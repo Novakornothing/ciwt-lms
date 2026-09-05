@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Test analytics — NAVEDTRA metrics{% endblock %}
+{% block content %}
+<style>
+  [data-theme="dark"] .filter-panel, [data-theme="dark"] .form-check-label, [data-theme="dark"] .form-label { color: #f0f5fc !important; }
+  [data-theme="dark"] .text-muted { color: #a8b8cc !important; }
+  [data-theme="dark"] .table td, [data-theme="dark"] .table th { color: #eef3fb !important; }
+  .filter-panel {
+    border: 1px solid var(--surface-3); border-radius: 10px; background: var(--surface);
+    padding: .65rem .8rem; height: 100%;
+  }
+  .filter-panel-title {
+    font-weight: 700; font-size: .85rem; margin-bottom: .3rem;
+    display: flex; justify-content: space-between; align-items: center; gap: .4rem;
+  }
+  .filter-actions .btn-link { text-decoration: none; font-weight: 600; font-size: .75rem; padding: 0; }
+  .check-list { max-height: 8.5rem; overflow-y: auto; }
+  .check-list .form-check { margin-bottom: .25rem; }
+  .check-list .form-check-label { font-size: .9rem; line-height: 1.3; cursor: pointer; }
+  .item-metrics { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .item-card summary { cursor: pointer; list-style: none; }
+  .item-card summary::-webkit-details-marker { display: none; }
+  .item-card[open] summary { margin-bottom: .75rem; }
+</style>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    {% if is_admin %}
+    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+    {% else %}
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_analytics_hub') }}">Analytics</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">Test analytics</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <h1 class="h3 mb-1">Test analytics</h1>
+  <p class="mb-0">NAVEDTRA metrics: difficulty index <strong>P</strong>, discrimination <strong>d</strong>, effectiveness of alternatives. Students never see this view.</p>
+</div>
+
+<details class="card mb-4" {% if not analysis and not test_cards %}open{% endif %}>
+  <summary class="card-header navy" style="cursor:pointer">Filters <span class="small fw-normal text-muted ms-2">(click to expand / collapse)</span></summary>
+  <div class="card-body">
+    <form method="get" id="analyticsFilterForm">
+      <div class="row g-3">
+        <div class="col-lg-3 col-md-6">
+          <div class="filter-panel">
+            <div class="filter-panel-title">
+              <span>Curriculum</span>
+              <span class="filter-actions">
+                <button type="button" class="btn btn-link" data-check-all="course_id">All</button> ·
+                <button type="button" class="btn btn-link" data-check-none="course_id">None</button>
+              </span>
+            </div>
+            <div class="check-list">
+              {% for c in courses %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="course_id" value="{{ c.id }}" id="course_{{ c.id }}"
+                       {% if c.id in filter_course_ids %}checked{% endif %}>
+                <label class="form-check-label" for="course_{{ c.id }}">{{ c.code }} — {{ c.title }}</label>
+              </div>
+              {% else %}<div class="text-muted small">No courses</div>{% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="filter-panel">
+            <div class="filter-panel-title">
+              <span>Tests</span>
+              <span class="filter-actions">
+                <button type="button" class="btn btn-link" data-check-all="test_id">All</button> ·
+                <button type="button" class="btn btn-link" data-check-none="test_id">None</button>
+              </span>
+            </div>
+            <div class="check-list">
+              {% for t in tests %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="test_id" value="{{ t.id }}" id="test_{{ t.id }}"
+                       {% if t.id in filter_test_ids %}checked{% endif %}>
+                <label class="form-check-label" for="test_{{ t.id }}">{{ t.title }}</label>
+              </div>
+              {% else %}<div class="text-muted small">No tests</div>{% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="filter-panel">
+            <div class="filter-panel-title">
+              <span>Classes</span>
+              <span class="filter-actions">
+                <button type="button" class="btn btn-link" data-check-all="section_id">All</button> ·
+                <button type="button" class="btn btn-link" data-check-none="section_id">None</button>
+              </span>
+            </div>
+            <div class="check-list">
+              {% for s in sections %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="section_id" value="{{ s.id }}" id="sec_{{ s.id }}"
+                       {% if s.id in filter_section_ids %}checked{% endif %}>
+                <label class="form-check-label" for="sec_{{ s.id }}">{{ s.name }}</label>
+              </div>
+              {% else %}<div class="text-muted small">No classes</div>{% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="filter-panel">
+            <div class="filter-panel-title">
+              <span>Instructors</span>
+              {% if is_admin %}
+              <span class="filter-actions">
+                <button type="button" class="btn btn-link" data-check-all="instructor_id">All</button> ·
+                <button type="button" class="btn btn-link" data-check-none="instructor_id">None</button>
+              </span>
+              {% else %}<span class="small text-muted">Your classes</span>{% endif %}
+            </div>
+            <div class="check-list">
+              {% for i in instructors %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="instructor_id" value="{{ i.id }}" id="instr_{{ i.id }}"
+                       {% if i.id in filter_instructor_ids %}checked{% endif %}
+                       {% if not is_admin %}disabled{% endif %}>
+                <label class="form-check-label" for="instr_{{ i.id }}">{{ i.full_name }}</label>
+                {% if not is_admin %}<input type="hidden" name="instructor_id" value="{{ i.id }}">{% endif %}
+              </div>
+              {% else %}<div class="text-muted small">No instructors</div>{% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row g-2 align-items-end mt-3">
+        <div class="col-6 col-md-2">
+          <label class="form-label small mb-1">Year</label>
+          <select name="year" class="form-select form-select-sm">
+            <option value="">All</option>
+            {% for y in years %}<option value="{{ y }}" {% if filter_year == y %}selected{% endif %}>{{ y }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label small mb-1">Quarter</label>
+          <select name="quarter" class="form-select form-select-sm">
+            <option value="">All</option>
+            {% for qq in ['Q1','Q2','Q3','Q4'] %}
+            <option value="{{ qq }}" {% if filter_quarter == qq %}selected{% endif %}>{{ qq }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" name="only_flagged" value="1" id="of" {% if only_flagged %}checked{% endif %}>
+            <label class="form-check-label" for="of">Flagged items only</label>
+          </div>
+        </div>
+        <div class="col-6 col-md-5 d-flex gap-2 justify-content-md-end">
+          <button class="btn btn-brand btn-sm">Apply</button>
+          <a class="btn btn-outline-navy btn-sm" href="{{ url_for('admin_test_analytics') }}">Reset</a>
+        </div>
+      </div>
+      <p class="small text-muted mt-2 mb-0">Select <strong>one test</strong> for full item detail. Select several for a comparison table.</p>
+    </form>
+  </div>
+</details>
+
+<script>
+(function () {
+  function setGroup(name, checked) {
+    document.querySelectorAll('input[type="checkbox"][name="' + name + '"]').forEach(function (cb) {
+      if (!cb.disabled) cb.checked = checked;
+    });
+  }
+  document.querySelectorAll('[data-check-all]').forEach(function (btn) {
+    btn.addEventListener('click', function () { setGroup(btn.getAttribute('data-check-all'), true); });
+  });
+  document.querySelectorAll('[data-check-none]').forEach(function (btn) {
+    btn.addEventListener('click', function () { setGroup(btn.getAttribute('data-check-none'), false); });
+  });
+})();
+</script>
+
+{% if not filter_course_ids and not filter_test_ids %}
+<div class="alert alert-secondary">Choose curriculum or tests above, then <strong>Apply</strong>. Need sample data? Admin can re-seed the demo database.</div>
+{% endif %}
+
+{% if test_cards %}
+<div class="card mb-4">
+  <div class="card-header navy">Comparison</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Test</th><th>Attempts</th><th>Average</th><th>Pass rate</th>
+          <th>Flagged</th><th>Strong distractors</th><th>Non-functional</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for card in test_cards %}
+        <tr>
+          <td><strong>{{ card.test.title }}</strong></td>
+          <td>{{ card.summary.n_attempts }}</td>
+          <td>{% if card.summary.mean_score is not none %}{{ card.summary.mean_score }}%{% else %}—{% endif %}</td>
+          <td>{% if card.summary.pass_rate is not none %}{{ card.summary.pass_rate }}%{% else %}—{% endif %}</td>
+          <td>{{ card.flagged }}</td>
+          <td>{{ card.strong_distractors }}</td>
+          <td>{{ card.dead_distractors }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-brand" href="{{ url_for('admin_test_analytics', test_id=card.test.id) }}">Detail</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if summary %}
+<div class="row g-2 mb-3">
+  <div class="col-4 col-md"><div class="card text-center p-2"><div class="text-muted small">Attempts</div><div class="fs-5 fw-bold">{{ summary.n_attempts }}</div></div></div>
+  <div class="col-4 col-md"><div class="card text-center p-2"><div class="text-muted small">Average</div><div class="fs-5 fw-bold">{% if summary.mean_score is not none %}{{ summary.mean_score }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-4 col-md"><div class="card text-center p-2"><div class="text-muted small">Median</div><div class="fs-5 fw-bold">{% if summary.median_score is not none %}{{ summary.median_score }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-4 col-md"><div class="card text-center p-2"><div class="text-muted small">Pass rate</div><div class="fs-5 fw-bold">{% if summary.pass_rate is not none %}{{ summary.pass_rate }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-4 col-md"><div class="card text-center p-2"><div class="text-muted small">P in band</div><div class="fs-5 fw-bold">{{ summary.items_in_band or '—' }}</div></div></div>
+  <div class="col-4 col-md"><div class="card text-center p-2"><div class="text-muted small">Flagged</div><div class="fs-5 fw-bold">{{ summary.n_flagged }}</div></div></div>
+</div>
+
+{% if distractor_roll %}
+<div class="card mb-3">
+  <div class="card-body py-2 d-flex flex-wrap gap-2 align-items-center">
+    <span class="small text-muted me-1">Alternatives:</span>
+    {% for label, count in distractor_roll.items() %}
+    <span class="stat-pill">{{ label }} <strong>{{ count }}</strong></span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if analysis is not none %}
+{% if summary.n_attempts == 0 %}
+<div class="alert alert-secondary">No completed attempts match these filters.</div>
+{% else %}
+<p class="small text-muted mb-2">P = difficulty (Nc/N) · d = discrimination (upper−lower ~27%) · Expand a row for alternatives.</p>
+{% for item in analysis %}
+<details class="card mb-2 item-card">
+  <summary class="card-body py-2">
+    <div class="d-flex justify-content-between flex-wrap gap-2 align-items-start">
+      <div class="wrap-ok"><strong>Q{{ item.index }}.</strong> {{ item.text[:140] }}{% if item.text|length > 140 %}…{% endif %}</div>
+      <div class="item-metrics">
+        <span class="badge badge-gold">P {{ item.P if item.P is defined else '—' }}</span>
+        <span class="badge badge-closed">{{ item.difficulty }}</span>
+        <span class="badge badge-live">d {{ item.discrimination }} · {{ item.disc_label }}</span>
+        {% if item.flags %}<span class="badge badge-gold">{{ item.flags|length }} flag(s)</span>{% endif %}
+      </div>
+    </div>
+  </summary>
+  <div class="card-body pt-0 border-top">
+    {% if item.flags %}
+    <p class="small mb-2">{% for f in item.flags %}<span class="badge badge-gold me-1">{{ f }}</span>{% endfor %}</p>
+    {% endif %}
+    <p class="small text-muted">Upper {{ item.p_high }}% · Lower {{ item.p_low }}% · Key: <strong>{{ item.correct }}</strong></p>
+    {% for opt in item.options %}
+    <div class="mb-2">
+      <div class="d-flex justify-content-between small">
+        <span class="{% if opt.is_correct %}fw-semibold text-success{% endif %}">{% if opt.is_correct %}✓ {% endif %}{{ opt.option }}</span>
+        <span>{{ opt.count }} ({{ '%.0f'|format(opt.pct) }}%)</span>
+      </div>
+      <div class="option-bar mt-1 mb-1"><span class="{% if opt.is_correct %}correct{% endif %}" style="width: {{ opt.pct }}%"></span></div>
+      <div class="small"><span class="badge {% if opt.is_correct %}badge-live{% elif opt.effectiveness == 'Non-functional' %}badge-closed{% else %}badge-gold{% endif %}">{{ opt.effectiveness }}</span>
+        <span class="text-muted">{{ opt.note }}</span></div>
+    </div>
+    {% endfor %}
+  </div>
+</details>
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Preview {{ quiz.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item active">{{ quiz.title }}</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ quiz.title }}</h1>
+  <p class="mb-0">Instructor preview · highlight a stem or choice, then Report this text.</p>
+</div>
+<div class="card card-body module-content" id="lessonBody">
+  {% for q in questions %}
+  <section class="mb-4" id="q{{ loop.index }}">
+    <h3>Q{{ loop.index }}. {{ q.text }}</h3>
+    {% if q.lo %}<p class="small text-muted">{{ q.lo }} · {{ q.lo_text or '' }}</p>{% endif %}
+    <ul>
+      {% for opt in q.options or [] %}
+      <li>{{ opt }}{% if opt == q.correct %} <strong>(key)</strong>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>
+<style>
+  #lessonBody ::selection { background:#f0c14b; color:#0a1628; }
+  #selectionTicketBar { z-index:1080; left:50%; bottom:1.25rem; width:min(36rem, calc(100vw - 1.5rem)); }
+  #selectionTicketBar .ticket-pop { background:#fff8e8; color:#0a1628; border:2px solid #c9a227; }
+  #selectionPreview { max-height:6.5rem; overflow:auto; white-space:pre-wrap; font-weight:600; }
+</style>
+<div id="selectionTicketBar" class="position-fixed translate-middle-x d-none">
+  <div class="ticket-pop rounded-3 p-3">
+    <div class="text-uppercase mb-1" style="letter-spacing:.08em;font-size:.75rem;font-weight:700;color:#8a6d12">Highlighted text</div>
+    <div id="selectionPreview" class="mb-3"></div>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-brand" id="reportSelectionBtn">Report this text</button>
+      <button type="button" class="btn btn-outline-navy" id="selectionDismiss">Dismiss</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  const body = document.getElementById('lessonBody');
+  const bar = document.getElementById('selectionTicketBar');
+  const preview = document.getElementById('selectionPreview');
+  const btn = document.getElementById('reportSelectionBtn');
+  const dismiss = document.getElementById('selectionDismiss');
+  if (!body || !bar || !btn) return;
+  let lastQuote = '';
+  function clearBar(){ bar.classList.add('d-none'); lastQuote=''; }
+  function showBar(text){
+    lastQuote = (text || '').trim();
+    if (lastQuote.length < 4) { clearBar(); return; }
+    if (lastQuote.length > 500) lastQuote = lastQuote.slice(0, 500);
+    preview.textContent = '“' + lastQuote + '”';
+    bar.classList.remove('d-none');
+  }
+  document.addEventListener('mouseup', function(){
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !body.contains(sel.anchorNode)) return;
+    showBar(sel.toString());
+  });
+  dismiss && dismiss.addEventListener('click', clearBar);
+  btn.addEventListener('click', function(){
+    if (!lastQuote) return;
+    const params = new URLSearchParams({
+      quiz_id: '{{ quiz.id }}',
+      section_id: '{{ section.id }}',
+      course_id: '{{ course_id or "" }}',
+      quote: lastQuote
+    });
+    window.location.href = '{{ url_for("tickets_new") }}?' + params.toString();
+  });
+})();
+</script>
+{% endblock %}

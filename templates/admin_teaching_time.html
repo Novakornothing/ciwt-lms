@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block title %}Teaching time{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin tools</a></li>
+    <li class="breadcrumb-item active">Teaching time</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h3 mb-1">Teaching time</h1>
+  <p class="mb-0">Filter by instructor, class, course, year, and quarter. Sort the tables. Totals are student-present teaching time.</p>
+</div>
+
+<form method="get" class="card card-body mb-4">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">Search</label>
+      <input type="search" name="q" class="form-control" value="{{ filter_q or '' }}" placeholder="Name, class, course…">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Instructor</label>
+      <select name="instructor_id" class="form-select">
+        <option value="">All instructors</option>
+        {% for i in instructors %}
+        <option value="{{ i.id }}" {% if filter_instructor_id == i.id %}selected{% endif %}>{{ i.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Course</label>
+      <select name="course_id" class="form-select">
+        <option value="">All courses</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}" {% if filter_course_id == c.id %}selected{% endif %}>{{ c.code }} — {{ c.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Class</label>
+      <select name="section_id" class="form-select">
+        <option value="">All classes</option>
+        {% for s in sections %}
+        <option value="{{ s.id }}" {% if filter_section_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Year</label>
+      <select name="year" class="form-select">
+        <option value="">All years</option>
+        {% for y in years %}
+        <option value="{{ y }}" {% if filter_year == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Quarter</label>
+      <select name="quarter" class="form-select">
+        <option value="">All quarters</option>
+        {% for qq in ['Q1','Q2','Q3','Q4'] %}
+        <option value="{{ qq }}" {% if filter_quarter == qq %}selected{% endif %}>{{ qq }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Sort</label>
+      <select name="sort" class="form-select">
+        <option value="instructor" {% if filter_sort == 'instructor' %}selected{% endif %}>Instructor A–Z</option>
+        <option value="time" {% if filter_sort == 'time' %}selected{% endif %}>Most time</option>
+        <option value="class" {% if filter_sort == 'class' %}selected{% endif %}>Class name</option>
+        <option value="course" {% if filter_sort == 'course' %}selected{% endif %}>Course</option>
+        <option value="year" {% if filter_sort == 'year' %}selected{% endif %}>Year (newest)</option>
+      </select>
+    </div>
+  </div>
+  <div class="mt-3 d-flex gap-2 flex-wrap">
+    <button class="btn btn-brand">Apply filters</button>
+    <a class="btn btn-outline-navy" href="{{ url_for('admin_teaching_time') }}">Clear</a>
+  </div>
+</form>
+
+<div class="card mb-4">
+  <div class="card-header navy">By instructor and class (detail)</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>Instructor</th>
+          <th>Class</th>
+          <th>Curriculum</th>
+          <th>Sessions</th>
+          <th>Teaching time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in teach_by_class %}
+        <tr>
+          <td>{{ row.user.full_name if row.user else '—' }}</td>
+          <td>
+            {% if row.section %}
+            <a href="{{ url_for('instructor_section', section_id=row.section.id) }}">{{ row.section.name }}</a>
+            {% else %}
+            <span class="text-muted">No class selected on timer</span>
+            {% endif %}
+          </td>
+          <td class="small">{{ row.course.code if row.course else '—' }}</td>
+          <td>{{ row.sessions }}</td>
+          <td>{{ fmt_seconds(row.seconds) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-muted">No teaching time logged yet. Instructors must pick a class in the top bar before Start.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">Course averages</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>Curriculum set</th>
+          <th>Classes with time</th>
+          <th>Total teaching time</th>
+          <th>Avg per class</th>
+          <th>Instructors</th>
+          <th>Avg per instructor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in course_averages %}
+        <tr>
+          <td>{{ row.course.title if row.course else '—' }}</td>
+          <td>{{ row.n_classes }}</td>
+          <td>{{ fmt_seconds(row.total_seconds) }}</td>
+          <td>{{ fmt_seconds(row.avg_per_class) }}</td>
+          <td>{{ row.n_instructors }}</td>
+          <td>{{ fmt_seconds(row.avg_per_instructor) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-muted">No course averages yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">By instructor and course (with class count)</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>Instructor</th>
+          <th>Course</th>
+          <th>Classes taught</th>
+          <th>Total time</th>
+          <th>Avg per class</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in teach_by_course %}
+        <tr>
+          <td>{{ row.user.full_name if row.user else '—' }}</td>
+          <td>{{ row.course.title if row.course else 'Untagged' }}</td>
+          <td>{{ row.n_classes }}</td>
+          <td>{{ fmt_seconds(row.seconds) }}</td>
+          <td>{{ fmt_seconds(row.avg_per_class) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-muted">No course rollups yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">By instructor, quarter, and class</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr><th>Year</th><th>Quarter</th><th>Instructor</th><th>Class</th><th>Course</th><th>Teaching time</th></tr>
+      </thead>
+      <tbody>
+        {% for row in teach_by_quarter %}
+        <tr>
+          <td>{{ row.year }}</td>
+          <td>{{ row.quarter }}</td>
+          <td>{{ row.user.full_name if row.user else '—' }}</td>
+          <td>{% if row.section %}{{ row.section.name }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="small">{{ row.course.code if row.course else '—' }}</td>
+          <td>{{ fmt_seconds(row.seconds) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-muted">No quarterly totals yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">By instructor and year</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Year</th><th>Instructor</th><th>Teaching time</th></tr></thead>
+      <tbody>
+        {% for row in teach_by_year %}
+        <tr>
+          <td>{{ row.year }}</td>
+          <td>{{ row.user.full_name if row.user else '—' }}</td>
+          <td>{{ fmt_seconds(row.seconds) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="text-muted">No yearly totals yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

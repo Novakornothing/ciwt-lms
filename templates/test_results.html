@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Results — {{ test.title }}{% endblock %}
+{% block content %}
+<div class="test-shell">
+  <div class="page-hero">
+    <h1 class="h3 mb-1">{% if passed %}Pass{% else %}Not yet passing{% endif %} · {{ score|round(0)|int }}%</h1>
+    <p>{{ correct }} of {{ total }} correct · Passing score {{ test.passing_score }}% · {{ test.title }}
+    {% if timed_out %}<span class="badge badge-closed ms-1">Submitted on time expiry</span>{% endif %}</p>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header navy">Overall result</div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-3 align-items-center mb-2">
+        <span class="stat-pill">Score <strong>{{ '%.1f'|format(score) }}%</strong></span>
+        <span class="stat-pill">{% if passed %}<span class="text-success">Passed</span>{% else %}<span style="color:var(--danger)">Below pass mark</span>{% endif %}</span>
+        <span class="stat-pill">Pass mark {{ test.passing_score }}%</span>
+      </div>
+      <p class="text-muted small mb-0">
+        Item-level answers are not shown to students. Use category performance below to guide review of the related curriculum chapters.
+        Instructors can view detailed item results for coaching and analysis.
+      </p>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header navy">Performance by broad category</div>
+    <div class="list-group list-group-flush">
+      {% for c in categories %}
+      <div class="list-group-item">
+        <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
+          <strong>{{ c.category }}</strong>
+          <span>{{ c.correct }}/{{ c.total }} · <strong>{{ c.pct }}%</strong></span>
+        </div>
+        <div class="progress" style="height:.65rem">
+          <div class="progress-bar" style="width: {{ c.pct }}%"></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="list-group-item text-muted">No category data.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <a href="{{ url_for('student_section', section_id=section_id) }}" class="btn btn-brand">Back to class</a>
+</div>
+{% endblock %}

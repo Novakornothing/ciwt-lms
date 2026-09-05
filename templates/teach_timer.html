@@ -1,0 +1,100 @@
+<div class="card mb-4">
+  <div class="card-header navy">Teaching session</div>
+  <div class="card-body">
+    <p class="small text-muted mb-3">
+      Time counts only while at least one student has this course open. Pick the class you are with, then start.
+    </p>
+    <div class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label">Class</label>
+        <select id="teachSection" class="form-select">
+          <option value="">Select class…</option>
+          {% for s in staff_nav_sections %}
+          <option value="{{ s.id }}" {% if section is defined and section.id == s.id %}selected{% endif %}>
+            {{ s.name }}{% if s.course %} · {{ s.course.code }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Break reminder</label>
+        <select id="breakMins" class="form-select">
+          <option value="50" selected>50 minutes (default)</option>
+          <option value="10">10 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="75">75 minutes</option>
+          <option value="90">90 minutes</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <span id="teachClock" class="fs-3 fw-bold">00:00</span>
+          <button type="button" class="btn btn-brand" id="teachStart">Start</button>
+          <button type="button" class="btn btn-outline-navy" id="teachStop">Stop</button>
+        </div>
+      </div>
+    </div>
+    <div class="small mt-3" id="teachStatus">Stopped</div>
+  </div>
+</div>
+<script>
+(function(){
+  const startBtn = document.getElementById('teachStart');
+  const stopBtn = document.getElementById('teachStop');
+  const clock = document.getElementById('teachClock');
+  const status = document.getElementById('teachStatus');
+  if (!startBtn || !clock) return;
+  let credited = 0, tick = null, ping = null, warned = false, running = false;
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function show(sec){
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    clock.textContent = h ? (h + ':' + pad(m) + ':' + pad(s)) : (pad(m) + ':' + pad(s));
+  }
+  function doPing(){
+    fetch('{{ url_for("time_teaching_ping") }}', {method:'POST'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d.ok) return;
+        credited = d.seconds || credited;
+        show(credited);
+        if (d.credited) status.textContent = 'Counting — a student is in this course.';
+        else status.textContent = d.message || 'Paused — waiting for a student in this course.';
+        const limit = parseInt((document.getElementById('breakMins')||{}).value || '50', 10) * 60;
+        if (!warned && credited >= limit) {
+          warned = true;
+          status.textContent += ' Break window.';
+        }
+      }).catch(function(){});
+  }
+  startBtn.onclick = function(){
+    const sid = (document.getElementById('teachSection') || {}).value;
+    if (!sid) { status.textContent = 'Select a class first.'; return; }
+    fetch('{{ url_for("time_teaching_start") }}', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({section_id: sid})
+    }).then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
+      .then(function(res){
+        if (!res.ok) {
+          status.textContent = (res.d && res.d.error) || 'Could not start.';
+          return;
+        }
+        running = true; credited = 0; warned = false;
+        show(0);
+        status.textContent = 'Session open. Time accrues when a student is in the course.';
+        if (ping) clearInterval(ping);
+        ping = setInterval(doPing, 20000);
+        doPing();
+      });
+  };
+  if (stopBtn) stopBtn.onclick = function(){
+    fetch('{{ url_for("time_teaching_stop") }}', {method:'POST'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (ping) clearInterval(ping);
+        running = false;
+        status.textContent = 'Saved ' + (d.label || '0m') + '. Only student-present time was kept.';
+      });
+  };
+})();
+</script>

@@ -1,0 +1,675 @@
+{% extends "base.html" %}
+{% block title %}{{ lab.title }} — Live Lab{% endblock %}
+{% block content %}
+<style>
+  .lab-layout { display: grid; grid-template-columns: 1fr minmax(260px, 320px); gap: 1rem; align-items: start; }
+  @media (max-width: 991px) { .lab-layout { grid-template-columns: 1fr; } }
+  .term {
+    background: #070e18;
+    color: #d6e8ff;
+    border-radius: 12px;
+    border: 2px solid #3ec7ff;
+    box-shadow: 0 0 0 1px rgba(62,199,255,.25), 0 12px 40px rgba(0,0,0,.35);
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    font-size: 0.95rem;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+  }
+  .term-head {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid #2a3f5c;
+    color: #f0c14b;
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    display: flex; justify-content: space-between; align-items: center; gap: .5rem;
+  }
+  .term-live-dot {
+    width: .65rem; height: .65rem; border-radius: 50%;
+    background: #0d9f6e; box-shadow: 0 0 8px #0d9f6e;
+    display: inline-block; margin-right: .4rem;
+  }
+  .term-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.85rem 1rem;
+    max-height: 55vh;
+    min-height: 320px;
+  }
+  .term-line { white-space: pre-wrap; word-break: break-word; margin: 0 0 0.15rem; line-height: 1.4; }
+  .term-cmd { color: #7ee0ff; }
+  .term-input-row {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-top: 2px solid #3ec7ff;
+    background: #0d1828;
+  }
+  .term-input-row .prompt { color: #f0c14b; white-space: nowrap; font-weight: 700; }
+  .term-input-row input {
+    flex: 1;
+    background: #132033;
+    border: 1px solid #3a5575;
+    border-radius: 6px;
+    color: #e8f4ff;
+    outline: none;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 0.55rem 0.75rem;
+  }
+  .term-input-row input:focus { border-color: #3ec7ff; box-shadow: 0 0 0 3px rgba(62,199,255,.25); }
+  .obj-item { display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.65rem; font-size: 0.92rem; }
+  .obj-item .ck {
+    flex: 0 0 1.2rem; height: 1.2rem; border-radius: 4px;
+    border: 2px solid #3ec7ff; margin-top: 0.1rem;
+  }
+  .obj-item.done .ck { background: #0d9f6e; border-color: #0d9f6e; }
+  .obj-item.done span { text-decoration: line-through; opacity: 0.7; }
+  .lab-success {
+    display: none; margin-top: 0.75rem; padding: 0.85rem;
+    border-radius: 8px; background: rgba(13,159,110,.18);
+    border: 1px solid #0d9f6e; font-weight: 600;
+  }
+  .lab-success.show { display: block; }
+  .lab-banner {
+    background: linear-gradient(90deg, #0a2540, #123a5c);
+    border: 1px solid #3ec7ff; border-radius: 10px;
+    padding: 0.85rem 1.1rem; margin-bottom: 1rem; color: #e8f4ff;
+  }
+  .lab-banner strong { color: #f0c14b; }
+  .w11-vm {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #3d3d3d;
+    box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  }
+  .w11-titlebar {
+    background: #1f1f1f;
+    color: #f3f3f3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .45rem .8rem;
+    font-size: .82rem;
+    font-weight: 600;
+  }
+  .w11-dots span {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 6px;
+  }
+  .w11-taskbar {
+    background: #1c1c1c;
+    color: #cfcfcf;
+    font-size: .75rem;
+    padding: .35rem .8rem;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('interactive_labs_index') }}">Live labs</a></li>
+    <li class="breadcrumb-item active">{{ lab.title }}</li>
+  </ol>
+</nav>
+
+<div class="lab-banner">
+  {% if lab.kind == 'windows' %}
+  <strong>WINDOWS 11 TRAINING VM</strong> — Host <code>CIWT-W11-07</code>, Education 23H2.
+  Click the console, type a command, press <kbd>Enter</kbd>. Switch shells with <code>powershell</code> or <code>cmd</code>.
+  This is a CIWT simulator, not a Microsoft-licensed image.
+  {% else %}
+  <strong>LIVE TERMINAL</strong> — Click the box, type a command, press <kbd>Enter</kbd>.
+  Tab completes Cisco keywords. Hints stay on the right.
+  {% endif %}
+</div>
+
+<div class="page-hero">
+  <h1 class="h4 mb-1">{{ lab.title }}</h1>
+  <p class="mb-0">{{ lab.intro }}</p>
+</div>
+
+<div class="lab-layout mb-4">
+  <div>
+    <div class="{% if lab.kind == 'windows' %}w11-vm{% endif %}">
+    {% if lab.kind == 'windows' %}
+    <div class="w11-titlebar">
+      <span>Windows 11 Education — CIWT-W11-07 · Terminal</span>
+      <span class="w11-dots"><span style="background:#e81123"></span><span style="background:#ffb900"></span><span style="background:#00cc6a"></span></span>
+    </div>
+    {% endif %}
+    <div class="term" id="term" tabindex="0" style="{% if lab.kind == 'windows' %}border-radius:0;border:0{% endif %}">
+      <div class="term-head">
+        <span><span class="term-live-dot"></span>{% if lab.kind == 'windows' %}WIN11 VM · CMD / PowerShell{% else %}{{ lab.kind|upper }} simulator · live{% endif %}</span>
+        <span class="small" style="color:#9bb4d0;font-weight:600;letter-spacing:0">Type · Enter · Tab</span>
+      </div>
+      <div class="term-body" id="termBody"></div>
+      <div class="term-input-row">
+        <span class="prompt" id="termPrompt">{{ prompt }}</span>
+        <input id="termInput" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Command — Tab to complete"
+               aria-label="Command input" autofocus>
+      </div>
+    </div>
+    {% if lab.kind == 'windows' %}
+    <div class="w11-taskbar">
+      <span>Start · Search · Settings &gt; Network &amp; internet</span>
+      <span>CIWT-W11-07 · 23H2</span>
+    </div>
+    {% endif %}
+    </div>
+    <p class="small text-muted mt-2 mb-0">CIWT training VM simulator — does not install or license Windows on your computer.</p>
+  </div>
+  <div>
+    <div class="card">
+      <div class="card-header navy">Objectives — check off as you work</div>
+      <div class="card-body">
+        {% for o in lab.objectives %}
+        <div class="obj-item" id="obj-{{ o.id }}" data-oid="{{ o.id }}">
+          <div class="ck"></div>
+          <span>{{ o.text }}</span>
+        </div>
+        {% endfor %}
+        <div class="lab-success" id="labSuccess">{{ lab.success_msg }}</div>
+        {% if lab.kind in ('switch', 'router') %}
+        <div class="small mb-3">
+          <div class="fw-semibold mb-1">IOS help and shortcuts (every switch/router lab)</div>
+          <ul class="mb-2 ps-3">
+            <li><code>?</code> — commands legal in this prompt</li>
+            <li><code>show ?</code> or <code>conf t</code> then <code>interface ?</code> — next word</li>
+            <li><code>sh?</code> — keywords that start with <code>sh</code></li>
+            <li><kbd>Tab</kbd> — complete a unique prefix</li>
+            <li>Short forms: <code>en</code>, <code>conf t</code>, <code>int fa0/2</code>, <code>sh vlan br</code>, <code>sh ip int br</code>, <code>sh run</code>, <code>wr</code></li>
+          </ul>
+          <div class="text-muted">Wrong mode does not change the prompt. <code>do show …</code> works from config.</div>
+        </div>
+        {% else %}
+        <p class="small text-muted mb-2">Type <code>help</code> for supported commands. Use Hint only if you are stuck.</p>
+        {% endif %}
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button type="button" class="btn btn-sm btn-outline-navy" id="btnReset">Reset lab</button>
+          <button type="button" class="btn btn-sm btn-brand" id="btnHint">Hint</button>
+        </div>
+        <div class="small text-muted mt-2" id="hintBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Scripts in content so they always run even if scripts block is skipped #}
+<script>
+(function(){
+  const labId = {{ lab.id|tojson }};
+  const labKind = {{ lab.kind|tojson }};
+  const hints = {{ lab.hints|tojson }};
+  const objectives = {{ lab.objectives|tojson }};
+  const successMsg = {{ lab.success_msg|tojson }};
+  const cmdUrl = {{ url_for('interactive_lab_cmd', lab_id=lab.id)|tojson }};
+  const completeUrl = {{ url_for('interactive_lab_complete', lab_id=lab.id)|tojson }};
+  const resetUrl = {{ url_for('interactive_lab_reset', lab_id=lab.id)|tojson }};
+  const startPrompt = {{ prompt|tojson }};
+
+  const body = document.getElementById('termBody');
+  const input = document.getElementById('termInput');
+  const promptEl = document.getElementById('termPrompt');
+  const successEl = document.getElementById('labSuccess');
+  let hintIdx = 0;
+  let history = [];
+  let histPos = -1;
+  let done = [];
+
+  function appendLine(text, cls) {
+    const p = document.createElement('div');
+    p.className = 'term-line' + (cls ? ' ' + cls : '');
+    p.textContent = text;
+    body.appendChild(p);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function setDone(doneIds) {
+    done = doneIds || [];
+    const set = new Set(done);
+    document.querySelectorAll('.obj-item').forEach(function(el){
+      el.classList.toggle('done', set.has(el.getAttribute('data-oid')));
+    });
+    const need = objectives.map(function(o){ return o.id; });
+    const complete = need.every(function(id){ return set.has(id); });
+    if (complete) {
+      successEl.classList.add('show');
+      successEl.textContent = successMsg;
+    }
+  }
+
+  function mark(id) {
+    if (done.indexOf(id) === -1) done.push(id);
+    setDone(done);
+  }
+
+  /* —— Client-side fallback engine (works even if API fails) —— */
+  var winState = {
+    hostname: 'CIWT-LAB-PC07',
+    ipv4: '10.20.30.47',
+    mask: '255.255.255.0',
+    gateway: '10.20.30.1',
+    dns: ['10.20.30.10'],
+    released: false
+  };
+  var swState = {
+    hostname: 'SW-ACCESS-01', mode: 'user', editIf: null, editVlan: null,
+    vlans: {1: 'default'},
+    ifaces: {'FastEthernet0/1': {mode:'access', vlan:1}, 'FastEthernet0/2': {mode:'access', vlan:1}}
+  };
+  var rtrState = {
+    hostname: 'R1', mode: 'user', editIf: null,
+    ifaces: {
+      'GigabitEthernet0/0': {ip:null, up:false},
+      'GigabitEthernet0/1': {ip:null, up:false}
+    }
+  };
+
+  function localWindows(cmd) {
+    var c = cmd.trim(), cl = c.toLowerCase(), lines = [];
+    if (cl === 'help' || cl === '?') {
+      lines.push('Supported: hostname, ipconfig, ipconfig /all, ipconfig /release, ipconfig /renew, ipconfig /flushdns, ping <host>, nslookup <name>, help');
+      return lines;
+    }
+    if (cl === 'hostname') { lines.push(winState.hostname); mark('run_hostname'); return lines; }
+    if (cl === 'ipconfig' || cl === 'ipconfig /all') {
+      lines.push('Windows IP Configuration', '');
+      lines.push('   Host Name . . . . . . . . . . . . : ' + winState.hostname);
+      lines.push('Ethernet adapter Ethernet:', '');
+      lines.push('   IPv4 Address. . . . . . . . . . . : ' + winState.ipv4);
+      lines.push('   Subnet Mask . . . . . . . . . . . : ' + winState.mask);
+      lines.push('   Default Gateway . . . . . . . . . : ' + (winState.released ? '' : winState.gateway));
+      lines.push('   DNS Servers . . . . . . . . . . . : ' + winState.dns[0]);
+      mark('run_ipconfig');
+      return lines;
+    }
+    if (cl === 'ipconfig /release') {
+      winState.released = true; winState.ipv4 = '0.0.0.0';
+      lines.push('Windows IP Configuration', '', '   IPv4 Address. . . . . . . . . . . : 0.0.0.0');
+      mark('release'); return lines;
+    }
+    if (cl === 'ipconfig /renew') {
+      winState.released = false; winState.ipv4 = '10.20.30.47';
+      lines.push('Windows IP Configuration', '', '   IPv4 Address. . . . . . . . . . . : 10.20.30.47');
+      lines.push('   Default Gateway . . . . . . . . . : 10.20.30.1');
+      mark('renew'); return lines;
+    }
+    if (cl === 'ipconfig /flushdns') {
+      lines.push('Successfully flushed the DNS Resolver Cache.');
+      mark('flush_dns'); return lines;
+    }
+    if (cl.indexOf('ping ') === 0) {
+      var t = c.split(/\s+/)[1];
+      if (/[a-zA-Z]/.test(t) && t.indexOf('app.training') >= 0) {
+        lines.push('Ping request could not find host ' + t + '. Please check the name and try again.');
+        mark('ping_name_fail');
+      } else if (t === '10.20.30.50' || t === '127.0.0.1' || t === winState.gateway || t === '10.20.30.47' || t === '10.20.30.1') {
+        lines.push('Pinging ' + t + ' with 32 bytes of data:');
+        lines.push('Reply from ' + t + ': bytes=32 time<1ms TTL=64');
+        lines.push('Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)');
+        if (t === '10.20.30.50') mark('ping_ip_ok');
+        if (t === '10.20.30.1' || t === winState.gateway) mark('ping_gw');
+      } else {
+        lines.push('Request timed out.');
+      }
+      return lines;
+    }
+    if (cl.indexOf('nslookup ') === 0) {
+      var n = c.split(/\s+/)[1];
+      lines.push('Server:  dns-lab.training.local', 'Address:  10.20.30.10', '');
+      if (n && n.indexOf('app.training') >= 0) {
+        lines.push("*** can't find " + n + ": Non-existent domain");
+        mark('nslookup_fail');
+      } else {
+        lines.push('Name:    ' + n, 'Address:  10.20.30.50');
+      }
+      return lines;
+    }
+    lines.push("'" + c + "' is not recognized. Type help");
+    return lines;
+  }
+
+  function swPrompt() {
+    var m = swState.mode;
+    if (m === 'priv') return swState.hostname + '#';
+    if (m === 'config') return swState.hostname + '(config)#';
+    if (m === 'config-if') return swState.hostname + '(config-if)#';
+    if (m === 'config-vlan') return swState.hostname + '(config-vlan)#';
+    return swState.hostname + '>';
+  }
+  function isConfT(cl) {
+    return /^(configure terminal|configure term|configure t|config terminal|config term|config t|conf terminal|conf term|conf t)$/.test(cl);
+  }
+  function normIf(ifn) {
+    if (/fa0\/2|f0\/2|fastethernet0\/2/i.test(ifn)) return 'FastEthernet0/2';
+    if (/fa0\/1|f0\/1|fastethernet0\/1/i.test(ifn)) return 'FastEthernet0/1';
+    if (/fa0\/3|f0\/3|fastethernet0\/3/i.test(ifn)) return 'FastEthernet0/3';
+    return ifn;
+  }
+  function localSwitch(cmd) {
+    var c = cmd.trim(), cl = c.toLowerCase().trim(), lines = [];
+    if (cl.indexOf('do ') === 0) { cl = cl.slice(3).trim(); c = c.slice(3).trim(); }
+    if (cl === 'help' || cl === '?') {
+      lines.push('enable → configure terminal → vlan 20 → name TRAINING-USERS → interface fa0/2 → switchport mode access → switchport access vlan 20 → end → show vlan brief');
+      return lines;
+    }
+    if (cl === 'enable') {
+      if (swState.mode !== 'user' && swState.mode !== 'priv') {
+        lines.push("% Invalid input detected at '^' marker.");
+        return lines;
+      }
+      swState.mode = 'priv'; mark('enable');
+      promptEl.textContent = swPrompt();
+      return lines;
+    }
+    if (isConfT(cl)) {
+      if (swState.mode !== 'priv') {
+        lines.push("% Invalid input detected at '^' marker.");
+        return lines;
+      }
+      swState.mode = 'config';
+      promptEl.textContent = swPrompt();
+      return lines;
+    }
+    if (cl === 'end') {
+      swState.mode = 'priv'; swState.editIf = null; swState.editVlan = null;
+      promptEl.textContent = swPrompt();
+      return lines;
+    }
+    if (cl === 'exit') {
+      if (swState.mode === 'config-if' || swState.mode === 'config-vlan') swState.mode = 'config';
+      else if (swState.mode === 'config') swState.mode = 'priv';
+      else if (swState.mode === 'priv') swState.mode = 'user';
+      promptEl.textContent = swPrompt();
+      return lines;
+    }
+    if (cl.indexOf('vlan ') === 0) {
+      if (swState.mode !== 'config' && swState.mode !== 'config-vlan') {
+        lines.push('% Command requires global configuration mode.');
+        lines.push('  Type: enable  then  configure terminal  then  vlan 20');
+        return lines;
+      }
+      var vid = parseInt(c.split(/\s+/)[1], 10);
+      if (!vid) { lines.push('% Invalid VLAN id. Example: vlan 20'); return lines; }
+      swState.vlans[vid] = swState.vlans[vid] || ('VLAN' + vid);
+      swState.editVlan = vid;
+      swState.mode = 'config-vlan';
+      if (vid === 20) mark('vlan20');
+      promptEl.textContent = swPrompt();
+      lines.push('VLAN ' + vid + ' created/selected. Optional: name TRAINING-USERS');
+      return lines;
+    }
+    if (swState.mode === 'config-vlan' && cl.indexOf('name ') === 0) {
+      var nm = c.split(/\s+/).slice(1).join(' ');
+      swState.vlans[swState.editVlan] = nm;
+      if (swState.editVlan === 20) mark('vlan20');
+      lines.push('VLAN ' + swState.editVlan + ' name set to ' + nm);
+      return lines;
+    }
+    if (cl.indexOf('interface ') === 0) {
+      if (swState.mode !== 'config' && swState.mode !== 'config-if' && swState.mode !== 'config-vlan') {
+        lines.push('% Requires configure terminal first.');
+        return lines;
+      }
+      var ifn = normIf(c.split(/\s+/)[1] || '');
+      swState.ifaces[ifn] = swState.ifaces[ifn] || {mode:'access', vlan:1};
+      swState.editIf = ifn; swState.mode = 'config-if';
+      promptEl.textContent = swPrompt();
+      return lines;
+    }
+    if (swState.mode === 'config-if') {
+      if (cl === 'switchport mode access' || cl === 'sw mode access') {
+        swState.ifaces[swState.editIf] = swState.ifaces[swState.editIf] || {};
+        swState.ifaces[swState.editIf].mode = 'access';
+        return lines;
+      }
+      if (cl === 'switchport mode trunk' || cl === 'sw mode trunk') {
+        swState.ifaces[swState.editIf] = swState.ifaces[swState.editIf] || {};
+        swState.ifaces[swState.editIf].mode = 'trunk';
+        mark('trunk');
+        return lines;
+      }
+      if (cl.indexOf('switchport access vlan ') === 0 || cl.indexOf('sw access vlan ') === 0) {
+        var v = parseInt(c.split(/\s+/).pop(), 10);
+        swState.ifaces[swState.editIf] = swState.ifaces[swState.editIf] || {};
+        swState.ifaces[swState.editIf].vlan = v;
+        swState.ifaces[swState.editIf].mode = 'access';
+        if ((swState.editIf === 'FastEthernet0/2' || /0\/2/.test(swState.editIf)) && v === 20) mark('access');
+        lines.push(swState.editIf + ' is access VLAN ' + v);
+        return lines;
+      }
+    }
+    if (cl === 'show vlan brief' || cl === 'sh vlan brief' || cl === 'show vlan' || cl === 'sh vlan') {
+      lines.push('VLAN Name                             Status    Ports');
+      lines.push('---- -------------------------------- --------- ----------------');
+      Object.keys(swState.vlans).sort(function(a,b){return a-b;}).forEach(function(vid){
+        var ports = [];
+        Object.keys(swState.ifaces).forEach(function(p){
+          if (String(swState.ifaces[p].vlan) === String(vid)) ports.push(p.replace('FastEthernet','Fa'));
+        });
+        lines.push(vid + '    ' + swState.vlans[vid] + '  active  ' + ports.join(','));
+      });
+      if (swState.vlans[20] && Object.keys(swState.ifaces).some(function(p){ return Number(swState.ifaces[p].vlan) === 20; })) mark('verify');
+      return lines;
+    }
+    if (cl === 'show running-config' || cl === 'sh run' || cl === 'show run') {
+      lines.push('hostname ' + swState.hostname);
+      Object.keys(swState.ifaces).forEach(function(p){
+        lines.push('interface ' + p);
+        lines.push(' switchport mode ' + (swState.ifaces[p].mode || 'access'));
+        if (swState.ifaces[p].mode === 'trunk') mark('verify_trunk');
+        else lines.push(' switchport access vlan ' + (swState.ifaces[p].vlan || 1));
+      });
+      return lines;
+    }
+    lines.push('% Incomplete or unsupported. Current mode: ' + swState.mode + '. Type help');
+    return lines;
+  }
+
+  function localRouter(cmd) {
+    var c = cmd.trim(), cl = c.toLowerCase().trim(), lines = [];
+    if (cl.indexOf('do ') === 0) { cl = cl.slice(3).trim(); c = c.slice(3).trim(); }
+    if (cl === 'help' || cl === '?') {
+      lines.push('enable → conf t → interface Gi0/0 → ip address 10.20.0.1 255.255.255.0 → no shutdown → end → show ip interface brief → ping 10.20.0.10');
+      return lines;
+    }
+    if (cl === 'enable') { rtrState.mode = 'priv'; mark('enable'); promptEl.textContent = rtrState.hostname + '#'; return lines; }
+    if (isConfT(cl)) {
+      if (rtrState.mode === 'user') { lines.push('% Enter privileged mode first: enable'); return lines; }
+      rtrState.mode = 'config'; promptEl.textContent = rtrState.hostname + '(config)#';
+      lines.push('Enter configuration commands, one per line. End with CNTL/Z (or type end).');
+      return lines;
+    }
+    if (cl === 'end') { rtrState.mode = 'priv'; rtrState.editIf = null; promptEl.textContent = rtrState.hostname + '#'; return lines; }
+    if (cl === 'exit') {
+      if (rtrState.mode === 'config-if') { rtrState.mode = 'config'; promptEl.textContent = rtrState.hostname + '(config)#'; }
+      else if (rtrState.mode === 'config') { rtrState.mode = 'priv'; promptEl.textContent = rtrState.hostname + '#'; }
+      else if (rtrState.mode === 'priv') { rtrState.mode = 'user'; promptEl.textContent = rtrState.hostname + '>'; }
+      return lines;
+    }
+    if (cl.indexOf('interface ') === 0) {
+      if (rtrState.mode !== 'config' && rtrState.mode !== 'config-if') {
+        lines.push('% Requires configure terminal first.');
+        return lines;
+      }
+      var ifn = c.split(/\s+/)[1];
+      if (/gi?0\/0/i.test(ifn)) ifn = 'GigabitEthernet0/0';
+      if (/gi?0\/1/i.test(ifn)) ifn = 'GigabitEthernet0/1';
+      rtrState.editIf = ifn; rtrState.mode = 'config-if';
+      promptEl.textContent = rtrState.hostname + '(config-if)#';
+      return lines;
+    }
+    if (rtrState.mode === 'config-if') {
+      if (cl.indexOf('ip address ') === 0) {
+        var parts = c.split(/\s+/);
+        rtrState.ifaces[rtrState.editIf] = rtrState.ifaces[rtrState.editIf] || {};
+        rtrState.ifaces[rtrState.editIf].ip = parts[2];
+        if (rtrState.editIf.endsWith('0/0') && parts[2] === '10.20.0.1') mark('addr');
+        if (rtrState.editIf.endsWith('0/1') && parts[2] === '10.30.0.1') mark('addr2');
+        return lines;
+      }
+      if (cl === 'no shutdown') {
+        rtrState.ifaces[rtrState.editIf].up = !!rtrState.ifaces[rtrState.editIf].ip;
+        if (rtrState.editIf.endsWith('0/0') && rtrState.ifaces[rtrState.editIf].ip === '10.20.0.1') mark('addr');
+        if (rtrState.editIf.endsWith('0/1') && rtrState.ifaces[rtrState.editIf].ip === '10.30.0.1') mark('addr2');
+        return lines;
+      }
+    }
+    if (cl === 'show ip interface brief' || cl === 'sh ip int brief') {
+      lines.push('Interface                  IP-Address      Status');
+      Object.keys(rtrState.ifaces).forEach(function(p){
+        var cfg = rtrState.ifaces[p];
+        lines.push(p + '  ' + (cfg.ip || 'unassigned') + '  ' + (cfg.up ? 'up' : 'down'));
+      });
+      var g0 = rtrState.ifaces['GigabitEthernet0/0'];
+      if (g0 && g0.ip === '10.20.0.1' && g0.up) mark('show_ip');
+      return lines;
+    }
+    if (cl.indexOf('ping ') === 0) {
+      var tgt = c.split(/\s+/)[1];
+      var g0 = rtrState.ifaces['GigabitEthernet0/0'];
+      var anyUp = Object.keys(rtrState.ifaces).some(function(k){ return rtrState.ifaces[k].up && rtrState.ifaces[k].ip; });
+      if (anyUp && (tgt === '10.20.0.10' || tgt === '10.30.0.20')) {
+        lines.push('Sending 5, 100-byte ICMP Echos to ' + tgt, '!!!!!', 'Success rate is 100 percent (5/5)');
+        if (tgt === '10.20.0.10') mark('ping_pc');
+        if (tgt === '10.30.0.20') mark('ping_pc2');
+      } else {
+        lines.push('.....', 'Success rate is 0 percent (0/5)');
+      }
+      return lines;
+    }
+    lines.push('% Incomplete or unsupported. Type help');
+    return lines;
+  }
+
+  function runLocal(cmd) {
+    if (labKind === 'windows') return localWindows(cmd);
+    if (labKind === 'switch') return localSwitch(cmd);
+    return localRouter(cmd);
+  }
+
+  async function sendCmd(cmd) {
+    appendLine(promptEl.textContent + ' ' + cmd, 'term-cmd');
+    if (!cmd.trim()) return;
+    try {
+      const res = await fetch(cmdUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ command: cmd })
+      });
+      if (!res.ok) throw new Error('API ' + res.status);
+      const data = await res.json();
+      if (data.clear) body.innerHTML = '';
+      (data.lines || []).forEach(function(line){ appendLine(line); });
+      if (data.prompt) promptEl.textContent = data.prompt;
+      setDone(data.done || []);
+      if (data.complete) {
+        successEl.classList.add('show');
+        if (data.success_msg) successEl.textContent = data.success_msg;
+      }
+    } catch (err) {
+      // Local fallback so the lab stays interactive
+      var lines = runLocal(cmd);
+      lines.forEach(function(line){ appendLine(line); });
+    }
+  }
+
+  function modeFromPrompt(){
+    var p = promptEl.textContent || '';
+    if (p.indexOf('(config-if)') >= 0) return 'config-if';
+    if (p.indexOf('(config-vlan)') >= 0) return 'config-vlan';
+    if (p.indexOf('(config)') >= 0) return 'config';
+    if (p.indexOf('#') >= 0) return 'priv';
+    return 'user';
+  }
+  var IOS = {
+    user: ['enable','exit','help','show vlan brief','show vlan','show interfaces status','show version','show ip interface brief'],
+    priv: ['enable','disable','exit','end','configure terminal','show vlan brief','show vlan','show running-config','show startup-config','show interfaces status','show ip interface brief','show ip route','show mac address-table','show version','ping ','traceroute ','copy running-config startup-config','write memory'],
+    config: ['hostname ','vlan ','interface ','ip default-gateway ','ip route ','exit','end','do show vlan brief','do show running-config','do show ip interface brief'],
+    'config-vlan': ['name ','vlan ','interface ','exit','end'],
+    'config-if': ['switchport mode access','switchport mode trunk','switchport access vlan ','switchport trunk allowed vlan ','description ','speed ','duplex ','no shutdown','shutdown','ip address ','interface ','exit','end'],
+    win: ['hostname','whoami','winver','systeminfo','ipconfig','ipconfig /all','ipconfig /release','ipconfig /renew','ipconfig /flushdns','ping ','nslookup ','tracert ','arp -a','powershell','cmd','Get-NetIPConfiguration','Get-NetAdapter','Get-Service ','Test-Connection ']
+  };
+  function localComplete(partial){
+    var list = (labKind === 'windows') ? IOS.win : (IOS[modeFromPrompt()] || IOS.user);
+    var p = (partial || '').replace(/^\s+/, '');
+    var opts = list.filter(function(c){ return c.toLowerCase().indexOf(p.toLowerCase()) === 0; });
+    if (opts.length === 1) return { text: opts[0], options: opts };
+    if (opts.length > 1) {
+      var common = opts[0];
+      opts.forEach(function(o){
+        var i=0; while (i<common.length && i<o.length && common[i].toLowerCase()===o[i].toLowerCase()) i++;
+        common = common.slice(0,i);
+      });
+      return { text: common || partial, options: opts };
+    }
+    return { text: partial, options: [] };
+  }
+  function applyComplete(data){
+    if (data && data.text) input.value = data.text;
+    if (data && data.options && data.options.length > 1) {
+      appendLine(promptEl.textContent + (data.text || input.value));
+      appendLine(data.options.join('  '));
+    }
+  }
+  input.addEventListener('keydown', function(e){
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      e.stopPropagation();
+      var partial = input.value;
+      fetch(completeUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ partial: partial, mode: modeFromPrompt() })
+      }).then(function(res){ return res.json(); }).then(applyComplete).catch(function(){
+        applyComplete(localComplete(partial));
+      });
+      return;
+    }
+    if (e.key === 'Enter') {
+      var cmd = input.value;
+      input.value = '';
+      if (cmd.trim()) { history.push(cmd); histPos = history.length; }
+      sendCmd(cmd);
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      if (histPos > 0) { histPos--; input.value = history[histPos] || ''; }
+      e.preventDefault();
+    } else if (e.key === 'ArrowDown') {
+      if (histPos < history.length - 1) { histPos++; input.value = history[histPos] || ''; }
+      else { histPos = history.length; input.value = ''; }
+      e.preventDefault();
+    }
+  });
+
+  document.getElementById('btnReset').addEventListener('click', async function(){
+    try { await fetch(resetUrl, { method: 'POST' }); } catch (e) {}
+    body.innerHTML = '';
+    successEl.classList.remove('show');
+    done = [];
+    setDone([]);
+    promptEl.textContent = startPrompt;
+    swState.mode = 'user'; rtrState.mode = 'user';
+    appendLine('Lab reset.');
+    input.focus();
+  });
+
+  document.getElementById('btnHint').addEventListener('click', function(){
+    if (!hints.length) { document.getElementById('hintBox').textContent = 'No hints.'; return; }
+    document.getElementById('hintBox').textContent = 'Hint: ' + hints[hintIdx % hints.length];
+    hintIdx++;
+  });
+
+  document.getElementById('term').addEventListener('click', function(){ input.focus(); });
+
+  appendLine('CIWT training simulator.');
+  setTimeout(function(){ input.focus(); }, 100);
+})();
+</script>
+{% endblock %}
+{% block scripts %}{% endblock %}

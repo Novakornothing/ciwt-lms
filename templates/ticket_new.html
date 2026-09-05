@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Submit curriculum ticket{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('tickets_list') }}">Tickets</a></li>
+    <li class="breadcrumb-item active">New</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h3 mb-1">Submit a curriculum ticket</h1>
+  <p class="mb-0">Highlight text in a lesson, quiz, or test and report it. Tickets work on curriculum, quizzes, and tests.</p>
+</div>
+
+<div class="card card-body">
+  <form method="post" action="{{ url_for('tickets_new') }}">
+    {% if pre_section %}<input type="hidden" name="section_id" value="{{ pre_section }}">{% endif %}
+    {% if pre_lesson %}<input type="hidden" name="lesson_id" value="{{ pre_lesson }}">{% endif %}
+    {% if pre_quiz %}<input type="hidden" name="quiz_id" value="{{ pre_quiz }}">{% endif %}
+    {% if pre_test %}<input type="hidden" name="test_id" value="{{ pre_test }}">{% endif %}
+    {% if pre_quote %}
+    <div class="alert alert-info">
+      <div class="fw-bold small mb-1">Highlighted passage</div>
+      <blockquote class="mb-0 small">“{{ pre_quote }}”</blockquote>
+      <input type="hidden" name="quoted_text" value="{{ pre_quote }}">
+    </div>
+    {% endif %}
+    <div class="mb-3">
+      <label class="form-label">Category</label>
+      <select name="category" class="form-select" required>
+        <option value="error" selected>Error or inaccuracy</option>
+        <option value="content">Content question / clarification</option>
+        <option value="request">Improvement request</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Curriculum set</label>
+      <select name="course_id" class="form-select">
+        <option value="">— Optional —</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}" {% if pre_course == c.id or (lesson and lesson.module and lesson.module.course_id == c.id) %}selected{% endif %}>
+          {{ c.code }} — {{ c.title }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    {% if lesson %}
+    <div class="alert alert-info py-2 small mb-3">Linked lesson: <strong>{{ lesson.title }}</strong></div>
+    {% endif %}
+    {% if quiz %}
+    <div class="alert alert-info py-2 small mb-3">Linked quiz: <strong>{{ quiz.title }}</strong></div>
+    {% endif %}
+    {% if test %}
+    <div class="alert alert-info py-2 small mb-3">Linked test: <strong>{{ test.title }}</strong></div>
+    {% endif %}
+    <div class="mb-3">
+      <label class="form-label">Subject</label>
+      <input type="text" name="subject" class="form-control" required maxlength="200"
+             placeholder="Short label for the issue"
+             value="{% if pre_quote %}Issue in selected text{% elif quiz %}Quiz: {{ quiz.title }}{% elif test %}Test: {{ test.title }}{% elif lesson %}{{ lesson.title }}{% endif %}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">What should change? <span class="text-muted">(optional if you highlighted text)</span></label>
+      <textarea name="body" class="form-control" rows="4"
+                placeholder="Optional: what is wrong or what you want fixed."></textarea>
+    </div>
+    {% if not pre_quote %}
+    <div class="mb-3">
+      <label class="form-label">Paste the problem sentence (optional)</label>
+      <textarea name="quoted_text" class="form-control" rows="2" placeholder="Or highlight text on a lesson page instead"></textarea>
+    </div>
+    {% endif %}
+    <button class="btn btn-brand">Submit ticket</button>
+    <a class="btn btn-outline-navy" href="{{ url_for('tickets_list') }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

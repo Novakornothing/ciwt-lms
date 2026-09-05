@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}{{ quiz.title }} — CIWT LMS{% endblock %}
+{% block content %}
+<div class="test-shell">
+  <div class="test-toolbar">
+    <div>
+      <div class="fw-bold">{{ quiz.title }}</div>
+      <div class="meta">Ungraded progress check · {{ questions|length }} questions</div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="meta" id="progressLabel">Question 1 of {{ questions|length }}</span>
+      <button type="button" class="btn btn-sm btn-outline-gold" id="flagBtn"><i class="bi bi-flag"></i> Flag</button>
+      <button type="button" class="btn btn-sm btn-outline-light" id="reportQBtn">Report question</button>
+    </div>
+  </div>
+
+  <div class="q-nav mb-3" id="qNav" aria-label="Question navigator"></div>
+
+  <form method="post" id="testForm">
+    <div class="q-card" id="qCard">
+      <div class="q-lo" id="qLo"></div>
+      <h2 class="h5 fw-bold mb-3" id="qText"></h2>
+      <div id="qOptions"></div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3 gap-2 flex-wrap">
+      <button type="button" class="btn btn-outline-navy" id="prevBtn"><i class="bi bi-arrow-left"></i> Previous</button>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-gold" id="reviewBtn">Review unanswered</button>
+        <button type="button" class="btn btn-navy" id="nextBtn">Next <i class="bi bi-arrow-right"></i></button>
+        <button type="submit" class="btn btn-brand d-none" id="submitBtn">Submit quiz</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="reviewModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Before you submit</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="reviewBody"></div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-navy" data-bs-dismiss="modal">Keep reviewing</button>
+        <button type="button" class="btn btn-brand" id="confirmSubmit">Submit quiz anyway</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const questions = {{ questions | tojson }};
+const answers = {};
+const flagged = new Set();
+let idx = 0;
+
+const qNav = document.getElementById('qNav');
+const qText = document.getElementById('qText');
+const qOptions = document.getElementById('qOptions');
+const qLo = document.getElementById('qLo');
+const progressLabel = document.getElementById('progressLabel');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const submitBtn = document.getElementById('submitBtn');
+const flagBtn = document.getElementById('flagBtn');
+const form = document.getElementById('testForm');
+
+function buildNav() {
+  qNav.innerHTML = '';
+  questions.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = i + 1;
+    b.dataset.i = i;
+    b.addEventListener('click', () => { idx = i; render(); });
+    qNav.appendChild(b);
+  });
+}
+
+function render() {
+  const q = questions[idx];
+  progressLabel.textContent = `Question ${idx + 1} of ${questions.length}`;
+  qText.textContent = `${idx + 1}. ${q.text}`;
+  const loCode = q.lo || q.lo_code || 'LO';
+  const loText = q.lo_text || 'Linked learning objective';
+  qLo.innerHTML = `<i class="bi bi-bullseye"></i> <strong>${loCode}</strong> · ${loText}`;
+
+  qOptions.innerHTML = '';
+  (q.options || []).forEach((opt, oi) => {
+    const lab = document.createElement('label');
+    lab.className = 'q-option' + (answers[idx] === opt ? ' selected' : '');
+    lab.innerHTML = `<input type="radio" name="q${idx}" value="${opt.replace(/"/g, '&quot;')}"> ${opt}`;
+    if (answers[idx] === opt) lab.querySelector('input').checked = true;
+    lab.addEventListener('click', () => {
+      answers[idx] = opt;
+      // keep hidden inputs in form for all answers
+      syncHidden();
+      render();
+    });
+    qOptions.appendChild(lab);
+  });
+
+  prevBtn.disabled = idx === 0;
+  const last = idx === questions.length - 1;
+  nextBtn.classList.toggle('d-none', last);
+  submitBtn.classList.toggle('d-none', !last);
+
+  flagBtn.innerHTML = flagged.has(idx)
+    ? '<i class="bi bi-flag-fill"></i> Flagged'
+    : '<i class="bi bi-flag"></i> Flag';
+
+  [...qNav.children].forEach((b, i) => {
+    b.className = '';
+    if (i === idx) b.classList.add('current');
+    if (answers[i] != null) b.classList.add('answered');
+    if (flagged.has(i)) b.classList.add('flagged');
+  });
+}
+
+function syncHidden() {
+  form.querySelectorAll('input[type=hidden][data-ans]').forEach(el => el.remove());
+  Object.keys(answers).forEach(i => {
+    const h = document.createElement('input');
+    h.type = 'hidden';
+    h.name = 'q' + i;
+    h.value = answers[i];
+    h.dataset.ans = '1';
+    form.appendChild(h);
+  });
+}
+
+prevBtn.addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+nextBtn.addEventListener('click', () => { if (idx < questions.length - 1) { idx++; render(); } });
+flagBtn.addEventListener('click', () => {
+  if (flagged.has(idx)) flagged.delete(idx); else flagged.add(idx);
+  render();
+});
+
+document.getElementById('reviewBtn').addEventListener('click', () => showReview(false));
+submitBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  showReview(true);
+});
+
+function showReview(fromSubmit) {
+  const unanswered = [];
+  questions.forEach((_, i) => { if (answers[i] == null) unanswered.push(i + 1); });
+  const flaggedList = [...flagged].map(i => i + 1).sort((a,b)=>a-b);
+  let html = '';
+  if (unanswered.length) {
+    html += `<p class="mb-2"><strong>${unanswered.length} unanswered:</strong> ${unanswered.join(', ')}</p>`;
+  } else {
+    html += `<p class="text-success mb-2"><i class="bi bi-check-circle"></i> All questions have answers.</p>`;
+  }
+  if (flaggedList.length) {
+    html += `<p class="mb-2"><strong>Flagged for review:</strong> ${flaggedList.join(', ')}</p>`;
+  }
+  if (!fromSubmit && !unanswered.length && !flaggedList.length) {
+    html = '<p class="mb-0">No unanswered or flagged items. You can submit when ready.</p>';
+  }
+  document.getElementById('reviewBody').innerHTML = html;
+  document.getElementById('confirmSubmit').classList.toggle('d-none', !fromSubmit);
+  new bootstrap.Modal(document.getElementById('reviewModal')).show();
+}
+
+document.getElementById('confirmSubmit').addEventListener('click', () => {
+  syncHidden();
+  form.submit();
+});
+
+const reportBtn = document.getElementById('reportQBtn');
+if (reportBtn) {
+  reportBtn.addEventListener('click', () => {
+    const q = questions[idx] || {};
+    const params = new URLSearchParams({
+      quiz_id: '{{ quiz.id }}',
+      section_id: '{{ section_id }}',
+      course_id: '{{ course_id or "" }}',
+      quote: 'Q' + (idx + 1) + '. ' + (q.text || '')
+    });
+    window.open('{{ url_for("tickets_new") }}?' + params.toString(), '_blank');
+  });
+}
+
+buildNav();
+render();
+</script>
+{% endblock %}

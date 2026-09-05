@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Lab self-test — CIWT{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Lab engine self-test</h1>
+  <p class="mb-0">Runs the official command sequence for every lab and checks objectives.</p>
+</div>
+<div class="alert {% if ok %}alert-success{% else %}alert-danger{% endif %}">
+  {% if ok %}All labs PASSED.{% else %}One or more labs FAILED — see report.{% endif %}
+</div>
+<pre class="p-3 rounded" style="background:#0a1220;color:#d6e8ff;max-height:60vh;overflow:auto">{% for line in report %}{{ line }}
+{% endfor %}</pre>
+<a class="btn btn-brand" href="{{ url_for('interactive_labs_index') }}">Back to labs</a>
+{% endblock %}

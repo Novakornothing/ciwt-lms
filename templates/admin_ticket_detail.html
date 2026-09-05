@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('admin_tickets') }}">Tickets</a></li>
+    <li class="breadcrumb-item active">#{{ ticket.id }}</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <h1 class="h3 mb-1">Ticket #{{ ticket.id }} · {{ ticket.subject }}</h1>
+  <p class="mb-0">
+    Pending tickets do not change curriculum. When you apply a content fix below, the shared lesson updates for <strong>every class</strong> on that course.
+  </p>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header navy">Report</div>
+      <div class="card-body">
+        <div class="small text-muted mb-2">
+          {{ ticket.user.full_name if ticket.user else '—' }}
+          ({{ ticket.user.role if ticket.user else '' }})
+          · {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') if ticket.created_at else '' }}
+          · {{ ticket.category }}
+          · <span class="badge badge-live">{{ ticket.status }}</span>
+          {% if ticket.resolution %}<span class="badge badge-closed">{{ ticket.resolution }}</span>{% endif %}
+        </div>
+        {% if ticket.course %}<div class="small">Course: {{ ticket.course.code }} — {{ ticket.course.title }}</div>{% endif %}
+        {% if ticket.section %}<div class="small">Class: {{ ticket.section.name }}</div>{% endif %}
+        {% if ticket.lesson %}<div class="small">Lesson: {{ ticket.lesson.title }}</div>{% endif %}
+        {% if ticket.quiz %}<div class="small">Quiz: {{ ticket.quiz.title }}</div>{% endif %}
+        {% if ticket.test %}<div class="small">Test: {{ ticket.test.title }}</div>{% endif %}
+        <hr>
+        <p class="mb-0">{{ ticket.body }}</p>
+        {% if ticket.quoted_text %}
+        <hr>
+        <div class="fw-bold small">Quoted passage (from curriculum)</div>
+        <blockquote class="border-start border-3 border-warning ps-3 mb-0 mt-1">{{ ticket.quoted_text }}</blockquote>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header navy">Status (no curriculum change)</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('admin_ticket_update', ticket_id=ticket.id) }}">
+          <div class="mb-2">
+            <label class="form-label small">Status</label>
+            <select name="status" class="form-select form-select-sm">
+              {% for s in ['open','in_progress','resolved','closed'] %}
+              <option value="{{ s }}" {% if ticket.status == s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Resolution (when closing without an edit)</label>
+            <select name="resolution" class="form-select form-select-sm">
+              <option value="other" {% if ticket.resolution == 'other' %}selected{% endif %}>Other</option>
+              <option value="declined" {% if ticket.resolution == 'declined' %}selected{% endif %}>Declined</option>
+              <option value="duplicate" {% if ticket.resolution == 'duplicate' %}selected{% endif %}>Duplicate</option>
+              <option value="fixed_content" {% if ticket.resolution == 'fixed_content' %}selected{% endif %}>Fixed content</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Link lesson (if missing)</label>
+            <select name="link_lesson_id" class="form-select form-select-sm">
+              <option value="">— keep current —</option>
+              {% for m in modules %}
+                {% for L in lessons_by_module.get(m.id, []) %}
+                <option value="{{ L.id }}" {% if ticket.lesson_id == L.id %}selected{% endif %}>{{ m.order }}.{{ L.order }} {{ L.title }}</option>
+                {% endfor %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Admin notes (visible to submitter after update)</label>
+            <textarea name="admin_notes" class="form-control form-control-sm" rows="3">{{ ticket.admin_notes or '' }}</textarea>
+          </div>
+          <button class="btn btn-sm btn-outline-navy">Save status only</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header navy">Edit shared curriculum (pushes to all classes)</div>
+      <div class="card-body">
+        {% if lesson %}
+        {% if ticket.quoted_text %}
+        <div class="alert alert-warning py-2 small mb-3">
+          <strong>Quoted in ticket:</strong> “{{ ticket.quoted_text[:280] }}{% if ticket.quoted_text|length > 280 %}…{% endif %}”
+        </div>
+        {% endif %}
+        <p class="mb-3">
+          Open the lesson as students and instructors see it (not source code):
+        </p>
+        {% if view_section %}
+        <a class="btn btn-brand mb-3"
+           href="{{ url_for('view_lesson', section_id=view_section.id, module_id=lesson.module_id, lesson_id=lesson.id) }}">
+          Open “{{ lesson.title }}” in curriculum
+        </a>
+        <div class="small text-muted mb-3">
+          Same shared lesson for every class on this course.
+          Viewing via class {{ view_section.name }}.
+        </div>
+        {% else %}
+        <p class="text-warning">No class exists yet to open this lesson. Create a class for the course first.</p>
+        {% endif %}
+        <form method="post" action="{{ url_for('admin_ticket_update', ticket_id=ticket.id) }}" class="mb-3">
+          <input type="hidden" name="status" value="resolved">
+          <input type="hidden" name="resolution" value="fixed_content">
+          <label class="form-label small">Note to submitter after you review/fix</label>
+          <input type="text" name="admin_notes" class="form-control form-control-sm mb-2"
+                 value="{{ ticket.admin_notes or 'Reviewed the live lesson.' }}">
+          <button class="btn btn-outline-navy btn-sm">Mark ticket resolved</button>
+        </form>
+        {% else %}
+        <p class="text-muted mb-0">
+          No lesson is linked yet. Use <strong>Link lesson</strong> on the left, save status, then return here to edit content.
+          Prefer tickets created by highlighting text on a lesson so the passage is linked automatically.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

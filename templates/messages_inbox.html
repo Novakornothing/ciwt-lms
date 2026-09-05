@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Messages — CIWT LMS{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-0">{% if mode == 'staff' %}Instructor / admin inbox{% else %}Messages to staff{% endif %}</h1>
+    <p class="text-muted small mb-0">
+      {% if mode == 'staff' %}
+      Students may contact instructors and admins only — not other students.
+      {% else %}
+      Ask your instructor or an administrator. You cannot message other students.
+      {% endif %}
+      {% if unread %}<span class="badge badge-gold ms-1">{{ unread }} unread</span>{% endif %}
+    </p>
+  </div>
+  <a class="btn btn-brand" href="{{ url_for('messages_new') }}">
+    {% if mode == 'staff' %}Message a student{% else %}Ask instructor{% endif %}
+  </a>
+</div>
+
+{% if threads %}
+<div class="list-group">
+  {% for m in threads %}
+  <a href="{{ url_for('messages_thread', msg_id=m.id) }}"
+     class="list-group-item list-group-item-action {% if not m.is_read and m.recipient_id == current_user.id %}fw-bold{% endif %}">
+    <div class="d-flex justify-content-between gap-2 flex-wrap">
+      <span>{{ m.subject }}</span>
+      <span class="small text-muted">{{ m.created_at.strftime('%Y-%m-%d %H:%M') if m.created_at else '' }} UTC</span>
+    </div>
+    <div class="small text-muted">
+      From {{ m.sender.full_name if m.sender else '—' }}
+      → {{ m.recipient.full_name if m.recipient else '—' }}
+      {% if m.section %} · {{ m.section.name }}{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card card-body text-muted">No messages yet.</div>
+{% endif %}
+{% endblock %}

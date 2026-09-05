@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}CIWT LMS — Home
+{% endblock %}
+{% block content %}
+<div class="page-hero card-elevated">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-8 position-relative" style="z-index:1">
+      <p class="text-uppercase small mb-2" style="letter-spacing:0.12em;color:var(--accent-bright);font-weight:600">Center for Information Warfare Training</p>
+      <h1 class="h2 mb-2">CIWT Learning Management System</h1>
+      <p class="mb-0">Instructor-controlled release of modules, progress checks, and graded knowledge tests — with class sections, enrollments, and item analysis for Navy Information Systems Technician training.</p>
+    </div>
+    <div class="col-lg-4 text-center position-relative" style="z-index:1">
+      <div class="hero-logo-wrap">
+        <span class="logo-live" role="img" aria-label="Navy mark"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header">Sign-in accounts (demo)</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0 align-middle">
+            <thead class="table-light"><tr><th>Role</th><th>Email</th><th>Password</th></tr></thead>
+            <tbody>
+              <tr><td><span class="role-chip" style="background:#0a1628;color:#e8d48b">Admin</span></td><td><code>admin@lms.local</code></td><td><code>admin123</code></td></tr>
+              <tr><td><span class="badge badge-gold">Instructor</span></td><td><code>instructor@lms.local</code></td><td><code>teach123</code></td></tr>
+              <tr><td><span class="badge badge-live">Student</span></td><td><code>student1@lms.local</code> … <code>student25</code></td><td><code>student123</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-body border-top">
+        <a href="{{ url_for('login') }}" class="btn btn-brand px-4">Sign in to demo</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header">Demonstration scope</div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Admin creates classes &amp; assigns instructors</li>
+          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Instructors enroll students</li>
+          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Timed release of modules &amp; graded tests</li>
+          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Student progress quizzes &amp; knowledge tests</li>
+          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Test item analysis for authorized roles</li>
+          <li class="mb-0"><i class="bi bi-check2-circle text-success me-2"></i>Courses: IT Support &amp; Network Operations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

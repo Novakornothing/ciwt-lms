@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Product readiness — CIWT{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Product readiness</h1>
+  <p class="mb-0">What this build already is versus what a high-value schoolhouse product still needs.</p>
+</div>
+<div class="row g-3 mb-4">
+  {% for c in checks %}
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="fw-semibold">{{ c.name }}</div>
+        <div class="small">{% if c.ok %}<span class="text-success">Ready</span>{% else %}<span class="text-warning">Gap</span>{% endif %} · {{ c.detail }}</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<p class="small text-muted">Labs by type:
+  {% for k,v in by_kind.items() %}{{ k }} {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}
+</p>
+<h2 class="h5">Still outside this repo</h2>
+<ul>
+  <li>Authority to operate / FedRAMP-equivalent hosting, CAC/SSO, 508 full pass</li>
+  <li>Postgres, backups off-box, staging + prod, on-call support</li>
+  <li>Real Windows 11 and IOS lab backends (not only simulators)</li>
+  <li>Complete A+ / Net+ chapter depth and a lab or checklist for every skill</li>
+  <li>Implementation, instructor training, and a support contract — that is most of a seven-figure deal</li>
+</ul>
+<p><a class="btn btn-outline-navy btn-sm" href="{{ url_for('admin_backup_db') }}">Download SQLite backup</a>
+   <a class="btn btn-outline-navy btn-sm" href="{{ url_for('admin_audit') }}">Audit log</a>
+   <a class="btn btn-outline-navy btn-sm" href="{{ url_for('healthz') }}">Health JSON</a></p>
+{% endblock %}

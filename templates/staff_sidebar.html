@@ -1,0 +1,549 @@
+{% set ep = request.endpoint or '' %}
+{% set open_section_id = section.id if section is defined else none %}
+{% set is_admin_mode = current_user.role == 'admin' and (acting_role is not defined or acting_role != 'instructor') %}
+{% set is_student = current_user.role == 'student' %}
+
+{# Fixed left rail — tree navigation: main categories expand to sub-items #}
+<aside id="staffRail" class="staff-rail" aria-label="Main menu">
+  <div class="staff-rail-inner">
+    <div class="staff-rail-top">
+      <span class="staff-rail-title">Menu</span>
+      <button type="button" id="staffRailToggle" class="staff-rail-toggle" title="Collapse or expand menu" aria-label="Collapse menu">
+        <i class="bi bi-layout-sidebar-inset"></i><span class="rail-toggle-label">Hide</span>
+      </button>
+    </div>
+
+    <div class="staff-rail-body">
+
+      {% if is_student %}
+      <details class="rail-tree" open>
+        <summary class="rail-tree-sum">
+          <i class="bi bi-journal-bookmark rail-ico"></i><span>Learn</span>
+        </summary>
+        <div class="rail-tree-kids">
+          <a class="rail-link {% if ep == 'student_dashboard' %}active{% endif %}" href="{{ url_for('student_dashboard') }}">
+            <i class="bi bi-house-door"></i><span>Home</span>
+          </a>
+          {% for s in student_nav_sections|default([]) %}
+          <a class="rail-link {% if open_section_id == s.id %}active{% endif %}"
+             href="{{ url_for('student_section', section_id=s.id) }}">
+            <i class="bi bi-door-open"></i><span>{{ s.course.code if s.course else 'Class' }} · {{ s.name }}</span>
+          </a>
+          {% else %}
+          <span class="rail-empty">No classes yet</span>
+          {% endfor %}
+        </div>
+      </details>
+      <details class="rail-tree" {% if ep and ep.startswith('interactive_lab') %}open{% endif %}>
+        <summary class="rail-tree-sum">
+          <i class="bi bi-terminal rail-ico"></i><span>Practice</span>
+        </summary>
+        <div class="rail-tree-kids">
+          {% for s in student_nav_sections|default([]) %}
+          <a class="rail-link {% if ep == 'course_labs' and open_section_id == s.id %}active{% endif %}"
+             href="{{ url_for('course_labs', section_id=s.id) }}">
+            <i class="bi bi-collection-play"></i><span>{{ s.course.code if s.course else 'Class' }} labs</span>
+          </a>
+          {% endfor %}
+          <a class="rail-link {% if ep == 'interactive_labs_index' %}active{% endif %}" href="{{ url_for('interactive_labs_index') }}">
+            <i class="bi bi-grid"></i><span>All live labs</span>
+          </a>
+          <a class="rail-link {% if ep == 'convening_home' %}active{% endif %}" href="{{ url_for('convening_home') }}">
+            <i class="bi bi-flag"></i><span>Convening home</span>
+          </a>
+          <a class="rail-link {% if ep == 'aschool_outline' %}active{% endif %}" href="{{ url_for('aschool_outline') }}">
+            <i class="bi bi-journal-bookmark"></i><span>A-school outline</span>
+          </a>
+          <a class="rail-link {% if ep == 'cschool_comms' %}active{% endif %}" href="{{ url_for('cschool_comms') }}">
+            <i class="bi bi-broadcast"></i><span>C-school comms</span>
+          </a>
+          <a class="rail-link {% if ep == 'cschool_sysadmin' %}active{% endif %}" href="{{ url_for('cschool_sysadmin') }}">
+            <i class="bi bi-hdd-stack"></i><span>C-school sysadmin</span>
+          </a>
+          <a class="rail-link" href="{{ url_for('interactive_labs_index') }}#windows"><i class="bi bi-laptop"></i><span>Windows 11 CLI</span></a>
+          <a class="rail-link" href="{{ url_for('interactive_labs_index') }}#win11gui"><i class="bi bi-window-desktop"></i><span>Windows 11 GUI</span></a>
+          <a class="rail-link" href="{{ url_for('interactive_labs_index') }}#switch"><i class="bi bi-hdd-network"></i><span>Switch labs</span></a>
+          <a class="rail-link" href="{{ url_for('interactive_labs_index') }}#router"><i class="bi bi-router"></i><span>Router labs</span></a>
+        </div>
+      </details>
+      <details class="rail-tree" {% if ep in ('tickets_list','tickets_new','messages_inbox','messages_thread','messages_new','curriculum_search') %}open{% endif %}>
+        <summary class="rail-tree-sum">
+          <i class="bi bi-life-preserver rail-ico"></i><span>Help</span>
+        </summary>
+        <div class="rail-tree-kids">
+          <a class="rail-link {% if ep in ('messages_inbox','messages_thread','messages_new') %}active{% endif %}" href="{{ url_for('messages_inbox') }}">
+            <i class="bi bi-envelope"></i><span>Ask instructor</span>
+          </a>
+          <a class="rail-link {% if ep in ('tickets_list','tickets_new') %}active{% endif %}" href="{{ url_for('tickets_list') }}">
+            <i class="bi bi-ticket-perforated"></i><span>Curriculum tickets</span>
+          </a>
+          <a class="rail-link {% if ep == 'curriculum_search' %}active{% endif %}" href="{{ url_for('curriculum_search') }}">
+            <i class="bi bi-search"></i><span>Search lessons</span>
+          </a>
+        </div>
+      </details>
+      {% else %}
+      <details class="rail-tree" open>
+        <summary class="rail-tree-sum">
+          <i class="bi bi-house-door rail-ico"></i><span>Teach</span>
+        </summary>
+        <div class="rail-tree-kids">
+          {% if is_admin_mode %}
+          <a class="rail-link {% if ep == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+            <i class="bi bi-speedometer2"></i><span>Admin home</span>
+          </a>
+          <a class="rail-link {% if ep == 'admin_readiness' %}active{% endif %}" href="{{ url_for('admin_readiness') }}">
+            <i class="bi bi-clipboard-check"></i><span>Product readiness</span>
+          </a>
+          <a class="rail-link {% if ep == 'admin_audit' %}active{% endif %}" href="{{ url_for('admin_audit') }}">
+            <i class="bi bi-shield-check"></i><span>Audit log</span>
+          </a>
+          {% endif %}
+          <a class="rail-link {% if ep == 'instructor_dashboard' %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
+            <i class="bi bi-collection"></i><span>My classes</span>
+          </a>
+          <a class="rail-link {% if ep and ep.startswith('interactive_lab') %}active{% endif %}" href="{{ url_for('interactive_labs_index') }}">
+            <i class="bi bi-terminal"></i><span>Live labs</span>
+          </a>
+        </div>
+      </details>
+      <details class="rail-tree" {% if ep in ('admin_tickets','admin_ticket_detail','tickets_list','tickets_new','messages_inbox','messages_thread','messages_new','curriculum_search') %}open{% endif %}>
+        <summary class="rail-tree-sum">
+          <i class="bi bi-inboxes rail-ico"></i><span>Inbox</span>
+        </summary>
+        <div class="rail-tree-kids">
+          {% if is_admin_mode %}
+          <a class="rail-link {% if ep in ('admin_tickets','admin_ticket_detail') %}active{% endif %}" href="{{ url_for('admin_tickets') }}">
+            <i class="bi bi-ticket-perforated"></i><span>Tickets</span>
+          </a>
+          {% else %}
+          <a class="rail-link {% if ep in ('tickets_list','tickets_new') %}active{% endif %}" href="{{ url_for('tickets_list') }}">
+            <i class="bi bi-ticket-perforated"></i><span>Tickets</span>
+          </a>
+          {% endif %}
+          <a class="rail-link {% if ep in ('messages_inbox','messages_thread','messages_new') %}active{% endif %}" href="{{ url_for('messages_inbox') }}">
+            <i class="bi bi-envelope"></i><span>Student messages</span>
+          </a>
+          <a class="rail-link {% if ep == 'curriculum_search' %}active{% endif %}" href="{{ url_for('curriculum_search') }}">
+            <i class="bi bi-search"></i><span>Search lessons</span>
+          </a>
+        </div>
+      </details>
+      {% endif %}
+
+      {# —— Analytics (staff only) —— #}
+      {% if not is_student %}
+      <details class="rail-tree" {% if ep in ('admin_teaching_time','admin_test_analytics','instructor_analytics_hub','export_analytics_csv','export_item_flags_csv') or (ep is string and 'performance' in ep) %}open{% endif %}>
+        <summary class="rail-tree-sum">
+          <i class="bi bi-bar-chart-line rail-ico"></i><span>Reports</span>
+        </summary>
+        <div class="rail-tree-kids">
+          {% if is_admin_mode %}
+          <a class="rail-link {% if ep == 'admin_teaching_time' %}active{% endif %}" href="{{ url_for('admin_teaching_time') }}">
+            <i class="bi bi-clock-history"></i><span>Teaching time</span>
+          </a>
+          <a class="rail-link {% if ep == 'admin_test_analytics' %}active{% endif %}" href="{{ url_for('admin_test_analytics') }}">
+            <i class="bi bi-graph-up-arrow"></i><span>Test analytics</span>
+          </a>
+          <a class="rail-link {% if ep == 'instructor_analytics_hub' %}active{% endif %}" href="{{ url_for('instructor_analytics_hub') }}">
+            <i class="bi bi-clipboard-data"></i><span>Score hub</span>
+          </a>
+          <a class="rail-link" href="{{ url_for('export_analytics_csv') }}">
+            <i class="bi bi-download"></i><span>Export scores CSV</span>
+          </a>
+          <a class="rail-link" href="{{ url_for('export_item_flags_csv') }}">
+            <i class="bi bi-flag"></i><span>Export item flags</span>
+          </a>
+          {% else %}
+          <a class="rail-link {% if ep == 'instructor_analytics_hub' %}active{% endif %}" href="{{ url_for('instructor_analytics_hub') }}">
+            <i class="bi bi-bar-chart"></i><span>Scores &amp; reports</span>
+          </a>
+          <a class="rail-link {% if ep == 'admin_test_analytics' %}active{% endif %}" href="{{ url_for('admin_test_analytics') }}">
+            <i class="bi bi-graph-up-arrow"></i><span>Test analytics</span>
+          </a>
+          {% endif %}
+        </div>
+      </details>
+
+      {% if is_admin_mode %}
+      <details class="rail-tree" {% if ep in ('admin_backup_db','demo_guide','gaps') %}open{% endif %}>
+        <summary class="rail-tree-sum">
+          <i class="bi bi-wrench-adjustable rail-ico"></i><span>System</span>
+        </summary>
+        <div class="rail-tree-kids">
+          <a class="rail-link" href="{{ url_for('admin_backup_db') }}">
+            <i class="bi bi-database"></i><span>Backup database</span>
+          </a>
+          <a class="rail-link {% if ep == 'demo_guide' %}active{% endif %}" href="{{ url_for('demo_guide') }}">
+            <i class="bi bi-book"></i><span>Demo guide</span>
+          </a>
+          <a class="rail-link {% if ep == 'gaps' %}active{% endif %}" href="{{ url_for('gaps') }}">
+            <i class="bi bi-map"></i><span>Gaps &amp; roadmap</span>
+          </a>
+        </div>
+      </details>
+      {% endif %}
+
+      {# —— Classes (course → section tree) —— #}
+      <details class="rail-tree" {% if open_section_id or ep in ('instructor_section','instructor_dashboard') %}open{% endif %}>
+        <summary class="rail-tree-sum">
+          <i class="bi bi-diagram-3 rail-ico"></i><span>Classes</span>
+        </summary>
+        <div class="rail-tree-kids">
+          {% if is_admin_mode %}
+          <a class="rail-link {% if ep == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+            <i class="bi bi-list-ul"></i><span>All classes (admin)</span>
+          </a>
+          {% else %}
+          <a class="rail-link {% if ep == 'instructor_dashboard' %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
+            <i class="bi bi-list-ul"></i><span>All my classes</span>
+          </a>
+          {% endif %}
+
+          {% for c in staff_nav_courses %}
+          <details class="rail-tree rail-tree-nested" {% if open_section_id and (staff_nav_sections|selectattr('id','equalto',open_section_id)|map(attribute='course_id')|first) == c.id %}open{% endif %}>
+            <summary class="rail-tree-sum rail-tree-sum-sm" title="{{ c.title }}">
+              <i class="bi bi-journal-bookmark rail-ico"></i><span>{{ c.code }}</span>
+            </summary>
+            <div class="rail-tree-kids">
+              {% for s in staff_nav_sections if s.course_id == c.id %}
+              <a class="rail-link rail-sublink {% if open_section_id == s.id and ep == 'instructor_section' %}active{% endif %}"
+                 href="{{ url_for('instructor_section', section_id=s.id) }}" title="{{ s.name }}">
+                <i class="bi bi-door-open"></i><span>{{ s.name }}</span>
+                {% if s.instructor_id != current_user.id and current_user.role == 'instructor' %}
+                <span class="rail-badge">shared</span>
+                {% endif %}
+              </a>
+              <a class="rail-link rail-sublink {% if ep == 'course_labs' and open_section_id == s.id %}active{% endif %}"
+                 href="{{ url_for('course_labs', section_id=s.id) }}">
+                <i class="bi bi-terminal"></i><span>Labs</span>
+              </a>
+              {% else %}
+              <span class="rail-empty">No classes</span>
+              {% endfor %}
+              <a class="rail-link rail-sublink" href="{{ url_for('course_performance', course_id=c.id) }}">
+                <i class="bi bi-graph-up"></i><span>{{ c.code }} stats</span>
+              </a>
+            </div>
+          </details>
+          {% else %}
+          <span class="rail-empty">No courses yet</span>
+          {% endfor %}
+        </div>
+      </details>
+      {% endif %}
+
+    </div>
+  </div>
+</aside>
+
+<button type="button" id="staffRailExpand" class="staff-rail-expand" title="Show menu" aria-label="Show menu">
+  <i class="bi bi-list"></i>
+</button>
+
+<style>
+  :root {
+    --staff-rail-w: 260px;
+    --staff-rail-collapsed: 52px;
+  }
+
+  .staff-rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--staff-rail-w);
+    z-index: 1030;
+    background: var(--surface, #fff);
+    border-right: 1px solid color-mix(in srgb, var(--ink, #0a1424) 12%, transparent);
+    box-shadow: 4px 0 18px rgba(0,0,0,.06);
+    display: flex;
+    flex-direction: column;
+    transition: width .2s ease, transform .2s ease;
+  }
+  [data-theme="dark"] .staff-rail {
+    background: #0b1524;
+    border-right-color: #2a3f5c;
+    box-shadow: 4px 0 20px rgba(0,0,0,.35);
+  }
+
+  .staff-rail-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  .staff-rail-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.75rem 0.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+    min-height: 3rem;
+  }
+  .staff-rail-title {
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .staff-rail-toggle {
+    border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+    background: var(--surface-2, #f0f5fb);
+    color: var(--ink);
+    border-radius: 8px;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .rail-toggle-label { letter-spacing: .02em; }
+  .staff-rail-toggle:hover {
+    background: var(--accent, #3ec7ff);
+    color: #06101f;
+    border-color: var(--accent);
+  }
+  .staff-rail-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.45rem 0.35rem 1rem;
+    overscroll-behavior: contain;
+  }
+
+  /* Tree nodes */
+  .rail-tree {
+    margin: 0.15rem 0;
+    border-radius: 8px;
+  }
+  .rail-tree > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+  }
+  .rail-tree > summary::-webkit-details-marker { display: none; }
+
+  .rail-tree-sum {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.55rem;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: var(--ink);
+  }
+  .rail-tree-sum::before {
+    content: "▸";
+    display: inline-block;
+    width: 0.75rem;
+    color: var(--ink-muted, #5f738c);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+  .rail-tree[open] > .rail-tree-sum::before { content: "▾"; }
+  .rail-tree-sum:hover {
+    background: var(--surface-3, #dce6f3);
+  }
+  .rail-tree-sum-sm {
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.45rem;
+  }
+  .rail-ico { opacity: 0.9; flex-shrink: 0; }
+
+  .rail-tree-kids {
+    padding: 0.1rem 0 0.25rem 0.35rem;
+    margin-left: 0.55rem;
+    border-left: 2px solid color-mix(in srgb, var(--accent, #3ec7ff) 35%, transparent);
+  }
+  .rail-tree-nested {
+    margin-left: 0.15rem;
+  }
+
+  .rail-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 8px;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.86rem;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .rail-link i { flex: 0 0 1rem; text-align: center; opacity: 0.9; }
+  .rail-link span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rail-link:hover {
+    background: var(--surface-3, #dce6f3);
+    color: var(--ink);
+  }
+  .rail-link.active {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--ink);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .rail-sublink { font-size: 0.82rem; font-weight: 500; }
+  .rail-empty {
+    display: block;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.78rem;
+    color: var(--ink-muted, #5f738c);
+  }
+  .rail-badge {
+    margin-left: auto;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--ink) 12%, transparent);
+    color: var(--ink-muted);
+    flex-shrink: 0;
+  }
+
+  /* Collapsed rail: icons only */
+  body.staff-rail-collapsed .staff-rail {
+    width: var(--staff-rail-collapsed);
+  }
+  body.staff-rail-collapsed .staff-rail-title,
+  body.staff-rail-collapsed .rail-tree-sum span,
+  body.staff-rail-collapsed .rail-link span,
+  body.staff-rail-collapsed .rail-empty,
+  body.staff-rail-collapsed .rail-badge,
+  body.staff-rail-collapsed .rail-toggle-label,
+  body.staff-rail-collapsed .rail-tree-sum::before {
+    display: none;
+  }
+  body.staff-rail-collapsed .rail-tree-kids {
+    display: none;
+  }
+  body.staff-rail-collapsed .staff-rail-top {
+    justify-content: center;
+    padding: 0.65rem 0.25rem;
+  }
+  body.staff-rail-collapsed .rail-tree-sum {
+    justify-content: center;
+    padding: 0.55rem 0.25rem;
+  }
+  body.staff-rail-collapsed .rail-link {
+    justify-content: center;
+    padding: 0.5rem 0.25rem;
+  }
+
+  /* Push header (logo), main content, and footer clear of the fixed rail */
+  body.has-staff-rail .topbar,
+  body.has-staff-rail header.topbar,
+  body.has-staff-rail .app-main,
+  body.has-staff-rail footer {
+    margin-left: var(--staff-rail-w);
+    transition: margin-left .2s ease;
+  }
+  body.has-staff-rail.staff-rail-collapsed .topbar,
+  body.has-staff-rail.staff-rail-collapsed header.topbar,
+  body.has-staff-rail.staff-rail-collapsed .app-main,
+  body.has-staff-rail.staff-rail-collapsed footer {
+    margin-left: var(--staff-rail-collapsed);
+  }
+  body.has-staff-rail .topbar,
+  body.has-staff-rail header.topbar {
+    position: relative;
+    z-index: 1020;
+  }
+
+  .staff-rail-expand {
+    display: none;
+    position: fixed;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1040;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0 10px 10px 0;
+    border: 1px solid #2a3f5c;
+    background: #0b1524;
+    color: #f0c14b;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  @media (max-width: 991.98px) {
+    .staff-rail {
+      transform: translateX(-100%);
+    }
+    body.staff-rail-open .staff-rail {
+      transform: translateX(0);
+      width: min(300px, 90vw);
+    }
+    body.has-staff-rail .topbar,
+    body.has-staff-rail header.topbar,
+    body.has-staff-rail .app-main,
+    body.has-staff-rail footer,
+    body.has-staff-rail.staff-rail-collapsed .topbar,
+    body.has-staff-rail.staff-rail-collapsed header.topbar,
+    body.has-staff-rail.staff-rail-collapsed .app-main,
+    body.has-staff-rail.staff-rail-collapsed footer {
+      margin-left: 0;
+    }
+    .staff-rail-expand {
+      display: inline-flex;
+    }
+    body.staff-rail-open .staff-rail-expand {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+(function () {
+  const KEY = 'ciwt_staff_rail_collapsed';
+  const rail = document.getElementById('staffRail');
+  const toggle = document.getElementById('staffRailToggle');
+  const expand = document.getElementById('staffRailExpand');
+  if (!rail) return;
+
+  document.body.classList.add('has-staff-rail'); /* keep if server class missing */
+
+  function setCollapsed(on) {
+    document.body.classList.toggle('staff-rail-collapsed', on);
+    try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {}
+  }
+
+  try {
+    if (localStorage.getItem(KEY) === '1') setCollapsed(true);
+  } catch (e) {}
+
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      if (window.innerWidth < 992) {
+        document.body.classList.remove('staff-rail-open');
+        return;
+      }
+      setCollapsed(!document.body.classList.contains('staff-rail-collapsed'));
+    });
+  }
+  if (expand) {
+    expand.addEventListener('click', function () {
+      document.body.classList.add('staff-rail-open');
+      setCollapsed(false);
+    });
+  }
+
+  rail.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', function () {
+      if (window.innerWidth < 992) document.body.classList.remove('staff-rail-open');
+    });
+  });
+})();
+</script>

@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}Class comparison — {{ course.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_analytics_hub') }}">Analytics</a></li>
+    <li class="breadcrumb-item active">{{ course.title }}</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ course.title }}</h1>
+  <p class="mb-0">
+    Class-by-class performance for this curriculum set
+    {% if curriculum_mean is not none %}· Curriculum average across classes {{ curriculum_mean }}%{% endif %}
+    {% if hist_avg is not none %}· Your historical average {{ hist_avg }}% ({{ hist_n }} attempts){% endif %}
+  </p>
+</div>
+
+
+<style>
+  .heat-cell {
+    display: inline-block; min-width: 3.2rem; padding: .35rem .45rem;
+    border-radius: 8px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .heat-hi { background: #c6f0d8; color: #0b5c32; }
+  .heat-mid { background: #e8f5c8; color: #3d5c0b; }
+  .heat-low { background: #ffe6b3; color: #7a5200; }
+  .heat-crit { background: #ffd0c8; color: #8a1f12; }
+  [data-theme="dark"] .heat-hi { background: rgba(61,214,140,.25); color: #9df0c0; }
+  [data-theme="dark"] .heat-mid { background: rgba(200,220,80,.22); color: #e8f59a; }
+  [data-theme="dark"] .heat-low { background: rgba(240,193,74,.22); color: #f5d78a; }
+  [data-theme="dark"] .heat-crit { background: rgba(255,138,122,.25); color: #ffc4ba; }
+  .heat-legend { display: flex; flex-wrap: wrap; gap: .5rem; font-size: .8rem; margin-bottom: 1rem; }
+
+  [data-theme="dark"] .list-group-item {
+    background: var(--surface-2);
+    color: var(--ink);
+    border-color: var(--surface-3);
+  }
+  [data-theme="dark"] .list-group-item-action:hover,
+  [data-theme="dark"] .list-group-item-action:focus {
+    background: var(--surface-3);
+    color: var(--ink);
+  }
+  [data-theme="dark"] .list-group-item .text-muted {
+    color: var(--ink-muted) !important;
+  }
+  [data-theme="dark"] .page-hero p,
+  [data-theme="dark"] .card-body.small.text-muted {
+    color: var(--ink-secondary) !important;
+  }
+  .compare-next {
+    color: var(--accent);
+    font-weight: 800;
+    margin-left: .35rem;
+  }
+</style>
+<div class="heat-legend">
+  <span class="heat-cell heat-hi">≥85% strong</span>
+  <span class="heat-cell heat-mid">70–84% solid</span>
+  <span class="heat-cell heat-low">55–69% watch</span>
+  <span class="heat-cell heat-crit">&lt;55% priority</span>
+</div>
+{% if not section_rows %}
+<div class="card card-body text-muted">No active class sections for this curriculum. Admins can create a class or re-seed demo data.</div>
+{% else %}
+
+<div class="card mb-4">
+  <div class="card-header navy">Overall scores by class</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Class</th>
+          <th>Instructor</th>
+          <th>Attempts</th>
+          <th>Average</th>
+          <th>Median</th>
+          <th>High</th>
+          <th>Low</th>
+          <th>Pass rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in section_rows %}
+        <tr>
+          <td>
+            <a href="{{ url_for('instructor_section', section_id=row.section.id) }}"><strong>{{ row.section.name }}</strong></a>
+          </td>
+          <td class="small">{% if row.instructor %}{{ row.instructor.first_name }} {{ row.instructor.last_name }}{% else %}—{% endif %}</td>
+          <td>{{ row.n_attempts }}</td>
+          <td>{% if row.overall is not none %}<span class="heat-cell {% if row.overall >= 85 %}heat-hi{% elif row.overall >= 70 %}heat-mid{% elif row.overall >= 55 %}heat-low{% else %}heat-crit{% endif %}"><strong>{{ row.overall }}%</strong></span>{% else %}—{% endif %}</td>
+          <td>{% if row.median is not none %}{{ row.median }}%{% else %}—{% endif %}</td>
+          <td>{% if row.high is not none %}{{ row.high }}%{% else %}—{% endif %}</td>
+          <td>{% if row.low is not none %}{{ row.low }}%{% else %}—{% endif %}</td>
+          <td>{% if row.pass_rate is not none %}{{ row.pass_rate }}%{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">Broad category scores by class</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Class</th>
+          {% for cat in category_names %}
+          <th class="text-center small">{{ cat }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in section_rows %}
+        <tr>
+          <td><strong>{{ row.section.name }}</strong></td>
+          {% for cat in category_names %}
+            {% set ns = namespace(pct=none) %}
+            {% for c in row.categories %}
+              {% if c.category == cat %}{% set ns.pct = c.pct %}{% endif %}
+            {% endfor %}
+            <td class="text-center p-1">
+              {% if ns.pct is none %}
+                <span class="text-muted">—</span>
+              {% else %}
+                <span class="heat-cell {% if ns.pct >= 85 %}heat-hi{% elif ns.pct >= 70 %}heat-mid{% elif ns.pct >= 55 %}heat-low{% else %}heat-crit{% endif %}">{{ ns.pct }}%</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body">
+    <p class="small text-muted mb-3">Expand a category to see <strong>subtopics</strong> (storage, DNS, MFA, etc.) for each class. Scores update from completed tests.</p>
+    {% for cat in category_names %}
+    <details class="cat-expand mb-2">
+      <summary class="cat-summary">
+        <span class="fw-bold">{{ cat }}</span>
+        <span class="text-muted small ms-2">Show subcategories</span>
+      </summary>
+      <div class="table-responsive mt-2">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>Subtopic</th>
+              <th>Score</th>
+              <th>Items scored</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in section_rows %}
+              {% set subs = row.subs_by_category.get(cat, []) if row.subs_by_category else [] %}
+              {% if subs %}
+                {% for s in subs %}
+                <tr>
+                  {% if loop.first %}
+                  <td rowspan="{{ subs|length }}"><strong>{{ row.section.name }}</strong></td>
+                  {% endif %}
+                  <td class="wrap-ok">{{ s.subcategory }}</td>
+                  <td>
+                    <span class="heat-cell {% if s.pct >= 85 %}heat-hi{% elif s.pct >= 70 %}heat-mid{% elif s.pct >= 55 %}heat-low{% else %}heat-crit{% endif %}">{{ s.pct }}%</span>
+                  </td>
+                  <td class="small text-muted">{{ s.correct }}/{{ s.total }}</td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td><strong>{{ row.section.name }}</strong></td>
+                  <td colspan="3" class="text-muted small">No items in this category yet</td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+</div>
+<style>
+  .cat-expand {
+    border: 1px solid var(--surface-3);
+    border-radius: 10px;
+    padding: .55rem .85rem;
+    background: var(--surface);
+  }
+  .cat-summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .cat-summary::-webkit-details-marker { display: none; }
+  .cat-summary::before {
+    content: "▸";
+    color: var(--accent);
+    font-weight: 800;
+  }
+  details[open] > .cat-summary::before { content: "▾"; }
+</style>
+
+{% for row in section_rows %}
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>{{ row.section.name }} — knowledge tests</span>
+    <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_section', section_id=row.section.id) }}">Manage class</a>
+  </div>
+  <div class="list-group list-group-flush">
+    {% for pt in row.per_test %}
+    <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+       href="{{ url_for('instructor_test_performance', section_id=row.section.id, test_id=pt.test.id) }}">
+      <span>
+        <strong>{{ pt.test.title }}</strong>
+        <span class="text-muted small ms-2">{{ pt.stats.n }} attempt{{ 's' if pt.stats.n != 1 else '' }}</span>
+      </span>
+      <span>
+        {% if pt.stats.mean is not none %}
+          Avg {{ pt.stats.mean }}% · High {{ pt.stats.high }}% · Low {{ pt.stats.low }}%
+        {% else %}
+          <span class="text-muted">No attempts</span>
+        {% endif %}
+        <span class="compare-next" aria-hidden="true">→</span>
+      </span>
+    </a>
+    {% else %}
+    <div class="list-group-item text-muted">No knowledge tests on this curriculum.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+{% endif %}
+
+<a href="{{ url_for('instructor_analytics_hub') }}" class="btn btn-brand">Back to analytics hub</a>
+{% endblock %}

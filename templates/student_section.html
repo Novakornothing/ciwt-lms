@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}{{ section.name }} — CIWT LMS{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}">My classes</a></li>
+    <li class="breadcrumb-item active">{{ section.name }}</li>
+  </ol>
+</nav>
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
+  <div>
+    <h1 class="h3 mb-1">{{ section.name }}</h1>
+    <p class="text-muted mb-0">{{ section.course.title }} · Instructor {{ section.instructor.full_name }}</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <a class="btn btn-brand btn-sm" href="{{ url_for('course_labs', section_id=section.id) }}">All labs in this course</a>
+    {% if enrollment %}
+    <span class="stat-pill">Progress {{ '%.0f'|format(enrollment.progress_percent) }}%</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">Modules &amp; progress quizzes</div>
+      <div class="list-group list-group-flush">
+        {% for item in modules %}
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ item.module.order }}. {{ item.module.title }}</strong>
+              <div class="small text-muted">~{{ item.module.estimated_minutes }} min
+                · {{ item.quizzes|length }} progress quiz(zes)</div>
+            </div>
+            {% if item.available %}
+              <a href="{{ url_for('view_module', section_id=section.id, module_id=item.module.id) }}"
+                 class="btn btn-sm btn-brand">Open</a>
+            {% else %}
+              <span class="badge badge-closed">Locked</span>
+            {% endif %}
+          </div>
+          {% if item.available and item.labs %}
+          <div class="small mt-2">
+            <span class="text-muted">Chapter labs:</span>
+            {% for lab in item.labs %}
+            <a href="{{ url_for('interactive_lab', lab_id=lab.id) }}">{{ lab.title }}</a>{% if not loop.last %} · {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted">No modules yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card mb-4">
+      <div class="card-header navy">How labs work in this class</div>
+      <div class="card-body small">
+        <a href="{{ url_for('course_labs', section_id=section.id) }}">Open the course lab list</a>
+      to see every lab for {{ section.course.code }}. Matching labs also sit at the bottom of the lesson that teaches them.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Knowledge tests (graded)</div>
+      <div class="list-group list-group-flush">
+        {% for item in tests %}
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <strong>{{ item.test.title }}</strong>
+              <div class="small text-muted">{{ item.test.description }} · Pass ≥ {{ item.test.passing_score }}%</div>
+              {% if item.attempts %}
+                <div class="small mt-1">
+                  Last score:
+                  <strong>{{ '%.0f'|format(item.attempts[0].score) }}%</strong>
+                  {% if item.attempts[0].passed %}
+                    <span class="text-success">Passed</span>
+                  {% else %}
+                    <span class="text-danger">Not passed</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+            <div class="text-end">
+              {% if item.available %}
+                <a href="{{ url_for('take_test', section_id=section.id, test_id=item.test.id) }}"
+                   class="btn btn-sm btn-outline-danger">Take test</a>
+              {% else %}
+                <span class="badge badge-closed">Closed</span>
+                {% if current_user.role in ('admin', 'instructor') %}
+                <form method="post" action="{{ url_for('toggle_release') }}" class="mt-1">
+                  <input type="hidden" name="section_id" value="{{ section.id }}">
+                  <input type="hidden" name="content_type" value="test">
+                  <input type="hidden" name="content_id" value="{{ item.test.id }}">
+                  <input type="hidden" name="action" value="activate">
+                  <input type="hidden" name="audience" value="class">
+                  <input type="hidden" name="schedule_mode" value="duration">
+                  <input type="hidden" name="duration_minutes" value="90">
+                  <button class="btn btn-sm btn-brand">Open now for class</button>
+                </form>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted">No tests yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

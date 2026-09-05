@@ -1,0 +1,21 @@
+<div class="card mb-4 border-2" style="border-color: var(--accent-border) !important;">
+  <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span>Live CLI labs — type commands in a terminal ({{ all_interactive_labs|length }} labs)</span>
+    <a class="btn btn-sm btn-brand" href="{{ url_for('interactive_labs_index') }}">Open lab catalog</a>
+  </div>
+  <div class="card-body py-2">
+    {% if all_interactive_labs %}
+    <div class="d-flex flex-wrap gap-2">
+      {% for lab in all_interactive_labs %}
+      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('interactive_lab', lab_id=lab.id) }}">
+        <span class="badge text-bg-dark me-1">{{ lab.kind|upper }}</span>{{ lab.title }}
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-danger mb-0">
+      Lab catalog is empty. Confirm <code>interactive_labs.py</code> sits next to <code>app.py</code>, then restart the server.
+    </div>
+    {% endif %}
+  </div>
+</div>

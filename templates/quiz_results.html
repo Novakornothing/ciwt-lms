@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Quiz results — {{ quiz.title }}{% endblock %}
+{% block content %}
+<div class="test-shell">
+  <div class="page-hero">
+    <h1 class="h3 mb-1">Progress check complete</h1>
+    <p class="mb-0">
+      {{ correct }} of {{ total }} correct · {{ score|round(0)|int }}%
+      · Ungraded learning check — no individual items are shown
+    </p>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card text-center p-3">
+        <div class="text-muted small">Score</div>
+        <div class="fs-3 fw-bold">{{ score|round(0)|int }}%</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center p-3">
+        <div class="text-muted small">Correct</div>
+        <div class="fs-3 fw-bold">{{ correct }} / {{ total }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center p-3">
+        <div class="text-muted small">Focus areas</div>
+        <div class="fs-3 fw-bold">{{ focus_areas|length if focus_areas else 0 }}</div>
+      </div>
+    </div>
+  </div>
+
+  {% if not focus_areas %}
+  <div class="alert alert-success">
+    Strong pass on this check. Keep practicing the chapter workflows—not just the facts—so you can apply them on a live ticket.
+  </div>
+  {% else %}
+  <div class="card mb-4">
+    <div class="card-header navy">Where to focus next</div>
+    <div class="card-body">
+      <p class="small text-muted mb-3">
+        These are topic areas where answers were incomplete. Study the linked lessons end-to-end.
+        Goal: be able to <em>do the work</em>, not memorize a single quiz stem.
+      </p>
+      {% for area in focus_areas %}
+      <div class="border rounded-3 p-3 mb-3">
+        <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+          <h2 class="h6 mb-0">{{ area.focus }}</h2>
+          <span class="badge badge-gold">{{ area.wrong }} of {{ area.total }} in this area need work</span>
+        </div>
+        {% if area.tips %}
+        <ul class="small mb-2">
+          {% for tip in area.tips %}
+          <li>{{ tip }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if area.lessons %}
+        <div class="small fw-bold mb-1">Return to curriculum</div>
+        <div class="d-flex flex-wrap gap-2">
+          {% for les in area.lessons %}
+          <a class="btn btn-sm btn-outline-navy"
+             href="{{ url_for('view_lesson', section_id=section_id, module_id=les.module_id, lesson_id=les.id) }}">
+            {{ les.title }}
+          </a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('view_module', section_id=section_id, module_id=module_id) }}" class="btn btn-brand">Back to chapter</a>
+    <a href="{{ url_for('student_section', section_id=section_id) }}" class="btn btn-outline-navy">Class overview</a>
+  </div>
+</div>
+{% endblock %}

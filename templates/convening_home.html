@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Convening home — CIWT{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Convening home</h1>
+  <p class="mb-0">One page for the duty day. You have marked {{ done_n }} of {{ total_eos }} enabling objectives on this account.</p>
+</div>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header navy">A-school</div>
+      <div class="card-body">
+        <p>{{ a.blocks }} blocks · {{ a.hours }} hrs · {{ a.eos }} EOs · {{ a.with_lab }} labs</p>
+        <a class="btn btn-sm btn-brand" href="{{ url_for('aschool_outline') }}">Open outline</a>
+        <a class="btn btn-sm btn-outline-navy" href="{{ url_for('aschool_trainee_guide') }}">Trainee guide</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header navy">C-school comms</div>
+      <div class="card-body">
+        <p>{{ c.blocks }} block · {{ c.hours }} hrs · {{ c.eos }} EOs</p>
+        <a class="btn btn-sm btn-brand" href="{{ url_for('cschool_comms') }}">Open path</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header navy">C-school sysadmin</div>
+      <div class="card-body">
+        <p>{{ s.blocks }} block · {{ s.hours }} hrs · {{ s.eos }} EOs</p>
+        <a class="btn btn-sm btn-brand" href="{{ url_for('cschool_sysadmin') }}">Open path</a>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mt-3">
+  <a class="btn btn-outline-navy btn-sm" href="{{ url_for('interactive_labs_index') }}">All live labs</a>
+  {% if current_user.role != 'student' %}
+  <a class="btn btn-outline-navy btn-sm" href="{{ url_for('aschool_progress') }}">EO roster</a>
+  <a class="btn btn-outline-navy btn-sm" href="{{ url_for('admin_readiness') if current_user.role == 'admin' else url_for('instructor_dashboard') }}">Staff home</a>
+  {% endif %}
+</p>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ category }} — {{ course.title }}{% endblock %}
+{% block content %}
+<style>
+  .heat-cell { display:inline-block; min-width:3.2rem; padding:.35rem .5rem; border-radius:8px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .heat-hi { background:#c6f0d8; color:#0b5c32; }
+  .heat-mid { background:#e8f5c8; color:#3d5c0b; }
+  .heat-low { background:#ffe6b3; color:#7a5200; }
+  .heat-crit { background:#ffd0c8; color:#8a1f12; }
+  [data-theme="dark"] .heat-hi { background:rgba(61,214,140,.25); color:#9df0c0; }
+  [data-theme="dark"] .heat-mid { background:rgba(200,220,80,.22); color:#e8f59a; }
+  [data-theme="dark"] .heat-low { background:rgba(240,193,74,.22); color:#f5d78a; }
+  [data-theme="dark"] .heat-crit { background:rgba(255,138,122,.25); color:#ffc4ba; }
+</style>
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_analytics_hub') }}">Analytics</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('course_performance', course_id=course.id) }}">{{ course.title }}</a></li>
+    <li class="breadcrumb-item active">{{ category }}</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ category }}</h1>
+  <p class="mb-0">Subcategory performance by class · {{ course.title }}</p>
+</div>
+
+{% if not sub_names %}
+<div class="card card-body text-muted">No attempt data for this category yet.</div>
+{% else %}
+<div class="card mb-4">
+  <div class="card-header navy">Subcategories (learning objectives) by class</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Class</th>
+          <th>Overall in category</th>
+          {% for sub in sub_names %}
+          <th class="text-center small wrap-ok" style="min-width:7rem;white-space:normal;max-width:10rem">{{ sub }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in section_rows %}
+        <tr>
+          <td><strong>{{ row.section.name }}</strong>
+            <div class="small text-muted">{{ row.n_attempts }} attempt{{ 's' if row.n_attempts != 1 else '' }}</div>
+          </td>
+          <td>
+            {% if row.overall is not none %}
+            <span class="heat-cell {% if row.overall >= 85 %}heat-hi{% elif row.overall >= 70 %}heat-mid{% elif row.overall >= 55 %}heat-low{% else %}heat-crit{% endif %}">{{ row.overall }}%</span>
+            {% else %}—{% endif %}
+          </td>
+          {% for sub in sub_names %}
+            {% set ns = namespace(pct=none) %}
+            {% for s in row.subs %}
+              {% if s.subcategory == sub %}{% set ns.pct = s.pct %}{% endif %}
+            {% endfor %}
+            <td class="text-center">
+              {% if ns.pct is none %}<span class="text-muted">—</span>
+              {% else %}
+              <span class="heat-cell {% if ns.pct >= 85 %}heat-hi{% elif ns.pct >= 70 %}heat-mid{% elif ns.pct >= 55 %}heat-low{% else %}heat-crit{% endif %}">{{ ns.pct }}%</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body small text-muted">Subcategories come from learning objectives tied to each test item under this broad category.</div>
+</div>
+{% endif %}
+
+<a href="{{ url_for('course_performance', course_id=course.id) }}" class="btn btn-brand">Back to class comparison</a>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Gaps & roadmap — CIWT LMS{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Gaps &amp; roadmap</h1>
+  <p class="mb-0">This is a training <strong>system prototype</strong> with proprietary curriculum — not official CompTIA content or a production LMS.</p>
+</div>
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header navy">In scope today</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">Roles: admin, instructor, student</li>
+        <li class="list-group-item">Class sections, enrollments, content release</li>
+        <li class="list-group-item">Quizzes, timed knowledge tests, item / distractor analysis</li>
+        <li class="list-group-item">Teaching time, tickets, messaging, binary game</li>
+        <li class="list-group-item">Demo reseed, CSV export, SQLite backup</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header navy">Not in this prototype</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">CAC / SSO / DoD IdP integration</li>
+        <li class="list-group-item">SCORM / xAPI packaging</li>
+        <li class="list-group-item">Formal Section 508 audit package</li>
+        <li class="list-group-item">Multi-region HA hosting &amp; formal ATO path</li>
+        <li class="list-group-item">Official vendor exam banks or licensed media</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="card mt-4">
+  <div class="card-header">Production notes</div>
+  <div class="card-body">
+    <p>Development server is fine for demos. For sustained use:</p>
+    <pre class="p-3 rounded mb-2" style="background:var(--surface-3);color:var(--ink)">gunicorn -b 0.0.0.0:5050 -w 2 'app:app'</pre>
+    <p class="mb-0 small text-muted">Set a strong <code>SECRET_KEY</code>, put SQLite/Postgres behind backups, and place a reverse proxy (nginx/Caddy) in front.</p>
+  </div>
+</div>
+<a href="{{ url_for('demo_guide') }}" class="btn btn-brand mt-3">Demo guide</a>
+{% endblock %}

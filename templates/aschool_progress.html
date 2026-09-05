@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}EO progress — CIWT{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">A / C school EO progress</h1>
+  <p class="mb-0">{{ total }} enabling objectives across A-school and both C-school paths.</p>
+</div>
+<div class="table-responsive">
+  <table class="table table-sm">
+    <thead><tr><th>Student</th><th>Done</th><th>Total</th><th>%</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.user.last_name }}, {{ r.user.first_name }}</td>
+        <td>{{ r.done }}</td>
+        <td>{{ r.total }}</td>
+        <td>{{ r.pct }}%</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="text-muted">No students yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

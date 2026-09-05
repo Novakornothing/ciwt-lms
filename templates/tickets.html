@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}My curriculum tickets{% endblock %}
+{% block content %}
+<div class="page-hero d-flex flex-wrap justify-content-between align-items-start gap-2">
+  <div>
+    <h1 class="h3 mb-1">Curriculum tickets</h1>
+    <p class="mb-0">Report content issues, errors, or improvement requests for lessons and tests.</p>
+  </div>
+  <a class="btn btn-brand" href="{{ url_for('tickets_new') }}"><i class="bi bi-plus-lg me-1"></i>New ticket</a>
+</div>
+
+{% if tickets %}
+<div class="list-group">
+  {% for t in tickets %}
+  <div class="list-group-item">
+    <div class="d-flex flex-wrap justify-content-between gap-2">
+      <div>
+        <strong>#{{ t.id }} · {{ t.subject }}</strong>
+        <div class="small text-muted">
+          {{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '' }}
+          · {{ t.category }}
+          {% if t.course %} · {{ t.course.code }}{% endif %}
+          {% if t.lesson %} · Lesson: {{ t.lesson.title }}{% endif %}{% if t.quiz %} · Quiz: {{ t.quiz.title }}{% endif %}{% if t.test %} · Test: {{ t.test.title }}{% endif %}
+        </div>
+      </div>
+      <span class="badge {% if t.status == 'open' %}badge-live{% elif t.status == 'in_progress' %}badge-live{% else %}badge-closed{% endif %}">{{ t.status }}</span>
+    </div>
+    {% if t.quoted_text %}<div class="small mt-2"><em>“{{ t.quoted_text[:180] }}{% if t.quoted_text|length > 180 %}…{% endif %}”</em></div>{% endif %}
+    <p class="mb-0 mt-2 small">{{ t.body[:400] }}{% if t.body|length > 400 %}…{% endif %}</p>
+    {% if t.admin_notes %}
+    <div class="alert alert-info mt-2 mb-0 py-2 small"><strong>Admin:</strong> {{ t.admin_notes }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card card-body text-muted">No tickets yet. Use <a href="{{ url_for('tickets_new') }}">New ticket</a> or the link on a lesson page.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Item analysis — {{ test.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+    <li class="breadcrumb-item active">Item analysis</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ test.title }}</h1>
+  <p class="mb-0">NAVEDTRA-aligned item analysis (P, d, alternatives){% if section %} · {{ section.name }}{% endif %}</p>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">Attempts</div><div class="fs-4 fw-bold">{{ summary.n_attempts }}</div></div></div>
+  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">Average</div><div class="fs-4 fw-bold">{% if summary.mean_score is not none %}{{ summary.mean_score }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">Median</div><div class="fs-4 fw-bold">{% if summary.median_score is not none %}{{ summary.median_score }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">High / low</div><div class="fs-5 fw-bold">{% if summary.high_score is not none %}{{ summary.high_score }} / {{ summary.low_score }}{% else %}—{% endif %}</div></div></div>
+  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">SD</div><div class="fs-4 fw-bold">{% if summary.stdev is not none %}{{ summary.stdev }}{% else %}—{% endif %}</div></div></div>
+  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">Pass rate</div><div class="fs-4 fw-bold">{% if summary.pass_rate is not none %}{{ summary.pass_rate }}%{% else %}—{% endif %}</div></div></div>
+</div>
+<p class="small text-muted mb-3">
+  {{ summary.n_items or analysis|length }} items ·
+  In-band P {{ summary.items_in_band or 0 }} · Out-of-band {{ summary.items_out_of_band or 0 }} ·
+  Flagged {{ summary.n_flagged or 0 }}
+  · Pass mark {{ summary.passing_score }}%
+  · Acceptable P band {{ summary.p_band or '0.60–0.95' }}
+  · Groups: {{ summary.group_method or 'Upper/lower 27%' }}
+</p>
+
+{% if summary.lo_rows %}
+<div class="card mb-4">
+  <div class="card-header navy">Performance by learning objective</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Objective</th><th>Items</th><th>Avg % correct</th><th>Hard items</th></tr></thead>
+      <tbody>
+        {% for row in summary.lo_rows %}
+        <tr>
+          <td><strong>{{ row.lo }}</strong>{% if row.text %} <span class="text-muted">{{ row.text }}</span>{% endif %}</td>
+          <td>{{ row.n }}</td>
+          <td>{{ row.avg_pct }}%</td>
+          <td>{{ row.hard }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if summary.n_attempts == 0 %}
+<div class="alert alert-secondary">No completed attempts yet. Statistics appear after submissions.</div>
+{% else %}
+<div class="card mb-3">
+  <div class="card-header navy">NAVEDTRA test-item analysis techniques</div>
+  <div class="card-body small">
+    <ul class="mb-2">
+      <li><strong>Difficulty index (P)</strong> = Nc / N (proportion correct). Higher P = easier item. Acceptable band for high pass scores (~80%): about <strong>{{ summary.p_band or '0.60–0.95' }}</strong>.</li>
+      <li><strong>Discrimination index (d)</strong> = Ph − Pl using upper vs lower ~27% by total score. Prefer d ≥ 0.30; negative d flags review.</li>
+      <li><strong>Effectiveness of alternatives</strong> — each distractor’s share of responses; non-functional alternatives (&lt;5% chosen) should be revised.</li>
+      <li>Low throughput: full sample used; items missed by ≥50% are flagged for review.</li>
+    </ul>
+    <p class="mb-0 text-muted">Aligned to NETC instructional testing practice (difficulty, discrimination, alternatives). Not a substitute for official course of instruction approval processes.</p>
+  </div>
+</div>
+{% for item in analysis %}
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+      <h2 class="h6 mb-0">Q{{ item.index }}. {{ item.text }}
+        {% if item.lo or item.to or item.category %}
+        <div class="small mt-1" style="color:var(--ink-secondary)">
+          {% if item.category %}<span class="badge badge-closed me-1">{{ item.category }}</span>{% endif %}
+          {% if item.lo %}<span class="me-1">{{ item.lo }}</span>{% endif %}
+          {% if item.to %}<span>{{ item.to }}</span>{% elif item.lo_text %}<span>{{ item.lo_text }}</span>{% endif %}
+        </div>
+        {% endif %}</h2>
+      <div class="d-flex flex-wrap gap-1">
+        <span class="badge badge-gold">P = {{ item.P if item.P is defined else (item.pct_correct/100)|round(3) }} ({{ item.pct_correct }}%)</span>
+        <span class="badge badge-closed">{{ item.difficulty }} · {{ item.p_status or '' }}</span>
+        <span class="badge badge-live">d = {{ item.discrimination }} · {{ item.disc_label }}</span>
+        {% if item.omit %}
+        <span class="badge badge-closed">{{ item.omit }} omit ({{ item.omit_pct }}%)</span>
+        {% endif %}
+        {% for f in item.flags or [] %}
+        <span class="badge badge-gold">{{ f }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    <p class="small text-muted mb-1">Upper ~27%: {{ item.p_high }}% correct (n={{ item.high_n or "—" }}) · Lower ~27%: {{ item.p_low }}% correct (n={{ item.low_n or "—" }})</p>
+    {% if item.lo %}<div class="q-lo mb-2"><strong>{{ item.lo }}</strong> · {{ item.lo_text }}</div>{% endif %}
+    <p class="small text-muted mb-3">
+      {{ item.correct_count }} / {{ item.answered }} correct · Key: <strong>{{ item.correct }}</strong>
+    </p>
+    {% for opt in item.options %}
+    <div class="mb-3">
+      <div class="d-flex justify-content-between small flex-wrap gap-2">
+        <span class="{% if opt.is_correct %}fw-semibold text-success{% endif %}">
+          {% if opt.is_correct %}<i class="bi bi-check-circle-fill me-1"></i>{% endif %}
+          {{ opt.option }}
+        </span>
+        <span>{{ opt.count }} ({{ '%.0f'|format(opt.pct) }}%)</span>
+      </div>
+      <div class="option-bar mt-1 mb-1">
+        <span class="{% if opt.is_correct %}correct{% endif %}" style="width: {{ opt.pct }}%"></span>
+      </div>
+      <div class="small">
+        <span class="badge {% if opt.is_correct %}badge-live{% elif opt.effectiveness == 'Non-functional' %}badge-closed{% else %}badge-gold{% endif %}">{{ opt.effectiveness }}</span>
+        <span class="text-muted">{{ opt.note }}{% if not opt.is_correct and opt.pct_of_wrong %} · {{ opt.pct_of_wrong }}% of wrong answers{% endif %}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

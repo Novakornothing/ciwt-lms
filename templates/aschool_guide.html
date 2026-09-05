@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>CIWT IT A-School Trainee Guide</title>
+  <style>
+    body { font-family: "Segoe UI", Calibri, sans-serif; max-width: 800px; margin: 24px auto; color: #111; }
+    h1 { font-size: 22px; }
+    h2 { font-size: 16px; margin-top: 1.4em; border-bottom: 1px solid #ccc; }
+    .meta { color: #444; font-size: 13px; }
+    li { margin: .35em 0; }
+    @media print { a { color: #000; text-decoration: none; } .noprint { display: none; } }
+  </style>
+</head>
+<body>
+  <p class="noprint"><button onclick="window.print()">Print / Save as PDF</button>
+    <a href="{{ url_for('aschool_trainee_guide_txt') }}">Plain text</a></p>
+  <h1>CIWT IT A-School Trainee Guide</h1>
+  <p class="meta">Original CIWT instructional map. Not official NAVEDTRA courseware and not CompTIA exam text.<br>
+  {{ stats.blocks }} blocks · {{ stats.hours }} contact hours · {{ stats.eos }} enabling objectives · {{ stats.with_lab }} live labs.<br>
+  Generated {{ generated }} UTC.</p>
+  {% for b in blocks %}
+  <h2>{{ b.title }} — weeks {{ b.week }} ({{ b.hours }} hrs)</h2>
+  <p>{{ b.goal }}</p>
+  <ol>
+    {% for e in b.eos %}
+    <li>{{ e.text }}
+      {% if e.lab %}<br><em>Lab:</em> {{ e.lab }}
+      {% else %}<br><em>Written check:</em> {{ e.check }}{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% endfor %}
+</body>
+</html>

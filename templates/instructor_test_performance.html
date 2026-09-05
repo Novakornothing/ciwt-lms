@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Class performance — {{ test.title }}{% endblock %}
+{% block content %}
+<style>
+  .perf-cat {
+    border: 1px solid var(--surface-3);
+    border-radius: 10px;
+    margin: .5rem .75rem;
+    background: var(--surface);
+  }
+  .perf-cat > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: .85rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    color: var(--ink);
+  }
+  .perf-cat > summary::-webkit-details-marker { display: none; }
+  .perf-cat > summary::before {
+    content: "▸";
+    color: var(--accent);
+    font-weight: 800;
+    margin-right: .35rem;
+  }
+  details[open].perf-cat > summary::before { content: "▾"; }
+  .perf-cat .sub-row {
+    padding: .55rem 1rem .55rem 2rem;
+    border-top: 1px solid var(--surface-3);
+    color: var(--ink);
+  }
+  .table-attempts {
+    --attempt-fg: #0b1628;
+    --attempt-muted: #4a5a70;
+  }
+  [data-theme="dark"] .table-attempts {
+    --attempt-fg: #f0f5fc;
+    --attempt-muted: #c5d0e0;
+  }
+  .table-attempts td,
+  .table-attempts th {
+    color: var(--attempt-fg) !important;
+    padding: .9rem 1.1rem !important;
+    font-size: 1rem !important;
+    white-space: nowrap;
+    border-color: var(--surface-3) !important;
+    background: transparent !important;
+  }
+  .table-attempts thead th {
+    color: var(--attempt-muted) !important;
+    font-weight: 700;
+  }
+  [data-theme="dark"] .table-attempts tbody tr:hover td {
+    background: rgba(255,255,255,.04) !important;
+  }
+  .heat-cell {
+    display: inline-block; min-width: 3rem; padding: .25rem .45rem;
+    border-radius: 8px; font-weight: 700;
+  }
+  .heat-hi { background: #c6f0d8; color: #0b5c32; }
+  .heat-mid { background: #e8f5c8; color: #3d5c0b; }
+  .heat-low { background: #ffe6b3; color: #7a5200; }
+  .heat-crit { background: #ffd0c8; color: #8a1f12; }
+  [data-theme="dark"] .heat-hi { background: rgba(61,214,140,.28); color: #b6f5d4; }
+  [data-theme="dark"] .heat-mid { background: rgba(200,220,80,.25); color: #eef7b0; }
+  [data-theme="dark"] .heat-low { background: rgba(240,193,74,.25); color: #ffe2a0; }
+  [data-theme="dark"] .heat-crit { background: rgba(255,138,122,.28); color: #ffd0c8; }
+</style>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My sections</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item active">{{ test.title }}</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ test.title }}</h1>
+  <p class="mb-0">{{ section.name }} · Class performance · Pass mark {{ test.passing_score }}%</p>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Attempts</div><div class="fs-4 fw-bold">{{ stats.n }}</div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Class average</div><div class="fs-4 fw-bold">{% if stats.mean is not none %}{{ stats.mean }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Median</div><div class="fs-4 fw-bold">{% if stats.median is not none %}{{ stats.median }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Pass rate</div><div class="fs-4 fw-bold">{% if stats.pass_rate is not none %}{{ stats.pass_rate }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">High score</div><div class="fs-4 fw-bold">{% if stats.high is not none %}{{ stats.high }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Low score</div><div class="fs-4 fw-bold">{% if stats.low is not none %}{{ stats.low }}%{% else %}—{% endif %}</div></div></div>
+  <div class="col-md-6"><div class="card text-center p-3"><div class="text-muted small">Your historical average (all sections you teach)</div><div class="fs-4 fw-bold">{% if hist_avg is not none %}{{ hist_avg }}% <span class="fs-6 text-muted">({{ hist_n }} attempts)</span>{% else %}—{% endif %}</div></div></div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">Class performance by broad category</div>
+  <p class="small text-muted px-3 pt-3 mb-1">Click a category to expand subtopics on this page.</p>
+  {% for c in stats.category_avg %}
+  <details class="perf-cat">
+    <summary>
+      <span><strong>{{ c.category }}</strong></span>
+      <span>
+        <span class="heat-cell {% if c.pct >= 85 %}heat-hi{% elif c.pct >= 70 %}heat-mid{% elif c.pct >= 55 %}heat-low{% else %}heat-crit{% endif %}">{{ c.pct }}%</span>
+      </span>
+    </summary>
+    {% set subs = category_subs.get(c.category, []) %}
+    {% if subs %}
+      {% for s in subs %}
+      <div class="sub-row d-flex justify-content-between flex-wrap gap-2">
+        <span>{{ s.subcategory }}</span>
+        <span>
+          <span class="heat-cell {% if s.pct >= 85 %}heat-hi{% elif s.pct >= 70 %}heat-mid{% elif s.pct >= 55 %}heat-low{% else %}heat-crit{% endif %}">{{ s.pct }}%</span>
+          <span class="small text-muted ms-1">{{ s.correct }}/{{ s.total }}</span>
+        </span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="sub-row text-muted">No subtopic data yet.</div>
+    {% endif %}
+  </details>
+  {% else %}
+  <div class="p-3 text-muted">No attempts yet.</div>
+  {% endfor %}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span>Student attempts</span>
+    <span class="small fw-normal text-muted">Showing {{ rows|length }} of {{ all_attempt_count|default(rows|length) }}</span>
+  </div>
+  <div class="card-body border-bottom">
+    <form method="get" class="row g-3 align-items-start">
+      <div class="col-lg-6">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="form-label mb-0 fw-semibold">Students</label>
+          <span>
+            <button type="button" class="btn btn-link btn-sm p-0" id="stuAll">All</button>
+            <span class="text-muted">·</span>
+            <button type="button" class="btn btn-link btn-sm p-0" id="stuNone">None</button>
+          </span>
+        </div>
+        <div class="border rounded p-2" style="max-height:10rem;overflow-y:auto;background:var(--surface)">
+          {% for sid, sname in student_options or [] %}
+          <div class="form-check">
+            <input class="form-check-input stu-cb" type="checkbox" name="student_id" value="{{ sid }}" id="stu_{{ sid }}"
+                   {% if not filter_student_ids or sid in filter_student_ids %}checked{% endif %}>
+            <label class="form-check-label" for="stu_{{ sid }}">{{ sname }}</label>
+          </div>
+          {% else %}
+          <div class="text-muted small">No students with attempts yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label fw-semibold">Result</label>
+        <select name="result" class="form-select">
+          <option value="" {% if not result_filter %}selected{% endif %}>All results</option>
+          <option value="pass" {% if result_filter == 'pass' %}selected{% endif %}>Passed only</option>
+          <option value="fail" {% if result_filter == 'fail' %}selected{% endif %}>Below pass only</option>
+        </select>
+      </div>
+      <div class="col-lg-3 col-md-6 d-flex align-items-end gap-2">
+        <button class="btn btn-brand">Apply filters</button>
+        <a class="btn btn-outline-navy" href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=test.id) }}">Reset</a>
+      </div>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-attempts mb-0 align-middle">
+      <thead>
+        <tr>
+          <th scope="col">Student</th>
+          <th scope="col">Score</th>
+          <th scope="col">Result</th>
+          <th scope="col">Completed</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td class="fw-semibold">{{ r.name }}</td>
+          <td>{{ '%.1f'|format(r.attempt.score) }}%</td>
+          <td>{% if r.attempt.passed %}<span class="badge badge-live">Pass</span>{% else %}<span class="badge badge-closed">Below 80%</span>{% endif %}</td>
+          <td>{{ r.attempt.completed_at.strftime('%Y-%m-%d %H:%M') if r.attempt.completed_at else '—' }}</td>
+          <td><a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_attempt_detail', attempt_id=r.attempt.id) }}">Item detail</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="text-muted">No completed attempts.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<a href="{{ url_for('test_item_analysis', test_id=test.id, section_id=section.id) }}" class="btn btn-outline-navy me-2">Item / distractor analysis</a>
+<a href="{{ url_for('instructor_section', section_id=section.id) }}" class="btn btn-brand">Back to section</a>
+{% endblock %}

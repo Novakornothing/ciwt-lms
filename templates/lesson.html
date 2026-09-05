@@ -1,0 +1,596 @@
+{% extends "base.html" %}
+{% block title %}{{ lesson.title }} — CIWT LMS{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section_id) }}">Class</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">{{ module.title }}</a></li>
+    <li class="breadcrumb-item active">{{ lesson.title }}</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start">
+    <div>
+      <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">{{ module.title }}</div>
+      <h1 class="h3 mb-1">{{ lesson.title }}</h1>
+      <p class="mb-0">Lesson {{ lesson.order }} of {{ lessons|length }} · ~{{ lesson.estimated_minutes }} min</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      {% if lesson_labs %}
+      <a href="#chapter-lab" class="btn btn-brand btn-sm">
+        <i class="bi bi-terminal"></i> Lab for this lesson
+      </a>
+      {% endif %}
+      <button type="button" class="btn btn-outline-gold btn-sm" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer">
+        <i class="bi bi-list"></i> Chapters
+      </button>
+      <button type="button" class="btn btn-outline-gold btn-sm" id="curriculumFullscreenBtn" title="Focus mode — curriculum only">
+        <i class="bi bi-arrows-fullscreen"></i> Full screen
+      </button>
+      <a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}" class="btn btn-outline-light btn-sm">All lessons</a>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('tickets_new', lesson_id=lesson.id, section_id=section_id, course_id=module.course_id) }}"
+         class="btn btn-outline-light btn-sm">Report issue</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{# Labs sit under the lesson — not a full catalog dump at the top #}
+
+<div class="card mb-3 narrate-bar">
+  <div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
+    <span class="fw-semibold"><i class="bi bi-soundwave"></i> Narrate</span>
+    <select id="ttsVoice" class="form-select form-select-sm" style="width:auto">
+      <option value="en-US-JennyNeural" selected>Jenny — neural</option>
+      <option value="en-US-GuyNeural">Guy — neural</option>
+    </select>
+    <button type="button" class="btn btn-brand btn-sm" id="ttsPlay"><i class="bi bi-play-fill"></i> Play</button>
+    <button type="button" class="btn btn-outline-navy btn-sm" id="ttsFromHere"><i class="bi bi-cursor-text"></i> From selection</button>
+    <button type="button" class="btn btn-outline-navy btn-sm" id="ttsPause"><i class="bi bi-pause-fill"></i> Pause</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="ttsStop"><i class="bi bi-stop-fill"></i> Stop</button>
+    <span class="small text-muted" id="ttsStatus">Ready</span>
+    <audio id="ttsAudio" controls class="ms-2" style="height:2rem;max-width:14rem"></audio>
+  </div>
+</div>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="lessonDrawer" aria-labelledby="lessonDrawerLabel">
+  <div class="offcanvas-header border-bottom">
+    <h2 class="offcanvas-title h5 mb-0" id="lessonDrawerLabel">Chapter navigation</h2>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body p-0" id="lessonSideNav">
+    <div class="list-group list-group-flush lesson-nav">
+      {% for L in lessons %}
+      <a href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=L.id) }}"
+         class="list-group-item list-group-item-action py-2 {% if L.id == lesson.id %}active-lesson{% endif %}">
+        <span class="small fw-bold">{{ L.order }}.</span> {{ L.title.split(' ', 1)[1] if ' ' in L.title else L.title }}
+      </a>
+      {% endfor %}
+    </div>
+    <div class="card-header navy border-top">On this page</div>
+    <div class="list-group list-group-flush" id="subNav"></div>
+  </div>
+</div>
+
+<div class="lesson-layout">
+  <div class="curriculum-stage" id="curriculumStage">
+    <div class="curriculum-fs-toolbar d-none" id="curriculumFsToolbar">
+      <span class="fw-semibold text-truncate me-auto">{{ lesson.title }}</span>
+      <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer">
+        <i class="bi bi-list"></i> Chapters
+      </button>
+      <button type="button" class="btn btn-sm btn-brand" id="curriculumExitFsBtn">
+        <i class="bi bi-fullscreen-exit"></i> Exit full screen
+      </button>
+    </div>
+    <div class="card card-elevated curriculum-card">
+      <div class="card-header navy d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>Lesson content</span>
+        <button type="button" class="btn btn-sm btn-outline-light curriculum-fs-inline" id="curriculumFullscreenBtn2">
+          <i class="bi bi-arrows-fullscreen"></i> Full screen
+        </button>
+      </div>
+      <div class="card-body module-content" id="lessonBody">
+        {{ lesson.content | render_lesson | safe }}
+        {% include '_lesson_labs.html' %}
+      </div>
+    </div>
+    <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
+      {% if prev_l %}
+      <a class="btn btn-outline-navy" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=prev_l.id) }}">
+        ← {{ prev_l.title }}
+      </a>
+      {% else %}<span></span>{% endif %}
+      {% if next_l %}
+      <a class="btn btn-brand" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=next_l.id) }}">
+        {{ next_l.title }} →
+      </a>
+      {% else %}
+      <a class="btn btn-brand" href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">Back to chapter</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<style>
+  #lessonBody ::selection { background:#f0c14b; color:#0a1628; }
+  #selectionTicketBar {
+    z-index: 2000;
+    left: 50%;
+    bottom: 1.25rem;
+    width: min(36rem, calc(100vw - 1.5rem));
+  }
+  #selectionTicketBar .ticket-pop {
+    background: #fff8e8;
+    color: #0a1628;
+    border: 2px solid #c9a227;
+    box-shadow: 0 12px 32px rgba(0,0,0,.35);
+  }
+  [data-theme="dark"] #selectionTicketBar .ticket-pop {
+    background: #1b2433;
+    color: #f4f7fb;
+    border-color: #f0c14b;
+  }
+  #selectionPreview {
+    display: block;
+    max-height: 6.5rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 1rem;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+</style>
+<div id="selectionTicketBar" class="position-fixed translate-middle-x d-none">
+  <div class="ticket-pop rounded-3 p-3">
+    <div class="text-uppercase mb-1" style="letter-spacing:.08em;font-size:.75rem;font-weight:700;color:#8a6d12">Highlighted text</div>
+    <div id="selectionPreview" class="mb-3"></div>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-brand" id="reportSelectionBtn">Report this text</button>
+      <button type="button" class="btn btn-outline-navy" id="selectionDismiss">Dismiss</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+<style>
+  .tts-word { border-radius: 3px; transition: background .05s, box-shadow .05s; }
+  .tts-word.tts-active {
+    background: #f0c14b !important;
+    color: #0a1628 !important;
+    box-shadow: 0 0 0 3px rgba(240,193,75,.55);
+    font-weight: 700;
+  }
+  .tts-word.tts-done {
+    background: rgba(62, 199, 255, 0.18);
+  }
+  [data-theme="dark"] .tts-word.tts-active {
+    background: #f0c14b !important;
+    color: #0a1628 !important;
+  }
+</style>
+
+<style>
+  .lesson-nav .active-lesson { font-weight: 700; }
+  #lessonDrawer {
+    width: min(320px, 94vw);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  #lessonDrawer .offcanvas-header {
+    background: var(--navy-900, #06101f);
+    color: #f5f8fc;
+  }
+  #lessonDrawer .offcanvas-header .btn-close { filter: invert(1); opacity: .85; }
+  #lessonDrawer .list-group-item {
+    border-left: 0; border-right: 0;
+    background: var(--surface);
+    color: var(--ink);
+  }
+  #lessonDrawer .list-group-item:hover {
+    background: var(--surface-3);
+  }
+  #lessonDrawer .list-group-item.active-lesson {
+    font-weight: 700;
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+
+  /* Curriculum full screen / focus mode */
+  .curriculum-fs-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: var(--navy-900, #06101f);
+    color: #f5f8fc;
+    margin: -1rem -1rem 1rem;
+  }
+  body.curriculum-fullscreen {
+    overflow: hidden;
+  }
+  body.curriculum-fullscreen .topbar,
+  body.curriculum-fullscreen footer,
+  body.curriculum-fullscreen .staff-command-bar,
+  body.curriculum-fullscreen .teach-topbar,
+  body.curriculum-fullscreen .breadcrumb,
+  body.curriculum-fullscreen .page-hero,
+  body.curriculum-fullscreen .narrate-bar,
+  body.curriculum-fullscreen .curriculum-fs-inline {
+    display: none !important;
+  }
+  body.curriculum-fullscreen .app-main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+  body.curriculum-fullscreen #curriculumStage {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: var(--surface-2);
+    overflow: auto;
+    padding: 1rem 1.25rem 2rem;
+  }
+  body.curriculum-fullscreen .curriculum-fs-toolbar {
+    display: flex !important;
+    margin: -1rem -1.25rem 1rem;
+  }
+  body.curriculum-fullscreen .curriculum-card {
+    max-width: 920px;
+    margin: 0 auto;
+    border: none;
+    box-shadow: none;
+  }
+  body.curriculum-fullscreen .curriculum-card .card-header.navy {
+    display: none;
+  }
+  body.curriculum-fullscreen #lessonBody {
+    font-size: 1.08rem;
+    line-height: 1.75;
+    padding: 0.5rem 0 2rem;
+  }
+</style>
+{% if current_user.is_authenticated %}
+<script>
+(function(){
+  const body = document.getElementById('lessonBody');
+  const bar = document.getElementById('selectionTicketBar');
+  const preview = document.getElementById('selectionPreview');
+  const btn = document.getElementById('reportSelectionBtn');
+  const dismiss = document.getElementById('selectionDismiss');
+  if (!body || !bar || !btn) return;
+  let lastQuote = '';
+  function clearBar(){ bar.classList.add('d-none'); lastQuote=''; }
+  function showBar(text){
+    lastQuote = text.trim();
+    if (lastQuote.length < 4) { clearBar(); return; }
+    if (lastQuote.length > 500) lastQuote = lastQuote.slice(0, 500);
+    preview.textContent = '“' + lastQuote + '”';
+    bar.classList.remove('d-none');
+  }
+  function nodeInBody(node){
+    if (!node || !body) return false;
+    const el = node.nodeType === 3 ? node.parentElement : node;
+    return el && body.contains(el);
+  }
+  document.addEventListener('mouseup', function(){
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    if (!nodeInBody(sel.anchorNode) && !nodeInBody(sel.focusNode)) return;
+    showBar(sel.toString());
+  });
+  document.addEventListener('keyup', function(e){
+    if (e.key === 'Escape') clearBar();
+  });
+  dismiss && dismiss.addEventListener('click', clearBar);
+  btn.addEventListener('click', function(){
+    if (!lastQuote) return;
+    const params = new URLSearchParams({
+      lesson_id: '{{ lesson.id }}',
+      section_id: '{{ section_id }}',
+      course_id: '{{ module.course_id }}',
+      quote: lastQuote
+    });
+    window.location.href = '{{ url_for("tickets_new") }}?' + params.toString();
+  });
+})();
+</script>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Curriculum full-screen focus mode — independent of narration */
+(function () {
+  const btns = [
+    document.getElementById('curriculumFullscreenBtn'),
+    document.getElementById('curriculumFullscreenBtn2')
+  ].filter(Boolean);
+  const exitBtn = document.getElementById('curriculumExitFsBtn');
+  function enterFs() {
+    document.body.classList.add('curriculum-fullscreen');
+    try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); } catch (e) {}
+  }
+  function exitFs() {
+    document.body.classList.remove('curriculum-fullscreen');
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+  }
+  btns.forEach(b => b.addEventListener('click', enterFs));
+  if (exitBtn) exitBtn.addEventListener('click', exitFs);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.body.classList.contains('curriculum-fullscreen')) exitFs();
+  });
+  document.addEventListener('fullscreenchange', function () {
+    if (!document.fullscreenElement) document.body.classList.remove('curriculum-fullscreen');
+  });
+})();
+</script>
+<script>
+(function () {
+  const body = document.getElementById('lessonBody');
+  const subNav = document.getElementById('subNav');
+  if (body && subNav) {
+    body.querySelectorAll('section.sublesson, h3').forEach((el, i) => {
+      let id = el.id;
+      let title = el.tagName === 'H3' ? el.textContent : (el.querySelector('h3') || {}).textContent;
+      if (!title) return;
+      if (!id) { id = 'sec-' + i; el.id = id; }
+      if (el.tagName === 'SECTION' && !el.querySelector('h3')) return;
+      if (el.tagName === 'H3' && el.closest('section.sublesson')) return;
+      const a = document.createElement('a');
+      a.className = 'list-group-item list-group-item-action py-2 small';
+      a.href = '#' + id;
+      a.textContent = title.trim();
+      subNav.appendChild(a);
+    });
+  }
+
+  const status = document.getElementById('ttsStatus');
+  const playBtn = document.getElementById('ttsPlay');
+  const fromBtn = document.getElementById('ttsFromHere');
+  const voiceSel = document.getElementById('ttsVoice');
+  const audio = document.getElementById('ttsAudio');
+  if (!playBtn || !audio || !body) return;
+
+  let lastSelection = '';
+  let wordTimings = [];
+  let wordSpans = [];
+  let startOffsetInFull = 0;
+
+  function setStatus(msg) { if (status) status.textContent = msg; }
+
+  function plainFromBody() {
+    return (body.innerText || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function clearHighlights() {
+    body.querySelectorAll('.tts-word').forEach(sp => {
+      sp.replaceWith(document.createTextNode(sp.textContent));
+    });
+    body.normalize();
+    wordSpans = [];
+  }
+
+  function wrapWords() {
+    clearHighlights();
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        const p = node.parentElement;
+        if (!p || p.closest('script, style, button, .btn')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(textNode => {
+      const parts = textNode.nodeValue.split(/(\s+)/);
+      const frag = document.createDocumentFragment();
+      parts.forEach(part => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) frag.appendChild(document.createTextNode(part));
+        else {
+          const sp = document.createElement('span');
+          sp.className = 'tts-word';
+          sp.textContent = part;
+          frag.appendChild(sp);
+        }
+      });
+      textNode.parentNode.replaceChild(frag, textNode);
+    });
+    wordSpans = Array.from(body.querySelectorAll('.tts-word'));
+  }
+
+  function selectionInLesson() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return '';
+    const inBody = (n) => {
+      const el = n && n.nodeType === 3 ? n.parentElement : n;
+      return el && body.contains(el);
+    };
+    if (!inBody(sel.anchorNode) && !inBody(sel.focusNode)) return '';
+    return (sel.toString() || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function textFromSelectionOnward() {
+    const full = plainFromBody();
+    const selected = selectionInLesson() || lastSelection;
+    if (!selected) return { text: '', offset: 0 };
+    const idx = full.indexOf(selected);
+    if (idx >= 0) return { text: full.slice(idx).trim(), offset: idx };
+    return { text: selected, offset: 0 };
+  }
+
+  function highlightAtTime(t) {
+    if (!wordTimings.length || !wordSpans.length) return;
+    let idx = 0;
+    for (let i = 0; i < wordTimings.length; i++) {
+      if (t >= wordTimings[i].start) idx = i;
+    }
+    if (!highlightAtTime._map || highlightAtTime._map.length !== wordTimings.length) {
+      const map = [];
+      let si = 0;
+      let charCount = 0;
+      while (si < wordSpans.length && charCount < startOffsetInFull) {
+        charCount += (wordSpans[si].textContent || '').length + 1;
+        si++;
+      }
+      for (let wi = 0; wi < wordTimings.length; wi++) {
+        const target = (wordTimings[wi].text || '').replace(/[^\w']/g, '').toLowerCase();
+        let found = -1;
+        for (let j = si; j < Math.min(si + 12, wordSpans.length); j++) {
+          const cand = (wordSpans[j].textContent || '').replace(/[^\w']/g, '').toLowerCase();
+          if (cand && target && (cand === target || cand.startsWith(target) || target.startsWith(cand))) {
+            found = j; break;
+          }
+        }
+        if (found < 0) found = Math.min(si, wordSpans.length - 1);
+        map.push(found);
+        si = found + 1;
+      }
+      highlightAtTime._map = map;
+    }
+    const map = highlightAtTime._map;
+    const spanIdx = map[idx];
+    wordSpans.forEach((sp, i) => {
+      const mi = map.indexOf(i);
+      sp.classList.toggle('tts-done', mi >= 0 && mi < idx);
+      sp.classList.remove('tts-active');
+    });
+    if (spanIdx >= 0 && wordSpans[spanIdx]) {
+      wordSpans[spanIdx].classList.add('tts-active');
+      wordSpans[spanIdx].classList.remove('tts-done');
+    }
+  }
+
+  function browserFallback(text) {
+    if (!('speechSynthesis' in window)) {
+      setStatus('No speech available in this browser');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.slice(0, 6000));
+    u.rate = 0.92;
+    const voices = window.speechSynthesis.getVoices() || [];
+    const prefer = voices.find(v => /en-US/i.test(v.lang) && /Google|Samantha|Microsoft|Neural/i.test(v.name))
+      || voices.find(v => /^en/i.test(v.lang));
+    if (prefer) u.voice = prefer;
+    u.onstart = () => setStatus('Narrating (browser voice)');
+    u.onend = () => setStatus('Finished');
+    window.speechSynthesis.speak(u);
+  }
+
+  async function speakNeural(text, label, offset) {
+    if (!text) { setStatus('Nothing to read'); return; }
+    startOffsetInFull = offset || 0;
+    highlightAtTime._map = null;
+    playBtn.disabled = true;
+    if (fromBtn) fromBtn.disabled = true;
+    setStatus('Generating neural voice…');
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    try {
+      wrapWords();
+      const res = await fetch('{{ url_for("api_narrate") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          text: text,
+          voice: (voiceSel && voiceSel.value) || 'en-US-JennyNeural'
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        setStatus((data.error || ('HTTP ' + res.status)) + ' — browser voice');
+        browserFallback(text);
+        return;
+      }
+      wordTimings = data.words || [];
+      audio.src = data.url;
+      audio.onended = () => {
+        setStatus('Finished');
+        wordSpans.forEach(sp => { sp.classList.remove('tts-active'); sp.classList.add('tts-done'); });
+      };
+      audio.ontimeupdate = function () {
+        highlightAtTime(audio.currentTime + 0.2);
+      };
+      await new Promise((resolve) => {
+        let done = false;
+        audio.onloadeddata = () => { if (!done) { done = true; resolve(); } };
+        audio.onerror = () => { if (!done) { done = true; resolve(); } };
+        audio.load();
+        setTimeout(() => { if (!done) { done = true; resolve(); } }, 10000);
+      });
+      if (audio.duration && isFinite(audio.duration) && wordTimings.length) {
+        const estEnd = wordTimings[wordTimings.length - 1].end || 1;
+        const scale = audio.duration / estEnd;
+        wordTimings = wordTimings.map(w => ({
+          text: w.text, start: w.start * scale, end: w.end * scale
+        }));
+        highlightAtTime._map = null;
+      }
+      await audio.play();
+      let msg = label || 'Narrating';
+      if (data.truncated) msg += ' (first part)';
+      setStatus(msg);
+    } catch (e) {
+      console.error(e);
+      setStatus('Neural failed — browser voice');
+      browserFallback(text);
+    } finally {
+      playBtn.disabled = false;
+      if (fromBtn) fromBtn.disabled = false;
+    }
+  }
+
+  document.addEventListener('mouseup', function () {
+    const tsel = selectionInLesson();
+    if (tsel.length >= 4) {
+      lastSelection = tsel;
+      setStatus('Selection ready — From selection');
+    }
+  });
+
+  playBtn.onclick = function () {
+    if (audio.src && audio.paused && audio.currentTime > 0 && !audio.ended) {
+      audio.play();
+      setStatus('Narrating');
+      return;
+    }
+    if (audio.src && !audio.paused && !audio.ended) {
+      return;
+    }
+    speakNeural(plainFromBody(), 'Narrating', 0);
+  };
+  if (fromBtn) {
+    fromBtn.onclick = function () {
+      const { text, offset } = textFromSelectionOnward();
+      if (!text) { setStatus('Highlight text first'); return; }
+      speakNeural(text, 'Narrating from selection', offset);
+    };
+  }
+  const pauseBtn = document.getElementById('ttsPause');
+  const stopBtn = document.getElementById('ttsStop');
+  if (pauseBtn) pauseBtn.onclick = function () {
+    audio.pause();
+    if ('speechSynthesis' in window) window.speechSynthesis.pause();
+    setStatus('Paused');
+  };
+  if (stopBtn) stopBtn.onclick = function () {
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    clearHighlights();
+    setStatus('Stopped');
+  };
+})();
+</script>
+{% endblock %}

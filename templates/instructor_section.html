@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+{% block title %}Manage {{ section.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My sections</a></li>
+    <li class="breadcrumb-item active">{{ section.name }}</li>
+  </ol>
+</nav>
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+  <h1 class="h3 mb-1">{{ section.name }}</h1>
+  <div class="d-flex flex-wrap gap-2">
+    {% if modules %}
+    <a class="btn btn-sm btn-brand" href="{{ url_for('view_module', section_id=section.id, module_id=modules[0].id) }}">Open curriculum</a>
+    {% endif %}
+    <a class="btn btn-sm btn-outline-navy" href="{{ url_for('course_labs', section_id=section.id) }}">All labs in this course</a>
+    <a class="btn btn-sm btn-outline-navy" href="{{ url_for('course_performance', course_id=section.course_id) }}">Compare classes</a>
+  </div>
+</div>
+<p class="text-muted mb-4">{{ section.course.title }} · Instructor {{ section.instructor.full_name if section.instructor else '—' }} · {{ enrollments|length }} students</p>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#content">Chapters & tests</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#staff">Instructors</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#students">Students</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#analysis">Scores</button></li>
+</ul>
+
+<div class="tab-content">
+  <!-- Content -->
+  <div class="tab-pane fade show active" id="content">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">Modules (includes ungraded progress quizzes)</div>
+          <div class="list-group list-group-flush">
+            {% for m in modules %}
+            {% set rel = releases.get(('module', m.id)) %}
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <strong>{{ m.order }}. {{ m.title }}</strong>
+                  <div class="small text-muted">
+                    {% if rel and rel.is_active %}
+                      <span class="text-success">Live</span>
+                      until {{ rel.available_until.strftime('%Y-%m-%d %H:%M') if rel.available_until else '—' }} UTC
+                    {% else %}
+                      Locked
+                    {% endif %}
+                  </div>
+                  {% for qz in quizzes_by_module.get(m.id, []) %}
+                  <div class="mt-1">
+                    <a class="small" href="{{ url_for('instructor_quiz_preview', section_id=section.id, quiz_id=qz.id) }}">Preview quiz · {{ qz.title }}</a>
+                  </div>
+                  {% endfor %}
+                </div>
+                <div class="text-end" style="min-width:14rem">
+                  <form method="post" action="{{ url_for('toggle_release') }}" class="mb-1">
+                    <input type="hidden" name="section_id" value="{{ section.id }}">
+                    <input type="hidden" name="content_type" value="module">
+                    <input type="hidden" name="content_id" value="{{ m.id }}">
+                    <input type="hidden" name="action" value="activate">
+                    <input type="hidden" name="schedule_mode" value="duration">
+                    <select name="duration_minutes" class="form-select form-select-sm mb-1">
+                      <option value="60">Open 1 hour</option>
+                      <option value="75">Open 75 minutes</option>
+                      <option value="90" selected>Open 1.5 hours</option>
+                      <option value="120">Open 2 hours</option>
+                      <option value="180">Open 3 hours</option>
+                      <option value="1440">Open 24 hours</option>
+                      <option value="4320">Open 3 days</option>
+                      <option value="10080">Open 7 days</option>
+                      <option value="43200">Open 30 days</option>
+                    </select>
+                    <button class="btn btn-sm btn-brand w-100">Activate now</button>
+                  </form>
+                  <form method="post" action="{{ url_for('toggle_release') }}">
+                    <input type="hidden" name="section_id" value="{{ section.id }}">
+                    <input type="hidden" name="content_type" value="module">
+                    <input type="hidden" name="content_id" value="{{ m.id }}">
+                    <input type="hidden" name="action" value="deactivate">
+                    <button class="btn btn-sm btn-outline-secondary w-100">Deactivate</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">Knowledge tests (graded)</div>
+          <div class="list-group list-group-flush">
+            {% for t in tests %}
+            {% set rel = releases.get(('test', t.id)) %}
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <strong>{{ t.title }}</strong>
+                  <div class="mb-1">
+                    <a class="small" href="{{ url_for('instructor_test_preview', section_id=section.id, test_id=t.id) }}">View full test</a>
+                  </div>
+                  <div class="small text-muted">
+                    Pass ≥ {{ t.passing_score }}%
+                    {% if rel and rel.is_active %}
+                      · <span class="text-success">Open</span>
+                      {{ rel.available_from.strftime('%Y-%m-%d %H:%M') if rel.available_from else 'now' }}
+                      → {{ rel.available_until.strftime('%Y-%m-%d %H:%M') if rel.available_until else '—' }}
+                    {% else %}
+                      · <span class="text-danger">Closed</span>
+                    {% endif %}
+                  </div>
+                  <form method="post" action="{{ url_for('toggle_release') }}" class="mt-2">
+                    <input type="hidden" name="section_id" value="{{ section.id }}">
+                    <input type="hidden" name="content_type" value="test">
+                    <input type="hidden" name="content_id" value="{{ t.id }}">
+                    <input type="hidden" name="schedule_mode" value="duration">
+                    <div class="d-flex flex-wrap gap-2 align-items-end mb-1">
+                      <div>
+                        <label class="form-label small mb-0">Open for</label>
+                        <select name="duration_minutes" class="form-select form-select-sm">
+                          <option value="45">45 min</option>
+                          <option value="60">1 hour</option>
+                          <option value="75">75 min</option>
+                          <option value="90" selected>90 min</option>
+                          <option value="120">2 hours</option>
+                          <option value="180">3 hours</option>
+                          <option value="240">4 hours</option>
+                          <option value="1440">24 hours</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="form-label small mb-0">Who</label>
+                        <select name="audience" class="form-select form-select-sm js-audience">
+                          <option value="class" selected>Whole class</option>
+                          <option value="students">Selected students</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="js-student-picks d-none border rounded p-2 mb-2" style="max-height:8rem;overflow:auto">
+                      <div class="d-flex gap-1 mb-1">
+                        <button type="button" class="btn btn-sm btn-outline-navy js-select-all">All</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-clear-all">None</button>
+                      </div>
+                      {% for e in enrollments %}
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="student_ids" value="{{ e.user_id }}" id="open-stu-{{ t.id }}-{{ e.user_id }}">
+                        <label class="form-check-label small" for="open-stu-{{ t.id }}-{{ e.user_id }}">{{ e.user.full_name if e.user else e.user_id }}</label>
+                      </div>
+                      {% else %}
+                      <div class="small text-muted">Enroll students first.</div>
+                      {% endfor %}
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                      <button class="btn btn-sm btn-brand" name="action" value="activate">Open now</button>
+                      {% if rel and rel.is_active %}
+                      <button class="btn btn-sm btn-outline-secondary" name="action" value="deactivate">Close</button>
+                      {% endif %}
+                    </div>
+                  </form>
+                </div>
+                <div style="min-width:17rem">
+                  <details class="border rounded-3 p-2 mb-2">
+                    <summary class="small fw-semibold">Schedule or pick students</summary>
+                  <form method="post" action="{{ url_for('toggle_release') }}" class="mt-2">
+                    <input type="hidden" name="section_id" value="{{ section.id }}">
+                    <input type="hidden" name="content_type" value="test">
+                    <input type="hidden" name="content_id" value="{{ t.id }}">
+                    <input type="hidden" name="action" value="activate">
+                    <div class="small fw-bold mb-1">Schedule access</div>
+                    <select name="schedule_mode" class="form-select form-select-sm mb-2 js-sched-mode">
+                      <option value="duration">From a start time · for a duration</option>
+                      <option value="window">Exact start &amp; end date/time</option>
+                    </select>
+                    <label class="form-label small mb-0">Starts</label>
+                    <input type="datetime-local" name="available_from" class="form-control form-control-sm mb-2">
+                    <div class="js-duration-block">
+                      <label class="form-label small mb-0">Duration open</label>
+                      <select name="duration_minutes" class="form-select form-select-sm mb-2">
+                        <option value="60">1 hour</option>
+                        <option value="75">75 minutes</option>
+                        <option value="90" selected>1.5 hours</option>
+                        <option value="120">2 hours</option>
+                        <option value="180">3 hours</option>
+                        <option value="240">4 hours</option>
+                        <option value="1440">24 hours</option>
+                        <option value="2880">48 hours</option>
+                        <option value="4320">72 hours</option>
+                      </select>
+                    </div>
+                    <div class="js-window-block d-none">
+                      <label class="form-label small mb-0">Ends</label>
+                      <input type="datetime-local" name="available_until" class="form-control form-control-sm mb-2">
+                    </div>
+                    <div class="small fw-bold mb-1">Who can take it</div>
+                    <div class="form-check">
+                      <input class="form-check-input js-audience" type="radio" name="audience" value="class" id="aud-class-{{ t.id }}" checked>
+                      <label class="form-check-label" for="aud-class-{{ t.id }}">Whole class</label>
+                    </div>
+                    <div class="form-check mb-1">
+                      <input class="form-check-input js-audience" type="radio" name="audience" value="students" id="aud-stu-{{ t.id }}">
+                      <label class="form-check-label" for="aud-stu-{{ t.id }}">Specific student(s)</label>
+                    </div>
+                    <div class="js-student-picks d-none border rounded p-2 mb-2" style="max-height:8rem;overflow:auto">
+                      <div class="d-flex gap-1 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-navy js-select-all">Select all</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-clear-all">Clear</button>
+                      </div>
+                      {% for e in enrollments %}
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="student_ids" value="{{ e.user_id }}" id="stu-{{ t.id }}-{{ e.user_id }}">
+                        <label class="form-check-label small" for="stu-{{ t.id }}-{{ e.user_id }}">{{ e.user.full_name if e.user else e.user_id }}</label>
+                      </div>
+                      {% else %}
+                      <div class="small text-muted">Enroll students first.</div>
+                      {% endfor %}
+                    </div>
+                    <button class="btn btn-sm btn-brand w-100">Open / schedule test</button>
+                  </form>
+                  </details>
+                  {% set srels = student_releases.get(('test', t.id), []) if student_releases is defined else [] %}
+                  {% set live_sids = srels | selectattr('is_active') | map(attribute='user_id') | list %}
+                  {% if live_sids %}
+                  <div class="small mb-2">
+                    Open for:
+                    {% for e in enrollments if e.user_id in live_sids %}
+                      {{ e.user.full_name if e.user else e.user_id }}{% if not loop.last %}; {% endif %}
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                  <form method="post" action="{{ url_for('toggle_release') }}">
+                    <input type="hidden" name="section_id" value="{{ section.id }}">
+                    <input type="hidden" name="content_type" value="test">
+                    <input type="hidden" name="content_id" value="{{ t.id }}">
+                    <input type="hidden" name="action" value="deactivate">
+                    <input type="hidden" name="audience" value="class">
+                    <button class="btn btn-sm btn-outline-secondary w-100 mb-1">Close whole class</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="staff">
+    <div class="card mb-3">
+      <div class="card-header navy">Primary instructor for this class</div>
+      <div class="card-body">
+        <p class="mb-2"><strong>{{ section.instructor.full_name if section.instructor else 'Unassigned' }}</strong>
+          {% if section.instructor %}<span class="text-muted">· {{ section.instructor.email }}</span>{% endif %}
+          {% if section.instructor and teach_totals is defined %}
+          <span class="badge badge-live">Taught {{ fmt_seconds(teach_totals.get(section.instructor_id, 0)) if fmt_seconds is defined else '' }}</span>
+          {% endif %}
+        </p>
+        {% if current_user.role == 'admin' and instructors %}
+        <form method="post" action="{{ url_for('section_set_instructor', section_id=section.id) }}" class="d-flex flex-wrap gap-2">
+          <select name="instructor_id" class="form-select" style="max-width:20rem">
+            {% for i in instructors %}
+            <option value="{{ i.id }}" {% if section.instructor_id == i.id %}selected{% endif %}>{{ i.full_name }} ({{ i.email }})</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-brand">Set primary instructor</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header navy">Curriculum instructors (all classes in {{ section.course.title }})</div>
+      <div class="card-body">
+        {% if course_instructor_links %}
+        <ul class="mb-3">
+          {% for link in course_instructor_links %}
+          <li>{{ link.user.full_name if link.user else 'Instructor' }}
+            <span class="text-muted small">{{ link.user.email if link.user else '' }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">No extra instructors on this curriculum set yet.</p>
+        {% endif %}
+        {% if current_user.role == 'admin' and instructors %}
+        <form method="post" action="{{ url_for('section_add_course_instructor', section_id=section.id) }}" class="d-flex flex-wrap gap-2">
+          <select name="user_id" class="form-select" style="max-width:20rem">
+            {% for i in instructors %}
+            <option value="{{ i.id }}">{{ i.full_name }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-outline-navy">Add to this curriculum</button>
+        </form>
+        <p class="small text-muted mt-2 mb-0">Curriculum instructors can open every class in this course. Primary instructor owns this class by default.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Students -->
+  <div class="tab-pane fade" id="students">
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <div class="card">
+          <div class="card-header">Add student</div>
+          <div class="card-body">
+            <form method="post" action="{{ url_for('instructor_enroll') }}">
+              <input type="hidden" name="section_id" value="{{ section.id }}">
+              <div class="mb-3">
+                <label class="form-label">From existing students</label>
+                <select name="user_id" class="form-select">
+                  <option value="">— Select —</option>
+                  {% for s in available_students %}
+                  <option value="{{ s.id }}">{{ s.full_name }} ({{ s.email }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <p class="text-center text-muted small">or create / enroll by email</p>
+              <div class="mb-2">
+                <input type="email" name="email" class="form-control" placeholder="student@example.com">
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col"><input type="text" name="first_name" class="form-control" placeholder="First name"></div>
+                <div class="col"><input type="text" name="last_name" class="form-control" placeholder="Last name"></div>
+              </div>
+              <button class="btn btn-brand">Enroll</button>
+            </form>
+            <p class="small text-muted mt-2 mb-0">New accounts get password <code>student123</code>.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card">
+          <div class="card-header">Roster ({{ enrollments|length }})</div>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Progress</th><th>Time in material</th><th></th></tr>
+              </thead>
+              <tbody>
+                {% for e in enrollments %}
+                <tr>
+                  <td>{{ e.user.full_name }}</td>
+                  <td class="small">{{ e.user.email }}</td>
+                  <td>{{ '%.0f'|format(e.progress_percent) }}%</td>
+                  <td class="small">{{ fmt_seconds(study_totals.get(e.user_id, 0)) if fmt_seconds is defined else '—' }}</td>
+                  <td class="text-end">
+                    <form method="post" action="{{ url_for('instructor_unenroll') }}" class="d-inline"
+                          onsubmit="return confirm('Remove this student?')">
+                      <input type="hidden" name="section_id" value="{{ section.id }}">
+                      <input type="hidden" name="enrollment_id" value="{{ e.id }}">
+                      <button class="btn btn-sm btn-outline-danger">Remove</button>
+                    </form>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-muted">No students enrolled yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analysis links -->
+  <div class="tab-pane fade" id="analysis">
+    <div class="card">
+      <div class="card-header">Knowledge test item analysis</div>
+      <div class="list-group list-group-flush">
+        {% for t in tests %}
+        <a class="list-group-item list-group-item-action d-flex justify-content-between"
+           href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=t.id) }}">
+          <span>{{ t.title }}</span>
+          <span class="text-muted small">Class performance →</span>
+        </a>
+        {% else %}
+        <div class="list-group-item text-muted">No tests.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('form').forEach(form => {
+  const mode = form.querySelector('.js-sched-mode');
+  if (!mode) return;
+  const dur = form.querySelector('.js-duration-block');
+  const win = form.querySelector('.js-window-block');
+  const sync = () => {
+    const windowMode = mode.value === 'window';
+    dur.classList.toggle('d-none', windowMode);
+    win.classList.toggle('d-none', !windowMode);
+  };
+  mode.addEventListener('change', sync);
+  sync();
+});
+document.querySelectorAll('form').forEach(form => {
+  const picks = form.querySelector('.js-student-picks');
+  if (!picks) return;
+  function audienceValue() {
+    const sel = form.querySelector('select.js-audience');
+    if (sel) return sel.value;
+    const radio = form.querySelector('.js-audience:checked');
+    return radio ? radio.value : 'class';
+  }
+  form.querySelectorAll('.js-audience').forEach(el => {
+    el.addEventListener('change', () => {
+      picks.classList.toggle('d-none', audienceValue() !== 'students');
+    });
+  });
+  picks.classList.toggle('d-none', audienceValue() !== 'students');
+  const boxes = () => form.querySelectorAll('.js-student-picks input[name="student_ids"]');
+  const selAll = form.querySelector('.js-select-all');
+  const clrAll = form.querySelector('.js-clear-all');
+  if (selAll) selAll.addEventListener('click', () => boxes().forEach(b => { b.checked = true; }));
+  if (clrAll) clrAll.addEventListener('click', () => boxes().forEach(b => { b.checked = false; }));
+});
+if (location.hash) {
+  const tab = document.querySelector('[data-bs-target="' + location.hash + '"]');
+  if (tab) new bootstrap.Tab(tab).show();
+}
+</script>
+{% endblock %}

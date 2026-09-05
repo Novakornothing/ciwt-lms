@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ title|default('IT A-school outline') }} — CIWT{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ title|default('IT A-school outline') }}</h1>
+  <p class="mb-0">{{ stats.blocks }} blocks · {{ stats.hours }} hours · {{ stats.eos }} enabling objectives · {{ stats.with_lab }} live labs · {{ stats.checklist_only }} written checks. Original CIWT map — not official NAVEDTRA.</p>
+</div>
+<p class="mb-3">
+  <a class="btn btn-brand btn-sm" href="{{ url_for('aschool_trainee_guide') }}">Trainee guide (print / PDF)</a>
+  <a class="btn btn-outline-navy btn-sm" href="{{ url_for('aschool_trainee_guide_txt') }}">Download .txt</a>
+  <a class="btn btn-outline-navy btn-sm" href="{{ url_for('aschool_outline') }}">A-school</a>
+  <a class="btn btn-outline-navy btn-sm" href="{{ url_for('cschool_comms') }}">C-comms</a>
+  <a class="btn btn-outline-navy btn-sm" href="{{ url_for('cschool_sysadmin') }}">C-sysadmin</a>
+  {% if current_user.role != 'student' %}
+  <a class="btn btn-outline-navy btn-sm" href="{{ url_for('aschool_progress') }}">EO roster</a>
+  {% endif %}
+</p>
+{% for b in blocks %}
+<section class="card mb-3" id="{{ b.id }}">
+  <div class="card-header navy">{{ b.title }} <span class="small fw-normal">Weeks {{ b.week }} · {{ b.hours }} hrs</span></div>
+  <div class="card-body">
+    <p>{{ b.goal }}</p>
+    <ul class="list-unstyled mb-0">
+      {% for e in b.eos %}
+      <li class="d-flex gap-2 align-items-start mb-2" id="{{ e.id }}">
+        <form method="post" action="{{ url_for('aschool_toggle_eo', eo_id=e.id) }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button type="submit" class="btn btn-sm {% if e.id in done %}btn-success{% else %}btn-outline-navy{% endif %}">
+            {% if e.id in done %}Done{% else %}Mark{% endif %}
+          </button>
+        </form>
+        <div>
+          <div>{{ e.text }}</div>
+          <div class="small text-muted">
+            {% if e.lab %}<a href="{{ url_for('interactive_lab', lab_id=e.lab) }}">Open lab {{ e.lab }}</a>
+            {% else %}Check: {{ e.check }}{% endif %}
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

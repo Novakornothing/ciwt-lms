@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Search curriculum{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Find curriculum</h1>
+  <p class="mb-0">Search lessons, chapters, and knowledge tests.</p>
+</div>
+
+<form class="card card-body mb-4" method="get" action="{{ url_for('curriculum_search') }}">
+  <div class="d-flex flex-wrap gap-2">
+    <input type="search" name="q" value="{{ q }}" class="form-control" style="min-width:16rem;flex:1"
+           placeholder="Example: RAID, APIPA, Secure Boot, DHCP" autofocus>
+    <button class="btn btn-brand">Search</button>
+  </div>
+</form>
+
+{% if q %}
+  <p class="text-muted">{{ results|length }} result{{ 's' if results|length != 1 else '' }} for “{{ q }}”</p>
+  {% if results %}
+  <div class="list-group mb-3">
+    {% for r in results %}
+    <a class="list-group-item list-group-item-action" href="{{ r.url }}">
+      <div class="d-flex justify-content-between flex-wrap gap-2">
+        <strong>{{ r.title }}</strong>
+        <span class="badge {% if r.locked %}badge-closed{% else %}badge-live{% endif %}">{{ r.kind }}{% if r.locked %} · locked{% endif %}</span>
+      </div>
+      <div class="small text-muted">{{ r.course }}{% if r.chapter and r.chapter != r.course %} · {{ r.chapter }}{% endif %}</div>
+      {% if r.snippet %}<div class="small mt-1">{{ r.snippet }}</div>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card card-body text-muted">No matching curriculum. Try a shorter term (RAM, VLAN, DNS).</div>
+  {% endif %}
+{% else %}
+  <div class="card card-body text-muted">Enter a topic, tool, or chapter name to jump straight to the lesson.</div>
+{% endif %}
+{% endblock %}

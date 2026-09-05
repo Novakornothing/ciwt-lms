@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ category }} — {{ test.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=test.id) }}">{{ test.title }}</a></li>
+    <li class="breadcrumb-item active">{{ category }}</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ category }}</h1>
+  <p class="mb-0">{{ section.name }} · {{ test.title }} · {{ n_attempts }} attempt{{ 's' if n_attempts != 1 else '' }}</p>
+</div>
+<div class="card mb-4">
+  <div class="card-header navy">Subcategory performance</div>
+  <div class="list-group list-group-flush">
+    {% for s in subs %}
+    <div class="list-group-item">
+      <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
+        <strong class="wrap-ok">{{ s.subcategory }}</strong>
+        <span>{{ s.pct }}% <span class="text-muted small">({{ s.correct }}/{{ s.total }})</span></span>
+      </div>
+      <div class="progress" style="height:.65rem"><div class="progress-bar" style="width:{{ s.pct }}%"></div></div>
+    </div>
+    {% else %}
+    <div class="list-group-item text-muted">No data for this category.</div>
+    {% endfor %}
+  </div>
+</div>
+<a href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=test.id) }}" class="btn btn-brand">Back to test performance</a>
+{% endblock %}

@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% block title %}Admin — CIWT LMS{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Admin tools</h1>
+  <p class="mb-0">Create classes and people here. Use the <strong>left menu</strong> for Teaching time, Test analytics, Tickets, and exports.</p>
+</div>
+<p class="small text-muted mb-3">
+  On this page:
+  {% if acting_role != 'instructor' %}<a href="#admin-class">Create class</a> ·{% endif %}
+  <a href="#admin-people">Add instructor / admin</a> ·
+  <a href="#admin-staff">Staff roster</a>
+</p>
+<div class="card mb-4 border-warning">
+  <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <strong>Reset demo data</strong>
+      <div class="small text-muted">Wipes the database and reloads users, classes, curriculum, and sample attempts. Cannot be undone.</div>
+    </div>
+    <form method="post" action="{{ url_for('seed_data_route') }}" onsubmit="return confirm('Re-seed the entire demo database? All live changes will be lost.');">
+      <button class="btn btn-outline-navy">Re-seed demo database</button>
+    </form>
+  </div>
+</div>
+
+<div id="admin-class"></div>
+
+<div class="row g-4">
+  <!-- Create section — administrators only (not instructor work mode) -->
+  <div class="col-lg-6">
+    {% if acting_role == 'instructor' %}
+    <div class="alert alert-info">Class creation is an administrator task. Switch back to admin mode to create a class.</div>
+    {% else %}
+    <div class="card">
+      <div class="card-header">Create class section</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('admin_create_section') }}">
+          <div class="mb-3">
+            <label class="form-label">Section name</label>
+            <input type="text" name="name" class="form-control" required
+                   placeholder="IT Support Fall 2026 — Section D">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Course</label>
+            <select name="course_id" class="form-select" required>
+              {% for c in courses %}
+              <option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Assign instructor</label>
+            <select name="instructor_id" class="form-select" required>
+              {% for i in instructors %}
+              <option value="{{ i.id }}">{{ i.full_name }} ({{ i.email }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col">
+              <label class="form-label">Start</label>
+              <input type="date" name="start_date" class="form-control">
+            </div>
+            <div class="col">
+              <label class="form-label">End</label>
+              <input type="date" name="end_date" class="form-control">
+            </div>
+            <div class="col">
+              <label class="form-label">Max students</label>
+              <input type="number" name="max_students" class="form-control" value="25" min="1">
+            </div>
+          </div>
+          <button class="btn btn-brand">Create section</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card mt-4" id="admin-course-instr">
+      <div class="card-header navy">Add instructor to a curriculum set</div>
+      <div class="card-body">
+        <p class="small text-muted mb-3">Gives the instructor access to every class in that course (release content, scores, analytics). You can still set a primary instructor per class below.</p>
+        <form method="post" action="{{ url_for('admin_add_course_instructor') }}" class="row g-2 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label">Curriculum set</label>
+            <select name="course_id" class="form-select" required>
+              {% for c in courses %}
+              <option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Instructor</label>
+            <select name="user_id" class="form-select" required>
+              {% for i in instructors %}
+              <option value="{{ i.id }}">{{ i.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-brand w-100">Add</button>
+          </div>
+        </form>
+        <div class="mt-3">
+          {% for c in courses %}
+          <div class="small mb-2">
+            <strong>{{ c.title }}</strong>
+            {% set links = course_instructors.get(c.id, []) if course_instructors is defined else [] %}
+            {% if links %}
+              {% for link in links %}
+              <form method="post" action="{{ url_for('admin_remove_course_instructor') }}" class="d-inline">
+                <input type="hidden" name="link_id" value="{{ link.id }}">
+                <span class="badge badge-live">{{ link.user.full_name if link.user else 'Instructor' }}</span>
+                <button class="btn btn-sm btn-link text-danger p-0 align-baseline">remove</button>
+              </form>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted">No course-level instructors yet</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-4" id="admin-people">
+      <div class="card-header navy">Add instructor or admin</div>
+      <div class="card-body">
+        <p class="small text-muted">Creates a staff account. Use Role to choose Instructor (teaches classes) or Admin (full control). If the email already exists, that person is updated to the selected role.</p>
+        <form method="post" action="{{ url_for('admin_create_instructor') }}">
+          <div class="row g-2 mb-2">
+            <div class="col">
+              <label class="form-label">First name</label>
+              <input type="text" name="first_name" class="form-control" placeholder="e.g. Jordan" required>
+            </div>
+            <div class="col">
+              <label class="form-label">Last name</label>
+              <input type="text" name="last_name" class="form-control" placeholder="e.g. Lee" required>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Work email (sign-in)</label>
+            <input type="email" name="email" class="form-control" placeholder="e.g. jordan.lee@lms.local" required>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col">
+              <label class="form-label">Role</label>
+              <select name="role" class="form-select" required>
+                <option value="instructor" selected>Instructor — teach classes, release tests</option>
+                <option value="admin">Admin — manage people, classes, tickets</option>
+              </select>
+            </div>
+            <div class="col">
+              <label class="form-label">Temporary password</label>
+              <input type="text" name="password" class="form-control" placeholder="Leave blank for changeme123">
+            </div>
+          </div>
+          <button class="btn btn-brand">Create staff account</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">Create student or other user</div>
+      <div class="card-body">
+        <p class="small text-muted">Use this for students (default). Staff can also be created here if you pick Instructor or Admin.</p>
+        <form method="post" action="{{ url_for('admin_create_user') }}">
+          <div class="row g-2 mb-2">
+            <div class="col">
+              <label class="form-label">First name</label>
+              <input type="text" name="first_name" class="form-control" placeholder="e.g. Alex" required>
+            </div>
+            <div class="col">
+              <label class="form-label">Last name</label>
+              <input type="text" name="last_name" class="form-control" placeholder="e.g. Rivera" required>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Email (sign-in)</label>
+            <input type="email" name="email" class="form-control" placeholder="e.g. student12@lms.local" required>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col">
+              <label class="form-label">Role</label>
+              <select name="role" class="form-select" required>
+                <option value="student" selected>Student — takes lessons and tests</option>
+                <option value="instructor">Instructor — teaches classes</option>
+                <option value="admin">Admin — full control</option>
+              </select>
+            </div>
+            <div class="col">
+              <label class="form-label">Temporary password</label>
+              <input type="text" name="password" class="form-control" placeholder="Leave blank for changeme123">
+            </div>
+          </div>
+          <button class="btn btn-outline-dark">Create user</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sections list -->
+  <div class="col-lg-6">
+    <div class="card" id="admin-sections">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Class sections</span>
+        <form method="post" action="{{ url_for('seed_data_route') }}"
+              onsubmit="return confirm('This will wipe and re-seed the database. Continue?')">
+          <button class="btn btn-sm btn-outline-danger">Re-seed demo data</button>
+        </form>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr><th>Name</th><th>Course</th><th>Instructor</th><th>Students</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for s in sections %}
+            <tr class="{% if not s.is_active %}table-secondary{% endif %}">
+              <td>{{ s.name }}</td>
+              <td>{{ s.course.code }}</td>
+              <td class="small">
+                <form method="post" action="{{ url_for('admin_assign_instructor') }}" class="d-flex gap-1">
+                  <input type="hidden" name="section_id" value="{{ s.id }}">
+                  <select name="instructor_id" class="form-select form-select-sm">
+                    {% for i in instructors %}
+                    <option value="{{ i.id }}" {% if s.instructor_id == i.id %}selected{% endif %}>{{ i.full_name }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-sm btn-outline-navy">Set</button>
+                </form>
+              </td>
+              <td>{{ s.enrollments|length }}/{{ s.max_students }}</td>
+              <td class="text-end">
+                <a href="{{ url_for('instructor_section', section_id=s.id) }}" class="btn btn-sm btn-outline-primary">Open</a>
+                <form method="post" action="{{ url_for('admin_toggle_section') }}" class="d-inline">
+                  <input type="hidden" name="section_id" value="{{ s.id }}">
+                  <button class="btn btn-sm btn-outline-secondary">
+                    {% if s.is_active %}Deactivate{% else %}Activate{% endif %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-muted">No sections.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header navy d-flex justify-content-between align-items-center">
+        <span>Teaching time by instructor and class</span>
+        <a class="btn btn-sm btn-outline-gold" href="{{ url_for('admin_teaching_time') }}">Course / quarter / year</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Instructor</th><th>Class</th><th>Curriculum</th><th>Time</th></tr></thead>
+          <tbody>
+            {% for row in teach_by_class %}
+            <tr>
+              <td>{{ row.user.full_name if row.user else '—' }}</td>
+              <td>{% if row.section %}<a href="{{ url_for('instructor_section', section_id=row.section.id) }}">{{ row.section.name }}</a>{% else %}<span class="text-muted">No class selected</span>{% endif %}</td>
+              <td class="small">{{ row.section.course.code if row.section and row.section.course else '—' }}</td>
+              <td>{{ fmt_seconds(row.seconds) if fmt_seconds is defined else row.seconds }}{% if row.open %} <span class="badge badge-live">live</span>{% endif %}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-muted">No teaching sessions yet. Instructors start the top-bar timer and pick a class.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt-4" id="admin-staff">
+      <div class="card-header navy">Administrators ({{ admins|length if admins is defined else 0 }})</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Name</th><th>Email</th><th>Sign-in</th><th></th></tr></thead>
+          <tbody>
+            {% for a in admins %}
+            <tr>
+              <td>{{ a.full_name }}{% if a.id == current_user.id %} <span class="badge badge-live">you</span>{% endif %}</td>
+              <td class="small">{{ a.email }}</td>
+              <td><span class="badge bg-dark text-uppercase">admin</span></td>
+              <td class="text-end">
+                {% if a.id != current_user.id %}
+                <form method="post" action="{{ url_for('admin_demote_admin') }}" class="d-inline"
+                      onsubmit="return confirm('Remove admin access for {{ a.full_name }}? They become an instructor.')">
+                  <input type="hidden" name="user_id" value="{{ a.id }}">
+                  <button class="btn btn-sm btn-outline-navy">Make instructor</button>
+                </form>
+                {% else %}
+                <span class="small text-muted">Signed in as this admin</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-muted">No administrators found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-body small text-muted py-2">
+        Create another admin with <strong>Add instructor or admin</strong> on the left (Role = Admin). Demo default: admin@lms.local / admin123.
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header navy">Instructors ({{ instructors|length }})</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Name</th><th>Email</th><th>Classes</th><th>Teaching time</th><th></th></tr></thead>
+          <tbody>
+            {% for i in instructors %}
+            <tr>
+              <td>{{ i.full_name }}</td>
+              <td class="small">{{ i.email }}</td>
+              <td class="small">
+                {% set taught = sections|selectattr('instructor_id', 'equalto', i.id)|list %}
+                {{ taught|length }}
+              </td>
+              <td class="small">{{ fmt_seconds(teach_totals.get(i.id, 0)) if fmt_seconds is defined else '—' }}</td>
+              <td class="text-end">
+                <form method="post" action="{{ url_for('admin_remove_instructor') }}" class="d-flex flex-wrap gap-1 justify-content-end"
+                      onsubmit="return confirm('Remove instructor access for {{ i.full_name }}?')">
+                  <input type="hidden" name="user_id" value="{{ i.id }}">
+                  {% if instructors|length > 1 %}
+                  <select name="reassign_to" class="form-select form-select-sm" style="min-width:9rem">
+                    <option value="">Reassign classes to…</option>
+                    {% for other in instructors if other.id != i.id %}
+                    <option value="{{ other.id }}">{{ other.full_name }}</option>
+                    {% endfor %}
+                  </select>
+                  {% endif %}
+                  <button class="btn btn-sm btn-outline-danger">Remove</button>
+                </form>
+                <form method="post" action="{{ url_for('admin_make_admin') }}" class="d-inline"
+                      onsubmit="return confirm('Make {{ i.full_name }} an administrator? Only an admin can do this.')">
+                  <input type="hidden" name="user_id" value="{{ i.id }}">
+                  <button class="btn btn-sm btn-brand mt-1">Make admin</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-muted">No instructors yet. Add one on the left.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-body small text-muted">
+        Remove drops instructor access (account stays as a student). If they own classes, pick a replacement first.
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">Users ({{ users|length }})</div>
+      <div class="table-responsive" style="max-height: 320px; overflow:auto">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td>{{ u.full_name }}</td>
+              <td class="small">{{ u.email }}</td>
+              <td><span class="badge bg-secondary text-uppercase">{{ u.role }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

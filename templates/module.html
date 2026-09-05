@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% block title %}{{ module.title }} — CIWT LMS{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section_id) }}">Class</a></li>
+    <li class="breadcrumb-item active">{{ module.title }}</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+      <h1 class="h3 mb-1">{{ module.title }}</h1>
+      <p class="mb-0">~{{ module.estimated_minutes }} min study · Progressive chapter · Built-in narration</p>
+    </div>
+    <a href="{{ url_for('student_section', section_id=section_id) }}" class="btn btn-outline-gold btn-sm">← Back to class</a>
+  </div>
+</div>
+
+<div class="card mb-3 narrate-bar">
+  <div class="card-body py-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <span class="fw-semibold"><i class="bi bi-soundwave"></i> Narrate</span>
+      <select id="ttsVoice" class="form-select form-select-sm" style="width:auto">
+        <option value="en-US-JennyNeural" selected>Jenny — neural instructor</option>
+        <option value="en-US-GuyNeural">Guy — neural instructor</option>
+      </select>
+      <button type="button" class="btn btn-brand btn-sm" id="ttsPlay"><i class="bi bi-play-fill"></i> Play</button>
+      <button type="button" class="btn btn-outline-navy btn-sm" id="ttsFromHere" title="Start from your text selection"><i class="bi bi-cursor-text"></i> From selection</button>
+      <button type="button" class="btn btn-outline-navy btn-sm" id="ttsPause"><i class="bi bi-pause-fill"></i> Pause</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="ttsStop"><i class="bi bi-stop-fill"></i> Stop</button>
+      <span class="small text-muted" id="ttsStatus">Select text, then From selection — or Play for the full lesson</span>
+      <audio id="ttsAudio" preload="none" class="d-none"></audio>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 g-lg-4 module-layout">
+  <div class="col-lg-8">
+    <div class="card card-elevated">
+      <div class="card-header navy">Curriculum</div>
+      <div class="card-body module-content" id="lessonBody">
+        {{ module.content | render_lesson | safe }}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3 border-2" style="border-color: var(--accent-border) !important;">
+      <div class="card-header navy d-flex justify-content-between align-items-center">
+        <span>Labs for this chapter</span>
+      </div>
+      <div class="list-group list-group-flush" style="max-height: 16rem; overflow-y: auto;">
+        {% for lab in chapter_labs %}
+        <a class="list-group-item list-group-item-action py-2"
+           href="{{ url_for('interactive_lab', lab_id=lab.id) }}">
+          <span class="badge text-bg-dark">{{ lab.kind|upper }}</span>
+          {{ lab.title }}
+        </a>
+        {% else %}
+        <div class="list-group-item small text-muted">
+          <a href="{{ url_for('interactive_labs_index') }}">Open live labs</a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card module-side-nav">
+      <div class="card-header navy">Progress quizzes</div>
+      <div class="list-group list-group-flush">
+        {% for q in quizzes %}
+        <a href="{{ url_for('take_quiz', section_id=section_id, quiz_id=q.id) }}"
+           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+          <span>{{ q.title }}</span>
+          <i class="bi bi-chevron-right"></i>
+        </a>
+        {% else %}
+        <div class="list-group-item text-muted">No quizzes for this module.</div>
+        {% endfor %}
+      </div>
+      <div class="card-body small text-muted">Ungraded. Graded tests are scheduled by your instructor.</div>
+    </div>
+  </div>
+</div>
+{% if current_user.is_authenticated %}
+<style>
+  #lessonBody ::selection { background:#f0c14b; color:#0a1628; }
+  #selectionTicketBar { z-index:2000; left:50%; bottom:1.25rem; width:min(36rem, calc(100vw - 1.5rem)); }
+  #selectionTicketBar .ticket-pop { background:#fff8e8; color:#0a1628; border:2px solid #c9a227; }
+  #selectionPreview { max-height:6.5rem; overflow:auto; white-space:pre-wrap; font-weight:600; }
+</style>
+<div id="selectionTicketBar" class="position-fixed translate-middle-x d-none">
+  <div class="ticket-pop rounded-3 p-3">
+    <div class="text-uppercase mb-1" style="font-size:.75rem;font-weight:700;color:#8a6d12">Highlighted text</div>
+    <div id="selectionPreview" class="mb-3"></div>
+    <button type="button" class="btn btn-brand" id="reportSelectionBtn">Report this text</button>
+    <button type="button" class="btn btn-outline-navy" id="selectionDismiss">Dismiss</button>
+  </div>
+</div>
+{% endif %}
+<style>
+  .tts-word { border-radius: 3px; transition: background .12s, color .12s; }
+  .tts-word.tts-active {
+    background: #f0c14b !important;
+    color: #0a1628 !important;
+    box-shadow: 0 0 0 3px rgba(240,193,75,.55);
+    font-weight: 700;
+  }
+  [data-theme="dark"] .tts-word.tts-active {
+    background: rgba(240, 193, 75, 0.65);
+    color: #0a1628 !important;
+  }
+  .tts-word.tts-done {
+    background: rgba(62, 199, 255, 0.12);
+  }
+</style>
+
+<style>
+  @media (min-width: 992px) {
+    .module-side-nav {
+      position: sticky;
+      top: calc(var(--topbar-h, 64px) + 0.75rem);
+      max-height: calc(100vh - var(--topbar-h, 64px) - 1.5rem);
+      overflow-y: auto;
+      z-index: 1005;
+    }
+  }
+</style>
+{% endblock %}
+
+<style>
+  @media (min-width: 992px) {
+    .module-layout > .col-lg-8 { flex: 1 1 auto; max-width: none; min-width: 0; }
+    .module-layout > .col-lg-4 { flex: 0 0 280px; max-width: 280px; }
+  }
+</style>
+{% block scripts %}
+<script>
+(function () {
+  const status = document.getElementById('ttsStatus');
+  const body = document.getElementById('lessonBody');
+  const playBtn = document.getElementById('ttsPlay');
+  const fromBtn = document.getElementById('ttsFromHere');
+  const voiceSel = document.getElementById('ttsVoice');
+  const audio = document.getElementById('ttsAudio');
+  if (!status || !body || !playBtn || !audio) return;
+
+  let objectUrl = null;
+  let lastSelection = '';
+  let wordTimings = [];
+  let wordSpans = [];
+  let raf = null;
+  let startOffsetInFull = 0; // char offset when reading from selection
+
+  function setStatus(msg) { status.textContent = msg; }
+
+  function fullLessonText() {
+    const clone = body.cloneNode(true);
+    clone.querySelectorAll('button, .btn, script, style, nav, .tts-word').forEach(el => {
+      if (el.classList && el.classList.contains('tts-word')) {
+        el.replaceWith(document.createTextNode(el.textContent));
+      } else if (!el.classList || !el.classList.contains('tts-word')) {
+        if (el.tagName === 'BUTTON' || el.classList.contains('btn') || el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'NAV')
+          el.remove();
+      }
+    });
+    // unwrap any leftover
+    return (body.innerText || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function plainFromBody() {
+    return (body.innerText || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function clearHighlights() {
+    body.querySelectorAll('.tts-word').forEach(sp => {
+      const t = document.createTextNode(sp.textContent);
+      sp.replaceWith(t);
+    });
+    body.normalize();
+    wordSpans = [];
+    wordTimings = [];
+  }
+
+  /** Wrap each whitespace-separated token in the lesson in .tts-word spans */
+  function wrapWords() {
+    clearHighlights();
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        const p = node.parentElement;
+        if (!p || p.closest('script, style, button, .btn')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(textNode => {
+      const raw = textNode.nodeValue;
+      const parts = raw.split(/(\s+)/);
+      if (parts.length === 1 && !parts[0].trim()) return;
+      const frag = document.createDocumentFragment();
+      parts.forEach(part => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) {
+          frag.appendChild(document.createTextNode(part));
+        } else {
+          const sp = document.createElement('span');
+          sp.className = 'tts-word';
+          sp.textContent = part;
+          frag.appendChild(sp);
+        }
+      });
+      textNode.parentNode.replaceChild(frag, textNode);
+    });
+    wordSpans = Array.from(body.querySelectorAll('.tts-word'));
+  }
+
+  function selectionInLesson() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return '';
+    const inBody = (n) => {
+      const el = n && n.nodeType === 3 ? n.parentElement : n;
+      return el && body.contains(el);
+    };
+    if (!inBody(sel.anchorNode) && !inBody(sel.focusNode)) return '';
+    return (sel.toString() || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function textFromSelectionOnward() {
+    const full = plainFromBody();
+    const selected = selectionInLesson() || lastSelection;
+    if (!selected) return { text: '', offset: 0 };
+    const idx = full.indexOf(selected);
+    if (idx >= 0) return { text: full.slice(idx).trim(), offset: idx };
+    return { text: selected, offset: 0 };
+  }
+
+  function highlightAtTime(t) {
+    if (!wordTimings.length || !wordSpans.length) return;
+    let idx = -1;
+    for (let i = 0; i < wordTimings.length; i++) {
+      const w = wordTimings[i];
+      if (t >= w.start && t < w.end + 0.05) { idx = i; break; }
+      if (t >= w.start) idx = i;
+    }
+    // Map timing index to DOM spans: match sequential non-empty tokens from startOffset
+    // Build list of span indices corresponding to spoken words from start
+    if (!highlightAtTime._map || highlightAtTime._map.length !== wordTimings.length) {
+      const map = [];
+      let si = 0;
+      // Skip spans before startOffset by counting characters
+      let charCount = 0;
+      while (si < wordSpans.length && charCount < startOffsetInFull) {
+        charCount += (wordSpans[si].textContent || '').length;
+        // account for spaces roughly
+        charCount += 1;
+        si++;
+      }
+      for (let wi = 0; wi < wordTimings.length; wi++) {
+        const target = (wordTimings[wi].text || '').replace(/[^\w']/g, '').toLowerCase();
+        let found = -1;
+        for (let j = si; j < Math.min(si + 8, wordSpans.length); j++) {
+          const cand = (wordSpans[j].textContent || '').replace(/[^\w']/g, '').toLowerCase();
+          if (cand && target && (cand === target || cand.startsWith(target) || target.startsWith(cand))) {
+            found = j;
+            break;
+          }
+        }
+        if (found < 0) found = Math.min(si, wordSpans.length - 1);
+        map.push(found);
+        si = found + 1;
+      }
+      highlightAtTime._map = map;
+    }
+    const map = highlightAtTime._map;
+    const spanIdx = map[idx];
+    wordSpans.forEach((sp, i) => {
+      sp.classList.remove('tts-active');
+      if (map.indexOf(i) >= 0 && map.indexOf(i) < idx) sp.classList.add('tts-done');
+      else sp.classList.remove('tts-done');
+    });
+    if (spanIdx >= 0 && wordSpans[spanIdx]) {
+      const sp = wordSpans[spanIdx];
+      sp.classList.add('tts-active');
+      sp.classList.remove('tts-done');
+      /* no auto-scroll while narrating */
+    }
+  }
+
+  function tick() {
+    if (!audio.paused && !audio.ended) {
+      highlightAtTime(audio.currentTime + 0.2);
+      raf = requestAnimationFrame(tick);
+    }
+  }
+
+  async function speakNeural(text, label, offset) {
+    if (!text) { setStatus('Nothing to read — select text or use Play.'); return; }
+    startOffsetInFull = offset || 0;
+    highlightAtTime._map = null;
+    playBtn.disabled = true;
+    if (fromBtn) fromBtn.disabled = true;
+    setStatus('Generating narration…');
+    const voice = (voiceSel && voiceSel.value) || 'en-US-JennyNeural';
+    try {
+      wrapWords();
+      const res = await fetch('{{ url_for("api_narrate") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, voice: voice, words: true, format: 'json' })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || ('HTTP ' + res.status));
+      }
+      const data = await res.json();
+      wordTimings = data.words || [];
+      const b64 = data.audio_b64;
+      if (!b64) throw new Error('No audio');
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: data.mime || 'audio/mpeg' });
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrl = URL.createObjectURL(blob);
+      audio.src = objectUrl;
+      audio.onended = () => {
+        setStatus('Finished');
+        wordSpans.forEach(sp => { sp.classList.remove('tts-active'); sp.classList.add('tts-done'); });
+        if (raf) cancelAnimationFrame(raf);
+      };
+      audio.onplay = () => { if (raf) cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); };
+      await audio.play();
+      setStatus(label || 'Narrating · neural');
+    } catch (e) {
+      console.error(e);
+      setStatus('Could not narrate: ' + (e.message || 'error'));
+      clearHighlights();
+    } finally {
+      playBtn.disabled = false;
+      if (fromBtn) fromBtn.disabled = false;
+    }
+  }
+
+  document.addEventListener('mouseup', function () {
+    const t = selectionInLesson();
+    if (t.length >= 4) {
+      lastSelection = t;
+      setStatus('Selection ready — click From selection');
+    }
+  });
+
+  playBtn.onclick = () => {
+    if (!audio.paused && audio.currentTime > 0 && !audio.ended) {
+      audio.play();
+      return;
+    }
+    speakNeural(plainFromBody(), 'Narrating full lesson', 0);
+  };
+
+  if (fromBtn) {
+    fromBtn.onclick = () => {
+      const { text, offset } = textFromSelectionOnward();
+      if (!text) {
+        setStatus('Highlight a sentence in the lesson, then click From selection.');
+        return;
+      }
+      speakNeural(text, 'Narrating from selection', offset);
+    };
+  }
+
+  document.getElementById('ttsPause').onclick = () => {
+    audio.pause();
+    if (raf) cancelAnimationFrame(raf);
+    setStatus('Paused');
+  };
+  document.getElementById('ttsStop').onclick = () => {
+    audio.pause();
+    audio.currentTime = 0;
+    if (raf) cancelAnimationFrame(raf);
+    clearHighlights();
+    setStatus('Stopped');
+  };
+})();
+</script>
+
+
+
+
+
+{% if current_user.is_authenticated %}
+<script>
+(function(){
+  const body = document.getElementById('lessonBody');
+  const bar = document.getElementById('selectionTicketBar');
+  const preview = document.getElementById('selectionPreview');
+  const btn = document.getElementById('reportSelectionBtn');
+  if (!body || !bar || !btn) return;
+  let lastQuote = '';
+  function inBody(node){
+    const el = node && node.nodeType === 3 ? node.parentElement : node;
+    return el && body.contains(el);
+  }
+  document.addEventListener('mouseup', function(){
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    if (!inBody(sel.anchorNode) && !inBody(sel.focusNode)) return;
+    lastQuote = (sel.toString() || '').trim();
+    if (lastQuote.length < 4) { bar.classList.add('d-none'); return; }
+    preview.textContent = '“' + lastQuote.slice(0,500) + '”';
+    bar.classList.remove('d-none');
+  });
+  document.getElementById('selectionDismiss')?.addEventListener('click', () => bar.classList.add('d-none'));
+  btn.addEventListener('click', function(){
+    if (!lastQuote) return;
+    const params = new URLSearchParams({
+      section_id: '{{ section_id }}',
+      course_id: '{{ module.course_id }}',
+      quote: lastQuote
+    });
+    window.location.href = '{{ url_for("tickets_new") }}?' + params.toString();
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,323 @@
+<div class="arcade" id="binaryGame">
+  <div class="arcade-top">
+    <div>
+      <div class="arcade-kicker">Skill drill</div>
+      <h2 class="arcade-title">Binary Blitz</h2>
+    </div>
+    <div class="arcade-pills">
+      <span>BEST <b id="bgBest">0</b></span>
+      <span>COMBO <b id="bgCombo">0</b></span>
+    </div>
+  </div>
+
+  <ol class="how">
+    <li><b>Gold MAKE</b> — flip bits (click 0/1) until they add up to that number.</li>
+    <li><b>Blue TYPE</b> — bits are locked. Add the gold 1s and type the total, then Enter.</li>
+    <li>Rows mix both jobs and stack like Tetris. Clear them or the well fills.</li>
+  </ol>
+
+  <div class="arcade-stats">
+    <div class="stat"><em>Score</em><strong id="bgScore">0</strong></div>
+    <div class="stat"><em>Level</em><strong id="bgLevel">1</strong></div>
+    <div class="stat"><em>Stack</em><strong id="bgStack">0/7</strong></div>
+    <div class="stat"><em>Next</em><strong id="bgNext">—</strong></div>
+  </div>
+  <div class="drop-track"><i id="bgDropBar"></i></div>
+
+  <div class="board">
+    <div class="well">
+      <div class="pv" id="bgPv"></div>
+      <div class="stack" id="bgGrid"></div>
+    </div>
+    <aside class="side">
+      <p class="callout" id="bgCoach">Press Play. You will get stacked rows like Tetris.</p>
+      <label for="bgDecIn">Answer a TYPE row</label>
+      <div class="entry">
+        <input type="text" inputmode="numeric" autocomplete="off" id="bgDecIn" placeholder="0–255">
+        <button type="button" id="bgSubmit">Enter</button>
+      </div>
+      <div class="btns">
+        <button type="button" class="go" id="bgStart">Play</button>
+        <button type="button" class="ghost" id="bgPause">Pause</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<style>
+.arcade{
+  --ink:#eaf7fb; --dim:#8ec4d0; --gold:#f0c14a; --cyan:#4ad7ef; --ok:#5ee0a0; --bad:#ff8b7a;
+  margin:1.2rem 0 0; padding:1.1rem 1.15rem 1.2rem; border-radius:18px; color:var(--ink);
+  background:radial-gradient(120% 80% at 0% 0%,rgba(74,215,239,.14),transparent 50%),linear-gradient(180deg,#0a2430,#06141c);
+  border:1px solid rgba(74,215,239,.28); box-shadow:0 18px 40px rgba(0,0,0,.28);
+}
+.arcade-top{display:flex;justify-content:space-between;gap:1rem;align-items:flex-end;margin-bottom:.55rem}
+.arcade-kicker{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);font-weight:700}
+.arcade-title{margin:0;font-size:1.3rem;font-weight:800}
+.arcade-pills span{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:.2rem .55rem;font-size:.72rem;color:var(--dim);margin-left:.3rem}
+.arcade-pills b{color:var(--gold);font-family:ui-monospace,monospace}
+.how{margin:0 0 .8rem;padding:.7rem .9rem .7rem 1.4rem;background:rgba(240,193,74,.1);border:1px solid rgba(240,193,74,.35);border-radius:12px;color:var(--ink)}
+.how li{margin:.25rem 0;font-size:.86rem;line-height:1.4}
+.arcade-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+@media(max-width:640px){.arcade-stats{grid-template-columns:1fr 1fr}}
+.arcade .stat{background:rgba(0,0,0,.28);border-radius:12px;padding:.4rem;text-align:center;border:1px solid rgba(255,255,255,.06)}
+.arcade .stat em{display:block;font-style:normal;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.arcade .stat strong{font:700 1.05rem ui-monospace,monospace}
+.drop-track{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:.55rem 0 .7rem}
+.drop-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--gold))}
+.board{display:grid;grid-template-columns:1fr minmax(11rem,13rem);gap:.8rem}
+@media(max-width:760px){.board{grid-template-columns:1fr}}
+.well{background:#041820;border:2px solid rgba(74,215,239,.35);border-radius:14px;padding:.5rem;min-height:340px;box-shadow:inset 0 0 36px rgba(0,0,0,.4)}
+.pv{display:grid;grid-template-columns:repeat(8,1fr) 6.2rem;gap:4px;margin-bottom:6px;text-align:center;font:800 .8rem ui-monospace,monospace;color:#ffe08a}
+.stack{display:flex;flex-direction:column-reverse;gap:5px;min-height:280px}
+.c-row{display:grid;grid-template-columns:repeat(8,1fr) 6.2rem;gap:4px;animation:rise .35s ease}
+@keyframes rise{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+.c-row.gone{animation:gone .28s ease forwards}
+@keyframes gone{to{transform:scale(.7);opacity:0}}
+.c-cell{min-height:38px;border:0;border-radius:8px;cursor:pointer;font:800 1.05rem ui-monospace,monospace;color:#9ad3de;background:#123743}
+.c-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1}
+.c-cell .bit{font-size:1.05rem}
+.c-cell .pvn{font-size:.58rem;font-weight:800;opacity:.95;margin-top:1px}
+.c-cell.on{background:linear-gradient(180deg,#ffe08a,#e0a61a);color:#2a1a00}
+.c-cell.on .pvn{color:#3a2200}
+.c-cell.locked{cursor:default}
+.job{border-radius:8px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;padding:2px 4px;font:700 .62rem/1.15 ui-monospace,monospace;text-align:center}
+.job.make{background:#f0c14a;color:#231800}
+.job.read{background:#1a5c6c;color:#eaf7fb;padding:0}
+.job .lab{font-size:.55rem;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.job .num{font-size:.95rem;font-weight:800}
+.job input{width:100%;border:0;background:transparent;color:#fff;text-align:center;font:800 .9rem ui-monospace,monospace;min-height:34px}
+.job input:focus{outline:2px solid var(--cyan);background:#0d3d4a;border-radius:6px}
+.side .callout{background:rgba(74,215,239,.1);border:1px solid rgba(74,215,239,.28);border-radius:12px;padding:.65rem .7rem;font-weight:700;min-height:4.2rem}
+.side label{display:block;margin:.55rem 0 .25rem;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.entry{display:flex;gap:.35rem}
+.entry input{flex:1;min-width:0;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#03141a;color:#fff;padding:.45rem .5rem;font:700 .95rem ui-monospace,monospace}
+.side button{border:0;border-radius:10px;font-weight:800;padding:.5rem .7rem;cursor:pointer}
+#bgSubmit,.go{background:var(--gold);color:#231800}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;margin-top:.45rem}
+.ghost{background:transparent;color:var(--ink);border:1px solid rgba(255,255,255,.2)!important}
+
+/* Mobile / touch */
+@media (max-width: 760px) {
+  .arcade { margin: .85rem 0 0; padding: .85rem .75rem 1rem; border-radius: 14px; }
+  .arcade-title { font-size: 1.15rem; }
+  .how { padding: .65rem .75rem .65rem 1.2rem; margin-bottom: .65rem; }
+  .how li { font-size: .8rem; }
+  .board { grid-template-columns: 1fr; gap: .65rem; }
+  .side { order: -1; } /* controls above board for thumbs */
+  .well { min-height: 0; padding: .4rem; }
+  .stack { min-height: 200px; }
+  .pv, .c-row {
+    grid-template-columns: repeat(8, minmax(0, 1fr)) minmax(3.6rem, 4.8rem);
+    gap: 3px;
+  }
+  .c-cell {
+    min-height: 44px;
+    border-radius: 7px;
+    padding: 2px 0;
+  }
+  .c-cell .bit { font-size: 1rem; }
+  .c-cell .pvn { font-size: .5rem; }
+  .pv { font-size: .65rem !important; }
+  .job .lab { font-size: .5rem; }
+  .job .num { font-size: .82rem; }
+  .job input { min-height: 42px; font-size: 16px; }
+  .entry input, #bgDecIn { font-size: 16px; min-height: 44px; }
+  .side button, #bgSubmit, .go, .ghost { min-height: 44px; }
+  .side .callout { min-height: 0; font-size: .88rem; }
+  .btns { margin-top: .35rem; }
+}
+@media (max-width: 400px) {
+  .c-cell .pvn { display: none; } /* place values still on header row */
+  .pv { font-size: .58rem !important; }
+}
+</style>
+
+<script>
+(function(){
+  const PV=[128,64,32,16,8,4,2,1], MAX=7;
+  const grid=document.getElementById('bgGrid');
+  const pv=document.getElementById('bgPv');
+  const scoreEl=document.getElementById('bgScore');
+  const levelEl=document.getElementById('bgLevel');
+  const stackEl=document.getElementById('bgStack');
+  const nextEl=document.getElementById('bgNext');
+  const comboEl=document.getElementById('bgCombo');
+  const bestEl=document.getElementById('bgBest');
+  const coach=document.getElementById('bgCoach');
+  const decIn=document.getElementById('bgDecIn');
+  const dropBar=document.getElementById('bgDropBar');
+  if(!grid) return;
+
+  let playing=false,paused=false,level=1,score=0,combo=0,rows=[],id=0;
+  let spawnIv=null,barIv=null,nextAt=0;
+  const BEST_KEY='ciwt-binary-best';
+  bestEl.textContent=localStorage.getItem(BEST_KEY)||'0';
+
+  function guides(){ return level<=4; }
+  function spawnMs(){ return Math.max(6000, 11000-(level-1)*500); }
+  function val(bits){ return bits.reduce(function(s,b,i){return s+(b?PV[i]:0);},0); }
+
+  function drawPv(){
+    pv.innerHTML = PV.map(function(n){return '<span>'+(guides()?n:'')+'</span>';}).join('') + '<span>job</span>';
+  }
+  function hud(){
+    scoreEl.textContent=score; levelEl.textContent=level;
+    stackEl.textContent=rows.length+'/'+MAX;
+    comboEl.textContent=combo; drawPv();
+  }
+  function say(t){ coach.textContent=t; }
+
+  function render(row){
+    const wrap=document.createElement('div'); wrap.className='c-row';
+    row.bits.forEach(function(b,i){
+      const c=document.createElement('button');
+      c.type='button';
+      c.className='c-cell'+(b?' on':'')+(row.kind==='read'?' locked':'');
+      c.innerHTML = '<span class="bit">'+(b?'1':'0')+'</span>' + (guides() ? '<span class="pvn">'+PV[i]+'</span>' : '');
+      c.title = (guides()?('This column is worth '+PV[i]+'. '):'') + (row.kind==='make'?'Click to flip 0/1':'Locked pattern');
+      if(row.kind==='make'){
+        c.addEventListener('click', function(e){
+          e.preventDefault();
+          if(!playing||paused||row.dead) return;
+          row.bits[i]=row.bits[i]?0:1;
+          c.classList.toggle('on', !!row.bits[i]);
+          c.innerHTML = '<span class="bit">'+(row.bits[i]?'1':'0')+'</span>' + (guides() ? '<span class="pvn">'+PV[i]+'</span>' : '');
+          const s=val(row.bits);
+          say('This row totals '+s+' / goal '+row.target+'. Flip bits on or off.');
+          if(s===row.target) clearRow(row, true);
+        });
+      }
+      wrap.appendChild(c);
+    });
+    const job=document.createElement('div');
+    if(row.kind==='make'){
+      job.className='job make';
+      job.innerHTML='<span class="lab">MAKE</span><span class="num">'+row.target+'</span>';
+    } else {
+      job.className='job read';
+      const inp=document.createElement('input');
+      inp.type='text'; inp.inputMode='numeric'; inp.autocomplete='off';
+      inp.className='row-dec'; inp.placeholder='TYPE';
+      inp.title='Type the decimal of this bit row';
+      inp.addEventListener('keydown', function(e){
+        e.stopPropagation();
+        if(e.key==='Enter'){ e.preventDefault(); tryType(inp.value, row); }
+      });
+      job.appendChild(inp); row.inp=inp;
+    }
+    wrap.appendChild(job);
+    row.el=wrap;
+    return wrap;
+  }
+
+  function saveBest(){
+    if(score>parseInt(localStorage.getItem(BEST_KEY)||'0',10)){
+      localStorage.setItem(BEST_KEY,String(score));
+      bestEl.textContent=String(score);
+    }
+  }
+
+  function clearRow(row, ok){
+    if(row.dead) return;
+    row.dead=true;
+    if(ok){
+      combo+=1;
+      const pts=100*level+combo*15;
+      score+=pts; saveBest();
+      say('Cleared +'+pts+(combo>1?' combo x'+combo:'')+'. Keep the stack low.');
+    }
+    if(row.el) row.el.classList.add('gone');
+    setTimeout(function(){
+      rows=rows.filter(function(r){return r!==row;});
+      if(row.el&&row.el.parentNode) row.el.parentNode.removeChild(row.el);
+      if(ok && score>0 && score%800<200 && level<12){ /* mild level bump via clears */ }
+      // level up every 5 clears
+      const cleared = parseInt(levelEl.dataset.clears||'0',10)+(ok?1:0);
+      levelEl.dataset.clears=String(cleared);
+      if(ok && cleared%5===0){ level+=1; say('Level '+level+' — rows come a bit sooner.'); armSpawn(); }
+      hud();
+    },260);
+  }
+
+  function tryType(raw, specific){
+    if(!playing||paused) return;
+    const n=parseInt(String(raw||'').replace(/[^\d]/g,''),10);
+    if(isNaN(n)){ say('Type a number 0–255.'); return; }
+    const pool=specific?[specific]:rows.filter(function(r){return r.kind==='read'&&!r.dead;}).slice().reverse();
+    for(let i=0;i<pool.length;i++){
+      if(pool[i].target===n){
+        if(decIn) decIn.value='';
+        if(pool[i].inp) pool[i].inp.value='';
+        clearRow(pool[i], true);
+        return;
+      }
+    }
+    combo=0;
+    say('Not a match. Add only columns that show 1 (gold). 128+64+…+1.');
+  }
+
+  function spawn(forceKind){
+    if(!playing||paused) return;
+    const ae=document.activeElement;
+    if(!forceKind && ae && ae.classList && ae.classList.contains('row-dec') && ae.value) return;
+    if(!forceKind && ae && ae.id==='bgDecIn' && ae.value) return;
+    if(rows.length>=MAX){
+      playing=false; clearInterval(spawnIv); clearInterval(barIv);
+      say('Stack full — Play to run it back. Score '+score+'.');
+      return;
+    }
+    const lastTwo = rows.slice(-2).map(function(r){ return r.kind; });
+    let kind = forceKind;
+    if(!kind){
+      if (lastTwo.length===2 && lastTwo[0]===lastTwo[1]) kind = lastTwo[0]==='make' ? 'read' : 'make';
+      else kind = Math.random()<0.5 ? 'make' : 'read';
+    }
+    const target=Math.floor(Math.random()*256);
+    let start;
+    if(kind==='make'){
+      do{ start=PV.map(function(){return Math.random()<0.28?1:0;}); }while(val(start)===target);
+    } else start=PV.map(function(p){return (target&p)?1:0;});
+    const row={id:++id,kind:kind,target:target,bits:start,dead:false};
+    render(row); rows.push(row); grid.appendChild(row.el);
+    hud();
+    if(kind==='make') say('New row: click bits until they MAKE '+target+'. Live add the gold tiles.');
+    else { say('New row: TYPE the decimal of that locked pattern.'); if(row.inp) row.inp.focus(); }
+    nextAt=performance.now()+spawnMs();
+  }
+
+  function armSpawn(){
+    clearInterval(spawnIv); clearInterval(barIv);
+    const ms=spawnMs();
+    nextAt=performance.now()+ms;
+    spawnIv=setInterval(spawn, ms);
+    barIv=setInterval(function(){
+      if(!playing||paused){ dropBar.style.width='0%'; nextEl.textContent='—'; return; }
+      const left=Math.max(0,nextAt-performance.now());
+      dropBar.style.width=((1-left/ms)*100)+'%';
+      nextEl.textContent=(left/1000).toFixed(1)+'s';
+    },80);
+  }
+
+  function start(){
+    playing=true; paused=false; level=1; score=0; combo=0; rows=[]; id=0;
+    levelEl.dataset.clears='0';
+    grid.innerHTML=''; hud(); say('First row incoming. Look at the right-hand job: MAKE or TYPE.');
+    if(decIn) decIn.value='';
+    spawn('make'); spawn('read'); armSpawn();
+  }
+
+  document.getElementById('bgStart').addEventListener('click', start);
+  document.getElementById('bgPause').addEventListener('click', function(){
+    if(!playing) return;
+    paused=!paused;
+    say(paused?'Paused — stack is frozen.':'Unpaused.');
+  });
+  document.getElementById('bgSubmit').addEventListener('click', function(e){ e.preventDefault(); tryType(decIn.value,null); });
+  decIn.addEventListener('keydown', function(e){
+    e.stopPropagation();
+    if(e.key==='Enter'){ e.preventDefault(); tryType(decIn.value,null); }
+  });
+  drawPv(); hud();
+})();
+</script>

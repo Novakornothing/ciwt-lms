@@ -1,0 +1,22 @@
+{% set embed = lesson_labs if lesson_labs is defined else chapter_labs %}
+{% if embed %}
+<div class="card mt-4" id="chapter-lab">
+  <div class="card-header navy">Try this in the live lab</div>
+  <div class="list-group list-group-flush">
+    {% for lab in embed %}
+    <div class="list-group-item">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div>
+          <div class="fw-semibold"><span class="badge text-bg-dark me-1">{{ lab.kind|upper }}</span>{{ lab.title }}</div>
+          <div class="small text-muted mt-1">{{ lab.align or lab.blurb }}</div>
+        </div>
+        <a class="btn btn-sm btn-brand" href="{{ url_for('interactive_lab', lab_id=lab.id) }}">Launch terminal</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="card-body py-2 small text-muted">
+    All labs: left menu → <a href="{{ url_for('interactive_labs_index') }}">Practice → All live labs</a>
+  </div>
+</div>
+{% endif %}

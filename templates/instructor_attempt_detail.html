@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Attempt detail — {{ student.first_name if student else 'Student' }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=test.id) }}">{{ test.title }}</a></li>
+    <li class="breadcrumb-item active">Attempt</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ student.first_name }} {{ student.last_name }}</h1>
+  <p class="mb-0">{{ test.title }} · {{ '%.1f'|format(attempt.score) }}% · {% if attempt.passed %}Pass{% else %}Below pass mark{% endif %}</p>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">Category performance (this attempt)</div>
+  <div class="list-group list-group-flush">
+    {% for c in categories %}
+    <div class="list-group-item d-flex justify-content-between">
+      <span>{{ c.category }}</span>
+      <strong>{{ c.pct }}% ({{ c.correct }}/{{ c.total }})</strong>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">Item-level results (instructor only)</div>
+  <div class="list-group list-group-flush">
+    {% for it in items %}
+    <div class="list-group-item">
+      <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
+        <strong>Q{{ it.index }}</strong>
+        {% if it.ok %}<span class="badge badge-live">Correct</span>{% else %}<span class="badge badge-closed">Incorrect</span>{% endif %}
+      </div>
+      <div class="mb-1">{{ it.text }}</div>
+      <div class="q-lo mb-2"><strong>TO</strong> · {{ it.to }} · <span class="text-muted">{{ it.category }}</span></div>
+      <div class="small">Student answer: <strong>{{ it.yours or '— none —' }}</strong></div>
+      {% if not it.ok %}
+      <div class="small">Correct answer: <strong>{{ it.correct }}</strong></div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<a href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=test.id) }}" class="btn btn-brand">Back to class performance</a>
+{% endblock %}

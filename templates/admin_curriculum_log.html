@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Curriculum change log{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Curriculum change log</h1>
+  <p class="mb-0">Every admin content fix is shared across all classes on that course. Closed and resolved tickets are listed below.</p>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">Applied content fixes</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr><th>When</th><th>Admin</th><th>Lesson</th><th>Summary</th><th>Ticket</th></tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="small">{{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '' }}</td>
+          <td>{{ log.admin.full_name if log.admin else '—' }}</td>
+          <td class="small">{{ log.lesson.title if log.lesson else log.lesson_id }}</td>
+          <td>{{ log.summary }}</td>
+          <td>{% if log.ticket_id %}<a href="{{ url_for('admin_ticket_detail', ticket_id=log.ticket_id) }}">#{{ log.ticket_id }}</a>{% else %}—{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-muted">No content fixes logged yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header navy">Resolved / closed tickets</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr><th>ID</th><th>Subject</th><th>Status</th><th>Resolution</th><th>Submitter</th><th>Updated</th></tr>
+      </thead>
+      <tbody>
+        {% for t in closed_tickets %}
+        <tr>
+          <td><a href="{{ url_for('admin_ticket_detail', ticket_id=t.id) }}">#{{ t.id }}</a></td>
+          <td>{{ t.subject }}</td>
+          <td>{{ t.status }}</td>
+          <td>{{ t.resolution or '—' }}</td>
+          <td class="small">{{ t.user.full_name if t.user else '—' }}</td>
+          <td class="small">{{ t.updated_at.strftime('%Y-%m-%d %H:%M') if t.updated_at else '' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-muted">No closed tickets yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

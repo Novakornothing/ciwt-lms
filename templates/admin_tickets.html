@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Curriculum tickets — Admin{% endblock %}
+{% block content %}
+<div class="page-hero d-flex flex-wrap justify-content-between align-items-start gap-2">
+  <div>
+    <h1 class="h3 mb-1">Curriculum tickets</h1>
+    <p class="mb-0">Open a ticket to edit the linked lesson. Pending tickets never alter curriculum; a saved fix updates every class.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-brand btn-sm" href="{{ url_for('tickets_new') }}">New ticket</a>
+    <a class="btn btn-outline-navy btn-sm" href="{{ url_for('admin_curriculum_log') }}">Change log</a>
+    <a class="btn btn-outline-navy btn-sm" href="{{ url_for('admin_dashboard') }}">Admin tools</a>
+  </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  {% for key, label in [('all','All'),('open','Open'),('in_progress','In progress'),('resolved','Resolved'),('closed','Closed')] %}
+  <a class="btn btn-sm {% if status == key %}btn-brand{% else %}btn-outline-navy{% endif %}"
+     href="{{ url_for('admin_tickets', status=key) }}">{{ label }} ({{ counts.get(key, 0) }})</a>
+  {% endfor %}
+</div>
+
+{% if tickets %}
+<div class="list-group">
+  {% for t in tickets %}
+  <a class="list-group-item list-group-item-action" href="{{ url_for('admin_ticket_detail', ticket_id=t.id) }}">
+    <div class="d-flex flex-wrap justify-content-between gap-2">
+      <div>
+        <strong>#{{ t.id }} · {{ t.subject }}</strong>
+        <div class="small text-muted">
+          {{ t.user.full_name if t.user else '—' }} ({{ t.user.role if t.user else '' }})
+          · {{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '' }}
+          · {{ t.category }}
+          {% if t.lesson %} · {{ t.lesson.title }}{% endif %}{% if t.quiz %} · Quiz: {{ t.quiz.title }}{% endif %}{% if t.test %} · Test: {{ t.test.title }}{% endif %}
+          {% if t.course %} · {{ t.course.code }}{% endif %}
+        </div>
+      </div>
+      <span class="badge {% if t.status in ('open','in_progress') %}badge-live{% else %}badge-closed{% endif %}">
+        {{ t.status }}{% if t.resolution %} · {{ t.resolution }}{% endif %}
+      </span>
+    </div>
+    <div class="small mt-1">{{ t.body[:220] }}{% if t.body|length > 220 %}…{% endif %}</div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card card-body text-muted">No tickets in this filter.</div>
+{% endif %}
+{% endblock %}

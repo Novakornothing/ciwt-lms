@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Live CLI Labs — CIWT{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') if current_user.role == 'student' else url_for('instructor_dashboard') }}">Home</a></li>
+    <li class="breadcrumb-item active">Live labs</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h3 mb-1">Live labs</h1>
+  <p class="mb-0">Work in order. Windows first, then switch, then router. Capstones reuse earlier commands.</p>
+</div>
+<div class="mb-3 d-flex flex-wrap gap-2">
+  <a class="btn btn-sm btn-outline-navy" href="#windows">Windows 11 CLI</a>
+  <a class="btn btn-sm btn-outline-navy" href="#win11gui">Windows 11 GUI</a>
+  <a class="btn btn-sm btn-outline-navy" href="#switch">Switch</a>
+  <a class="btn btn-sm btn-outline-navy" href="#router">Router</a>
+  {% if current_user.role in ('admin', 'instructor') %}
+  <a class="btn btn-sm btn-outline-navy ms-auto" href="{{ url_for('interactive_labs_verify') }}">Self-test</a>
+  {% endif %}
+</div>
+
+{% for kind, heading in [('windows','Windows 11 VM — Command Prompt / PowerShell'), ('win11gui','Windows 11 VM — Settings / Services GUI'), ('switch','Switch CLI'), ('router','Router CLI')] %}
+<h2 class="h5 mt-4 mb-2" id="{{ kind }}">{{ heading }}</h2>
+<div class="row g-3 mb-2">
+  {% for lab in labs if lab.kind == kind %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="small text-muted mb-1">{{ lab.title.split('.', 1)[0] if '.' in lab.title else lab.kind }}</div>
+        <h3 class="h6">{{ lab.title }}</h3>
+        <p class="text-muted small flex-grow-1">{{ lab.blurb }}</p>
+        <a class="btn btn-brand btn-sm" href="{{ url_for('interactive_lab', lab_id=lab.id) }}">Launch terminal</a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12 text-muted">No {{ kind }} labs loaded.</div>
+  {% endfor %}
+</div>
+{% endfor %}
+{% endblock %}

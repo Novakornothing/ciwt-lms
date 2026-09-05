@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+{% block title %}{{ lab.title }} — Win11 GUI{% endblock %}
+{% block content %}
+<style>
+  .w11-wrap { font-family: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif; }
+  .w11-desk {
+    position: relative;
+    height: min(78vh, 820px);
+    min-height: 620px;
+    border-radius: 8px;
+    overflow: hidden;
+    color: #1a1a1a;
+    background:
+      radial-gradient(1200px 500px at 15% 0%, rgba(180,210,255,.55), transparent 55%),
+      radial-gradient(900px 600px at 90% 20%, rgba(80,160,255,.35), transparent 50%),
+      radial-gradient(800px 500px at 40% 100%, rgba(40,90,180,.45), transparent 50%),
+      linear-gradient(165deg, #7eb6ff 0%, #3d7fd6 42%, #1a4e96 100%);
+    box-shadow: 0 24px 60px rgba(0,0,0,.28);
+  }
+  .w11-icons { position: absolute; top: 18px; left: 16px; display: flex; flex-direction: column; gap: 18px; }
+  .w11-icon { width: 76px; text-align: center; color: #fff; cursor: pointer; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,.55); user-select: none; }
+  .w11-icon:hover .face { outline: 1px solid rgba(255,255,255,.45); background: rgba(255,255,255,.12); }
+  .w11-icon .face {
+    width: 48px; height: 48px; margin: 0 auto 6px; border-radius: 10px;
+    display: grid; place-items: center;
+  }
+  .ico-settings {
+    background: linear-gradient(#3aa0e8, #0a63b7);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .gear {
+    width: 22px; height: 22px; border: 3px solid #fff; border-radius: 50%;
+    position: relative;
+  }
+  .gear:before { content: ""; position: absolute; inset: -6px; border: 3px dotted #fff; border-radius: 50%; }
+  .ico-mmc { background: linear-gradient(#3c3c3c, #1c1c1c); color: #fff; font-weight: 700; font-size: 11px; letter-spacing: .04em; }
+  .w11-tb {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 48px;
+    background: rgba(232,232,232,.72);
+    backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(255,255,255,.35);
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  }
+  .tb-center { display: flex; gap: 6px; justify-content: center; }
+  .tb-btn {
+    width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent;
+    display: grid; place-items: center; cursor: pointer;
+  }
+  .tb-btn:hover { background: rgba(255,255,255,.45); }
+  .start-logo { width: 18px; height: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5px; }
+  .start-logo i { background: #222; display: block; }
+  .start-logo i:nth-child(1) { background: #f35325; }
+  .start-logo i:nth-child(2) { background: #81bc06; }
+  .start-logo i:nth-child(3) { background: #05a6f0; }
+  .start-logo i:nth-child(4) { background: #ffba08; }
+  .tb-tray { justify-self: end; padding-right: 12px; font-size: 12px; color: #222; display: flex; gap: 14px; align-items: center; }
+  .w11-win {
+    display: none; position: absolute; top: 28px; left: 88px; right: 28px; bottom: 60px;
+    background: #f3f3f3; border-radius: 8px; overflow: hidden; flex-direction: column;
+    box-shadow: 0 16px 48px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.06);
+  }
+  .w11-win.show { display: flex; }
+  .cap {
+    height: 36px; display: flex; align-items: center; justify-content: space-between;
+    padding-left: 12px; background: #f3f3f3; font-size: 12px; color: #616161;
+  }
+  .cap-btns { display: flex; height: 100%; }
+  .cap-btns b { width: 46px; display: grid; place-items: center; font-weight: 400; cursor: pointer; }
+  .cap-btns b:hover { background: #e5e5e5; }
+  .cap-btns b.x:hover { background: #c42b1c; color: #fff; }
+  .set-body { display: flex; flex: 1; min-height: 0; }
+  .set-nav { width: 280px; padding: 8px 12px 16px; overflow: auto; }
+  .set-search {
+    width: 100%; border: 1px solid #d1d1d1; border-radius: 4px; padding: 8px 10px;
+    margin-bottom: 10px; background: #fff;
+  }
+  .acct { display: flex; gap: 10px; align-items: center; padding: 8px 6px 12px; }
+  .acct .av { width: 36px; height: 36px; border-radius: 50%; background: #0078d4; color: #fff; display: grid; place-items: center; font-weight: 600; }
+  .nav-item {
+    width: 100%; border: 0; background: transparent; text-align: left;
+    padding: 8px 10px; border-radius: 4px; display: flex; gap: 10px; align-items: center;
+    font-size: 13.5px; color: #1a1a1a;
+  }
+  .nav-item.on { background: #fff; box-shadow: inset 3px 0 0 #0067c0; }
+  .nav-item:hover { background: #eaeaea; }
+  .set-main { flex: 1; padding: 8px 28px 24px; overflow: auto; }
+  .set-main h2 { font-weight: 600; font-size: 28px; margin: 8px 0 16px; }
+  .row {
+    background: #fff; border-radius: 8px; padding: 14px 16px; margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+    border: 1px solid #eee;
+  }
+  .row:hover { background: #fafafa; }
+  .row small { color: #616161; display: block; font-size: 12px; }
+  .chev { color: #616161; }
+  .spec { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+  .pill { border: 1px solid #d1d1d1; background: #fff; border-radius: 4px; padding: 6px 14px; font-size: 13px; }
+  .pill.pri { background: #0067c0; color: #fff; border-color: #0067c0; }
+  .svc-app .set-main { padding-top: 12px; }
+  .svc-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+  .svc-table th { text-align: left; font-weight: 600; padding: 8px; border-bottom: 1px solid #d0d0d0; }
+  .svc-table td { padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; }
+  .svc-table tr:hover td { background: #e8f4ff; }
+  .obj .box { width: 18px; height: 18px; border: 1px solid #8a8a8a; border-radius: 3px; flex: 0 0 18px; }
+  .obj.done .box { background: #0f7b0f; border-color: #0f7b0f; }
+  [data-theme="dark"] .w11-win, [data-theme="dark"] .cap { background: #202020; color: #ddd; }
+  [data-theme="dark"] .set-nav { background: #202020; }
+  [data-theme="dark"] .set-main, [data-theme="dark"] .row, [data-theme="dark"] .svc-table { background: #2c2c2c; color: #eee; }
+  [data-theme="dark"] .nav-item { color: #eee; }
+  [data-theme="dark"] .nav-item.on { background: #2b2b2b; }
+  [data-theme="dark"] .set-search { background: #2c2c2c; color: #eee; border-color: #444; }
+</style>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('interactive_labs_index') }}">Live labs</a></li>
+    <li class="breadcrumb-item active">{{ lab.title }}</li>
+  </ol>
+</nav>
+<p class="small text-muted mb-2">Windows 11 Education training desktop (CIWT visual replica — not Microsoft software).</p>
+
+<div class="w11-wrap lab-layout mb-4" style="display:grid;grid-template-columns:1fr minmax(240px,280px);gap:1rem">
+  <div class="w11-desk">
+    <div class="w11-icons">
+      <div class="w11-icon" id="icoSettings">
+        <div class="face ico-settings"><span class="gear"></span></div>
+        Settings
+      </div>
+      <div class="w11-icon" id="icoServices">
+        <div class="face ico-mmc">svc</div>
+        Services
+      </div>
+      <div class="w11-icon" id="icoDev">
+        <div class="face ico-mmc">dev</div>
+        Device Manager
+      </div>
+    </div>
+
+    <div class="w11-win" id="winSettings">
+      <div class="cap">
+        <span>Settings</span>
+        <div class="cap-btns"><b>—</b><b>□</b><b class="x" id="closeSettings">✕</b></div>
+      </div>
+      <div class="set-body">
+        <aside class="set-nav">
+          <input class="set-search" placeholder="Find a setting" aria-label="Find a setting">
+          <div class="acct">
+            <div class="av">T</div>
+            <div><div style="font-weight:600">Trainee</div><div style="font-size:12px;color:#616161">CIWT\Trainee</div></div>
+          </div>
+          <button type="button" class="nav-item on" data-pane="home">Home</button>
+          <button type="button" class="nav-item" data-pane="system">System</button>
+          <button type="button" class="nav-item" data-pane="network">Network & internet</button>
+          <button type="button" class="nav-item" data-pane="accounts">Accounts</button>
+          <button type="button" class="nav-item" data-pane="update">Windows Update</button>
+        </aside>
+        <section class="set-main">
+          <div class="pane" id="pane-home">
+            <h2>Home</h2>
+            <div class="row" id="goSystem"><div><strong>System</strong><small>Display, sound, notifications, power</small></div><span class="chev">›</span></div>
+            <div class="row" id="goNetwork"><div><strong>Network & internet</strong><small>Wi-Fi, cellular, VPN, Ethernet</small></div><span class="chev">›</span></div>
+            <div class="row"><div><strong>Windows Update</strong><small>Check for updates</small></div><span class="chev">›</span></div>
+          </div>
+          <div class="pane d-none" id="pane-system">
+            <h2>System</h2>
+            <div class="row" id="goAbout"><div><strong>About</strong><small>Device specifications, rename PC, Windows specifications</small></div><span class="chev">›</span></div>
+            <div class="row"><div><strong>Display</strong><small>Monitors, brightness, night light</small></div><span class="chev">›</span></div>
+            <div class="row"><div><strong>Sound</strong><small>Volume levels, output, input</small></div><span class="chev">›</span></div>
+          </div>
+          <div class="pane d-none" id="pane-about">
+            <h2>About</h2>
+            <div class="row" style="cursor:default">
+              <div>
+                <div style="font-size:18px;font-weight:600">CIWT-W11-07</div>
+                <small>CIWT training device</small>
+              </div>
+            </div>
+            <div class="spec"><span>Processor</span><span>11th Gen · 8 cores</span></div>
+            <div class="spec"><span>Installed RAM</span><span>16.0 GB</span></div>
+            <div class="spec"><span>Device name</span><span>CIWT-W11-07</span></div>
+            <div class="spec"><span>Edition</span><span>Windows 11 Education</span></div>
+            <div class="spec"><span>Version</span><span>23H2</span></div>
+            <div class="spec"><span>OS build</span><span>22631.3737</span></div>
+          </div>
+          <div class="pane d-none" id="pane-network">
+            <h2>Network & internet</h2>
+            <div class="row" id="goEthernet"><div><strong>Ethernet</strong><small>Connected</small></div><span class="chev">›</span></div>
+            <div class="row"><div><strong>Wi-Fi</strong><small>Off</small></div><span class="chev">›</span></div>
+            <div class="row"><div><strong>VPN</strong><small>Not connected</small></div><span class="chev">›</span></div>
+          </div>
+          <div class="pane d-none" id="pane-ethernet">
+            <h2>Ethernet</h2>
+            <div class="spec"><span>Status</span><span id="ethStatus">Connected · TRAINING</span></div>
+            <div class="spec"><span>IPv4 address</span><span id="ipv4val">10.20.30.47</span></div>
+            <div class="spec"><span>IPv4 subnet prefix</span><span>255.255.255.0</span></div>
+            <div class="spec"><span>Default gateway</span><span>10.20.30.1</span></div>
+            <div class="spec"><span>DNS servers</span><span>10.20.30.10, 10.20.30.11</span></div>
+            <div class="spec"><span>IPv4 DNS suffix</span><span>training.local</span></div>
+            <div class="mt-3 d-flex gap-2">
+              <button type="button" class="pill" id="btnDisc">Disconnect</button>
+              <button type="button" class="pill pri" id="btnConn">Connect</button>
+            </div>
+            <div class="small text-muted mt-2" id="leaseNote"></div>
+          </div>
+          <div class="pane d-none" id="pane-accounts">
+            <h2>Accounts</h2>
+            <div class="row" style="cursor:default"><div><strong>Trainee</strong><small>Local account · CIWT\Trainee</small></div></div>
+            <div class="row"><div><strong>Your info</strong><small>Name, photo, account settings</small></div><span class="chev">›</span></div>
+            <div class="row"><div><strong>Sign-in options</strong><small>Password, PIN, Windows Hello</small></div><span class="chev">›</span></div>
+            <div class="row"><div><strong>Other users</strong><small>Add or remove other users on this device</small></div><span class="chev">›</span></div>
+          </div>
+          <div class="pane d-none" id="pane-update">
+            <h2>Windows Update</h2>
+            <p><strong>You're up to date</strong></p>
+            <p class="small text-muted">Last checked just now. Training image does not phone home to Microsoft.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="w11-win svc-app" id="winServices">
+      <div class="cap">
+        <span>Services</span>
+        <div class="cap-btns"><b>—</b><b>□</b><b class="x" id="closeServices">✕</b></div>
+      </div>
+      <div class="set-main">
+        <table class="svc-table">
+          <thead><tr><th>Name</th><th>Description</th><th>Status</th><th>Startup Type</th></tr></thead>
+          <tbody>
+            <tr data-svc="dhcp"><td>DHCP Client</td><td>Registers and updates IP addresses</td><td>Running</td><td>Automatic</td></tr>
+            <tr data-svc="dns"><td>DNS Client</td><td>Resolves and caches DNS names</td><td>Running</td><td>Automatic</td></tr>
+            <tr data-svc="defend"><td>Microsoft Defender Antivirus Service</td><td>Helps protect the device</td><td>Running</td><td>Automatic</td></tr>
+            <tr><td>Print Spooler</td><td>Loads files to memory for later printing</td><td>Running</td><td>Automatic</td></tr>
+            <tr><td>Windows Update</td><td>Enables detection and apply of updates</td><td>Running</td><td>Manual</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="w11-win svc-app" id="winDev">
+      <div class="cap">
+        <span>Device Manager</span>
+        <div class="cap-btns"><b>—</b><b>□</b><b class="x" id="closeDev">✕</b></div>
+      </div>
+      <div class="set-main">
+        <div class="row" id="devNic" style="cursor:pointer"><div><strong>Network adapters</strong><small>Intel(R) Ethernet Connection</small></div>›</div>
+        <div class="row" id="devDisp" style="cursor:pointer"><div><strong>Display adapters</strong><small>Basic Display Adapter</small></div>›</div>
+        <div class="row"><div><strong>Disk drives</strong><small>Virtual HD</small></div>›</div>
+        <div class="row"><div><strong>Keyboards</strong><small>HID Keyboard</small></div>›</div>
+        <p class="small text-muted">Real PC: Start → Device Manager or <code>devmgmt.msc</code>. Yellow bangs mean a driver problem.</p>
+      </div>
+    </div>
+
+    <div class="w11-tb">
+      <div></div>
+      <div class="tb-center">
+        <button type="button" class="tb-btn" id="tbStart" title="Start">
+          <span class="start-logo"><i></i><i></i><i></i><i></i></span>
+        </button>
+        <button type="button" class="tb-btn" id="tbSettings" title="Settings">⚙</button>
+        <button type="button" class="tb-btn" id="tbSvc" title="Services">▣</button>
+      </div>
+      <div class="tb-tray"><span>ᯤ</span><span>15:52</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header navy">Objectives</div>
+    <div class="card-body">
+      {% for o in lab.objectives %}
+      <div class="d-flex gap-2 mb-2 obj" data-oid="{{ o.id }}">
+        <span class="box"></span><span>{{ o.text }}</span>
+      </div>
+      {% endfor %}
+      <div class="alert alert-success d-none mt-3" id="labOk">{{ lab.success_msg }}</div>
+      <p class="small text-muted mb-0">Use the desktop or the taskbar the way you would on Windows 11.</p>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const need = {{ lab.objectives|map(attribute='id')|list|tojson }};
+  const done = new Set();
+  function mark(id){
+    if (need.indexOf(id) === -1) return;
+    done.add(id);
+    document.querySelectorAll('.obj').forEach(function(el){
+      if (el.getAttribute('data-oid') === id) el.classList.add('done');
+    });
+    if (need.every(function(id){ return done.has(id); })) {
+      document.getElementById('labOk').classList.remove('d-none');
+    }
+  }
+  function showSettings(){
+    document.getElementById('winSettings').classList.add('show');
+    document.getElementById('winServices').classList.remove('show');
+    mark('open_settings');
+  }
+  function showServices(){
+    document.getElementById('winServices').classList.add('show');
+    document.getElementById('winSettings').classList.remove('show');
+    mark('open_services');
+  }
+  function showPane(name){
+    document.querySelectorAll('.pane').forEach(function(p){ p.classList.add('d-none'); });
+    var el = document.getElementById('pane-' + name);
+    if (el) el.classList.remove('d-none');
+    document.querySelectorAll('.nav-item').forEach(function(b){
+      var pane = b.getAttribute('data-pane');
+      b.classList.toggle('on', pane === name || (name==='about' && pane==='system') || (name==='ethernet' && pane==='network'));
+    });
+    if (name === 'system') mark('open_system');
+    if (name === 'network') mark('open_network');
+    if (name === 'about') mark('open_about');
+    if (name === 'ethernet') mark('open_ethernet');
+    if (name === 'update') mark('open_update');
+    if (name === 'accounts') mark('open_accounts');
+  }
+  document.getElementById('icoSettings').onclick = showSettings;
+  document.getElementById('tbSettings').onclick = showSettings;
+  document.getElementById('tbStart').onclick = showSettings;
+  document.getElementById('icoServices').onclick = showServices;
+  document.getElementById('tbSvc').onclick = showServices;
+  function showDev(){
+    document.getElementById('winDev').classList.add('show');
+    document.getElementById('winSettings').classList.remove('show');
+    document.getElementById('winServices').classList.remove('show');
+    mark('open_devmgr');
+  }
+  document.getElementById('icoDev').onclick = showDev;
+  document.getElementById('closeDev').onclick = function(){ document.getElementById('winDev').classList.remove('show'); };
+  document.getElementById('devNic').onclick = function(){ mark('find_nic'); };
+  document.getElementById('devDisp').onclick = function(){ mark('find_display'); };
+  document.getElementById('closeSettings').onclick = function(){ document.getElementById('winSettings').classList.remove('show'); };
+  document.getElementById('closeServices').onclick = function(){ document.getElementById('winServices').classList.remove('show'); };
+  document.querySelectorAll('.nav-item').forEach(function(b){
+    b.onclick = function(){ showPane(b.getAttribute('data-pane')); };
+  });
+  document.getElementById('goSystem').onclick = function(){ showPane('system'); };
+  document.getElementById('goNetwork').onclick = function(){ showPane('network'); };
+  document.getElementById('goAbout').onclick = function(){ showPane('about'); };
+  document.getElementById('goEthernet').onclick = function(){ showPane('ethernet'); };
+  var down = false;
+  document.getElementById('btnDisc').onclick = function(){
+    down = true;
+    document.getElementById('ipv4val').textContent = 'None';
+    document.getElementById('ethStatus').textContent = 'Not connected';
+    document.getElementById('leaseNote').textContent = 'Disconnected. Address released.';
+  };
+  document.getElementById('btnConn').onclick = function(){
+    document.getElementById('ipv4val').textContent = '10.20.30.47';
+    document.getElementById('ethStatus').textContent = 'Connected · TRAINING';
+    document.getElementById('leaseNote').textContent = 'Connected. New DHCP lease obtained.';
+    if (down) mark('toggle_lease');
+  };
+  document.querySelectorAll('.svc-table [data-svc]').forEach(function(row){
+    row.onclick = function(){
+      var s = row.getAttribute('data-svc');
+      if (s === 'dhcp') mark('find_dhcp');
+      if (s === 'dns') mark('find_dns');
+      if (s === 'defend') mark('find_defend');
+    };
+  });
+})();
+</script>
+{% endblock %}
+{% block scripts %}{% endblock %}

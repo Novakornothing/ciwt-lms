@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Log in — CIWT LMS{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <h2 class="h4 mb-3">Sign in</h2>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" required autofocus
+                   placeholder="admin@lms.local">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-brand w-100">Log in</button>
+        </form>
+        <hr>
+        <p class="small mb-2" style="color:var(--ink-secondary)">
+          Demo accounts: <code>admin@lms.local</code> / <code>admin123</code> ·
+          <code>instructor@lms.local</code> / <code>teach123</code> ·
+          <code>student1@lms.local</code> / <code>student123</code>
+        </p>
+        <p class="small mb-0">
+          <a href="{{ url_for('demo_guide') }}">Demo walkthrough</a>
+          ·
+          <a href="{{ url_for('gaps') }}">Gaps &amp; roadmap</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

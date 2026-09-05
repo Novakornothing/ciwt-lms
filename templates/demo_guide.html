@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Demo guide — CIWT LMS{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Demo walkthrough</h1>
+  <p class="mb-0">10-minute path for Navy / contractor briefings · Proprietary training prototype</p>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">Accounts</div>
+  <div class="card-body">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Role</th><th>Email</th><th>Password</th></tr></thead>
+      <tbody>
+        <tr><td>Admin</td><td><code>admin@lms.local</code></td><td><code>admin123</code></td></tr>
+        <tr><td>Instructor</td><td><code>instructor@lms.local</code></td><td><code>teach123</code></td></tr>
+        <tr><td>Student</td><td><code>student1@lms.local</code></td><td><code>student123</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">Suggested click path</div>
+  <ol class="list-group list-group-numbered list-group-flush">
+    <li class="list-group-item">Log in as <strong>admin</strong> → open Score hub / Test analytics → show class heat maps and alternative effectiveness.</li>
+    <li class="list-group-item">Admin → Teaching time → filter by instructor / class.</li>
+    <li class="list-group-item">Log in as <strong>instructor</strong> → open a class → expand broad categories → student attempts (item detail).</li>
+    <li class="list-group-item">Instructor → activate a quiz or test for whole class or selected students.</li>
+    <li class="list-group-item">Log in as <strong>student</strong> → open curriculum lessons → take a progress check → take a knowledge test (one question at a time).</li>
+    <li class="list-group-item">Optional: Binary game, tickets on curriculum, instructor inbox.</li>
+  </ol>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">How to run (Mac)</div>
+  <div class="card-body">
+<pre class="mb-2 p-3 rounded" style="background:var(--surface-3);color:var(--ink);overflow:auto">cd ~/Downloads
+unzip -o ciwt-lms.zip
+cd comptia-lms
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+PORT=5050 python app.py</pre>
+    <p class="small text-muted mb-0">Open <code>http://127.0.0.1:5050</code>. For a peer on another network, use a Cloudflare quick tunnel to that port. For production-style runs use gunicorn (see Gaps &amp; ops).</p>
+  </div>
+</div>
+
+<a href="{{ url_for('login') }}" class="btn btn-brand">Back to sign in</a>
+<a href="{{ url_for('gaps') }}" class="btn btn-outline-navy ms-2">Gaps &amp; roadmap</a>
+{% endblock %}

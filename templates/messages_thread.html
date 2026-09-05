@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ root.subject }} — Messages{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('messages_inbox') }}">Messages</a></li>
+    <li class="breadcrumb-item active">Thread</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ root.subject }}</h1>
+  <p class="mb-0 small">
+    {{ root.sender.full_name if root.sender else '' }} ↔ {{ root.recipient.full_name if root.recipient else '' }}
+    {% if root.section %} · {{ root.section.name }}{% endif %}
+  </p>
+</div>
+
+{% for m in thread %}
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between flex-wrap gap-2">
+    <span>
+      <strong>{{ m.sender.full_name if m.sender else '—' }}</strong>
+      <span class="role-chip ms-1">{{ m.sender.role if m.sender else '' }}</span>
+    </span>
+    <span class="small text-muted">{{ m.created_at.strftime('%Y-%m-%d %H:%M') if m.created_at else '' }} UTC</span>
+  </div>
+  <div class="card-body" style="white-space:pre-wrap">{{ m.body }}</div>
+</div>
+{% endfor %}
+
+<div class="card card-body">
+  <form method="post">
+    <label class="form-label">Reply</label>
+    <textarea name="body" class="form-control mb-2" rows="4" required placeholder="Write a reply…"></textarea>
+    <button type="submit" class="btn btn-brand">Send reply</button>
+  </form>
+</div>
+{% endblock %}
