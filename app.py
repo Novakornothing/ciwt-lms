@@ -990,13 +990,11 @@ def compute_item_analysis(test_id, section_id=None, section_ids=None,
 # ==================== ROUTES ====================
 
 def _lms_host():
-    """LMS app on ciwt.* or local; apex/www get the Novak or Nothing landing."""
+    """Apex/www of novakornothing.com = marketing page. Render and ciwt = LMS."""
     host = (request.host or "").split(":")[0].lower()
-    if host.startswith("ciwt."):
-        return True
-    if host in ("127.0.0.1", "localhost") or host.endswith(".local"):
-        return True
-    return False
+    if host in ("novakornothing.com", "www.novakornothing.com"):
+        return False
+    return True
 
 
 @app.route('/')
