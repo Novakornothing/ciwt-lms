@@ -17,15 +17,15 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
       <a class="btn btn-sm btn-outline-navy" href="#roster">Roster</a>
-      <a class="btn btn-sm btn-brand" href="{{ all_chapters_url(section.id) }}">Open curriculum</a>
+      <a class="btn btn-sm btn-brand" href="#chapters">Open curriculum</a>
     </div>
   </div>
 </div>
 
-<div class="card mb-3">
+<div class="card mb-3" id="chapters">
   <div class="card-header navy d-flex justify-content-between align-items-center">
     <span>All chapters ({{ modules|length }})</span>
-    <a class="btn btn-sm btn-outline-light" href="{{ all_chapters_url(section.id) }}">Full list</a>
+    <a class="btn btn-sm btn-outline-light" href="#chapters">Full list</a>
   </div>
   <div class="list-group list-group-flush">
     {% for m in modules %}

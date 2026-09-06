@@ -4,7 +4,7 @@
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">Class</a></li>
-    <li class="breadcrumb-item"><a href="{{ all_chapters_url(section_id) }}">All chapters</a></li>
+    <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">All chapters</a></li>
     <li class="breadcrumb-item active">{{ module.title }}</li>
   </ol>
 </nav>
@@ -12,7 +12,7 @@
 <div class="page-hero">
   <h1 class="h3 mb-1">{{ module.title }}</h1>
   <p class="mb-0">~{{ module.estimated_minutes }} min total · {{ lessons|length }} lessons
-    · <a href="{{ all_chapters_url(section_id) }}">All chapters</a></p>
+    · <a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">All chapters</a></p>
 </div>
 
 {% if course_modules %}

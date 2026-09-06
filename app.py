@@ -748,7 +748,9 @@ def student_gold_path(user, section):
             'key': 'quiz',
             'n': len(steps) + 1,
             'title': 'Take the ungraded quiz',
-            'detail': quiz.title + (' · last score %.0f%%' % quiz_attempt.score if quiz_attempt else ''),
+            'detail': quiz.title + (
+                ' · last score %.0f%%' % (quiz_attempt.score or 0) if quiz_attempt and quiz_attempt.score is not None else ''
+            ),
             'url': url_for('take_quiz', section_id=section.id, quiz_id=quiz.id),
             'done': bool(quiz_attempt),
             'available': True,
@@ -759,7 +761,10 @@ def student_gold_path(user, section):
             'n': len(steps) + 1,
             'title': 'Take the graded test',
             'detail': (
-                test.title + (' · last score %.0f%%' % test_attempt.score if test_attempt else '')
+                test.title + (
+                    ' · last score %.0f%%' % (test_attempt.score or 0)
+                    if test_attempt and test_attempt.score is not None else ''
+                )
                 if test_open else test.title + ' · closed until an instructor opens it'
             ),
             'url': url_for('take_test', section_id=section.id, test_id=test.id) if test_open else None,
@@ -2361,7 +2366,12 @@ def student_dashboard():
     for s in sections:
         enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=s.id).first()
         progress[s.id] = enr.progress_percent if enr else 0
-    gold_path = student_gold_path(current_user, sections[0]) if sections else None
+    gold_path = None
+    if sections:
+        try:
+            gold_path = student_gold_path(current_user, sections[0])
+        except Exception as exc:
+            print('gold_path student dashboard:', exc)
     return render_template(
         'student_dashboard.html',
         sections=sections,
@@ -3903,7 +3913,12 @@ def instructor_dashboard():
     if current_user.role == 'admin':
         courses = Course.query.order_by(Course.title).all()
     sections = sorted(sections, key=lambda s: ((s.course.title if s.course else ''), s.name or ''))
-    tqi_by_id = {s.id: _tqi_status(s) for s in sections}
+    tqi_by_id = {}
+    for s in sections:
+        try:
+            tqi_by_id[s.id] = _tqi_status(s)
+        except Exception as exc:
+            print('tqi_status', s.id, exc)
     return render_template('instructor_dashboard.html', sections=sections, courses=courses, tqi_by_id=tqi_by_id)
 
 
