@@ -2514,13 +2514,12 @@ def view_module(section_id, module_id):
         except Exception as exc:
             print('gold_path chapter:', exc)
     if lessons:
-        return render_template(
-            'chapter.html', module=module, lessons=lessons,
-            section_id=section_id, quizzes=quizzes, chapter_labs=chapter_labs,
-            gold_path=gold_path,
-            course_modules=course_modules,
-            class_home=class_home,
-        )
+        return redirect(url_for(
+            'view_lesson',
+            section_id=section_id,
+            module_id=module_id,
+            lesson_id=lessons[0].id,
+        ))
     return render_template(
         'module.html', module=module, section_id=section_id, quizzes=quizzes,
         chapter_labs=chapter_labs,
