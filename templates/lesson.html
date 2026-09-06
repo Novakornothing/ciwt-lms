@@ -4,7 +4,7 @@
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">Class</a></li>
-    <li class="breadcrumb-item"><a href="{{ url_for('curriculum_index', section_id=section_id) }}">All chapters</a></li>
+    <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">All chapters</a></li>
     <li class="breadcrumb-item"><a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">{{ module.title }}</a></li>
     <li class="breadcrumb-item active">{{ lesson.title }}</li>
   </ol>
