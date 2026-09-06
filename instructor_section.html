@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% block title %}{{ section.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My classes</a></li>
+    <li class="breadcrumb-item active">{{ section.name }}</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <div class="d-flex flex-wrap justify-content-between gap-2">
+    <div>
+      <h1 class="h3 mb-1">{{ section.name }}</h1>
+      <p class="mb-0">{{ section.course.title }} · {{ modules|length }} chapters · {{ enrollments|length }} students
+        · Instructor {{ section.instructor.full_name if section.instructor else 'unassigned' }}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-sm btn-outline-navy" href="#roster">Roster</a>
+      <a class="btn btn-sm btn-brand" href="{{ all_chapters_url(section.id) }}">Open curriculum</a>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy d-flex justify-content-between align-items-center">
+    <span>All chapters ({{ modules|length }})</span>
+    <a class="btn btn-sm btn-outline-light" href="{{ all_chapters_url(section.id) }}">Full list</a>
+  </div>
+  <div class="list-group list-group-flush">
+    {% for m in modules %}
+    <a class="list-group-item list-group-item-action d-flex justify-content-between"
+       href="{{ url_for('view_module', section_id=section.id, module_id=m.id) }}">
+      <span>{{ m.order }}. {{ m.title }}</span>
+      <span class="small text-muted">Open</span>
+    </a>
+    {% else %}
+    <div class="list-group-item text-muted">No chapters on this course yet. Open curriculum once to rebuild.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#run">Run class</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#students">Roster</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#content">Chapters</button></li>
+  {% if current_user.role == 'admin' %}
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#staff">Staff</button></li>
+  {% endif %}
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade show active" id="run">
+    <div class="card mb-4">
+      <div class="card-header navy">1. Open a graded test</div>
+      <div class="list-group list-group-flush">
+        {% for t in tests %}
+        {% set rel = releases.get(('test', t.id)) %}
+        {% set st = test_stats.get(t.id) if test_stats is defined else none %}
+        <div class="list-group-item">
+          <div class="d-flex flex-wrap justify-content-between gap-3">
+            <div>
+              <strong>{{ t.title }}</strong>
+              <div class="small text-muted">Pass ≥ {{ t.passing_score }}%
+                {% if rel and rel.is_active %}
+                  · <span class="text-success">Open</span>
+                  until {{ rel.available_until.strftime('%Y-%m-%d %H:%M') if rel.available_until else '—' }}
+                {% else %}
+                  · <span class="text-danger">Closed</span>
+                {% endif %}
+              </div>
+              {% if st and st.n %}
+              <div class="small mt-1">
+                {{ st.n }} completed · average {{ st.avg }}% · high {{ st.high }}% · low {{ st.low }}%
+              </div>
+              {% else %}
+              <div class="small text-muted mt-1">No completed attempts yet.</div>
+              {% endif %}
+              <div class="mt-2 d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=t.id) }}">Item analysis</a>
+                <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_test_preview', section_id=section.id, test_id=t.id) }}">Preview items</a>
+              </div>
+            </div>
+            <form method="post" action="{{ url_for('toggle_release') }}" style="min-width:16rem">
+              <input type="hidden" name="section_id" value="{{ section.id }}">
+              <input type="hidden" name="content_type" value="test">
+              <input type="hidden" name="content_id" value="{{ t.id }}">
+              <input type="hidden" name="schedule_mode" value="duration">
+              <label class="form-label small mb-0">Open for</label>
+              <select name="duration_minutes" class="form-select form-select-sm mb-1">
+                <option value="45">45 min</option>
+                <option value="60">1 hour</option>
+                <option value="75">75 min</option>
+                <option value="90" selected>90 min</option>
+                <option value="120">2 hours</option>
+                <option value="180">3 hours</option>
+                <option value="1440">24 hours</option>
+              </select>
+              <label class="form-label small mb-0">Who</label>
+              <select name="audience" class="form-select form-select-sm mb-1 js-audience">
+                <option value="class" selected>Whole class</option>
+                <option value="students">Selected students</option>
+              </select>
+              <div class="js-student-picks d-none border rounded p-2 mb-2" style="max-height:8rem;overflow:auto">
+                <div class="d-flex gap-1 mb-1">
+                  <button type="button" class="btn btn-sm btn-outline-navy js-select-all">All</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary js-clear-all">None</button>
+                </div>
+                {% for e in enrollments %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="student_ids" value="{{ e.user_id }}" id="run-stu-{{ t.id }}-{{ e.user_id }}">
+                  <label class="form-check-label small" for="run-stu-{{ t.id }}-{{ e.user_id }}">{{ e.user.full_name if e.user else e.user_id }}</label>
+                </div>
+                {% else %}
+                <div class="small text-muted">Enroll students first.</div>
+                {% endfor %}
+              </div>
+              <div class="d-flex flex-wrap gap-1">
+                <button class="btn btn-sm btn-brand" name="action" value="activate">Open now</button>
+                {% if rel and rel.is_active %}
+                <button class="btn btn-sm btn-outline-secondary" name="action" value="deactivate">Close</button>
+                {% endif %}
+              </div>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted">No graded tests in this course.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header navy">2. Class scores</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Student</th>
+              {% for t in tests %}
+              <th>{{ t.title }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in enrollments %}
+            <tr>
+              <td>{{ e.user.full_name if e.user else e.user_id }}</td>
+              {% for t in tests %}
+              <td class="small">
+                {% set sc = roster_scores.get(t.id, {}).get(e.user_id) if roster_scores is defined else none %}
+                {% if sc is not none %}{{ sc }}%{% else %}—{% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% else %}
+            <tr><td class="text-muted" colspan="{{ 1 + tests|length }}">No students yet. Use Roster to enroll.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-body small text-muted">
+        Per-test average / high / low is on each test card above. Open <strong>Item analysis</strong> for distractors and flags.
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="students">
+    <div class="row g-4" id="roster">
+      <div class="col-lg-5">
+        <div class="card">
+          <div class="card-header">Add student</div>
+          <div class="card-body">
+            <form method="post" action="{{ url_for('instructor_enroll') }}">
+              <input type="hidden" name="section_id" value="{{ section.id }}">
+              <div class="mb-3">
+                <label class="form-label">From existing students</label>
+                <select name="user_id" class="form-select">
+                  <option value="">— Select —</option>
+                  {% for s in available_students %}
+                  <option value="{{ s.id }}">{{ s.full_name }} ({{ s.email }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <p class="text-center text-muted small">or create by email</p>
+              <div class="mb-2">
+                <input type="email" name="email" class="form-control" placeholder="student@example.com">
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col"><input type="text" name="first_name" class="form-control" placeholder="First name"></div>
+                <div class="col"><input type="text" name="last_name" class="form-control" placeholder="Last name"></div>
+              </div>
+              <button class="btn btn-brand">Enroll</button>
+            </form>
+            <p class="small text-muted mt-2 mb-0">New accounts get password <code>student123</code>.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card">
+          <div class="card-header">Roster ({{ enrollments|length }})</div>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Progress</th><th></th></tr>
+              </thead>
+              <tbody>
+                {% for e in enrollments %}
+                <tr>
+                  <td>{{ e.user.full_name }}</td>
+                  <td class="small">{{ e.user.email }}</td>
+                  <td>{{ '%.0f'|format(e.progress_percent) }}%</td>
+                  <td class="text-end">
+                    <form method="post" action="{{ url_for('instructor_unenroll') }}" class="d-inline"
+                          onsubmit="return confirm('Remove this student?')">
+                      <input type="hidden" name="section_id" value="{{ section.id }}">
+                      <input type="hidden" name="enrollment_id" value="{{ e.id }}">
+                      <button class="btn btn-sm btn-outline-danger">Remove</button>
+                    </form>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-muted">No students enrolled yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="content">
+    <div class="card">
+      <div class="card-header navy">Chapters (lessons + ungraded quizzes)</div>
+      <div class="list-group list-group-flush">
+        {% for m in modules %}
+        {% set rel = releases.get(('module', m.id)) %}
+        <div class="list-group-item">
+          <div class="d-flex flex-wrap justify-content-between gap-2">
+            <div>
+              <strong>{{ m.order }}. {{ m.title }}</strong>
+              <div class="small text-muted">{% if rel and rel.is_active %}Live{% else %}Locked{% endif %}</div>
+              {% for qz in quizzes_by_module.get(m.id, []) %}
+              <div><a class="small" href="{{ url_for('instructor_quiz_preview', section_id=section.id, quiz_id=qz.id) }}">{{ qz.title }}</a></div>
+              {% endfor %}
+            </div>
+            <div class="d-flex flex-column gap-1 text-end">
+            <a class="btn btn-sm btn-brand" href="{{ url_for('view_module', section_id=section.id, module_id=m.id) }}">Open chapter</a>
+            <form method="post" action="{{ url_for('toggle_release') }}">
+              <input type="hidden" name="section_id" value="{{ section.id }}">
+              <input type="hidden" name="content_type" value="module">
+              <input type="hidden" name="content_id" value="{{ m.id }}">
+              <input type="hidden" name="schedule_mode" value="duration">
+              <input type="hidden" name="duration_minutes" value="10080">
+              <input type="hidden" name="audience" value="class">
+              {% if rel and rel.is_active %}
+              <button class="btn btn-sm btn-outline-secondary" name="action" value="deactivate">Lock for students</button>
+              {% else %}
+              <button class="btn btn-sm btn-outline-navy" name="action" value="activate">Unlock for students</button>
+              {% endif %}
+            </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% if current_user.role == 'admin' %}
+  <div class="tab-pane fade" id="staff">
+    <div class="card">
+      <div class="card-header navy">Primary instructor</div>
+      <div class="card-body">
+        <p>{{ section.instructor.full_name if section.instructor else 'Unassigned' }}</p>
+        {% if instructors %}
+        <form method="post" action="{{ url_for('section_set_instructor', section_id=section.id) }}" class="d-flex flex-wrap gap-2">
+          <select name="instructor_id" class="form-select" style="max-width:20rem">
+            {% for i in instructors %}
+            <option value="{{ i.id }}" {% if section.instructor_id == i.id %}selected{% endif %}>{{ i.full_name }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-brand">Set primary</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('form').forEach(form => {
+  const picks = form.querySelector('.js-student-picks');
+  if (!picks) return;
+  function audienceValue() {
+    const sel = form.querySelector('select.js-audience');
+    return sel ? sel.value : 'class';
+  }
+  form.querySelectorAll('.js-audience').forEach(el => {
+    el.addEventListener('change', () => {
+      picks.classList.toggle('d-none', audienceValue() !== 'students');
+    });
+  });
+  const boxes = () => form.querySelectorAll('.js-student-picks input[name="student_ids"]');
+  const selAll = form.querySelector('.js-select-all');
+  const clrAll = form.querySelector('.js-clear-all');
+  if (selAll) selAll.addEventListener('click', () => boxes().forEach(b => { b.checked = true; }));
+  if (clrAll) clrAll.addEventListener('click', () => boxes().forEach(b => { b.checked = false; }));
+});
+if (location.hash) {
+  const tab = document.querySelector('[data-bs-target="' + location.hash + '"]');
+  if (tab) new bootstrap.Tab(tab).show();
+}
+</script>
+{% endblock %}

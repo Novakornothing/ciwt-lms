@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}My classes{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item active">My classes</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h3 mb-1">My classes</h1>
+  <p class="mb-0">Open a class to enroll students, open a test, and read scores.</p>
+</div>
+
+{% if sections %}
+  {% for s in sections %}
+    {% if loop.first or (sections[loop.index0-1].course_id if loop.index0 else none) != s.course_id %}
+      {% if not loop.first %}</div></div>{% endif %}
+      <div class="card mb-3">
+        <div class="card-header navy d-flex justify-content-between align-items-center">
+          <span>{{ s.course.title if s.course else 'Curriculum' }}</span>
+          {% if s.course %}
+          <a class="btn btn-sm btn-outline-gold" href="{{ url_for('course_performance', course_id=s.course_id) }}">Course scores</a>
+          {% endif %}
+        </div>
+        <div class="list-group list-group-flush">
+    {% endif %}
+        <div class="list-group-item">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+              <strong>{{ s.name }}</strong>
+              <div class="small text-muted">{{ s.enrollments|length }} enrolled{% if s.instructor %} · {{ s.instructor.full_name }}{% endif %}
+                · {{ s.start_date or '—' }} → {{ s.end_date or '—' }}
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <a class="btn btn-sm btn-brand" href="{{ url_for('instructor_section', section_id=s.id) }}">Open class</a>
+              <a class="btn btn-sm btn-outline-navy" href="{{ all_chapters_url(s.id) }}">Open curriculum</a>
+            </div>
+          </div>
+        </div>
+    {% if loop.last %}</div></div>{% endif %}
+  {% endfor %}
+{% else %}
+<div class="card card-body text-muted">
+  No classes assigned. An administrator must create the class and assign you as instructor.
+</div>
+{% endif %}
+{% endblock %}

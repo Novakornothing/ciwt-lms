@@ -27,6 +27,19 @@ from aschool import BLOCKS as ASCHOOL_BLOCKS, CSCHOOL_COMMS, CSCHOOL_SYS, outlin
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ciwt-lms-demo-key-change-in-production')
+
+
+@app.context_processor
+def _ciwt_nav_urls():
+    def all_chapters_url(sid):
+        if sid and 'curriculum_index' in app.view_functions:
+            return url_for('curriculum_index', section_id=sid)
+        if sid and current_user.is_authenticated and current_user.role in ('admin', 'instructor'):
+            return url_for('instructor_section', section_id=sid)
+        if sid:
+            return url_for('student_section', section_id=sid)
+        return url_for('index')
+    return {'all_chapters_url': all_chapters_url}
 TQI_CORS = {
     'https://novakornothing.com',
     'https://www.novakornothing.com',
@@ -2466,7 +2479,10 @@ def view_module(section_id, module_id):
     lessons = Lesson.query.filter_by(module_id=module_id).order_by(Lesson.order).all()
     quizzes = Quiz.query.filter_by(module_id=module_id).all()
     # If structured lessons exist, show chapter hub; else legacy single page
-    chapter_labs = labs_for_module(module)
+    try:
+        chapter_labs = labs_for_module(module)
+    except Exception:
+        chapter_labs = []
     section = ClassSection.query.get(section_id)
     course_modules = []
     if module.course_id:
