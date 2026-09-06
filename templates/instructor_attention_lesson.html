@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ lesson.title }} — class attention{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_attention', section_id=section.id) }}">Attention signal</a></li>
+    <li class="breadcrumb-item active">{{ lesson.title }}</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ lesson.title }}</h1>
+  <p class="mb-0">Class AOI rollup for one lesson. Thin dwell is a reteach hint, not a failing score.</p>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">Headings</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>AOI</th><th>Students</th><th>Dwell</th><th>Visits</th><th>Note</th></tr></thead>
+      <tbody>
+      {% for a in aois %}
+        <tr>
+          <td>{{ a.label }}</td>
+          <td>{{ a.students }}</td>
+          <td>{{ '%.1f'|format(a.minutes) }} min</td>
+          <td>{{ a.visits }}</td>
+          <td class="small">{% if a.thin %}Thin relative dwell — worth a second pass in class{% else %}Held{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="text-muted">No AOI data for this lesson.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

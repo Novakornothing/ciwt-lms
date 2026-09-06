@@ -20,6 +20,8 @@
   </div>
 </div>
 
+{% include '_gold_path.html' %}
+
 <div class="row g-4">
   <div class="col-lg-7">
     <div class="card">
@@ -111,6 +113,35 @@
         {% endfor %}
       </div>
     </div>
+  </div>
+</div>
+
+<div class="card mt-4" id="tqi">
+  <div class="card-header navy">End-of-course critique</div>
+  <div class="card-body">
+    <p class="small text-muted mb-3">Anonymous after you save. Ratings are not a grade. Staff see counts and comments, not your name.</p>
+    <form method="post" action="{{ url_for('tqi_add_critique', section_id=section.id) }}">
+      <input type="hidden" name="next" value="student">
+      {% for key, group, label in eoc_items %}
+      <div class="mb-2">
+        <label class="form-label mb-1" for="eoc-{{ key }}"><span class="small text-muted">{{ group }}</span> — {{ label }}</label>
+        <select id="eoc-{{ key }}" name="{{ key }}" class="form-select form-select-sm" required>
+          <option value="">Select</option>
+          <option value="5" {% if my_answers.get(key)|string == '5' %}selected{% endif %}>5 — Strongly agree</option>
+          <option value="4" {% if my_answers.get(key)|string == '4' %}selected{% endif %}>4 — Agree</option>
+          <option value="3" {% if my_answers.get(key)|string == '3' %}selected{% endif %}>3 — Neither</option>
+          <option value="2" {% if my_answers.get(key)|string == '2' %}selected{% endif %}>2 — Disagree</option>
+          <option value="1" {% if my_answers.get(key)|string == '1' %}selected{% endif %}>1 — Strongly disagree</option>
+        </select>
+      </div>
+      {% endfor %}
+      <div class="mb-3">
+        <label class="form-label" for="eocComment">Comments (optional)</label>
+        <textarea id="eocComment" name="body" class="form-control" rows="3">{{ my_eoc.comment if my_eoc else '' }}</textarea>
+      </div>
+      <button class="btn btn-brand">{{ 'Update critique' if my_eoc else 'Submit critique' }}</button>
+      {% if my_eoc %}<span class="small text-muted ms-2">Last saved {{ my_eoc.updated_at.strftime('%Y-%m-%d') if my_eoc.updated_at else '' }}</span>{% endif %}
+    </form>
   </div>
 </div>
 {% endblock %}

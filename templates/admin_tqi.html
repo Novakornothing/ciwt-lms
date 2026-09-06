@@ -1,10 +1,29 @@
 {% extends "base.html" %}
 {% block title %}TQI board — all classes{% endblock %}
 {% block content %}
+<style>
+  .tqi-row { cursor: pointer; }
+  .tqi-row:hover { background: color-mix(in srgb, var(--accent, #d4b46a) 12%, transparent); }
+  .tqi-open-btn {
+    display: inline-block;
+    padding: .4rem .85rem;
+    font-weight: 600;
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
+  }
+  .tqi-status-link {
+    display: inline-block;
+    text-decoration: none;
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
+  }
+</style>
 <div class="page-hero">
   <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">Admin</div>
   <h1 class="h3 mb-1">TQI completion board</h1>
-  <p class="mb-0">Each convening, the assigned instructor, scheduled dates, and what is still missing from the TQI packet. Ready packets auto-complete after the end date.</p>
+  <p class="mb-0">Click a class name, the packet status, or <strong>Open packet</strong>. The yellow “open” label is the packet state — it now opens the packet too.</p>
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
@@ -29,9 +48,10 @@
     {% for card in cards %}
       {% set s = card.section %}
       {% set st = card.status %}
-      <tr>
+      {% set packet_url = url_for('tqi_class', section_id=s.id) %}
+      <tr class="tqi-row" data-href="{{ packet_url }}">
         <td>
-          <div class="fw-semibold">{{ s.name }}</div>
+          <a class="fw-semibold" href="{{ packet_url }}">{{ s.name }}</a>
           <div class="small text-muted">{{ s.course.code if s.course else '' }} · {{ st.n_enrolled }} enrolled</div>
         </td>
         <td class="small">
@@ -43,7 +63,7 @@
           <div class="small text-muted">{% if st.instructor %}{{ st.instructor.email }}{% endif %}</div>
         </td>
         <td>
-          <span class="badge {% if st.packet.status == 'complete' %}text-bg-success{% elif st.packet.status == 'ready' %}text-bg-info{% else %}text-bg-warning{% endif %}">{{ st.packet.status }}</span>
+          <a class="tqi-status-link badge {% if st.packet.status == 'complete' %}text-bg-success{% elif st.packet.status == 'ready' %}text-bg-info{% else %}text-bg-warning{% endif %}" href="{{ packet_url }}">{{ st.packet.status }}</a>
         </td>
         <td class="small">
           {% if st.missing %}
@@ -53,8 +73,8 @@
           {% endif %}
         </td>
         <td class="text-end">
-          <a class="btn btn-sm btn-outline-navy" href="{{ url_for('tqi_class', section_id=s.id) }}">Open</a>
-          <a class="btn btn-sm btn-brand" href="{{ url_for('tqi_report', section_id=s.id) }}">Report</a>
+          <a class="btn btn-sm btn-brand tqi-open-btn" href="{{ packet_url }}">Open packet</a>
+          <a class="btn btn-sm btn-outline-navy tqi-open-btn" href="{{ url_for('tqi_report', section_id=s.id) }}">Report</a>
         </td>
       </tr>
     {% else %}
@@ -63,4 +83,12 @@
     </tbody>
   </table>
 </div>
+<script>
+  document.querySelectorAll("tr.tqi-row[data-href]").forEach(function (row) {
+    row.addEventListener("click", function (e) {
+      if (e.target.closest("a, button, input, select, textarea, label")) return;
+      window.location.href = row.getAttribute("data-href");
+    });
+  });
+</script>
 {% endblock %}

@@ -1,0 +1,50 @@
+{% if gold_path and gold_path.steps %}
+<style>
+  .gold-path ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+  .gold-path .gp-step {
+    display: flex; gap: .75rem; align-items: flex-start;
+    padding: .65rem .75rem; border: 1px solid var(--line, #31405a); border-radius: 10px;
+  }
+  .gold-path .gp-n {
+    flex: 0 0 1.6rem; height: 1.6rem; border-radius: 999px;
+    display: grid; place-items: center; font-weight: 700; font-size: .8rem;
+    background: #1a2740; color: #d4b46a;
+  }
+  .gold-path .gp-step.done .gp-n { background: #1e4d36; color: #b6f0c8; }
+  .gold-path .gp-step.current { border-color: #d4b46a; box-shadow: 0 0 0 1px #d4b46a; }
+  .gold-path .gp-title { font-weight: 650; }
+  .gold-path .gp-detail { color: var(--muted, #8aa0b8); font-size: .86rem; }
+</style>
+<div class="card mb-4 gold-path">
+  <div class="card-header navy d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span>Your path — {{ gold_path.section.name }}</span>
+    {% if gold_path.complete %}
+    <span class="small">Path complete</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <p class="small text-muted mb-3">Work the chapter in order: lesson, matching lab, ungraded quiz. The graded test appears when your instructor opens it. After a test you see score and category only — not individual items.</p>
+    <ol>
+      {% for step in gold_path.steps %}
+      <li class="gp-step {% if step.done %}done{% endif %} {% if gold_path.next and gold_path.next.key == step.key %}current{% endif %}">
+        <span class="gp-n">{% if step.done %}✓{% else %}{{ step.n }}{% endif %}</span>
+        <div class="flex-grow-1">
+          <div class="gp-title">{{ step.title }}</div>
+          <div class="gp-detail">{{ step.detail }}</div>
+        </div>
+        {% if step.url and not step.done %}
+        <a class="btn btn-sm {% if gold_path.next and gold_path.next.key == step.key %}btn-brand{% else %}btn-outline-navy{% endif %}" href="{{ step.url }}">Open</a>
+        {% elif step.url and step.done %}
+        <a class="btn btn-sm btn-outline-navy" href="{{ step.url }}">Review</a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+    {% if gold_path.next %}
+    <a class="btn btn-brand mt-3" href="{{ gold_path.next.url }}">Continue — {{ gold_path.next.title }}</a>
+    {% elif gold_path.complete %}
+    <p class="small text-muted mb-0 mt-3">You finished the first-chapter path. Open other chapters from the class list when you are ready.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

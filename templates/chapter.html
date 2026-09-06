@@ -3,15 +3,32 @@
 {% block content %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section_id) }}">Class</a></li>
+    <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">Class</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('curriculum_index', section_id=section_id) }}">All chapters</a></li>
     <li class="breadcrumb-item active">{{ module.title }}</li>
   </ol>
 </nav>
 
 <div class="page-hero">
   <h1 class="h3 mb-1">{{ module.title }}</h1>
-  <p class="mb-0">~{{ module.estimated_minutes }} min total · {{ lessons|length }} lessons · Progressive chapter</p>
+  <p class="mb-0">~{{ module.estimated_minutes }} min total · {{ lessons|length }} lessons
+    · <a href="{{ url_for('curriculum_index', section_id=section_id) }}">All chapters</a></p>
 </div>
+
+{% if course_modules %}
+<div class="card mb-4">
+  <div class="card-header navy">All chapters in this course</div>
+  <div class="list-group list-group-flush">
+    {% for m in course_modules %}
+    <a class="list-group-item list-group-item-action d-flex justify-content-between {% if m.id == module.id %}fw-semibold{% endif %}"
+       href="{{ url_for('view_module', section_id=section_id, module_id=m.id) }}">
+      <span>{{ m.order }}. {{ m.title }}</span>
+      {% if m.id == module.id %}<span class="small text-muted">This chapter</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
 
 {% if module.content %}
 <div class="card mb-4">

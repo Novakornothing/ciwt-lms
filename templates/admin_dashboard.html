@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-hero">
   <h1 class="h3 mb-1">Admin tools</h1>
-  <p class="mb-0">Create classes and people here. Use the <strong>left menu</strong> for Teaching time, Test analytics, Tickets, and exports.</p>
+  <p class="mb-0">Create classes and people here. TQI lives on a separate admin site that pulls from this LMS: <a href="https://novakornothing.com/tqi" target="_blank" rel="noopener">novakornothing.com/tqi</a>.</p>
 </div>
 <p class="small text-muted mb-3">
   On this page:
@@ -11,6 +11,35 @@
   <a href="#admin-people">Add instructor / admin</a> ·
   <a href="#admin-staff">Staff roster</a>
 </p>
+<div class="card mb-4">
+  <div class="card-header navy d-flex justify-content-between align-items-center">
+    <span>TQI packets</span>
+    <a class="btn btn-sm btn-brand" href="https://novakornothing.com/tqi" target="_blank" rel="noopener">Open TQI site</a>
+  </div>
+  <div class="card-body py-2">
+    <span class="stat-pill">Complete <strong>{{ tqi_complete|default(0) }}</strong></span>
+    <span class="stat-pill">Missing items <strong>{{ tqi_missing|default(0) }}</strong></span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Class</th><th>Instructor</th><th>Schedule</th><th>Status</th><th>Missing</th></tr></thead>
+      <tbody>
+      {% for card in tqi_cards|default([]) %}
+        <tr>
+          <td><a href="https://novakornothing.com/tqi" target="_blank" rel="noopener">{{ card.section.name }}</a></td>
+          <td>{{ card.status.instructor.full_name if card.status.instructor else '—' }}</td>
+          <td class="small">{{ card.section.start_date or '—' }} → {{ card.section.end_date or '—' }}</td>
+          <td>{{ card.status.packet.status }}</td>
+          <td class="small">{% if card.status.missing %}{{ card.status.missing|join('; ') }}{% else %}—{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="text-muted">No classes.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <div class="card mb-4 border-warning">
   <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div>

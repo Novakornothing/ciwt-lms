@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Attention signal — {{ section.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My classes</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item active">Attention signal</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">Instructor dashboard</div>
+  <h1 class="h3 mb-1">Where students looked — {{ section.name }}</h1>
+  <p class="mb-0">AOI timelines from WebGazer. This is an <strong>attention signal</strong>, not a grade, attendance mark, or test score.</p>
+</div>
+
+<div class="alert mb-3" style="background:color-mix(in srgb, var(--accent) 16%, transparent);border:1px solid var(--accent)">
+  Use thin dwell to decide what to reteach. Do not convert these numbers into points.
+  <a href="{{ url_for('helix_attention_policy') }}">Read the written policy</a>.
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <span class="stat-pill">Sessions <strong>{{ n_sessions }}</strong></span>
+  <span class="stat-pill">Students with data <strong>{{ n_students }}</strong></span>
+  <span class="stat-pill">Lessons touched <strong>{{ n_lessons }}</strong></span>
+  <a class="btn btn-sm btn-outline-navy" href="{{ url_for('helix_attention_csv', section_id=section.id) }}">Export AOI CSV</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header navy">Students</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Student</th><th>Sessions</th><th>Last</th><th></th></tr></thead>
+          <tbody>
+          {% for row in students %}
+            <tr>
+              <td>{{ row.name }}</td>
+              <td>{{ row.sessions }}</td>
+              <td class="small">{{ row.last.strftime('%Y-%m-%d %H:%M') if row.last else '—' }} UTC</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_attention_student', section_id=section.id, user_id=row.user_id) }}">Timeline</a>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-muted">No opt-in sessions yet. Open a lesson as a student, allow the camera, click the nine marks, and read for half a minute.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header navy">Class dwell by heading (all lessons rolled)</div>
+      <div class="list-group list-group-flush">
+        {% for a in aois %}
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between gap-2">
+            <div>
+              <div class="fw-semibold">{{ a.label }}</div>
+              <div class="small text-muted">{{ a.students }} student{{ 's' if a.students != 1 else '' }} · {{ a.visits }} visits</div>
+            </div>
+            <div class="text-end">
+              <div>{{ '%.1f'|format(a.minutes) }} min</div>
+              <div class="small text-muted">{{ a.share }}% of recorded dwell</div>
+            </div>
+          </div>
+          <div class="progress mt-2" style="height:.4rem">
+            <div class="progress-bar" style="width:{{ a.bar }}%;background:#c9a227"></div>
+          </div>
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted">No AOI buckets stored yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header navy">Lessons with stored timelines</div>
+      <div class="list-group list-group-flush">
+        {% for L in lessons %}
+        <a class="list-group-item list-group-item-action d-flex justify-content-between"
+           href="{{ url_for('instructor_attention_lesson', section_id=section.id, lesson_id=L.id) }}">
+          <span>{{ L.title }}</span>
+          <span class="small text-muted">{{ L.sessions }} session{{ 's' if L.sessions != 1 else '' }} →</span>
+        </a>
+        {% else %}
+        <div class="list-group-item text-muted">No lesson-level data yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -17,6 +17,19 @@
   </div>
 </div>
 
+<div class="card mb-4">
+  <div class="card-header navy">TQI — Training Quality Indicator</div>
+  <div class="card-body">
+    <p class="mb-2">Each class has a TQI packet: end-of-course student critiques (anonymous), instructor closeout, and test item analysis. Sign in to open it.</p>
+    <ul class="mb-3">
+      <li><strong>Student</strong> — home page shows EOC complete / not complete for each class</li>
+      <li><strong>Instructor</strong> — home page shows packet status and missing items</li>
+      <li><strong>Admin</strong> — home page lists every class packet and the TQI board</li>
+    </ul>
+    <a class="btn btn-brand" href="{{ url_for('login') }}">Sign in to open TQI</a>
+  </div>
+</div>
+
 <div class="row g-4">
   <div class="col-lg-7">
     <div class="card h-100">
@@ -47,6 +60,7 @@
           <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Instructors enroll students</li>
           <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Timed release of modules &amp; graded tests</li>
           <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Student progress quizzes &amp; knowledge tests</li>
+          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>TQI packet per class (EOC critiques, instructor closeout, item analysis)</li>
           <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Test item analysis for authorized roles</li>
           <li class="mb-0"><i class="bi bi-check2-circle text-success me-2"></i>Courses: IT Support &amp; Network Operations</li>
         </ul>

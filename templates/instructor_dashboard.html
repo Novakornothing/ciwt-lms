@@ -8,7 +8,7 @@
 </nav>
 <div class="page-hero">
   <h1 class="h3 mb-1">My classes</h1>
-  <p class="mb-0">Pick a class to teach. Labs and reports are in the left menu under <strong>Teach</strong> and <strong>Reports</strong>.</p>
+  <p class="mb-0">Open a class to enroll students, open a test, and read scores.</p>
 </div>
 
 {% if sections %}
@@ -28,9 +28,14 @@
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <strong>{{ s.name }}</strong>
-              <div class="small text-muted">{{ s.enrollments|length }} enrolled{% if s.instructor %} · {{ s.instructor.full_name }}{% endif %}</div>
+              <div class="small text-muted">{{ s.enrollments|length }} enrolled{% if s.instructor %} · {{ s.instructor.full_name }}{% endif %}
+                · {{ s.start_date or '—' }} → {{ s.end_date or '—' }}
+              </div>
             </div>
-            <a class="btn btn-sm btn-brand" href="{{ url_for('instructor_section', section_id=s.id) }}">Open class</a>
+            <div class="d-flex gap-2">
+              <a class="btn btn-sm btn-brand" href="{{ url_for('instructor_section', section_id=s.id) }}">Open class</a>
+              <a class="btn btn-sm btn-outline-navy" href="{{ url_for('curriculum_index', section_id=s.id) }}">Open curriculum</a>
+            </div>
           </div>
         </div>
     {% if loop.last %}</div></div>{% endif %}

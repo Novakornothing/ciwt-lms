@@ -3,7 +3,8 @@
 {% block content %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section_id) }}">Class</a></li>
+    <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">Class</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('curriculum_index', section_id=section_id) }}">All chapters</a></li>
     <li class="breadcrumb-item"><a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">{{ module.title }}</a></li>
     <li class="breadcrumb-item active">{{ lesson.title }}</li>
   </ol>
@@ -56,10 +57,22 @@
 
 <div class="offcanvas offcanvas-start" tabindex="-1" id="lessonDrawer" aria-labelledby="lessonDrawerLabel">
   <div class="offcanvas-header border-bottom">
-    <h2 class="offcanvas-title h5 mb-0" id="lessonDrawerLabel">Chapter navigation</h2>
+    <h2 class="offcanvas-title h5 mb-0" id="lessonDrawerLabel">Course navigation</h2>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body p-0" id="lessonSideNav">
+    {% if course_modules %}
+    <div class="card-header navy">Chapters</div>
+    <div class="list-group list-group-flush">
+      {% for m in course_modules %}
+      <a href="{{ url_for('view_module', section_id=section_id, module_id=m.id) }}"
+         class="list-group-item list-group-item-action py-2 {% if m.id == module.id %}active-lesson{% endif %}">
+        {{ m.order }}. {{ m.title }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="card-header navy border-top">Lessons in this chapter</div>
     <div class="list-group list-group-flush lesson-nav">
       {% for L in lessons %}
       <a href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=L.id) }}"
@@ -104,8 +117,12 @@
       {% else %}<span></span>{% endif %}
       {% if next_l %}
       <a class="btn btn-brand" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=next_l.id) }}">
-        {{ next_l.title }} →
+        Next lesson →
       </a>
+      {% elif lesson_labs %}
+      <a class="btn btn-brand" href="#chapter-lab">Do the lab for this lesson</a>
+      {% elif quizzes %}
+      <a class="btn btn-brand" href="{{ url_for('take_quiz', section_id=section_id, quiz_id=quizzes[0].id) }}">Take the chapter quiz</a>
       {% else %}
       <a class="btn btn-brand" href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">Back to chapter</a>
       {% endif %}
@@ -593,4 +610,21 @@
   };
 })();
 </script>
+{% if current_user.is_authenticated %}
+<script>
+window.HELIX = {
+  lessonId: {{ lesson.id }},
+  sectionId: {{ section_id }},
+  policyVersion: '2026-09-06',
+  policyUrl: "{{ url_for('helix_attention_policy') }}",
+  startUrl: "{{ url_for('helix_session_start') }}",
+  timelineUrl: "{{ url_for('helix_session_timeline', session_id=0) }}",
+  calibratedUrl: "{{ url_for('helix_session_calibrated', session_id=0) }}",
+  summaryUrl: "{{ url_for('helix_lesson_summary', lesson_id=lesson.id) }}",
+  engineUrl: "{{ url_for('static', filename='vendor/webgazer.js') }}",
+  cdnUrl: "https://cdn.jsdelivr.net/npm/webgazer@3.3.0/dist/webgazer.min.js"
+};
+</script>
+<script src="{{ url_for('static', filename='js/helix-gaze.js') }}" defer></script>
+{% endif %}
 {% endblock %}

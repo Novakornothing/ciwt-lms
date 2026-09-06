@@ -1698,26 +1698,45 @@
 
     /* Mobile rail behavior lives in staff_sidebar.html — do not force position:static */
 
+    .skip-link {
+      position: absolute; left: 0.75rem; top: -3rem; z-index: 2000;
+      background: var(--accent); color: #041018; font-weight: 600;
+      padding: 0.45rem 0.75rem; border-radius: 6px; text-decoration: none;
+    }
+    .skip-link:focus { top: 0.6rem; outline: 3px solid #fff; }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--accent-bright); outline-offset: 2px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
   </style>
   {% block head %}{% endblock %}
 </head>
 {% set ui_role = acting_role if acting_role is defined and acting_role else (current_user.role if current_user.is_authenticated else 'student') %}
 <body data-role="{{ ui_role }}" class="{% if current_user.is_authenticated %}has-staff-rail{% endif %}">
+  <a class="skip-link" href="#main">Skip to main content</a>
   <header class="topbar" data-role-label="{{ ui_role|upper }} · IST">
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark" aria-label="Primary">
       <div class="container-fluid px-3 px-md-4">
-        <a class="navbar-brand" href="{{ url_for('index') }}">
-          <span class="brand-logo-wrap" title="Navy Information Systems Training">
-            <span class="logo-live" role="img" aria-label="Navy mark"></span>
+        <a class="navbar-brand" href="https://novakornothing.com" title="Novak or Nothing home">
+          <span class="brand-logo-wrap" title="CIWT Information Systems Training">
+            <span class="logo-live" role="img" aria-label="CIWT mark"></span>
           </span>
           <span><span class="brand-title-line">CIWT LMS</span><span class="brand-sub">Info Systems Training</span></span>
         </a>
         {% if current_user.is_authenticated %}
-        <button type="button" class="btn btn-sm btn-outline-light me-2 d-lg-none" id="mobileStaffMenuBtn" title="Menu">
-          <i class="bi bi-list"></i> Menu
+        <button type="button" class="btn btn-sm btn-outline-light me-2 d-lg-none" id="mobileStaffMenuBtn" title="Open menu" aria-label="Open staff menu">
+          <i class="bi bi-list" aria-hidden="true"></i> Menu
         </button>
         {% endif %}
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="nav">
@@ -1729,7 +1748,8 @@
           </ul>
           {% if current_user.is_authenticated %}
           <form class="d-flex ms-lg-2 my-2 my-lg-0" method="get" action="{{ url_for('curriculum_search') }}" role="search">
-            <input class="form-control form-control-sm border-0" type="search" name="q" placeholder="Search curriculum"
+            <label class="visually-hidden" for="curricSearch">Search curriculum</label>
+            <input id="curricSearch" class="form-control form-control-sm border-0" type="search" name="q" placeholder="Search curriculum"
                    style="min-width:9rem;max-width:14rem;background:rgba(255,255,255,.12);color:inherit">
           </form>
           {% endif %}
@@ -1788,7 +1808,7 @@
     </div>
     {% endif %}
   </header>
-  <main class="container-fluid px-3 px-md-4 px-xl-4 py-3 py-md-4 flex-grow-1 app-main">
+  <main id="main" class="container-fluid px-3 px-md-4 px-xl-4 py-3 py-md-4 flex-grow-1 app-main" tabindex="-1">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -1806,8 +1826,8 @@
   {% endif %}
   <footer class="py-3">
     <div class="container-fluid px-3 px-md-4 d-flex justify-content-between flex-wrap gap-2">
-      <span>CIWT Learning Management System · Prototype demonstration build</span>
-      <span>For training demonstration use only</span>
+      <span>CIWT Learning Management System · proprietary schoolhouse software</span>
+      <span>Original CIWT curriculum — not a vendor exam product</span>
     </div>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

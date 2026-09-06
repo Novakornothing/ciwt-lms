@@ -482,7 +482,7 @@ LABS = [
         [
             {"id": "fw", "text": "netsh advfirewall show allprofiles"},
         ],
-        "Before you turn a firewall off, prove which profile is on. This is an A+ support habit.",
+        "Before you turn a firewall off, prove which profile is on. That is a CIWT support habit.",
         "You can read Windows Defender Firewall profile state from CLI.",
         _win_state(),
         hints=["netsh advfirewall show allprofiles"],
@@ -527,7 +527,7 @@ LABS = [
             {"id": "access", "text": "Fa0/2 access VLAN 20"},
             {"id": "portsec", "text": "switchport port-security on Fa0/2"},
         ],
-        "Port security is a Network+ access-layer control. Practice it after the VLAN lab.",
+        "Port security is an access-layer control. Practice it after the VLAN lab.",
         "Fa0/2 is an access port with port-security enabled.",
         _sw_state(),
         hints=["enable", "conf t", "vlan 20", "int fa0/2", "switchport mode access", "switchport access vlan 20", "switchport port-security", "end"],
@@ -544,7 +544,7 @@ LABS = [
             {"id": "defroute", "text": "ip route 0.0.0.0 0.0.0.0 10.20.0.2"},
             {"id": "show_route", "text": "show ip route"},
         ],
-        "A LAN with no default route cannot reach the internet. This is a Network+ routing staple.",
+        "A LAN with no default route cannot reach the internet. Practice that default route here.",
         "The router has a connected LAN and a default route.",
         _rtr_state(),
         hints=["enable", "conf t", "int g0/0", "ip address 10.20.0.1 255.255.255.0", "no shutdown", "ip route 0.0.0.0 0.0.0.0 10.20.0.2", "end", "show ip route"],
@@ -775,6 +775,68 @@ LABS = [
         _sw_state(),
         hints=["enable", "conf t", "int fa0/2", "description USER-DROP"],
         builds_on=["sw-vlan-access"],
+    ),
+    _lab(
+        "ticket-intake",
+        "Block 1 — Ticket intake desk",
+        "ticket",
+        "Classify, set impact, decide escalate, write a usable note, submit.",
+        [
+            {"id": "showed", "text": "Read the ticket with show ticket"},
+            {"id": "classified", "text": "classify break-fix | request | incident"},
+            {"id": "impact", "text": "impact 1 | impact many"},
+            {"id": "escalated", "text": "escalate yes | escalate no"},
+            {"id": "noted", "text": "note <symptom, observation, next step>"},
+            {"id": "submitted", "text": "submit the complete intake"},
+        ],
+        "A user typed one messy sentence. Turn it into an intake another watch can use. Commands are in Chapter 1.5.",
+        "Intake is complete: type, impact, escalate decision, and a usable note.",
+        {
+            "hostname": "TICKET-DESK",
+            "ticket": "Half the quarterdeck badges stopped after lunch. The reader by the hatch feels warm.",
+            "classify": None,
+            "impact": None,
+            "escalate": None,
+            "note": "",
+        },
+        hints=["help", "show ticket", "classify incident", "impact many", "escalate yes", "note ...", "submit"],
+    ),
+    _lab(
+        "hw-board",
+        "Block 2 — Identify the board on the bench",
+        "ticket",
+        "Name form factor, socket, memory, storage, and POST from the bench card.",
+        [
+            {"id": "showed", "text": "show board"},
+            {"id": "form", "text": "form-factor microatx | atx | mini-itx"},
+            {"id": "socket", "text": "socket lga1700 | am5"},
+            {"id": "memory", "text": "memory ddr4 | ddr5"},
+            {"id": "storage", "text": "storage nvme | sata"},
+            {"id": "post", "text": "post memory | display | power | ok"},
+            {"id": "submitted", "text": "submit"},
+        ],
+        "Side panel is off. Read the card. Commands are in Chapter 2.",
+        "Board card complete.",
+        {
+            "hostname": "BENCH",
+            "kind": "hw",
+            "card": (
+                "CASE: small office tower\n"
+                "BOARD: 9.6 x 9.6 in, four DIMM slots, one M.2 short slot with a stick installed\n"
+                "SOCKET silkscreen: LGA1700\n"
+                "DIMM marking: DDR5\n"
+                "POST: debug LED reads MEM — long beeps, no video"
+            ),
+            "answers": {
+                "form-factor": "microatx",
+                "socket": "lga1700",
+                "memory": "ddr5",
+                "storage": "nvme",
+                "post": "memory",
+            },
+            "guess": {},
+        },
+        hints=["help", "show board", "form-factor microatx", "socket lga1700", "memory ddr5", "storage nvme", "post memory", "submit"],
     ),
 ]
 
@@ -1172,6 +1234,29 @@ def complete_ios_line(line, kind, mode=None):
 
 # Expected sequences for self-test (every lab must pass)
 VERIFY_SEQUENCES = {
+    "ticket-intake": (
+        [
+            "show ticket",
+            "classify incident",
+            "impact many",
+            "escalate yes",
+            "note Badge readers failed after lunch. Reader surface warm. Did not open panel. Need facilities on scene.",
+            "submit",
+        ],
+        ["showed", "classified", "impact", "escalated", "noted", "submitted"],
+    ),
+    "hw-board": (
+        [
+            "show board",
+            "form-factor microatx",
+            "socket lga1700",
+            "memory ddr5",
+            "storage nvme",
+            "post memory",
+            "submit",
+        ],
+        ["showed", "form", "socket", "memory", "storage", "post", "submitted"],
+    ),
     "win-ipconfig": (["hostname", "ipconfig /all"], ["run_hostname", "run_ipconfig"]),
     "win-dns-break": (
         ["ipconfig /all", "ping 10.20.30.50", "ping app.training.local", "nslookup app.training.local", "ipconfig /flushdns"],
@@ -1339,6 +1424,8 @@ VERIFY_SEQUENCES = {
 
 # Curriculum chapter → live labs (course code, module order)
 CHAPTER_LABS = {
+    ("ITSUP", 1): ["ticket-intake"],
+    ("ITSUP", 2): ["hw-board"],
     ("ITSUP", 3): ["w11-disk", "gui-devices"],
     ("ITSUP", 5): ["win-ipconfig", "win-dns-break", "w11-inventory", "w11-netsh", "gui-ethernet", "win-hostname", "win-ping-loop", "win-nslookup-ok", "win-flushdns", "win-arp", "win-route", "w11-wlan"],
     ("ITSUP", 8): ["w11-inventory", "w11-powershell-net", "w11-services", "win-dhcp-renew", "gui-about", "gui-services", "gui-update", "gui-accounts"],
@@ -1403,7 +1490,11 @@ def labs_for_module(module):
     ids = list(CHAPTER_LABS.get((code, order), []))
     if not ids:
         title = (getattr(module, "title", "") or "").lower()
-        if any(k in title for k in ("vlan", "switch", "trunk")):
+        if any(k in title for k in ("foundation", "workplace", "ticket", "safety")):
+            ids = ["ticket-intake"]
+        elif any(k in title for k in ("motherboard", "architecture", "cpu", "memory")):
+            ids = ["hw-board"]
+        elif any(k in title for k in ("vlan", "switch", "trunk")):
             ids = ["sw-vlan-access", "sw-trunk-basics", "sw-vlan-and-trunk"]
         elif any(k in title for k in ("rout", "wan", "gateway")):
             ids = ["rtr-gateway", "rtr-two-interfaces", "rtr-edge-complete"]
@@ -1416,6 +1507,16 @@ def labs_for_module(module):
 
 # Specific lesson (course, chapter order, lesson order) → labs to embed
 LESSON_LABS = {
+    ("ITSUP", 1, 1): ["ticket-intake"],
+    ("ITSUP", 1, 2): ["ticket-intake"],
+    ("ITSUP", 1, 3): ["ticket-intake"],
+    ("ITSUP", 1, 4): ["ticket-intake"],
+    ("ITSUP", 1, 5): ["ticket-intake"],
+    ("ITSUP", 2, 1): ["hw-board"],
+    ("ITSUP", 2, 2): ["hw-board"],
+    ("ITSUP", 2, 3): ["hw-board"],
+    ("ITSUP", 2, 4): ["hw-board"],
+    ("ITSUP", 2, 5): ["hw-board"],
     ("ITSUP", 5, 1): ["win-ipconfig"],
     ("ITSUP", 5, 3): ["win-ipconfig", "win-dns-break"],
     ("ITSUP", 5, 5): ["win-full-triage"],
@@ -1447,6 +1548,8 @@ LESSON_LABS = {
 }
 
 LAB_ALIGN = {
+    "ticket-intake": "show ticket, classify, impact, escalate, note, submit — same order as Chapter 1.5.",
+    "hw-board": "show board, then form-factor, socket, memory, storage, post, submit — Chapter 2.",
     "gui-about": "Click Settings → System → About. Read edition and device name.",
     "gui-ethernet": "Click Settings → Network & internet → Ethernet. Read IPv4, gateway, and DNS.",
     "gui-renew": "On Ethernet, Disconnect then Connect to recycle the lease.",
@@ -1521,6 +1624,8 @@ def prompt_for(lab, state):
     kind = lab["kind"]
     host = state.get("hostname", "device")
     mode = state.get("mode", "user")
+    if kind == "ticket":
+        return "TICKET-DESK>"
     if kind == "windows":
         if (state.get("shell") or "cmd") == "ps":
             return "PS C:\\Users\\Trainee>"
@@ -2463,6 +2568,149 @@ def complete_command(lab_id, partial, mode=None):
     return complete_ios_line(partial or "", lab["kind"], mode=mode)
 
 
+def run_hw(cmd, state, done):
+    raw = (cmd or "").strip()
+    cl = raw.lower()
+    answers = state.get("answers") or {}
+    guess = state.setdefault("guess", {})
+    marks = {
+        "form-factor": "form",
+        "socket": "socket",
+        "memory": "memory",
+        "storage": "storage",
+        "post": "post",
+    }
+    if cl in ("help", "?"):
+        return [
+            "Commands: help, show board,",
+            "  form-factor atx | microatx | mini-itx",
+            "  socket lga1700 | am5",
+            "  memory ddr4 | ddr5",
+            "  storage nvme | sata",
+            "  post memory | display | power | ok",
+            "  submit",
+        ], state, done
+    if cl in ("show board", "show", "board"):
+        _mark(done, "showed")
+        card = (state.get("card") or "").split("\n")
+        return ["BENCH CARD:"] + card + ["", "Your answers: " + ", ".join(
+            f"{k}={guess.get(k) or '—'}" for k in marks
+        )], state, done
+    for key in marks:
+        prefix = key + " "
+        if cl.startswith(prefix) or cl.startswith(key.replace("-", " ") + " "):
+            val = cl.split(None, 1)[1].strip().replace(" ", "")
+            aliases = {
+                "micro-atx": "microatx", "matx": "microatx",
+                "miniitx": "mini-itx", "itx": "mini-itx",
+                "lga": "lga1700",
+                "am4": "am5",
+            }
+            val = aliases.get(val, val)
+            guess[key] = val
+            if val == answers.get(key):
+                _mark(done, marks[key])
+                return [f"{key} recorded: {val} (matches the card)."], state, done
+            return [f"{key} recorded: {val}. Does not match the card — look again."], state, done
+    if cl == "submit":
+        missing = [k for k, oid in marks.items() if oid not in done]
+        if "showed" not in done:
+            missing = ["show board"] + missing
+        if missing:
+            return ["Cannot submit. Still need correct: " + ", ".join(missing)], state, done
+        _mark(done, "submitted")
+        return ["Bench card submitted. Isolation order stays: power, POST, display, firmware, OS."], state, done
+    return ["Not recognized. Type help."], state, done
+
+
+def run_ticket(cmd, state, done):
+    """Block 1 intake desk — commands match Chapter 1.5."""
+    raw = (cmd or "").strip()
+    cl = raw.lower()
+    if cl in ("help", "?"):
+        return [
+            "Commands:",
+            "  help",
+            "  show ticket",
+            "  classify break-fix | request | incident",
+            "  impact 1 | impact many",
+            "  escalate yes | escalate no",
+            "  note <symptom, observation, next step>",
+            "  submit",
+        ], state, done
+    if cl in ("show ticket", "show", "ticket"):
+        _mark(done, "showed")
+        return [
+            "RAW USER TEXT:",
+            state.get("ticket") or "(empty)",
+            "",
+            "STATUS  classify=%s  impact=%s  escalate=%s" % (
+                state.get("classify") or "—",
+                state.get("impact") or "—",
+                state.get("escalate") if state.get("escalate") is not None else "—",
+            ),
+            "NOTE    " + (state.get("note") or "(none)"),
+        ], state, done
+    if cl.startswith("classify "):
+        val = cl.split(None, 1)[1].strip().replace("_", "-")
+        aliases = {
+            "break-fix": "break-fix", "breakfix": "break-fix", "break": "break-fix",
+            "request": "request", "service": "request", "service-request": "request",
+            "incident": "incident", "security": "incident",
+        }
+        if val not in aliases:
+            return ["Unknown type. Use classify break-fix | request | incident"], state, done
+        state["classify"] = aliases[val]
+        _mark(done, "classified")
+        return ["Classified as %s." % state["classify"]], state, done
+    if cl.startswith("impact "):
+        val = cl.split(None, 1)[1].strip()
+        if val in ("1", "one", "single"):
+            state["impact"] = "1"
+        elif val in ("many", "multi", "multiple"):
+            state["impact"] = "many"
+        else:
+            return ["Use impact 1 or impact many"], state, done
+        _mark(done, "impact")
+        return ["Impact set to %s." % state["impact"]], state, done
+    if cl.startswith("escalate "):
+        val = cl.split(None, 1)[1].strip()
+        if val in ("yes", "y"):
+            state["escalate"] = "yes"
+        elif val in ("no", "n"):
+            state["escalate"] = "no"
+        else:
+            return ["Use escalate yes or escalate no"], state, done
+        _mark(done, "escalated")
+        return ["Escalate = %s." % state["escalate"]], state, done
+    if cl == "note" or cl.startswith("note "):
+        text = raw.split(None, 1)[1].strip() if " " in raw else ""
+        if len(text) < 24:
+            return ["Note too short. Include symptom, one observation, and a next step."], state, done
+        state["note"] = text
+        _mark(done, "noted")
+        return ["Note saved (%d characters)." % len(text)], state, done
+    if cl == "submit":
+        missing = []
+        if not state.get("classify"):
+            missing.append("classify")
+        if not state.get("impact"):
+            missing.append("impact")
+        if state.get("escalate") not in ("yes", "no"):
+            missing.append("escalate")
+        if len(state.get("note") or "") < 24:
+            missing.append("note")
+        if missing:
+            return ["Cannot submit. Still need: " + ", ".join(missing)], state, done
+        _mark(done, "submitted")
+        return [
+            "Intake submitted.",
+            "type=%s  impact=%s  escalate=%s" % (state["classify"], state["impact"], state["escalate"]),
+            "note: " + state["note"],
+        ], state, done
+    return ["Not recognized. Type help."], state, done
+
+
 def run_command(lab_id, state, done, command):
     lab = get_lab(lab_id)
     if not lab:
@@ -2498,7 +2746,12 @@ def run_command(lab_id, state, done, command):
             }, state, done
         cmd = expanded or cmd
 
-    if lab["kind"] == "windows":
+    if lab["kind"] == "ticket":
+        if lab_id == "hw-board" or (state or {}).get("kind") == "hw":
+            lines, state, done = run_hw(cmd, state, done)
+        else:
+            lines, state, done = run_ticket(cmd, state, done)
+    elif lab["kind"] == "windows":
         lines, state, done = run_windows(cmd, state, done)
     elif lab["kind"] == "switch":
         lines, state, done = run_switch(cmd, state, done)

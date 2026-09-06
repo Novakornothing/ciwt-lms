@@ -8,8 +8,10 @@
 </nav>
 <div class="page-hero">
   <h1 class="h3 mb-1">Your training</h1>
-  <p class="mb-0">Open a class to study lessons. Use <strong>Practice</strong> in the left menu for live CLI labs.</p>
+  <p class="mb-0">Work your class in order: lesson, lab, quiz, then the graded test when it is open.</p>
 </div>
+
+{% include '_gold_path.html' %}
 
 <div class="row g-4">
   <div class="col-lg-7">
@@ -29,7 +31,9 @@
               <div class="progress-bar bg-danger" style="width: {{ progress.get(s.id, 0) }}%"></div>
             </div>
           </div>
-          <span class="btn btn-sm btn-brand">Enter</span>
+          <span class="d-flex flex-column align-items-end gap-1">
+            <span class="btn btn-sm btn-brand">Enter</span>
+          </span>
         </a>
         {% endfor %}
       </div>
@@ -58,9 +62,4 @@
   </div>
 </div>
 
-{% if current_user.role == 'student' %}
-<div class="mt-4">
-  {% include 'binary_game.html' %}
-</div>
-{% endif %}
 {% endblock %}

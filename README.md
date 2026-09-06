@@ -1,6 +1,6 @@
 # CIWT Learning Management System
 
-Demo-ready web LMS with **proprietary** curriculum for IT support and network operations training (Navy IST / contractor prototype). Not official CompTIA content.
+Schoolhouse LMS with **proprietary** CIWT curriculum for IT support and network operations training. Original instructional content — not a vendor certification product.
 
 ## Demo accounts
 
@@ -34,6 +34,7 @@ gunicorn -b 0.0.0.0:5050 -w 2 'app:app'
 - **Export scores CSV** / **item flags CSV**
 - **Backup database** — downloads SQLite file
 - Teaching time, test analytics, tickets
+- Opt-in Helix attention (WebGazer engine): AOI timelines per student/lesson, instructor dashboard, written policy that this is a signal not an assessment (`/policy/attention`)
 
 ## Smoke check
 

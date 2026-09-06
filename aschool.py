@@ -1,5 +1,5 @@
 """CIWT IT A-school block outline — original schoolhouse map.
-Public IT rating tasks only. Not official NAVEDTRA courseware or CompTIA exam text.
+Public IT rating tasks only. Proprietary CIWT map — not official NAVEDTRA courseware.
 ~24 instructional weeks compressed into blocks a convening can run.
 """
 

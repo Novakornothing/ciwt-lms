@@ -46,7 +46,7 @@
   {% if eoc_avgs %}
   <div class="table-responsive">
     <table class="table table-sm mb-0">
-      <thead><tr><th>Area</th><th>Item</th><th>n</th><th>Avg (1–5)</th></tr></thead>
+      <thead><tr><th>Area</th><th>Item</th><th>n</th><th>Avg (1–5)</th><th>% agree</th><th>1–5</th></tr></thead>
       <tbody>
       {% for row in eoc_avgs %}
         <tr>
@@ -54,6 +54,8 @@
           <td>{{ row.label }}</td>
           <td>{{ row.n }}</td>
           <td>{% if row.avg %}{{ row.avg }}{% else %}—{% endif %}</td>
+          <td>{% if row.pct_agree is not none %}{{ row.pct_agree }}%{% else %}—{% endif %}</td>
+          <td class="small">{{ row.dist_label }}</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -115,7 +117,28 @@
 </div>
 
 <div class="card mb-3">
-  <div class="card-header navy">4. Test item analysis</div>
+  <div class="card-header navy">4. Corrective action log</div>
+  {% if actions %}
+  <table class="table table-sm mb-0">
+    <thead><tr><th>Area</th><th>Owner</th><th>Due</th><th>Action</th></tr></thead>
+    <tbody>
+    {% for a in actions %}
+      <tr>
+        <td>{{ a.area }}</td>
+        <td>{{ a.owner or '—' }}</td>
+        <td>{{ a.due_on or '—' }}</td>
+        <td style="white-space:pre-wrap">{{ a.body }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="card-body text-muted">No corrective actions logged.</div>
+  {% endif %}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">5. Test item analysis</div>
   <div class="card-body">
     {% for pack in test_packs %}
     <h2 class="h5">{{ pack.test.title }}</h2>
@@ -152,5 +175,9 @@
   </div>
 </div>
 
-<p class="small text-muted">Aligned to NAVEDTRA M-142.5 TQI monitoring (student reaction, instructor closeout, test-item analysis). This product form is not the official NETC LAS instrument.</p>
+<p class="small text-muted">CIWT schoolhouse packet aligned to NAVEDTRA M-142.5 functions. Not the official NETC LAS instrument.
+  <a href="{{ url_for('tqi_official', section_id=section.id) }}">Official print packet</a>
+  ·
+  <a href="{{ url_for('tqi_official_txt', section_id=section.id) }}">Download .txt</a>
+</p>
 {% endblock %}

@@ -15,7 +15,7 @@
 </nav>
 <div class="page-hero">
   <h1 class="h3 mb-1">Labs in {{ section.course.code }}</h1>
-  <p class="mb-0">Live labs mapped to A+ / Network+ <em>job domains</em> (CIWT original — not exam dumps). Knowledge-only topics stay in the chapter.</p>
+  <p class="mb-0">Live labs mapped to CIWT IT Support and Network Operations skill areas. Knowledge-only topics stay in the chapter.</p>
   {% if current_user.role != 'student' %}
   <p class="mt-2 mb-0">
     <a class="btn btn-sm btn-outline-navy" href="{{ url_for('section_pilot_pack', section_id=section.id) }}">Download pilot data pack (CSV)</a>

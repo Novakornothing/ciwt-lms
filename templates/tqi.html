@@ -13,7 +13,7 @@
 </nav>
 
 <div class="page-hero">
-  <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">NAVEDTRA M-142.5 aligned</div>
+  <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">CIWT schoolhouse TQI packet</div>
   <h1 class="h3 mb-1">TQI — {{ section.name }}</h1>
   <p class="mb-0">
     Schedule {{ section.start_date or '—' }} → {{ section.end_date or '—' }}
@@ -27,7 +27,8 @@
   <span class="stat-pill">Student voices <strong>{{ status.student_voices }}/{{ status.n_enrolled }}</strong></span>
   <span class="stat-pill">Instructor notes <strong>{{ status.instr_n }}</strong></span>
   {% if current_user.role != 'student' %}
-  <a class="btn btn-sm btn-brand" href="{{ url_for('tqi_official', section_id=section.id) }}">Generate official TQI report</a>
+  <a class="btn btn-sm btn-brand" href="{{ url_for('tqi_official', section_id=section.id) }}">Official packet (print)</a>
+  <a class="btn btn-sm btn-outline-navy" href="{{ url_for('tqi_official_txt', section_id=section.id) }}">Download .txt</a>
   <a class="btn btn-sm btn-outline-navy" href="{{ url_for('tqi_report', section_id=section.id) }}">Working copy</a>
   {% if current_user.role == 'admin' %}
   <a class="btn btn-sm btn-outline-navy" href="{{ url_for('admin_tqi') }}">All-class TQI board</a>
@@ -90,7 +91,7 @@
             <textarea name="body" class="form-control" rows="4">{{ my_eoc.comment if my_eoc else '' }}</textarea>
           </div>
           {% else %}
-          <p class="small text-muted">Comments save on this class and pull to the TQI board on novakornothing.com.</p>
+          <p class="small text-muted">Comments stay on this class packet. Student names never appear on the official report.</p>
           <div class="mb-2">
             <label class="form-label">Kind</label>
             <select name="kind" class="form-select">
@@ -129,9 +130,12 @@
       <div class="card-header navy">EOC item averages ({{ eoc_n }} surveys)</div>
       <div class="list-group list-group-flush">
         {% for row in eoc_avgs %}
-        <div class="list-group-item d-flex justify-content-between gap-2">
-          <span>{{ row.group }} — {{ row.label }}</span>
-          <strong>{% if row.avg %}{{ row.avg }}{% else %}—{% endif %}</strong>
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between gap-2">
+            <span>{{ row.group }} — {{ row.label }}</span>
+            <strong>{% if row.avg %}{{ row.avg }}{% else %}—{% endif %}</strong>
+          </div>
+          <div class="small text-muted">n={{ row.n }} · agree {{ row.pct_agree if row.pct_agree is not none else '—' }}% · {{ row.dist_label }}</div>
         </div>
         {% endfor %}
       </div>
@@ -162,6 +166,52 @@
         {% endfor %}
       </div>
     </div>
+    {% if current_user.role != 'student' %}
+    <div class="card mt-3">
+      <div class="card-header navy">Corrective actions</div>
+      <div class="list-group list-group-flush">
+        {% for a in actions|default([]) %}
+        <div class="list-group-item">
+          <div class="small text-muted">{{ a.area }} · owner {{ a.owner or '—' }} · due {{ a.due_on or '—' }} · {{ a.created_at.strftime('%Y-%m-%d') }}</div>
+          <div style="white-space:pre-wrap">{{ a.body }}</div>
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted">None logged.</div>
+        {% endfor %}
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('tqi_add_action', section_id=section.id) }}">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label" for="actArea">Area</label>
+              <select id="actArea" name="area" class="form-select form-select-sm">
+                <option value="content">Content</option>
+                <option value="instructor">Instructor</option>
+                <option value="labs">Labs</option>
+                <option value="testing">Testing</option>
+                <option value="safety">Safety</option>
+                <option value="site">Site</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="actOwner">Owner</label>
+              <input id="actOwner" name="owner" class="form-control form-control-sm" placeholder="Who fixes this">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="actDue">Due</label>
+              <input id="actDue" type="date" name="due_on" class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="mt-2">
+            <label class="form-label" for="actBody">Action</label>
+            <textarea id="actBody" name="body" class="form-control" rows="3" required minlength="4" placeholder="What will change before the next convening."></textarea>
+          </div>
+          <button class="btn btn-sm btn-brand mt-2">Log action</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

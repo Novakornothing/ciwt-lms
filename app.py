@@ -1,7 +1,7 @@
 """
 CIWT Learning Management System
-Demo-ready prototype — proprietary curriculum aligned to public exam domains
-(original instructional content).
+Proprietary schoolhouse software for IT support and network operations training.
+Original instructional content. Not a vendor certification product.
 """
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, abort, Response, send_file, session
@@ -36,6 +36,20 @@ TQI_CORS = {
 }
 
 
+def _tqi_origin_ok(origin):
+    if not origin:
+        return False
+    if origin in TQI_CORS:
+        return True
+    if origin.endswith('.novakornothing.com'):
+        return True
+    if origin.endswith('.workers.dev') or origin.endswith('.pages.dev'):
+        return True
+    if origin.startswith('http://127.0.0.1:') or origin.startswith('http://localhost:'):
+        return True
+    return False
+
+
 @app.context_processor
 def inject_interactive_labs():
     """Make all live labs available in every template (curriculum, class, nav)."""
@@ -58,12 +72,20 @@ login_manager.login_message_category = 'info'
 @app.after_request
 def _tqi_cors(resp):
     origin = request.headers.get('Origin', '')
-    if origin in TQI_CORS or origin.endswith('.novakornothing.com'):
+    if _tqi_origin_ok(origin):
         resp.headers['Access-Control-Allow-Origin'] = origin
         resp.headers['Access-Control-Allow-Credentials'] = 'true'
         resp.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type'
         resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        resp.headers['Vary'] = 'Origin'
     return resp
+
+
+@app.route('/api/tqi/ping', methods=['GET', 'OPTIONS'])
+def api_tqi_ping():
+    if request.method == 'OPTIONS':
+        return ('', 204)
+    return jsonify({'ok': True, 'service': 'ciwt-lms', 'tqi_api': True})
 
 # ==================== MODELS ====================
 
@@ -255,6 +277,19 @@ class TqiPacket(db.Model):
     auto_ready_at = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
     completed_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+
+class TqiAction(db.Model):
+    """Corrective action for a low EOC area or flagged test item."""
+    __tablename__ = 'tqi_action'
+    id = db.Column(db.Integer, primary_key=True)
+    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False)
+    area = db.Column(db.String(40), default='curriculum')  # content, instructor, labs, testing, safety, site
+    owner = db.Column(db.String(120), default='')
+    due_on = db.Column(db.String(20), default='')
+    body = db.Column(db.Text, nullable=False)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class CourseInstructor(db.Model):
@@ -646,6 +681,90 @@ def get_student_sections(user):
     return ClassSection.query.join(Enrollment).filter(
         Enrollment.user_id == user.id, ClassSection.is_active == True
     ).all()
+
+
+def student_gold_path(user, section):
+    """Student course path: first lesson → matching lab → ungraded quiz → graded test when released."""
+    if not section or not section.course_id:
+        return None
+    modules = Module.query.filter_by(course_id=section.course_id).order_by(Module.order).all()
+    module = modules[0] if modules else None
+    lessons = Lesson.query.filter_by(module_id=module.id).order_by(Lesson.order).all() if module else []
+    lesson = lessons[0] if lessons else None
+    labs = labs_for_module(module) if module else []
+    lab = labs[0] if labs else None
+    quizzes = Quiz.query.filter_by(module_id=module.id).all() if module else []
+    quiz = quizzes[0] if quizzes else None
+    tests = KnowledgeTest.query.filter_by(course_id=section.course_id).order_by(KnowledgeTest.order).all()
+    test = tests[0] if tests else None
+    quiz_attempt = None
+    if quiz:
+        quiz_attempt = QuizAttempt.query.filter_by(user_id=user.id, quiz_id=quiz.id).order_by(QuizAttempt.id.desc()).first()
+    test_attempt = None
+    if test:
+        test_attempt = TestAttempt.query.filter_by(
+            user_id=user.id, test_id=test.id, section_id=section.id
+        ).filter(TestAttempt.completed_at.isnot(None)).order_by(TestAttempt.completed_at.desc()).first()
+    test_open = bool(test and (
+        user.role in ('admin', 'instructor') or
+        is_content_available(section.id, 'test', test.id, user.id)
+    ))
+    steps = []
+    if lesson:
+        steps.append({
+            'key': 'lesson',
+            'n': len(steps) + 1,
+            'title': 'Read the first lesson',
+            'detail': lesson.title,
+            'url': url_for('view_lesson', section_id=section.id, module_id=module.id, lesson_id=lesson.id),
+            'done': bool(quiz_attempt or test_attempt),
+            'available': True,
+        })
+    if lab:
+        steps.append({
+            'key': 'lab',
+            'n': len(steps) + 1,
+            'title': 'Run the matching lab',
+            'detail': lab.title,
+            'url': url_for('interactive_lab', lab_id=lab.id),
+            'done': bool(quiz_attempt or test_attempt),
+            'available': True,
+        })
+    if quiz:
+        steps.append({
+            'key': 'quiz',
+            'n': len(steps) + 1,
+            'title': 'Take the ungraded quiz',
+            'detail': quiz.title + (' · last score %.0f%%' % quiz_attempt.score if quiz_attempt else ''),
+            'url': url_for('take_quiz', section_id=section.id, quiz_id=quiz.id),
+            'done': bool(quiz_attempt),
+            'available': True,
+        })
+    if test:
+        steps.append({
+            'key': 'test',
+            'n': len(steps) + 1,
+            'title': 'Take the graded test',
+            'detail': (
+                test.title + (' · last score %.0f%%' % test_attempt.score if test_attempt else '')
+                if test_open else test.title + ' · closed until an instructor opens it'
+            ),
+            'url': url_for('take_test', section_id=section.id, test_id=test.id) if test_open else None,
+            'done': bool(test_attempt),
+            'available': test_open,
+        })
+    nxt = None
+    for step in steps:
+        if not step['done'] and step['available'] and step.get('url'):
+            nxt = step
+            break
+    return {
+        'section': section,
+        'module': module,
+        'steps': steps,
+        'next': nxt,
+        'complete': bool(steps) and all(s['done'] or not s['available'] for s in steps) and (not test or test_attempt),
+    }
 
 
 def role_required(*roles):
@@ -1175,13 +1294,23 @@ def logout():
     return redirect(url_for('index'))
 
 
+REQUIRED_TEMPLATES = (
+    'base.html', 'login.html', 'admin_tqi.html', 'tqi.html',
+    'tqi_report.html', 'tqi_official.html', 'staff_sidebar.html',
+)
+
+
 @app.route('/healthz')
 def healthz():
+    tpl = Path(_base) / 'templates'
+    missing = [name for name in REQUIRED_TEMPLATES if not (tpl / name).is_file()]
+    ok = not missing
     return jsonify({
-        'ok': True,
+        'ok': ok,
         'service': 'ciwt-lms',
         'time': datetime.utcnow().isoformat() + 'Z',
-    })
+        'missing_templates': missing,
+    }), (200 if ok else 503)
 
 
 def _eo_done(user_id=None):
@@ -1307,7 +1436,7 @@ def aschool_trainee_guide():
 def aschool_trainee_guide_txt():
     lines = [
         'CIWT IT A-SCHOOL TRAINEE GUIDE',
-        'Original CIWT material — not official NAVEDTRA / not CompTIA exam text.',
+        'Original CIWT material — proprietary schoolhouse content, not official NAVEDTRA.',
         f'Generated {datetime.utcnow().isoformat()}Z',
         '',
     ]
@@ -2219,11 +2348,13 @@ def student_dashboard():
     for s in sections:
         enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=s.id).first()
         progress[s.id] = enr.progress_percent if enr else 0
-    tqi_by_id = {s.id: _tqi_status(s) for s in sections}
-    my_eoc = {}
-    for s in sections:
-        my_eoc[s.id] = TqiEocResponse.query.filter_by(section_id=s.id, user_id=current_user.id).first() is not None
-    return render_template('student_dashboard.html', sections=sections, progress=progress, tqi_by_id=tqi_by_id, my_eoc=my_eoc)
+    gold_path = student_gold_path(current_user, sections[0]) if sections else None
+    return render_template(
+        'student_dashboard.html',
+        sections=sections,
+        progress=progress,
+        gold_path=gold_path,
+    )
 
 
 @app.route('/student/section/<int:section_id>')
@@ -2257,6 +2388,15 @@ def student_section(section_id):
             user_id=current_user.id, test_id=t.id, section_id=section_id
         ).order_by(TestAttempt.completed_at.desc()).all()
         available_tests.append({'test': t, 'available': avail, 'attempts': attempts})
+    my_eoc = None
+    my_answers = {}
+    if current_user.role == 'student':
+        my_eoc = TqiEocResponse.query.filter_by(section_id=section.id, user_id=current_user.id).first()
+        if my_eoc:
+            try:
+                my_answers = json.loads(my_eoc.answers_json or '{}')
+            except Exception:
+                my_answers = {}
     return render_template(
         'student_section.html',
         section=section,
@@ -2264,6 +2404,41 @@ def student_section(section_id):
         tests=available_tests,
         enrollment=enr,
         course_labs=labs_for_course(section.course),
+        gold_path=student_gold_path(current_user, section),
+        eoc_items=TQI_EOC_ITEMS,
+        my_eoc=my_eoc,
+        my_answers=my_answers,
+    )
+
+
+@app.route('/class/<int:section_id>/curriculum')
+@login_required
+def curriculum_index(section_id):
+    """Every chapter in the class course — instructor and student."""
+    section = ClassSection.query.get_or_404(section_id)
+    if current_user.role == 'student':
+        enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first()
+        if not enr:
+            flash('You are not enrolled in this class.', 'danger')
+            return redirect(url_for('student_dashboard'))
+    elif current_user.role == 'instructor':
+        if not instructor_can_access_section(current_user, section):
+            flash('Access denied.', 'danger')
+            return redirect(url_for('instructor_dashboard'))
+    elif current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('index'))
+    modules = Module.query.filter_by(course_id=section.course_id).order_by(Module.order).all()
+    class_home = (
+        url_for('instructor_section', section_id=section_id)
+        if current_user.role in ('admin', 'instructor')
+        else url_for('student_section', section_id=section_id)
+    )
+    return render_template(
+        'curriculum_index.html',
+        section=section,
+        modules=modules,
+        class_home=class_home,
     )
 
 
@@ -2278,14 +2453,28 @@ def view_module(section_id, module_id):
     quizzes = Quiz.query.filter_by(module_id=module_id).all()
     # If structured lessons exist, show chapter hub; else legacy single page
     chapter_labs = labs_for_module(module)
+    section = ClassSection.query.get(section_id)
+    course_modules = []
+    if module.course_id:
+        course_modules = Module.query.filter_by(course_id=module.course_id).order_by(Module.order).all()
+    class_home = (
+        url_for('instructor_section', section_id=section_id)
+        if current_user.role in ('admin', 'instructor')
+        else url_for('student_section', section_id=section_id)
+    )
     if lessons:
         return render_template(
             'chapter.html', module=module, lessons=lessons,
-            section_id=section_id, quizzes=quizzes, chapter_labs=chapter_labs
+            section_id=section_id, quizzes=quizzes, chapter_labs=chapter_labs,
+            gold_path=student_gold_path(current_user, section) if section else None,
+            course_modules=course_modules,
+            class_home=class_home,
         )
     return render_template(
         'module.html', module=module, section_id=section_id, quizzes=quizzes,
         chapter_labs=chapter_labs,
+        course_modules=course_modules,
+        class_home=class_home,
     )
 
 
@@ -2308,11 +2497,21 @@ def view_lesson(section_id, module_id, lesson_id):
                 next_l = lessons[i + 1]
             break
     quizzes = Quiz.query.filter_by(module_id=module_id).all()
+    section = ClassSection.query.get(section_id)
+    course_modules = Module.query.filter_by(course_id=module.course_id).order_by(Module.order).all() if module.course_id else []
+    class_home = (
+        url_for('instructor_section', section_id=section_id)
+        if current_user.role in ('admin', 'instructor')
+        else url_for('student_section', section_id=section_id)
+    )
     return render_template(
         'lesson.html', module=module, lesson=lesson, lessons=lessons,
         prev_l=prev_l, next_l=next_l, section_id=section_id, quizzes=quizzes,
         chapter_labs=labs_for_module(module),
         lesson_labs=labs_for_lesson(module, lesson),
+        gold_path=student_gold_path(current_user, section) if section else None,
+        course_modules=course_modules,
+        class_home=class_home,
     )
 
 
@@ -2789,11 +2988,13 @@ def take_quiz(section_id, quiz_id):
             })
         focus_areas.sort(key=lambda x: (-x['wrong'], x['focus']))
 
+        section = ClassSection.query.get(section_id)
         return render_template(
             'quiz_results.html',
             quiz=quiz, section_id=section_id, module_id=quiz.module_id,
             score=score, correct=correct, total=len(questions),
             focus_areas=focus_areas, module=module,
+            gold_path=student_gold_path(current_user, section) if section else None,
         )
     mod = Module.query.get(quiz.module_id)
     return render_template('quiz.html', quiz=quiz, questions=questions, section_id=section_id, course_id=mod.course_id if mod else None)
@@ -2845,11 +3046,13 @@ def take_test(section_id, test_id):
         audit('test_submit', f'test={test_id} section={section_id} score={score:.0f}')
         if timed_out:
             flash('Time expired — your answers were submitted and graded automatically.', 'info')
+        section = ClassSection.query.get(section_id)
         return render_template(
             'test_results.html',
             test=test, section_id=section_id, score=score, passed=passed,
             correct=correct, total=len(questions), categories=categories,
             attempt_id=open_attempt.id, timed_out=timed_out,
+            gold_path=student_gold_path(current_user, section) if section else None,
         )
 
     # GET — start or resume attempt; compute remaining seconds for timer
@@ -2896,12 +3099,16 @@ TQI_EOC_ITEMS = [
 ]
 
 
+TQI_PUBLIC_URL = os.environ.get('TQI_PUBLIC_URL', 'https://novakornothing.com/tqi')
+
+
 def _tqi_can_use_section(section):
+    """Admin sees every class. Instructor sees assigned classes. Student sees enrolled classes (submit only)."""
     if not current_user.is_authenticated:
         return False
     if current_user.role == 'admin':
         return True
-    if current_user.role == 'instructor' and instructor_can_access_section(current_user, section):
+    if current_user.role == 'instructor' and section.instructor_id == current_user.id:
         return True
     if current_user.role == 'student':
         return Enrollment.query.filter_by(section_id=section.id, user_id=current_user.id).first() is not None
@@ -3035,12 +3242,22 @@ def _tqi_eoc_averages(section_id):
     out = []
     for key, group, label in TQI_EOC_ITEMS:
         vals = buckets[key]
+        dist = {i: vals.count(i) for i in range(1, 6)}
+        n = len(vals)
+        agree_n = dist[4] + dist[5]
         out.append({
             'key': key, 'group': group, 'label': label,
-            'n': len(vals),
-            'avg': round(sum(vals) / len(vals), 2) if vals else None,
+            'n': n,
+            'avg': round(sum(vals) / n, 2) if n else None,
+            'dist': dist,
+            'dist_label': ' '.join(f'{i}:{dist[i]}' for i in range(1, 6)),
+            'pct_agree': round(100.0 * agree_n / n, 1) if n else None,
         })
     return out, len(rows)
+
+
+def _tqi_actions(section_id):
+    return TqiAction.query.filter_by(section_id=section_id).order_by(TqiAction.created_at.desc()).all()
 
 
 @app.route('/class/<int:section_id>/tqi')
@@ -3092,6 +3309,7 @@ def tqi_class(section_id):
         eoc_n=eoc_n,
         my_eoc=my_eoc,
         my_answers=my_answers,
+        actions=_tqi_actions(section.id),
         n_student=status['student_voices'],
         n_instructor=status['instr_n'],
     )
@@ -3106,7 +3324,7 @@ def tqi_add_critique(section_id):
         return redirect(url_for('index'))
     body = (request.form.get('body') or '').strip()
     kind = (request.form.get('kind') or 'other').strip()[:40]
-    if kind not in ('curriculum', 'instruction', 'labs', 'test', 'facility', 'eoc', 'closeout', 'other'):
+    if kind not in ('curriculum', 'instruction', 'labs', 'test', 'facility', 'eoc', 'closeout', 'comment', 'note', 'other'):
         kind = 'other'
     rating_raw = (request.form.get('rating') or '').strip()
     rating = int(rating_raw) if rating_raw.isdigit() else None
@@ -3132,8 +3350,8 @@ def tqi_add_critique(section_id):
         kind = 'eoc'
         if rating is None:
             rating = int(round(sum(answers.values()) / len(answers)))
-    if role != 'student' and len(body) < 8:
-        flash('Instructor closeout needs a short written critique.', 'warning')
+    if role != 'student' and len(body) < 4:
+        flash('Instructor TQI comment needs a short written note.', 'warning')
         return redirect(url_for('tqi_class', section_id=section.id))
     if body or role == 'student':
         db.session.add(TqiCritique(
@@ -3146,13 +3364,19 @@ def tqi_add_critique(section_id):
         ))
     if role != 'student':
         pkt = _tqi_packet(section)
-        note = (request.form.get('closeout_note') or body).strip()
-        if note:
-            pkt.closeout_note = note[:4000]
+        if kind == 'closeout':
+            note = (request.form.get('closeout_note') or body).strip()
+            if note:
+                pkt.closeout_note = note[:4000]
     db.session.commit()
     _tqi_status(section)
     audit('tqi_critique', f'section={section.id} role={role}')
     flash('Saved to this class TQI file.', 'success')
+    nxt = (request.form.get('next') or '').strip()
+    if nxt == 'section':
+        return redirect(url_for('instructor_section', section_id=section.id) + '#tqi')
+    if nxt == 'student':
+        return redirect(url_for('student_section', section_id=section.id) + '#tqi')
     return redirect(url_for('tqi_class', section_id=section.id))
 
 
@@ -3174,6 +3398,76 @@ def tqi_mark_complete(section_id):
     audit('tqi_complete', f'section={section.id}')
     flash('TQI packet marked complete for this class.', 'success')
     return redirect(url_for('tqi_report', section_id=section.id))
+
+
+@app.route('/class/<int:section_id>/tqi/action', methods=['POST'])
+@login_required
+def tqi_add_action(section_id):
+    section = ClassSection.query.get_or_404(section_id)
+    if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
+        abort(403)
+    body = (request.form.get('body') or '').strip()
+    if len(body) < 4:
+        flash('Action needs a short written fix.', 'warning')
+        return redirect(url_for('tqi_class', section_id=section.id))
+    area = (request.form.get('area') or 'curriculum').strip()[:40]
+    if area not in ('content', 'instructor', 'labs', 'testing', 'safety', 'site', 'curriculum', 'other'):
+        area = 'other'
+    db.session.add(TqiAction(
+        section_id=section.id,
+        area=area,
+        owner=(request.form.get('owner') or '')[:120],
+        due_on=(request.form.get('due_on') or '')[:20],
+        body=body[:4000],
+        created_by_id=current_user.id,
+    ))
+    db.session.commit()
+    audit('tqi_action', f'section={section.id} area={area}')
+    flash('Action logged on the TQI packet.', 'success')
+    return redirect(url_for('tqi_class', section_id=section.id))
+
+
+@app.route('/class/<int:section_id>/tqi/official.txt')
+@login_required
+def tqi_official_txt(section_id):
+    section = ClassSection.query.get_or_404(section_id)
+    if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
+        abort(403)
+    status = _tqi_status(section)
+    eoc_avgs, eoc_n = _tqi_eoc_averages(section.id)
+    lines = [
+        'CIWT SCHOOLHOUSE TQI PACKET',
+        'Not the official NETC LAS export.',
+        f"Course: {(section.course.title if section.course else '')} ({section.course.code if section.course else ''})",
+        f"Class: {section.name}",
+        f"Schedule: {section.start_date or '—'} to {section.end_date or '—'}",
+        f"Instructor: {status['instructor'].full_name if status['instructor'] else 'Unassigned'}",
+        f"Roster: {status['n_enrolled']}",
+        f"Packet: {status['packet'].status}",
+        f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC",
+        '',
+        'COMPLETENESS',
+    ]
+    for c in status['checks']:
+        lines.append(f"  [{'OK' if c['ok'] else 'OPEN'}] {c['label']} — {c['detail']}")
+    lines += ['', f'STUDENT REACTION (n={eoc_n}, anonymous)']
+    for row in eoc_avgs:
+        lines.append(
+            f"  {row['group']} | {row['label']} | n={row['n']} mean={row['avg'] or '—'} "
+            f"agree={row['pct_agree'] if row['pct_agree'] is not None else '—'}% dist={row['dist_label']}"
+        )
+    lines += ['', 'ACTIONS']
+    acts = _tqi_actions(section.id)
+    if not acts:
+        lines.append('  None logged.')
+    for a in acts:
+        lines.append(f"  {a.area} | owner={a.owner or '—'} | due={a.due_on or '—'} | {a.body}")
+    body = '\n'.join(lines) + '\n'
+    return Response(
+        body,
+        mimetype='text/plain; charset=utf-8',
+        headers={'Content-Disposition': f'attachment; filename=CIWT-TQI-{section.id}.txt'},
+    )
 
 
 @app.route('/class/<int:section_id>/tqi/report')
@@ -3223,6 +3517,7 @@ def tqi_report(section_id):
         recommendations=recs,
         generated=datetime.utcnow(),
         official=False,
+        actions=_tqi_actions(section.id),
     )
 
 
@@ -3272,6 +3567,7 @@ def tqi_official(section_id):
         test_packs=test_packs,
         recommendations=recs,
         generated=datetime.utcnow(),
+        actions=_tqi_actions(section.id),
     )
 
 
@@ -3384,6 +3680,8 @@ def api_tqi_login():
     user = User.query.filter_by(email=email).first()
     if not user or not user.check_password(password):
         return jsonify({'ok': False, 'error': 'Bad sign-in'}), 401
+    if user.role != 'admin':
+        return jsonify({'ok': False, 'error': 'TQI is admin only'}), 403
     token = secrets.token_hex(24)
     db.session.add(ApiToken(token=token, user_id=user.id))
     db.session.commit()
@@ -3397,26 +3695,27 @@ def api_tqi_board():
     user = _api_user_from_token()
     if not user:
         return jsonify({'ok': False, 'error': 'Sign in'}), 401
-    if user.role == 'admin':
-        sections = ClassSection.query.order_by(ClassSection.name).all()
-    elif user.role == 'instructor':
-        sections = ClassSection.query.filter(
-            db.or_(ClassSection.instructor_id == user.id, ClassSection.id.in_(
-                [e.section_id for e in []]
-            ))
-        ).all()
-        sections = ClassSection.query.filter(
-            db.or_(
-                ClassSection.instructor_id == user.id,
-                ClassSection.course_id.in_(instructor_course_ids(user.id) or [0]),
-            )
-        ).order_by(ClassSection.name).all()
-    else:
-        sections = get_student_sections(user)
+    if user.role != 'admin':
+        return jsonify({'ok': False, 'error': 'TQI is admin only'}), 403
+    sections = ClassSection.query.order_by(ClassSection.name).all()
     cards = []
     for sec in sections:
         st = _tqi_status(sec)
         instr = st['instructor']
+        latest = None
+        if user.role in ('admin', 'instructor'):
+            last = TqiCritique.query.filter(
+                TqiCritique.section_id == sec.id,
+                TqiCritique.role.in_(['instructor', 'admin']),
+            ).order_by(TqiCritique.created_at.desc()).first()
+            if last:
+                who = last.user or User.query.get(last.user_id)
+                latest = {
+                    'author': who.full_name if who else 'Instructor',
+                    'kind': last.kind,
+                    'body': (last.body or '')[:400],
+                    'when': last.created_at.isoformat() if last.created_at else None,
+                }
         cards.append({
             'id': sec.id,
             'name': sec.name,
@@ -3429,6 +3728,9 @@ def api_tqi_board():
             'missing': st['missing'],
             'n_enrolled': st['n_enrolled'],
             'eoc_n': st['eoc_n'],
+            'instr_n': st['instr_n'],
+            'latest_instructor_note': latest,
+            'closeout': (st['packet'].closeout_note or '')[:240] if user.role in ('admin', 'instructor') else '',
             'my_eoc': bool(TqiEocResponse.query.filter_by(section_id=sec.id, user_id=user.id).first()) if user.role == 'student' else None,
         })
     return jsonify({'ok': True, 'role': user.role, 'name': user.full_name, 'classes': cards})
@@ -3441,11 +3743,9 @@ def api_tqi_class(section_id):
     user = _api_user_from_token()
     if not user:
         return jsonify({'ok': False, 'error': 'Sign in'}), 401
+    if user.role != 'admin':
+        return jsonify({'ok': False, 'error': 'TQI is admin only'}), 403
     section = ClassSection.query.get_or_404(section_id)
-    if user.role == 'student' and not Enrollment.query.filter_by(section_id=section.id, user_id=user.id).first():
-        return jsonify({'ok': False, 'error': 'Not in this class'}), 403
-    if user.role == 'instructor' and not instructor_can_access_section(user, section):
-        return jsonify({'ok': False, 'error': 'Not your class'}), 403
     payload = _tqi_payload(section, user)
     if user.role == 'student':
         payload['instructor_notes'] = []
@@ -3497,11 +3797,9 @@ def api_tqi_closeout(section_id):
     if request.method == 'OPTIONS':
         return ('', 204)
     user = _api_user_from_token()
-    if not user or user.role not in ('admin', 'instructor'):
-        return jsonify({'ok': False, 'error': 'Staff sign-in required'}), 401
+    if not user or user.role != 'admin':
+        return jsonify({'ok': False, 'error': 'TQI is admin only'}), 403
     section = ClassSection.query.get_or_404(section_id)
-    if user.role == 'instructor' and not instructor_can_access_section(user, section):
-        return jsonify({'ok': False, 'error': 'Not your class'}), 403
     data = request.get_json(silent=True) or {}
     body = (data.get('body') or '').strip()
     if len(body) < 8:
@@ -3518,6 +3816,40 @@ def api_tqi_closeout(section_id):
     db.session.commit()
     _tqi_status(section)
     return jsonify({'ok': True, 'status': pkt.status})
+
+
+@app.route('/api/tqi/<int:section_id>/comment', methods=['POST', 'OPTIONS'])
+def api_tqi_comment(section_id):
+    """Instructor / admin running comment on a class. Appears on novakornothing.com/tqi."""
+    if request.method == 'OPTIONS':
+        return ('', 204)
+    user = _api_user_from_token()
+    if not user or user.role != 'admin':
+        return jsonify({'ok': False, 'error': 'TQI is admin only'}), 403
+    section = ClassSection.query.get_or_404(section_id)
+    data = request.get_json(silent=True) or {}
+    body = (data.get('body') or '').strip()
+    if len(body) < 4:
+        return jsonify({'ok': False, 'error': 'Write a short class comment'}), 400
+    kind = (data.get('kind') or 'comment').strip()[:40]
+    if kind not in ('curriculum', 'instruction', 'labs', 'test', 'facility', 'closeout', 'comment', 'note', 'other'):
+        kind = 'comment'
+    rating = data.get('rating')
+    rating = int(rating) if str(rating).isdigit() else None
+    db.session.add(TqiCritique(
+        section_id=section.id,
+        user_id=user.id,
+        role=user.role,
+        kind=kind,
+        rating=rating,
+        body=body[:4000],
+    ))
+    if kind == 'closeout':
+        pkt = _tqi_packet(section)
+        pkt.closeout_note = body[:4000]
+    db.session.commit()
+    _tqi_status(section)
+    return jsonify({'ok': True, 'kind': kind})
 
 
 @app.route('/instructor')
@@ -3590,6 +3922,39 @@ def instructor_section(section_id):
         teach_totals[row.user_id] += row.seconds or 0
         if row.ended_at is None and row.started_at:
             teach_totals[row.user_id] += int((datetime.utcnow() - row.started_at).total_seconds())
+    test_stats = {}
+    roster_scores = {}
+    for t in tests:
+        atts = TestAttempt.query.filter_by(section_id=section.id, test_id=t.id).filter(
+            TestAttempt.completed_at.isnot(None)
+        ).order_by(TestAttempt.completed_at.desc()).all()
+        scores = [float(a.score or 0) for a in atts]
+        test_stats[t.id] = {
+            'n': len(scores),
+            'avg': round(sum(scores) / len(scores), 1) if scores else None,
+            'high': round(max(scores), 1) if scores else None,
+            'low': round(min(scores), 1) if scores else None,
+        }
+        latest = {}
+        for a in atts:
+            if a.user_id not in latest:
+                latest[a.user_id] = round(float(a.score or 0), 1)
+        roster_scores[t.id] = latest
+    tqi_status = _tqi_status(section)
+    tqi_notes = []
+    for c in TqiCritique.query.filter(
+        TqiCritique.section_id == section.id,
+        TqiCritique.role.in_(['instructor', 'admin']),
+    ).order_by(TqiCritique.created_at.desc()).limit(20).all():
+        who = c.user or User.query.get(c.user_id)
+        tqi_notes.append({
+            'author': who.full_name if who else 'Instructor',
+            'role': c.role,
+            'kind': c.kind,
+            'rating': c.rating,
+            'body': c.body,
+            'when': c.created_at,
+        })
     return render_template(
         'instructor_section.html',
         section=section,
@@ -3606,6 +3971,10 @@ def instructor_section(section_id):
         teach_totals=teach_totals,
         fmt_seconds=_fmt_seconds,
         course_labs=labs_for_course(section.course),
+        tqi_status=tqi_status,
+        tqi_notes=tqi_notes,
+        test_stats=test_stats,
+        roster_scores=roster_scores,
     )
 
 
@@ -5876,6 +6245,7 @@ def seed_database():
     db.session.commit()
     _seed_helix_demo(section_a, students)
     _seed_tqi_demo()
+    _ensure_gold_path_releases()
     print('Database seeded successfully (with demo test analytics).')
 
 
@@ -6129,6 +6499,7 @@ def sync_curriculum():
         if changed:
             qz.questions = json.dumps(items)
     db.session.commit()
+    _ensure_gold_path_releases()
     return True
 
 
@@ -6201,6 +6572,11 @@ def _ensure_schema():
         print('Schema ensure note:', e)
 
 
+def _ensure_gold_path_releases():
+    """Do not auto-open graded tests. Instructors / admins release tests per class."""
+    return 0
+
+
 def init_db():
     db.create_all()
     _ensure_schema()
@@ -6226,6 +6602,12 @@ def init_db():
         sync_curriculum()
     except Exception as e:
         print('Curriculum sync note:', e)
+    try:
+        n = _ensure_gold_path_releases()
+        if n:
+            print('Opened first knowledge test on', n, 'classes for the student gold path.')
+    except Exception as e:
+        print('Gold path release note:', e)
 
 
 with app.app_context():

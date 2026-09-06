@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Attention signal policy — CIWT LMS{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+    <li class="breadcrumb-item active">Attention signal policy</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">Written product policy</div>
+  <h1 class="h3 mb-1">Helix attention is a signal, not an assessment</h1>
+  <p class="mb-0">Version {{ policy_version }} · Engine: WebGazer in the student browser · Face video is not uploaded</p>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">What this feature is</div>
+  <div class="card-body">
+    <p>When a student opts in on a lesson page, the browser runs <strong>WebGazer</strong> and estimates where the pointer of gaze sits on the page. The LMS stores a compact <strong>area-of-interest (AOI) timeline</strong> for that student and lesson: which headings or blocks the estimate lingered on, for how long, and in what order.</p>
+    <p class="mb-0">Instructors can open a class dashboard built from those timelines. The dashboard exists so a teacher can notice “this block got almost no dwell” or “this student skipped the lab practice heading,” then decide whether to reteach, check in, or leave it alone.</p>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">What this feature is not</div>
+  <div class="card-body">
+    <ul class="mb-0">
+      <li>Not a grade, score, GPA input, or knowledge-test substitute.</li>
+      <li>Not attendance, not “time on task” for pay or discipline, not a proctoring camera for exams.</li>
+      <li>Not proof that a student understood, cheated, or was inattentive. Calibration error, glasses, lighting, posture, looking at notes, and looking at a lab window all move the signal.</li>
+      <li>Not a recording of the student’s face. Video is processed locally so gaze can be estimated. The server stores AOI keys, labels, dwell, and segment times — not pixels.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">Rules for schoolhouse use</div>
+  <div class="card-body">
+    <ol class="mb-3">
+      <li>Participation is <strong>opt-in per lesson session</strong>. A student who clicks “Not now” still gets the full curriculum, labs, quizzes, and tests.</li>
+      <li>Instructors and admins may view class and per-student AOI timelines for sections they already have access to.</li>
+      <li>Do not put dwell percentages on a score sheet, promotion package, or counseling chit.</li>
+      <li>Do not require gaze as a condition of sitting a knowledge test.</li>
+      <li>Treat thin dwell as a prompt to ask a question or point at a heading — the same way you would treat a quiet room after a lecture slide.</li>
+      <li>Students may stop the camera at any time. Stopping ends the session and flushes the last segments.</li>
+    </ol>
+    <p class="mb-0 small text-muted">If a command or contract requires a different rule, write that rule down and keep this page as the product default until it is replaced.</p>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">Data stored</div>
+  <div class="card-body">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Field</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Student, section, lesson, session times</td><td>Whose timeline, which page</td></tr>
+        <tr><td>Engine name (<code>webgazer</code>) and policy version</td><td>Provenance</td></tr>
+        <tr><td>AOI key / heading label / order</td><td>Which block on the lesson</td></tr>
+        <tr><td>Segment start/end (ms from session start), sample count</td><td>Timeline</td></tr>
+        <tr><td>Dwell ms and visit count per AOI</td><td>Instructor rollup</td></tr>
+        <tr><td>Viewport size, calibration point count</td><td>Quality context</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<p>
+  {% if current_user.is_authenticated and current_user.role in ('admin','instructor') %}
+  <a class="btn btn-brand" href="{{ url_for('instructor_dashboard') }}">Back to classes</a>
+  {% elif current_user.is_authenticated %}
+  <a class="btn btn-brand" href="{{ url_for('student_dashboard') }}">Back to training</a>
+  {% endif %}
+  <a class="btn btn-outline-navy" href="{{ url_for('gaps') }}">Gaps &amp; roadmap</a>
+</p>
+{% endblock %}

@@ -1,5 +1,5 @@
-"""CIWT skill map aligned to A+ / Network+ *job domains*.
-Original wording — not CompTIA exam objectives or item text.
+"""CIWT skill map for IT Support and Network Operations.
+Original wording — proprietary schoolhouse objectives, not vendor exam text.
 """
 
 ITSUP_DOMAINS = [

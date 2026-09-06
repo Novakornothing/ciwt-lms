@@ -80,6 +80,10 @@
           <a class="rail-link {% if ep == 'curriculum_search' %}active{% endif %}" href="{{ url_for('curriculum_search') }}">
             <i class="bi bi-search"></i><span>Search lessons</span>
           </a>
+          <a class="rail-link {% if ep == 'helix_attention_policy' %}active{% endif %}" href="{{ url_for('helix_attention_policy') }}">
+            <i class="bi bi-eye"></i><span>Attention policy</span>
+          </a>
+          {# TQI is admin-only on novakornothing.com/tqi — not shown to students #}
         </div>
       </details>
       {% else %}
@@ -97,6 +101,9 @@
           </a>
           <a class="rail-link {% if ep == 'admin_audit' %}active{% endif %}" href="{{ url_for('admin_audit') }}">
             <i class="bi bi-shield-check"></i><span>Audit log</span>
+          </a>
+          <a class="rail-link" href="https://novakornothing.com/tqi" target="_blank" rel="noopener">
+            <i class="bi bi-clipboard2-pulse"></i><span>TQI site</span>
           </a>
           {% endif %}
           <a class="rail-link {% if ep == 'instructor_dashboard' %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
@@ -133,7 +140,7 @@
 
       {# —— Analytics (staff only) —— #}
       {% if not is_student %}
-      <details class="rail-tree" {% if ep in ('admin_teaching_time','admin_test_analytics','instructor_analytics_hub','export_analytics_csv','export_item_flags_csv') or (ep is string and 'performance' in ep) %}open{% endif %}>
+      <details class="rail-tree" {% if ep in ('admin_teaching_time','admin_test_analytics','instructor_analytics_hub','export_analytics_csv','export_item_flags_csv') or (ep is string and ('performance' in ep or 'attention' in ep)) %}open{% endif %}>
         <summary class="rail-tree-sum">
           <i class="bi bi-bar-chart-line rail-ico"></i><span>Reports</span>
         </summary>
@@ -148,6 +155,9 @@
           <a class="rail-link {% if ep == 'instructor_analytics_hub' %}active{% endif %}" href="{{ url_for('instructor_analytics_hub') }}">
             <i class="bi bi-clipboard-data"></i><span>Score hub</span>
           </a>
+          <a class="rail-link {% if ep and ep.startswith('instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
+            <i class="bi bi-eye"></i><span>Attention signal</span>
+          </a>
           <a class="rail-link" href="{{ url_for('export_analytics_csv') }}">
             <i class="bi bi-download"></i><span>Export scores CSV</span>
           </a>
@@ -160,6 +170,9 @@
           </a>
           <a class="rail-link {% if ep == 'admin_test_analytics' %}active{% endif %}" href="{{ url_for('admin_test_analytics') }}">
             <i class="bi bi-graph-up-arrow"></i><span>Test analytics</span>
+          </a>
+          <a class="rail-link {% if ep and ep.startswith('instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
+            <i class="bi bi-eye"></i><span>Attention signal</span>
           </a>
           {% endif %}
         </div>

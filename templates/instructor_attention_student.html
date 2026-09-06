@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — attention signal{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_attention', section_id=section.id) }}">Attention signal</a></li>
+    <li class="breadcrumb-item active">{{ student.full_name }}</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <h1 class="h3 mb-1">{{ student.full_name }}</h1>
+  <p class="mb-0">AOI timeline per lesson. Signal only — not an assessment of this student.</p>
+</div>
+
+{% for block in blocks %}
+<div class="card mb-3">
+  <div class="card-header navy d-flex justify-content-between">
+    <span>{{ block.lesson.title }}</span>
+    <span class="small">{{ block.sessions|length }} session{{ 's' if block.sessions|length != 1 else '' }}</span>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-5">
+        <div class="small text-uppercase text-muted mb-1">Dwell by heading</div>
+        {% for a in block.aois %}
+        <div class="d-flex justify-content-between small mb-1">
+          <span>{{ a.aoi_label }}</span>
+          <span>{{ '%.0f'|format((a.dwell_ms or 0)/1000) }}s</span>
+        </div>
+        {% else %}
+        <p class="small text-muted mb-0">No buckets.</p>
+        {% endfor %}
+      </div>
+      <div class="col-md-7">
+        <div class="small text-uppercase text-muted mb-1">Latest session segments</div>
+        {% if block.timeline %}
+        <ol class="small mb-0 ps-3">
+          {% for seg in block.timeline %}
+          <li>{{ '%.1f'|format((seg.t0 or 0)/1000) }}–{{ '%.1f'|format((seg.t1 or 0)/1000) }}s · {{ seg.label or seg.aoi }}</li>
+          {% endfor %}
+        </ol>
+        {% else %}
+        <p class="small text-muted mb-0">No segment list stored on the latest session.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card card-body text-muted">This student has not opted into a Helix session in this class.</div>
+{% endfor %}
+{% endblock %}

@@ -8,13 +8,14 @@
         <h2 class="h4 mb-3">Sign in</h2>
         <form method="post">
           <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control" required autofocus
-                   placeholder="admin@lms.local">
+            <label class="form-label" for="loginEmail">Email</label>
+            <input id="loginEmail" type="email" name="email" class="form-control" required autofocus
+                   autocomplete="username" placeholder="admin@lms.local">
           </div>
           <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input type="password" name="password" class="form-control" required>
+            <label class="form-label" for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" name="password" class="form-control" required
+                   autocomplete="current-password">
           </div>
           <button type="submit" class="btn btn-brand w-100">Log in</button>
         </form>
