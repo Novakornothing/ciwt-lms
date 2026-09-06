@@ -706,6 +706,7 @@ def student_gold_path(user, section):
     lesson = lessons[0] if lessons else None
     labs = labs_for_module(module) if module else []
     lab = labs[0] if labs else None
+    lab_id = lab.get('id') if isinstance(lab, dict) else getattr(lab, 'id', None)
     quizzes = Quiz.query.filter_by(module_id=module.id).all() if module else []
     quiz = quizzes[0] if quizzes else None
     tests = KnowledgeTest.query.filter_by(course_id=section.course_id).order_by(KnowledgeTest.order).all()
@@ -739,7 +740,7 @@ def student_gold_path(user, section):
             'n': len(steps) + 1,
             'title': 'Run the matching lab',
             'detail': lab.title,
-            'url': url_for('interactive_lab', lab_id=lab.id),
+            'url': url_for('interactive_lab', lab_id=lab_id) if lab_id else None,
             'done': bool(quiz_attempt or test_attempt),
             'available': True,
         })
@@ -2471,12 +2472,16 @@ def curriculum_index(section_id):
         if current_user.role in ('admin', 'instructor')
         else url_for('student_section', section_id=section_id)
     )
-    return render_template(
-        'curriculum_index.html',
-        section=section,
-        modules=modules,
-        class_home=class_home,
-    )
+    try:
+        return render_template(
+            'curriculum_index.html',
+            section=section,
+            modules=modules,
+            class_home=class_home,
+        )
+    except Exception as exc:
+        print('curriculum_index template:', exc)
+        return redirect(class_home)
 
 
 @app.route('/student/module/<int:section_id>/<int:module_id>')
@@ -2502,11 +2507,17 @@ def view_module(section_id, module_id):
         if current_user.role in ('admin', 'instructor')
         else url_for('student_section', section_id=section_id)
     )
+    gold_path = None
+    if section:
+        try:
+            gold_path = student_gold_path(current_user, section)
+        except Exception as exc:
+            print('gold_path chapter:', exc)
     if lessons:
         return render_template(
             'chapter.html', module=module, lessons=lessons,
             section_id=section_id, quizzes=quizzes, chapter_labs=chapter_labs,
-            gold_path=student_gold_path(current_user, section) if section else None,
+            gold_path=gold_path,
             course_modules=course_modules,
             class_home=class_home,
         )
@@ -2544,12 +2555,26 @@ def view_lesson(section_id, module_id, lesson_id):
         if current_user.role in ('admin', 'instructor')
         else url_for('student_section', section_id=section_id)
     )
+    try:
+        chapter_labs = labs_for_module(module)
+    except Exception:
+        chapter_labs = []
+    try:
+        lesson_labs = labs_for_lesson(module, lesson)
+    except Exception:
+        lesson_labs = []
+    gold_path = None
+    if section:
+        try:
+            gold_path = student_gold_path(current_user, section)
+        except Exception as exc:
+            print('gold_path lesson:', exc)
     return render_template(
         'lesson.html', module=module, lesson=lesson, lessons=lessons,
         prev_l=prev_l, next_l=next_l, section_id=section_id, quizzes=quizzes,
-        chapter_labs=labs_for_module(module),
-        lesson_labs=labs_for_lesson(module, lesson),
-        gold_path=student_gold_path(current_user, section) if section else None,
+        chapter_labs=chapter_labs,
+        lesson_labs=lesson_labs,
+        gold_path=gold_path,
         course_modules=course_modules,
         class_home=class_home,
     )

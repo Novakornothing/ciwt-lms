@@ -77,8 +77,8 @@
       <div class="card-header navy">Labs in this chapter</div>
       <div class="list-group list-group-flush">
         {% for lab in chapter_labs %}
-        <a class="list-group-item list-group-item-action" href="{{ url_for('interactive_lab', lab_id=lab.id) }}">
-          <span class="badge text-bg-dark me-1">{{ lab.kind|upper }}</span>{{ lab.title }}
+        <a class="list-group-item list-group-item-action" href="{{ url_for('interactive_lab', lab_id=lab['id']) }}">
+          <span class="badge text-bg-dark me-1">{{ lab['kind']|upper }}</span>{{ lab['title'] }}
         </a>
         {% endfor %}
       </div>
