@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}TQI board — all classes{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">Admin</div>
+  <h1 class="h3 mb-1">TQI completion board</h1>
+  <p class="mb-0">Each convening, the assigned instructor, scheduled dates, and what is still missing from the TQI packet. Ready packets auto-complete after the end date.</p>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <span class="stat-pill">Classes <strong>{{ cards|length }}</strong></span>
+  <span class="stat-pill">Not complete <strong>{{ open_n }}</strong></span>
+  <span class="stat-pill">Missing items <strong>{{ missing_n }}</strong></span>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>Class</th>
+        <th>Schedule</th>
+        <th>Instructor</th>
+        <th>Packet</th>
+        <th>Missing</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for card in cards %}
+      {% set s = card.section %}
+      {% set st = card.status %}
+      <tr>
+        <td>
+          <div class="fw-semibold">{{ s.name }}</div>
+          <div class="small text-muted">{{ s.course.code if s.course else '' }} · {{ st.n_enrolled }} enrolled</div>
+        </td>
+        <td class="small">
+          {{ s.start_date or '—' }} → {{ s.end_date or '—' }}
+          {% if st.ended %}<div class="text-warning">Ended</div>{% elif st.started %}<div>In session</div>{% else %}<div>Upcoming</div>{% endif %}
+        </td>
+        <td>
+          {{ st.instructor.full_name if st.instructor else 'Unassigned' }}
+          <div class="small text-muted">{% if st.instructor %}{{ st.instructor.email }}{% endif %}</div>
+        </td>
+        <td>
+          <span class="badge {% if st.packet.status == 'complete' %}text-bg-success{% elif st.packet.status == 'ready' %}text-bg-info{% else %}text-bg-warning{% endif %}">{{ st.packet.status }}</span>
+        </td>
+        <td class="small">
+          {% if st.missing %}
+            {{ st.missing|join(' · ') }}
+          {% else %}
+            None
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-navy" href="{{ url_for('tqi_class', section_id=s.id) }}">Open</a>
+          <a class="btn btn-sm btn-brand" href="{{ url_for('tqi_report', section_id=s.id) }}">Report</a>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="text-muted">No classes.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

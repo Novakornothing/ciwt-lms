@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}TQI report — {{ section.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('tqi_class', section_id=section.id) }}">TQI</a></li>
+    <li class="breadcrumb-item active">Report</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">TQI packet</div>
+  <h1 class="h3 mb-1">TQI — {{ section.name }}</h1>
+  <p class="mb-0">
+    {{ section.course.title if section.course else '' }}
+    · {{ section.start_date or '—' }} → {{ section.end_date or '—' }}
+    · Instructor {{ status.instructor.full_name if status.instructor else 'unassigned' }}
+    · Status <strong>{{ status.packet.status }}</strong>
+    · Generated {{ generated.strftime('%Y-%m-%d %H:%M') }} UTC
+  </p>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <span class="stat-pill">Roster <strong>{{ status.n_enrolled }}</strong></span>
+  <span class="stat-pill">EOC surveys <strong>{{ eoc_n }}</strong></span>
+  <span class="stat-pill">Student notes <strong>{{ student_critiques|length }}</strong></span>
+  <span class="stat-pill">Instructor notes <strong>{{ instructor_critiques|length }}</strong></span>
+  <a class="btn btn-sm btn-brand" href="{{ url_for('tqi_official', section_id=section.id) }}">Official TQI report</a>
+  <button type="button" class="btn btn-sm btn-outline-navy" onclick="window.print()">Print working copy</button>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">0. Auto checklist</div>
+  <ul class="list-group list-group-flush">
+    {% for c in status.checks %}
+    <li class="list-group-item d-flex justify-content-between">
+      <span>{% if c.ok %}Ready{% else %}Missing{% endif %} — {{ c.label }} · {{ c.detail }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">1. End-of-course student reaction ({{ eoc_n }})</div>
+  {% if eoc_avgs %}
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Area</th><th>Item</th><th>n</th><th>Avg (1–5)</th></tr></thead>
+      <tbody>
+      {% for row in eoc_avgs %}
+        <tr>
+          <td>{{ row.group }}</td>
+          <td>{{ row.label }}</td>
+          <td>{{ row.n }}</td>
+          <td>{% if row.avg %}{{ row.avg }}{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body text-muted">No EOC surveys yet.</div>
+  {% endif %}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">2. Anonymous student comments</div>
+  {% if anon_comments %}
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>When</th><th>Topic</th><th>Rating</th><th>Comment</th></tr></thead>
+      <tbody>
+      {% for c in anon_comments %}
+        <tr>
+          <td class="small">{{ c.when.strftime('%Y-%m-%d') if c.when else '' }}</td>
+          <td>{{ c.kind }}</td>
+          <td>{% if c.rating %}{{ c.rating }}/5{% else %}—{% endif %}</td>
+          <td style="white-space:pre-wrap">{{ c.body }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body text-muted">No anonymous student comments.</div>
+  {% endif %}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">3. Instructor closeout</div>
+  {% if status.packet.closeout_note %}
+  <div class="card-body" style="white-space:pre-wrap">{{ status.packet.closeout_note }}</div>
+  {% endif %}
+  {% if instructor_critiques %}
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>When</th><th>Instructor</th><th>Topic</th><th>Rating</th><th>Critique</th></tr></thead>
+      <tbody>
+      {% for c in instructor_critiques %}
+        <tr>
+          <td class="small">{{ c.created_at.strftime('%Y-%m-%d') }}</td>
+          <td>{{ c.author }}</td>
+          <td>{{ c.kind }}</td>
+          <td>{% if c.rating %}{{ c.rating }}/5{% else %}—{% endif %}</td>
+          <td style="white-space:pre-wrap">{{ c.body }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif not status.packet.closeout_note %}
+  <div class="card-body text-muted">No instructor closeout yet.</div>
+  {% endif %}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">4. Test item analysis</div>
+  <div class="card-body">
+    {% for pack in test_packs %}
+    <h2 class="h5">{{ pack.test.title }}</h2>
+    <p class="small text-muted">
+      Attempts {{ pack.summary.n_attempts or 0 }}
+      · mean {% if pack.summary.mean_score is not none %}{{ pack.summary.mean_score }}%{% else %}—{% endif %}
+      · pass rate {% if pack.summary.pass_rate is not none %}{{ pack.summary.pass_rate }}%{% else %}—{% endif %}
+      · flagged {{ pack.summary.n_flagged or 0 }} / {{ pack.summary.n_items or 0 }}
+      · P band {{ pack.summary.p_band }}
+    </p>
+    {% if pack.flagged %}
+    <div class="table-responsive mb-3">
+      <table class="table table-sm">
+        <thead><tr><th>#</th><th>Item</th><th>P</th><th>d</th><th>Flags</th></tr></thead>
+        <tbody>
+        {% for it in pack.flagged %}
+          <tr>
+            <td>{{ it.index }}</td>
+            <td>{{ (it.text or '')[:140] }}{% if (it.text or '')|length > 140 %}…{% endif %}</td>
+            <td>{{ it.P }}</td>
+            <td>{{ it.discrimination }} <span class="small text-muted">{{ it.disc_label }}</span></td>
+            <td class="small">{{ it.flags|join('; ') }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="small text-muted">No flagged items (or no attempts yet).</p>
+    {% endif %}
+    {% else %}
+    <p class="text-muted mb-0">No knowledge tests on this course.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<p class="small text-muted">Aligned to NAVEDTRA M-142.5 TQI monitoring (student reaction, instructor closeout, test-item analysis). This product form is not the official NETC LAS instrument.</p>
+{% endblock %}

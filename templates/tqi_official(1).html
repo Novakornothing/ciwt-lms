@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Official TQI report — {{ section.name }}{% endblock %}
+{% block content %}
+<style>
+@media print {
+  .staff-rail, .staff-rail-expand, .navbar, .breadcrumb, form, .btn, button { display:none !important; }
+  body { background:#fff !important; color:#000 !important; }
+  .page-hero, .card { break-inside: avoid; box-shadow:none !important; }
+}
+</style>
+<nav aria-label="breadcrumb" class="d-print-none">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('tqi_class', section_id=section.id) }}">TQI</a></li>
+    <li class="breadcrumb-item active">Official report</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">Official Training Quality Indicator report</div>
+  <h1 class="h3 mb-1">{{ section.course.code if section.course else 'COURSE' }} — {{ section.name }}</h1>
+  <p class="mb-0">Generated {{ generated.strftime('%d %b %Y %H:%M') }} UTC · Packet {{ status.packet.status }} · Student identities withheld</p>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3 d-print-none">
+  <button type="button" class="btn btn-brand" onclick="window.print()">Print / save official TQI</button>
+  <a class="btn btn-outline-navy" href="{{ url_for('tqi_class', section_id=section.id) }}">Back to class TQI</a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">1. Convening identification</div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <div><strong>Course</strong> {{ section.course.title if section.course else '—' }} ({{ section.course.code if section.course else '—' }})</div>
+        <div><strong>Class / convening</strong> {{ section.name }}</div>
+        <div><strong>Schedule</strong> {{ section.start_date or 'not dated' }} → {{ section.end_date or 'not dated' }}</div>
+      </div>
+      <div class="col-md-6">
+        <div><strong>Assigned instructor</strong> {{ status.instructor.full_name if status.instructor else 'Unassigned' }}{% if status.instructor %} ({{ status.instructor.email }}){% endif %}</div>
+        <div><strong>Roster</strong> {{ status.n_enrolled }} enrolled</div>
+        <div><strong>Packet</strong> {{ status.packet.status }}{% if status.packet.completed_at %} · closed {{ status.packet.completed_at.strftime('%Y-%m-%d') }}{% endif %}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">2. TQI completeness (M-142.5 monitored functions)</div>
+  <table class="table table-sm mb-0">
+    <thead><tr><th>Function</th><th>State</th><th>Evidence</th></tr></thead>
+    <tbody>
+    {% for c in status.checks %}
+      <tr>
+        <td>{{ c.label }}</td>
+        <td>{% if c.ok %}Complete{% else %}Not complete{% endif %}</td>
+        <td class="small">{{ c.detail }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">3. Student reaction / end-of-course critique (anonymous)</div>
+  <div class="card-body pb-0">
+    <p class="small text-muted">Level 1 reaction summary. Counts only — no student names. Scale 1 (strongly disagree) to 5 (strongly agree).</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Area</th><th>Item</th><th>n</th><th>Mean</th></tr></thead>
+      <tbody>
+      {% for row in eoc_avgs %}
+        <tr>
+          <td>{{ row.group }}</td>
+          <td>{{ row.label }}</td>
+          <td>{{ row.n }}</td>
+          <td>{% if row.avg %}{{ '%.2f'|format(row.avg) }}{% else %}—{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="text-muted">No EOC surveys.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">4. Anonymous student comments</div>
+  {% if anon_comments %}
+  <ol class="list-group list-group-flush list-group-numbered">
+    {% for note in anon_comments %}
+    <li class="list-group-item">
+      <div class="small text-muted">{{ note.kind }}{% if note.rating %} · {{ note.rating }}/5{% endif %}{% if note.when %} · {{ note.when.strftime('%Y-%m-%d') }}{% endif %}</div>
+      <div style="white-space:pre-wrap">{{ note.body }}</div>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <div class="card-body text-muted">No free-text student comments.</div>
+  {% endif %}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">5. Instructor closeout and action taken</div>
+  {% if status.packet.closeout_note %}
+  <div class="card-body" style="white-space:pre-wrap">{{ status.packet.closeout_note }}</div>
+  {% endif %}
+  {% if instructor_critiques %}
+  <table class="table table-sm mb-0">
+    <thead><tr><th>When</th><th>Instructor</th><th>Topic</th><th>Rating</th><th>Note</th></tr></thead>
+    <tbody>
+    {% for c in instructor_critiques %}
+      <tr>
+        <td class="small">{{ c.created_at.strftime('%Y-%m-%d') }}</td>
+        <td>{{ c.author }}</td>
+        <td>{{ c.kind }}</td>
+        <td>{% if c.rating %}{{ c.rating }}/5{% else %}—{% endif %}</td>
+        <td style="white-space:pre-wrap">{{ c.body }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% elif not status.packet.closeout_note %}
+  <div class="card-body text-muted">No instructor closeout on file.</div>
+  {% endif %}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">6. Test item analysis (this convening)</div>
+  <div class="card-body">
+    {% for pack in test_packs %}
+    <h2 class="h6">{{ pack.test.title }}</h2>
+    <p class="small text-muted">
+      N={{ pack.summary.n_attempts or 0 }}
+      · mean {% if pack.summary.mean_score is not none %}{{ pack.summary.mean_score }}%{% else %}—{% endif %}
+      · median {% if pack.summary.median_score is not none %}{{ pack.summary.median_score }}%{% else %}—{% endif %}
+      · pass rate {% if pack.summary.pass_rate is not none %}{{ pack.summary.pass_rate }}%{% else %}—{% endif %}
+      · items {{ pack.summary.n_items or 0 }}
+      · flagged {{ pack.summary.n_flagged or 0 }}
+      · P band {{ pack.summary.p_band }}
+      · {{ pack.summary.group_method }}
+    </p>
+    {% if pack.flagged %}
+    <table class="table table-sm">
+      <thead><tr><th>#</th><th>Item (excerpt)</th><th>P</th><th>d</th><th>Flags</th></tr></thead>
+      <tbody>
+      {% for it in pack.flagged %}
+        <tr>
+          <td>{{ it.index }}</td>
+          <td>{{ (it.text or '')[:160] }}{% if (it.text or '')|length > 160 %}…{% endif %}</td>
+          <td>{{ it.P }}</td>
+          <td>{{ it.discrimination }}</td>
+          <td class="small">{{ it.flags|join('; ') }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="small text-muted">No flagged items.</p>
+    {% endif %}
+    {% else %}
+    <p class="text-muted mb-0">No knowledge tests.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">7. Recommended actions</div>
+  {% if recommendations %}
+  <ul class="list-group list-group-flush">
+    {% for rec in recommendations %}
+    <li class="list-group-item">{{ rec }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="card-body">No automatic findings. Packet artifacts are inside expected bands.</div>
+  {% endif %}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">8. Authentication</div>
+  <div class="card-body">
+    <p>This report was generated from CIWT LMS TQI records for this convening. Student reaction data is aggregated and comments are anonymous. It is a schoolhouse TQI packet aligned to NAVEDTRA M-142.5 monitored functions (student critique program, instructor closeout, test-item analysis). It is not the NETC LAS export file.</p>
+    <div class="row mt-3">
+      <div class="col-md-6">Instructor: {{ status.instructor.full_name if status.instructor else '________________' }}</div>
+      <div class="col-md-6">Date: {{ generated.strftime('%Y-%m-%d') }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
