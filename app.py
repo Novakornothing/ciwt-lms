@@ -2413,6 +2413,20 @@ def student_section(section_id):
 
 @app.route('/class/<int:section_id>/curriculum')
 @login_required
+def _modules_for_section(section, heal=True):
+    """All chapters for this class course. Re-sync if the DB is short."""
+    modules = Module.query.filter_by(course_id=section.course_id).order_by(Module.order).all()
+    if heal and len(modules) < 8:
+        try:
+            sync_curriculum()
+            db.session.commit()
+        except Exception as exc:
+            print('curriculum heal:', exc)
+            db.session.rollback()
+        modules = Module.query.filter_by(course_id=section.course_id).order_by(Module.order).all()
+    return modules
+
+
 def curriculum_index(section_id):
     """Every chapter in the class course — instructor and student."""
     section = ClassSection.query.get_or_404(section_id)
@@ -2428,7 +2442,7 @@ def curriculum_index(section_id):
     elif current_user.role != 'admin':
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
-    modules = Module.query.filter_by(course_id=section.course_id).order_by(Module.order).all()
+    modules = _modules_for_section(section)
     class_home = (
         url_for('instructor_section', section_id=section_id)
         if current_user.role in ('admin', 'instructor')
@@ -3884,7 +3898,7 @@ def instructor_section(section_id):
     if current_user.role != 'admin' and not instructor_can_access_section(current_user, section):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
-    modules = Module.query.filter_by(course_id=section.course_id).order_by(Module.order).all()
+    modules = _modules_for_section(section)
     quizzes_by_module = {
         m.id: Quiz.query.filter_by(module_id=m.id).all()
         for m in modules
@@ -6449,10 +6463,13 @@ def sync_curriculum():
                 db.session.flush()
             # replace lessons for module
             Lesson.query.filter_by(module_id=m.id).delete()
-            for les in lesson_list:
+            for idx, les in enumerate(lesson_list, start=1):
                 db.session.add(Lesson(
-                    module_id=m.id, title=les['title'], order=les['order'],
-                    content=les['html'], estimated_minutes=les.get('minutes', 30)
+                    module_id=m.id,
+                    title=les.get('title') or f'Lesson {idx}',
+                    order=int(les.get('order') or idx),
+                    content=les.get('html') or '',
+                    estimated_minutes=les.get('minutes', 30)
                 ))
     used_stems = set()
     for mod in Module.query.all():
