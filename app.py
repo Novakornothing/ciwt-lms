@@ -11,6 +11,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from collections import defaultdict
 import json
+import secrets
 import csv
 from io import StringIO, BytesIO
 import shutil
@@ -26,6 +27,13 @@ from aschool import BLOCKS as ASCHOOL_BLOCKS, CSCHOOL_COMMS, CSCHOOL_SYS, outlin
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ciwt-lms-demo-key-change-in-production')
+TQI_CORS = {
+    'https://novakornothing.com',
+    'https://www.novakornothing.com',
+    'http://127.0.0.1:8080',
+    'http://localhost:8080',
+    'http://127.0.0.1:5500',
+}
 
 
 @app.context_processor
@@ -45,6 +53,17 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
+
+
+@app.after_request
+def _tqi_cors(resp):
+    origin = request.headers.get('Origin', '')
+    if origin in TQI_CORS or origin.endswith('.novakornothing.com'):
+        resp.headers['Access-Control-Allow-Origin'] = origin
+        resp.headers['Access-Control-Allow-Credentials'] = 'true'
+        resp.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type'
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    return resp
 
 # ==================== MODELS ====================
 
@@ -100,6 +119,60 @@ class Lesson(db.Model):
     estimated_minutes = db.Column(db.Integer, default=30)
 
 
+HELIX_POLICY_VERSION = '2026-09-06'
+HELIX_ENGINE = 'webgazer'
+
+
+class HelixAttentionEvent(db.Model):
+    """Legacy heading beat. Prefer HelixGazeSession + HelixAoiBucket."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'))
+    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
+    heading = db.Column(db.String(240), default='')
+    seconds = db.Column(db.Float, default=0)
+    focused = db.Column(db.Float, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class HelixGazeSession(db.Model):
+    """One opt-in WebGazer run on a lesson. Stores the AOI timeline JSON."""
+    __tablename__ = 'helix_gaze_session'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'))
+    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
+    engine = db.Column(db.String(40), default=HELIX_ENGINE)
+    consent_version = db.Column(db.String(20), default=HELIX_POLICY_VERSION)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ended_at = db.Column(db.DateTime)
+    calibration_points = db.Column(db.Integer, default=0)
+    calibration_score = db.Column(db.Integer, default=0)
+    viewport_w = db.Column(db.Integer, default=0)
+    viewport_h = db.Column(db.Integer, default=0)
+    sample_count = db.Column(db.Integer, default=0)
+    timeline_json = db.Column(db.Text, default='[]')
+    status = db.Column(db.String(20), default='running')
+
+
+class HelixAoiBucket(db.Model):
+    """Queryable dwell per student / lesson / heading. Not a grade."""
+    __tablename__ = 'helix_aoi_bucket'
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey('helix_gaze_session.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'))
+    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
+    aoi_key = db.Column(db.String(80), default='')
+    aoi_label = db.Column(db.String(240), default='')
+    aoi_order = db.Column(db.Integer, default=0)
+    dwell_ms = db.Column(db.Integer, default=0)
+    visits = db.Column(db.Integer, default=0)
+    first_ms = db.Column(db.Integer, default=0)
+    last_ms = db.Column(db.Integer, default=0)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=False)
@@ -132,6 +205,56 @@ class ClassSection(db.Model):
     instructor = db.relationship('User', foreign_keys=[instructor_id])
     enrollments = db.relationship('Enrollment', backref='section', lazy=True)
     releases = db.relationship('ContentRelease', backref='section', lazy=True)
+
+
+
+class TqiCritique(db.Model):
+    """Per-class student or instructor critique that feeds the TQI report."""
+    __tablename__ = 'tqi_critique'
+    id = db.Column(db.Integer, primary_key=True)
+    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    role = db.Column(db.String(20), default='student')
+    kind = db.Column(db.String(40), default='curriculum')
+    rating = db.Column(db.Integer)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User')
+    section = db.relationship('ClassSection')
+
+
+
+class TqiEocResponse(db.Model):
+    """End-of-course student reaction (NAVEDTRA M-142.5 / student critique program)."""
+    __tablename__ = 'tqi_eoc_response'
+    id = db.Column(db.Integer, primary_key=True)
+    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    answers_json = db.Column(db.Text, default='{}')
+    comment = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class ApiToken(db.Model):
+    """Bearer token so the .com TQI page can pull LMS data without living in the LMS UI."""
+    __tablename__ = 'api_token'
+    token = db.Column(db.String(64), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User')
+
+
+class TqiPacket(db.Model):
+    """Per-class TQI packet status. Ready/complete is computed from schedule + artifacts."""
+    __tablename__ = 'tqi_packet'
+    id = db.Column(db.Integer, primary_key=True)
+    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), unique=True, nullable=False)
+    status = db.Column(db.String(20), default='open')  # open | ready | complete
+    closeout_note = db.Column(db.Text, default='')
+    auto_ready_at = db.Column(db.DateTime)
+    completed_at = db.Column(db.DateTime)
+    completed_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
 class CourseInstructor(db.Model):
@@ -2096,7 +2219,11 @@ def student_dashboard():
     for s in sections:
         enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=s.id).first()
         progress[s.id] = enr.progress_percent if enr else 0
-    return render_template('student_dashboard.html', sections=sections, progress=progress)
+    tqi_by_id = {s.id: _tqi_status(s) for s in sections}
+    my_eoc = {}
+    for s in sections:
+        my_eoc[s.id] = TqiEocResponse.query.filter_by(section_id=s.id, user_id=current_user.id).first() is not None
+    return render_template('student_dashboard.html', sections=sections, progress=progress, tqi_by_id=tqi_by_id, my_eoc=my_eoc)
 
 
 @app.route('/student/section/<int:section_id>')
@@ -2187,6 +2314,387 @@ def view_lesson(section_id, module_id, lesson_id):
         chapter_labs=labs_for_module(module),
         lesson_labs=labs_for_lesson(module, lesson),
     )
+
+
+def _helix_owns_session(sess):
+    if not sess:
+        return False
+    if sess.user_id == current_user.id:
+        return True
+    if current_user.role == 'admin':
+        return True
+    if current_user.role == 'instructor' and sess.section_id:
+        sec = ClassSection.query.get(sess.section_id)
+        return bool(sec and instructor_can_access_section(current_user, sec))
+    return False
+
+
+def _helix_merge_timeline(existing_json, segments):
+    try:
+        cur = json.loads(existing_json or '[]')
+    except Exception:
+        cur = []
+    if not isinstance(cur, list):
+        cur = []
+    for seg in segments or []:
+        if not isinstance(seg, dict):
+            continue
+        try:
+            t0 = max(0, int(float(seg.get('t0') or 0)))
+            t1 = max(t0, int(float(seg.get('t1') or t0)))
+        except (TypeError, ValueError):
+            continue
+        if t1 - t0 > 120000:
+            t1 = t0 + 120000
+        cur.append({
+            't0': t0,
+            't1': t1,
+            'aoi': str(seg.get('aoi') or 'unknown')[:80],
+            'label': str(seg.get('label') or seg.get('aoi') or '')[:240],
+            'n': min(5000, int(seg.get('n') or 0)),
+            'conf': float(seg.get('conf') or 0),
+        })
+    if len(cur) > 800:
+        cur = cur[-800:]
+    return json.dumps(cur)
+
+
+@app.route('/api/helix/beat', methods=['POST'])
+@login_required
+def helix_beat():
+    data = request.get_json(silent=True) or {}
+    heading = (data.get('heading') or 'Lesson')[:240]
+    try:
+        seconds = min(30.0, max(0.0, float(data.get('seconds') or 0)))
+        focused = min(seconds, max(0.0, float(data.get('focused') or 0)))
+    except (TypeError, ValueError):
+        return jsonify({'ok': False}), 400
+    lesson_id = data.get('lesson_id')
+    section_id = data.get('section_id')
+    if not lesson_id:
+        return jsonify({'ok': False}), 400
+    ev = HelixAttentionEvent(
+        user_id=current_user.id,
+        section_id=int(section_id) if section_id else None,
+        lesson_id=int(lesson_id),
+        heading=heading,
+        seconds=seconds,
+        focused=focused,
+    )
+    db.session.add(ev)
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/helix/session/start', methods=['POST'])
+@login_required
+def helix_session_start():
+    data = request.get_json(silent=True) or {}
+    lesson_id = data.get('lesson_id')
+    if not lesson_id:
+        return jsonify({'ok': False, 'error': 'lesson required'}), 400
+    lesson = Lesson.query.get(int(lesson_id))
+    if not lesson:
+        return jsonify({'ok': False}), 404
+    section_id = data.get('section_id')
+    sess = HelixGazeSession(
+        user_id=current_user.id,
+        section_id=int(section_id) if section_id else None,
+        lesson_id=lesson.id,
+        engine=HELIX_ENGINE,
+        consent_version=str(data.get('consent_version') or HELIX_POLICY_VERSION)[:20],
+        viewport_w=int(data.get('viewport_w') or 0),
+        viewport_h=int(data.get('viewport_h') or 0),
+        timeline_json='[]',
+        status='running',
+    )
+    db.session.add(sess)
+    db.session.commit()
+    audit('helix_session_start', f'lesson={lesson.id} session={sess.id}')
+    return jsonify({'ok': True, 'session_id': sess.id, 'engine': HELIX_ENGINE, 'policy': HELIX_POLICY_VERSION})
+
+
+@app.route('/api/helix/session/<int:session_id>/calibrated', methods=['POST'])
+@login_required
+def helix_session_calibrated(session_id):
+    sess = HelixGazeSession.query.get_or_404(session_id)
+    if sess.user_id != current_user.id:
+        abort(403)
+    data = request.get_json(silent=True) or {}
+    sess.calibration_points = min(12, int(data.get('calibration_points') or 0))
+    sess.calibration_score = min(100, int(data.get('calibration_score') or 0))
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/helix/session/<int:session_id>/timeline', methods=['POST'])
+@login_required
+def helix_session_timeline(session_id):
+    sess = HelixGazeSession.query.get_or_404(session_id)
+    if sess.user_id != current_user.id:
+        abort(403)
+    data = request.get_json(silent=True) or {}
+    segments = data.get('segments') or []
+    if len(segments) > 250:
+        segments = segments[:250]
+    sess.timeline_json = _helix_merge_timeline(sess.timeline_json, segments)
+    sess.sample_count = max(sess.sample_count or 0, int(data.get('sample_count') or 0))
+    if data.get('viewport_w'):
+        sess.viewport_w = int(data.get('viewport_w') or 0)
+        sess.viewport_h = int(data.get('viewport_h') or 0)
+    for b in data.get('buckets') or []:
+        if not isinstance(b, dict):
+            continue
+        key = str(b.get('aoi_key') or b.get('aoi') or '')[:80]
+        if not key:
+            continue
+        row = HelixAoiBucket.query.filter_by(session_id=sess.id, aoi_key=key).first()
+        if not row:
+            row = HelixAoiBucket(
+                session_id=sess.id,
+                user_id=sess.user_id,
+                section_id=sess.section_id,
+                lesson_id=sess.lesson_id,
+                aoi_key=key,
+            )
+            db.session.add(row)
+        row.aoi_label = str(b.get('aoi_label') or b.get('label') or key)[:240]
+        row.aoi_order = int(b.get('aoi_order') or 0)
+        row.dwell_ms = min(3_600_000, int(b.get('dwell_ms') or 0))
+        row.visits = min(10_000, int(b.get('visits') or 0))
+        row.first_ms = int(b.get('first_ms') or 0)
+        row.last_ms = int(b.get('last_ms') or 0)
+        row.updated_at = datetime.utcnow()
+    if data.get('end'):
+        sess.status = 'ended'
+        sess.ended_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/helix/lesson-summary/<int:lesson_id>')
+@login_required
+def helix_lesson_summary(lesson_id):
+    buckets = HelixAoiBucket.query.filter_by(user_id=current_user.id, lesson_id=lesson_id).all()
+    by = {}
+    for r in buckets:
+        slot = by.setdefault(r.aoi_label or r.aoi_key or 'Lesson', {'dwell_ms': 0, 'visits': 0})
+        slot['dwell_ms'] += r.dwell_ms or 0
+        slot['visits'] += r.visits or 0
+    if not by:
+        rows = HelixAttentionEvent.query.filter_by(user_id=current_user.id, lesson_id=lesson_id).all()
+        for r in rows:
+            slot = by.setdefault(r.heading or 'Lesson', {'dwell_ms': 0, 'visits': 0})
+            slot['dwell_ms'] += int((r.seconds or 0) * 1000)
+            slot['visits'] += 1
+    total = sum(v['dwell_ms'] for v in by.values()) or 1
+    review = []
+    for heading, slot in by.items():
+        if heading in ('Off page', 'Page chrome', 'off_page', 'chrome'):
+            continue
+        sec = slot['dwell_ms'] / 1000.0
+        share = slot['dwell_ms'] / total
+        if sec >= 2 and share < 0.08:
+            review.append({
+                'heading': heading,
+                'aoi_label': heading,
+                'seconds': round(sec, 1),
+                'dwell_ms': slot['dwell_ms'],
+                'focus': round(share * 100),
+            })
+    review.sort(key=lambda x: x['dwell_ms'])
+    return jsonify({'review': review[:8], 'policy': HELIX_POLICY_VERSION})
+
+
+@app.route('/policy/attention')
+def helix_attention_policy():
+    return render_template('helix_policy.html', policy_version=HELIX_POLICY_VERSION)
+
+
+def _helix_section_or_403(section_id):
+    section = ClassSection.query.get_or_404(section_id)
+    if current_user.role == 'admin':
+        return section
+    if current_user.role != 'instructor' or not instructor_can_access_section(current_user, section):
+        abort(403)
+    return section
+
+
+@app.route('/instructor/section/<int:section_id>/attention')
+@login_required
+def instructor_attention(section_id):
+    section = _helix_section_or_403(section_id)
+    sessions = HelixGazeSession.query.filter_by(section_id=section.id).all()
+    buckets = HelixAoiBucket.query.filter_by(section_id=section.id).all()
+    by_user = {}
+    for s in sessions:
+        slot = by_user.setdefault(s.user_id, {'user_id': s.user_id, 'sessions': 0, 'last': None, 'name': ''})
+        slot['sessions'] += 1
+        if not slot['last'] or (s.started_at and s.started_at > slot['last']):
+            slot['last'] = s.started_at
+    user_ids = list(by_user.keys()) or [0]
+    users = {u.id: u for u in User.query.filter(User.id.in_(user_ids)).all()}
+    students = []
+    for uid, slot in by_user.items():
+        u = users.get(uid)
+        slot['name'] = u.full_name if u else f'User {uid}'
+        students.append(slot)
+    students.sort(key=lambda r: r['name'])
+    aoi_map = {}
+    total_ms = 0
+    for b in buckets:
+        if (b.aoi_key or '') in ('off_page', 'chrome') or (b.aoi_label or '') in ('Off page', 'Page chrome'):
+            continue
+        key = b.aoi_label or b.aoi_key
+        slot = aoi_map.setdefault(key, {'label': key, 'dwell_ms': 0, 'visits': 0, 'students': set()})
+        slot['dwell_ms'] += b.dwell_ms or 0
+        slot['visits'] += b.visits or 0
+        slot['students'].add(b.user_id)
+        total_ms += b.dwell_ms or 0
+    aois = []
+    for slot in aoi_map.values():
+        minutes = (slot['dwell_ms'] or 0) / 60000.0
+        share = int(round(100.0 * slot['dwell_ms'] / (total_ms or 1)))
+        aois.append({
+            'label': slot['label'],
+            'minutes': minutes,
+            'visits': slot['visits'],
+            'students': len(slot['students']),
+            'share': share,
+            'bar': min(100, share),
+            'dwell_ms': slot['dwell_ms'],
+        })
+    aois.sort(key=lambda x: x['dwell_ms'], reverse=True)
+    lesson_map = {}
+    for s in sessions:
+        lesson_map.setdefault(s.lesson_id, 0)
+        lesson_map[s.lesson_id] += 1
+    lesson_rows = []
+    if lesson_map:
+        for les in Lesson.query.filter(Lesson.id.in_(list(lesson_map.keys()))).all():
+            lesson_rows.append(type('L', (), {
+                'id': les.id, 'title': les.title, 'sessions': lesson_map[les.id]
+            })())
+        lesson_rows.sort(key=lambda L: L.title)
+    return render_template(
+        'instructor_attention.html',
+        section=section,
+        students=students,
+        aois=aois[:24],
+        lessons=lesson_rows,
+        n_sessions=len(sessions),
+        n_students=len(students),
+        n_lessons=len(lesson_rows),
+    )
+
+
+@app.route('/instructor/section/<int:section_id>/attention/student/<int:user_id>')
+@login_required
+def instructor_attention_student(section_id, user_id):
+    section = _helix_section_or_403(section_id)
+    student = User.query.get_or_404(user_id)
+    sessions = (
+        HelixGazeSession.query
+        .filter_by(section_id=section.id, user_id=user_id)
+        .order_by(HelixGazeSession.started_at.desc())
+        .all()
+    )
+    by_lesson = {}
+    for s in sessions:
+        by_lesson.setdefault(s.lesson_id, []).append(s)
+    blocks = []
+    for lid, sess_list in by_lesson.items():
+        lesson = Lesson.query.get(lid)
+        if not lesson:
+            continue
+        aois = HelixAoiBucket.query.filter_by(section_id=section.id, user_id=user_id, lesson_id=lid).all()
+        aois.sort(key=lambda a: (-(a.dwell_ms or 0), a.aoi_order or 0))
+        try:
+            timeline = json.loads(sess_list[0].timeline_json or '[]')
+        except Exception:
+            timeline = []
+        blocks.append({
+            'lesson': lesson,
+            'sessions': sess_list,
+            'aois': aois[:16],
+            'timeline': timeline[:40],
+        })
+    blocks.sort(key=lambda b: b['lesson'].title)
+    return render_template(
+        'instructor_attention_student.html',
+        section=section,
+        student=student,
+        blocks=blocks,
+    )
+
+
+@app.route('/instructor/section/<int:section_id>/attention/lesson/<int:lesson_id>')
+@login_required
+def instructor_attention_lesson(section_id, lesson_id):
+    section = _helix_section_or_403(section_id)
+    lesson = Lesson.query.get_or_404(lesson_id)
+    buckets = HelixAoiBucket.query.filter_by(section_id=section.id, lesson_id=lesson_id).all()
+    grouped = {}
+    total = 0
+    for b in buckets:
+        if (b.aoi_key or '') in ('off_page', 'chrome'):
+            continue
+        key = b.aoi_label or b.aoi_key
+        slot = grouped.setdefault(key, {'label': key, 'dwell_ms': 0, 'visits': 0, 'students': set()})
+        slot['dwell_ms'] += b.dwell_ms or 0
+        slot['visits'] += b.visits or 0
+        slot['students'].add(b.user_id)
+        total += b.dwell_ms or 0
+    aois = []
+    n_head = max(1, len(grouped))
+    fair = (total / n_head) if total else 1
+    for slot in grouped.values():
+        aois.append({
+            'label': slot['label'],
+            'minutes': (slot['dwell_ms'] or 0) / 60000.0,
+            'visits': slot['visits'],
+            'students': len(slot['students']),
+            'thin': slot['dwell_ms'] < fair * 0.45,
+        })
+    aois.sort(key=lambda x: x['minutes'])
+    return render_template(
+        'instructor_attention_lesson.html',
+        section=section,
+        lesson=lesson,
+        aois=aois,
+    )
+
+
+@app.route('/instructor/section/<int:section_id>/attention.csv')
+@login_required
+def helix_attention_csv(section_id):
+    section = _helix_section_or_403(section_id)
+    buckets = HelixAoiBucket.query.filter_by(section_id=section.id).all()
+    user_ids = {b.user_id for b in buckets} or {0}
+    lesson_ids = {b.lesson_id for b in buckets} or {0}
+    users = {u.id: u for u in User.query.filter(User.id.in_(user_ids)).all()}
+    lessons = {L.id: L for L in Lesson.query.filter(Lesson.id.in_(lesson_ids)).all()}
+    buf = StringIO()
+    w = csv.writer(buf)
+    w.writerow(['student', 'email', 'lesson', 'aoi', 'dwell_ms', 'visits', 'session_id'])
+    for b in buckets:
+        u = users.get(b.user_id)
+        L = lessons.get(b.lesson_id)
+        w.writerow([
+            u.full_name if u else b.user_id,
+            u.email if u else '',
+            L.title if L else b.lesson_id,
+            b.aoi_label or b.aoi_key,
+            b.dwell_ms or 0,
+            b.visits or 0,
+            b.session_id or '',
+        ])
+    return Response(
+        buf.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename=attention-section-{section_id}.csv'},
+    )
+
 
 
 @app.route('/student/quiz/<int:section_id>/<int:quiz_id>', methods=['GET', 'POST'])
@@ -2371,6 +2879,647 @@ def take_test(section_id, test_id):
 
 # ---------- Instructor ----------
 
+
+
+TQI_EOC_ITEMS = [
+    ('eoc_needs', 'Content', 'Training matched what I needed to do the job.'),
+    ('eoc_objectives', 'Content', 'Lessons covered the stated objectives.'),
+    ('eoc_sequence', 'Content', 'Topic order helped me learn.'),
+    ('eoc_materials', 'Content', 'Guides and materials helped me meet the objectives.'),
+    ('eoc_labs', 'Labs', 'Labs and practice were enough to perform the skill.'),
+    ('eoc_tests', 'Testing', 'Tests measured what was taught.'),
+    ('eoc_prepared', 'Instructor', 'The instructor was prepared.'),
+    ('eoc_level', 'Instructor', 'The instructor taught at a level I could follow.'),
+    ('eoc_questions', 'Instructor', 'I could ask questions and get help.'),
+    ('eoc_safety', 'Safety', 'Safety and operational risk were addressed.'),
+    ('eoc_site', 'Site', 'Classroom and lab setup supported learning.'),
+]
+
+
+def _tqi_can_use_section(section):
+    if not current_user.is_authenticated:
+        return False
+    if current_user.role == 'admin':
+        return True
+    if current_user.role == 'instructor' and instructor_can_access_section(current_user, section):
+        return True
+    if current_user.role == 'student':
+        return Enrollment.query.filter_by(section_id=section.id, user_id=current_user.id).first() is not None
+    return False
+
+
+def _tqi_rows(section_id, role=None):
+    q = TqiCritique.query.filter_by(section_id=section_id)
+    if role:
+        q = q.filter_by(role=role)
+    rows = q.order_by(TqiCritique.created_at.desc()).all()
+    out = []
+    for c in rows:
+        u = c.user or User.query.get(c.user_id)
+        out.append(type('C', (), {
+            'id': c.id,
+            'role': c.role,
+            'kind': c.kind,
+            'rating': c.rating,
+            'body': c.body,
+            'created_at': c.created_at,
+            'author': u.full_name if u else 'Unknown',
+        })())
+    return out
+
+
+def _tqi_packet(section):
+    pkt = TqiPacket.query.filter_by(section_id=section.id).first()
+    if not pkt:
+        pkt = TqiPacket(section_id=section.id, status='open')
+        db.session.add(pkt)
+        db.session.commit()
+    return pkt
+
+
+def _tqi_teaching_hours(section):
+    seconds = 0
+    q = TimeLog.query.filter_by(kind='teaching')
+    rows = q.all()
+    for row in rows:
+        if row.section_id == section.id or (row.section_id is None and row.user_id == section.instructor_id):
+            seconds += row.seconds or 0
+    return seconds
+
+
+def _tqi_status(section):
+    """Build checklist + auto-ready / auto-complete from schedule and artifacts."""
+    enrolled = Enrollment.query.filter_by(section_id=section.id).all()
+    n_enrolled = len(enrolled)
+    eoc_n = TqiEocResponse.query.filter_by(section_id=section.id).count()
+    student_notes = TqiCritique.query.filter_by(section_id=section.id, role='student').count()
+    student_voices = max(eoc_n, student_notes)
+    instr_n = TqiCritique.query.filter(
+        TqiCritique.section_id == section.id,
+        TqiCritique.role.in_(['instructor', 'admin']),
+    ).count()
+    tests = KnowledgeTest.query.filter_by(course_id=section.course_id).all()
+    tests_with_attempts = 0
+    tests_flagged = 0
+    for test in tests:
+        n_att = TestAttempt.query.filter_by(test_id=test.id, section_id=section.id).filter(
+            TestAttempt.completed_at.isnot(None)
+        ).count()
+        if n_att:
+            tests_with_attempts += 1
+            _t, analysis, summary = compute_item_analysis(test.id, section_id=section.id)
+            if summary.get('n_flagged'):
+                tests_flagged += 1
+    need_eoc = max(1, int(round(n_enrolled * 0.6))) if n_enrolled else 1
+    today = datetime.utcnow().date()
+    ended = bool(section.end_date and section.end_date <= today)
+    started = bool(section.start_date and section.start_date <= today)
+    instructor = User.query.get(section.instructor_id) if section.instructor_id else None
+    pkt = _tqi_packet(section)
+    checks = [
+        {'key': 'schedule', 'label': 'Convening dates on the class schedule', 'ok': bool(section.start_date and section.end_date),
+         'detail': f"{section.start_date or 'no start'} → {section.end_date or 'no end'}"},
+        {'key': 'instructor', 'label': 'Instructor assigned on the schedule', 'ok': bool(instructor),
+         'detail': instructor.full_name if instructor else 'Unassigned'},
+        {'key': 'eoc', 'label': 'End-of-course student critiques (target 60% of roster)', 'ok': student_voices >= need_eoc,
+         'detail': f"{student_voices} of {n_enrolled} enrolled (need {need_eoc})"},
+        {'key': 'instructor_note', 'label': 'Instructor closeout critique', 'ok': instr_n >= 1,
+         'detail': f"{instr_n} instructor note(s)"},
+        {'key': 'item_analysis', 'label': 'Test item analysis available for this class',
+         'ok': (not tests) or tests_with_attempts >= 1,
+         'detail': f"{tests_with_attempts} test(s) with completed attempts · {tests_flagged} with flagged items"},
+    ]
+    missing = [c['label'] for c in checks if not c['ok']]
+    all_ok = not missing
+    if all_ok and pkt.status == 'open':
+        pkt.status = 'ready'
+        pkt.auto_ready_at = pkt.auto_ready_at or datetime.utcnow()
+        db.session.commit()
+    if all_ok and ended and pkt.status == 'ready':
+        pkt.status = 'complete'
+        pkt.completed_at = datetime.utcnow()
+        db.session.commit()
+    return {
+        'packet': pkt,
+        'checks': checks,
+        'missing': missing,
+        'all_ok': all_ok,
+        'n_enrolled': n_enrolled,
+        'eoc_n': eoc_n,
+        'student_voices': student_voices,
+        'need_eoc': need_eoc,
+        'instr_n': instr_n,
+        'tests': len(tests),
+        'tests_with_attempts': tests_with_attempts,
+        'tests_flagged': tests_flagged,
+        'ended': ended,
+        'started': started,
+        'instructor': instructor,
+        'teaching_seconds': _tqi_teaching_hours(section),
+    }
+
+
+def _tqi_eoc_averages(section_id):
+    rows = TqiEocResponse.query.filter_by(section_id=section_id).all()
+    buckets = {k: [] for k, _g, _l in TQI_EOC_ITEMS}
+    for row in rows:
+        try:
+            ans = json.loads(row.answers_json or '{}')
+        except Exception:
+            ans = {}
+        for key in buckets:
+            try:
+                buckets[key].append(int(ans.get(key)))
+            except (TypeError, ValueError):
+                pass
+    out = []
+    for key, group, label in TQI_EOC_ITEMS:
+        vals = buckets[key]
+        out.append({
+            'key': key, 'group': group, 'label': label,
+            'n': len(vals),
+            'avg': round(sum(vals) / len(vals), 2) if vals else None,
+        })
+    return out, len(rows)
+
+
+@app.route('/class/<int:section_id>/tqi')
+@login_required
+def tqi_class(section_id):
+    section = ClassSection.query.get_or_404(section_id)
+    if not _tqi_can_use_section(section):
+        flash('Access denied.', 'danger')
+        return redirect(url_for('index'))
+    status = _tqi_status(section)
+    rows = _tqi_rows(section.id)
+    my_eoc = None
+    if current_user.role != 'student':
+        rows = [r for r in rows if r.role in ('instructor', 'admin')]
+    if current_user.role == 'student':
+        rows = []
+        for c in TqiCritique.query.filter_by(section_id=section.id, user_id=current_user.id).order_by(TqiCritique.created_at.desc()).all():
+            rows.append(type('C', (), {
+                'id': c.id, 'role': c.role, 'kind': c.kind, 'rating': c.rating,
+                'body': c.body, 'created_at': c.created_at, 'author': current_user.full_name,
+            })())
+        my_eoc = TqiEocResponse.query.filter_by(section_id=section.id, user_id=current_user.id).first()
+    tests = KnowledgeTest.query.filter_by(course_id=section.course_id).order_by(KnowledgeTest.order).all()
+    eoc_avgs, eoc_n = _tqi_eoc_averages(section.id)
+    my_answers = {}
+    if my_eoc:
+        try:
+            my_answers = json.loads(my_eoc.answers_json or '{}')
+        except Exception:
+            my_answers = {}
+    anon_comments = []
+    if current_user.role != 'student':
+        for row in TqiEocResponse.query.filter_by(section_id=section.id).all():
+            if (row.comment or '').strip():
+                anon_comments.append(row.comment.strip())
+        for c in TqiCritique.query.filter_by(section_id=section.id, role='student').all():
+            text = (c.body or '').strip()
+            if text and text != 'EOC survey submitted.':
+                anon_comments.append(text)
+    return render_template(
+        'tqi.html',
+        section=section,
+        critiques=rows,
+        anon_comments=anon_comments,
+        tests=tests,
+        status=status,
+        eoc_items=TQI_EOC_ITEMS,
+        eoc_avgs=eoc_avgs,
+        eoc_n=eoc_n,
+        my_eoc=my_eoc,
+        my_answers=my_answers,
+        n_student=status['student_voices'],
+        n_instructor=status['instr_n'],
+    )
+
+
+@app.route('/class/<int:section_id>/tqi/critique', methods=['POST'])
+@login_required
+def tqi_add_critique(section_id):
+    section = ClassSection.query.get_or_404(section_id)
+    if not _tqi_can_use_section(section):
+        flash('Access denied.', 'danger')
+        return redirect(url_for('index'))
+    body = (request.form.get('body') or '').strip()
+    kind = (request.form.get('kind') or 'other').strip()[:40]
+    if kind not in ('curriculum', 'instruction', 'labs', 'test', 'facility', 'eoc', 'closeout', 'other'):
+        kind = 'other'
+    rating_raw = (request.form.get('rating') or '').strip()
+    rating = int(rating_raw) if rating_raw.isdigit() else None
+    if rating is not None:
+        rating = max(1, min(5, rating))
+    role = current_user.role if current_user.role in ('student', 'instructor', 'admin') else 'student'
+    if role == 'student':
+        answers = {}
+        for key, _g, _label in TQI_EOC_ITEMS:
+            raw = request.form.get(key) or ''
+            if raw.isdigit():
+                answers[key] = max(1, min(5, int(raw)))
+        if len(answers) < 6:
+            flash('Rate each end-of-course item (1–5) before saving.', 'warning')
+            return redirect(url_for('tqi_class', section_id=section.id))
+        row = TqiEocResponse.query.filter_by(section_id=section.id, user_id=current_user.id).first()
+        if not row:
+            row = TqiEocResponse(section_id=section.id, user_id=current_user.id)
+            db.session.add(row)
+        row.answers_json = json.dumps(answers)
+        row.comment = body[:4000]
+        row.updated_at = datetime.utcnow()
+        kind = 'eoc'
+        if rating is None:
+            rating = int(round(sum(answers.values()) / len(answers)))
+    if role != 'student' and len(body) < 8:
+        flash('Instructor closeout needs a short written critique.', 'warning')
+        return redirect(url_for('tqi_class', section_id=section.id))
+    if body or role == 'student':
+        db.session.add(TqiCritique(
+            section_id=section.id,
+            user_id=current_user.id,
+            role=role,
+            kind=kind if role != 'student' else 'eoc',
+            rating=rating,
+            body=(body or 'EOC survey submitted.')[:4000],
+        ))
+    if role != 'student':
+        pkt = _tqi_packet(section)
+        note = (request.form.get('closeout_note') or body).strip()
+        if note:
+            pkt.closeout_note = note[:4000]
+    db.session.commit()
+    _tqi_status(section)
+    audit('tqi_critique', f'section={section.id} role={role}')
+    flash('Saved to this class TQI file.', 'success')
+    return redirect(url_for('tqi_class', section_id=section.id))
+
+
+@app.route('/class/<int:section_id>/tqi/complete', methods=['POST'])
+@login_required
+def tqi_mark_complete(section_id):
+    section = ClassSection.query.get_or_404(section_id)
+    if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
+        abort(403)
+    status = _tqi_status(section)
+    pkt = status['packet']
+    if not status['all_ok'] and current_user.role != 'admin':
+        flash('Finish the missing TQI items first, or ask an admin to close the packet.', 'warning')
+        return redirect(url_for('tqi_class', section_id=section.id))
+    pkt.status = 'complete'
+    pkt.completed_at = datetime.utcnow()
+    pkt.completed_by_id = current_user.id
+    db.session.commit()
+    audit('tqi_complete', f'section={section.id}')
+    flash('TQI packet marked complete for this class.', 'success')
+    return redirect(url_for('tqi_report', section_id=section.id))
+
+
+@app.route('/class/<int:section_id>/tqi/report')
+@login_required
+def tqi_report(section_id):
+    section = ClassSection.query.get_or_404(section_id)
+    if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
+        flash('The TQI report is for instructors and admins of this class.', 'warning')
+        return redirect(url_for('tqi_class', section_id=section.id))
+    status = _tqi_status(section)
+    student_critiques = _tqi_rows(section.id, role='student')
+    instructor_critiques = [r for r in _tqi_rows(section.id) if r.role in ('instructor', 'admin')]
+    eoc_avgs, eoc_n = _tqi_eoc_averages(section.id)
+    tests = KnowledgeTest.query.filter_by(course_id=section.course_id).order_by(KnowledgeTest.order).all()
+    test_packs = []
+    for test in tests:
+        _t, analysis, summary = compute_item_analysis(test.id, section_id=section.id)
+        flagged = [it for it in analysis if it.get('flags')]
+        test_packs.append({'test': test, 'analysis': analysis, 'summary': summary, 'flagged': flagged[:40]})
+    anon_comments = []
+    for c in student_critiques:
+        text = (c.body or '').strip()
+        if text and text != 'EOC survey submitted.':
+            anon_comments.append({'kind': c.kind, 'rating': c.rating, 'body': text, 'when': c.created_at})
+    for row in TqiEocResponse.query.filter_by(section_id=section.id).all():
+        if (row.comment or '').strip():
+            anon_comments.append({'kind': 'eoc', 'rating': None, 'body': row.comment.strip(), 'when': row.created_at})
+    recs = []
+    for row in eoc_avgs:
+        if row['avg'] is not None and row['avg'] <= 3.0:
+            recs.append(f"EOC '{row['label']}' averaged {row['avg']} — review {row['group'].lower()}.")
+    for pack in test_packs:
+        if pack['summary'].get('n_flagged'):
+            recs.append(f"{pack['test'].title}: {pack['summary']['n_flagged']} flagged item(s) from item analysis.")
+    if status['missing']:
+        recs.append('Open TQI items: ' + '; '.join(status['missing']))
+    return render_template(
+        'tqi_report.html',
+        section=section,
+        status=status,
+        student_critiques=[],
+        instructor_critiques=instructor_critiques,
+        anon_comments=anon_comments,
+        eoc_avgs=eoc_avgs,
+        eoc_n=eoc_n,
+        test_packs=test_packs,
+        recommendations=recs,
+        generated=datetime.utcnow(),
+        official=False,
+    )
+
+
+@app.route('/class/<int:section_id>/tqi/official')
+@login_required
+def tqi_official(section_id):
+    section = ClassSection.query.get_or_404(section_id)
+    if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
+        flash('Official TQI reports are for the class instructor and admin.', 'warning')
+        return redirect(url_for('tqi_class', section_id=section.id))
+    # reuse report builder by calling internals
+    status = _tqi_status(section)
+    student_critiques = _tqi_rows(section.id, role='student')
+    instructor_critiques = [r for r in _tqi_rows(section.id) if r.role in ('instructor', 'admin')]
+    eoc_avgs, eoc_n = _tqi_eoc_averages(section.id)
+    tests = KnowledgeTest.query.filter_by(course_id=section.course_id).order_by(KnowledgeTest.order).all()
+    test_packs = []
+    for test in tests:
+        _t, analysis, summary = compute_item_analysis(test.id, section_id=section.id)
+        flagged = [it for it in analysis if it.get('flags')]
+        test_packs.append({'test': test, 'analysis': analysis, 'summary': summary, 'flagged': flagged[:40]})
+    anon_comments = []
+    for c in student_critiques:
+        text = (c.body or '').strip()
+        if text and text != 'EOC survey submitted.':
+            anon_comments.append({'kind': c.kind, 'rating': c.rating, 'body': text, 'when': c.created_at})
+    for row in TqiEocResponse.query.filter_by(section_id=section.id).all():
+        if (row.comment or '').strip():
+            anon_comments.append({'kind': 'eoc', 'rating': None, 'body': row.comment.strip(), 'when': row.created_at})
+    recs = []
+    for row in eoc_avgs:
+        if row['avg'] is not None and row['avg'] <= 3.0:
+            recs.append(f"EOC '{row['label']}' averaged {row['avg']} — review {row['group'].lower()}.")
+    for pack in test_packs:
+        if pack['summary'].get('n_flagged'):
+            recs.append(f"{pack['test'].title}: {pack['summary']['n_flagged']} flagged item(s).")
+    agree = {}
+    # percent agree computed in template from avg
+    return render_template(
+        'tqi_official.html',
+        section=section,
+        status=status,
+        instructor_critiques=instructor_critiques,
+        anon_comments=anon_comments,
+        eoc_avgs=eoc_avgs,
+        eoc_n=eoc_n,
+        test_packs=test_packs,
+        recommendations=recs,
+        generated=datetime.utcnow(),
+    )
+
+
+@app.route('/admin/tqi')
+@login_required
+@role_required('admin')
+def admin_tqi():
+    sections = ClassSection.query.order_by(ClassSection.name).all()
+    cards = []
+    for sec in sections:
+        st = _tqi_status(sec)
+        cards.append({'section': sec, 'status': st})
+    cards.sort(key=lambda c: (0 if c['status']['missing'] else 1, c['section'].end_date or datetime.max.date(), c['section'].name or ''))
+    open_n = sum(1 for c in cards if c['status']['packet'].status != 'complete')
+    missing_n = sum(1 for c in cards if c['status']['missing'])
+    return render_template('admin_tqi.html', cards=cards, open_n=open_n, missing_n=missing_n)
+
+
+
+def _api_user_from_token():
+    raw = (request.headers.get('Authorization') or '').strip()
+    token = raw.split(None, 1)[1] if raw.lower().startswith('bearer ') else raw
+    if not token:
+        return None
+    row = ApiToken.query.filter_by(token=token).first()
+    return row.user if row else None
+
+
+def _tqi_payload(section, viewer):
+    st = _tqi_status(section)
+    eoc_avgs, eoc_n = _tqi_eoc_averages(section.id)
+    tests = KnowledgeTest.query.filter_by(course_id=section.course_id).order_by(KnowledgeTest.order).all()
+    test_packs = []
+    for test in tests:
+        _t, analysis, summary = compute_item_analysis(test.id, section_id=section.id)
+        flagged = [{
+            'index': it['index'],
+            'text': (it.get('text') or '')[:180],
+            'P': it.get('P'),
+            'd': it.get('discrimination'),
+            'flags': it.get('flags') or [],
+        } for it in analysis if it.get('flags')]
+        test_packs.append({
+            'title': test.title,
+            'n_attempts': summary.get('n_attempts'),
+            'mean': summary.get('mean_score'),
+            'median': summary.get('median_score'),
+            'pass_rate': summary.get('pass_rate'),
+            'n_items': summary.get('n_items'),
+            'n_flagged': summary.get('n_flagged'),
+            'p_band': summary.get('p_band'),
+            'flagged': flagged[:40],
+        })
+    comments = []
+    for c in TqiCritique.query.filter_by(section_id=section.id, role='student').all():
+        text = (c.body or '').strip()
+        if text and text != 'EOC survey submitted.':
+            comments.append({'kind': c.kind, 'rating': c.rating, 'body': text, 'when': c.created_at.isoformat() if c.created_at else None})
+    for row in TqiEocResponse.query.filter_by(section_id=section.id).all():
+        if (row.comment or '').strip():
+            comments.append({'kind': 'eoc', 'rating': None, 'body': row.comment.strip(), 'when': row.created_at.isoformat() if row.created_at else None})
+    instr_notes = []
+    if viewer and viewer.role in ('admin', 'instructor'):
+        for c in TqiCritique.query.filter(TqiCritique.section_id==section.id, TqiCritique.role.in_(['instructor','admin'])).order_by(TqiCritique.created_at.desc()).all():
+            u = c.user or User.query.get(c.user_id)
+            instr_notes.append({
+                'author': u.full_name if u else 'Instructor',
+                'kind': c.kind, 'rating': c.rating, 'body': c.body,
+                'when': c.created_at.isoformat() if c.created_at else None,
+            })
+    recs = []
+    for row in eoc_avgs:
+        if row['avg'] is not None and row['avg'] <= 3.0:
+            recs.append("EOC '%s' averaged %s — review %s." % (row['label'], row['avg'], row['group'].lower()))
+    for pack in test_packs:
+        if pack.get('n_flagged'):
+            recs.append('%s: %s flagged item(s).' % (pack['title'], pack['n_flagged']))
+    instr = st['instructor']
+    return {
+        'id': section.id,
+        'name': section.name,
+        'course': section.course.title if section.course else None,
+        'code': section.course.code if section.course else None,
+        'start': section.start_date.isoformat() if section.start_date else None,
+        'end': section.end_date.isoformat() if section.end_date else None,
+        'instructor': instr.full_name if instr else None,
+        'instructor_email': instr.email if instr else None,
+        'status': st['packet'].status,
+        'missing': st['missing'],
+        'checks': st['checks'],
+        'n_enrolled': st['n_enrolled'],
+        'eoc_n': eoc_n,
+        'eoc': eoc_avgs,
+        'comments': comments,
+        'instructor_notes': instr_notes,
+        'closeout': st['packet'].closeout_note or '',
+        'tests': test_packs,
+        'recommendations': recs,
+        'generated': datetime.utcnow().isoformat() + 'Z',
+    }
+
+
+@app.route('/api/tqi/login', methods=['POST', 'OPTIONS'])
+def api_tqi_login():
+    if request.method == 'OPTIONS':
+        return ('', 204)
+    data = request.get_json(silent=True) or request.form
+    email = (data.get('email') or '').strip().lower()
+    password = data.get('password') or ''
+    user = User.query.filter_by(email=email).first()
+    if not user or not user.check_password(password):
+        return jsonify({'ok': False, 'error': 'Bad sign-in'}), 401
+    token = secrets.token_hex(24)
+    db.session.add(ApiToken(token=token, user_id=user.id))
+    db.session.commit()
+    return jsonify({'ok': True, 'token': token, 'role': user.role, 'name': user.full_name})
+
+
+@app.route('/api/tqi/board', methods=['GET', 'OPTIONS'])
+def api_tqi_board():
+    if request.method == 'OPTIONS':
+        return ('', 204)
+    user = _api_user_from_token()
+    if not user:
+        return jsonify({'ok': False, 'error': 'Sign in'}), 401
+    if user.role == 'admin':
+        sections = ClassSection.query.order_by(ClassSection.name).all()
+    elif user.role == 'instructor':
+        sections = ClassSection.query.filter(
+            db.or_(ClassSection.instructor_id == user.id, ClassSection.id.in_(
+                [e.section_id for e in []]
+            ))
+        ).all()
+        sections = ClassSection.query.filter(
+            db.or_(
+                ClassSection.instructor_id == user.id,
+                ClassSection.course_id.in_(instructor_course_ids(user.id) or [0]),
+            )
+        ).order_by(ClassSection.name).all()
+    else:
+        sections = get_student_sections(user)
+    cards = []
+    for sec in sections:
+        st = _tqi_status(sec)
+        instr = st['instructor']
+        cards.append({
+            'id': sec.id,
+            'name': sec.name,
+            'course': sec.course.title if sec.course else None,
+            'code': sec.course.code if sec.course else None,
+            'start': sec.start_date.isoformat() if sec.start_date else None,
+            'end': sec.end_date.isoformat() if sec.end_date else None,
+            'instructor': instr.full_name if instr else None,
+            'status': st['packet'].status,
+            'missing': st['missing'],
+            'n_enrolled': st['n_enrolled'],
+            'eoc_n': st['eoc_n'],
+            'my_eoc': bool(TqiEocResponse.query.filter_by(section_id=sec.id, user_id=user.id).first()) if user.role == 'student' else None,
+        })
+    return jsonify({'ok': True, 'role': user.role, 'name': user.full_name, 'classes': cards})
+
+
+@app.route('/api/tqi/<int:section_id>', methods=['GET', 'OPTIONS'])
+def api_tqi_class(section_id):
+    if request.method == 'OPTIONS':
+        return ('', 204)
+    user = _api_user_from_token()
+    if not user:
+        return jsonify({'ok': False, 'error': 'Sign in'}), 401
+    section = ClassSection.query.get_or_404(section_id)
+    if user.role == 'student' and not Enrollment.query.filter_by(section_id=section.id, user_id=user.id).first():
+        return jsonify({'ok': False, 'error': 'Not in this class'}), 403
+    if user.role == 'instructor' and not instructor_can_access_section(user, section):
+        return jsonify({'ok': False, 'error': 'Not your class'}), 403
+    payload = _tqi_payload(section, user)
+    if user.role == 'student':
+        payload['instructor_notes'] = []
+        payload['closeout'] = ''
+        payload['tests'] = []
+        payload['recommendations'] = []
+    return jsonify({'ok': True, 'role': user.role, 'report': payload, 'eoc_items': [
+        {'key': k, 'group': g, 'label': l} for k, g, l in TQI_EOC_ITEMS
+    ]})
+
+
+@app.route('/api/tqi/<int:section_id>/eoc', methods=['POST', 'OPTIONS'])
+def api_tqi_eoc(section_id):
+    if request.method == 'OPTIONS':
+        return ('', 204)
+    user = _api_user_from_token()
+    if not user or user.role != 'student':
+        return jsonify({'ok': False, 'error': 'Student sign-in required'}), 401
+    section = ClassSection.query.get_or_404(section_id)
+    if not Enrollment.query.filter_by(section_id=section.id, user_id=user.id).first():
+        return jsonify({'ok': False, 'error': 'Not in this class'}), 403
+    data = request.get_json(silent=True) or {}
+    answers = {}
+    for key, _g, _l in TQI_EOC_ITEMS:
+        raw = data.get(key)
+        if str(raw).isdigit():
+            answers[key] = max(1, min(5, int(raw)))
+    if len(answers) < 6:
+        return jsonify({'ok': False, 'error': 'Rate the EOC items'}), 400
+    row = TqiEocResponse.query.filter_by(section_id=section.id, user_id=user.id).first()
+    if not row:
+        row = TqiEocResponse(section_id=section.id, user_id=user.id)
+        db.session.add(row)
+    row.answers_json = json.dumps(answers)
+    row.comment = (data.get('comment') or '')[:4000]
+    row.updated_at = datetime.utcnow()
+    db.session.add(TqiCritique(
+        section_id=section.id, user_id=user.id, role='student', kind='eoc',
+        rating=int(round(sum(answers.values())/len(answers))),
+        body=(row.comment or 'EOC survey submitted.')[:4000],
+    ))
+    db.session.commit()
+    _tqi_status(section)
+    return jsonify({'ok': True})
+
+
+@app.route('/api/tqi/<int:section_id>/closeout', methods=['POST', 'OPTIONS'])
+def api_tqi_closeout(section_id):
+    if request.method == 'OPTIONS':
+        return ('', 204)
+    user = _api_user_from_token()
+    if not user or user.role not in ('admin', 'instructor'):
+        return jsonify({'ok': False, 'error': 'Staff sign-in required'}), 401
+    section = ClassSection.query.get_or_404(section_id)
+    if user.role == 'instructor' and not instructor_can_access_section(user, section):
+        return jsonify({'ok': False, 'error': 'Not your class'}), 403
+    data = request.get_json(silent=True) or {}
+    body = (data.get('body') or '').strip()
+    if len(body) < 8:
+        return jsonify({'ok': False, 'error': 'Write a closeout note'}), 400
+    rating = data.get('rating')
+    rating = int(rating) if str(rating).isdigit() else None
+    pkt = _tqi_packet(section)
+    pkt.closeout_note = body[:4000]
+    db.session.add(TqiCritique(section_id=section.id, user_id=user.id, role=user.role, kind='closeout', rating=rating, body=body[:4000]))
+    if data.get('complete'):
+        pkt.status = 'complete'
+        pkt.completed_at = datetime.utcnow()
+        pkt.completed_by_id = user.id
+    db.session.commit()
+    _tqi_status(section)
+    return jsonify({'ok': True, 'status': pkt.status})
+
+
 @app.route('/instructor')
 @login_required
 def instructor_dashboard():
@@ -2392,7 +3541,8 @@ def instructor_dashboard():
     if current_user.role == 'admin':
         courses = Course.query.order_by(Course.title).all()
     sections = sorted(sections, key=lambda s: ((s.course.title if s.course else ''), s.name or ''))
-    return render_template('instructor_dashboard.html', sections=sections, courses=courses)
+    tqi_by_id = {s.id: _tqi_status(s) for s in sections}
+    return render_template('instructor_dashboard.html', sections=sections, courses=courses, tqi_by_id=tqi_by_id)
 
 
 @app.route('/instructor/section/<int:section_id>')
@@ -3423,10 +4573,18 @@ def admin_dashboard():
         collapsed[key]['open'] = collapsed[key]['open'] or item['open']
     teach_by_class = sorted(collapsed.values(), key=lambda x: (-x['seconds'], x['user'].last_name if x['user'] else ''))
     report = _teaching_time_report()
+    tqi_cards = []
+    for sec in sections:
+        tqi_cards.append({'section': sec, 'status': _tqi_status(sec)})
+    tqi_missing = sum(1 for c in tqi_cards if c['status']['missing'])
+    tqi_complete = sum(1 for c in tqi_cards if c['status']['packet'].status == 'complete')
     return render_template(
         'admin_dashboard.html',
         users=users,
         sections=sections,
+        tqi_cards=tqi_cards,
+        tqi_missing=tqi_missing,
+        tqi_complete=tqi_complete,
         courses=courses,
         instructors=instructors,
         admins=admins,
@@ -4716,7 +5874,138 @@ def seed_database():
         for enr in enrolled:
             enr.progress_percent = _rnd.randint(15, 100)
     db.session.commit()
+    _seed_helix_demo(section_a, students)
+    _seed_tqi_demo()
     print('Database seeded successfully (with demo test analytics).')
+
+
+
+def _seed_helix_demo(section, students):
+    """Populate sample AOI timelines so the instructor dashboard is not empty."""
+    lessons = (
+        Lesson.query.join(Module)
+        .filter(Module.course_id == section.course_id)
+        .order_by(Lesson.id)
+        .limit(3)
+        .all()
+    )
+    if not lessons or not students:
+        return
+    heading_sets = []
+    for les in lessons:
+        found = re.findall(r'<h[2-5][^>]*>(.*?)</h[2-5]>', les.content or '', flags=re.I | re.S)
+        labels = []
+        for raw in found:
+            lab = re.sub(r'<[^>]+>', '', raw)
+            lab = re.sub(r'\s+', ' ', lab).strip()
+            if lab and lab not in labels:
+                labels.append(lab[:240])
+        if not labels:
+            labels = ['Lesson body', 'Practice standard for this lesson', 'Beyond the quiz']
+        heading_sets.append(labels[:8])
+    demo_students = students[:6]
+    weights = [18, 14, 22, 9, 16, 7, 11, 5]
+    for si, stu in enumerate(demo_students):
+        for li, les in enumerate(lessons):
+            labels = heading_sets[li]
+            started = datetime.utcnow() - timedelta(days=3 - li, hours=si)
+            timeline = []
+            t = 0
+            sess = HelixGazeSession(
+                user_id=stu.id,
+                section_id=section.id,
+                lesson_id=les.id,
+                engine=HELIX_ENGINE,
+                consent_version=HELIX_POLICY_VERSION,
+                started_at=started,
+                ended_at=started + timedelta(minutes=8 + si),
+                calibration_points=9,
+                calibration_score=72 + (si * 3),
+                viewport_w=1440,
+                viewport_h=900,
+                sample_count=400 + si * 40,
+                status='ended',
+            )
+            db.session.add(sess)
+            db.session.flush()
+            for hi, lab in enumerate(labels):
+                dwell = int((weights[hi % len(weights)] + (si * 2) - (hi * 1.4)) * 1000)
+                dwell = max(1200, dwell)
+                if si == 2 and hi in (3, 4):
+                    dwell = 800
+                visits = 1 + (hi % 3)
+                timeline.append({
+                    't0': t,
+                    't1': t + dwell,
+                    'aoi': f'h{hi}',
+                    'label': lab,
+                    'n': max(4, dwell // 80),
+                    'conf': 0.6,
+                })
+                db.session.add(HelixAoiBucket(
+                    session_id=sess.id,
+                    user_id=stu.id,
+                    section_id=section.id,
+                    lesson_id=les.id,
+                    aoi_key=f'h{hi}',
+                    aoi_label=lab,
+                    aoi_order=hi,
+                    dwell_ms=dwell,
+                    visits=visits,
+                    first_ms=t,
+                    last_ms=t + dwell,
+                ))
+                t += dwell + 400
+            sess.timeline_json = json.dumps(timeline)
+            sess.sample_count = max(sess.sample_count, t // 40)
+    db.session.commit()
+
+
+
+def _seed_tqi_demo():
+    """Sample critiques so a class TQI report is not empty after seed."""
+    if TqiCritique.query.count():
+        return
+    section = ClassSection.query.filter(ClassSection.name.ilike('%Section A%')).first()
+    if not section:
+        section = ClassSection.query.first()
+    if not section:
+        return
+    instr = User.query.filter_by(role='instructor').first()
+    students = User.query.filter_by(role='student').order_by(User.id).limit(4).all()
+    samples = [
+        (students[0] if students else instr, 'student', 'labs', 4, 'CLI labs matched the lesson. The switch lab needed one more example of a wrong VLAN.'),
+        (students[1] if len(students) > 1 else instr, 'student', 'curriculum', 3, 'Chapter 1 was clear. RAID vs backup still feels rushed before the quiz.'),
+        (students[2] if len(students) > 2 else instr, 'student', 'test', 2, 'Two items used wording we never saw in the lesson. Flag those for rewrite.'),
+        (instr, 'instructor', 'instruction', 4, 'Pace was fine. Reteach default gateway before the knowledge test. Student critiques match the item flags on DNS vs path.'),
+        (instr, 'instructor', 'test', 3, 'Item analysis shows two non-functional distractors on the first knowledge test. Those belong in the TQI packet for the next convening.'),
+    ]
+    for user, role, kind, rating, body in samples:
+        if not user:
+            continue
+        db.session.add(TqiCritique(
+            section_id=section.id,
+            user_id=user.id,
+            role=role,
+            kind=kind,
+            rating=rating,
+            body=body,
+        ))
+    # Structured EOC surveys so the packet can auto-ready
+    keys = [k for k, _g, _l in TQI_EOC_ITEMS]
+    for i, stu in enumerate(User.query.filter_by(role='student').order_by(User.id).limit(12).all()):
+        answers = {k: 3 + ((i + n) % 3) for n, k in enumerate(keys)}
+        db.session.add(TqiEocResponse(
+            section_id=section.id,
+            user_id=stu.id,
+            answers_json=json.dumps(answers),
+            comment='Demo EOC reaction for TQI packet.',
+        ))
+    pkt = TqiPacket.query.filter_by(section_id=section.id).first()
+    if not pkt:
+        pkt = TqiPacket(section_id=section.id, status='open')
+        db.session.add(pkt)
+    db.session.commit()
 
 
 def render_lesson_html(text):
@@ -4919,6 +6208,18 @@ def init_db():
         print('Seeding database...')
         seed_database()
         return
+    try:
+        if HelixGazeSession.query.count() == 0:
+            section = ClassSection.query.filter(ClassSection.name.ilike('%Section A%')).first()
+            students = User.query.filter_by(role='student').order_by(User.id).limit(6).all()
+            if section and students:
+                _seed_helix_demo(section, students)
+                print('Seeded Helix AOI demo timelines.')
+        if TqiCritique.query.count() == 0:
+            _seed_tqi_demo()
+            print('Seeded TQI demo critiques.')
+    except Exception as e:
+        print('Helix seed note:', e)
     # Do not drop_all on an existing schoolhouse DB — that hangs startup
     # and looks like the site is down. Sync lesson text only.
     try:
