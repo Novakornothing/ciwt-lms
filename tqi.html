@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}TQI — {{ section.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    {% if current_user.role == 'student' %}
+    <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    {% else %}
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">TQI</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">NAVEDTRA M-142.5 aligned</div>
+  <h1 class="h3 mb-1">TQI — {{ section.name }}</h1>
+  <p class="mb-0">
+    Schedule {{ section.start_date or '—' }} → {{ section.end_date or '—' }}
+    · Instructor {{ status.instructor.full_name if status.instructor else 'unassigned' }}
+    · Packet <strong>{{ status.packet.status }}</strong>
+  </p>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <span class="stat-pill">EOC surveys <strong>{{ status.eoc_n }}</strong></span>
+  <span class="stat-pill">Student voices <strong>{{ status.student_voices }}/{{ status.n_enrolled }}</strong></span>
+  <span class="stat-pill">Instructor notes <strong>{{ status.instr_n }}</strong></span>
+  {% if current_user.role != 'student' %}
+  <a class="btn btn-sm btn-brand" href="{{ url_for('tqi_official', section_id=section.id) }}">Generate official TQI report</a>
+  <a class="btn btn-sm btn-outline-navy" href="{{ url_for('tqi_report', section_id=section.id) }}">Working copy</a>
+  {% if current_user.role == 'admin' %}
+  <a class="btn btn-sm btn-outline-navy" href="{{ url_for('admin_tqi') }}">All-class TQI board</a>
+  {% endif %}
+  {% endif %}
+</div>
+
+{% if current_user.role != 'student' %}
+<div class="card mb-3">
+  <div class="card-header navy">Packet checklist (auto)</div>
+  <div class="list-group list-group-flush">
+    {% for c in status.checks %}
+    <div class="list-group-item d-flex justify-content-between gap-3">
+      <div>
+        <div class="fw-semibold">{% if c.ok %}Ready{% else %}Missing{% endif %} — {{ c.label }}</div>
+        <div class="small text-muted">{{ c.detail }}</div>
+      </div>
+      <span>{% if c.ok %}OK{% else %}Open{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% if status.packet.status != 'complete' %}
+  <div class="card-body">
+    <form method="post" action="{{ url_for('tqi_mark_complete', section_id=section.id) }}">
+      <button class="btn btn-brand" {% if not status.all_ok and current_user.role != 'admin' %}disabled{% endif %}>Mark TQI complete</button>
+      <span class="small text-muted ms-2">
+        {% if status.all_ok and status.ended %}Auto-completes after the scheduled end date.{% elif status.all_ok %}All artifacts present — ready to close.{% else %}Finish missing items or an admin can close.{% endif %}
+      </span>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header navy">
+        {% if current_user.role == 'student' %}End-of-course critique{% else %}Instructor closeout{% endif %}
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('tqi_add_critique', section_id=section.id) }}">
+          {% if current_user.role == 'student' %}
+          <p class="small text-muted">Student reaction items aligned to NAVEDTRA M-142.5 (content, instructor, labs, testing, safety, site). Not a grade.</p>
+          {% for key, group, label in eoc_items %}
+          <div class="mb-2">
+            <label class="form-label mb-1"><span class="small text-muted">{{ group }}</span> — {{ label }}</label>
+            <select name="{{ key }}" class="form-select form-select-sm" required>
+              <option value="">Select</option>
+              <option value="5" {% if my_answers.get(key)|string == '5' %}selected{% endif %}>5 — Strongly agree</option>
+              <option value="4" {% if my_answers.get(key)|string == '4' %}selected{% endif %}>4 — Agree</option>
+              <option value="3" {% if my_answers.get(key)|string == '3' %}selected{% endif %}>3 — Neither</option>
+              <option value="2" {% if my_answers.get(key)|string == '2' %}selected{% endif %}>2 — Disagree</option>
+              <option value="1" {% if my_answers.get(key)|string == '1' %}selected{% endif %}>1 — Strongly disagree</option>
+            </select>
+          </div>
+          {% endfor %}
+          <div class="mb-3">
+            <label class="form-label">Comments</label>
+            <textarea name="body" class="form-control" rows="4">{{ my_eoc.comment if my_eoc else '' }}</textarea>
+          </div>
+          {% else %}
+          <p class="small text-muted">Comments save on this class and pull to the TQI board on novakornothing.com.</p>
+          <div class="mb-2">
+            <label class="form-label">Kind</label>
+            <select name="kind" class="form-select">
+              <option value="comment">Class comment</option>
+              <option value="instruction">Instruction</option>
+              <option value="curriculum">Curriculum</option>
+              <option value="labs">Labs</option>
+              <option value="test">Testing</option>
+              <option value="facility">Facility / site</option>
+              <option value="closeout" selected>Closeout critique</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Rating</label>
+            <select name="rating" class="form-select">
+              <option value="5">5 — convening solid</option>
+              <option value="4">4</option>
+              <option value="3" selected>3 — mixed / follow-up</option>
+              <option value="2">2</option>
+              <option value="1">1 — needs action</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Instructor comment</label>
+            <textarea name="body" class="form-control" rows="5" required minlength="8" placeholder="What the EOC and item analysis showed, what happened in class, and what you will change next convening.">{{ status.packet.closeout_note or '' }}</textarea>
+          </div>
+          {% endif %}
+          <button class="btn btn-brand">Save to TQI</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    {% if current_user.role != 'student' and eoc_avgs %}
+    <div class="card mb-3">
+      <div class="card-header navy">EOC item averages ({{ eoc_n }} surveys)</div>
+      <div class="list-group list-group-flush">
+        {% for row in eoc_avgs %}
+        <div class="list-group-item d-flex justify-content-between gap-2">
+          <span>{{ row.group }} — {{ row.label }}</span>
+          <strong>{% if row.avg %}{{ row.avg }}{% else %}—{% endif %}</strong>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if current_user.role != 'student' %}
+    <div class="card mb-3">
+      <div class="card-header navy">Anonymous student comments</div>
+      <div class="list-group list-group-flush">
+        {% for note in anon_comments|default([]) %}
+        <div class="list-group-item" style="white-space:pre-wrap">{{ note }}</div>
+        {% else %}
+        <div class="list-group-item text-muted">No student comments (ratings stay aggregated and unnamed).</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    <div class="card">
+      <div class="card-header navy">{% if current_user.role == 'student' %}Your submissions{% else %}Instructor notes{% endif %}</div>
+      <div class="list-group list-group-flush">
+        {% for c in critiques %}
+        <div class="list-group-item">
+          <div class="small text-muted">{{ c.author }} · {{ c.role }} · {{ c.kind }}{% if c.rating %} · {{ c.rating }}/5{% endif %} · {{ c.created_at.strftime('%Y-%m-%d') }}</div>
+          <div style="white-space:pre-wrap">{{ c.body }}</div>
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted">None saved yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
