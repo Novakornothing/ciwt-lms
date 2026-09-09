@@ -80,7 +80,7 @@
           <div class="d-flex flex-wrap justify-content-between gap-3">
             <div>
               <strong>{{ t.title }}</strong>
-                {% if t.title.startswith('Skills ') %}<span class="badge bg-warning text-dark">Skills</span>{% endif %}
+                {% if t.title and t.title.startswith('Skills ') %}<span class="badge bg-warning text-dark">Skills</span>{% endif %}
               <div class="small text-muted">Pass ≥ {{ t.passing_score }}%
                 {% if rel and rel.is_active %}
                   · <span class="text-success">Open</span>
