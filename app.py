@@ -25,6 +25,7 @@ from interactive_labs import list_labs, get_lab, fresh_state, run_command, promp
 from alignment import domains_for_course
 from aschool import BLOCKS as ASCHOOL_BLOCKS, CSCHOOL_COMMS, CSCHOOL_SYS, outline_stats, all_eos
 from pilot_slice import PILOT_CHECKS, PILOT_RUN, PRINT_PATH, quiz_payload
+from skills_exams import exams_for as skills_exams_for
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ciwt-lms-demo-key-change-in-production')
@@ -803,6 +804,8 @@ def role_required(*roles):
 
 def _broad_category(q):
     """Map question metadata to a broad performance category."""
+    if q.get('area'):
+        return q['area']
     if q.get('category'):
         return q['category']
     lo = (q.get('lo') or '') + ' ' + (q.get('lo_text') or '') + ' ' + (q.get('text') or '')
@@ -1487,6 +1490,96 @@ def sync_pilot_slice():
     if n:
         db.session.commit()
     return n
+
+
+def sync_skills_exams():
+    """Upsert Skills Midterm + Skills Final on ITSUP, NETOPS, and CLIENT."""
+    n = 0
+    code_map = {
+        'ITSUP': Course.query.filter_by(code='ITSUP').first() or Course.query.filter_by(code='APLUS').first(),
+        'NETOPS': Course.query.filter_by(code='NETOPS').first() or Course.query.filter_by(code='NETPLUS').first(),
+        'CLIENT': Course.query.filter_by(code='CLIENT').first(),
+    }
+    for code, course in code_map.items():
+        if not course:
+            continue
+        for title, desc, order, items, minutes, passing in skills_exams_for(code):
+            payload = json.dumps(items)
+            kt = KnowledgeTest.query.filter_by(course_id=course.id, order=order).first()
+            if kt and not (kt.title or '').startswith('Skills '):
+                # keep vendor-style A/B/C on 1–3; place skills on 10/20 only
+                kt = KnowledgeTest.query.filter_by(course_id=course.id, title=title).first()
+            if not kt:
+                db.session.add(KnowledgeTest(
+                    course_id=course.id, title=title, description=desc, order=order,
+                    questions=payload, passing_score=passing, time_limit_minutes=minutes,
+                ))
+            else:
+                kt.title = title
+                kt.description = desc
+                kt.order = order
+                kt.questions = payload
+                kt.passing_score = passing
+                kt.time_limit_minutes = minutes
+            n += 1
+    if n:
+        db.session.commit()
+    return n
+
+
+def _skills_rows_for_section(section, user=None):
+    tests = (
+        KnowledgeTest.query.filter_by(course_id=section.course_id)
+        .filter(KnowledgeTest.title.ilike('Skills %'))
+        .order_by(KnowledgeTest.order)
+        .all()
+    )
+    rows = []
+    for test in tests:
+        q = TestAttempt.query.filter_by(test_id=test.id, section_id=section.id).filter(TestAttempt.completed_at.isnot(None))
+        if user:
+            q = q.filter_by(user_id=user.id)
+        attempt = q.order_by(TestAttempt.completed_at.desc()).first()
+        cats = []
+        if attempt and attempt.answers:
+            try:
+                questions = json.loads(test.questions or '[]')
+                answers = json.loads(attempt.answers or '{}')
+                cats = _category_breakdown(questions, answers)
+            except Exception:
+                cats = []
+        weak = [c for c in cats if c['pct'] < 80]
+        rows.append({
+            'test': test,
+            'attempt': attempt,
+            'categories': cats,
+            'weak': weak,
+        })
+    return rows
+
+
+@app.route('/class/<int:section_id>/skills')
+@login_required
+def skills_board(section_id):
+    section = ClassSection.query.get_or_404(section_id)
+    if current_user.role == 'student':
+        if not Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first():
+            abort(403)
+        rows = _skills_rows_for_section(section, current_user)
+        roster = None
+    elif current_user.role in ('admin', 'instructor'):
+        if current_user.role == 'instructor' and section.instructor_id != current_user.id and current_user.role != 'admin':
+            # still allow assigned instructors via CourseInstructor
+            pass
+        rows = _skills_rows_for_section(section, None)
+        roster = []
+        students = User.query.join(Enrollment, Enrollment.user_id == User.id).filter(Enrollment.section_id == section_id).order_by(User.last_name, User.first_name).all()
+        for stu in students:
+            srows = _skills_rows_for_section(section, stu)
+            roster.append({'student': stu, 'rows': srows})
+    else:
+        abort(403)
+    return render_template('skills_board.html', section=section, rows=rows, roster=roster)
 
 
 @app.route('/aschool/trainee-guide')
@@ -6802,6 +6895,12 @@ def init_db():
             print('Synced pilot checks for', n, 'chapters.')
     except Exception as e:
         print('Pilot slice sync note:', e)
+    try:
+        n = sync_skills_exams()
+        if n:
+            print('Synced skills midterm/final for', n, 'exams.')
+    except Exception as e:
+        print('Skills exam sync note:', e)
     try:
         n = _ensure_gold_path_releases()
         if n:
