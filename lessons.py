@@ -5906,8 +5906,14 @@ APLUS[12] = CHAPTER13
 
 from raised_bar import apply_raised_bar
 from curriculum_depth import apply_curriculum_depth
+from hours_ch1 import apply_hours_ch1
+from hours_rest import apply_hours_rest
+from ground_up import apply_ground_up
 apply_raised_bar(APLUS)
 apply_curriculum_depth(APLUS)
+apply_hours_ch1(APLUS)
+apply_hours_rest(APLUS)
+apply_ground_up(APLUS)
 
 import copy
 
