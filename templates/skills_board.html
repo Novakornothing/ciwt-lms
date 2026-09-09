@@ -41,7 +41,44 @@
   <p>No skills exams on this course yet. Redeploy so sync_skills_exams can create them.</p>
   {% endfor %}
 {% else %}
-  <p class="mb-3"><a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_section', section_id=section.id) }}">Back to class</a></p>
+  <p class="mb-3">
+    <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_section', section_id=section.id) }}">Class page — same Open/Close list</a>
+  </p>
+  <div class="card mb-4">
+    <div class="card-header navy">Open or close these exams (same control as Knowledge tests)</div>
+    <div class="list-group list-group-flush">
+      {% for row in rows %}
+      <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+          <strong>{{ row.test.title }}</strong>
+          <div class="small text-muted">{{ row.test.time_limit_minutes }} min · pass {{ row.test.passing_score }}%</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_test_preview', section_id=section.id, test_id=row.test.id) }}">Preview</a>
+          <form method="post" action="{{ url_for('toggle_release') }}" class="d-inline">
+            <input type="hidden" name="section_id" value="{{ section.id }}">
+            <input type="hidden" name="content_type" value="test">
+            <input type="hidden" name="content_id" value="{{ row.test.id }}">
+            <input type="hidden" name="action" value="activate">
+            <input type="hidden" name="audience" value="class">
+            <input type="hidden" name="schedule_mode" value="duration">
+            <input type="hidden" name="duration_minutes" value="{{ row.test.time_limit_minutes or 90 }}">
+            <button class="btn btn-sm btn-brand">Open for class</button>
+          </form>
+          <form method="post" action="{{ url_for('toggle_release') }}" class="d-inline">
+            <input type="hidden" name="section_id" value="{{ section.id }}">
+            <input type="hidden" name="content_type" value="test">
+            <input type="hidden" name="content_id" value="{{ row.test.id }}">
+            <input type="hidden" name="action" value="deactivate">
+            <button class="btn btn-sm btn-outline-danger">Close</button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div class="list-group-item">No skills exams in the database yet. Confirm <code>skills_exams.py</code> is on Render next to <code>app.py</code>.</div>
+      {% endfor %}
+    </div>
+  </div>
   {% for person in roster or [] %}
   <div class="card mb-3">
     <div class="card-header navy">{{ person.student.full_name }} <span class="small opacity-75">{{ person.student.email }}</span></div>

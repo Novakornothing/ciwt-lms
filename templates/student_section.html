@@ -22,6 +22,35 @@
 
 {% include '_gold_path.html' %}
 
+<div class="card mb-4 border-navy">
+  <div class="card-header navy d-flex justify-content-between align-items-center">
+    <span>Skills midterm and final</span>
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('skills_board', section_id=section.id) }}">Score board</a>
+  </div>
+  <div class="list-group list-group-flush">
+    {% for item in skills_tests %}
+    <div class="list-group-item d-flex justify-content-between align-items-center gap-2">
+      <div>
+        <strong>{{ item.test.title }}</strong>
+        <div class="small text-muted">{{ item.test.time_limit_minutes }} min · pass {{ item.test.passing_score }}% · {{ item.test.description }}</div>
+        {% if item.attempts %}
+        <div class="small">Last score {{ '%.0f'|format(item.attempts[0].score) }}%</div>
+        {% endif %}
+      </div>
+      {% if item.available or current_user.role != 'student' %}
+      <a class="btn btn-sm btn-brand" href="{{ url_for('take_test', section_id=section.id, test_id=item.test.id) }}">Open exam</a>
+      {% else %}
+      <span class="badge badge-closed">Closed</span>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="list-group-item">
+      These exams are created on deploy from <code>skills_exams.py</code>. If this box is empty, that file and the latest <code>app.py</code> are not on Render yet.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
 <div class="row g-4">
   <div class="col-lg-7">
     <div class="card">
@@ -67,7 +96,7 @@
     </div>
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Knowledge tests (graded)</span>
+        <span>Knowledge tests (graded) — includes skills midterm and final</span>
         <a class="btn btn-sm btn-outline-light" href="{{ url_for('skills_board', section_id=section.id) }}">Skills scores</a>
       </div>
       <div class="list-group list-group-flush">
@@ -76,6 +105,7 @@
           <div class="d-flex justify-content-between align-items-start gap-2">
             <div>
               <strong>{{ item.test.title }}</strong>
+              {% if item.test.title.startswith('Skills ') %}<span class="badge bg-warning text-dark">Skills exam</span>{% endif %}
               <div class="small text-muted">{{ item.test.description }} · Pass ≥ {{ item.test.passing_score }}%</div>
               {% if item.attempts %}
                 <div class="small mt-1">
