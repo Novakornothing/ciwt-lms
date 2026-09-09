@@ -5882,11 +5882,17 @@ from block2_hardware import CHAPTER2
 from block3_storage import CHAPTER3
 from block4_mobile import CHAPTER4
 from block5_network import CHAPTER5
+from block6_virt import CHAPTER6
+from block7_method import CHAPTER7
+from block8_windows import CHAPTER8
 APLUS[0] = CHAPTER1
 APLUS[1] = CHAPTER2
 APLUS[2] = CHAPTER3
 APLUS[3] = CHAPTER4
 APLUS[4] = CHAPTER5
+APLUS[5] = CHAPTER6
+APLUS[6] = CHAPTER7
+APLUS[7] = CHAPTER8
 
 # Hands-on switch/router CLI lab track (simulators / isolated lab only)
 NETPLUS = NETPLUS + NETWORK_LAB_CHAPTERS
