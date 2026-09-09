@@ -5879,8 +5879,14 @@ _apply_ciwt_deepen(NETPLUS)
 
 from block1_foundations import CHAPTER1
 from block2_hardware import CHAPTER2
+from block3_storage import CHAPTER3
+from block4_mobile import CHAPTER4
+from block5_network import CHAPTER5
 APLUS[0] = CHAPTER1
 APLUS[1] = CHAPTER2
+APLUS[2] = CHAPTER3
+APLUS[3] = CHAPTER4
+APLUS[4] = CHAPTER5
 
 # Hands-on switch/router CLI lab track (simulators / isolated lab only)
 NETPLUS = NETPLUS + NETWORK_LAB_CHAPTERS

@@ -24,6 +24,7 @@ from question_bank import tests_aplus, tests_netplus
 from interactive_labs import list_labs, get_lab, fresh_state, run_command, prompt_for, complete_command, labs_for_module, labs_for_lesson, labs_for_course
 from alignment import domains_for_course
 from aschool import BLOCKS as ASCHOOL_BLOCKS, CSCHOOL_COMMS, CSCHOOL_SYS, outline_stats, all_eos
+from pilot_slice import PILOT_CHECKS, PILOT_RUN, PRINT_PATH, quiz_payload
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ciwt-lms-demo-key-change-in-production')
@@ -1441,6 +1442,46 @@ def aschool_progress():
             'pct': round(100 * len(done) / len(eos), 0) if eos else 0,
         })
     return render_template('aschool_progress.html', rows=rows, total=len(eos))
+
+
+@app.route('/pilot')
+@login_required
+def instructor_pilot():
+    if current_user.role not in ('admin', 'instructor'):
+        flash('Instructor run sheet is for staff.', 'warning')
+        return redirect(url_for('dashboard'))
+    return render_template(
+        'instructor_pilot.html',
+        rows=PILOT_RUN,
+        print_path=PRINT_PATH,
+    )
+
+
+def sync_pilot_slice():
+    """Keep Chapters 1–5 progress checks aligned to the pilot item banks."""
+    course = Course.query.filter_by(code='ITSUP').first() or Course.query.filter_by(code='APLUS').first()
+    if not course:
+        return 0
+    n = 0
+    mods = Module.query.filter_by(course_id=course.id).order_by(Module.order).all()
+    for mod in mods:
+        if mod.order not in PILOT_CHECKS:
+            continue
+        qs = quiz_payload(mod.order, mod.title)
+        if not qs:
+            continue
+        title = f'Chapter {mod.order} check — pilot'
+        qz = Quiz.query.filter_by(module_id=mod.id).order_by(Quiz.id).first()
+        payload = json.dumps(qs)
+        if not qz:
+            db.session.add(Quiz(module_id=mod.id, title=title, questions=payload, is_ungraded=True))
+        else:
+            qz.title = title
+            qz.questions = payload
+        n += 1
+    if n:
+        db.session.commit()
+    return n
 
 
 @app.route('/aschool/trainee-guide')
@@ -3238,15 +3279,47 @@ def _tqi_status(section):
         ).count()
         if n_att:
             tests_with_attempts += 1
-            _t, analysis, summary = compute_item_analysis(test.id, section_id=section.id)
-            if summary.get('n_flagged'):
-                tests_flagged += 1
+            try:
+                _t, analysis, summary = compute_item_analysis(test.id, section_id=section.id)
+                if summary.get('n_flagged'):
+                    tests_flagged += 1
+            except Exception:
+                pass
     need_eoc = max(1, int(round(n_enrolled * 0.6))) if n_enrolled else 1
     today = datetime.utcnow().date()
     ended = bool(section.end_date and section.end_date <= today)
     started = bool(section.start_date and section.start_date <= today)
     instructor = User.query.get(section.instructor_id) if section.instructor_id else None
+    owners = []
+    seen = set()
+    if instructor:
+        owners.append(instructor)
+        seen.add(instructor.id)
+    try:
+        for link in CourseInstructor.query.filter_by(course_id=section.course_id).all():
+            u = User.query.get(link.user_id)
+            if u and u.id not in seen:
+                owners.append(u)
+                seen.add(u.id)
+    except Exception:
+        pass
+    commented_ids = {
+        row.user_id for row in TqiCritique.query.filter(
+            TqiCritique.section_id == section.id,
+            TqiCritique.role.in_(['instructor', 'admin']),
+        ).all()
+    }
+    silent = [u for u in owners if u.id not in commented_ids]
+    silent_names = [u.full_name for u in silent] or ([instructor.full_name] if instructor and instr_n < 1 else [])
+    if not instructor and instr_n < 1:
+        silent_names = ['Unassigned instructor']
     pkt = _tqi_packet(section)
+    note_ok = instr_n >= 1 and not silent
+    note_detail = (
+        f"{instr_n} instructor note(s)"
+        if note_ok else
+        ("No comment from " + ", ".join(silent_names) if silent_names else f"{instr_n} instructor note(s) — still need the assigned instructor")
+    )
     checks = [
         {'key': 'schedule', 'label': 'Convening dates on the class schedule', 'ok': bool(section.start_date and section.end_date),
          'detail': f"{section.start_date or 'no start'} → {section.end_date or 'no end'}"},
@@ -3254,8 +3327,9 @@ def _tqi_status(section):
          'detail': instructor.full_name if instructor else 'Unassigned'},
         {'key': 'eoc', 'label': 'End-of-course student critiques (target 60% of roster)', 'ok': student_voices >= need_eoc,
          'detail': f"{student_voices} of {n_enrolled} enrolled (need {need_eoc})"},
-        {'key': 'instructor_note', 'label': 'Instructor closeout critique', 'ok': instr_n >= 1,
-         'detail': f"{instr_n} instructor note(s)"},
+        {'key': 'instructor_note', 'label': 'Instructor closeout critique' + ((" — needed from " + ", ".join(silent_names)) if silent_names and not note_ok else ""),
+         'ok': note_ok,
+         'detail': note_detail},
         {'key': 'item_analysis', 'label': 'Test item analysis available for this class',
          'ok': (not tests) or tests_with_attempts >= 1,
          'detail': f"{tests_with_attempts} test(s) with completed attempts · {tests_flagged} with flagged items"},
@@ -3286,6 +3360,7 @@ def _tqi_status(section):
         'ended': ended,
         'started': started,
         'instructor': instructor,
+        'comment_needed_from': silent_names,
         'teaching_seconds': _tqi_teaching_hours(section),
     }
 
@@ -3764,25 +3839,45 @@ def api_tqi_board():
     sections = ClassSection.query.order_by(ClassSection.name).all()
     cards = []
     for sec in sections:
-        st = _tqi_status(sec)
+        try:
+            st = _tqi_status(sec)
+        except Exception as err:
+            cards.append({
+                'id': sec.id,
+                'name': sec.name or ('Class %s' % sec.id),
+                'course': sec.course.title if sec.course else None,
+                'code': sec.course.code if sec.course else None,
+                'start': sec.start_date.isoformat() if sec.start_date else None,
+                'end': sec.end_date.isoformat() if sec.end_date else None,
+                'instructor': (User.query.get(sec.instructor_id).full_name if sec.instructor_id and User.query.get(sec.instructor_id) else None),
+                'status': 'open',
+                'missing': ['Could not finish packet status'],
+                'comment_needed_from': [],
+                'n_enrolled': 0,
+                'eoc_n': 0,
+                'instr_n': 0,
+                'latest_instructor_note': None,
+                'closeout': '',
+                'error': str(err)[:160],
+            })
+            continue
         instr = st['instructor']
         latest = None
-        if user.role in ('admin', 'instructor'):
-            last = TqiCritique.query.filter(
-                TqiCritique.section_id == sec.id,
-                TqiCritique.role.in_(['instructor', 'admin']),
-            ).order_by(TqiCritique.created_at.desc()).first()
-            if last:
-                who = last.user or User.query.get(last.user_id)
-                latest = {
-                    'author': who.full_name if who else 'Instructor',
-                    'kind': last.kind,
-                    'body': (last.body or '')[:400],
-                    'when': last.created_at.isoformat() if last.created_at else None,
-                }
+        last = TqiCritique.query.filter(
+            TqiCritique.section_id == sec.id,
+            TqiCritique.role.in_(['instructor', 'admin']),
+        ).order_by(TqiCritique.created_at.desc()).first()
+        if last:
+            who = last.user or User.query.get(last.user_id)
+            latest = {
+                'author': who.full_name if who else 'Instructor',
+                'kind': last.kind,
+                'body': (last.body or '')[:400],
+                'when': last.created_at.isoformat() if last.created_at else None,
+            }
         cards.append({
             'id': sec.id,
-            'name': sec.name,
+            'name': sec.name or ('Class %s' % sec.id),
             'course': sec.course.title if sec.course else None,
             'code': sec.course.code if sec.course else None,
             'start': sec.start_date.isoformat() if sec.start_date else None,
@@ -3790,14 +3885,14 @@ def api_tqi_board():
             'instructor': instr.full_name if instr else None,
             'status': st['packet'].status,
             'missing': st['missing'],
+            'comment_needed_from': st.get('comment_needed_from') or [],
             'n_enrolled': st['n_enrolled'],
             'eoc_n': st['eoc_n'],
             'instr_n': st['instr_n'],
             'latest_instructor_note': latest,
-            'closeout': (st['packet'].closeout_note or '')[:240] if user.role in ('admin', 'instructor') else '',
-            'my_eoc': bool(TqiEocResponse.query.filter_by(section_id=sec.id, user_id=user.id).first()) if user.role == 'student' else None,
+            'closeout': (st['packet'].closeout_note or '')[:240],
         })
-    return jsonify({'ok': True, 'role': user.role, 'name': user.full_name, 'classes': cards})
+    return jsonify({'ok': True, 'role': user.role, 'name': user.full_name, 'classes': cards, 'count': len(cards)})
 
 
 @app.route('/api/tqi/<int:section_id>', methods=['GET', 'OPTIONS'])
@@ -5939,7 +6034,10 @@ def seed_database():
     ]
 
     for i, mod in enumerate(aplus_mods):
-        bank = quiz_data[i % len(quiz_data)]
+        if mod.order in PILOT_CHECKS:
+            bank = PILOT_CHECKS[mod.order]
+        else:
+            bank = quiz_data[i % len(quiz_data)]
         # attach focus metadata if missing
         enriched = []
         for item in bank:
@@ -6674,6 +6772,12 @@ def init_db():
         sync_curriculum()
     except Exception as e:
         print('Curriculum sync note:', e)
+    try:
+        n = sync_pilot_slice()
+        if n:
+            print('Synced pilot checks for', n, 'chapters.')
+    except Exception as e:
+        print('Pilot slice sync note:', e)
     try:
         n = _ensure_gold_path_releases()
         if n:

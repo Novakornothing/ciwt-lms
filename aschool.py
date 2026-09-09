@@ -11,9 +11,9 @@ BLOCKS = [
         "title": "Block 1 — Workplace, tickets, and safety",
         "goal": "A Sailor can take a trouble call, write a ticket, and work on a PC without hurting the gear or the person.",
         "eos": [
-            {"id": "b1-e1", "text": "List ESD and power-safety steps before opening a case", "lab": None, "check": "Name three ESD steps and when you use each."},
-            {"id": "b1-e2", "text": "Write a ticket with symptom, scope, and first tests", "lab": None, "check": "Draft a five-line ticket for 'no intranet'."},
-            {"id": "b1-e3", "text": "Explain change awareness: what you touch, what you document", "lab": None, "check": "Write what you would log after a DNS change."},
+            {"id": "b1-e1", "text": "List ESD and power-safety steps before opening a case", "lab": None, "check": "Name the order: power off, wall unplug, wait, strap, open."},
+            {"id": "b1-e2", "text": "Classify a contact and write a ticket another watch can use", "lab": "ticket-intake", "check": "Finish Lab ticket-intake with classify, impact, escalate, note, submit."},
+            {"id": "b1-e3", "text": "Explain change awareness: what you touch, what you document", "lab": None, "check": "Say whether adding DNS is a change or a repair."},
         ],
     },
     {
@@ -23,9 +23,9 @@ BLOCKS = [
         "title": "Block 2 — Hardware and storage",
         "goal": "Identify the box, the disks, and the adapters before replacing parts.",
         "eos": [
-            {"id": "b2-e1", "text": "Read Windows identity: name, edition, build", "lab": "gui-about", "check": None},
-            {"id": "b2-e2", "text": "Inventory with hostname, whoami, systeminfo", "lab": "w11-inventory", "check": None},
-            {"id": "b2-e3", "text": "Open Device Manager and find NIC / display", "lab": "gui-devices", "check": None},
+            {"id": "b2-e1", "text": "Identify form factor, socket, memory, storage, and POST from a bench card", "lab": "hw-board", "check": "Submit Lab hw-board with the card values."},
+            {"id": "b2-e2", "text": "Read Windows identity: name, edition, build", "lab": "gui-about", "check": None},
+            {"id": "b2-e3", "text": "Inventory with hostname, whoami, systeminfo", "lab": "w11-inventory", "check": None},
             {"id": "b2-e4", "text": "List disks before any wipe or image", "lab": "w11-disk", "check": None},
         ],
     },
