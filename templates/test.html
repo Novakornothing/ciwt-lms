@@ -18,6 +18,7 @@
     </div>
   </div>
 
+  <div id="timeWarnBanner" role="status" aria-live="assertive"></div>
   <div class="q-nav mb-3" id="qNav" aria-label="Question navigator"></div>
   <p class="small mb-2" style="color:var(--ink-muted)">Navigator: answered · <span class="text-warning">flagged</span> · current. Use <strong>Flag for review</strong> then <strong>Review unanswered</strong> before submit.</p>
 
@@ -135,6 +136,7 @@ let idx = 0;
 const remainingSeconds = {{ remaining_seconds|default(test.time_limit_minutes * 60 if test.time_limit_minutes else 4500) }};
 const endAt = Date.now() + (remainingSeconds * 1000);
 let autoSubmitted = false;
+let warned15 = false;
 let warned10 = false;
 let warned5 = false;
 
@@ -268,6 +270,15 @@ function updateTimer() {
       if (ban) {
         ban.className = 'show warn10';
         ban.textContent = '10 minutes remaining. Check unanswered and flagged questions.';
+      }
+    }
+  } else if (totalSec <= 900) {
+    timerEl.classList.add('warn10');
+    if (!warned15) {
+      warned15 = true;
+      if (ban) {
+        ban.className = 'show warn10';
+        ban.textContent = '15 minutes remaining. Plan your last pass now — the test auto-submits at zero.';
       }
     }
   } else {

@@ -1517,18 +1517,51 @@ LESSON_LABS = {
     ("ITSUP", 2, 3): ["hw-board"],
     ("ITSUP", 2, 4): ["hw-board"],
     ("ITSUP", 2, 5): ["hw-board"],
+    ("ITSUP", 2, 6): ["gui-about", "w11-inventory", "w11-disk", "gui-devices"],
+    ("ITSUP", 3, 1): ["w11-disk"],
+    ("ITSUP", 3, 3): ["ticket-intake"],
+    ("ITSUP", 3, 5): ["hw-board", "w11-disk", "gui-devices"],
+    ("ITSUP", 4, 2): ["gui-accounts"],
+    ("ITSUP", 4, 4): ["ticket-intake"],
     ("ITSUP", 5, 1): ["win-ipconfig"],
-    ("ITSUP", 5, 3): ["win-ipconfig", "win-dns-break"],
-    ("ITSUP", 5, 5): ["win-full-triage"],
+    ("ITSUP", 5, 3): ["win-ipconfig", "win-dns-break", "gui-ethernet"],
+    ("ITSUP", 5, 4): ["w11-wlan"],
+    ("ITSUP", 5, 5): ["win-full-triage", "gui-ethernet"],
+    ("ITSUP", 6, 1): ["gui-about", "w11-inventory"],
+    ("ITSUP", 6, 3): ["win-ipconfig"],
+    ("ITSUP", 6, 4): ["w11-inventory", "gui-about"],
+    ("ITSUP", 7, 3): ["ticket-intake"],
+    ("ITSUP", 7, 4): ["ticket-intake", "win-full-triage"],
     ("ITSUP", 8, 1): ["w11-inventory", "gui-about"],
-    ("ITSUP", 8, 2): ["win-dhcp-renew", "w11-powershell-net", "gui-ethernet"],
-    ("ITSUP", 8, 3): ["w11-services", "gui-services"],
+    ("ITSUP", 8, 2): ["gui-update", "gui-accounts", "gui-ethernet", "win-dhcp-renew"],
+    ("ITSUP", 8, 3): ["w11-services", "gui-services", "w11-processes", "w11-firewall"],
+    ("ITSUP", 8, 4): ["gui-about", "gui-update", "gui-services"],
+    ("ITSUP", 9, 2): ["gui-accounts"],
+    ("ITSUP", 9, 3): ["gui-accounts"],
+    ("ITSUP", 9, 4): ["ticket-intake", "gui-accounts"],
+    ("ITSUP", 10, 1): ["gui-accounts", "w11-firewall"],
+    ("ITSUP", 10, 2): ["ticket-intake"],
+    ("ITSUP", 10, 3): ["gui-services", "gui-update"],
+    ("ITSUP", 10, 4): ["ticket-intake", "gui-accounts"],
+    ("ITSUP", 11, 2): ["win-full-triage"],
+    ("ITSUP", 11, 3): ["gui-about", "gui-update"],
+    ("ITSUP", 11, 4): ["w11-inventory", "w11-processes", "gui-services"],
+    ("ITSUP", 12, 2): ["gui-accounts"],
+    ("ITSUP", 12, 4): ["ticket-intake", "win-full-triage", "hw-board"],
     ("ITSUP", 13, 1): ["w11-inventory", "gui-about"],
     ("ITSUP", 13, 2): ["win-ipconfig", "w11-powershell-net", "gui-ethernet"],
     ("ITSUP", 13, 3): ["win-dhcp-renew", "gui-renew"],
     ("ITSUP", 13, 4): ["win-dns-break", "win-full-triage"],
     ("ITSUP", 13, 5): ["gui-about", "gui-ethernet", "gui-renew", "gui-services", "gui-update", "gui-accounts"],
     ("ITSUP", 13, 6): ["w11-processes", "w11-netsh"],
+    ("NETOPS", 1, 2): ["win-ipconfig"],
+}
+# CLIENT course uses the same lesson labs as ITSUP chapters 8–13, remapped to 1–6
+_ITSUP_TO_CLIENT = {8: 1, 9: 2, 10: 3, 11: 4, 12: 5, 13: 6}
+for (_code, _ch, _lo), _ids in list(LESSON_LABS.items()):
+    if _code == "ITSUP" and _ch in _ITSUP_TO_CLIENT:
+        LESSON_LABS[("CLIENT", _ITSUP_TO_CLIENT[_ch], _lo)] = list(_ids)
+LESSON_LABS.update({
     ("NETOPS", 1, 2): ["win-ipconfig"],
     ("NETOPS", 2, 1): ["sw-vlan-access"],
     ("NETOPS", 2, 2): ["sw-vlan-access", "sw-trunk-basics"],
@@ -1545,7 +1578,7 @@ LESSON_LABS = {
     ("NETOPS", 9, 4): ["rtr-edge-complete"],
     ("NETOPS", 9, 5): ["sw-vlan-and-trunk", "rtr-edge-complete"],
     ("NETOPS", 9, 6): ["sw-hostname-write", "rtr-hostname-write"],
-}
+})
 
 LAB_ALIGN = {
     "ticket-intake": "show ticket, classify, impact, escalate, note, submit — same order as Chapter 1.5.",

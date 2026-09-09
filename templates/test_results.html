@@ -16,10 +16,17 @@
         <span class="stat-pill">{% if passed %}<span class="text-success">Passed</span>{% else %}<span style="color:var(--danger)">Below pass mark</span>{% endif %}</span>
         <span class="stat-pill">Pass mark {{ test.passing_score }}%</span>
       </div>
-      <p class="text-muted small mb-0">
-        Item-level answers are not shown to students. Use category performance below to guide review of the related curriculum chapters.
-        Instructors can view detailed item results for coaching and analysis.
+      <p class="text-muted small mb-2">
+        Item-level answers are not shown to students. Use the skill areas below. Anything under 80% is a struggle area — go back to that chapter and the matching lab.
       </p>
+      {% set weak = categories | selectattr('pct', 'lt', 80) | list %}
+      {% if weak %}
+      <p class="mb-0"><strong>Where you struggled:</strong>
+        {% for c in weak %}{{ c.category }} ({{ c.pct }}%){% if not loop.last %} · {% endif %}{% endfor %}
+      </p>
+      {% else %}
+      <p class="mb-0">No struggle area under 80% on this attempt.</p>
+      {% endif %}
     </div>
   </div>
 

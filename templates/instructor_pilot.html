@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Pilot slice — Chapters 1–13{% endblock %}
+{% block content %}
+<style>
+@media print {
+  .noprint, nav, .navbar, footer, .page-hero .btn { display: none !important; }
+  body { background: #fff; color: #111; }
+}
+.pilot-table td, .pilot-table th { vertical-align: top; }
+</style>
+<div class="page-hero noprint">
+  <h1 class="h3 mb-1">Pilot product — Chapters 1–13</h1>
+  <p class="mb-0">Teach from the screen. One lab or checklist per lesson. One check per chapter. Print this page for the week.</p>
+  <div class="mt-2 d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-brand btn-sm" onclick="window.print()">Print / PDF</button>
+    <a class="btn btn-outline-light btn-sm" href="{{ url_for('aschool_trainee_guide') }}">Full A-school outline</a>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">What this slice is</div>
+  <div class="card-body">
+    <p class="mb-2">CIWT proprietary material. Not a vendor exam product and not official Navy courseware. A stranger should run Friday from the lesson page plus this sheet.</p>
+    <ol class="mb-0">
+      <li>Student opens the chapter lesson in order.</li>
+      <li>Does the lab under that lesson (or the paper drill if the lesson says so).</li>
+      <li>Takes <strong>Progress Check: Chapter N</strong> (10 items from this slice).</li>
+      <li>Instructor uses the pass bar below — not eye tracking, not speed.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">Run sheet</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0 pilot-table">
+      <thead>
+        <tr>
+          <th>Ch</th>
+          <th>Focus</th>
+          <th>Min</th>
+          <th>Lab</th>
+          <th>Pass bar</th>
+          <th>Do not</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.ch }}</td>
+          <td>{{ row.title }}</td>
+          <td>{{ row.minutes }}</td>
+          <td>{{ row.lab }}</td>
+          <td>{{ row.pass_bar }}</td>
+          <td>{{ row.do_not }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">Print path card (Chapter 4.3)</div>
+  <div class="card-body">
+    <table class="table table-sm mb-0">
+      {% for who, first in print_path %}
+      <tr><th style="width:14rem">{{ who }}</th><td>{{ first }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">hw-board card answers (Chapter 2.5)</div>
+  <div class="card-body">
+    <p class="mb-0"><code>form-factor microatx</code> · <code>socket lga1700</code> · <code>memory ddr5</code> · <code>storage nvme</code> · <code>post memory</code></p>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">ticket-intake card answers (Chapter 1.5)</div>
+  <div class="card-body">
+    <p class="mb-0"><code>classify incident</code> · <code>impact many</code> · <code>escalate yes</code> · note names heat and a next person · do not open the reader.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header navy">Chapters 6–8 reminders</div>
+  <div class="card-body">
+    <p class="mb-1"><strong>6:</strong> Guest inventory first. Snapshot ≠ backup. Tenant mail down + good ipconfig = SaaS.</p>
+    <p class="mb-1"><strong>7:</strong> Identify → one test → one change. Do not diskpart a SaaS outage.</p>
+    <p class="mb-0"><strong>8:</strong> About + Update + services. Firewall and Defender stay on. No <code>clean</code>.</p>
+  </div>
+</div>
+{% endblock %}

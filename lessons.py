@@ -5879,8 +5879,57 @@ _apply_ciwt_deepen(NETPLUS)
 
 from block1_foundations import CHAPTER1
 from block2_hardware import CHAPTER2
+from block3_storage import CHAPTER3
+from block4_mobile import CHAPTER4
+from block5_network import CHAPTER5
+from block6_virt import CHAPTER6
+from block7_method import CHAPTER7
+from block8_windows import CHAPTER8
+from block9_crossplat import CHAPTER9
+from block10_security import CHAPTER10
+from block11_software import CHAPTER11
+from block12_ops import CHAPTER12
+from block13_cli import CHAPTER13
 APLUS[0] = CHAPTER1
 APLUS[1] = CHAPTER2
+APLUS[2] = CHAPTER3
+APLUS[3] = CHAPTER4
+APLUS[4] = CHAPTER5
+APLUS[5] = CHAPTER6
+APLUS[6] = CHAPTER7
+APLUS[7] = CHAPTER8
+APLUS[8] = CHAPTER9
+APLUS[9] = CHAPTER10
+APLUS[10] = CHAPTER11
+APLUS[11] = CHAPTER12
+APLUS[12] = CHAPTER13
+
+from raised_bar import apply_raised_bar
+from curriculum_depth import apply_curriculum_depth
+apply_raised_bar(APLUS)
+apply_curriculum_depth(APLUS)
+
+import copy
+
+def _as_course_chapter(src, new_order):
+    ch = copy.deepcopy(src)
+    ch["order"] = new_order
+    raw = ch.get("title") or f"Chapter {new_order}"
+    if " — " in raw:
+        ch["title"] = f"Chapter {new_order} — " + raw.split(" — ", 1)[1]
+    else:
+        ch["title"] = f"Chapter {new_order} — {raw}"
+    return ch
+
+# Shop / client-ops course. Copy from ITSUP 8–13 after depth is applied.
+CLIENT = [
+    _as_course_chapter(APLUS[7], 1),
+    _as_course_chapter(APLUS[8], 2),
+    _as_course_chapter(APLUS[9], 3),
+    _as_course_chapter(APLUS[10], 4),
+    _as_course_chapter(APLUS[11], 5),
+    _as_course_chapter(APLUS[12], 6),
+]
 
 # Hands-on switch/router CLI lab track (simulators / isolated lab only)
 NETPLUS = NETPLUS + NETWORK_LAB_CHAPTERS
