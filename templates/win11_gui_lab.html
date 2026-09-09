@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block title %}{{ lab.title }} — Win11 GUI{% endblock %}
 {% block content %}
+{% if practical_back %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+  <span>Skills exam station. Finish the clicks, then return to the exam checklist.</span>
+  <a class="btn btn-sm btn-brand" href="{{ practical_back }}">Back to skills exam</a>
+</div>
+{% endif %}
 <style>
   .w11-wrap { font-family: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif; }
   .w11-desk {
@@ -289,6 +295,11 @@
     });
     if (need.every(function(id){ return done.has(id); })) {
       document.getElementById('labOk').classList.remove('d-none');
+      fetch({{ url_for('interactive_lab_mark_done', lab_id=lab.id)|tojson }}, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({done: Array.from(done)})
+      }).catch(function(){});
     }
   }
   function showSettings(){

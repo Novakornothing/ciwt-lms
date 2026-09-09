@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ test.title }} — skills exam{% endblock %}
+{% block content %}
+<div class="test-shell">
+  <div class="test-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <div class="fw-bold">{{ test.title }}</div>
+      <div class="meta">Hands-on stations · pass {{ test.passing_score }}% · {{ finished }}/{{ total }} done · {{ test.time_limit_minutes }} min</div>
+    </div>
+    <div id="testTimer" class="test-timer ok"><i class="bi bi-clock"></i> <span id="timerDisplay">--:--</span></div>
+  </div>
+  <div id="timeWarnBanner" role="status" aria-live="assertive"></div>
+  <p>Open each station. Do the work in the CLI or Windows GUI until it accepts the finish. Come back here. Submit the exam before the timer hits zero — unfinished stations score zero.</p>
+  <div class="list-group mb-3">
+    {% for s in stations %}
+    <div class="list-group-item d-flex justify-content-between align-items-center gap-2">
+      <div>
+        <strong>{{ s.title }}</strong>
+        <div class="small text-muted">{{ s.area }} · {{ s.kind }}</div>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        {% if s.done %}<span class="text-success">Done</span>{% else %}<span class="text-danger">Not finished</span>{% endif %}
+        <a class="btn btn-sm btn-brand" href="{{ s.url }}">Open station</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <form method="post" id="testForm">
+    <input type="hidden" name="timed_out" value="0" id="timedOutField">
+    <button type="submit" class="btn btn-brand" id="submitBtn">Submit skills exam</button>
+  </form>
+</div>
+<style>
+  .test-timer { font-family: ui-monospace, monospace; font-weight: 700; padding:.4rem .85rem; border-radius:8px; }
+  .test-timer.ok { background: rgba(61,214,140,.12); color:#3dd68c; }
+  .test-timer.warn10, .test-timer.warn5 { background: rgba(240,193,75,.15); color:#e8c547; }
+  .test-timer.danger { background: rgba(255,90,80,.18); color:#ff8a7a; animation: pulse-timer 1s ease-in-out infinite; }
+  @keyframes pulse-timer { 50% { opacity:.8 } }
+  #timeWarnBanner { display:none; margin-bottom:.75rem; padding:.65rem 1rem; border-radius:8px; font-weight:600; }
+  #timeWarnBanner.show { display:block; }
+  #timeWarnBanner.warn10 { background: rgba(240,193,75,.15); color:#e8c547; }
+  #timeWarnBanner.warn5 { background: rgba(255,140,60,.18); color:#ff9a4a; }
+  #timeWarnBanner.danger { background: rgba(255,90,80,.18); color:#ff8a7a; }
+</style>
+{% endblock %}
+{% block scripts %}
+<script>
+const remainingSeconds = {{ remaining_seconds|default(2400) }};
+const endAt = Date.now() + remainingSeconds * 1000;
+let autoSubmitted = false, warned15=false, warned10=false, warned5=false;
+const timerEl = document.getElementById('testTimer');
+const timerDisplay = document.getElementById('timerDisplay');
+const form = document.getElementById('testForm');
+function forceSubmit() {
+  if (autoSubmitted) return;
+  autoSubmitted = true;
+  const h = document.getElementById('timedOutField');
+  if (h) h.value = '1';
+  form.submit();
+}
+function updateTimer() {
+  const ms = endAt - Date.now();
+  const ban = document.getElementById('timeWarnBanner');
+  if (ms <= 0) { timerDisplay.textContent = '0:00'; timerEl.className = 'test-timer danger'; forceSubmit(); return; }
+  const totalSec = Math.floor(ms/1000);
+  const m = Math.floor(totalSec/60), s = totalSec % 60;
+  timerDisplay.textContent = m + ':' + String(s).padStart(2,'0');
+  timerEl.className = 'test-timer';
+  if (totalSec <= 60) { timerEl.classList.add('danger'); if (ban){ ban.className='show danger'; ban.textContent='Less than 1 minute — exam will auto-submit.'; } }
+  else if (totalSec <= 300) { timerEl.classList.add('warn5'); if (!warned5){ warned5=true; if (ban){ ban.className='show warn5'; ban.textContent='5 minutes left. Finish open stations.'; } } }
+  else if (totalSec <= 600) { timerEl.classList.add('warn10'); if (!warned10){ warned10=true; if (ban){ ban.className='show warn10'; ban.textContent='10 minutes remaining.'; } } }
+  else if (totalSec <= 900) { timerEl.classList.add('warn10'); if (!warned15){ warned15=true; if (ban){ ban.className='show warn10'; ban.textContent='15 minutes remaining.'; } } }
+  else timerEl.classList.add('ok');
+}
+updateTimer();
+setInterval(updateTimer, 1000);
+</script>
+{% endblock %}

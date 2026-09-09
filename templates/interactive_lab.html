@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block title %}{{ lab.title }} — Live Lab{% endblock %}
 {% block content %}
+{% if practical_back %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+  <span>Skills exam station. Submit this lab, then return to the exam checklist.</span>
+  <a class="btn btn-sm btn-brand" href="{{ practical_back }}">Back to skills exam</a>
+</div>
+{% endif %}
 <style>
   .lab-layout { display: grid; grid-template-columns: 1fr minmax(260px, 320px); gap: 1rem; align-items: start; }
   @media (max-width: 991px) { .lab-layout { grid-template-columns: 1fr; } }
