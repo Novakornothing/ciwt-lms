@@ -66,7 +66,10 @@
       </div>
     </div>
     <div class="card">
-      <div class="card-header">Knowledge tests (graded)</div>
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Knowledge tests (graded)</span>
+        <a class="btn btn-sm btn-outline-light" href="{{ url_for('skills_board', section_id=section.id) }}">Skills scores</a>
+      </div>
       <div class="list-group list-group-flush">
         {% for item in tests %}
         <div class="list-group-item">

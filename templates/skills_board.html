@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Skills scores — {{ section.name }}{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Skills midterm and final</h1>
+  <p class="mb-0">{{ section.name }} · {{ section.course.title }}. Overall score plus struggle areas under 80%.</p>
+</div>
+
+{% if current_user.role == 'student' %}
+  {% for row in rows %}
+  <div class="card mb-3">
+    <div class="card-header navy d-flex justify-content-between">
+      <span>{{ row.test.title }}</span>
+      <span>{{ row.test.time_limit_minutes }} min · pass {{ row.test.passing_score }}%</span>
+    </div>
+    <div class="card-body">
+      {% if row.attempt %}
+      <p class="mb-2">Overall: <strong>{{ '%.0f'|format(row.attempt.score or 0) }}%</strong>
+        {% if row.attempt.passed %}<span class="text-success">Passed</span>{% else %}<span class="text-danger">Not passed</span>{% endif %}
+      </p>
+      {% if row.weak %}
+      <p class="mb-2"><strong>Struggled:</strong>
+        {% for c in row.weak %}{{ c.category }} ({{ c.pct }}%){% if not loop.last %} · {% endif %}{% endfor %}
+      </p>
+      {% else %}
+      <p class="mb-2">No area under 80% on the latest attempt.</p>
+      {% endif %}
+      {% for c in row.categories %}
+      <div class="mb-2">
+        <div class="d-flex justify-content-between small"><span>{{ c.category }}</span><span>{{ c.correct }}/{{ c.total }} · {{ c.pct }}%</span></div>
+        <div class="progress" style="height:.55rem"><div class="progress-bar {% if c.pct < 80 %}bg-danger{% endif %}" style="width:{{ c.pct }}%"></div></div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p class="mb-2 text-muted">No completed attempt yet.</p>
+      <a class="btn btn-sm btn-brand" href="{{ url_for('take_test', section_id=section.id, test_id=row.test.id) }}">Open exam</a>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <p>No skills exams on this course yet. Redeploy so sync_skills_exams can create them.</p>
+  {% endfor %}
+{% else %}
+  <p class="mb-3"><a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_section', section_id=section.id) }}">Back to class</a></p>
+  {% for person in roster or [] %}
+  <div class="card mb-3">
+    <div class="card-header navy">{{ person.student.full_name }} <span class="small opacity-75">{{ person.student.email }}</span></div>
+    <div class="card-body">
+      {% for row in person.rows %}
+      <div class="mb-3">
+        <strong>{{ row.test.title }}</strong>
+        {% if row.attempt %}
+          — {{ '%.0f'|format(row.attempt.score or 0) }}%
+          {% if row.weak %} · struggled: {% for c in row.weak %}{{ c.category }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+        {% else %}
+          — no attempt
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <p class="text-muted">No students enrolled.</p>
+  {% endfor %}
+{% endif %}
+{% endblock %}
