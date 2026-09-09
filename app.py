@@ -698,6 +698,14 @@ def get_student_sections(user):
     ).all()
 
 
+def _safe_gold_path(user, section):
+    try:
+        return student_gold_path(user, section)
+    except Exception as exc:
+        print('gold_path:', exc)
+        return None
+
+
 def student_gold_path(user, section):
     """Student course path: first lesson → matching lab → ungraded quiz → graded test when released."""
     if not section or not section.course_id:
@@ -2609,16 +2617,14 @@ def student_section(section_id):
         tests=available_tests,
         skills_tests=skills_tests,
         enrollment=enr,
-        course_labs=labs_for_course(section.course),
-        gold_path=student_gold_path(current_user, section),
+        course_labs=labs_for_course(section.course) if section.course else [],
+        gold_path=_safe_gold_path(current_user, section),
         eoc_items=TQI_EOC_ITEMS,
         my_eoc=my_eoc,
         my_answers=my_answers,
     )
 
 
-@app.route('/class/<int:section_id>/curriculum')
-@login_required
 def _modules_for_section(section, heal=True):
     """All chapters for this class course. Re-sync if the DB is short."""
     modules = Module.query.filter_by(course_id=section.course_id).order_by(Module.order).all()
@@ -2633,6 +2639,8 @@ def _modules_for_section(section, heal=True):
     return modules
 
 
+@app.route('/class/<int:section_id>/curriculum')
+@login_required
 def curriculum_index(section_id):
     """Every chapter in the class course — instructor and student."""
     section = ClassSection.query.get_or_404(section_id)
