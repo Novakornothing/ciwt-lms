@@ -1524,6 +1524,38 @@ def sync_skills_exams():
             n += 1
     if n:
         db.session.commit()
+    opened = _ensure_skills_releases()
+    return n + opened
+
+
+def _ensure_skills_releases():
+    """Open Skills Midterm/Final on every active class so they are visible."""
+    n = 0
+    tests = KnowledgeTest.query.filter(KnowledgeTest.title.ilike('Skills %')).all()
+    sections = ClassSection.query.filter_by(is_active=True).all()
+    for sec in sections:
+        for t in tests:
+            if t.course_id != sec.course_id:
+                continue
+            rel = ContentRelease.query.filter_by(
+                section_id=sec.id, content_type='test', content_id=t.id, user_id=None
+            ).first()
+            if not rel:
+                db.session.add(ContentRelease(
+                    section_id=sec.id,
+                    content_type='test',
+                    content_id=t.id,
+                    user_id=None,
+                    is_active=True,
+                    activated_at=datetime.utcnow(),
+                ))
+                n += 1
+            elif not rel.is_active:
+                rel.is_active = True
+                rel.activated_at = datetime.utcnow()
+                n += 1
+    if n:
+        db.session.commit()
     return n
 
 
@@ -1561,6 +1593,10 @@ def _skills_rows_for_section(section, user=None):
 @app.route('/class/<int:section_id>/skills')
 @login_required
 def skills_board(section_id):
+    try:
+        sync_skills_exams()
+    except Exception:
+        pass
     section = ClassSection.query.get_or_404(section_id)
     if current_user.role == 'student':
         if not Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first():
@@ -2529,7 +2565,12 @@ def student_section(section_id):
         flash('You are not enrolled in this section.', 'danger')
         return redirect(url_for('student_dashboard'))
     modules = Module.query.filter_by(course_id=section.course_id).order_by(Module.order).all()
+    try:
+        sync_skills_exams()
+    except Exception:
+        pass
     tests = KnowledgeTest.query.filter_by(course_id=section.course_id).order_by(KnowledgeTest.order).all()
+    tests = sorted(tests, key=lambda t: (0 if (t.title or '').startswith('Skills ') else 1, t.order or 0))
     quizzes_by_module = {
         m.id: Quiz.query.filter_by(module_id=m.id).all()
         for m in modules
@@ -2551,6 +2592,7 @@ def student_section(section_id):
             user_id=current_user.id, test_id=t.id, section_id=section_id
         ).order_by(TestAttempt.completed_at.desc()).all()
         available_tests.append({'test': t, 'available': avail, 'attempts': attempts})
+    skills_tests = [x for x in available_tests if (x['test'].title or '').startswith('Skills ')]
     my_eoc = None
     my_answers = {}
     if current_user.role == 'student':
@@ -2565,6 +2607,7 @@ def student_section(section_id):
         section=section,
         modules=available_modules,
         tests=available_tests,
+        skills_tests=skills_tests,
         enrollment=enr,
         course_labs=labs_for_course(section.course),
         gold_path=student_gold_path(current_user, section),
@@ -4151,7 +4194,12 @@ def instructor_section(section_id):
         m.id: Quiz.query.filter_by(module_id=m.id).all()
         for m in modules
     }
+    try:
+        sync_skills_exams()
+    except Exception:
+        pass
     tests = KnowledgeTest.query.filter_by(course_id=section.course_id).order_by(KnowledgeTest.order).all()
+    tests = sorted(tests, key=lambda t: (0 if (t.title or '').startswith('Skills ') else 1, t.order or 0))
     enrollments = (
         Enrollment.query.filter_by(section_id=section_id)
         .join(User).order_by(User.last_name, User.first_name).all()
@@ -4222,6 +4270,7 @@ def instructor_section(section_id):
         section=section,
         modules=modules,
         tests=tests,
+        skills_tests=[t for t in tests if (t.title or '').startswith('Skills ')],
         enrollments=enrollments,
         releases=releases,
         available_students=available_students,
