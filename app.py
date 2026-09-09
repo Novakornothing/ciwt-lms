@@ -25,7 +25,7 @@ from interactive_labs import list_labs, get_lab, fresh_state, run_command, promp
 from alignment import domains_for_course
 from aschool import BLOCKS as ASCHOOL_BLOCKS, CSCHOOL_COMMS, CSCHOOL_SYS, outline_stats, all_eos
 from pilot_slice import PILOT_CHECKS, PILOT_RUN, PRINT_PATH, quiz_payload
-from skills_exams import exams_for as skills_exams_for
+from skills_exams import exams_for as skills_exams_for, is_practical_payload, stations_of
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ciwt-lms-demo-key-change-in-production')
@@ -458,6 +458,17 @@ class QuizAttempt(db.Model):
     score = db.Column(db.Float)
     completed_at = db.Column(db.DateTime, default=datetime.utcnow)
     quiz = db.relationship('Quiz')
+
+
+class LabCompletion(db.Model):
+    """Persisted lab station finish so a skills practical can grade after the student leaves the terminal."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    lab_id = db.Column(db.String(80), nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'))
+    test_id = db.Column(db.Integer, db.ForeignKey('knowledge_test.id'))
+    done_json = db.Column(db.Text)
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class TestAttempt(db.Model):
@@ -998,6 +1009,11 @@ def compute_item_analysis(test_id, section_id=None, section_ids=None,
     """
     test = KnowledgeTest.query.get_or_404(test_id)
     questions = json.loads(test.questions or '[]')
+    if is_practical_payload(questions):
+        questions = [
+            {'text': st['lab_id'], 'options': ['pass', 'fail'], 'correct': 'pass', 'area': st.get('area')}
+            for st in stations_of(questions)
+        ]
     q = TestAttempt.query.filter_by(test_id=test_id)
     if section_id:
         q = q.filter_by(section_id=section_id)
@@ -2189,15 +2205,48 @@ def interactive_lab(lab_id):
     if key_s not in session:
         session[key_s] = fresh_state(lab_id)
         session[key_d] = []
+    if request.args.get('section_id'):
+        session['lab_section_id'] = request.args.get('section_id')
+    if request.args.get('test_id'):
+        session['lab_test_id'] = request.args.get('test_id')
     state = session[key_s]
     audit('lab_open', lab_id)
+    back = None
+    if session.get('lab_test_id') and session.get('lab_section_id'):
+        try:
+            back = url_for('take_test', section_id=int(session['lab_section_id']), test_id=int(session['lab_test_id']))
+        except Exception:
+            back = None
     if lab.get('kind') == 'win11gui':
-        return render_template('win11_gui_lab.html', lab=lab)
+        return render_template('win11_gui_lab.html', lab=lab, practical_back=back)
     return render_template(
         'interactive_lab.html',
         lab=lab,
         prompt=prompt_for(lab, state),
+        practical_back=back,
     )
+
+
+@app.route('/labs/<lab_id>/mark-done', methods=['POST'])
+@login_required
+def interactive_lab_mark_done(lab_id):
+    if not get_lab(lab_id):
+        return jsonify({'error': 'unknown lab'}), 404
+    payload = request.get_json(silent=True) or {}
+    done = payload.get('done') or session.get(f'lab_done_{lab_id}') or []
+    session[f'lab_done_{lab_id}'] = list(done)
+    session.modified = True
+    sid = session.get('lab_section_id')
+    tid = session.get('lab_test_id')
+    try:
+        _record_lab_completion(
+            lab_id, done,
+            section_id=int(sid) if sid else None,
+            test_id=int(tid) if tid else None,
+        )
+    except Exception as exc:
+        print('mark-done note:', exc)
+    return jsonify({'ok': True})
 
 
 @app.route('/labs/<lab_id>/complete', methods=['POST'])
@@ -2228,6 +2277,16 @@ def interactive_lab_cmd(lab_id):
     session[key_s] = state
     session[key_d] = done
     session.modified = True
+    try:
+        sid = request.args.get('section_id') or session.get('lab_section_id')
+        tid = request.args.get('test_id') or session.get('lab_test_id')
+        _record_lab_completion(
+            lab_id, done,
+            section_id=int(sid) if sid else None,
+            test_id=int(tid) if tid else None,
+        )
+    except Exception as exc:
+        print('lab complete note:', exc)
     return jsonify(result)
 
 
@@ -3254,6 +3313,112 @@ def take_quiz(section_id, quiz_id):
     return render_template('quiz.html', quiz=quiz, questions=questions, section_id=section_id, course_id=mod.course_id if mod else None)
 
 
+def _lab_objectives_met(lab_id, done):
+    lab = get_lab(lab_id) or {}
+    need = [o.get('id') for o in (lab.get('objectives') or []) if o.get('id')]
+    have = set(done or [])
+    if need:
+        return all(i in have for i in need)
+    return 'submitted' in have
+
+
+def _record_lab_completion(lab_id, done, section_id=None, test_id=None):
+    if not current_user.is_authenticated:
+        return
+    if not _lab_objectives_met(lab_id, done):
+        return
+    row = LabCompletion.query.filter_by(
+        user_id=current_user.id, lab_id=lab_id, section_id=section_id, test_id=test_id
+    ).order_by(LabCompletion.id.desc()).first()
+    if not row:
+        row = LabCompletion(
+            user_id=current_user.id, lab_id=lab_id,
+            section_id=section_id, test_id=test_id,
+        )
+        db.session.add(row)
+    row.done_json = json.dumps(list(done or []))
+    row.completed_at = datetime.utcnow()
+    db.session.commit()
+
+
+def _station_done(user_id, lab_id, section_id, test_id=None):
+    q = LabCompletion.query.filter_by(user_id=user_id, lab_id=lab_id)
+    if section_id:
+        q = q.filter((LabCompletion.section_id == section_id) | (LabCompletion.section_id.is_(None)))
+    row = q.order_by(LabCompletion.completed_at.desc()).first()
+    if row:
+        return True
+    # session fallback while they are still in this browser
+    done = session.get(f'lab_done_{lab_id}') or []
+    return _lab_objectives_met(lab_id, done)
+
+
+def _take_practical(section_id, test, payload):
+    stations = stations_of(payload)
+    limit_min = int(test.time_limit_minutes or 60)
+    open_attempt = TestAttempt.query.filter_by(
+        user_id=current_user.id, test_id=test.id, section_id=section_id,
+    ).filter(TestAttempt.completed_at.is_(None)).order_by(TestAttempt.started_at.desc()).first()
+    if not open_attempt:
+        open_attempt = TestAttempt(
+            user_id=current_user.id, test_id=test.id, section_id=section_id,
+            started_at=datetime.utcnow(),
+        )
+        db.session.add(open_attempt)
+        db.session.commit()
+    started = open_attempt.started_at or datetime.utcnow()
+    remaining = max(0, int(limit_min * 60 - (datetime.utcnow() - started).total_seconds()))
+    rows = []
+    for st in stations:
+        lab = get_lab(st['lab_id']) or {}
+        done = _station_done(current_user.id, st['lab_id'], section_id, test.id)
+        rows.append({
+            'lab_id': st['lab_id'],
+            'area': st.get('area') or lab.get('title') or st['lab_id'],
+            'title': lab.get('title') or st['lab_id'],
+            'kind': lab.get('kind') or 'lab',
+            'done': done,
+            'url': url_for('interactive_lab', lab_id=st['lab_id'], section_id=section_id, test_id=test.id, practical=1),
+        })
+    finished = sum(1 for r in rows if r['done'])
+    total = len(rows) or 1
+    if request.method == 'POST' or remaining <= 0:
+        timed_out = request.form.get('timed_out') == '1' or remaining <= 0
+        answers = {str(i): ('pass' if r['done'] else 'fail') for i, r in enumerate(rows)}
+        answers.update({r['lab_id']: ('pass' if r['done'] else 'fail') for r in rows})
+        score = finished / total * 100
+        passed = score >= (test.passing_score or 80)
+        categories = []
+        buckets = {}
+        for r in rows:
+            b = buckets.setdefault(r['area'], {'correct': 0, 'total': 0})
+            b['total'] += 1
+            if r['done']:
+                b['correct'] += 1
+        for cat, v in sorted(buckets.items()):
+            pct = round(v['correct'] / v['total'] * 100, 1) if v['total'] else 0
+            categories.append({'category': cat, 'correct': v['correct'], 'total': v['total'], 'pct': pct})
+        open_attempt.answers = json.dumps(answers)
+        open_attempt.score = score
+        open_attempt.passed = passed
+        open_attempt.completed_at = datetime.utcnow()
+        db.session.commit()
+        if timed_out:
+            flash('Time expired — stations completed so far were graded.', 'info')
+        return render_template(
+            'test_results.html',
+            test=test, section_id=section_id, score=score, passed=passed,
+            correct=finished, total=len(rows), categories=categories,
+            attempt_id=open_attempt.id, timed_out=timed_out,
+            gold_path=None,
+        )
+    return render_template(
+        'skills_practical.html',
+        test=test, section_id=section_id, stations=rows,
+        remaining_seconds=remaining, finished=finished, total=len(rows),
+    )
+
+
 @app.route('/student/test/<int:section_id>/<int:test_id>', methods=['GET', 'POST'])
 @login_required
 def take_test(section_id, test_id):
@@ -3262,6 +3427,8 @@ def take_test(section_id, test_id):
         return redirect(url_for('student_section', section_id=section_id))
     test = KnowledgeTest.query.get_or_404(test_id)
     questions = json.loads(test.questions or '[]')
+    if is_practical_payload(questions):
+        return _take_practical(section_id, test, questions)
     limit_min = int(test.time_limit_minutes or 75)
 
     # Open (in-progress) attempt for this student
@@ -4447,6 +4614,16 @@ def instructor_test_preview(section_id, test_id):
         return redirect(url_for('instructor_dashboard'))
     test = KnowledgeTest.query.get_or_404(test_id)
     questions = json.loads(test.questions or '[]')
+    if is_practical_payload(questions):
+        questions = [
+            {
+                'text': 'Station: ' + (get_lab(st['lab_id']) or {}).get('title', st['lab_id']),
+                'options': ['Complete the lab until it accepts the finish'],
+                'correct': 'Complete the lab until it accepts the finish',
+                'area': st.get('area'),
+            }
+            for st in stations_of(questions)
+        ]
     return render_template(
         'instructor_test_preview.html',
         section=section, test=test, questions=questions,
