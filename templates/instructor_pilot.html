@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Pilot slice — Chapters 1–5{% endblock %}
+{% block title %}Pilot slice — Chapters 1–8{% endblock %}
 {% block content %}
 <style>
 @media print {
@@ -9,7 +9,7 @@
 .pilot-table td, .pilot-table th { vertical-align: top; }
 </style>
 <div class="page-hero noprint">
-  <h1 class="h3 mb-1">Pilot product — Chapters 1–5</h1>
+  <h1 class="h3 mb-1">Pilot product — Chapters 1–8</h1>
   <p class="mb-0">Teach from the screen. One lab or checklist per lesson. One check per chapter. Print this page for the week.</p>
   <div class="mt-2 d-flex flex-wrap gap-2">
     <button type="button" class="btn btn-brand btn-sm" onclick="window.print()">Print / PDF</button>
@@ -78,10 +78,19 @@
   </div>
 </div>
 
-<div class="card">
+<div class="card mb-3">
   <div class="card-header navy">ticket-intake card answers (Chapter 1.5)</div>
   <div class="card-body">
     <p class="mb-0"><code>classify incident</code> · <code>impact many</code> · <code>escalate yes</code> · note names heat and a next person · do not open the reader.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header navy">Chapters 6–8 reminders</div>
+  <div class="card-body">
+    <p class="mb-1"><strong>6:</strong> Guest inventory first. Snapshot ≠ backup. Tenant mail down + good ipconfig = SaaS.</p>
+    <p class="mb-1"><strong>7:</strong> Identify → one test → one change. Do not diskpart a SaaS outage.</p>
+    <p class="mb-0"><strong>8:</strong> About + Update + services. Firewall and Defender stay on. No <code>clean</code>.</p>
   </div>
 </div>
 {% endblock %}
