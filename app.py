@@ -19,7 +19,7 @@ import random
 import os
 from pathlib import Path
 import re
-from lessons import APLUS as APLUS_LESSONS, NETPLUS as NETPLUS_LESSONS
+from lessons import APLUS as APLUS_LESSONS, NETPLUS as NETPLUS_LESSONS, CLIENT as CLIENT_LESSONS
 from question_bank import tests_aplus, tests_netplus
 from interactive_labs import list_labs, get_lab, fresh_state, run_command, prompt_for, complete_command, labs_for_module, labs_for_lesson, labs_for_course
 from alignment import domains_for_course
@@ -1458,27 +1458,32 @@ def instructor_pilot():
 
 
 def sync_pilot_slice():
-    """Keep Chapters 1–13 progress checks aligned to the pilot item banks."""
-    course = Course.query.filter_by(code='ITSUP').first() or Course.query.filter_by(code='APLUS').first()
-    if not course:
-        return 0
+    """Keep ITSUP 1–13 and CLIENT 1–6 progress checks aligned to the item banks."""
     n = 0
-    mods = Module.query.filter_by(course_id=course.id).order_by(Module.order).all()
-    for mod in mods:
-        if mod.order not in PILOT_CHECKS:
+    jobs = [
+        (Course.query.filter_by(code='ITSUP').first() or Course.query.filter_by(code='APLUS').first(), lambda order: order),
+        (Course.query.filter_by(code='CLIENT').first(), lambda order: order + 7),  # CLIENT 1 = bank 8
+    ]
+    for course, bank_of in jobs:
+        if not course:
             continue
-        qs = quiz_payload(mod.order, mod.title)
-        if not qs:
-            continue
-        title = f'Chapter {mod.order} check — pilot'
-        qz = Quiz.query.filter_by(module_id=mod.id).order_by(Quiz.id).first()
-        payload = json.dumps(qs)
-        if not qz:
-            db.session.add(Quiz(module_id=mod.id, title=title, questions=payload, is_ungraded=True))
-        else:
-            qz.title = title
-            qz.questions = payload
-        n += 1
+        mods = Module.query.filter_by(course_id=course.id).order_by(Module.order).all()
+        for mod in mods:
+            bank = bank_of(mod.order)
+            if bank not in PILOT_CHECKS:
+                continue
+            qs = quiz_payload(bank, mod.title)
+            if not qs:
+                continue
+            title = f'Chapter {mod.order} check — pilot'
+            qz = Quiz.query.filter_by(module_id=mod.id).order_by(Quiz.id).first()
+            payload = json.dumps(qs)
+            if not qz:
+                db.session.add(Quiz(module_id=mod.id, title=title, questions=payload, is_ungraded=True))
+            else:
+                qz.title = title
+                qz.questions = payload
+            n += 1
     if n:
         db.session.commit()
     return n
@@ -5900,11 +5905,17 @@ def seed_database():
         title='Network Operations Fundamentals',
         description='Networking concepts, infrastructure, operations, security, and troubleshooting.',
     )
-    db.session.add_all([aplus, netplus])
+    client = Course(
+        code='CLIENT',
+        title='Client Systems & Shop Procedures',
+        description='Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary CIWT course — not a vendor exam product.',
+    )
+    db.session.add_all([aplus, netplus, client])
     db.session.commit()
     db.session.add_all([
         CourseInstructor(course_id=aplus.id, user_id=instr1.id),
         CourseInstructor(course_id=netplus.id, user_id=instr2.id),
+        CourseInstructor(course_id=client.id, user_id=instr1.id),
     ])
     db.session.commit()
 
@@ -5939,6 +5950,7 @@ def seed_database():
 
     _seed_course_modules(aplus, APLUS_LESSONS)
     _seed_course_modules(netplus, NETPLUS_LESSONS)
+    _seed_course_modules(client, CLIENT_LESSONS)
 
     aplus_mods = Module.query.filter_by(course_id=aplus.id).order_by(Module.order).all()
     # Formative progress-check banks (must NOT overlap graded test scenario stems)
@@ -6588,14 +6600,26 @@ def sync_curriculum():
     """Overwrite lesson HTML in an existing DB so students see real pages."""
     aplus = Course.query.filter_by(code='ITSUP').first() or Course.query.filter_by(code='APLUS').first()
     netplus = Course.query.filter_by(code='NETOPS').first() or Course.query.filter_by(code='NETPLUS').first()
+    client = Course.query.filter_by(code='CLIENT').first()
     if not aplus or not netplus:
         return False
     aplus.code, aplus.title = 'ITSUP', 'IT Support Technician Fundamentals'
-    aplus.description = 'Hardware, software, networking, security, and operational procedures for IT support technicians.'
+    aplus.description = 'Hardware, client networking, virtualization, and ticket habits for IT support technicians. Proprietary CIWT course.'
     netplus.code, netplus.title = 'NETOPS', 'Network Operations Fundamentals'
     netplus.description = 'Networking concepts, infrastructure, operations, security, and troubleshooting.'
+    if not client:
+        client = Course(
+            code='CLIENT',
+            title='Client Systems & Shop Procedures',
+            description='Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary CIWT course — not a vendor exam product.',
+        )
+        db.session.add(client)
+        db.session.flush()
+    else:
+        client.title = 'Client Systems & Shop Procedures'
+        client.description = 'Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary CIWT course — not a vendor exam product.'
 
-    for course, pack in ((aplus, APLUS_LESSONS), (netplus, NETPLUS_LESSONS)):
+    for course, pack in ((aplus, APLUS_LESSONS), (netplus, NETPLUS_LESSONS), (client, CLIENT_LESSONS)):
         for ch in pack:
             if isinstance(ch, dict):
                 order, title, mins = ch['order'], ch['title'], ch.get('minutes', 60)

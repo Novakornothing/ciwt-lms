@@ -1555,6 +1555,14 @@ LESSON_LABS = {
     ("ITSUP", 13, 5): ["gui-about", "gui-ethernet", "gui-renew", "gui-services", "gui-update", "gui-accounts"],
     ("ITSUP", 13, 6): ["w11-processes", "w11-netsh"],
     ("NETOPS", 1, 2): ["win-ipconfig"],
+}
+# CLIENT course uses the same lesson labs as ITSUP chapters 8–13, remapped to 1–6
+_ITSUP_TO_CLIENT = {8: 1, 9: 2, 10: 3, 11: 4, 12: 5, 13: 6}
+for (_code, _ch, _lo), _ids in list(LESSON_LABS.items()):
+    if _code == "ITSUP" and _ch in _ITSUP_TO_CLIENT:
+        LESSON_LABS[("CLIENT", _ITSUP_TO_CLIENT[_ch], _lo)] = list(_ids)
+LESSON_LABS.update({
+    ("NETOPS", 1, 2): ["win-ipconfig"],
     ("NETOPS", 2, 1): ["sw-vlan-access"],
     ("NETOPS", 2, 2): ["sw-vlan-access", "sw-trunk-basics"],
     ("NETOPS", 2, 4): ["sw-vlan-and-trunk"],
@@ -1570,7 +1578,7 @@ LESSON_LABS = {
     ("NETOPS", 9, 4): ["rtr-edge-complete"],
     ("NETOPS", 9, 5): ["sw-vlan-and-trunk", "rtr-edge-complete"],
     ("NETOPS", 9, 6): ["sw-hostname-write", "rtr-hostname-write"],
-}
+})
 
 LAB_ALIGN = {
     "ticket-intake": "show ticket, classify, impact, escalate, note, submit — same order as Chapter 1.5.",

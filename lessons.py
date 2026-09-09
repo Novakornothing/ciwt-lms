@@ -5907,6 +5907,29 @@ APLUS[12] = CHAPTER13
 from raised_bar import apply_raised_bar
 apply_raised_bar(APLUS)
 
+import copy
+
+def _as_course_chapter(src, new_order):
+    ch = copy.deepcopy(src)
+    ch["order"] = new_order
+    raw = ch.get("title") or f"Chapter {new_order}"
+    # "Chapter 8 — Windows ..." → "Chapter 1 — Windows ..."
+    if " — " in raw:
+        ch["title"] = f"Chapter {new_order} — " + raw.split(" — ", 1)[1]
+    else:
+        ch["title"] = f"Chapter {new_order} — {raw}"
+    return ch
+
+# Shop / client-ops course (Core 2 analogue). Proprietary CIWT — not a vendor exam product.
+CLIENT = apply_raised_bar([
+    _as_course_chapter(CHAPTER8, 1),
+    _as_course_chapter(CHAPTER9, 2),
+    _as_course_chapter(CHAPTER10, 3),
+    _as_course_chapter(CHAPTER11, 4),
+    _as_course_chapter(CHAPTER12, 5),
+    _as_course_chapter(CHAPTER13, 6),
+])
+
 # Hands-on switch/router CLI lab track (simulators / isolated lab only)
 NETPLUS = NETPLUS + NETWORK_LAB_CHAPTERS
 _apply_ciwt_deepen(NETWORK_LAB_CHAPTERS)
