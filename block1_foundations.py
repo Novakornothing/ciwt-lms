@@ -18,8 +18,16 @@ CHAPTER1 = {
     "order": 1,
     "minutes": 240,
     "overview": (
-        "Block 1 (weeks 1–2). Classify work, stop when it is unsafe, write a ticket another watch "
-        "can use, then prove it in Lab ticket-intake. Do not open a chassis in this chapter."
+        "<p><strong>Block 1 gold standard.</strong> Weeks 1–2. Classify work, stop when it is unsafe, "
+        "write a ticket another watch can use, prove it in Lab ticket-intake. Do not open a chassis.</p>"
+        "<table class='port-table'><tr><th>Hour</th><th>Lesson</th><th>You do</th><th>Pass</th></tr>"
+        "<tr><td>1</td><td>1.1 Role</td><td>Classify four contacts out loud</td><td>Labels match the table</td></tr>"
+        "<tr><td>2</td><td>1.2 Safety</td><td>Point wall cord → strap → panel order</td><td>No one opens a PSU</td></tr>"
+        "<tr><td>3</td><td>1.3 Notes</td><td>Write one Ticket-B note</td><td>Action → result + next person</td></tr>"
+        "<tr><td>4</td><td>1.4 Talk / privacy</td><td>Refuse an unsafe reset</td><td>No password in the note</td></tr>"
+        "<tr><td>5–6</td><td>1.5 Lab</td><td>ticket-intake to submit</td><td>incident / many / escalate / heat named</td></tr>"
+        "</table>"
+        "<p>Chapter check: 10 items after 1.5. Printed run sheet: staff → Pilot 1–13.</p>"
     ),
     "lessons": [
         {
@@ -141,6 +149,15 @@ Ticket B can be worked. Ticket A forces the next person to start at zero.</p></d
 <div class="live-demo"><h4>Desk drill — before any hardware chapter</h4>
 <p>On a powered-off training PC, point to power cord, PSU switch if present, case screws, strap jack. Say the order you will use in Chapter 2: power off, unplug from the wall, wait, strap, then open.</p></div>
 
+<table class="port-table">
+<tr><th>Step</th><th>What you do</th><th>Fail if</th></tr>
+<tr><td>1</td><td>Power off the PC</td><td>You only close the lid</td></tr>
+<tr><td>2</td><td>Unplug the cord from the wall</td><td>You only unplug the PSU inlet</td></tr>
+<tr><td>3</td><td>Wait</td><td>You open immediately</td></tr>
+<tr><td>4</td><td>Strap on bare skin, clip to mat/chassis ground</td><td>Strap over a sleeve</td></tr>
+<tr><td>5</td><td>Then open the panel</td><td>Panel first</td></tr>
+</table>
+
 <section id="s1" class="sublesson"><h3>1. Electrical reality on a training bench</h3>
 <p>Treat every PSU and outlet as live until the cord is out of the wall (not just the PSU inlet) and you have waited. Do not defeat a ground pin. Do not work inside a PSU; replace the unit.</p>
 <p>Liquids, metal jewelry, and open drinks on the bench are how shorts and ruined ports happen.</p>
@@ -256,6 +273,15 @@ Ticket B can be worked. Ticket A forces the next person to start at zero.</p></d
 <div class="instructor-note"><h4>Instructor — 40 minutes</h4>
 <p>Role-play two calls: angry first-time access, and “disable the firewall for a game.” The class writes one user-facing sentence and one ticket sentence. Grade the refusal on policy, not volume.</p></div>
 <div class="build-on"><strong>Builds on:</strong> 1.3 notes. Same facts, aimed at a human who does not live in your tool.</div>
+<div class="live-demo"><h4>Desk drill — two sentences</h4>
+<p>User-facing: can they work, when, what you need from them.<br>
+Ticket: facts only. Lab still wants a clean <code>note</code> — no passwords.</p></div>
+<table class="port-table">
+<tr><th>Channel</th><th>Put this</th><th>Not this</th></tr>
+<tr><td>User</td><td>Outcome and next check-in</td><td>DHCP / APIPA lecture</td></tr>
+<tr><td>Ticket</td><td>Tests and results</td><td>Password, jokes, rants</td></tr>
+<tr><td>Lead phone</td><td>Judgment call</td><td>A novel in the ticket</td></tr>
+</table>
 <div class="plain-english"><h4>In plain English</h4>
 <p>The user needs: can I work, when, and what do you need from me. Your lead needs the theory. Put each message in the right channel.</p></div>
 
@@ -300,6 +326,15 @@ Better: “This PC does not have a usable network address. I am renewing it. If 
 <div class="build-on"><strong>Builds on:</strong> 1.1–1.4. This lesson is the rehearsal. The live lab is the performance.</div>
 <div class="plain-english"><h4>In plain English</h4>
 <p>You will see a raw sentence. You will not guess hardware yet. You will leave a structured intake. Chapters 2+ give you tools to test the guess.</p></div>
+<table class="port-table">
+<tr><th>Command</th><th>This card</th></tr>
+<tr><td><code>show ticket</code></td><td>Read heat + many badges</td></tr>
+<tr><td><code>classify incident</code></td><td>Not break-fix</td></tr>
+<tr><td><code>impact many</code></td><td>Not impact 1</td></tr>
+<tr><td><code>escalate yes</code></td><td>Facilities / access control</td></tr>
+<tr><td><code>note …</code></td><td>Warm reader, did not open panel</td></tr>
+<tr><td><code>submit</code></td><td>Fails until the five above exist</td></tr>
+</table>
 <div class="live-demo"><h4>Open lab ticket-intake now</h4>
 <p>Expected order:</p>
 <ol>

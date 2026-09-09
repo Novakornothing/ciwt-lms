@@ -5885,6 +5885,11 @@ from block5_network import CHAPTER5
 from block6_virt import CHAPTER6
 from block7_method import CHAPTER7
 from block8_windows import CHAPTER8
+from block9_crossplat import CHAPTER9
+from block10_security import CHAPTER10
+from block11_software import CHAPTER11
+from block12_ops import CHAPTER12
+from block13_cli import CHAPTER13
 APLUS[0] = CHAPTER1
 APLUS[1] = CHAPTER2
 APLUS[2] = CHAPTER3
@@ -5893,6 +5898,14 @@ APLUS[4] = CHAPTER5
 APLUS[5] = CHAPTER6
 APLUS[6] = CHAPTER7
 APLUS[7] = CHAPTER8
+APLUS[8] = CHAPTER9
+APLUS[9] = CHAPTER10
+APLUS[10] = CHAPTER11
+APLUS[11] = CHAPTER12
+APLUS[12] = CHAPTER13
+
+from raised_bar import apply_raised_bar
+apply_raised_bar(APLUS)
 
 # Hands-on switch/router CLI lab track (simulators / isolated lab only)
 NETPLUS = NETPLUS + NETWORK_LAB_CHAPTERS

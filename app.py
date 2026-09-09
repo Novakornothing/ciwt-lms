@@ -1458,7 +1458,7 @@ def instructor_pilot():
 
 
 def sync_pilot_slice():
-    """Keep Chapters 1–8 progress checks aligned to the pilot item banks."""
+    """Keep Chapters 1–13 progress checks aligned to the pilot item banks."""
     course = Course.query.filter_by(code='ITSUP').first() or Course.query.filter_by(code='APLUS').first()
     if not course:
         return 0
