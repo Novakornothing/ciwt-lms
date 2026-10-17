@@ -33,8 +33,8 @@ def _win_state(**extra):
         "dns_cache_flushed": False,
         "shell": "cmd",
         "edition": "Windows 11 Education",
-        "version": "23H2",
-        "build": "22631.3737",
+        "version": "25H2",
+        "build": "26200.9711",
         "user": "CIWT\\Trainee",
         "domain": "TRAINING",
         "pingable_ips": ["127.0.0.1", "10.20.30.1", "10.20.30.47", "10.20.30.50"],
@@ -1777,7 +1777,7 @@ def run_windows(cmd, state, done):
 
     if cl == "cmd":
         state["shell"] = "cmd"
-        out.append("Microsoft Windows [Version 10.0.22631.3737]")
+        out.append("Microsoft Windows [Version 10.0.26200.9711]")
         return out, state, done
 
     if cl in ("winver", "winver.exe"):

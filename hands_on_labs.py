@@ -44,9 +44,9 @@ WINDOWS_CLI_CHAPTERS = [
 <p>A <strong>virtual machine (VM)</strong> is a computer simulated in software on your host PC. You can break networking, install tools, and snapshot restore without destroying a physical classroom machine. Bridged mode can put a lab VM on the real network—use Host-Only or NAT unless an instructor directs otherwise.</p></div>
 <div class="vm-setup"><strong>Recommended starter lab</strong>
 <ul>
-<li>Hypervisor: Hyper-V, VMware Workstation Player, or VirtualBox (per site standard)</li>
-<li>Guest: Windows 10/11 evaluation or site lab image</li>
-<li>RAM: 4 GB+ guest if host allows; 2 virtual CPUs</li>
+<li>Hypervisor: Hyper-V (Windows Pro/Education/Enterprise), VMware Workstation Pro (free for personal, educational and commercial use since Nov 2024; the separate Workstation Player product was discontinued), or VirtualBox 7+ (per site standard)</li>
+<li>Guest: Windows 11 (Enterprise evaluation image from Microsoft, or the site's licensed lab image). Windows 10 reached end of support on 14 Oct 2025 — do not build new labs on it.</li>
+<li>RAM and firmware: Windows 11 needs at least 4 GB RAM, 2 virtual CPUs, 64 GB disk, UEFI with Secure Boot and a TPM 2.0 — enable the virtual TPM (Hyper-V Generation 2, VMware vTPM, or VirtualBox 7+ TPM 2.0)</li>
 <li>Network: NAT for internet updates; Host-Only for isolated peer labs</li>
 <li>Snapshot: take one clean snapshot before every major experiment</li>
 </ul></div>

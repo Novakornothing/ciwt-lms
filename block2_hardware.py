@@ -294,7 +294,7 @@ This card is a 9.6 × 9.6 in office tower → microATX. Later lessons add socket
 
 <section id="s4" class="sublesson"><h3>4. Note that ties Block 1 to Block 2</h3>
 <p>Example:</p>
-<p><code>CIWT-W11-07, Windows 11 Education 23H2. systeminfo RAM 16 GB matches two DDR5 sticks. list disk: Disk 0 256 GB GPT (OS), Disk 1 0 GB empty. No wipe. Next: image only Disk 0 after backup confirm.</code></p>
+<p><code>CIWT-W11-07, Windows 11 Education 25H2. systeminfo RAM 16 GB matches two DDR5 sticks. list disk: Disk 0 256 GB GPT (OS), Disk 1 0 GB empty. No wipe. Next: image only Disk 0 after backup confirm.</code></p>
 </section>
 
 <div class="miss-box"><h4>Common misses</h4>
