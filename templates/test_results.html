@@ -1,55 +1,53 @@
 {% extends "base.html" %}
 {% block title %}Results — {{ test.title }}{% endblock %}
 {% block content %}
+{% set pct = score|round(0)|int %}
 <div class="test-shell">
-  <div class="page-hero">
-    <h1 class="h3 mb-1">{% if passed %}Pass{% else %}Not yet passing{% endif %} · {{ score|round(0)|int }}%</h1>
-    <p>{{ correct }} of {{ total }} correct · Passing score {{ test.passing_score }}% · {{ test.title }}
-    {% if timed_out %}<span class="badge badge-closed ms-1">Submitted on time expiry</span>{% endif %}</p>
+  <div class="page-hero result-hero {{ 'is-pass' if passed else 'is-fail' }}">
+    <div class="result-badge" aria-hidden="true"><i class="bi {{ 'bi-patch-check' if passed else 'bi-arrow-repeat' }}"></i></div>
+    <div>
+      <h1 class="h3 mb-1">{% if passed %}Passed{% else %}Not passing yet{% endif %} · {{ pct }}%</h1>
+      <p class="mb-0">{{ test.title }} · pass mark {{ test.passing_score }}%
+      {% if timed_out %}<span class="badge badge-closed ms-1">Submitted when time ran out</span>{% endif %}</p>
+    </div>
   </div>
 
-  <div class="card mb-4">
-    <div class="card-header navy">Overall result</div>
-    <div class="card-body">
-      <div class="d-flex flex-wrap gap-3 align-items-center mb-2">
-        <span class="stat-pill">Score <strong>{{ '%.1f'|format(score) }}%</strong></span>
-        <span class="stat-pill">{% if passed %}<span class="text-success">Passed</span>{% else %}<span style="color:var(--danger)">Below pass mark</span>{% endif %}</span>
-        <span class="stat-pill">Pass mark {{ test.passing_score }}%</span>
-      </div>
-      <p class="text-muted small mb-2">
-        Item-level answers are not shown to students. Use the skill areas below. Anything under 80% is a struggle area — go back to that chapter and the matching lab.
-      </p>
-      {% set weak = categories | selectattr('pct', 'lt', 80) | list %}
+  <div class="kpi-row mb-4">
+    <div class="kpi-card{% if not passed %} kpi-alert{% endif %}"><div class="kpi-label">Score</div><div class="kpi-value">{{ '%.1f'|format(score) }}<small>%</small></div></div>
+    <div class="kpi-card"><div class="kpi-label">Correct</div><div class="kpi-value">{{ correct }}<small>/ {{ total }}</small></div></div>
+    <div class="kpi-card"><div class="kpi-label">Pass mark</div><div class="kpi-value">{{ test.passing_score }}<small>%</small></div></div>
+  </div>
+
+  {% set weak = categories | selectattr('pct', 'lt', 80) | list %}
+  <section class="card mb-4" aria-labelledby="catHead">
+    <div class="card-header navy" id="catHead">Results by skill area</div>
+    <div class="card-body pb-2">
       {% if weak %}
-      <p class="mb-0"><strong>Where you struggled:</strong>
-        {% for c in weak %}{{ c.category }} ({{ c.pct }}%){% if not loop.last %} · {% endif %}{% endfor %}
-      </p>
+      <p class="mb-2"><strong>Review first:</strong> {% for c in weak %}{{ c.category }}{% if not loop.last %}, {% endif %}{% endfor %}.</p>
       {% else %}
-      <p class="mb-0">No struggle area under 80% on this attempt.</p>
+      <p class="mb-2">Every skill area is at 80% or higher.</p>
       {% endif %}
+      <p class="field-hint mb-0">Individual answers stay hidden to keep the test fair. Under 80% in an area means: go back to that chapter and its lab.</p>
     </div>
-  </div>
-
-  <div class="card mb-4">
-    <div class="card-header navy">Performance by broad category</div>
-    <div class="list-group list-group-flush">
+    <ul class="list-group list-group-flush">
       {% for c in categories %}
-      <div class="list-group-item">
-        <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
+      <li class="list-group-item cat-row{% if c.pct < 80 %} is-weak{% endif %}">
+        <div class="cat-row-head">
           <strong>{{ c.category }}</strong>
-          <span>{{ c.correct }}/{{ c.total }} · <strong>{{ c.pct }}%</strong></span>
+          <span class="cat-score">{{ c.correct }}/{{ c.total }} · <strong>{{ c.pct }}%</strong></span>
         </div>
-        <div class="progress" style="height:.65rem">
-          <div class="progress-bar" style="width: {{ c.pct }}%"></div>
-        </div>
-      </div>
+        <meter class="cat-meter" min="0" max="100" low="80" optimum="100" value="{{ c.pct }}" aria-label="{{ c.category }}: {{ c.pct }} percent">{{ c.pct }}%</meter>
+      </li>
       {% else %}
-      <div class="list-group-item text-muted">No category data.</div>
+      <li class="list-group-item text-muted">No skill-area data for this test.</li>
       {% endfor %}
-    </div>
-  </div>
+    </ul>
+  </section>
 
   {% include '_gold_path.html' %}
-  <a href="{{ url_for('student_section', section_id=section_id) }}" class="btn btn-brand">Back to class</a>
+  <div class="result-actions">
+    <a href="{{ url_for('student_section_grades', section_id=section_id) }}" class="btn btn-brand">See my grades</a>
+    <a href="{{ url_for('student_section', section_id=section_id) }}" class="btn btn-outline-navy">Back to class</a>
+  </div>
 </div>
 {% endblock %}

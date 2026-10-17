@@ -73,7 +73,7 @@ def run_flow(pg, kind, path, shot):
         pg.locator('#confirmSubmit').tap()
     pg.wait_for_load_state('networkidle')
     body = pg.locator('main').inner_text()
-    check(f'{kind}: results page after submit', ('%' in body) and ('Score' in body or 'score' in body or 'correct' in body), pg.url)
+    check(f'{kind}: results page after submit', ('%' in body) and ('score' in body.lower()), pg.url)
     g = pg.evaluate(GEOM)
     check(f'{kind}: results fit phone width', g['sw'] <= g['W'] + 1, f"{g['sw']}")
     check(f'{kind}: tab bar back after submit', g['tabbar'] and g['tabbar']['shown'])
