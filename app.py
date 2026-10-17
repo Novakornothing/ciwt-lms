@@ -5328,6 +5328,9 @@ def admin_classes():
     )
 
 
+PEOPLE_PAGE_SIZE = 25
+
+
 @app.route('/admin/people')
 @login_required
 @role_required('admin')
@@ -5344,9 +5347,17 @@ def admin_people():
         like = f'%{q}%'
         users = users.filter(db.or_(User.first_name.ilike(like), User.last_name.ilike(like), User.email.ilike(like)))
     role_counts = dict(db.session.query(User.role, db.func.count(User.id)).group_by(User.role).all())
+    total = users.count()
+    pages = max(1, -(-total // PEOPLE_PAGE_SIZE))
+    page = min(max(request.args.get('page', 1, type=int) or 1, 1), pages)
+    rows = (users.order_by(User.role, User.last_name, User.first_name, User.id)
+            .offset((page - 1) * PEOPLE_PAGE_SIZE).limit(PEOPLE_PAGE_SIZE).all())
+    pager = {'page': page, 'pages': pages, 'total': total,
+             'first': (page - 1) * PEOPLE_PAGE_SIZE + 1 if total else 0,
+             'last': (page - 1) * PEOPLE_PAGE_SIZE + len(rows)}
     return render_template(
         'admin_people.html', admin_tab='admin_people',
-        users=users.order_by(User.role, User.last_name, User.first_name).all(), role=role, q=q, role_counts=role_counts,
+        users=rows, pager=pager, role=role, q=q, role_counts=role_counts,
         sections=ClassSection.query.all(),
         instructors=User.query.filter_by(role='instructor').order_by(User.last_name, User.first_name).all(),
         admins=User.query.filter_by(role='admin').order_by(User.last_name, User.first_name).all(),

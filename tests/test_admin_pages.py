@@ -78,3 +78,29 @@ def test_instructor_mode_hides_admin_subpages(admin):
             assert r.status_code in (302, 303) and '/instructor' in r.headers['Location'], path
     finally:
         admin.get('/admin/view-as/admin')
+
+
+def test_people_list_is_paginated_and_keeps_filters(admin, mod, monkeypatch):
+    import re
+    monkeypatch.setattr(mod, 'PEOPLE_PAGE_SIZE', 5)
+    with mod.app.app_context():
+        n_students = mod.User.query.filter_by(role='student').count()
+        n_all = mod.User.query.count()
+    assert n_students > 10
+    emails = lambda b: re.findall(r'<td class="small text-break">([^<]+)</td>', b)
+    p1 = admin.get('/admin/people?role=student').get_data(as_text=True)
+    assert len(emails(p1)) == 5
+    assert f'Showing 1–5 of {n_students}' in p1 and f'Everyone <span class="chip-count">{n_students}</span>' in p1
+    assert 'aria-label="People list pages"' in p1 and 'href="/admin/people?role=student&amp;page=2#admin-users"' in p1
+    p2 = admin.get('/admin/people?role=student&page=2').get_data(as_text=True)
+    assert len(emails(p2)) == 5 and not set(emails(p1)) & set(emails(p2))
+    assert 'rel="prev"' in p2 and 'aria-current="page">2<' in p2
+    last = -(-n_students // 5)
+    pl = admin.get(f'/admin/people?role=student&page={last + 7}').get_data(as_text=True)   # out of range clamps to last page
+    assert f'of {n_students}' in pl and 'rel="next"' not in pl and f'aria-current="page">{last}<' in pl
+    for b in (p1, p2, pl):
+        assert b.count('role-badge role-student') == len(emails(b)) and 'role-badge role-admin' not in b
+    allp = admin.get('/admin/people?page=0').get_data(as_text=True)                        # below range clamps to 1
+    assert f'Showing 1–5 of {n_all}' in allp
+    q = admin.get('/admin/people?q=student1%40').get_data(as_text=True)
+    assert 'Showing 1–1 of 1' in q and 'People list pages' not in q                     # a single page needs no pager
