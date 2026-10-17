@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Helix consent — CIWT LMS{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="eyebrow">Helix attention · consent</div>
+  <h1 class="h3 mb-1">Take part in the attention signal?</h1>
+  <p class="mb-0">Policy v{{ policy_version }} · optional · never a grade</p>
+</div>
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        {% if current %}
+        <div class="ui-callout ui-callout-success mb-3"><i class="bi bi-check-circle" aria-hidden="true"></i><div>You agreed on {{ consent.granted_at.strftime('%b %d, %Y') }} (camera: {{ 'yes' if consent.camera_ok else 'no' }}, reading signal: {{ 'yes' if consent.passive_ok else 'no' }}).</div></div>
+        {% elif consent %}
+        <div class="ui-callout ui-callout-accent mb-3"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><div>The policy changed since you agreed (v{{ consent.policy_version }}). Please review and agree again.</div></div>
+        {% endif %}
+        <p>Read the <a href="{{ url_for('helix.policy') }}">full policy</a>. In short: video stays in your browser, only lesson-block timings are stored, it is not a grade, and you can withdraw and delete at any time.</p>
+        <form method="post">
+          <input type="hidden" name="next" value="{{ next_url }}">
+          <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="agree" name="agree" value="1" required>
+            <label class="form-check-label" for="agree">I have read the policy and agree to take part.</label></div>
+          <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="camera_ok" name="camera_ok" value="1" {% if not consent or consent.camera_ok %}checked{% endif %}>
+            <label class="form-check-label" for="camera_ok">Allow camera gaze estimation (laptop/desktop)</label></div>
+          <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="passive_ok" name="passive_ok" value="1" {% if not consent or consent.passive_ok %}checked{% endif %}>
+            <label class="form-check-label" for="passive_ok">Allow the no-camera reading signal (any device)</label></div>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-brand" name="action" value="grant">Save consent</button>
+            {% if consent %}<button class="btn btn-outline-danger" name="action" value="revoke" formnovalidate>Withdraw consent</button>{% endif %}
+            <a class="btn btn-outline-secondary" href="{{ next_url }}">Not now</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

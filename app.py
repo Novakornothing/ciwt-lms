@@ -156,58 +156,16 @@ class Lesson(db.Model):
     estimated_minutes = db.Column(db.Integer, default=30)
 
 
-HELIX_POLICY_VERSION = '2026-09-06'
-HELIX_ENGINE = 'webgazer'
-
-
-class HelixAttentionEvent(db.Model):
-    """Legacy heading beat. Prefer HelixGazeSession + HelixAoiBucket."""
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'))
-    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
-    heading = db.Column(db.String(240), default='')
-    seconds = db.Column(db.Float, default=0)
-    focused = db.Column(db.Float, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class HelixGazeSession(db.Model):
-    """One opt-in WebGazer run on a lesson. Stores the AOI timeline JSON."""
-    __tablename__ = 'helix_gaze_session'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'))
-    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
-    engine = db.Column(db.String(40), default=HELIX_ENGINE)
-    consent_version = db.Column(db.String(20), default=HELIX_POLICY_VERSION)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
-    ended_at = db.Column(db.DateTime)
-    calibration_points = db.Column(db.Integer, default=0)
-    calibration_score = db.Column(db.Integer, default=0)
-    viewport_w = db.Column(db.Integer, default=0)
-    viewport_h = db.Column(db.Integer, default=0)
-    sample_count = db.Column(db.Integer, default=0)
-    timeline_json = db.Column(db.Text, default='[]')
-    status = db.Column(db.String(20), default='running')
-
-
-class HelixAoiBucket(db.Model):
-    """Queryable dwell per student / lesson / heading. Not a grade."""
-    __tablename__ = 'helix_aoi_bucket'
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.Integer, db.ForeignKey('helix_gaze_session.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'))
-    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
-    aoi_key = db.Column(db.String(80), default='')
-    aoi_label = db.Column(db.String(240), default='')
-    aoi_order = db.Column(db.Integer, default=0)
-    dwell_ms = db.Column(db.Integer, default=0)
-    visits = db.Column(db.Integer, default=0)
-    first_ms = db.Column(db.Integer, default=0)
-    last_ms = db.Column(db.Integer, default=0)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+# ---- Helix attention signal: models live in helix/models.py (see helix/__init__.py)
+import helix as helix_pkg
+_helix_models = helix_pkg.define_models(db)
+HelixAttentionEvent = _helix_models.HelixAttentionEvent
+HelixGazeSession = _helix_models.HelixGazeSession
+HelixAoiBucket = _helix_models.HelixAoiBucket
+HelixConsent = _helix_models.HelixConsent
+HelixSectionSetting = _helix_models.HelixSectionSetting
+HELIX_POLICY_VERSION = helix_pkg.POLICY_VERSION
+HELIX_ENGINE = helix_pkg.ENGINE
 
 
 class Quiz(db.Model):
@@ -2828,385 +2786,8 @@ def view_lesson(section_id, module_id, lesson_id):
     )
 
 
-def _helix_owns_session(sess):
-    if not sess:
-        return False
-    if sess.user_id == current_user.id:
-        return True
-    if current_user.role == 'admin':
-        return True
-    if current_user.role == 'instructor' and sess.section_id:
-        sec = ClassSection.query.get(sess.section_id)
-        return bool(sec and instructor_can_access_section(current_user, sec))
-    return False
-
-
-def _helix_merge_timeline(existing_json, segments):
-    try:
-        cur = json.loads(existing_json or '[]')
-    except Exception:
-        cur = []
-    if not isinstance(cur, list):
-        cur = []
-    for seg in segments or []:
-        if not isinstance(seg, dict):
-            continue
-        try:
-            t0 = max(0, int(float(seg.get('t0') or 0)))
-            t1 = max(t0, int(float(seg.get('t1') or t0)))
-        except (TypeError, ValueError):
-            continue
-        if t1 - t0 > 120000:
-            t1 = t0 + 120000
-        cur.append({
-            't0': t0,
-            't1': t1,
-            'aoi': str(seg.get('aoi') or 'unknown')[:80],
-            'label': str(seg.get('label') or seg.get('aoi') or '')[:240],
-            'n': min(5000, int(seg.get('n') or 0)),
-            'conf': float(seg.get('conf') or 0),
-        })
-    if len(cur) > 800:
-        cur = cur[-800:]
-    return json.dumps(cur)
-
-
-@app.route('/api/helix/beat', methods=['POST'])
-@login_required
-def helix_beat():
-    data = request.get_json(silent=True) or {}
-    heading = (data.get('heading') or 'Lesson')[:240]
-    try:
-        seconds = min(30.0, max(0.0, float(data.get('seconds') or 0)))
-        focused = min(seconds, max(0.0, float(data.get('focused') or 0)))
-    except (TypeError, ValueError):
-        return jsonify({'ok': False}), 400
-    lesson_id = data.get('lesson_id')
-    section_id = data.get('section_id')
-    if not lesson_id:
-        return jsonify({'ok': False}), 400
-    ev = HelixAttentionEvent(
-        user_id=current_user.id,
-        section_id=int(section_id) if section_id else None,
-        lesson_id=int(lesson_id),
-        heading=heading,
-        seconds=seconds,
-        focused=focused,
-    )
-    db.session.add(ev)
-    db.session.commit()
-    return jsonify({'ok': True})
-
-
-@app.route('/api/helix/session/start', methods=['POST'])
-@login_required
-def helix_session_start():
-    data = request.get_json(silent=True) or {}
-    lesson_id = data.get('lesson_id')
-    if not lesson_id:
-        return jsonify({'ok': False, 'error': 'lesson required'}), 400
-    lesson = Lesson.query.get(int(lesson_id))
-    if not lesson:
-        return jsonify({'ok': False}), 404
-    section_id = data.get('section_id')
-    sess = HelixGazeSession(
-        user_id=current_user.id,
-        section_id=int(section_id) if section_id else None,
-        lesson_id=lesson.id,
-        engine=HELIX_ENGINE,
-        consent_version=str(data.get('consent_version') or HELIX_POLICY_VERSION)[:20],
-        viewport_w=int(data.get('viewport_w') or 0),
-        viewport_h=int(data.get('viewport_h') or 0),
-        timeline_json='[]',
-        status='running',
-    )
-    db.session.add(sess)
-    db.session.commit()
-    audit('helix_session_start', f'lesson={lesson.id} session={sess.id}')
-    return jsonify({'ok': True, 'session_id': sess.id, 'engine': HELIX_ENGINE, 'policy': HELIX_POLICY_VERSION})
-
-
-@app.route('/api/helix/session/<int:session_id>/calibrated', methods=['POST'])
-@login_required
-def helix_session_calibrated(session_id):
-    sess = HelixGazeSession.query.get_or_404(session_id)
-    if sess.user_id != current_user.id:
-        abort(403)
-    data = request.get_json(silent=True) or {}
-    sess.calibration_points = min(12, int(data.get('calibration_points') or 0))
-    sess.calibration_score = min(100, int(data.get('calibration_score') or 0))
-    db.session.commit()
-    return jsonify({'ok': True})
-
-
-@app.route('/api/helix/session/<int:session_id>/timeline', methods=['POST'])
-@login_required
-def helix_session_timeline(session_id):
-    sess = HelixGazeSession.query.get_or_404(session_id)
-    if sess.user_id != current_user.id:
-        abort(403)
-    data = request.get_json(silent=True) or {}
-    segments = data.get('segments') or []
-    if len(segments) > 250:
-        segments = segments[:250]
-    sess.timeline_json = _helix_merge_timeline(sess.timeline_json, segments)
-    sess.sample_count = max(sess.sample_count or 0, int(data.get('sample_count') or 0))
-    if data.get('viewport_w'):
-        sess.viewport_w = int(data.get('viewport_w') or 0)
-        sess.viewport_h = int(data.get('viewport_h') or 0)
-    for b in data.get('buckets') or []:
-        if not isinstance(b, dict):
-            continue
-        key = str(b.get('aoi_key') or b.get('aoi') or '')[:80]
-        if not key:
-            continue
-        row = HelixAoiBucket.query.filter_by(session_id=sess.id, aoi_key=key).first()
-        if not row:
-            row = HelixAoiBucket(
-                session_id=sess.id,
-                user_id=sess.user_id,
-                section_id=sess.section_id,
-                lesson_id=sess.lesson_id,
-                aoi_key=key,
-            )
-            db.session.add(row)
-        row.aoi_label = str(b.get('aoi_label') or b.get('label') or key)[:240]
-        row.aoi_order = int(b.get('aoi_order') or 0)
-        row.dwell_ms = min(3_600_000, int(b.get('dwell_ms') or 0))
-        row.visits = min(10_000, int(b.get('visits') or 0))
-        row.first_ms = int(b.get('first_ms') or 0)
-        row.last_ms = int(b.get('last_ms') or 0)
-        row.updated_at = datetime.utcnow()
-    if data.get('end'):
-        sess.status = 'ended'
-        sess.ended_at = datetime.utcnow()
-    db.session.commit()
-    return jsonify({'ok': True})
-
-
-@app.route('/api/helix/lesson-summary/<int:lesson_id>')
-@login_required
-def helix_lesson_summary(lesson_id):
-    buckets = HelixAoiBucket.query.filter_by(user_id=current_user.id, lesson_id=lesson_id).all()
-    by = {}
-    for r in buckets:
-        slot = by.setdefault(r.aoi_label or r.aoi_key or 'Lesson', {'dwell_ms': 0, 'visits': 0})
-        slot['dwell_ms'] += r.dwell_ms or 0
-        slot['visits'] += r.visits or 0
-    if not by:
-        rows = HelixAttentionEvent.query.filter_by(user_id=current_user.id, lesson_id=lesson_id).all()
-        for r in rows:
-            slot = by.setdefault(r.heading or 'Lesson', {'dwell_ms': 0, 'visits': 0})
-            slot['dwell_ms'] += int((r.seconds or 0) * 1000)
-            slot['visits'] += 1
-    total = sum(v['dwell_ms'] for v in by.values()) or 1
-    review = []
-    for heading, slot in by.items():
-        if heading in ('Off page', 'Page chrome', 'off_page', 'chrome'):
-            continue
-        sec = slot['dwell_ms'] / 1000.0
-        share = slot['dwell_ms'] / total
-        if sec >= 2 and share < 0.08:
-            review.append({
-                'heading': heading,
-                'aoi_label': heading,
-                'seconds': round(sec, 1),
-                'dwell_ms': slot['dwell_ms'],
-                'focus': round(share * 100),
-            })
-    review.sort(key=lambda x: x['dwell_ms'])
-    return jsonify({'review': review[:8], 'policy': HELIX_POLICY_VERSION})
-
-
-@app.route('/policy/attention')
-def helix_attention_policy():
-    return render_template('helix_policy.html', policy_version=HELIX_POLICY_VERSION)
-
-
-def _helix_section_or_403(section_id):
-    section = ClassSection.query.get_or_404(section_id)
-    if current_user.role == 'admin':
-        return section
-    if current_user.role != 'instructor' or not instructor_can_access_section(current_user, section):
-        abort(403)
-    return section
-
-
-@app.route('/instructor/section/<int:section_id>/attention')
-@login_required
-def instructor_attention(section_id):
-    section = _helix_section_or_403(section_id)
-    sessions = HelixGazeSession.query.filter_by(section_id=section.id).all()
-    buckets = HelixAoiBucket.query.filter_by(section_id=section.id).all()
-    by_user = {}
-    for s in sessions:
-        slot = by_user.setdefault(s.user_id, {'user_id': s.user_id, 'sessions': 0, 'last': None, 'name': ''})
-        slot['sessions'] += 1
-        if not slot['last'] or (s.started_at and s.started_at > slot['last']):
-            slot['last'] = s.started_at
-    user_ids = list(by_user.keys()) or [0]
-    users = {u.id: u for u in User.query.filter(User.id.in_(user_ids)).all()}
-    students = []
-    for uid, slot in by_user.items():
-        u = users.get(uid)
-        slot['name'] = u.full_name if u else f'User {uid}'
-        students.append(slot)
-    students.sort(key=lambda r: r['name'])
-    aoi_map = {}
-    total_ms = 0
-    for b in buckets:
-        if (b.aoi_key or '') in ('off_page', 'chrome') or (b.aoi_label or '') in ('Off page', 'Page chrome'):
-            continue
-        key = b.aoi_label or b.aoi_key
-        slot = aoi_map.setdefault(key, {'label': key, 'dwell_ms': 0, 'visits': 0, 'students': set()})
-        slot['dwell_ms'] += b.dwell_ms or 0
-        slot['visits'] += b.visits or 0
-        slot['students'].add(b.user_id)
-        total_ms += b.dwell_ms or 0
-    aois = []
-    for slot in aoi_map.values():
-        minutes = (slot['dwell_ms'] or 0) / 60000.0
-        share = int(round(100.0 * slot['dwell_ms'] / (total_ms or 1)))
-        aois.append({
-            'label': slot['label'],
-            'minutes': minutes,
-            'visits': slot['visits'],
-            'students': len(slot['students']),
-            'share': share,
-            'bar': min(100, share),
-            'dwell_ms': slot['dwell_ms'],
-        })
-    aois.sort(key=lambda x: x['dwell_ms'], reverse=True)
-    lesson_map = {}
-    for s in sessions:
-        lesson_map.setdefault(s.lesson_id, 0)
-        lesson_map[s.lesson_id] += 1
-    lesson_rows = []
-    if lesson_map:
-        for les in Lesson.query.filter(Lesson.id.in_(list(lesson_map.keys()))).all():
-            lesson_rows.append(type('L', (), {
-                'id': les.id, 'title': les.title, 'sessions': lesson_map[les.id]
-            })())
-        lesson_rows.sort(key=lambda L: L.title)
-    return render_template(
-        'instructor_attention.html',
-        section=section,
-        students=students,
-        aois=aois[:24],
-        lessons=lesson_rows,
-        n_sessions=len(sessions),
-        n_students=len(students),
-        n_lessons=len(lesson_rows),
-    )
-
-
-@app.route('/instructor/section/<int:section_id>/attention/student/<int:user_id>')
-@login_required
-def instructor_attention_student(section_id, user_id):
-    section = _helix_section_or_403(section_id)
-    student = User.query.get_or_404(user_id)
-    sessions = (
-        HelixGazeSession.query
-        .filter_by(section_id=section.id, user_id=user_id)
-        .order_by(HelixGazeSession.started_at.desc())
-        .all()
-    )
-    by_lesson = {}
-    for s in sessions:
-        by_lesson.setdefault(s.lesson_id, []).append(s)
-    blocks = []
-    for lid, sess_list in by_lesson.items():
-        lesson = Lesson.query.get(lid)
-        if not lesson:
-            continue
-        aois = HelixAoiBucket.query.filter_by(section_id=section.id, user_id=user_id, lesson_id=lid).all()
-        aois.sort(key=lambda a: (-(a.dwell_ms or 0), a.aoi_order or 0))
-        try:
-            timeline = json.loads(sess_list[0].timeline_json or '[]')
-        except Exception:
-            timeline = []
-        blocks.append({
-            'lesson': lesson,
-            'sessions': sess_list,
-            'aois': aois[:16],
-            'timeline': timeline[:40],
-        })
-    blocks.sort(key=lambda b: b['lesson'].title)
-    return render_template(
-        'instructor_attention_student.html',
-        section=section,
-        student=student,
-        blocks=blocks,
-    )
-
-
-@app.route('/instructor/section/<int:section_id>/attention/lesson/<int:lesson_id>')
-@login_required
-def instructor_attention_lesson(section_id, lesson_id):
-    section = _helix_section_or_403(section_id)
-    lesson = Lesson.query.get_or_404(lesson_id)
-    buckets = HelixAoiBucket.query.filter_by(section_id=section.id, lesson_id=lesson_id).all()
-    grouped = {}
-    total = 0
-    for b in buckets:
-        if (b.aoi_key or '') in ('off_page', 'chrome'):
-            continue
-        key = b.aoi_label or b.aoi_key
-        slot = grouped.setdefault(key, {'label': key, 'dwell_ms': 0, 'visits': 0, 'students': set()})
-        slot['dwell_ms'] += b.dwell_ms or 0
-        slot['visits'] += b.visits or 0
-        slot['students'].add(b.user_id)
-        total += b.dwell_ms or 0
-    aois = []
-    n_head = max(1, len(grouped))
-    fair = (total / n_head) if total else 1
-    for slot in grouped.values():
-        aois.append({
-            'label': slot['label'],
-            'minutes': (slot['dwell_ms'] or 0) / 60000.0,
-            'visits': slot['visits'],
-            'students': len(slot['students']),
-            'thin': slot['dwell_ms'] < fair * 0.45,
-        })
-    aois.sort(key=lambda x: x['minutes'])
-    return render_template(
-        'instructor_attention_lesson.html',
-        section=section,
-        lesson=lesson,
-        aois=aois,
-    )
-
-
-@app.route('/instructor/section/<int:section_id>/attention.csv')
-@login_required
-def helix_attention_csv(section_id):
-    section = _helix_section_or_403(section_id)
-    buckets = HelixAoiBucket.query.filter_by(section_id=section.id).all()
-    user_ids = {b.user_id for b in buckets} or {0}
-    lesson_ids = {b.lesson_id for b in buckets} or {0}
-    users = {u.id: u for u in User.query.filter(User.id.in_(user_ids)).all()}
-    lessons = {L.id: L for L in Lesson.query.filter(Lesson.id.in_(lesson_ids)).all()}
-    buf = StringIO()
-    w = csv.writer(buf)
-    w.writerow(['student', 'email', 'lesson', 'aoi', 'dwell_ms', 'visits', 'session_id'])
-    for b in buckets:
-        u = users.get(b.user_id)
-        L = lessons.get(b.lesson_id)
-        w.writerow([
-            u.full_name if u else b.user_id,
-            u.email if u else '',
-            L.title if L else b.lesson_id,
-            b.aoi_label or b.aoi_key,
-            b.dwell_ms or 0,
-            b.visits or 0,
-            b.session_id or '',
-        ])
-    return Response(
-        buf.getvalue(),
-        mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment; filename=attention-section-{section_id}.csv'},
-    )
-
+# Helix API + dashboards are registered from helix/routes.py (blueprint "helix")
+# just before init_db() at the bottom of this file.
 
 
 @app.route('/student/quiz/<int:section_id>/<int:quiz_id>', methods=['GET', 'POST'])
@@ -6757,84 +6338,15 @@ def seed_database():
 
 
 def _seed_helix_demo(section, students):
-    """Populate sample AOI timelines so the instructor dashboard is not empty."""
+    """Populate clearly-labelled demo AOI timelines (is_demo=True) for the dashboard."""
     lessons = (
         Lesson.query.join(Module)
         .filter(Module.course_id == section.course_id)
-        .order_by(Lesson.id)
-        .limit(3)
+        .order_by(Module.order, Lesson.order)
+        .limit(4)
         .all()
     )
-    if not lessons or not students:
-        return
-    heading_sets = []
-    for les in lessons:
-        found = re.findall(r'<h[2-5][^>]*>(.*?)</h[2-5]>', les.content or '', flags=re.I | re.S)
-        labels = []
-        for raw in found:
-            lab = re.sub(r'<[^>]+>', '', raw)
-            lab = re.sub(r'\s+', ' ', lab).strip()
-            if lab and lab not in labels:
-                labels.append(lab[:240])
-        if not labels:
-            labels = ['Lesson body', 'Practice standard for this lesson', 'Beyond the quiz']
-        heading_sets.append(labels[:8])
-    demo_students = students[:6]
-    weights = [18, 14, 22, 9, 16, 7, 11, 5]
-    for si, stu in enumerate(demo_students):
-        for li, les in enumerate(lessons):
-            labels = heading_sets[li]
-            started = datetime.utcnow() - timedelta(days=3 - li, hours=si)
-            timeline = []
-            t = 0
-            sess = HelixGazeSession(
-                user_id=stu.id,
-                section_id=section.id,
-                lesson_id=les.id,
-                engine=HELIX_ENGINE,
-                consent_version=HELIX_POLICY_VERSION,
-                started_at=started,
-                ended_at=started + timedelta(minutes=8 + si),
-                calibration_points=9,
-                calibration_score=72 + (si * 3),
-                viewport_w=1440,
-                viewport_h=900,
-                sample_count=400 + si * 40,
-                status='ended',
-            )
-            db.session.add(sess)
-            db.session.flush()
-            for hi, lab in enumerate(labels):
-                dwell = int((weights[hi % len(weights)] + (si * 2) - (hi * 1.4)) * 1000)
-                dwell = max(1200, dwell)
-                if si == 2 and hi in (3, 4):
-                    dwell = 800
-                visits = 1 + (hi % 3)
-                timeline.append({
-                    't0': t,
-                    't1': t + dwell,
-                    'aoi': f'h{hi}',
-                    'label': lab,
-                    'n': max(4, dwell // 80),
-                    'conf': 0.6,
-                })
-                db.session.add(HelixAoiBucket(
-                    session_id=sess.id,
-                    user_id=stu.id,
-                    section_id=section.id,
-                    lesson_id=les.id,
-                    aoi_key=f'h{hi}',
-                    aoi_label=lab,
-                    aoi_order=hi,
-                    dwell_ms=dwell,
-                    visits=visits,
-                    first_ms=t,
-                    last_ms=t + dwell,
-                ))
-                t += dwell + 400
-            sess.timeline_json = json.dumps(timeline)
-            sess.sample_count = max(sess.sample_count, t // 40)
-    db.session.commit()
+    return helix_pkg.seed_demo(db, _helix_models, section, list(students)[:8], lessons)
 
 
 
@@ -7109,17 +6621,20 @@ def _ensure_gold_path_releases():
 def init_db():
     db.create_all()
     _ensure_schema()
+    helix_pkg.ensure_schema(db)
     if User.query.count() == 0:
         print('Seeding database...')
         seed_database()
         return
     try:
-        if HelixGazeSession.query.count() == 0:
+        live = (HelixGazeSession.query
+                .filter(HelixGazeSession.lesson_id.in_(db.session.query(Lesson.id))).count())
+        if live == 0 and os.environ.get('HELIX_DEMO_SEED', '1') != '0':
             section = ClassSection.query.filter(ClassSection.name.ilike('%Section A%')).first()
-            students = User.query.filter_by(role='student').order_by(User.id).limit(6).all()
+            students = User.query.filter_by(role='student').order_by(User.id).limit(8).all()
             if section and students:
-                _seed_helix_demo(section, students)
-                print('Seeded Helix AOI demo timelines.')
+                n = _seed_helix_demo(section, students)
+                print(f'Seeded {n} Helix demo sessions (is_demo=True).')
         if TqiCritique.query.count() == 0:
             _seed_tqi_demo()
             print('Seeded TQI demo critiques.')
@@ -7150,6 +6665,20 @@ def init_db():
     except Exception as e:
         print('Gold path release note:', e)
 
+
+import gradebook as gradebook_mod
+gradebook_mod.register(app, db, dict(
+    User=User, ClassSection=ClassSection, Enrollment=Enrollment, KnowledgeTest=KnowledgeTest,
+    TestAttempt=TestAttempt, Quiz=Quiz, QuizAttempt=QuizAttempt, Module=Module, LabCompletion=LabCompletion,
+    can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    is_content_available=lambda *a, **k: is_content_available(*a, **k),
+    audit=lambda action, detail='': audit(action, detail),
+))
+helix_pkg.init_app(app, db, dict(
+    User=User, Lesson=Lesson, Module=Module, ClassSection=ClassSection, Enrollment=Enrollment,
+    can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    audit=lambda action, detail='': audit(action, detail),
+))
 
 with app.app_context():
     init_db()

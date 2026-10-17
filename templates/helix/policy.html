@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Helix attention policy — CIWT LMS{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Attention policy</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">Written product policy · v{{ policy_version }}</div>
+  <h1 class="h3 mb-1">Helix attention is a signal, not an assessment</h1>
+  <p class="mb-0">Opt-in · camera video never leaves the browser · you can stop, withdraw, and delete at any time</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header navy">In one minute</div>
+      <div class="card-body">
+        <ul class="ui-checklist mb-0">
+          <li><strong>Optional.</strong> Saying “Not now” changes nothing about your lessons, labs, quizzes, tests, or grades.</li>
+          <li><strong>Two ways to take part.</strong> <em>Camera gaze</em> (laptop/desktop) estimates which part of the lesson your eyes are on. The <em>reading signal</em> (any device, no camera) uses which block is on your reading line, whether the tab is visible, and recent scrolling or touch.</li>
+          <li><strong>What is stored:</strong> lesson blocks (headings) you spent time on, how long, in what order, a coarse page heatmap, and data-quality details (calibration accuracy, face-not-detected and tab-hidden time).</li>
+          <li><strong>What is never stored:</strong> camera images or video, keystrokes, other tabs, or anything outside the lesson page.</li>
+          <li><strong>Who sees it:</strong> you, and instructors/admins who already have access to your class.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header navy">What Helix is not</div>
+      <div class="card-body">
+        <ul class="mb-0">
+          <li>Not a grade, score, GPA input, or knowledge-test substitute. The gradebook never reads Helix data.</li>
+          <li>Not attendance, “time on task” for pay or discipline, or exam proctoring.</li>
+          <li>Not proof of understanding, cheating, or inattention. Glasses, lighting, posture, looking at notes or a lab window all move the signal.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header navy">How the camera estimate works</div>
+      <div class="card-body">
+        <ol class="mb-0">
+          <li><strong>In-browser engine.</strong> WebGazer runs locally and maps eye features to screen positions. Frames are processed in memory and discarded.</li>
+          <li><strong>Calibration.</strong> You click nine dots (five clicks each) so the model learns your eyes, then look at five dots without clicking. Helix measures the gap between the dots and its estimate and reports an <em>accuracy score</em>. Below your class threshold it suggests recalibrating; after two tries it offers the reading signal instead.</li>
+          <li><strong>Smoothing.</strong> Single-frame spikes are rejected against a rolling median, real eye jumps are confirmed over several frames, and a Kalman filter steadies the estimate. Switching between headings needs ~150&nbsp;ms of agreement so jitter is not counted as reading.</li>
+          <li><strong>Honest gaps.</strong> If your face is not detected, the tab is hidden, or the estimate is too noisy, that time is labelled as such — never counted as reading and never as “not paying attention”.</li>
+          <li><strong>Drift.</strong> After 12 minutes, or if confidence stays low, Helix offers a quick recalibration.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header navy">Rules for schoolhouse use</div>
+      <div class="card-body">
+        <ol class="mb-2">
+          <li>Participation is opt-in, recorded with a versioned consent you can withdraw.</li>
+          <li>Instructors may turn Helix off for a class and set the accuracy threshold.</li>
+          <li>Do not put dwell or attention percentages on a score sheet, promotion package, or counseling record.</li>
+          <li>Do not require Helix to sit any quiz or test.</li>
+          <li>Treat thin dwell as a prompt to ask a question or revisit a heading.</li>
+          <li>Students may stop any session, withdraw consent, and delete their stored sessions from <a href="{{ url_for('helix.my_data') }}">My attention data</a>.</li>
+        </ol>
+        <p class="mb-0 small text-muted">If a command or contract requires a different rule, write it down and keep this page as the product default until it is replaced.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header navy">Data stored per session</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><th scope="row">Who / where</th><td>Student, class, lesson, start/end time</td></tr>
+            <tr><th scope="row">Mode</th><td>Camera or reading signal; device class</td></tr>
+            <tr><th scope="row">Quality</th><td>Accuracy %, error px, recalibrations</td></tr>
+            <tr><th scope="row">Timeline</th><td>Block key, label, start/end ms</td></tr>
+            <tr><th scope="row">Totals</th><td>Reading, away, face-lost, hidden, low-confidence ms</td></tr>
+            <tr><th scope="row">Heatmap</th><td>20×60 grid of ms over the lesson body</td></tr>
+            <tr><th scope="row">Provenance</th><td>Engine, policy version</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if current_user.is_authenticated %}
+    <div class="card"><div class="card-body d-grid gap-2">
+      {% if current_user.role == 'student' %}
+      <a class="btn btn-brand" href="{{ url_for('helix.my_data') }}">My attention data &amp; consent</a>
+      <a class="btn btn-outline-navy" href="{{ url_for('student_dashboard') }}">Back to training</a>
+      {% else %}
+      <a class="btn btn-brand" href="{{ url_for('instructor_dashboard') }}">Back to classes</a>
+      {% endif %}
+    </div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

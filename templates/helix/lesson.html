@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "helix/_macros.html" import mix_bar, band_badge, demo_ribbon, signal_notice with context %}
+{% block title %}Attention — {{ lesson.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('helix.instructor_attention', section_id=section.id) }}">Attention</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ lesson.title }}</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="d-flex flex-wrap justify-content-between gap-3">
+    <div>
+      <div class="eyebrow">Helix attention · lesson view</div>
+      <h1 class="h3 mb-1">{{ lesson.title }}</h1>
+      <p class="mb-0">{{ n_sessions }} session{{ 's' if n_sessions != 1 }} · {{ students|length }} student{{ 's' if students|length != 1 }} · {{ (total_ms/60000)|round(1) }} reading min</p>
+    </div>
+    <div><a class="btn btn-sm btn-outline-light" href="{{ url_for('view_lesson', section_id=section.id, module_id=lesson.module_id, lesson_id=lesson.id) }}"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Open lesson</a></div>
+  </div>
+</div>
+{{ signal_notice() }}
+<div class="mb-3">{{ demo_ribbon(demo) }}</div>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header navy">Page heatmap</div>
+      <div class="card-body">
+        <div class="hx-heat-wrap">
+          <div>
+            <script type="application/json" id="heatData">{{ {'heat': heat, 'layout': layout}|tojson }}</script>
+            <canvas class="hx-heat-canvas" data-hx-heat data-src="heatData" role="img"></canvas>
+            <div class="d-flex justify-content-between small text-muted mt-1" aria-hidden="true"><span>less</span><span style="flex:1;margin:.45rem .4rem;height:.4rem;border-radius:9px;background:linear-gradient(90deg,#0a1424,#146e8c,#3ec7ff,#f0c14b,#fffae6)"></span><span>more</span></div>
+          </div>
+          <ol class="small ps-3 mb-0">
+            {% for a in layout if a.kind == 'heading' %}<li class="mb-1">{{ a.label }}</li>{% else %}<li class="text-muted list-unstyled">No layout recorded (older client).</li>{% endfor %}
+          </ol>
+        </div>
+        <p class="small text-muted mt-3 mb-0">Top of the canvas = top of the lesson body. Numbers mark where each heading starts. Built from {{ heat.sessions }} session{{ 's' if heat.sessions != 1 }}; reading-signal sessions contribute a horizontal reading line.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header navy">Dwell by heading (lesson order)</div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          {% for a in aois %}
+          <li class="mb-3">
+            <div class="d-flex justify-content-between gap-2"><span class="fw-semibold small text-truncate" title="{{ a.label }}">{{ a.label }}</span>
+              <span class="small text-nowrap">{{ '%.1f'|format(a.minutes) }} min · {{ a.students }} stu{% if a.thin %} <span class="badge text-bg-danger">thin</span>{% endif %}</span></div>
+            <div class="hx-aoi-bar {{ 'thin' if a.thin }}"><span style="width:{{ a.bar }}%"></span></div>
+          </li>
+          {% else %}<li class="text-muted">No AOI dwell stored for this lesson.</li>{% endfor %}
+        </ul>
+        <p class="small text-muted mb-0">“Thin” = under 45% of an even share. Worth a reteach, a check-for-understanding question, or a closer look at the content itself.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-4">
+  <div class="card-header navy">AOI timelines — every session on this lesson</div>
+  <div class="card-body">
+    <script type="application/json" id="lessonLanes">{{ lanes|tojson }}</script>
+    <div class="hx-lanes" data-hx-lanes data-src="lessonLanes"></div>
+  </div>
+</div>
+
+{% if matrix.labels %}
+<div class="card mt-4">
+  <div class="card-header navy">Student × heading share</div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="hx-matrix">
+        <thead><tr><th scope="col">Student</th>{% for lab in matrix.labels %}<th scope="col" title="{{ lab }}"><span>{{ lab }}</span></th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for row in matrix.rows %}
+          <tr><th scope="row"><a href="{{ url_for('helix.instructor_attention_student', section_id=section.id, user_id=row.user_id) }}">{{ row.name }}</a></th>
+          {% for c in row.cells %}{% set mean = matrix.means[loop.index0] %}<td class="hx-cell {{ 'hx-thin' if mean >= 4 and c.share < mean * 0.5 }}" data-share="{{ c.share }}" data-mean="{{ mean }}" title="{{ c.label }}: {{ c.share }}%">{{ c.share }}</td>{% endfor %}</tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/helix/helix-charts.js') }}" defer></script>{% endblock %}

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% from "helix/_macros.html" import mix_bar, mix_legend, band_badge, demo_ribbon, signal_notice with context %}
+{% block title %}Attention — {{ section.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My classes</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Attention</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+    <div>
+      <div class="eyebrow">Helix attention · instructor view</div>
+      <h1 class="h3 mb-1">Where the class spent its reading time</h1>
+      <p class="mb-0">{{ section.name }} · {{ section.course.title }}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.attention_csv', section_id=section.id) }}"><i class="bi bi-download" aria-hidden="true"></i> AOI CSV</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.attention_sessions_csv', section_id=section.id) }}"><i class="bi bi-download" aria-hidden="true"></i> Sessions CSV</a>
+      <a class="btn btn-sm btn-brand" href="{{ url_for('instructor_gradebook', section_id=section.id) }}"><i class="bi bi-table" aria-hidden="true"></i> Gradebook</a>
+    </div>
+  </div>
+</div>
+
+{{ signal_notice() }}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">{{ demo_ribbon(demo) }}
+  {% if setting and not setting.enabled %}<span class="badge text-bg-secondary">Helix is OFF for this class</span>{% endif %}
+  {% if kpi.running %}<span class="badge text-bg-success"><span class="visually-hidden">Live:</span>{{ kpi.running }} live now</span>{% endif %}
+</div>
+
+<div class="hx-kpis mb-4">
+  <div class="kpi-card"><div class="kpi-label">Students opted in</div><div class="kpi-value">{{ kpi.students }}<small>/{{ kpi.enrolled }}</small></div><div class="kpi-sub">{{ kpi.not_opted_in }} without data</div></div>
+  <div class="kpi-card"><div class="kpi-label">Sessions</div><div class="kpi-value">{{ kpi.sessions }}</div><div class="kpi-sub">{{ kpi.gaze_sessions }} camera · {{ kpi.passive_sessions }} reading signal</div></div>
+  <div class="kpi-card"><div class="kpi-label">Avg calibration accuracy</div><div class="kpi-value">{{ kpi.avg_accuracy }}<small>%</small></div><div class="kpi-sub">{{ band_badge(band) }} camera sessions</div></div>
+  <div class="kpi-card"><div class="kpi-label">Time on lesson content</div><div class="kpi-value">{{ kpi.attentive_pct }}<small>%</small></div><div class="kpi-sub">of {{ kpi.minutes }} recorded min</div></div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header navy">Signal quality across all sessions</div>
+  <div class="card-body">
+    <div class="hx-mix mb-2" role="img" aria-label="Reading {{ kpi.mix.attentive }}%, away {{ kpi.mix.off_page }}%, face lost {{ kpi.mix.face_lost }}%, hidden {{ kpi.mix.hidden }}%, low confidence {{ kpi.mix.low_conf }}%" style="height:18px">
+      {% for k in ['attentive','off_page','face_lost','hidden','low_conf'] %}<span class="hx-c-{{ k }}" style="width:{{ kpi.mix[k] }}%"></span>{% endfor %}
+    </div>
+    {{ mix_legend() }}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-7">
+    <div class="card h-100">
+      <div class="card-header navy d-flex justify-content-between align-items-center"><span>Per-student summary</span><span class="small opacity-75">{{ students|length }} students</span></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 table-stack" aria-describedby="hxStudentsHelp">
+          <thead><tr><th scope="col">Student</th><th scope="col">Sessions</th><th scope="col">Accuracy</th><th scope="col" style="min-width:9rem">Time split</th><th scope="col">Last</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+          <tbody>
+          {% for r in students %}
+            <tr>
+              <td data-label="Student"><a class="fw-semibold" href="{{ url_for('helix.instructor_attention_student', section_id=section.id, user_id=r.user_id) }}">{{ r.name }}</a>
+                {% for f in r.flags %}<div class="small text-warning-emphasis"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> {{ f }}</div>{% endfor %}</td>
+              <td data-label="Sessions">{{ r.sessions }} <span class="small text-muted">· {{ r.lessons }} lesson{{ 's' if r.lessons != 1 }}</span>{% if r.passive_sessions %}<div class="small text-muted"><i class="bi bi-phone" aria-hidden="true"></i> {{ r.passive_sessions }} reading</div>{% endif %}</td>
+              <td data-label="Accuracy">{% if r.gaze_sessions %}{{ r.accuracy }}% {{ band_badge(r.band) }}{% else %}{{ band_badge(r.band) }}{% endif %}</td>
+              <td data-label="Time split">{{ mix_bar(r) }}<div class="small text-muted mt-1">{{ r.attentive_pct }}% reading · {{ r.minutes }} min</div></td>
+              <td data-label="Last" class="small">{{ r.last.strftime('%b %d %H:%M') if r.last else '—' }}</td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-navy" href="{{ url_for('helix.instructor_attention_student', section_id=section.id, user_id=r.user_id) }}">Timeline</a></td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6"><div class="empty-state"><i class="bi bi-eye-slash" aria-hidden="true"></i><p class="mb-1 fw-semibold">No opt-in sessions yet</p><p class="small text-muted mb-0">Students see a Helix panel on lesson pages. Data appears here after they agree and read for a bit.</p></div></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer small text-muted" id="hxStudentsHelp">Time split = share of recorded session time. "Face not detected" and "Tab hidden" are data-quality states, not misconduct.
+        {% if not_opted %}<details class="mt-1"><summary>{{ not_opted|length }} enrolled without data</summary>{{ not_opted|map(attribute='full_name')|join(', ') }}</details>{% endif %}</div>
+    </div>
+  </div>
+  <div class="col-xl-5">
+    <div class="card mb-4">
+      <div class="card-header navy">Lessons with timelines</div>
+      <div class="list-group list-group-flush">
+        {% for L in lessons %}
+        <a class="list-group-item list-group-item-action" href="{{ url_for('helix.instructor_attention_lesson', section_id=section.id, lesson_id=L.id) }}">
+          <div class="d-flex justify-content-between gap-2"><span class="fw-semibold">{{ L.title }}</span><span class="small text-muted text-nowrap">{{ L.students }} stu · {{ L.sessions }} sess</span></div>
+          <div class="small text-muted">{{ L.attentive_pct }}% reading{% if L.accuracy %} · accuracy {{ L.accuracy }}%{% endif %}
+            {% if L.thin %}<br><span class="text-danger-emphasis"><i class="bi bi-arrow-down-circle" aria-hidden="true"></i> Thin: {{ L.thin|join(' · ') }}</span>{% endif %}</div>
+        </a>
+        {% else %}
+        <div class="list-group-item text-muted">No lesson-level data yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header navy">Class dwell by heading (all lessons)</div>
+      <div class="list-group list-group-flush">
+        {% for a in aois[:10] %}
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between gap-2 small"><span class="fw-semibold text-truncate" title="{{ a.label }}">{{ a.label }}</span><span class="text-nowrap">{{ '%.1f'|format(a.minutes) }} min · {{ a.share }}%</span></div>
+          <div class="hx-aoi-bar mt-1 {{ 'thin' if a.thin }}"><span style="width:{{ a.bar }}%"></span></div>
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted">No AOI buckets stored yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if matrix and matrix.labels %}
+<div class="card mt-4" id="matrix">
+  <div class="card-header navy d-flex flex-wrap gap-2 justify-content-between align-items-center">
+    <span>Student × heading heatmap — {{ focus_lesson.title if focus_lesson else '' }}</span>
+    <form method="get" class="d-flex gap-2 align-items-center">
+      <label for="hxLessonSel" class="small">Lesson</label>
+      <select id="hxLessonSel" name="lesson" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for L in lessons %}<option value="{{ L.id }}" {% if L.id == focus_id %}selected{% endif %}>{{ L.title }}</option>{% endfor %}
+      </select>
+      <noscript><button class="btn btn-sm btn-brand">Show</button></noscript>
+    </form>
+  </div>
+  <div class="card-body">
+    <p class="small text-muted">Each cell = share of that student’s reading time on the heading. Dashed red = less than half the class average for that heading.</p>
+    <div class="table-responsive">
+      <table class="hx-matrix">
+        <thead><tr><th scope="col">Student</th>{% for lab in matrix.labels %}<th scope="col" title="{{ lab }}"><span>{{ lab }}</span></th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in matrix.rows %}
+          <tr><th scope="row">{{ row.name }}</th>
+            {% for c in row.cells %}{% set mean = matrix.means[loop.index0] %}
+            <td class="hx-cell {{ 'hx-thin' if mean >= 4 and c.share < mean * 0.5 }}" data-share="{{ c.share }}" data-mean="{{ mean }}" title="{{ row.name }} · {{ c.label }}: {{ c.share }}% ({{ (c.ms/1000)|round(1) }}s)">{{ c.share }}</td>
+            {% endfor %}</tr>
+          {% endfor %}
+          <tr><th scope="row" class="text-muted">Class mean</th>{% for mval in matrix.means %}<td class="text-center small text-muted">{{ mval }}</td>{% endfor %}</tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card mt-4">
+  <div class="card-header navy">Helix settings for this class</div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('helix.instructor_attention_settings', section_id=section.id) }}" class="row g-3 align-items-end">
+      <div class="col-sm-6 col-lg-3"><div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" id="hxEnabled" name="enabled" value="1" {% if not setting or setting.enabled %}checked{% endif %}>
+        <label class="form-check-label" for="hxEnabled">Offer Helix on lesson pages</label></div></div>
+      <div class="col-sm-6 col-lg-3"><div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" id="hxPassiveEn" name="passive_enabled" value="1" {% if not setting or setting.passive_enabled %}checked{% endif %}>
+        <label class="form-check-label" for="hxPassiveEn">Allow no-camera reading signal</label></div></div>
+      <div class="col-sm-6 col-lg-3">
+        <label class="form-label small" for="hxMinAcc">Recalibrate below accuracy (%)</label>
+        <input class="form-control form-control-sm" type="number" min="20" max="90" id="hxMinAcc" name="min_accuracy" value="{{ setting.min_accuracy if setting else 45 }}">
+      </div>
+      <div class="col-sm-6 col-lg-3"><button class="btn btn-brand w-100">Save settings</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/helix/helix-charts.js') }}" defer></script>{% endblock %}

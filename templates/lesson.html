@@ -615,16 +615,19 @@
 window.HELIX = {
   lessonId: {{ lesson.id }},
   sectionId: {{ section_id }},
-  policyVersion: '2026-09-06',
-  policyUrl: "{{ url_for('helix_attention_policy') }}",
-  startUrl: "{{ url_for('helix_session_start') }}",
-  timelineUrl: "{{ url_for('helix_session_timeline', session_id=0) }}",
-  calibratedUrl: "{{ url_for('helix_session_calibrated', session_id=0) }}",
-  summaryUrl: "{{ url_for('helix_lesson_summary', lesson_id=lesson.id) }}",
+  configUrl: "{{ url_for('helix.api_config', section_id=section_id) }}",
+  consentApiUrl: "{{ url_for('helix.api_consent') }}",
+  policyUrl: "{{ url_for('helix.policy') }}",
+  myDataUrl: "{{ url_for('helix.my_data') }}",
+  startUrl: "{{ url_for('helix.session_start') }}",
+  batchUrl: "{{ url_for('helix.session_batch', session_id=0) }}",
+  calibratedUrl: "{{ url_for('helix.session_calibrated', session_id=0) }}",
+  summaryUrl: "{{ url_for('helix.lesson_summary', lesson_id=lesson.id) }}",
   engineUrl: "{{ url_for('static', filename='vendor/webgazer.js') }}",
   cdnUrl: "https://cdn.jsdelivr.net/npm/webgazer@3.3.0/dist/webgazer.min.js"
 };
 </script>
-<script src="{{ url_for('static', filename='js/helix-gaze.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/helix/helix-core.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/helix/helix-gaze.js') }}" defer></script>
 {% endif %}
 {% endblock %}

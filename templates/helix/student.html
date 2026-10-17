@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "helix/_macros.html" import mix_bar, mix_legend, band_badge, demo_ribbon, signal_notice with context %}
+{% block title %}Attention — {{ student.full_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('helix.instructor_attention', section_id=section.id) }}">Attention</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ student.full_name }}</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">Helix attention · student timeline</div>
+  <h1 class="h3 mb-1">{{ student.full_name }}</h1>
+  <p class="mb-0">{{ student.email }} · {{ section.name }}</p>
+</div>
+{{ signal_notice() }}
+<div class="mb-3">{{ demo_ribbon(demo) }}</div>
+
+{% if summary %}
+<div class="hx-kpis mb-4">
+  <div class="kpi-card"><div class="kpi-label">Sessions</div><div class="kpi-value">{{ summary.sessions }}</div><div class="kpi-sub">{{ summary.lessons }} lessons · {{ summary.minutes }} min</div></div>
+  <div class="kpi-card"><div class="kpi-label">Calibration accuracy</div><div class="kpi-value">{{ summary.accuracy or '—' }}{% if summary.accuracy %}<small>%</small>{% endif %}</div><div class="kpi-sub">{{ band_badge(summary.band) }} · {{ summary.recalibrations }} recalibration{{ 's' if summary.recalibrations != 1 }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Reading lesson content</div><div class="kpi-value">{{ summary.attentive_pct }}<small>%</small></div><div class="kpi-sub">{{ mix_bar(summary) }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Data quality flags</div><div class="kpi-value">{{ summary.flags|length }}</div><div class="kpi-sub">{{ summary.flags|join('; ') or 'None' }}</div></div>
+</div>
+{{ mix_legend() }}
+{% endif %}
+
+{% for b in blocks %}
+<div class="card mt-4">
+  <div class="card-header navy d-flex flex-wrap justify-content-between gap-2">
+    <span>{{ b.lesson.title }}</span>
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.instructor_attention_lesson', section_id=section.id, lesson_id=b.lesson.id) }}">Class view for this lesson</a>
+  </div>
+  <div class="card-body">
+    <h2 class="h6">AOI timeline{{ 's' if b.lanes|length > 1 }} (most recent first)</h2>
+    <script type="application/json" id="lanes-{{ b.lesson.id }}">{{ b.lanes|tojson }}</script>
+    <div class="hx-lanes mb-4" data-hx-lanes data-src="lanes-{{ b.lesson.id }}" data-scale="each"></div>
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <h2 class="h6">Dwell by heading (lesson order)</h2>
+        <ul class="list-unstyled mb-0">
+          {% for a in b.aois %}
+          <li class="mb-2">
+            <div class="d-flex justify-content-between small gap-2"><span class="text-truncate" title="{{ a.label }}">{{ a.label }}</span><span class="text-nowrap">{{ a.seconds }}s · {{ a.visits }} visit{{ 's' if a.visits != 1 }}</span></div>
+            <div class="hx-aoi-bar {{ 'thin' if a.thin }}"><span style="width:{{ a.bar }}%"></span></div>
+          </li>
+          {% else %}<li class="text-muted small">No reading AOIs.</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="col-lg-6">
+        <h2 class="h6">Sessions</h2>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle table-stack mb-0">
+            <thead><tr><th>Started</th><th>Mode</th><th>Accuracy</th><th>Reading</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for r in b.sessions %}
+              <tr>
+                <td data-label="Started" class="small">{{ r.s.started_at.strftime('%b %d %H:%M') if r.s.started_at }}</td>
+                <td data-label="Mode"><i class="bi {{ 'bi-phone' if r.s.mode == 'passive' else 'bi-camera-video' }}" aria-hidden="true"></i> {{ 'Reading signal' if r.s.mode == 'passive' else 'Camera' }}<span class="small text-muted"> · {{ r.s.device or 'desktop' }}</span></td>
+                <td data-label="Accuracy">{% if r.s.mode != 'passive' %}{{ r.s.calibration_score }}%{% if r.s.validation_error_px %} <span class="small text-muted">(±{{ r.s.validation_error_px }}px)</span>{% endif %}{% endif %} {{ band_badge(r.band) }}</td>
+                <td data-label="Reading">{{ r.attentive_pct }}% <span class="small text-muted">of {{ (r.b.total/60000)|round(1) }} min</span></td>
+                <td data-label="Status"><span class="badge text-bg-{{ 'success' if r.s.status == 'running' else ('warning' if r.s.status == 'abandoned' else 'secondary') }}">{{ r.s.status }}</span>{% if r.s.is_demo %} <span class="badge text-bg-warning">demo</span>{% endif %}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="empty-state card mt-3"><i class="bi bi-eye-slash" aria-hidden="true"></i><p class="fw-semibold mb-1">No sessions for this student in this class.</p></div>
+{% endfor %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/helix/helix-charts.js') }}" defer></script>{% endblock %}

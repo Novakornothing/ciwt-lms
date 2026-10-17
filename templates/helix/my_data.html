@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}My attention data — CIWT LMS{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="d-flex flex-wrap justify-content-between gap-3">
+    <div>
+      <div class="eyebrow">Helix attention · your data</div>
+      <h1 class="h3 mb-1">My attention data</h1>
+      <p class="mb-0">Everything Helix has stored about you. Not a grade — and yours to delete.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-start">
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.policy') }}">Policy</a>
+      <a class="btn btn-sm btn-brand" href="{{ url_for('helix.consent_page', next=request.path) }}">{{ 'Manage consent' if consent else 'Give consent' }}</a>
+    </div>
+  </div>
+</div>
+
+<div class="ui-callout {{ 'ui-callout-success' if current else 'ui-callout-accent' }} mb-3">
+  <i class="bi {{ 'bi-check-circle' if current else 'bi-info-circle' }}" aria-hidden="true"></i>
+  <div>{% if current %}Consent active since {{ consent.granted_at.strftime('%b %d, %Y') }} · camera {{ 'allowed' if consent.camera_ok else 'off' }} · reading signal {{ 'allowed' if consent.passive_ok else 'off' }}.
+  {% elif consent %}Your consent is for an older policy version — Helix will ask again before recording.
+  {% else %}You have not opted in. Helix records nothing until you agree on a lesson page or <a href="{{ url_for('helix.consent_page', next=request.path) }}">here</a>.{% endif %}</div>
+</div>
+
+<div class="card">
+  <div class="card-header navy d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span>Stored sessions ({{ rows|length }})</span>
+    {% if rows %}
+    <form method="post" action="{{ url_for('helix.my_data_delete') }}" onsubmit="return confirm('Delete all of your Helix sessions? This cannot be undone.');">
+      <button class="btn btn-sm btn-outline-light"><i class="bi bi-trash" aria-hidden="true"></i> Delete all</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0 table-stack">
+      <thead><tr><th>Lesson</th><th>When</th><th>Mode</th><th>Accuracy</th><th>Reading</th><th><span class="visually-hidden">Delete</span></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td data-label="Lesson">{{ r.lesson.title if r.lesson else 'Lesson #' ~ r.s.lesson_id }}{% if r.s.is_demo %} <span class="badge text-bg-warning">demo</span>{% endif %}</td>
+          <td data-label="When" class="small">{{ r.s.started_at.strftime('%b %d %H:%M') if r.s.started_at }} · {{ (r.b.total/60000)|round(1) }} min</td>
+          <td data-label="Mode">{{ 'Reading signal' if r.s.mode == 'passive' else 'Camera' }}</td>
+          <td data-label="Accuracy">{% if r.s.mode != 'passive' %}{{ r.s.calibration_score }}%{% endif %} <span class="badge text-bg-{{ r.band.tone }}">{{ r.band.label }}</span></td>
+          <td data-label="Reading">{{ r.attentive_pct }}%</td>
+          <td class="text-end">
+            <form method="post" action="{{ url_for('helix.my_data_delete') }}">
+              <input type="hidden" name="session_id" value="{{ r.s.id }}">
+              <button class="btn btn-sm btn-outline-danger" aria-label="Delete session from {{ r.s.started_at.strftime('%b %d %H:%M') if r.s.started_at }}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6"><div class="empty-state"><i class="bi bi-inbox" aria-hidden="true"></i><p class="mb-0">No Helix sessions stored.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
