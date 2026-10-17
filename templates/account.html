@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Account &amp; settings{% endblock %}
+{% macro field(name, label, hint=None, auto='') %}
+  <div class="mb-3">
+    <label class="form-label" for="{{ name }}">{{ label }}</label>
+    <input class="form-control{% if errors.get(name) %} is-invalid{% endif %}" type="password" id="{{ name }}" name="{{ name }}"
+           required {% if name != 'current_password' %}minlength="8"{% endif %} autocomplete="{{ auto }}"
+           {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-err"{% elif hint %}aria-describedby="{{ name }}-hint"{% endif %}>
+    {% if errors.get(name) %}<div class="invalid-feedback d-block" id="{{ name }}-err">{{ errors[name] }}</div>
+    {% elif hint %}<div class="field-hint" id="{{ name }}-hint">{{ hint }}</div>{% endif %}
+  </div>
+{% endmacro %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h4 mb-1">Account &amp; settings</h1>
+  <p class="mb-0">Your profile, how the site looks, and your password.</p>
+</div>
+
+<div class="account-grid">
+  <section class="card" aria-labelledby="profHead">
+    <div class="card-header navy" id="profHead"><i class="bi bi-person-circle" aria-hidden="true"></i> Profile</div>
+    <div class="card-body">
+      <dl class="kv-list mb-0">
+        <dt>Name</dt><dd>{{ current_user.full_name }}</dd>
+        <dt>Email</dt><dd class="text-break">{{ current_user.email }}</dd>
+        <dt>Role</dt><dd class="text-capitalize">{{ current_user.role }}</dd>
+        {% if current_user.created_at %}<dt>Member since</dt><dd>{{ current_user.created_at.strftime('%b %d, %Y') }}</dd>{% endif %}
+        {% if sections %}
+        <dt>Classes</dt>
+        <dd><ul class="list-unstyled mb-0">{% for s in sections %}<li><a href="{{ url_for('student_section', section_id=s.id) }}">{{ s.name }}</a></li>{% endfor %}</ul></dd>
+        {% endif %}
+      </dl>
+      <p class="field-hint mt-3 mb-0">To change your name or email, ask {{ 'your instructor or ' if current_user.role == 'student' }}an administrator.</p>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="lookHead">
+    <div class="card-header navy" id="lookHead"><i class="bi bi-palette" aria-hidden="true"></i> Appearance</div>
+    <div class="card-body">
+      <fieldset>
+        <legend class="form-label">Theme</legend>
+        <div class="theme-choice" role="radiogroup">
+          <label class="theme-opt"><input class="form-check-input" type="radio" name="themePref" value="light"> <i class="bi bi-sun" aria-hidden="true"></i> Light</label>
+          <label class="theme-opt"><input class="form-check-input" type="radio" name="themePref" value="dark"> <i class="bi bi-moon-stars" aria-hidden="true"></i> Dark</label>
+        </div>
+        <p class="field-hint mt-2 mb-0" id="themeSaved" role="status" aria-live="polite">Saved on this device only.</p>
+      </fieldset>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="pwHead">
+    <div class="card-header navy" id="pwHead"><i class="bi bi-key" aria-hidden="true"></i> Change password</div>
+    <div class="card-body">
+      <form method="post" action="{{ url_for('account') }}" class="needs-validation">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {{ field('current_password', 'Current password', auto='current-password') }}
+        {{ field('new_password', 'New password', 'At least 8 characters. A short phrase is easier to remember.', 'new-password') }}
+        {{ field('confirm_password', 'Confirm new password', auto='new-password') }}
+        <button type="submit" class="btn btn-brand">Update password</button>
+      </form>
+    </div>
+  </section>
+
+  {% if has_helix and current_user.role == 'student' %}
+  <section class="card" aria-labelledby="privHead">
+    <div class="card-header navy" id="privHead"><i class="bi bi-shield-lock" aria-hidden="true"></i> Privacy</div>
+    <div class="card-body">
+      <p class="mb-3">Attention tracking is optional and off unless you turn it on. You can review or delete what was recorded at any time.</p>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-navy" href="{{ url_for('helix.consent_page') }}">Camera &amp; attention consent</a>
+        <a class="btn btn-outline-navy" href="{{ url_for('helix.my_data') }}">My attention data</a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var root = document.documentElement, key = 'ciwt-theme';
+  var cur = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  document.querySelectorAll('input[name=themePref]').forEach(function(r){
+    r.checked = r.value === cur;
+    r.addEventListener('change', function(){
+      if (r.value === 'dark') root.setAttribute('data-theme', 'dark'); else root.removeAttribute('data-theme');
+      try { localStorage.setItem(key, r.value); } catch (e) {}
+      var icon = document.getElementById('themeIcon'); if (icon) icon.className = r.value === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+      document.getElementById('themeSaved').textContent = (r.value === 'dark' ? 'Dark' : 'Light') + ' theme saved on this device.';
+    });
+  });
+})();
+</script>
+{% endblock %}

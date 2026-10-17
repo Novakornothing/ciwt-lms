@@ -1381,6 +1381,36 @@ def login():
     return render_template('login.html', hint=hint, entry_roles=ENTRY_ROLES)
 
 
+@app.route('/account', methods=['GET', 'POST'])
+@login_required
+def account():
+    """Profile summary, appearance preference and password change for every role."""
+    errors = {}
+    if request.method == 'POST':
+        cur = request.form.get('current_password', '')
+        new = request.form.get('new_password', '')
+        confirm = request.form.get('confirm_password', '')
+        if not current_user.check_password(cur):
+            errors['current_password'] = 'That is not your current password.'
+        if len(new) < 8:
+            errors['new_password'] = 'Use at least 8 characters.'
+        elif new == cur:
+            errors['new_password'] = 'Choose a password you are not using now.'
+        if new != confirm:
+            errors['confirm_password'] = 'The two new passwords do not match.'
+        if not errors:
+            current_user.set_password(new)
+            db.session.commit()
+            audit('password_change')
+            flash('Password updated. Use it the next time you sign in.', 'success')
+            return redirect(url_for('account'))
+    sections = []
+    if current_user.role == 'student':
+        sections = [e.section for e in current_user.enrollments if getattr(e, 'section', None)]
+    has_helix = 'helix' in app.blueprints
+    return render_template('account.html', errors=errors, sections=sections, has_helix=has_helix), (400 if errors else 200)
+
+
 @app.route('/logout')
 @login_required
 def logout():
