@@ -112,12 +112,10 @@ def drive_terminal(page, lab, view, notes):
         if view == 'phone' and i == 0:
             # submit the first command with the on-screen ↵ button (keys bar path), the rest with Enter
             wait_post(page, '/cmd', lambda: page.click('#termForm button[type=submit]'))
+            if not page.evaluate("document.getElementById('termWrap').classList.contains('term-focus')"):
+                notes.append('focus mode did not engage on phone')
         else:
             wait_post(page, '/cmd', lambda: inp.press('Enter'))
-    if view == 'phone' and cmds:
-        mode = page.evaluate("document.getElementById('termWrap').classList.contains('term-focus')")
-        if not mode:
-            notes.append('focus mode did not engage on phone')
 
 
 def gui_open(page, app, view):
@@ -135,7 +133,14 @@ def gui_open(page, app, view):
 
 
 def gui_user(page, ad_users, sam):
-    ou = next(u['ou'] for u in ad_users if u['sam'] == sam)
+    ou = next((u['ou'] for u in ad_users if u['sam'] == sam), None)
+    for _ in range(10):   # the state fetch can race the previous event's save
+        if ou:
+            break
+        page.wait_for_timeout(300)
+        st = page.evaluate("()=>fetch(LabKit.config().urls.state).then(r=>r.json())")
+        ou = next((u['ou'] for u in st['gui']['ad']['users'] if u['sam'] == sam), None)
+    assert ou, f'AD user {sam} not found in the lab state'
     page.click(f'[data-ou="{ou}"]')
     page.click(f'[data-user="{sam}"]')
 
@@ -399,7 +404,9 @@ def main():
                 try:
                     r = run_lab(page, lab, view, email, a.shots)
                 except Exception as e:  # keep going: report every lab
-                    r = {'lab': lab['id'], 'kind': lab['kind'], 'view': view, 'ok': False, 'error': str(e)[:300], 'notes': []}
+                    import traceback
+                    r = {'lab': lab['id'], 'kind': lab['kind'], 'view': view, 'ok': False,
+                         'error': (str(e) or type(e).__name__ + ' ' + traceback.format_exc().splitlines()[-3].strip())[:300], 'notes': []}
                     if a.shots:
                         page.screenshot(path=f"{a.shots}/FAIL-{lab['id']}-{view}.png")
                 if errs:
