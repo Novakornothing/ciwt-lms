@@ -32,6 +32,12 @@
           {% else %}
           <span class="rail-empty">No classes yet</span>
           {% endfor %}
+          <a class="rail-link {% if ep in ('student_grades','student_section_grades') %}active{% endif %}" href="{{ url_for('student_grades') }}">
+            <i class="bi bi-mortarboard"></i><span>My grades</span>
+          </a>
+          <a class="rail-link {% if ep in ('helix.my_data','helix.consent_page') %}active{% endif %}" href="{{ url_for('helix.my_data') }}">
+            <i class="bi bi-eye"></i><span>My attention data</span>
+          </a>
         </div>
       </details>
       <details class="rail-tree" {% if ep and ep.startswith('interactive_lab') %}open{% endif %}>
@@ -83,7 +89,7 @@
           <a class="rail-link {% if ep == 'curriculum_search' %}active{% endif %}" href="{{ url_for('curriculum_search') }}">
             <i class="bi bi-search"></i><span>Search lessons</span>
           </a>
-          <a class="rail-link {% if ep == 'helix_attention_policy' %}active{% endif %}" href="{{ url_for('helix_attention_policy') }}">
+          <a class="rail-link {% if ep == 'helix.policy' %}active{% endif %}" href="{{ url_for('helix.policy') }}">
             <i class="bi bi-eye"></i><span>Attention policy</span>
           </a>
           {# TQI is admin-only on novakornothing.com/tqi — not shown to students #}
@@ -158,7 +164,7 @@
           <a class="rail-link {% if ep == 'instructor_analytics_hub' %}active{% endif %}" href="{{ url_for('instructor_analytics_hub') }}">
             <i class="bi bi-clipboard-data"></i><span>Score hub</span>
           </a>
-          <a class="rail-link {% if ep and ep.startswith('instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
+          <a class="rail-link {% if ep and ep.startswith('helix.instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
             <i class="bi bi-eye"></i><span>Attention signal</span>
           </a>
           <a class="rail-link" href="{{ url_for('export_analytics_csv') }}">
@@ -174,7 +180,7 @@
           <a class="rail-link {% if ep == 'admin_test_analytics' %}active{% endif %}" href="{{ url_for('admin_test_analytics') }}">
             <i class="bi bi-graph-up-arrow"></i><span>Test analytics</span>
           </a>
-          <a class="rail-link {% if ep and ep.startswith('instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
+          <a class="rail-link {% if ep and ep.startswith('helix.instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
             <i class="bi bi-eye"></i><span>Attention signal</span>
           </a>
           {% endif %}
@@ -233,6 +239,14 @@
               <a class="rail-link rail-sublink {% if ep == 'course_labs' and open_section_id == s.id %}active{% endif %}"
                  href="{{ url_for('course_labs', section_id=s.id) }}">
                 <i class="bi bi-terminal"></i><span>Labs</span>
+              </a>
+              <a class="rail-link rail-sublink {% if ep in ('instructor_gradebook','instructor_gradebook_student') and open_section_id == s.id %}active{% endif %}"
+                 href="{{ url_for('instructor_gradebook', section_id=s.id) }}">
+                <i class="bi bi-table"></i><span>Gradebook</span>
+              </a>
+              <a class="rail-link rail-sublink {% if ep.startswith('helix.instructor_attention') and open_section_id == s.id %}active{% endif %}"
+                 href="{{ url_for('helix.instructor_attention', section_id=s.id) }}">
+                <i class="bi bi-eye"></i><span>Attention</span>
               </a>
               {% else %}
               <span class="rail-empty">No classes</span>

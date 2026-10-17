@@ -17,6 +17,8 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
       <a class="btn btn-sm btn-outline-navy" href="#roster">Roster</a>
+      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_gradebook', section_id=section.id) }}"><i class="bi bi-journal-check" aria-hidden="true"></i> Gradebook</a>
+      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('helix.instructor_attention', section_id=section.id) }}"><i class="bi bi-eye" aria-hidden="true"></i> Attention</a>
       <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_pilot') }}">Pilot 1–13 sheet</a>
       <a class="btn btn-sm btn-outline-navy" href="{{ url_for('skills_board', section_id=section.id) }}">Skills scores</a>
       <a class="btn btn-sm btn-brand" href="#chapters">Open curriculum</a>
