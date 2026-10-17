@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% from "gradebook/_macros.html" import score_cell, grade_badge with context %}
+{% block title %}Gradebook — {{ section.name }}{% endblock %}
+{% block content %}
+{% set st = gb.settings %}{% set S = gb.summary %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My classes</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Gradebook</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+    <div>
+      <div class="eyebrow">Gradebook</div>
+      <h1 class="h3 mb-1">{{ section.name }}</h1>
+      <p class="mb-0">{{ section.course.title }} · {{ S.students }} students · {{ st.policy|capitalize }} attempt counts · pass mark {{ st.pass_mark }}%</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-sm btn-brand" href="{{ url_for('gradebook_csv', section_id=section.id) }}"><i class="bi bi-filetype-csv" aria-hidden="true"></i> Export CSV</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.instructor_attention', section_id=section.id) }}"><i class="bi bi-eye" aria-hidden="true"></i> Attention</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('instructor_section', section_id=section.id) }}">Class home</a>
+    </div>
+  </div>
+</div>
+
+<div class="gb-kpis mb-4">
+  <div class="kpi-card"><div class="kpi-label">Class average</div><div class="kpi-value">{{ S.mean if S.mean is not none else '—' }}{% if S.mean is not none %}<small>%</small>{% endif %}</div><div class="kpi-sub">median {{ S.median if S.median is not none else '—' }} · sd {{ S.sd if S.sd is not none else '—' }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">At or above {{ st.pass_mark }}%</div><div class="kpi-value">{{ S.pass_rate if S.pass_rate is not none else '—' }}{% if S.pass_rate is not none %}<small>%</small>{% endif %}</div><div class="kpi-sub">{{ S.graded }} of {{ S.students }} have a grade</div></div>
+  <div class="kpi-card {{ 'kpi-alert' if S.at_risk }}"><div class="kpi-label">Below pass mark</div><div class="kpi-value">{{ S.at_risk }}</div><div class="kpi-sub">students to check in with</div></div>
+  <div class="kpi-card"><div class="kpi-label">Graded work submitted</div><div class="kpi-value">{{ S.completion }}<small>%</small></div><div class="kpi-sub">average completion</div></div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header navy">Grade distribution</div>
+      <div class="card-body">
+        <div class="gb-hist" role="img" aria-label="Distribution: {% for b in S.histogram %}{{ b.label }}: {{ b.n }}{{ ', ' if not loop.last }}{% endfor %}">
+          {% for b in S.histogram %}
+          <div class="gb-hist-col">
+            <div class="gb-hist-n">{{ b.n }}</div>
+            <div class="gb-hist-bar {{ 'gb-hist-pass' if b.lo >= st.pass_mark else '' }}" style="height:{{ [b.pct, 3]|max }}%"></div>
+            <div class="gb-hist-l">{{ b.label }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header navy">Category averages &amp; weights</div>
+      <div class="card-body">
+        {% for key, label in categories %}
+        {% set mval = S.cat_means[key] %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small"><span class="fw-semibold">{{ label }} <span class="text-muted fw-normal">· weight {{ gb.weights[key] }}%</span></span><span>{{ mval if mval is not none else 'no data' }}{{ '%' if mval is not none }}</span></div>
+          <div class="progress gb-progress" role="progressbar" aria-label="{{ label }} average" aria-valuenow="{{ mval or 0 }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar {{ 'bg-success' if mval and mval >= st.pass_mark else 'bg-warning' }}" style="width:{{ mval or 0 }}%"></div></div>
+        </div>
+        {% endfor %}
+        <details class="mt-2">
+          <summary class="fw-semibold">Grading settings</summary>
+          <form method="post" action="{{ url_for('gradebook_settings', section_id=section.id) }}" class="row g-2 mt-1">
+            <div class="col-4"><label class="form-label small" for="wT">Tests %</label><input id="wT" class="form-control form-control-sm" type="number" min="0" max="100" name="weight_tests" value="{{ gb.weights.tests }}"></div>
+            <div class="col-4"><label class="form-label small" for="wS">Skills %</label><input id="wS" class="form-control form-control-sm" type="number" min="0" max="100" name="weight_skills" value="{{ gb.weights.skills }}"></div>
+            <div class="col-4"><label class="form-label small" for="wQ">Quizzes %</label><input id="wQ" class="form-control form-control-sm" type="number" min="0" max="100" name="weight_quizzes" value="{{ gb.weights.quizzes }}"></div>
+            <div class="col-6"><label class="form-label small" for="gbPolicy">Multiple attempts</label>
+              <select id="gbPolicy" class="form-select form-select-sm" name="policy"><option value="best" {% if st.policy == 'best' %}selected{% endif %}>Best score counts</option><option value="latest" {% if st.policy == 'latest' %}selected{% endif %}>Latest score counts</option></select></div>
+            <div class="col-6"><label class="form-label small" for="gbPass">Pass mark %</label><input id="gbPass" class="form-control form-control-sm" type="number" min="1" max="100" name="pass_mark" value="{{ st.pass_mark }}"></div>
+            <div class="col-12 small text-muted">Weights are renormalised over categories that have scores, so they need not add to 100. Progress quizzes are practice by default (weight 0).</div>
+            <div class="col-12"><button class="btn btn-sm btn-brand">Save settings</button></div>
+          </form>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header navy d-flex flex-wrap gap-2 justify-content-between align-items-center">
+    <span>Grade grid</span>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <label class="visually-hidden" for="gbFilter">Filter students</label>
+      <input id="gbFilter" type="search" class="form-control form-control-sm gb-filter" placeholder="Filter students…" autocomplete="off">
+      <div class="form-check form-switch mb-0 small">
+        <input class="form-check-input" type="checkbox" role="switch" id="gbRisk"><label class="form-check-label" for="gbRisk">Below pass only</label>
+      </div>
+      {% if not show_quizzes %}<a class="btn btn-sm btn-outline-light" href="?quizzes=1">Show quizzes</a>{% else %}<a class="btn btn-sm btn-outline-light" href="?">Hide quizzes</a>{% endif %}
+    </div>
+  </div>
+  <div class="table-responsive gb-scroll" tabindex="0" aria-label="Grade grid, scroll horizontally for more items">
+    <table class="table table-sm align-middle mb-0 gb-table" id="gbTable">
+      <caption class="visually-hidden">Scores per student and item. Tap a score to open the attempt.</caption>
+      <thead>
+        <tr>
+          <th scope="col" class="gb-sticky"><button type="button" class="gb-sort" data-col="0" data-type="text">Student</button></th>
+          <th scope="col"><button type="button" class="gb-sort" data-col="1" data-type="num">Grade</button></th>
+          <th scope="col"><button type="button" class="gb-sort" data-col="2" data-type="num">Done</button></th>
+          {% for it in gb.columns %}{% if it.category != 'quizzes' or show_quizzes %}
+          {% set cs = gb.col_stats[loop.index0] %}
+          <th scope="col" class="gb-item gb-cat-{{ it.category }}" title="{{ it.title }}">
+            <button type="button" class="gb-sort" data-col="{{ loop.index0 + 3 }}" data-type="num">{{ it.short }}</button>
+            <div class="gb-colstat">{% if cs.mean is not none %}μ {{ cs.mean|round|int }} · {{ cs.pass_rate }}% pass{% else %}no scores{% endif %}</div>
+            {% if it.type == 'test' %}<div class="gb-collinks"><a href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=it.id) }}" title="Section performance">perf</a> · <a href="{{ url_for('test_item_analysis', test_id=it.id) }}" title="Item analysis">items</a></div>{% endif %}
+          </th>
+          {% endif %}{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in gb.rows %}
+        <tr data-risk="{{ 1 if r.at_risk else 0 }}" data-name="{{ r.user.full_name|lower }}">
+          <th scope="row" class="gb-sticky" data-v="{{ r.user.last_name }} {{ r.user.first_name }}"><a href="{{ url_for('instructor_gradebook_student', section_id=section.id, user_id=r.user.id) }}">{{ r.user.last_name }}, {{ r.user.first_name }}</a>{% if r.at_risk %} <i class="bi bi-exclamation-circle-fill text-danger" aria-label="below pass mark"></i>{% endif %}</th>
+          <td data-v="{{ r.grade if r.grade is not none else -1 }}"><strong>{{ r.grade if r.grade is not none else '—' }}</strong> <span class="small text-muted">{{ r.letter if r.grade is not none }}</span></td>
+          <td data-v="{{ r.completion }}"><span class="small">{{ r.completion }}%</span></td>
+          {% for c in r.cells %}{% if c.item.category != 'quizzes' or show_quizzes %}
+          <td class="text-center" data-v="{{ c.score if c.score is not none else -1 }}">{{ score_cell(c, section, staff=True) }}</td>
+          {% endif %}{% endfor %}
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ 3 + gb.columns|length }}"><div class="empty-state"><i class="bi bi-people" aria-hidden="true"></i><p class="mb-0">No students enrolled yet.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer small text-muted d-flex flex-wrap gap-3">
+    <span><span class="gb-chip gb-pass">85</span> at/above item pass mark</span>
+    <span><span class="gb-chip gb-fail">62</span> below</span>
+    <span><span class="gb-chip gb-pass gb-ov">90</span> instructor override</span>
+    <span><span class="gb-chip gb-ex">EX</span> excused</span>
+    <span><span class="gb-chip gb-missing">—</span> not attempted</span>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var table = document.getElementById('gbTable');
+  if (!table) return;
+  var tbody = table.tBodies[0];
+  var filter = document.getElementById('gbFilter'), risk = document.getElementById('gbRisk');
+  function apply() {
+    var q = (filter.value || '').toLowerCase().trim(), r = risk.checked;
+    Array.prototype.forEach.call(tbody.rows, function (tr) {
+      if (!tr.dataset.name) return;
+      var show = (!q || tr.dataset.name.indexOf(q) >= 0) && (!r || tr.dataset.risk === '1');
+      tr.hidden = !show;
+    });
+  }
+  filter.addEventListener('input', apply); risk.addEventListener('change', apply);
+  table.querySelectorAll('.gb-sort').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var col = +b.dataset.col, num = b.dataset.type === 'num';
+      var dir = b.getAttribute('aria-sort') === 'ascending' ? -1 : 1;
+      table.querySelectorAll('.gb-sort').forEach(function (o) { o.removeAttribute('aria-sort'); o.parentNode.removeAttribute('aria-sort'); });
+      b.setAttribute('aria-sort', dir > 0 ? 'ascending' : 'descending');
+      b.parentNode.setAttribute('aria-sort', dir > 0 ? 'ascending' : 'descending');
+      var rows = Array.prototype.filter.call(tbody.rows, function (tr) { return tr.dataset.name; });
+      rows.sort(function (a, c) {
+        var x = a.cells[col].dataset.v || '', y = c.cells[col].dataset.v || '';
+        return (num ? (parseFloat(x) - parseFloat(y)) : x.localeCompare(y)) * dir;
+      });
+      rows.forEach(function (tr) { tbody.appendChild(tr); });
+    });
+  });
+})();
+</script>
+{% endblock %}

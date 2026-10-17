@@ -1,0 +1,22 @@
+{% macro score_cell(c, section, staff=False) -%}
+{%- set it = c.item -%}
+{%- if c.status == 'excused' -%}<span class="gb-chip gb-ex" title="Excused{% if c.override and c.override.note %}: {{ c.override.note }}{% endif %}">EX</span>
+{%- elif c.score is none -%}<span class="gb-chip gb-missing" title="No attempt yet">—</span>
+{%- else -%}
+  {%- if staff and c.latest_id -%}<a class="gb-chip {{ 'gb-pass' if c.passed else 'gb-fail' }}{{ ' gb-ov' if c.status == 'override' }}" href="{{ url_for('instructor_attempt_detail', attempt_id=c.latest_id) }}" title="{{ it.title }}: {{ c.score }}%{% if c.attempts > 1 %} · {{ c.attempts }} attempts{% endif %}{% if c.status == 'override' %} · override{% endif %}">{{ c.score|round|int }}</a>
+  {%- else -%}<span class="gb-chip {{ 'gb-pass' if c.passed else 'gb-fail' }}{{ ' gb-ov' if c.status == 'override' }}" title="{{ it.title }}: {{ c.score }}%{% if c.status == 'override' %} · override{% endif %}">{{ c.score|round|int }}</span>{%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro grade_badge(row, pass_mark) -%}
+{% if row.grade is none %}<span class="badge text-bg-secondary">No grade yet</span>
+{% elif row.grade >= pass_mark %}<span class="badge text-bg-success">On track</span>
+{% else %}<span class="badge text-bg-danger">Below {{ pass_mark }}%</span>{% endif %}
+{%- endmacro %}
+
+{% macro ring(value, label, size=96) -%}
+{%- set v = value if value is not none else 0 -%}
+<div class="gb-ring" style="--v:{{ v }};--size:{{ size }}px" role="img" aria-label="{{ label }}: {{ value if value is not none else 'no data' }}{{ '%' if value is not none }}">
+  <span>{{ (value|round|int) if value is not none else '—' }}{% if value is not none %}<small>%</small>{% endif %}</span>
+</div>
+{%- endmacro %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "gradebook/_macros.html" import score_cell, grade_badge, ring with context %}
+{% block title %}{{ 'Grades — ' ~ row.user.full_name if staff else 'My grades' }} — {{ section.name }}{% endblock %}
+{% block content %}
+{% set st = gb.settings %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    {% if staff %}
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_gradebook', section_id=section.id) }}">Gradebook</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ row.user.full_name }}</li>
+    {% else %}
+    <li class="breadcrumb-item"><a href="{{ url_for('student_grades') }}">My grades</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ section.name }}</li>
+    {% endif %}
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="d-flex flex-wrap justify-content-between gap-3 align-items-center">
+    <div>
+      <div class="eyebrow">{{ 'Student grades' if staff else 'My grades' }}</div>
+      <h1 class="h3 mb-1">{{ row.user.full_name if staff else section.name }}</h1>
+      <p class="mb-0">{{ section.course.title }}{% if staff %} · {{ row.user.email }}{% endif %}</p>
+    </div>
+    <div class="d-flex gap-3 align-items-center">
+      {{ ring(row.grade, 'Course grade') }}
+      <div><div class="fs-4 fw-bold">{{ row.letter if row.grade is not none else '' }}</div>{{ grade_badge(row, st.pass_mark) }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="gb-kpis mb-4">
+  {% for key, label in categories %}{% if gb.weights[key] > 0 or row.cat_avgs[key] is not none %}
+  <div class="kpi-card"><div class="kpi-label">{{ label }}</div>
+    <div class="kpi-value">{{ row.cat_avgs[key] if row.cat_avgs[key] is not none else '—' }}{% if row.cat_avgs[key] is not none %}<small>%</small>{% endif %}</div>
+    <div class="kpi-sub">{{ 'weight ' ~ gb.weights[key] ~ '%' if gb.weights[key] else 'practice — not in grade' }}{% if gb.summary.cat_means[key] is not none and staff %} · class {{ gb.summary.cat_means[key] }}%{% endif %}</div></div>
+  {% endif %}{% endfor %}
+  <div class="kpi-card"><div class="kpi-label">Graded work done</div><div class="kpi-value">{{ row.completion }}<small>%</small></div>
+    <div class="progress gb-progress mt-1" role="progressbar" aria-label="Graded work completion" aria-valuenow="{{ row.completion }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width:{{ row.completion }}%"></div></div></div>
+  <div class="kpi-card"><div class="kpi-label">Lesson progress</div><div class="kpi-value">{{ row.progress }}<small>%</small></div>
+    <div class="progress gb-progress mt-1" role="progressbar" aria-label="Lesson progress" aria-valuenow="{{ row.progress }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar bg-info" style="width:{{ row.progress }}%"></div></div></div>
+</div>
+
+{% for key, label in categories %}
+{% set cells = row.cells|selectattr('item.category', 'equalto', key)|list %}
+{% if cells %}
+<div class="card mb-4">
+  <div class="card-header navy d-flex justify-content-between"><span>{{ label }}</span><span class="small opacity-75">{{ 'weight ' ~ gb.weights[key] ~ '%' if gb.weights[key] else 'practice' }}</span></div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0 table-stack">
+      <thead><tr><th scope="col">Item</th><th scope="col">Score</th><th scope="col">Attempts</th><th scope="col">Last</th>{% if staff %}<th scope="col">Class mean</th><th scope="col"><span class="visually-hidden">Manage</span></th>{% else %}<th scope="col">Status</th>{% endif %}</tr></thead>
+      <tbody>
+      {% for c in cells %}
+      {% set idx = gb.columns.index(c.item) %}
+        <tr>
+          <td data-label="Item"><span class="fw-semibold">{{ c.item.title }}</span><div class="small text-muted">pass {{ c.item.passing }}%</div>
+            {% if c.override %}<div class="small text-info-emphasis"><i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Excused' if c.override.excused else 'Override' }}: {{ c.override.note }}{% if staff and c.raw is not none %} (recorded {{ c.raw|round(1) }}%){% endif %}</div>{% endif %}</td>
+          <td data-label="Score">{{ score_cell(c, section, staff=staff) }}</td>
+          <td data-label="Attempts">{{ c.attempts }}</td>
+          <td data-label="Last" class="small">{{ c.latest_at.strftime('%b %d, %Y') if c.latest_at else '—' }}</td>
+          {% if staff %}
+          <td data-label="Class mean">{{ gb.col_stats[idx].mean if gb.col_stats[idx].mean is not none else '—' }}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-navy" type="button" data-bs-toggle="collapse" data-bs-target="#ov-{{ c.item.type }}-{{ c.item.id }}" aria-expanded="false" aria-controls="ov-{{ c.item.type }}-{{ c.item.id }}">Adjust</button>
+          </td>
+          {% else %}
+          <td data-label="Status">
+            {% if c.status == 'excused' %}<span class="badge text-bg-secondary">Excused</span>
+            {% elif c.score is not none %}<span class="badge text-bg-{{ 'success' if c.passed else 'warning' }}">{{ 'Passed' if c.passed else 'Below pass' }}</span>
+            {% elif c.available is defined and not c.available %}<span class="badge text-bg-light border">Not released</span>
+            {% elif c.item.type == 'test' %}<a class="btn btn-sm btn-brand" href="{{ url_for('take_test', section_id=section.id, test_id=c.item.id) }}">Take test</a>
+            {% else %}<a class="btn btn-sm btn-outline-navy" href="{{ url_for('take_quiz', section_id=section.id, quiz_id=c.item.id) }}">Practice</a>{% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% if staff %}
+        <tr class="collapse gb-ov-row" id="ov-{{ c.item.type }}-{{ c.item.id }}"><td colspan="6">
+          <form method="post" action="{{ url_for('gradebook_override', section_id=section.id) }}" class="row g-2 align-items-end">
+            <input type="hidden" name="user_id" value="{{ row.user.id }}"><input type="hidden" name="item_type" value="{{ c.item.type }}"><input type="hidden" name="item_id" value="{{ c.item.id }}">
+            <div class="col-6 col-md-2"><label class="form-label small" for="sc-{{ c.item.type }}-{{ c.item.id }}">Score %</label>
+              <input class="form-control form-control-sm" type="number" step="0.1" min="0" max="100" id="sc-{{ c.item.type }}-{{ c.item.id }}" name="score" value="{{ c.override.score if c.override and c.override.score is not none else '' }}"></div>
+            <div class="col-6 col-md-2"><div class="form-check"><input class="form-check-input" type="checkbox" name="excused" value="1" id="ex-{{ c.item.type }}-{{ c.item.id }}" {% if c.override and c.override.excused %}checked{% endif %}><label class="form-check-label small" for="ex-{{ c.item.type }}-{{ c.item.id }}">Excused</label></div></div>
+            <div class="col-12 col-md-5"><label class="form-label small" for="nt-{{ c.item.type }}-{{ c.item.id }}">Reason (required, audited)</label>
+              <input class="form-control form-control-sm" id="nt-{{ c.item.type }}-{{ c.item.id }}" name="note" maxlength="300" value="{{ c.override.note if c.override else '' }}" placeholder="e.g. regraded Q14 after key fix"></div>
+            <div class="col-12 col-md-3 d-flex gap-2"><button class="btn btn-sm btn-brand" name="action" value="save">Save</button>{% if c.override %}<button class="btn btn-sm btn-outline-danger" name="action" value="clear">Clear</button>{% endif %}</div>
+          </form>
+        </td></tr>
+        {% endif %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+<p class="small text-muted">{{ st.policy|capitalize }} attempt counts. Course grade = weighted average of categories with scores ({% for key, label in categories if gb.weights[key] %}{{ label }} {{ gb.weights[key] }}%{{ ', ' if not loop.last }}{% endfor %}). Helix attention data is never part of a grade.</p>
+{% endblock %}
