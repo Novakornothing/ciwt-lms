@@ -15,6 +15,7 @@ import secrets
 import csv
 from io import StringIO, BytesIO
 import shutil
+import logging
 import random
 import os
 from pathlib import Path
@@ -39,6 +40,18 @@ app = Flask(__name__)
 SITE_NAME = os.environ.get('SITE_NAME', 'Novak Learning')
 SITE_TAGLINE = os.environ.get('SITE_TAGLINE', 'Info Systems Training')
 app.config['SITE_NAME'] = SITE_NAME
+
+# ---- Response compression (HTML, CSS, JS, JSON, SVG). Runs inside the app, so it works the same under
+# `flask run`, `python app.py` and gunicorn on Render. Brotli where the browser supports it, gzip otherwise;
+# static files are streamed through the same encoders. No compressed-response cache: pages are per user.
+app.config.setdefault('COMPRESS_ALGORITHM', ['br', 'gzip'])
+app.config.setdefault('COMPRESS_ALGORITHM_STREAMING', ['br', 'gzip'])
+app.config.setdefault('COMPRESS_MIN_SIZE', 500)
+try:
+    from flask_compress import Compress
+    Compress(app)
+except ImportError:  # keeps an older venv runnable; start_lms.sh / Render install requirements.txt
+    logging.getLogger(__name__).warning('flask-compress not installed: responses are sent uncompressed')
 app.config['SITE_TAGLINE'] = SITE_TAGLINE
 
 
@@ -156,10 +169,15 @@ def favicon():
     return redirect(url_for('static', filename='img/favicon-32.png'), code=301)
 
 
+_VERSIONED_VENDOR = re.compile(r'vendor/[\w.-]+/v?\d[\w.]*/')
+
+
 @app.after_request
 def _static_cache(resp):
     if request.endpoint == 'static' and resp.status_code in (200, 304):
-        if request.args.get('v'):
+        # ?v=<mtime> URLs, and vendored files under a version directory (static/vendor/<pkg>/<version>/...,
+        # e.g. fonts referenced by url() inside vendored CSS), never change in place
+        if request.args.get('v') or _VERSIONED_VENDOR.match(request.view_args.get('filename', '') if request.view_args else ''):
             resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
         else:
             resp.headers['Cache-Control'] = 'public, max-age=86400'

@@ -73,5 +73,58 @@ def test_favicon_redirects_to_small_png(anon):
 
 def test_base_loads_icons_without_blocking(student):
     body = student.get('/student').get_data(as_text=True)
-    assert 'rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/bootstrap-icons' in body
+    assert 'rel="preload" as="style" href="/static/vendor/bootstrap-icons/1.11.3/bootstrap-icons-subset.css' in body
     assert 'onsubmit="return confirm' not in body
+
+
+def test_no_third_party_assets(anon, student):
+    """Pass 7: CSS, JS and fonts are self-hosted, so no page waits on a CDN."""
+    import re
+    for client, path in ((anon, '/login'), (student, '/student'), (anon, '/')):
+        body = client.get(path).get_data(as_text=True)
+        ext = re.findall(r'<(?:link|script)[^>]+(?:href|src)="(https?://[^"]+)"', body)
+        assert ext == [], (path, ext)
+        assert 'fonts.googleapis' not in body and 'cdn.jsdelivr' not in body
+
+
+def test_vendor_assets_served_and_cached(anon):
+    for path in ('/static/vendor/bootstrap/5.3.3/bootstrap.min.css', '/static/vendor/bootstrap/5.3.3/bootstrap.bundle.min.js',
+                 '/static/vendor/bootstrap-icons/1.11.3/bootstrap-icons-subset.css',
+                 '/static/vendor/fonts/v1/fonts.css', '/static/vendor/fonts/v1/ibm-plex-sans-400-700-latin.woff2'):
+        r = anon.get(path)
+        assert r.status_code == 200, path
+        # versioned directory => immutable even without ?v= (fonts are referenced by url() inside CSS)
+        assert 'immutable' in r.headers.get('Cache-Control', ''), path
+        r.close()
+
+
+def test_responses_are_compressed(anon):
+    r = anon.get('/login', headers={'Accept-Encoding': 'gzip'})
+    assert r.headers.get('Content-Encoding') == 'gzip'
+    assert 'Accept-Encoding' in r.headers.get('Vary', '')
+    r = anon.get('/login', headers={'Accept-Encoding': 'br, gzip'})
+    assert r.headers.get('Content-Encoding') == 'br'
+    r = anon.get('/static/vendor/bootstrap/5.3.3/bootstrap.min.css', headers={'Accept-Encoding': 'br'})
+    assert r.headers.get('Content-Encoding') == 'br'
+    assert len(r.get_data()) < 60_000          # ~230 KB raw
+    r.close()
+    # images and fonts are already compressed: untouched
+    r = anon.get('/static/vendor/fonts/v1/ibm-plex-sans-400-700-latin.woff2', headers={'Accept-Encoding': 'br, gzip'})
+    assert 'Content-Encoding' not in r.headers
+    r.close()
+
+
+def test_icon_subset_covers_every_icon_used():
+    """The icon font is subset to the icons the app uses; a new icon needs tools/build_icon_subset.py."""
+    import pathlib, re, sys
+    root = pathlib.Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root / 'tools'))
+    import build_icon_subset as b
+    css = (b.ICONS / 'bootstrap-icons-subset.css').read_text()
+    have = set(re.findall(r'\.bi-([a-z0-9-]+)::before', css))
+    defined = set(re.findall(r'\.bi-([a-z0-9-]+)::before', b.FULL_CSS.read_text()))
+    used = b.used_icons()
+    assert used - defined == set(), f'not Bootstrap Icons names: {sorted(used - defined)}'
+    assert used - have == set(), f'run tools/build_icon_subset.py; missing: {sorted(used - have)}'
+    font = re.search(r'url\("fonts/([^"]+)"\)', css).group(1)
+    assert (b.ICONS / 'fonts' / font).is_file()

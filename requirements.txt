@@ -5,3 +5,4 @@ werkzeug>=3.0
 gunicorn>=22.0
 edge-tts>=6.1.0
 flask-wtf>=1.2
+flask-compress>=1.15
