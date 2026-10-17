@@ -21,6 +21,11 @@
   var FEATURE_NAMES = ['gx', 'gy', 'uR', 'vR', 'uL', 'vL', 'lidR', 'lidL', 'openR', 'openL', 'u2', 'v2', 'uv',
     'yaw', 'pitch', 'roll', 'faceX', 'faceY', 'faceW', 'lookHR', 'lookVR', 'lookHL', 'lookVL'];
   // last four: MediaPipe blendshape eye-look scores (0 when unavailable, e.g. synthetic streams)
+  /* Pass 5: optional second-stage eye-crop features appended to vec when the high-res crop stage runs
+     (desktop): pupil centre in the pose-normalised crop (Timm & Barth, dark-centroid fallback) and the
+     upper/lower lid position, both in units of eye width. Missing values are NaN = "no information". */
+  var CROP_NAMES = ['pupilXR', 'pupilYR', 'pupilXL', 'pupilYL', 'lidUpR', 'lidLoR', 'lidUpL', 'lidLoL'];
+  var CROP_IDX = CROP_NAMES.map(function (_, i) { return 23 + i; });
   var GEO_IDX = [0, 1], EYE_IDX = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 19, 20, 21, 22], ALL_IDX = FEATURE_NAMES.map(function (_, i) { return i; });
   var EYE_GAIN = 2.3;   // sin(eye rotation) ~= iris offset / eye width * (eye width / eyeball radius ~ 2.8/1.2)
 
@@ -121,6 +126,173 @@
     return m;
   }
 
+
+  /* ---------- second stage: high-resolution eye crops (pass 5) ----------
+     MediaPipe localises the iris inside a ~256 px face crop, so on a 720p/1080p camera most of the
+     eye detail is thrown away. This stage samples each eye from the FULL camera frame into a
+     pose-normalised crop (rotated/scaled by the eye-corner line), then
+       - finds the eye centre with the gradient method of Timm & Barth (2011) restricted to the
+         lid opening, and a dark-weighted centroid as a cheaper alternative;
+       - builds a small histogram-equalised appearance patch (WebGazer-style, but pose-normalised).
+     Everything here is pure (works on a grey Uint8/Float array) so node tests and the bench use
+     exactly the browser code. */
+  var CROP = { W: 90, H: 54, SPAN: 1.5 };   // crop covers 1.5 x eye width horizontally, 0.9 x vertically
+  var R_CONTOUR = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
+  var L_CONTOUR = [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382];
+
+  /* affine frame->crop map for one eye: a b c d e f as in canvas setTransform (x' = a x + c y + e) */
+  function eyeCropTransform(A, B, opts) {
+    opts = opts || {};
+    var CW = opts.W || CROP.W, CH = opts.H || CROP.H, span = opts.span || CROP.SPAN;
+    if (A[0] > B[0]) { var t = A; A = B; B = t; }
+    var dx = B[0] - A[0], dy = B[1] - A[1], ew = Math.hypot(dx, dy) || 1;
+    var cs = dx / ew, sn = dy / ew, S = CW / (span * ew);
+    var cx = (A[0] + B[0]) / 2, cy = (A[1] + B[1]) / 2;
+    var a = S * cs, b = -S * sn, c = S * sn, d = S * cs;
+    return { a: a, b: b, c: c, d: d, e: CW / 2 - (a * cx + c * cy), f: CH / 2 - (b * cx + d * cy), W: CW, H: CH, scale: S, ew: ew,
+             apply: function (p) { return [a * p[0] + c * p[1] + this.e, b * p[0] + d * p[1] + this.f]; } };
+  }
+
+  /* rows spans of a polygon (crop coords) -> mask Uint8Array(W*H) */
+  function polygonMask(poly, W, H, grow) {
+    var m = new Uint8Array(W * H), cx = 0, cy = 0;
+    poly.forEach(function (p) { cx += p[0]; cy += p[1]; }); cx /= poly.length; cy /= poly.length;
+    var P = poly.map(function (p) { return [cx + (p[0] - cx) * (grow || 1), cy + (p[1] - cy) * (grow || 1)]; });
+    for (var y = 0; y < H; y++) {
+      var xs = [], yy = y + 0.5;
+      for (var i = 0, j = P.length - 1; i < P.length; j = i++) {
+        var yi = P[i][1], yj = P[j][1];
+        if ((yi > yy) !== (yj > yy)) xs.push(P[i][0] + (yy - yi) / (yj - yi) * (P[j][0] - P[i][0]));
+      }
+      xs.sort(function (p, q) { return p - q; });
+      for (var k = 0; k + 1 < xs.length; k += 2) {
+        for (var x = Math.max(0, Math.ceil(xs[k] - 0.5)); x <= Math.min(W - 1, Math.floor(xs[k + 1] - 0.5)); x++) m[y * W + x] = 1;
+      }
+    }
+    return m;
+  }
+
+  function blur3(g, W, H) {   // separable [1 2 1]/4 smoothing
+    var t = new Float32Array(W * H), o = new Float32Array(W * H), x, y, i;
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++) { i = y * W + x; t[i] = (g[y * W + Math.max(0, x - 1)] + 2 * g[i] + g[y * W + Math.min(W - 1, x + 1)]) / 4; }
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++) { i = y * W + x; o[i] = (t[Math.max(0, y - 1) * W + x] + 2 * t[i] + t[Math.min(H - 1, y + 1) * W + x]) / 4; }
+    return o;
+  }
+
+  /* Timm & Barth (2011) eye-centre localisation: the centre is where the most normalised image
+     gradients point radially away from (dark iris -> bright sclera), weighted by darkness.
+     Candidates and gradients are restricted to the lid opening (mask). Returns crop px. */
+  function pupilTimmBarth(gray, W, H, mask, opts) {
+    opts = opts || {};
+    var g = blur3(gray, W, H), gx = [], gy = [], px = [], py = [], mags = [], x, y, i;
+    var gm = mask ? polygonDilate(mask, W, H, 2) : null;
+    for (y = 1; y < H - 1; y++) for (x = 1; x < W - 1; x++) {
+      i = y * W + x; if (gm && !gm[i]) continue;
+      var ddx = (g[i + 1] - g[i - 1]) / 2, ddy = (g[i + W] - g[i - W]) / 2, mg = Math.hypot(ddx, ddy);
+      mags.push(mg); gx.push(ddx); gy.push(ddy); px.push(x); py.push(y);
+    }
+    if (mags.length < 10) return null;
+    var mu = 0, sd = 0; mags.forEach(function (v) { mu += v; }); mu /= mags.length;
+    mags.forEach(function (v) { sd += (v - mu) * (v - mu); }); sd = Math.sqrt(sd / mags.length);
+    var thr = mu + (opts.k == null ? 0.5 : opts.k) * sd, G = [];
+    for (i = 0; i < mags.length; i++) if (mags[i] > thr) G.push([px[i], py[i], gx[i] / mags[i], gy[i] / mags[i]]);
+    if (G.length < 6) return null;
+    if (G.length > (opts.maxGrad || 400)) { var keep = Math.ceil(G.length / (opts.maxGrad || 400)); G = G.filter(function (_, q) { return q % keep === 0; }); }
+    var maxI = 0; for (i = 0; i < g.length; i++) if (g[i] > maxI) maxI = g[i];
+    // coarse grid (step 2 by default) then full-resolution refinement around the best candidate
+    var step = opts.step || 2, best = -1, bx = 0, by = 0, obj = new Float32Array(W * H);
+    var evalAt = function (x, y) {
+      var i = y * W + x; if (obj[i] || (mask && !mask[i])) return;
+      var sum = 0;
+      for (var k = 0; k < G.length; k++) {
+        var qx = G[k][0] - x, qy = G[k][1] - y, n = Math.hypot(qx, qy);
+        if (n < 1) continue;
+        var dp = (qx * G[k][2] + qy * G[k][3]) / n;
+        if (dp > 0) sum += dp * dp;
+      }
+      var v = (maxI - g[i] + 1) * sum / G.length + 1e-9;
+      obj[i] = v; if (v > best) { best = v; bx = x; by = y; }
+    };
+    for (y = 2; y < H - 2; y += step) for (x = 2; x < W - 2; x += step) evalAt(x, y);
+    if (step > 1 && best > 0) {
+      var cx0 = bx, cy0 = by, r = step + 1;
+      for (y = Math.max(2, cy0 - r); y <= Math.min(H - 3, cy0 + r); y++) for (x = Math.max(2, cx0 - r); x <= Math.min(W - 3, cx0 + r); x++) evalAt(x, y);
+    }
+    if (best <= 0) return null;
+    // sub-pixel: objective-weighted centroid of the 5x5 neighbourhood
+    var sx = 0, sy = 0, sw = 0;
+    for (y = Math.max(0, by - 2); y <= Math.min(H - 1, by + 2); y++) for (x = Math.max(0, bx - 2); x <= Math.min(W - 1, bx + 2); x++) {
+      var w = obj[y * W + x] - 0.6 * best; if (w > 0) { sx += w * x; sy += w * y; sw += w; }
+    }
+    return sw ? [sx / sw, sy / sw] : [bx, by];
+  }
+  function polygonDilate(mask, W, H, r) {
+    var o = new Uint8Array(W * H);
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      if (!mask[y * W + x]) continue;
+      for (var yy = Math.max(0, y - r); yy <= Math.min(H - 1, y + r); yy++) for (var xx = Math.max(0, x - r); xx <= Math.min(W - 1, x + r); xx++) o[yy * W + xx] = 1;
+    }
+    return o;
+  }
+
+  /* cheaper alternative: centroid of the darkest pixels inside the lid opening */
+  function pupilDarkCentroid(gray, W, H, mask, frac) {
+    var g = blur3(gray, W, H), vals = [];
+    for (var i = 0; i < g.length; i++) if (!mask || mask[i]) vals.push(g[i]);
+    if (vals.length < 10) return null;
+    vals.sort(function (a, b) { return a - b; });
+    var thr = vals[Math.floor(vals.length * (frac || 0.25))], sx = 0, sy = 0, sw = 0;
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      var k = y * W + x; if (mask && !mask[k]) continue;
+      var w = thr - g[k]; if (w > 0) { sx += w * x; sy += w * y; sw += w; }
+    }
+    return sw ? [sx / sw, sy / sw] : null;
+  }
+
+  /* appearance patch: area-average to pw x ph, then rank-equalise to [0,1] */
+  function eyePatch(gray, W, H, pw, ph) {
+    var out = new Float32Array(pw * ph), bw = W / pw, bh = H / ph;
+    for (var j = 0; j < ph; j++) for (var i = 0; i < pw; i++) {
+      var s = 0, n = 0;
+      for (var y = Math.floor(j * bh); y < Math.floor((j + 1) * bh); y++) for (var x = Math.floor(i * bw); x < Math.floor((i + 1) * bw); x++) { s += gray[y * W + x]; n++; }
+      out[j * pw + i] = n ? s / n : 0;
+    }
+    var idx = Array.prototype.map.call(out, function (v, k) { return k; }).sort(function (a, b) { return out[a] - out[b]; });
+    var eq = new Float32Array(out.length);
+    idx.forEach(function (k, r) { eq[k] = r / (idx.length - 1); });
+    return eq;
+  }
+
+  /* all crop features for one eye. gray: crop pixels (W*H), polyCrop: lid contour in crop px */
+  function cropEyeFeatures(gray, W, H, polyCrop, opts) {
+    opts = opts || {};
+    var mask = polygonMask(polyCrop, W, H, 1.0);
+    var tb = opts.noTB ? null : pupilTimmBarth(gray, W, H, mask, { step: opts.tbStep || 2 });
+    var dc = pupilDarkCentroid(gray, W, H, mask);
+    var ewc = W / CROP.SPAN, cx = W / 2, cy = H / 2;
+    var norm = function (p) { return p ? [(p[0] - cx) / ewc, (p[1] - cy) / ewc] : null; };
+    // vertical cue from the lids themselves: upper/lower lid height at the centre column
+    // (where the vertical line through the crop centre crosses the lid contour)
+    var up = Infinity, lo = -Infinity, n = polyCrop.length;
+    for (var i = 0, j = n - 1; i < n; j = i++) {
+      var P = polyCrop[i], Q = polyCrop[j];
+      if ((P[0] > cx) === (Q[0] > cx)) continue;
+      var y = P[1] + (cx - P[0]) / (Q[0] - P[0]) * (Q[1] - P[1]);
+      up = Math.min(up, y); lo = Math.max(lo, y);
+    }
+    if (!(lo > up)) { up = Infinity; lo = -Infinity; }
+    return { tb: norm(tb), dc: norm(dc), upper: isFinite(up) ? (up - cy) / ewc : null, lower: isFinite(lo) ? (lo - cy) / ewc : null,
+             patch: opts.patch ? eyePatch(gray, W, H, opts.patch[0], opts.patch[1]) : null };
+  }
+
+  /* crop features -> the 8 values appended to vec (CROP_NAMES); NaN where unavailable */
+  function cropVec(crop) {
+    var out = [], N = NaN;
+    ['r', 'l'].forEach(function (k) { var e = crop && crop[k], p = e && (e.tb || e.dc); out.push(p ? p[0] : N, p ? p[1] : N); });
+    ['r', 'l'].forEach(function (k) { var e = crop && crop[k]; out.push(e && fin(e.upper) ? e.upper : N, e && fin(e.lower) ? e.lower : N); });
+    return out;
+  }
+
   /* ---------- linear algebra (small symmetric systems) ---------- */
   function jacobiEigen(A) {          // A: symmetric p x p (array of arrays). Returns {d, V} (columns = vectors)
     var p = A.length, a = A.map(function (r) { return r.slice(); }), V = [], i, j, k;
@@ -143,6 +315,7 @@
   }
 
   var LAMBDAS = [0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100];
+  var LAMBDAS_CV = [0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000];
 
   /* Weighted ridge regression x,y = f(features), standardised features, intercept unpenalised,
      lambda chosen by GCV. Calibration samples are kept; implicit samples live in a ring buffer
@@ -159,6 +332,7 @@
     // 'hybrid' (default): affine map of the geometric estimate + ridge on eye features for the residual.
     // 'ridge': one ridge model over the chosen features (used for ablations).
     this.mode = opts.mode || (opts.features ? 'ridge' : 'hybrid');
+    this.lambdaSel = opts.lambdaSel || null;  // 'cv' | 'gcv'; default: cv when crop features are present
   }
   GazeRegressor.prototype._f = function (vec) {
     if (!this.features) return vec;
@@ -190,10 +364,16 @@
     if (!geo) return (this.model = null);
     // stage 2: residual correction from eye-in-head features only (no head-position terms)
     var resid = rows.map(function (r) { var g = ridgePredict(geo, r.f); return { f: r.f, x: r.x - g.x, y: r.y - g.y, w: r.w }; });
-    var eye = ridgeFit(resid, this.eyeIdx || EYE_IDX, LAMBDAS);
+    // pass 5: with eye-crop features present, add them to stage 2 and choose lambda by grouped CV
+    // (accepted by the warp A/B: -0.36 deg mean over 55 sequences, p=0.03; without crops CV alone was neutral)
+    var hasCrop = !this.eyeIdx && rows.some(function (r) { return r.f.length > 23 && fin(r.f[23]); });
+    var eidx = this.eyeIdx || (hasCrop ? EYE_IDX.concat(CROP_IDX) : EYE_IDX);
+    var sel = this.lambdaSel || (hasCrop ? 'cv' : 'gcv'), cv = sel === 'cv' ? cvLambda(resid, eidx, LAMBDAS_CV, cvGroups(rows)) : null;   // folds by calibration target, not residual
+    var eye = ridgeFit(resid, eidx, cv ? [cv.lambda] : LAMBDAS);
+    if (eye && cv) eye.cvErr = cv.cvErr;
     var rss = 0, W = 0;
     rows.forEach(function (r) { var p = ridgePredict(geo, r.f), q = ridgePredict(eye, r.f); W += r.w; rss += r.w * (Math.pow(p.x + q.x - r.x, 2) + Math.pow(p.y + q.y - r.y, 2)); });
-    this.model = { kind: 'hybrid', geo: geo, eye: eye, lambda: eye ? eye.lambda : null, n: rows.length, rmsPx: Math.sqrt(rss / W), bias: { x: 0, y: 0 } };
+    this.model = { kind: 'hybrid', geo: geo, eye: eye, lambda: eye ? eye.lambda : null, crop: hasCrop, lambdaSel: cv ? 'cv' : 'gcv', n: rows.length, rmsPx: Math.sqrt(rss / W), bias: { x: 0, y: 0 } };
     this.model.bias = this._implicitBias(nowT);
     return this.model;
   };
@@ -225,15 +405,55 @@
     return { x: p.x + b.x, y: p.y + b.y };
   };
 
+  function fin(v) { return typeof v === 'number' && v === v && v !== Infinity && v !== -Infinity; }
   function ridgePredict(m, f) {
     var x = m.mx, y = m.my, idx = m.idx;
-    for (var a = 0; a < idx.length; a++) { var z = (f[idx[a]] - m.mu[a]) / m.sd[a]; x += z * m.wx[a]; y += z * m.wy[a]; }
+    for (var a = 0; a < idx.length; a++) {
+      var v = f[idx[a]]; if (!fin(v)) continue;          // missing feature (e.g. crop stage off) = mean
+      var z = (v - m.mu[a]) / m.sd[a]; x += z * m.wx[a]; y += z * m.wy[a];
+    }
     return { x: x, y: y };
   }
+
+  /* Lambda by grouped cross-validation: leave out all frames of one calibration target region at a
+     time (targets binned on a 3x3 grid, so 9-dot calibration = leave-one-dot-out). Frames at the same
+     dot are strongly correlated, which makes per-frame GCV pick too little regularisation. Scored like
+     validation: error of the median prediction per held-out group. */
+  function cvGroups(rows) {
+    var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    rows.forEach(function (r) { x0 = Math.min(x0, r.x); x1 = Math.max(x1, r.x); y0 = Math.min(y0, r.y); y1 = Math.max(y1, r.y); });
+    var cell = function (v, a, b) { return b - a < 1 ? 0 : Math.min(2, Math.floor(3 * (v - a) / (b - a + 1e-9))); };
+    return rows.map(function (r) { return cell(r.y, y0, y1) * 3 + cell(r.x, x0, x1); });
+  }
+  function cvLambda(rows, idx, lambdas, groups) {   // groups: fold id per row (default: cvGroups(rows))
+    var g = groups || cvGroups(rows), keys = [];
+    g.forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
+    if (keys.length < 4) return null;
+    var err = lambdas.map(function () { return 0; });
+    keys.forEach(function (k) {
+      var tr = rows.filter(function (_, i) { return g[i] !== k; }), te = rows.filter(function (_, i) { return g[i] === k; });
+      var P = ridgePrep(tr, idx); if (!P) return;
+      lambdas.forEach(function (lam, li) {
+        var m = P.model(lam), ex = [], ey = [];
+        te.forEach(function (r) { var q = ridgePredict(m, r.f); ex.push(q.x - r.x); ey.push(q.y - r.y); });
+        err[li] += Math.hypot(median(ex), median(ey));
+      });
+    });
+    var bi = 0; err.forEach(function (e, i) { if (e < err[bi]) bi = i; });
+    return { lambda: lambdas[bi], cvErr: err[bi] / keys.length };
+  }
+  function median(a) { var s = a.slice().sort(function (p, q) { return p - q; }), n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : 0; }
 
   /* Weighted ridge over columns idx (null = all), standardised, intercept unpenalised,
      lambda chosen from `lambdas` by generalised cross-validation (closed form via eigendecomposition). */
   function ridgeFit(rowsIn, idx, lambdas) {
+    var P = ridgePrep(rowsIn, idx);
+    if (!P) return null;
+    var best = null;
+    lambdas.forEach(function (lam) { var m = P.model(lam); if (!best || m.gcv < best.gcv) best = m; });
+    return best;
+  }
+  function ridgePrep(rowsIn, idx) {
     var rows = rowsIn;
     var n = rows.length;
     if (!n) return null;
@@ -241,13 +461,14 @@
     rows = rows.map(function (r) { return { f: idx.map(function (q) { return r.f[q]; }), x: r.x, y: r.y, w: r.w }; });
     var p = idx.length, i, j, k;
     var W = 0, mu = new Array(p).fill(0), mx = 0, my = 0;
-    rows.forEach(function (r) { W += r.w; mx += r.w * r.x; my += r.w * r.y; for (var q = 0; q < p; q++) mu[q] += r.w * r.f[q]; });
-    mx /= W; my /= W; for (j = 0; j < p; j++) mu[j] /= W;
+    var wq = new Array(p).fill(0);   // per-feature weight of rows where it is present (missing = NaN/undefined)
+    rows.forEach(function (r) { W += r.w; mx += r.w * r.x; my += r.w * r.y; for (var q = 0; q < p; q++) if (fin(r.f[q])) { mu[q] += r.w * r.f[q]; wq[q] += r.w; } });
+    mx /= W; my /= W; for (j = 0; j < p; j++) mu[j] = wq[j] ? mu[j] / wq[j] : 0;
     var sd = new Array(p).fill(0);
-    rows.forEach(function (r) { for (var q = 0; q < p; q++) sd[q] += r.w * Math.pow(r.f[q] - mu[q], 2); });
-    for (j = 0; j < p; j++) sd[j] = Math.sqrt(sd[j] / W) || 1;
-    // Z = sqrt(w) * standardised features
-    var Z = rows.map(function (r) { var s = Math.sqrt(r.w); return r.f.map(function (v, q) { return s * (v - mu[q]) / sd[q]; }); });
+    rows.forEach(function (r) { for (var q = 0; q < p; q++) if (fin(r.f[q])) sd[q] += r.w * Math.pow(r.f[q] - mu[q], 2); });
+    for (j = 0; j < p; j++) sd[j] = Math.sqrt(sd[j] / (wq[j] || 1)) || 1;
+    // Z = sqrt(w) * standardised features (missing -> 0, i.e. the mean)
+    var Z = rows.map(function (r) { var s = Math.sqrt(r.w); return r.f.map(function (v, q) { return fin(v) ? s * (v - mu[q]) / sd[q] : 0; }); });
     var tx = rows.map(function (r) { return Math.sqrt(r.w) * (r.x - mx); });
     var ty = rows.map(function (r) { return Math.sqrt(r.w) * (r.y - my); });
     var G = []; for (i = 0; i < p; i++) G.push(new Array(p).fill(0));
@@ -263,8 +484,7 @@
     var E = jacobiEigen(G), V = E.V, d = E.d;
     var px = new Array(p).fill(0), py = new Array(p).fill(0);   // V^T b
     for (j = 0; j < p; j++) for (i = 0; i < p; i++) { px[j] += V[i][j] * bx[i]; py[j] += V[i][j] * by[i]; }
-    var best = null;
-    lambdas.forEach(function (lam) {
+    var model = function (lam) {
       var wx = new Array(p).fill(0), wy = new Array(p).fill(0), df = 0;
       for (j = 0; j < p; j++) {
         var g = 1 / (Math.max(d[j], 0) + lam);
@@ -278,10 +498,9 @@
         rss += ex * ex + ey * ey;
       }
       var gcv = n * rss / Math.pow(Math.max(1, n - df), 2);
-      if (!best || gcv < best.gcv) best = { gcv: gcv, lam: lam, wx: wx, wy: wy, df: df, rss: rss };
-    });
-    return { idx: idx, mu: mu, sd: sd, mx: mx, my: my, wx: best.wx, wy: best.wy, lambda: best.lam, df: best.df,
-             n: n, rmsPx: Math.sqrt(best.rss / W) };
+      return { idx: idx, mu: mu, sd: sd, mx: mx, my: my, wx: wx, wy: wy, lambda: lam, df: df, gcv: gcv, n: n, rmsPx: Math.sqrt(rss / W) };
+    };
+    return { model: model };
   }
 
   /* Keep one regressor per screen orientation (phones/tablets): rotating the device changes the
@@ -556,7 +775,8 @@
     return opts.topBar ? dh : 0;
   }
 
-  return { LM: LM, FEATURE_NAMES: FEATURE_NAMES, GEO_IDX: GEO_IDX, EYE_IDX: EYE_IDX, ridgeFit: ridgeFit, headPose: headPose, eyeFeatures: eyeFeatures,
+  return { CROP: CROP, R_CONTOUR: R_CONTOUR, L_CONTOUR: L_CONTOUR, eyeCropTransform: eyeCropTransform, polygonMask: polygonMask, pupilTimmBarth: pupilTimmBarth, pupilDarkCentroid: pupilDarkCentroid, eyePatch: eyePatch, cropEyeFeatures: cropEyeFeatures,
+    LM: LM, FEATURE_NAMES: FEATURE_NAMES, CROP_NAMES: CROP_NAMES, CROP_IDX: CROP_IDX, cropVec: cropVec, cvLambda: cvLambda, cvGroups: cvGroups, GEO_IDX: GEO_IDX, EYE_IDX: EYE_IDX, ridgeFit: ridgeFit, headPose: headPose, eyeFeatures: eyeFeatures,
     jacobiEigen: jacobiEigen, GazeRegressor: GazeRegressor, OrientationModels: OrientationModels,
     poseGuidance: poseGuidance, angularError: angularError, aoiResolution: aoiResolution,
     DriftTracker: DriftTracker, CM_PER_CSS_PX: CM_PER_CSS_PX, IRIS_DIAMETER_CM: IRIS_DIAMETER_CM,
