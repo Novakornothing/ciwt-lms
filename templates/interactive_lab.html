@@ -7,113 +7,6 @@
   <a class="btn btn-sm btn-brand" href="{{ practical_back }}">Back to skills exam</a>
 </div>
 {% endif %}
-<style>
-  .lab-layout { display: grid; grid-template-columns: 1fr minmax(260px, 320px); gap: 1rem; align-items: start; }
-  @media (max-width: 991px) { .lab-layout { grid-template-columns: 1fr; } }
-  .term {
-    background: #070e18;
-    color: #d6e8ff;
-    border-radius: 12px;
-    border: 2px solid #3ec7ff;
-    box-shadow: 0 0 0 1px rgba(62,199,255,.25), 0 12px 40px rgba(0,0,0,.35);
-    font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
-    font-size: 0.95rem;
-    min-height: 480px;
-    display: flex;
-    flex-direction: column;
-  }
-  .term-head {
-    padding: 0.65rem 1rem;
-    border-bottom: 1px solid #2a3f5c;
-    color: #f0c14b;
-    font-weight: 800;
-    font-size: 0.85rem;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    display: flex; justify-content: space-between; align-items: center; gap: .5rem;
-  }
-  .term-live-dot {
-    width: .65rem; height: .65rem; border-radius: 50%;
-    background: #0d9f6e; box-shadow: 0 0 8px #0d9f6e;
-    display: inline-block; margin-right: .4rem;
-  }
-  .term-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.85rem 1rem;
-    max-height: 55vh;
-    min-height: 320px;
-  }
-  .term-line { white-space: pre-wrap; word-break: break-word; margin: 0 0 0.15rem; line-height: 1.4; }
-  .term-cmd { color: #7ee0ff; }
-  .term-input-row {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    border-top: 2px solid #3ec7ff;
-    background: #0d1828;
-  }
-  .term-input-row .prompt { color: #f0c14b; white-space: nowrap; font-weight: 700; }
-  .term-input-row input {
-    flex: 1;
-    background: #132033;
-    border: 1px solid #3a5575;
-    border-radius: 6px;
-    color: #e8f4ff;
-    outline: none;
-    font-family: inherit;
-    font-size: 1rem;
-    padding: 0.55rem 0.75rem;
-  }
-  .term-input-row input:focus { border-color: #3ec7ff; box-shadow: 0 0 0 3px rgba(62,199,255,.25); }
-  .obj-item { display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.65rem; font-size: 0.92rem; }
-  .obj-item .ck {
-    flex: 0 0 1.2rem; height: 1.2rem; border-radius: 4px;
-    border: 2px solid #3ec7ff; margin-top: 0.1rem;
-  }
-  .obj-item.done .ck { background: #0d9f6e; border-color: #0d9f6e; }
-  .obj-item.done span { text-decoration: line-through; opacity: 0.7; }
-  .lab-success {
-    display: none; margin-top: 0.75rem; padding: 0.85rem;
-    border-radius: 8px; background: rgba(13,159,110,.18);
-    border: 1px solid #0d9f6e; font-weight: 600;
-  }
-  .lab-success.show { display: block; }
-  .lab-banner {
-    background: linear-gradient(90deg, #0a2540, #123a5c);
-    border: 1px solid #3ec7ff; border-radius: 10px;
-    padding: 0.85rem 1.1rem; margin-bottom: 1rem; color: #e8f4ff;
-  }
-  .lab-banner strong { color: #f0c14b; }
-  .w11-vm {
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #3d3d3d;
-    box-shadow: 0 18px 50px rgba(0,0,0,.45);
-  }
-  .w11-titlebar {
-    background: #1f1f1f;
-    color: #f3f3f3;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: .45rem .8rem;
-    font-size: .82rem;
-    font-weight: 600;
-  }
-  .w11-dots span {
-    display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 6px;
-  }
-  .w11-taskbar {
-    background: #1c1c1c;
-    color: #cfcfcf;
-    font-size: .75rem;
-    padding: .35rem .8rem;
-    display: flex;
-    justify-content: space-between;
-  }
-</style>
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
@@ -143,26 +36,26 @@
     <div class="{% if lab.kind == 'windows' %}w11-vm{% endif %}">
     {% if lab.kind == 'windows' %}
     <div class="w11-titlebar">
-      <span>Windows 11 Education — CIWT-W11-07 · Terminal</span>
-      <span class="w11-dots"><span style="background:#e81123"></span><span style="background:#ffb900"></span><span style="background:#00cc6a"></span></span>
+      <span>Windows 11 Education<span class="w11-title-long"> — CIWT-W11-07</span> · Terminal</span>
+      <span class="w11-dots"><span class="dot-close"></span><span class="dot-min"></span><span class="dot-max"></span></span>
     </div>
     {% endif %}
-    <div class="term" id="term" tabindex="0" style="{% if lab.kind == 'windows' %}border-radius:0;border:0{% endif %}">
+    <div class="term" id="term" tabindex="0">
       <div class="term-head">
         <span><span class="term-live-dot"></span>{% if lab.kind == 'windows' %}WIN11 VM · CMD / PowerShell{% else %}{{ lab.kind|upper }} simulator · live{% endif %}</span>
-        <span class="small" style="color:#9bb4d0;font-weight:600;letter-spacing:0">Type · Enter · Tab</span>
+        <span class="small term-head-hint">Type · Enter · Tab</span>
       </div>
       <div class="term-body" id="termBody"></div>
       <div class="term-input-row">
         <span class="prompt" id="termPrompt">{{ prompt }}</span>
         <input id="termInput" type="text" autocomplete="off" spellcheck="false"
                placeholder="Command — Tab to complete"
-               aria-label="Command input" autofocus>
+               aria-label="Command input" autocapitalize="off" autocorrect="off" enterkeyhint="send">
       </div>
     </div>
     {% if lab.kind == 'windows' %}
     <div class="w11-taskbar">
-      <span>Start · Search · Settings &gt; Network &amp; internet</span>
+      <span class="w11-task-left">Start · Search · Settings &gt; Network &amp; internet</span>
       <span>CIWT-W11-07 · 23H2</span>
     </div>
     {% endif %}
@@ -674,7 +567,7 @@
   document.getElementById('term').addEventListener('click', function(){ input.focus(); });
 
   appendLine('CIWT training simulator.');
-  setTimeout(function(){ input.focus(); }, 100);
+  if (!window.matchMedia('(pointer: coarse)').matches) setTimeout(function(){ input.focus(); }, 100);
 })();
 </script>
 {% endblock %}
