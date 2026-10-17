@@ -6965,16 +6965,24 @@ def sync_curriculum():
                 m.content = overview
                 m.estimated_minutes = mins
                 db.session.flush()
-            # replace lessons for module
-            Lesson.query.filter_by(module_id=m.id).delete()
+            # Update lessons in place (matched by order) so lesson ids stay stable
+            # across restarts. Deleting + re-inserting used to orphan every
+            # lesson-keyed row (Helix timelines, tickets, bookmarks) on each boot.
+            existing = {L.order: L for L in Lesson.query.filter_by(module_id=m.id).all()}
+            wanted = set()
             for idx, les in enumerate(lesson_list, start=1):
-                db.session.add(Lesson(
-                    module_id=m.id,
-                    title=les.get('title') or f'Lesson {idx}',
-                    order=int(les.get('order') or idx),
-                    content=les.get('html') or '',
-                    estimated_minutes=les.get('minutes', 30)
-                ))
+                lorder = int(les.get('order') or idx)
+                wanted.add(lorder)
+                row = existing.get(lorder)
+                if row is None:
+                    row = Lesson(module_id=m.id, order=lorder)
+                    db.session.add(row)
+                row.title = les.get('title') or f'Lesson {idx}'
+                row.content = les.get('html') or ''
+                row.estimated_minutes = les.get('minutes', 30)
+            for lorder, row in existing.items():
+                if lorder not in wanted:
+                    db.session.delete(row)
     used_stems = set()
     for mod in Module.query.all():
         for qz in Quiz.query.filter_by(module_id=mod.id).all():
