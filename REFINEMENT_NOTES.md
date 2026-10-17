@@ -362,3 +362,38 @@ appearance features differently.
 * Results: node 31/31, pytest 63 passed, axe 63 pages with 0 violations, fake-camera Try-page
   e2e (1280x720) OK.
 * Screenshots: /workspace/ciwt/screenshots/pass5/try-hud-eye-crops.png and try-live.png.
+
+## Pass 6 (Oct 17 2026): full-site UI/UX and mobile polish
+
+Scope: every route for every role. Each page was screenshotted at 390/820/1280 in light and dark (`tools/site_audit.py`), critiqued and fixed over two rounds. Helix accuracy work is paused. Everything is local; the real DB was snapshotted and left unchanged (screenshots and e2e ran on a copy).
+
+### Changes by area
+- **Quizzes and tests:** one shared runner (`static/js/assessment.js` + `templates/_assessment.html`; quiz.html and test.html are now thin wrappers). On phones it runs in focus mode: tab bar and footer hidden, a fixed action bar at the bottom, and a sticky toolbar with the timer (turns amber at 10 min and 5 min, red in the last minute, auto-submits as "Time expired"). Answers survive a reload (sessionStorage) and are cleared on submit. The review modal has jump chips. Options are keyboard-reachable (the old radios used `display:none`), with ←/→/F shortcuts, aria-current/aria-pressed states and textContent-only rendering. `tools/assess_phone_e2e.py` runs the flow end to end on a phone (39 checks).
+- **Results:** 3-up KPI row, pass/fail hero, skill meters, focus areas sorted by most missed (first 3 shown, the rest collapsed) with wrapping lesson chips, and Try again / See my grades actions.
+- **Student class page:** progress meter, full-width actions on phones, chapter labs in a disclosure, Skills tests no longer listed twice, friendly empty states (developer "Render deploy" text removed), critique form collapsed.
+- **Labs:** one `lab_row` component. Course labs are grouped by chapter with jump chips, and the skill map is collapsed and shows lab titles. The live lab terminal no longer overflows phones (grid `minmax(0,1fr)`); the input has autocorrect off and no autofocus on touch.
+- **Gradebook and grades:** 44 px touch chips, names and sort headers; grade rows stack compactly on phones.
+- **Instructor analytics:** test performance and item analysis use a `kpi-grid` (3-up on phones) plus summary pills instead of a wall of metadata.
+- **Navigation:** the mobile Menu drawer opened below the page because of a legacy `position: static !important` rule; it now opens on screen. Bug predates pass 6. The rail has Account & settings and Sign out. Root-only breadcrumbs removed.
+- **Account:** new `/account` page for every role: profile, theme choice, password change with inline validation (400 on error, flash on success, audited), privacy links.
+- **Feedback and empty states:** flash messages with an icon and role per category; shared `empty_state` macro (inbox, search, tickets); `form[data-confirm]` replaces all 7 inline `onsubmit=confirm()` handlers; inbox has a header with an unread badge and CTA; friendly 404/403/500 pages (API 404s stay JSON).
+- **Forms:** removed a global `.form-label { white-space: nowrap }` that clipped long labels; 50 labels associated with their fields; check labels fill a 44 px row on touch.
+- **Design system:** the `<style>` blocks from the lab and sidebar pages moved into ciwt-ui.css; 41 static inline styles replaced by `u-*` utilities. Touch overrides sit after the component blocks so they win the cascade.
+- **Performance:** fonts and bootstrap-icons load non-blocking (preload + noscript); Mono weights trimmed to 400/600; preconnect to jsDelivr; 2 KB favicon (was the full logo) and `/favicon.ico` → 301. Versioned static files are served `immutable`, others max-age 86400 (tested).
+- **Accessibility:** axe gives 0 violations on 63 page/width combinations (the lab row "Launch" text was darkened in light mode).
+
+### Tests
+pytest 73 passed (new: error pages, account flows, caching headers, favicon, no inline confirm); node 31 passed; phone e2e 39/39 in light and dark; axe 0.
+
+### Screenshots
+`/workspace/ciwt/screenshots/pass6/`: `before/`, `after/` (light 390/1280), `after-dark/` (390), `phone-e2e-light|dark/`, `pairs/` (side-by-side before/after).
+
+### Remaining issues
+- Bootstrap CSS from the CDN is still render-blocking. Self-hosting it, or using a critical-CSS split, would help first paint.
+- The dev server doesn't gzip; enable compression at the proxy in production.
+- `static/img/navy-n.png` (2.1 MB) and `navy-interior-live.webp` (604 KB) are unreferenced. Candidates for removal (left in place).
+- Duplicate "… (1).html" templates were left untouched.
+- A test POST renders results directly, so reloading the results page offers to resubmit (should be POST-redirect-GET).
+- Data-driven inline widths (progress bars, histograms, distractor bars) are intentionally kept inline.
+- The admin dashboard is still long; jump chips help, but it should be split into tabs or pages.
+- Small-target counts at 1280 are mouse context (no touch rules) and are acceptable.
