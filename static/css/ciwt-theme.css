@@ -878,11 +878,7 @@ main.container {
     max-width: 100%;
   }
   #teachClock { font-size: 1.15rem !important; }
-  .staff-rail {
-    position: static !important;
-    top: auto !important;
-    margin-bottom: .5rem;
-  }
+  /* (pass 6) removed legacy ".staff-rail { position: static !important }" — it pinned the mobile drawer below the page */
   .staff-rail .card-header {
     display: flex;
     align-items: center;
