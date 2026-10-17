@@ -616,7 +616,7 @@ def lesson_plan(code, chapter):
 
 
 def _with_pass9(plan, code, chapter):
-    """Merge the pass-9 lesson-plan updates for ITSUP chapters 7–13 (and CLIENT 1–6)."""
+    """Merge the pass-9/10 lesson-plan updates for ITSUP chapters 3–13 (and CLIENT 1–6)."""
     from curriculum_v2.itsup_core import PENDING, PLAN_UPDATES, is_pending
     itsup_ch = chapter + 7 if code == 'CLIENT' else chapter
     upd = PLAN_UPDATES.get(itsup_ch) if code in ('ITSUP', 'CLIENT') else None
@@ -989,7 +989,7 @@ def answer_keys(code):
         exp = sorted((q for q in EXPANSION if OBJECTIVES[q['obj']]['chapter'] >= lo),
                      key=lambda q: (OBJECTIVES[q['obj']]['chapter'], q['bank_id']))
         if exp:
-            keys.append({'title': f'Chapter item bank, pass 9 — {PENDING}', 'kind': 'Exam item bank',
+            keys.append({'title': f'Chapter item bank, passes 9–10 — {PENDING}', 'kind': 'Exam item bank',
                          'review': PENDING, 'rows': _key_rows(exp)})
     if code == 'NETOPS':
         for order in NETOPS_CHECKS:
@@ -1084,7 +1084,7 @@ GLOSSARY = [
     ('Zero trust', 'A security model that verifies every request and applies least privilege regardless of network location.'),
 ]
 
-# Pass 9 terms (chapters 7–13), marked in the glossary document as pending SME review.
+# Pass 9–10 terms (chapters 3–13), marked in the glossary document as pending SME review.
 from curriculum_v2.itsup_core import GLOSSARY_ADD as _GLOSSARY_ADD  # noqa: E402
 
 _existing = {t.lower() for t, _d in GLOSSARY}

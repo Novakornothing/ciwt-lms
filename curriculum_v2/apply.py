@@ -54,7 +54,7 @@ def apply_itsup(pack, course='ITSUP'):
 
 
 def apply_itsup_core(pack, course='ITSUP'):
-    """Pass 9: chapters 7–13 core content and measurable lesson objectives (pending SME review)."""
+    """Passes 9–10: chapters 3–13 core content and measurable lesson objectives (pending SME review)."""
     last = {}
     for (ch, les_o) in ITSUP_CORE:
         last[ch] = max(last.get(ch, 0), les_o)

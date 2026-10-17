@@ -1,7 +1,8 @@
-"""IT Support Fundamentals chapters 7–13 — core teaching content (pass 9, pending SME review).
+"""IT Support Fundamentals chapters 3–13 — core teaching content (passes 9 and 10, pending SME review).
 
 The pass-8 audit found ITSUP chapters 7–13 thin (about 900–1,400 words each against 3,600–6,600 for
-chapters 1–2). Each chapter module (ch07 … ch13) adds, per lesson:
+chapters 1–2); pass 9 expanded them and pass 10 did the same for chapters 3–6. Each chapter module
+(ch03 … ch13) adds, per lesson:
 
 * measurable lesson objectives (replacing the old "terminal objectives" list on the page),
 * a core-content section with clear explanations, at least one worked example, a real-world
@@ -200,7 +201,7 @@ SOURCE_KEYS = sorted({k for _m in CHAPTERS for k in _m.SOURCES_USED})
 
 
 def is_pending(code, chapter):
-    """True for ITSUP chapters expanded in pass 9 (and the CLIENT chapters copied from them)."""
+    """True for ITSUP chapters expanded in passes 9–10 (and the CLIENT chapters copied from them)."""
     if code == 'CLIENT':
         chapter = chapter + 7
     elif code != 'ITSUP':
