@@ -9,7 +9,13 @@ articulation or vendor affiliation: this is original curriculum, not a vendor ex
 """
 from gradebook import CATEGORIES, DEFAULT_SCALE, DEFAULT_WEIGHTS
 
-from curriculum_v2.objectives import CLOS, OBJECTIVES, objectives_for
+from curriculum_v2.objectives import OBJECTIVES, clos_for
+from curriculum_v2.objectives import objectives_for as _objectives_for
+
+
+def objectives_for(code, chapter=None):
+    """Lesson objectives as dicts: code, text, bloom, chapter."""
+    return [dict(v, code=k) for k, v in _objectives_for(code, chapter)]
 
 DISCLAIMER = ('Original CIWT curriculum. Not affiliated with, endorsed by, or a substitute for any vendor '
               'certification exam. Where objectives are compared with publicly published exam objective '
@@ -88,7 +94,7 @@ def credit_mapping(code):
 
 def clos(code):
     """Course learning outcomes as dicts with the lesson objectives that support each one."""
-    src = CLOS.get(code) or []
+    src = clos_for(code) or []
     out = []
     for clo_code, text, prefixes in src:
         objs = [k for k in OBJECTIVES if any(k == p or k.startswith(p + '.') for p in prefixes)]

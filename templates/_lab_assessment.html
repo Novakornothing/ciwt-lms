@@ -1,0 +1,13 @@
+{% set la = lab_assessment(lab) %}
+{% if la %}
+<details class="card mt-3 lab-assessment">
+  <summary class="card-header"><i class="bi bi-clipboard-check" aria-hidden="true"></i> How this lab is assessed</summary>
+  <div class="card-body small">
+    <p class="mb-2">Scored with the <strong>{{ la.rubric.title }}</strong> (4 criteria, 1–4 each). Proficient work looks like this:</p>
+    <ul class="mb-2">{% for name, desc in la.proficient %}<li><strong>{{ name }}:</strong> {{ desc }}</li>{% endfor %}</ul>
+    <p class="mb-1 fw-semibold">Reflection questions (answer in your ticket note)</p>
+    <ol class="mb-2">{% for q in la.reflection %}<li>{{ q }}</li>{% endfor %}</ol>
+    <p class="mb-0 text-muted">About {{ la.minutes }} minutes. No simulator access? {{ la.low_cost }}</p>
+  </div>
+</details>
+{% endif %}

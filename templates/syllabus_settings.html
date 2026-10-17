@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Syllabus details — {{ section.name }}{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Syllabus details · {{ section.name }}</h1>
+  <p class="mb-0">These fields appear in this section’s syllabus. Leave a field empty to show the placeholder. Grading weights, pass mark and letter scale come from the <a class="link-light" href="{{ url_for('instructor_gradebook', section_id=section.id) }}">gradebook settings</a>.</p>
+</div>
+<form method="post" class="card"><div class="card-body">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h2 class="h5">Section</h2>
+  <div class="row g-3 mb-3">
+    {% for key, label, ph in section_fields %}
+    <div class="col-md-6">
+      <label class="form-label" for="sf-{{ key }}">{{ label }}</label>
+      <input class="form-control" id="sf-{{ key }}" name="{{ key }}" value="{{ fields.get(key, '') }}" placeholder="{{ ph }}" maxlength="4000">
+    </div>
+    {% endfor %}
+    <div class="col-md-6">
+      <label class="form-label" for="sf-pacing">Schedule length</label>
+      <select class="form-select" id="sf-pacing" name="pacing_weeks">
+        {% for w, t in [(16, '16-week semester'), (10, '10-week quarter'), (8, '8-week accelerated')] %}
+        <option value="{{ w }}" {% if weeks == w %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <h2 class="h5">Policies</h2>
+  <p class="small text-muted">Paste your institution’s required wording. The suggested text is shown until you replace it.</p>
+  {% for key, label, ph in policy_fields %}
+  <div class="mb-3">
+    <label class="form-label" for="pf-{{ key }}">{{ label }}</label>
+    <textarea class="form-control" id="pf-{{ key }}" name="{{ key }}" rows="3" placeholder="{{ ph }}" maxlength="4000">{{ fields.get(key, '') }}</textarea>
+  </div>
+  {% endfor %}
+  <div class="d-flex flex-wrap gap-2">
+    <button class="btn btn-brand">Save</button>
+    <a class="btn btn-outline-navy" href="{{ url_for('materials_view', code=code, kind='syllabus', section=section.id) }}">Preview syllabus</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('materials_index') }}">Course materials</a>
+  </div>
+  {% if row and row.updated_at %}<p class="small text-muted mt-2 mb-0">Last saved {{ row.updated_at.strftime('%Y-%m-%d %H:%M') }} UTC.</p>{% endif %}
+</div></form>
+{% endblock %}

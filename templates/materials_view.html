@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from '_doc_blocks.html' import render %}
+{% block title %}{{ doc.title }}{% endblock %}
+{% block content %}
+<div class="doc-toolbar d-flex flex-wrap gap-2 align-items-center mb-3 d-print-none">
+  {% if staff %}<a class="btn btn-sm btn-outline-navy" href="{{ url_for('materials_index') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Course materials</a>{% endif %}
+  {% if section and not staff %}<a class="btn btn-sm btn-outline-navy" href="{{ url_for('student_section', section_id=section.id) }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to class</a>{% endif %}
+  <button type="button" class="btn btn-sm btn-brand" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i> Print</button>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ download('docx') }}">Download DOCX</a>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ download('pdf') }}">Download PDF</a>
+  {% if staff and section and kind == 'syllabus' %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('syllabus_settings', section_id=section.id) }}">Edit section details</a>{% endif %}
+  {% if student_docs %}
+  <nav aria-label="Class documents" class="ms-lg-auto">
+    {% for k, t in student_docs %}<a class="btn btn-sm {% if k == kind %}btn-navy{% else %}btn-link{% endif %}" href="{{ url_for('section_material', section_id=section.id, kind=k) }}" {% if k == kind %}aria-current="page"{% endif %}>{{ t }}</a>{% endfor %}
+  </nav>
+  {% endif %}
+</div>
+{% if instructor_only %}<div class="alert alert-warning py-2 small" role="note"><i class="bi bi-shield-lock" aria-hidden="true"></i> Instructor-only document. Do not share with students.</div>{% endif %}
+{% if staff and kind == 'syllabus' and not section %}<div class="alert alert-info py-2 small" role="note">Showing the course template. Open a section’s syllabus from Course materials to see its own institution, term, meeting and policy details and its gradebook weights.</div>{% endif %}
+<article class="doc-body card"><div class="card-body">
+  <h1 class="h3">{{ doc.title }}</h1>
+  {{ render(doc.blocks) }}
+</div></article>
+{% endblock %}

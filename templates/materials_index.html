@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Course materials{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Course materials</h1>
+  <p class="mb-0">Syllabus, pacing guides, lesson plans, lab manual, rubrics, exam blueprints and answer keys. View and print here, or download DOCX (editable) or PDF.</p>
+</div>
+<p class="small text-muted">{{ disclaimer }}</p>
+{% for row in rows %}
+<section class="card mb-4" aria-labelledby="mat-{{ row.code }}">
+  <div class="card-header navy"><h2 class="h5 mb-0" id="mat-{{ row.code }}">{{ row.course.title }} <span class="small opacity-75">({{ row.course.code }})</span></h2></div>
+  <div class="card-body">
+    <div class="table-responsive">
+    <table class="table table-sm align-middle mb-3">
+      <caption class="visually-hidden">Documents for {{ row.course.title }}</caption>
+      <thead><tr><th scope="col">Document</th><th scope="col">Who sees it</th><th scope="col">Open</th></tr></thead>
+      <tbody>
+      {% for key, title, audience in docs %}
+        <tr>
+          <th scope="row" class="fw-normal">{{ title }}</th>
+          <td>{% if audience == 'all' %}<span class="badge text-bg-light border">Students and staff</span>{% else %}<span class="badge text-bg-warning">Instructors only</span>{% endif %}</td>
+          <td class="text-nowrap">
+            <a class="btn btn-sm btn-outline-navy" href="{{ url_for('materials_view', code=row.code, kind=key) }}">View<span class="visually-hidden"> {{ title }}</span></a>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('materials_download', code=row.code, kind=key, fmt='docx') }}">DOCX<span class="visually-hidden"> {{ title }}</span></a>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('materials_download', code=row.code, kind=key, fmt='pdf') }}">PDF<span class="visually-hidden"> {{ title }}</span></a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <h3 class="h6">Section syllabi</h3>
+    {% if row.sections %}
+    <ul class="list-unstyled mb-0">
+      {% for s in row.sections %}
+      <li class="mb-1">
+        <span class="fw-semibold">{{ s.name }}</span> —
+        <a href="{{ url_for('syllabus_settings', section_id=s.id) }}">Edit syllabus details<span class="visually-hidden"> for {{ s.name }}</span></a> ·
+        <a href="{{ url_for('materials_view', code=row.code, kind='syllabus', section=s.id) }}">View<span class="visually-hidden"> syllabus for {{ s.name }}</span></a> ·
+        <a href="{{ url_for('section_material', section_id=s.id, kind='syllabus') }}">Student view<span class="visually-hidden"> for {{ s.name }}</span></a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="small text-muted mb-0">No active sections for this course.</p>{% endif %}
+  </div>
+</section>
+{% else %}
+<p>No courses yet.</p>
+{% endfor %}
+{% endblock %}

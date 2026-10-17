@@ -7067,6 +7067,14 @@ helix_pkg.init_app(app, db, dict(
     can_access_section=lambda user, section: instructor_can_access_section(user, section),
     audit=lambda action, detail='': audit(action, detail),
 ))
+# pass 8: course materials (syllabus, pacing, lesson plans, rubrics, keys) + per-section syllabus fields
+from curriculum_v2 import materials as materials_mod  # noqa: E402
+SyllabusSettings = materials_mod.register(app, db, dict(
+    Course=Course, ClassSection=ClassSection, Enrollment=Enrollment,
+    instructor_can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    instructor_course_ids=lambda uid: instructor_course_ids(uid),
+    audit=lambda action, detail='': audit(action, detail),
+))
 
 _ERRORS = {
     403: ('bi-shield-lock', "You don't have access to this page",

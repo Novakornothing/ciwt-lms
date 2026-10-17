@@ -130,6 +130,9 @@
           <a class="rail-link {% if ep and ep.startswith('interactive_lab') %}active{% endif %}" href="{{ url_for('interactive_labs_index') }}">
             <i class="bi bi-terminal"></i><span>Live labs</span>
           </a>
+          <a class="rail-link {% if ep in ('materials_index','materials_view','syllabus_settings') %}active{% endif %}" href="{{ url_for('materials_index') }}">
+            <i class="bi bi-folder2-open"></i><span>Course materials</span>
+          </a>
         </div>
       </details>
       <details class="rail-tree" {% if ep in ('admin_tickets','admin_ticket_detail','tickets_list','tickets_new','messages_inbox','messages_thread','messages_new','curriculum_search') %}open{% endif %}>
@@ -252,6 +255,10 @@
               <a class="rail-link rail-sublink {% if ep in ('instructor_gradebook','instructor_gradebook_student') and open_section_id == s.id %}active{% endif %}"
                  href="{{ url_for('instructor_gradebook', section_id=s.id) }}">
                 <i class="bi bi-table"></i><span>Gradebook</span>
+              </a>
+              <a class="rail-link rail-sublink {% if ep == 'syllabus_settings' and open_section_id == s.id %}active{% endif %}"
+                 href="{{ url_for('syllabus_settings', section_id=s.id) }}">
+                <i class="bi bi-file-earmark-text"></i><span>Syllabus</span>
               </a>
               <a class="rail-link rail-sublink {% if ep.startswith('helix.instructor_attention') and open_section_id == s.id %}active{% endif %}"
                  href="{{ url_for('helix.instructor_attention', section_id=s.id) }}">

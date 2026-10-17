@@ -1,0 +1,24 @@
+{# Renders a curriculum_v2.documents block list. Heading levels shift by one: the page already has an h1. #}
+{% macro render(blocks) %}
+{% set ns = namespace(t=0) %}
+{% for b in blocks %}
+  {% set kind = b[0] %}
+  {% if kind == 'h1' and loop.first %}
+  {% elif kind == 'h1' %}<h2 class="doc-h1 h4 mt-4">{{ b[1] }}</h2>
+  {% elif kind == 'h2' %}<h3 class="doc-h2 h5 mt-4"{% if b|length > 2 %} id="{{ b[2] }}"{% endif %}>{{ b[1] }}</h3>
+  {% elif kind == 'h3' %}<h4 class="doc-h3 h6 mt-3 mb-1">{{ b[1] }}</h4>
+  {% elif kind == 'p' %}<p>{{ b[1] }}</p>
+  {% elif kind == 'note' %}<p class="small text-muted fst-italic">{{ b[1] }}</p>
+  {% elif kind == 'ul' %}<ul>{% for i in b[1] %}<li>{{ i }}</li>{% endfor %}</ul>
+  {% elif kind == 'ol' %}<ol>{% for i in b[1] %}<li>{{ i }}</li>{% endfor %}</ol>
+  {% elif kind == 'table' %}{% set ns.t = ns.t + 1 %}
+  <div class="table-responsive doc-table" tabindex="0" role="region" aria-label="Table {{ ns.t }}: {{ b[1]|join(', ') }}">
+    <table class="table table-sm table-bordered align-top">
+      <thead><tr>{% for h in b[1] %}<th scope="col">{{ h }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for r in b[2] %}<tr>{% for v in r %}{% if loop.first %}<th scope="row" class="fw-normal">{{ v }}</th>{% else %}<td>{{ v|e|replace('\n', '<br>'|safe) }}</td>{% endif %}{% endfor %}</tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% elif kind == 'pagebreak' %}<hr class="doc-break">
+  {% endif %}
+{% endfor %}
+{% endmacro %}

@@ -976,3 +976,18 @@ html[data-theme="dark"] .chip-scroll a.chip-link[aria-current] .chip-count { col
 [data-theme="dark"] .btn-link { --bs-btn-color: var(--accent-bright, #7adcff); --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff; }
 @media (min-width: 768px) { .admin-hub { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1400px) { .admin-hub { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* pass 8: course materials documents */
+.doc-body { max-width: 62rem; }
+.doc-body .doc-table th[scope="row"] { min-width: 8rem; }
+.doc-body .doc-table td, .doc-body .doc-table th { font-size: .85rem; }
+.doc-break { margin: 2rem 0 1rem; border-top: 2px dashed var(--surface-4); opacity: 1; }
+.lab-assessment > summary { cursor: pointer; }
+@media print {
+  .doc-toolbar, .alert[role="note"] .bi { display: none !important; }
+  .doc-body.card { border: 0 !important; box-shadow: none !important; }
+  .doc-body .card-body { padding: 0 !important; }
+  .doc-break { break-after: page; border: 0; margin: 0; }
+  .doc-body .doc-table { overflow: visible !important; }
+  .doc-body table { break-inside: auto; } .doc-body tr { break-inside: avoid; }
+}
