@@ -709,3 +709,69 @@ kbd { background: var(--surface-3); color: var(--ink); border: 1px solid var(--b
 .theme-opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft, rgba(62,199,255,.25)); }
 .theme-opt .form-check-input { margin: 0; }
 legend.form-label { font-size: var(--text-sm, .875rem); font-weight: 600; float: none; margin-bottom: .5rem; }
+
+/* ---- Quiz / test runner (pass 6; replaces test.html's inline <style>) ---- */
+.test-toolbar { position: sticky; top: 0; z-index: 6; padding-bottom: 1.1rem; overflow: hidden; }
+#flagBtn[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: #06101f; }
+.q-lo { display: inline-block; line-height: 1.4; }
+.q-lo strong { margin-right: .15rem; }
+.test-head { min-width: 0; flex: 1 1 14rem; }
+.test-title { font-family: var(--font); font-size: 1.05rem; font-weight: 700; margin: 0; color: inherit; letter-spacing: 0; }
+.test-tools { display: flex; align-items: center; gap: .5rem; flex-wrap: nowrap; }
+.test-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.12); }
+.test-progress > span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s ease; }
+.test-timer { font-family: var(--mono); font-weight: 700; font-size: 1.05rem; padding: .35rem .8rem; border-radius: 8px;
+  display: inline-flex; align-items: center; gap: .4rem; min-width: 6rem; justify-content: center; min-height: 36px;
+  background: rgba(61,214,140,.12); color: #3dd68c; border: 1px solid rgba(61,214,140,.45); transition: background .25s, color .25s, border-color .25s; }
+.test-timer.warn10 { background: rgba(240,193,75,.18); border-color: rgba(240,193,75,.65); color: #f0c14b; }
+.test-timer.warn5 { background: rgba(255,140,60,.2); border-color: rgba(255,140,60,.7); color: #ff9a4a; }
+.test-timer.danger { background: rgba(255,90,80,.22); border-color: rgba(255,90,80,.75); color: #ff7a6a; animation: pulse-timer 1s ease-in-out infinite; }
+@keyframes pulse-timer { 50% { opacity: .8; transform: scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .test-timer.danger { animation: none; } }
+#timeWarnBanner { display: none; margin-bottom: .75rem; padding: .65rem 1rem; border-radius: 8px; font-weight: 600; font-size: .95rem; }
+#timeWarnBanner.show { display: block; }
+#timeWarnBanner.warn10 { background: rgba(240,193,75,.15); border: 1px solid rgba(240,193,75,.5); color: var(--ink); }
+#timeWarnBanner.warn5 { background: rgba(255,140,60,.18); border: 1px solid rgba(255,140,60,.55); color: var(--ink); }
+#timeWarnBanner.danger { background: var(--danger-bg); border: 1px solid var(--danger); color: var(--ink); }
+.q-nav-wrap { background: var(--surface); border: 1px solid var(--surface-3); border-radius: 14px; padding: .65rem .85rem .85rem; box-shadow: var(--shadow); margin-bottom: 1rem; }
+.q-nav-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .25rem .75rem; font-size: var(--text-sm, .875rem); color: var(--ink-secondary); font-weight: 600; margin-bottom: .5rem; }
+.q-legend { display: inline-flex; align-items: center; gap: .35rem; font-weight: 500; color: var(--ink-muted); }
+.q-legend .lg { width: .8rem; height: .8rem; border-radius: 3px; display: inline-block; border: 1.5px solid var(--success); background: var(--success-bg); margin-left: .35rem; }
+.q-legend .lg.flagged { border-color: var(--gold); background: transparent; box-shadow: inset 0 0 0 1px var(--gold); }
+.q-nav-wrap .q-nav { background: none; border: 0; box-shadow: none; padding: 0; }
+.q-nav button { width: 44px; height: 44px; position: relative; }
+.q-nav button.flagged::after { content: ''; position: absolute; top: 3px; right: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+.q-stem { font-size: 1.15rem; font-weight: 700; line-height: 1.45; margin: 0 0 1rem; outline: none; }
+.q-option { display: flex; align-items: flex-start; gap: .75rem; position: relative; min-height: 52px; font-weight: 500; }
+.q-option .q-radio { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; display: block; }
+.q-option:has(.q-radio:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.q-key { flex: 0 0 1.9rem; height: 1.9rem; border-radius: 50%; border: 1.5px solid var(--surface-4); display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: .8rem; font-weight: 700; color: var(--ink-secondary); background: var(--surface-2); }
+.q-option.selected .q-key { background: var(--gold); border-color: var(--gold); color: #06101f; }
+.q-text { padding-top: .2rem; overflow-wrap: anywhere; }
+.assess-actions { display: grid; grid-template-columns: auto 1fr auto; gap: .5rem; align-items: center; margin-top: 1rem; }
+.assess-actions #reviewBtn { justify-self: center; }
+.assess-actions #prevBtn:disabled { visibility: hidden; }
+.assess-tip { font-size: var(--text-sm, .875rem); color: var(--ink-muted); margin-top: .75rem; text-align: center; }
+.review-sum { font-weight: 600; margin-bottom: .75rem; }
+.review-row { margin-bottom: .75rem; }
+.review-label { font-weight: 600; font-size: var(--text-sm, .875rem); margin-bottom: .35rem; }
+.review-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.review-chips .btn { min-width: 44px; min-height: 44px; }
+@media (max-width: 767.98px) {
+  /* Focus mode: no tab bar or footer during an attempt; actions sit in a bar above the home indicator */
+  body.assess-focus .mobile-tabbar, body.assess-focus > footer { display: none; }
+  body.assess-focus.has-mobile-tabbar { padding-bottom: 0; }
+  .test-toolbar { top: 0; border-radius: 0 0 14px 14px; margin: -1rem -1rem .75rem; padding: .6rem 1rem .85rem; gap: .4rem; }
+  .test-title { font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .test-toolbar .meta { display: none; }
+  .test-tools .btn { min-height: 40px; }
+  .q-card { padding: 1rem; }
+  .q-stem { font-size: 1.05rem; }
+  .q-nav { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: .25rem !important; scrollbar-width: thin; }
+  .q-nav button { flex: 0 0 44px; scroll-snap-align: start; }
+  body.assess-focus .test-shell { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .assess-actions { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1025; margin: 0; padding: .6rem 1rem calc(.6rem + env(safe-area-inset-bottom));
+    background: var(--surface); border-top: 1px solid var(--surface-3); box-shadow: 0 -6px 18px rgba(0,0,0,.08); }
+  .assess-actions .btn { min-height: 48px; }
+}

@@ -1,0 +1,71 @@
+{# Shared quiz/test markup. Expects: a_kind ('quiz'|'test'), a_title, a_meta, a_store_key, a_report (dict),
+   a_submit_label, questions, optional a_remaining (seconds). Behaviour lives in static/js/assessment.js. #}
+<div class="test-shell" data-assessment="{{ a_kind }}" data-store-key="{{ a_store_key }}"
+     data-report-url="{{ url_for('tickets_new') }}" data-report-params='{{ a_report|tojson }}'
+     data-submit-label="{{ a_submit_label }}" data-submit-anyway="{{ a_submit_label }} anyway"
+     {% if a_remaining is defined and a_remaining is not none %}data-remaining="{{ a_remaining|int }}"{% endif %}>
+  <div class="test-toolbar">
+    <div class="test-head">
+      <h1 class="test-title">{{ a_title }}</h1>
+      <div class="meta">{{ a_meta }}</div>
+    </div>
+    <div class="test-tools">
+      {% if a_remaining is defined and a_remaining is not none %}
+      <div id="testTimer" class="test-timer ok" role="timer" aria-label="Time remaining">
+        <i class="bi bi-clock" aria-hidden="true"></i><span id="timerDisplay">--:--</span>
+      </div>
+      {% endif %}
+      <button type="button" class="btn btn-sm btn-outline-gold" id="flagBtn" aria-pressed="false" title="Mark this question to review later (F)">
+        <i class="bi bi-flag" aria-hidden="true"></i> <span class="lbl">Flag</span>
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-light" id="reportQBtn" title="Report a problem with this question">
+        <i class="bi bi-exclamation-octagon" aria-hidden="true"></i><span class="d-none d-sm-inline"> Report</span><span class="visually-hidden d-sm-none">Report question</span>
+      </button>
+    </div>
+    <div class="test-progress" aria-hidden="true"><span id="progressBar"></span></div>
+  </div>
+
+  <div id="timeWarnBanner" role="status" aria-live="assertive"></div>
+  <p class="visually-hidden" id="assessLive" aria-live="polite"></p>
+
+  <div class="q-nav-wrap">
+    <div class="q-nav-head"><span id="progressLabel">Question 1 of {{ questions|length }}</span>
+      <span class="q-legend" aria-hidden="true"><span class="lg answered"></span>answered <span class="lg flagged"></span>flagged</span></div>
+    <nav class="q-nav" id="qNav" aria-label="Questions"></nav>
+  </div>
+
+  <form method="post" id="testForm" data-no-enhance>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if a_kind == 'test' %}<input type="hidden" name="timed_out" value="0" id="timedOutField">{% endif %}
+    <div class="q-card" id="qCard">
+      <div class="q-lo" id="qLo"></div>
+      <h2 class="q-stem" id="qText" tabindex="-1"></h2>
+      <div id="qOptions" class="q-options" role="radiogroup" aria-labelledby="qText"></div>
+    </div>
+
+    <div class="assess-actions">
+      <button type="button" class="btn btn-outline-navy" id="prevBtn"><i class="bi bi-arrow-left" aria-hidden="true"></i><span class="d-none d-sm-inline"> Previous</span><span class="visually-hidden d-sm-none">Previous question</span></button>
+      <button type="button" class="btn btn-outline-gold" id="reviewBtn"><i class="bi bi-list-check" aria-hidden="true"></i> Review</button>
+      <button type="button" class="btn btn-navy" id="nextBtn">Next <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+      <button type="submit" class="btn btn-brand d-none" id="submitBtn">{{ a_submit_label }}</button>
+    </div>
+  </form>
+  <p class="assess-tip d-none d-md-block">Tip: <kbd>←</kbd> <kbd>→</kbd> move between questions, <kbd>F</kbd> flags. Answers are kept if you reload this tab.</p>
+</div>
+
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewTitle" aria-modal="true" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="reviewTitle">Review your answers</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="reviewBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-navy" data-bs-dismiss="modal">Keep working</button>
+        <button type="button" class="btn btn-brand" id="confirmSubmit">{{ a_submit_label }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="application/json" id="assessQuestions">{{ questions|tojson }}</script>
