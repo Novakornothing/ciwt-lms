@@ -103,7 +103,16 @@
         <div class="rail-tree-kids">
           {% if is_admin_mode %}
           <a class="rail-link {% if ep == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
-            <i class="bi bi-speedometer2"></i><span>Admin home</span>
+            <i class="bi bi-speedometer2"></i><span>Admin overview</span>
+          </a>
+          <a class="rail-link {% if ep == 'admin_people' %}active{% endif %}" href="{{ url_for('admin_people') }}">
+            <i class="bi bi-people"></i><span>People</span>
+          </a>
+          <a class="rail-link {% if ep == 'admin_curriculum' %}active{% endif %}" href="{{ url_for('admin_curriculum') }}">
+            <i class="bi bi-journal-bookmark"></i><span>Curriculum</span>
+          </a>
+          <a class="rail-link {% if ep == 'admin_tqi' %}active{% endif %}" href="{{ url_for('admin_tqi') }}">
+            <i class="bi bi-clipboard2-pulse"></i><span>Quality / TQI</span>
           </a>
           <a class="rail-link {% if ep == 'admin_readiness' %}active{% endif %}" href="{{ url_for('admin_readiness') }}">
             <i class="bi bi-clipboard-check"></i><span>Product readiness</span>
@@ -213,7 +222,7 @@
         </summary>
         <div class="rail-tree-kids">
           {% if is_admin_mode %}
-          <a class="rail-link {% if ep == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+          <a class="rail-link {% if ep == 'admin_classes' %}active{% endif %}" href="{{ url_for('admin_classes') }}">
             <i class="bi bi-list-ul"></i><span>All classes (admin)</span>
           </a>
           {% else %}

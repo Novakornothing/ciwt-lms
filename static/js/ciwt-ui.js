@@ -90,6 +90,21 @@
     document.querySelectorAll('form[aria-busy]').forEach(function (f) { f.removeAttribute('aria-busy'); });
   });
 
-  function init() { document.querySelectorAll('form[method=post], form[method=POST], form.needs-validation').forEach(enhance); }
+  // Sideways-scrolling chip/tab rows: bring the current item into view; drop the edge fade once scrolled to the end
+  function initScrollers() {
+    document.querySelectorAll('.chip-scroll').forEach(function (row) {
+      var cur = row.querySelector('[aria-current="page"], [aria-current="true"]');
+      if (cur && row.scrollWidth > row.clientWidth) {
+        row.scrollLeft = Math.max(0, cur.offsetLeft - (row.clientWidth - cur.offsetWidth) / 2);
+      }
+      var edge = function () { row.classList.toggle('at-end', row.scrollLeft + row.clientWidth >= row.scrollWidth - 2); };
+      edge(); row.addEventListener('scroll', edge, { passive: true });
+    });
+  }
+
+  function init() {
+    document.querySelectorAll('form[method=post], form[method=POST], form.needs-validation').forEach(enhance);
+    initScrollers();
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

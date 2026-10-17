@@ -3813,7 +3813,7 @@ def admin_tqi():
     cards.sort(key=lambda c: (0 if c['status']['missing'] else 1, c['section'].end_date or datetime.max.date(), c['section'].name or ''))
     open_n = sum(1 for c in cards if c['status']['packet'].status != 'complete')
     missing_n = sum(1 for c in cards if c['status']['missing'])
-    return render_template('admin_tqi.html', cards=cards, open_n=open_n, missing_n=missing_n)
+    return render_template('admin_tqi.html', cards=cards, open_n=open_n, missing_n=missing_n, admin_tab='admin_tqi')
 
 
 
@@ -5174,74 +5174,145 @@ def admin_test_analytics():
 
 # ---------- Admin ----------
 
+# ---- Admin: one overview plus focused sub-pages (classes, people, curriculum, quality/TQI) sharing a
+# sub-nav (templates/_admin_nav.html). The old single long page lived at /admin with #anchors; the overview
+# forwards those anchors to the matching sub-page, so bookmarks keep working.
+ADMIN_TABS = [
+    ('admin_dashboard', 'Overview', 'bi-speedometer2'),
+    ('admin_classes', 'Classes', 'bi-collection'),
+    ('admin_people', 'People', 'bi-people'),
+    ('admin_curriculum', 'Curriculum', 'bi-journal-bookmark'),
+    ('admin_tqi', 'Quality / TQI', 'bi-clipboard2-pulse'),
+]
+
+
+
+@app.context_processor
+def _admin_tabs_ctx():
+    return {'admin_tabs': ADMIN_TABS}
+
+def _admin_instructor_mode_redirect():
+    if session.get('view_as') == 'instructor':
+        flash('Class creation and admin tools are hidden while you work as an instructor.', 'info')
+        return redirect(url_for('instructor_dashboard'))
+    return None
+
+
+def _teaching_by_class():
+    """Teaching seconds per instructor+class (live timers included), largest first."""
+    collapsed = {}
+    for row in TimeLog.query.filter_by(kind='teaching').all():
+        sec = _teaching_seconds(row)
+        section = db.session.get(ClassSection, row.section_id) if row.section_id else None
+        key = (row.user.id if row.user else 0, section.id if section else 0)
+        item = collapsed.setdefault(key, {'user': row.user, 'section': section, 'seconds': 0, 'open': False})
+        item['seconds'] += sec
+        item['open'] = item['open'] or row.ended_at is None
+    return sorted(collapsed.values(), key=lambda x: (-x['seconds'], x['user'].last_name if x['user'] else ''))
+
+
+def _teaching_totals():
+    totals = defaultdict(int)
+    for row in TimeLog.query.filter_by(kind='teaching').all():
+        totals[row.user_id] += _teaching_seconds(row)
+    return totals
+
+
 @app.route('/admin')
 @login_required
 @role_required('admin')
 def admin_dashboard():
-    if session.get('view_as') == 'instructor':
-        flash('Class creation and admin tools are hidden while you work as an instructor.', 'info')
-        return redirect(url_for('instructor_dashboard'))
-    users = User.query.order_by(User.role, User.last_name).all()
+    r = _admin_instructor_mode_redirect()
+    if r:
+        return r
     sections = ClassSection.query.order_by(ClassSection.name).all()
-    courses = Course.query.all()
-    instructors = User.query.filter_by(role='instructor').order_by(User.last_name, User.first_name).all()
-    admins = User.query.filter_by(role='admin').order_by(User.last_name, User.first_name).all()
-    course_instructors = {}
-    for link in CourseInstructor.query.all():
-        course_instructors.setdefault(link.course_id, []).append(link)
-    teach_totals = defaultdict(int)
-    for row in TimeLog.query.filter_by(kind='teaching').all():
-        teach_totals[row.user_id] += row.seconds or 0
-        if row.ended_at is None and row.started_at:
-            teach_totals[row.user_id] += max(0, int((utcnow() - row.started_at).total_seconds()))
-    study_all = defaultdict(int)
-    for row in TimeLog.query.filter_by(kind='study').all():
-        study_all[row.user_id] += row.seconds or 0
-    teach_by_class = []
-    for row in TimeLog.query.filter_by(kind='teaching').all():
-        sec = row.seconds or 0
-        if row.ended_at is None and row.started_at:
-            sec += max(0, int((utcnow() - row.started_at).total_seconds()))
-        teach_by_class.append({
-            'user': row.user,
-            'section': db.session.get(ClassSection, row.section_id) if row.section_id else None,
-            'seconds': sec,
-            'open': row.ended_at is None,
-        })
-    # collapse by instructor+class
-    collapsed = {}
-    for item in teach_by_class:
-        key = (item['user'].id if item['user'] else 0, item['section'].id if item['section'] else 0)
-        collapsed.setdefault(key, {'user': item['user'], 'section': item['section'], 'seconds': 0, 'open': False})
-        collapsed[key]['seconds'] += item['seconds']
-        collapsed[key]['open'] = collapsed[key]['open'] or item['open']
-    teach_by_class = sorted(collapsed.values(), key=lambda x: (-x['seconds'], x['user'].last_name if x['user'] else ''))
-    report = _teaching_time_report()
-    tqi_cards = []
-    for sec in sections:
-        tqi_cards.append({'section': sec, 'status': _tqi_status(sec)})
-    tqi_missing = sum(1 for c in tqi_cards if c['status']['missing'])
-    tqi_complete = sum(1 for c in tqi_cards if c['status']['packet'].status == 'complete')
+    tqi = [_tqi_status(sec) for sec in sections]
+    stats = {
+        'classes_active': sum(1 for s in sections if s.is_active),
+        'classes': len(sections),
+        'students': User.query.filter_by(role='student').count(),
+        'instructors': User.query.filter_by(role='instructor').count(),
+        'admins': User.query.filter_by(role='admin').count(),
+        'courses': Course.query.count(),
+        'tqi_missing': sum(1 for t in tqi if t['missing']),
+        'tqi_complete': sum(1 for t in tqi if t['packet'].status == 'complete'),
+        'tickets_open': CurriculumTicket.query.filter(CurriculumTicket.status.in_(('open', 'in_progress'))).count(),
+    }
+    return render_template('admin_dashboard.html', admin_tab='admin_dashboard', stats=stats,
+                           teach_by_class=_teaching_by_class()[:5], fmt_seconds=_fmt_seconds)
+
+
+@app.route('/admin/classes')
+@login_required
+@role_required('admin')
+def admin_classes():
+    r = _admin_instructor_mode_redirect()
+    if r:
+        return r
     return render_template(
-        'admin_dashboard.html',
-        users=users,
-        sections=sections,
-        tqi_cards=tqi_cards,
-        tqi_missing=tqi_missing,
-        tqi_complete=tqi_complete,
-        courses=courses,
-        instructors=instructors,
-        admins=admins,
-        course_instructors=course_instructors,
-        teach_totals=teach_totals,
-        study_all=study_all,
-        teach_by_class=teach_by_class,
-        teach_by_course=report['by_course'],
-        teach_by_quarter=report['by_quarter'],
-        teach_by_year=report['by_year'],
-        fmt_seconds=_fmt_seconds,
+        'admin_classes.html', admin_tab='admin_classes',
+        sections=ClassSection.query.order_by(ClassSection.name).all(),
+        courses=Course.query.order_by(Course.code).all(),
+        instructors=User.query.filter_by(role='instructor').order_by(User.last_name, User.first_name).all(),
+        teach_by_class=_teaching_by_class(), fmt_seconds=_fmt_seconds,
     )
 
+
+@app.route('/admin/people')
+@login_required
+@role_required('admin')
+def admin_people():
+    r = _admin_instructor_mode_redirect()
+    if r:
+        return r
+    role = request.args.get('role', '')
+    q = (request.args.get('q') or '').strip()
+    users = User.query
+    if role in ('student', 'instructor', 'admin'):
+        users = users.filter_by(role=role)
+    if q:
+        like = f'%{q}%'
+        users = users.filter(db.or_(User.first_name.ilike(like), User.last_name.ilike(like), User.email.ilike(like)))
+    role_counts = dict(db.session.query(User.role, db.func.count(User.id)).group_by(User.role).all())
+    return render_template(
+        'admin_people.html', admin_tab='admin_people',
+        users=users.order_by(User.role, User.last_name, User.first_name).all(), role=role, q=q, role_counts=role_counts,
+        sections=ClassSection.query.all(),
+        instructors=User.query.filter_by(role='instructor').order_by(User.last_name, User.first_name).all(),
+        admins=User.query.filter_by(role='admin').order_by(User.last_name, User.first_name).all(),
+        teach_totals=_teaching_totals(), fmt_seconds=_fmt_seconds,
+    )
+
+
+@app.route('/admin/curriculum')
+@login_required
+@role_required('admin')
+def admin_curriculum():
+    r = _admin_instructor_mode_redirect()
+    if r:
+        return r
+    courses = Course.query.order_by(Course.code).all()
+    links = defaultdict(list)
+    for link in CourseInstructor.query.all():
+        links[link.course_id].append(link)
+    rows = []
+    for c in courses:
+        mod_ids = [m.id for m in Module.query.filter_by(course_id=c.id).all()]
+        rows.append({
+            'course': c,
+            'chapters': len(mod_ids),
+            'lessons': Lesson.query.filter(Lesson.module_id.in_(mod_ids)).count() if mod_ids else 0,
+            'quizzes': Quiz.query.filter(Quiz.module_id.in_(mod_ids)).count() if mod_ids else 0,
+            'tests': KnowledgeTest.query.filter_by(course_id=c.id).count(),
+            'labs': len(labs_for_course(c)),
+            'sections': ClassSection.query.filter_by(course_id=c.id).order_by(ClassSection.name).all(),
+            'links': links.get(c.id, []),
+        })
+    return render_template(
+        'admin_curriculum.html', admin_tab='admin_curriculum', rows=rows, courses=courses,
+        instructors=User.query.filter_by(role='instructor').order_by(User.last_name, User.first_name).all(),
+        tickets_open=CurriculumTicket.query.filter(CurriculumTicket.status.in_(('open', 'in_progress'))).count(),
+    )
 
 def _teaching_seconds(row):
     sec = row.seconds or 0
@@ -5516,7 +5587,7 @@ def admin_create_section():
     end = request.form.get('end_date') or None
     if not name:
         flash('Section name is required.', 'warning')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_classes'))
     section = ClassSection(
         name=name,
         course_id=course_id,
@@ -5531,7 +5602,7 @@ def admin_create_section():
     grant_section_instructor_access(section.id, instructor_id, primary=True)
     db.session.commit()
     flash(f'Created section “{name}”.', 'success')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_classes'))
 
 
 @app.route('/admin/section/toggle', methods=['POST'])
@@ -5542,7 +5613,7 @@ def admin_toggle_section():
     section.is_active = not section.is_active
     db.session.commit()
     flash(f'Section “{section.name}” is now {"active" if section.is_active else "inactive"}.', 'info')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_classes'))
 
 
 @app.route('/admin/user/create', methods=['POST'])
@@ -5556,10 +5627,10 @@ def admin_create_user():
     password = request.form.get('password') or 'changeme123'
     if not email or not first or not last:
         flash('Email and name are required.', 'warning')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_people'))
     if User.query.filter_by(email=email).first():
         flash('Email already exists.', 'warning')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_people'))
     if role not in ('admin', 'instructor', 'student'):
         role = 'student'
     u = User(email=email, first_name=first, last_name=last, role=role)
@@ -5567,7 +5638,7 @@ def admin_create_user():
     db.session.add(u)
     db.session.commit()
     flash(f'Created {role} {first} {last} ({email}). Sign-in password: {password}', 'success')
-    return redirect(url_for('admin_dashboard') + '#admin-staff')
+    return redirect(url_for('admin_people') + '#admin-staff')
 
 
 @app.route('/admin/instructor/create', methods=['POST'])
@@ -5583,7 +5654,7 @@ def admin_create_instructor():
         role = 'instructor'
     if not email or not first or not last:
         flash('First name, last name, and email are required.', 'warning')
-        return redirect(url_for('admin_dashboard') + '#admin-people')
+        return redirect(url_for('admin_people') + '#admin-people')
     existing = User.query.filter_by(email=email).first()
     if existing:
         if existing.role == 'instructor':
@@ -5596,13 +5667,13 @@ def admin_create_instructor():
             existing.last_name = last or existing.last_name
             db.session.commit()
             flash(f'Updated {existing.full_name} to {role}.', 'success')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_people'))
     u = User(email=email, first_name=first, last_name=last, role=role)
     u.set_password(password)
     db.session.add(u)
     db.session.commit()
     flash(f'Added {role} {first} {last} ({email}). Temporary password: {password}', 'success')
-    return redirect(url_for('admin_dashboard') + '#admin-staff')
+    return redirect(url_for('admin_people') + '#admin-staff')
 
 
 @app.route('/admin/instructor/make-admin', methods=['POST'])
@@ -5612,14 +5683,14 @@ def admin_make_admin():
     user = db.get_or_404(User, int(request.form.get('user_id') or 0))
     if user.id == current_user.id:
         flash('You are already an administrator.', 'info')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_people'))
     if user.role != 'instructor':
         flash('Only an instructor account can be promoted to admin from this button.', 'warning')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_people'))
     user.role = 'admin'
     db.session.commit()
     flash(f'{user.full_name} is now an administrator.', 'success')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_people'))
 
 
 @app.route('/admin/admin/demote', methods=['POST'])
@@ -5629,18 +5700,18 @@ def admin_demote_admin():
     user = db.get_or_404(User, int(request.form.get('user_id') or 0))
     if user.id == current_user.id:
         flash('You cannot remove your own admin access from this screen.', 'warning')
-        return redirect(url_for('admin_dashboard') + '#admin-staff')
+        return redirect(url_for('admin_people') + '#admin-staff')
     if user.role != 'admin':
         flash('That account is not an administrator.', 'warning')
-        return redirect(url_for('admin_dashboard') + '#admin-staff')
+        return redirect(url_for('admin_people') + '#admin-staff')
     remaining = User.query.filter_by(role='admin').count()
     if remaining <= 1:
         flash('Keep at least one administrator.', 'warning')
-        return redirect(url_for('admin_dashboard') + '#admin-staff')
+        return redirect(url_for('admin_people') + '#admin-staff')
     user.role = 'instructor'
     db.session.commit()
     flash(f'{user.full_name} is now an instructor (admin access removed).', 'success')
-    return redirect(url_for('admin_dashboard') + '#admin-staff')
+    return redirect(url_for('admin_people') + '#admin-staff')
 
 
 @app.route('/admin/instructor/remove', methods=['POST'])
@@ -5652,10 +5723,10 @@ def admin_remove_instructor():
     instructor = db.get_or_404(User, user_id)
     if instructor.role != 'instructor':
         flash('That user is not an instructor.', 'warning')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_people'))
     if instructor.id == current_user.id:
         flash('You cannot remove your own account from this screen.', 'warning')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_people'))
     sections = ClassSection.query.filter_by(instructor_id=instructor.id).all()
     if sections:
         if not reassign_to:
@@ -5664,11 +5735,11 @@ def admin_remove_instructor():
                 'Choose another instructor to reassign those classes, then remove.',
                 'warning',
             )
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin_people'))
         replacement = User.query.filter_by(id=int(reassign_to), role='instructor').first()
         if not replacement or replacement.id == instructor.id:
             flash('Select a different active instructor to take those classes.', 'warning')
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin_people'))
         for sec in sections:
             prev_id = sec.instructor_id
             sec.instructor_id = replacement.id
@@ -5680,7 +5751,7 @@ def admin_remove_instructor():
     db.session.commit()
     extra = f' Classes moved to {replacement.full_name} (previous instructor keeps view access).' if sections else ''
     flash(f'Removed instructor access for {instructor.full_name}.{extra}', 'success')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_people'))
 
 
 @app.route('/admin/section/assign-instructor', methods=['POST'])
@@ -5691,7 +5762,7 @@ def admin_assign_instructor():
     instructor = User.query.filter_by(id=int(request.form['instructor_id']), role='instructor').first()
     if not instructor:
         flash('Select a valid instructor.', 'warning')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_classes'))
     prev_id = section.instructor_id
     section.instructor_id = instructor.id
     if prev_id and prev_id != instructor.id:
@@ -5708,7 +5779,7 @@ def admin_assign_instructor():
         )
     else:
         flash(f'{section.name} is now assigned to {instructor.full_name}.', 'success')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_classes'))
 
 
 
@@ -5720,15 +5791,15 @@ def admin_add_course_instructor():
     user = db.get_or_404(User, int(request.form.get('user_id') or 0))
     if user.role != 'instructor':
         flash('Select an instructor account.', 'warning')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_curriculum'))
     exists = CourseInstructor.query.filter_by(course_id=course.id, user_id=user.id).first()
     if exists:
         flash(f'{user.full_name} is already assigned to {course.title}.', 'info')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_curriculum'))
     db.session.add(CourseInstructor(course_id=course.id, user_id=user.id))
     db.session.commit()
     flash(f'Added {user.full_name} to curriculum set {course.title}.', 'success')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_curriculum'))
 
 
 @app.route('/admin/course/remove-instructor', methods=['POST'])
@@ -5741,7 +5812,7 @@ def admin_remove_course_instructor():
     db.session.delete(link)
     db.session.commit()
     flash(f'Removed {name} from {title}.', 'success')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_curriculum'))
 
 
 

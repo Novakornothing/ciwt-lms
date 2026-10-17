@@ -1,0 +1,12 @@
+{# Admin page header + sub-navigation. Set admin_tab (endpoint) in the view; pass title/lede with
+   {% with title=..., lede=... %}{% include '_admin_nav.html' %}{% endwith %}. On phones the tabs scroll sideways. #}
+<div class="page-hero admin-hero">
+  <div class="u-eyebrow small text-uppercase mb-1">Admin</div>
+  <h1 class="h3 mb-1">{{ title }}</h1>
+  {% if lede %}<p class="mb-0">{{ lede }}</p>{% endif %}
+</div>
+<nav class="admin-tabs chip-scroll mb-3" aria-label="Admin sections">
+  {% for ep, label, icon in admin_tabs %}
+  <a class="chip-link" href="{{ url_for(ep) }}"{% if admin_tab == ep %} aria-current="page"{% endif %}><i class="bi {{ icon }}" aria-hidden="true"></i> {% if label == 'Quality / TQI' %}<span class="d-none d-sm-inline">Quality / </span>TQI{% else %}{{ label }}{% endif %}</a>
+  {% endfor %}
+</nav>

@@ -37,7 +37,7 @@ PAGES = {
                  ('live-labs', '/live-labs'), ('class-labs', '/class/1/labs'), ('skills', '/class/1/skills'), ('inbox', '/messages'),
                  ('msg-thread', '/messages/{msg}'), ('msg-new', '/messages/new'), ('attention', '/instructor/section/1/attention'),
                  ('convening', '/convening'), ('pilot', '/pilot'), ('gaps', '/gaps'), ('aschool', '/aschool'), ('account', '/account')],
-  'admin': [('home', '/admin'), ('audit', '/admin/audit'), ('curriculum-log', '/admin/curriculum-log'), ('readiness', '/admin/readiness'),
+  'admin': [('home', '/admin'), ('classes', '/admin/classes'), ('people', '/admin/people'), ('curriculum-admin', '/admin/curriculum'), ('audit', '/admin/audit'), ('curriculum-log', '/admin/curriculum-log'), ('readiness', '/admin/readiness'),
             ('teaching-time', '/admin/teaching-time'), ('test-analytics', '/admin/test-analytics'), ('tickets', '/admin/tickets'),
             ('ticket', '/admin/tickets/{ticket}'), ('tqi', '/admin/tqi'), ('curriculum', '/class/1/curriculum'), ('demo', '/demo'),
             ('search', '/search?q=raid'), ('account', '/account')],

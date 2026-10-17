@@ -1,406 +1,93 @@
 {% extends "base.html" %}
 {% block title %}Admin — {{ site_name }}{% endblock %}
 {% block content %}
-<div class="page-hero">
-  <h1 class="h3 mb-1">Admin tools</h1>
-  <p class="mb-0">Create classes and people here. TQI lives on a separate admin site that pulls from this LMS: <a href="https://novakornothing.com/tqi" target="_blank" rel="noopener">novakornothing.com/tqi</a>.</p>
-</div>
-<nav class="chip-scroll mb-3" aria-label="On this page">
-  {% if acting_role != 'instructor' %}<a class="chip-link" href="#admin-class"><i class="bi bi-plus-square" aria-hidden="true"></i> Create class</a>{% endif %}
-  <a class="chip-link" href="#admin-sections"><i class="bi bi-collection" aria-hidden="true"></i> Classes</a>
-  <a class="chip-link" href="#admin-course-instr"><i class="bi bi-person-badge" aria-hidden="true"></i> Course instructors</a>
-  <a class="chip-link" href="#admin-people"><i class="bi bi-person-plus" aria-hidden="true"></i> Add people</a>
-  <a class="chip-link" href="#admin-staff"><i class="bi bi-people" aria-hidden="true"></i> Staff roster</a>
-</nav>
-<div class="card mb-4">
-  <div class="card-header navy d-flex justify-content-between align-items-center">
-    <span>TQI packets</span>
-    <a class="btn btn-sm btn-outline-light" href="https://novakornothing.com/tqi" target="_blank" rel="noopener">Open TQI site <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> (opens in a new tab)</span></a>
-  </div>
-  <div class="card-body py-2">
-    <span class="stat-pill">Complete <strong>{{ tqi_complete|default(0) }}</strong></span>
-    <span class="stat-pill">Missing items <strong>{{ tqi_missing|default(0) }}</strong></span>
-  </div>
-  <div class="table-responsive">
-    <table class="table table-sm mb-0">
-      <thead><tr><th>Class</th><th>Instructor</th><th>Schedule</th><th>Status</th><th>Missing</th></tr></thead>
-      <tbody>
-      {% for card in tqi_cards|default([]) %}
-        <tr>
-          <td><a href="https://novakornothing.com/tqi" target="_blank" rel="noopener">{{ card.section.name }}</a></td>
-          <td>{{ card.status.instructor.full_name if card.status.instructor else '—' }}</td>
-          <td class="small">{{ card.section.start_date or '—' }} → {{ card.section.end_date or '—' }}</td>
-          <td>{{ card.status.packet.status }}</td>
-          <td class="small">{% if card.status.missing %}{{ card.status.missing|join('; ') }}{% else %}—{% endif %}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="5" class="text-muted">No classes.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+{% with title='Admin overview', lede='Classes, people, curriculum and quality at a glance. Pick an area to manage it.' %}{% include '_admin_nav.html' %}{% endwith %}
 
-<div class="card mb-4 border-warning">
+<section aria-labelledby="admin-glance-h" class="mb-4">
+  <h2 id="admin-glance-h" class="visually-hidden">At a glance</h2>
+  <div class="kpi-grid">
+    <a class="kpi-card kpi-link" href="{{ url_for('admin_classes') }}"><div class="kpi-label">Active classes</div><div class="kpi-value">{{ stats.classes_active }}</div><div class="kpi-sub">of {{ stats.classes }}</div></a>
+    <a class="kpi-card kpi-link" href="{{ url_for('admin_people', role='student') }}"><div class="kpi-label">Students</div><div class="kpi-value">{{ stats.students }}</div></a>
+    <a class="kpi-card kpi-link" href="{{ url_for('admin_people', role='instructor') }}"><div class="kpi-label">Instructors</div><div class="kpi-value">{{ stats.instructors }}</div><div class="kpi-sub">{{ stats.admins }} admin{{ 's' if stats.admins != 1 }}</div></a>
+    <a class="kpi-card kpi-link" href="{{ url_for('admin_curriculum') }}"><div class="kpi-label">Curriculum sets</div><div class="kpi-value">{{ stats.courses }}</div></a>
+    <a class="kpi-card kpi-link{% if stats.tqi_missing %} kpi-warn{% endif %}" href="{{ url_for('admin_tqi') }}"><div class="kpi-label">TQI missing items</div><div class="kpi-value">{{ stats.tqi_missing }}</div><div class="kpi-sub">{{ stats.tqi_complete }} complete</div></a>
+    <a class="kpi-card kpi-link{% if stats.tickets_open %} kpi-warn{% endif %}" href="{{ url_for('admin_tickets') }}"><div class="kpi-label">Open content tickets</div><div class="kpi-value">{{ stats.tickets_open }}</div></a>
+  </div>
+</section>
+
+<section aria-labelledby="admin-areas-h" class="mb-4">
+  <h2 id="admin-areas-h" class="section-label">Manage</h2>
+  <div class="admin-hub">
+    <a class="admin-hub-card" href="{{ url_for('admin_classes') }}">
+      <i class="bi bi-collection" aria-hidden="true"></i>
+      <span><strong>Classes</strong><span>Create a class section, assign its instructor, activate or close it.</span></span>
+    </a>
+    <a class="admin-hub-card" href="{{ url_for('admin_people') }}">
+      <i class="bi bi-people" aria-hidden="true"></i>
+      <span><strong>People</strong><span>Add students and staff, change roles, find anyone by name or email.</span></span>
+    </a>
+    <a class="admin-hub-card" href="{{ url_for('admin_curriculum') }}">
+      <i class="bi bi-journal-bookmark" aria-hidden="true"></i>
+      <span><strong>Curriculum</strong><span>What each curriculum set contains and which instructors can teach it.</span></span>
+    </a>
+    <a class="admin-hub-card" href="{{ url_for('admin_tqi') }}">
+      <i class="bi bi-clipboard2-pulse" aria-hidden="true"></i>
+      <span><strong>Quality / TQI</strong><span>Training quality packets by class, with the items still missing.</span></span>
+    </a>
+  </div>
+  <nav class="chip-links mt-3" aria-label="More admin tools">
+    <a class="chip-link" href="{{ url_for('admin_teaching_time') }}"><i class="bi bi-stopwatch" aria-hidden="true"></i> Teaching time</a>
+    <a class="chip-link" href="{{ url_for('admin_test_analytics') }}"><i class="bi bi-bar-chart" aria-hidden="true"></i> Test analytics</a>
+    <a class="chip-link" href="{{ url_for('admin_tickets') }}"><i class="bi bi-ticket-perforated" aria-hidden="true"></i> Content tickets</a>
+    <a class="chip-link" href="{{ url_for('admin_audit') }}"><i class="bi bi-shield-check" aria-hidden="true"></i> Audit log</a>
+    <a class="chip-link" href="{{ url_for('admin_readiness') }}"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Product readiness</a>
+  </nav>
+</section>
+
+<section class="card mb-4" aria-labelledby="admin-teach-h">
+  <div class="card-header navy d-flex justify-content-between align-items-center gap-2">
+    <h2 id="admin-teach-h" class="h6 mb-0">Most teaching time</h2>
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('admin_classes') }}#admin-teaching">All classes</a>
+  </div>
+  {% if teach_by_class %}
+  <ul class="list-group list-group-flush">
+    {% for row in teach_by_class %}
+    <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+      <span class="min-w-0"><strong>{{ row.user.full_name if row.user else '—' }}</strong><br><span class="small text-muted">{{ row.section.name if row.section else 'No class selected' }}</span></span>
+      <span class="text-nowrap">{{ fmt_seconds(row.seconds) }}{% if row.open %} <span class="badge badge-live">live</span>{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="card-body text-muted small">No teaching sessions yet. Instructors start the top-bar timer and pick a class.</div>
+  {% endif %}
+</section>
+
+<section class="card border-warning mb-4" aria-labelledby="admin-reset-h">
   <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div>
-      <strong>Reset demo data</strong>
-      <div class="small text-muted">Wipes the database and reloads users, classes, curriculum, and sample attempts. Cannot be undone.</div>
+      <h2 id="admin-reset-h" class="h6 mb-1">Reset demo data</h2>
+      <div class="small text-muted">Wipes the database and reloads users, classes, curriculum and sample attempts. Cannot be undone.</div>
     </div>
     <form method="post" action="{{ url_for('seed_data_route') }}" data-confirm="Re-seed the entire demo database? All live changes will be lost."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button class="btn btn-outline-navy">Re-seed demo database</button>
+      <button class="btn btn-outline-danger">Re-seed demo database</button>
     </form>
   </div>
-</div>
-
-<div id="admin-class"></div>
-
-<div class="row g-4">
-  <!-- Create section — administrators only (not instructor work mode) -->
-  <div class="col-lg-6">
-    {% if acting_role == 'instructor' %}
-    <div class="alert alert-info">Class creation is an administrator task. Switch back to admin mode to create a class.</div>
-    {% else %}
-    <div class="card">
-      <div class="card-header">Create class section</div>
-      <div class="card-body">
-        <form method="post" action="{{ url_for('admin_create_section') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="mb-3">
-            <label class="form-label" for="f-name">Section name</label>
-            <input id="f-name" type="text" name="name" class="form-control" required
-                   placeholder="IT Support Fall 2026 — Section D">
-          </div>
-          <div class="mb-3">
-            <label class="form-label" for="f-course_id">Course</label>
-            <select id="f-course_id" name="course_id" class="form-select" required aria-label="Course">
-              {% for c in courses %}
-              <option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label" for="f-instructor_id">Assign instructor</label>
-            <select id="f-instructor_id" name="instructor_id" class="form-select" required aria-label="Assign instructor">
-              {% for i in instructors %}
-              <option value="{{ i.id }}">{{ i.full_name }} ({{ i.email }})</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="row g-2 mb-3">
-            <div class="col">
-              <label class="form-label" for="f-start_date">Start</label>
-              <input id="f-start_date" type="date" name="start_date" class="form-control" aria-label="Start">
-            </div>
-            <div class="col">
-              <label class="form-label" for="f-end_date">End</label>
-              <input id="f-end_date" type="date" name="end_date" class="form-control" aria-label="End">
-            </div>
-            <div class="col">
-              <label class="form-label" for="f-max_students">Max students</label>
-              <input id="f-max_students" type="number" name="max_students" class="form-control" value="25" min="1" aria-label="Max students">
-            </div>
-          </div>
-          <button class="btn btn-brand">Create section</button>
-        </form>
-      </div>
-    </div>
-    {% endif %}
-
-    <div class="card mt-4" id="admin-course-instr">
-      <div class="card-header navy">Add instructor to a curriculum set</div>
-      <div class="card-body">
-        <p class="small text-muted mb-3">Gives the instructor access to every class in that course (release content, scores, analytics). You can still set a primary instructor per class below.</p>
-        <form method="post" action="{{ url_for('admin_add_course_instructor') }}" class="row g-2 align-items-end"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="col-md-5">
-            <label class="form-label" for="f-course_id-2">Curriculum set</label>
-            <select id="f-course_id-2" name="course_id" class="form-select" required aria-label="Curriculum set">
-              {% for c in courses %}
-              <option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-md-5">
-            <label class="form-label" for="f-user_id">Instructor</label>
-            <select id="f-user_id" name="user_id" class="form-select" required aria-label="Instructor">
-              {% for i in instructors %}
-              <option value="{{ i.id }}">{{ i.full_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-brand w-100">Add</button>
-          </div>
-        </form>
-        <div class="mt-3">
-          {% for c in courses %}
-          <div class="small mb-2">
-            <strong>{{ c.title }}</strong>
-            {% set links = course_instructors.get(c.id, []) if course_instructors is defined else [] %}
-            {% if links %}
-              {% for link in links %}
-              <form method="post" action="{{ url_for('admin_remove_course_instructor') }}" class="d-inline" data-confirm="Remove {{ link.user.full_name if link.user else 'this instructor' }} from {{ c.title }}?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="link_id" value="{{ link.id }}">
-                <span class="person-chip">{{ link.user.full_name if link.user else 'Instructor' }}
-                  <button class="person-chip-x" type="submit" aria-label="Remove {{ link.user.full_name if link.user else 'instructor' }} from {{ c.title }}"><i class="bi bi-x-lg" aria-hidden="true"></i></button></span>
-              </form>
-              {% endfor %}
-            {% else %}
-              <span class="text-muted">No course-level instructors yet</span>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-
-    <div class="card mt-4" id="admin-people">
-      <div class="card-header navy">Add instructor or admin</div>
-      <div class="card-body">
-        <p class="small text-muted">Creates a staff account. Use Role to choose Instructor (teaches classes) or Admin (full control). If the email already exists, that person is updated to the selected role.</p>
-        <form method="post" action="{{ url_for('admin_create_instructor') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="row g-2 mb-2">
-            <div class="col">
-              <label class="form-label" for="f-first_name">First name</label>
-              <input id="f-first_name" type="text" name="first_name" class="form-control" placeholder="e.g. Jordan" required aria-label="First name">
-            </div>
-            <div class="col">
-              <label class="form-label" for="f-last_name">Last name</label>
-              <input id="f-last_name" type="text" name="last_name" class="form-control" placeholder="e.g. Lee" required aria-label="Last name">
-            </div>
-          </div>
-          <div class="mb-2">
-            <label class="form-label" for="f-email">Work email (sign-in)</label>
-            <input id="f-email" type="email" name="email" class="form-control" placeholder="e.g. jordan.lee@lms.local" required aria-label="Work email (sign-in)">
-          </div>
-          <div class="row g-2 mb-3">
-            <div class="col">
-              <label class="form-label" for="f-role">Role</label>
-              <select id="f-role" name="role" class="form-select" required aria-label="Role">
-                <option value="instructor" selected>Instructor — teach classes, release tests</option>
-                <option value="admin">Admin — manage people, classes, tickets</option>
-              </select>
-            </div>
-            <div class="col">
-              <label class="form-label" for="f-password">Temporary password</label>
-              <input id="f-password" type="text" name="password" class="form-control" placeholder="Leave blank for changeme123" aria-label="Temporary password">
-            </div>
-          </div>
-          <button class="btn btn-brand">Create staff account</button>
-        </form>
-      </div>
-    </div>
-
-    <div class="card mt-4">
-      <div class="card-header">Create student or other user</div>
-      <div class="card-body">
-        <p class="small text-muted">Use this for students (default). Staff can also be created here if you pick Instructor or Admin.</p>
-        <form method="post" action="{{ url_for('admin_create_user') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="row g-2 mb-2">
-            <div class="col">
-              <label class="form-label" for="f-first_name-2">First name</label>
-              <input id="f-first_name-2" type="text" name="first_name" class="form-control" placeholder="e.g. Alex" required aria-label="First name">
-            </div>
-            <div class="col">
-              <label class="form-label" for="f-last_name-2">Last name</label>
-              <input id="f-last_name-2" type="text" name="last_name" class="form-control" placeholder="e.g. Rivera" required aria-label="Last name">
-            </div>
-          </div>
-          <div class="mb-2">
-            <label class="form-label" for="f-email-2">Email (sign-in)</label>
-            <input id="f-email-2" type="email" name="email" class="form-control" placeholder="e.g. student12@lms.local" required aria-label="Email (sign-in)">
-          </div>
-          <div class="row g-2 mb-3">
-            <div class="col">
-              <label class="form-label" for="f-role-2">Role</label>
-              <select id="f-role-2" name="role" class="form-select" required aria-label="Role">
-                <option value="student" selected>Student — takes lessons and tests</option>
-                <option value="instructor">Instructor — teaches classes</option>
-                <option value="admin">Admin — full control</option>
-              </select>
-            </div>
-            <div class="col">
-              <label class="form-label" for="f-password-2">Temporary password</label>
-              <input id="f-password-2" type="text" name="password" class="form-control" placeholder="Leave blank for changeme123" aria-label="Temporary password">
-            </div>
-          </div>
-          <button class="btn btn-outline-dark">Create user</button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Sections list -->
-  <div class="col-lg-6">
-    <div class="card" id="admin-sections">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Class sections</span>
-        <form method="post" action="{{ url_for('seed_data_route') }}"
-              data-confirm="This will wipe and re-seed the database. Continue?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="btn btn-sm btn-outline-danger">Re-seed demo data</button>
-        </form>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-sm mb-0">
-          <thead>
-            <tr><th>Name</th><th>Course</th><th>Instructor</th><th>Students</th><th></th></tr>
-          </thead>
-          <tbody>
-            {% for s in sections %}
-            <tr class="{% if not s.is_active %}table-secondary{% endif %}">
-              <td>{{ s.name }}</td>
-              <td>{{ s.course.code }}</td>
-              <td class="small">
-                <form method="post" action="{{ url_for('admin_assign_instructor') }}" class="d-flex gap-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="section_id" value="{{ s.id }}">
-                  <select name="instructor_id" class="form-select form-select-sm" aria-label="Instructor for {{ s.name }}">
-                    {% for i in instructors %}
-                    <option value="{{ i.id }}" {% if s.instructor_id == i.id %}selected{% endif %}>{{ i.full_name }}</option>
-                    {% endfor %}
-                  </select>
-                  <button class="btn btn-sm btn-outline-navy">Set</button>
-                </form>
-              </td>
-              <td>{{ s.enrollments|length }}/{{ s.max_students }}</td>
-              <td class="text-end">
-                <a href="{{ url_for('instructor_section', section_id=s.id) }}" class="btn btn-sm btn-outline-primary">Open</a>
-                <form method="post" action="{{ url_for('admin_toggle_section') }}" class="d-inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="section_id" value="{{ s.id }}">
-                  <button class="btn btn-sm btn-outline-secondary">
-                    {% if s.is_active %}Deactivate{% else %}Activate{% endif %}
-                  </button>
-                </form>
-              </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="5" class="text-muted">No sections.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card mt-4">
-      <div class="card-header navy d-flex justify-content-between align-items-center">
-        <span>Teaching time by instructor and class</span>
-        <a class="btn btn-sm btn-outline-gold" href="{{ url_for('admin_teaching_time') }}">Course / quarter / year</a>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-sm mb-0">
-          <thead><tr><th>Instructor</th><th>Class</th><th>Curriculum</th><th>Time</th></tr></thead>
-          <tbody>
-            {% for row in teach_by_class %}
-            <tr>
-              <td>{{ row.user.full_name if row.user else '—' }}</td>
-              <td>{% if row.section %}<a href="{{ url_for('instructor_section', section_id=row.section.id) }}">{{ row.section.name }}</a>{% else %}<span class="text-muted">No class selected</span>{% endif %}</td>
-              <td class="small">{{ row.section.course.code if row.section and row.section.course else '—' }}</td>
-              <td>{{ fmt_seconds(row.seconds) if fmt_seconds is defined else row.seconds }}{% if row.open %} <span class="badge badge-live">live</span>{% endif %}</td>
-            </tr>
-            {% else %}
-            <tr><td colspan="4" class="text-muted">No teaching sessions yet. Instructors start the top-bar timer and pick a class.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card mt-4" id="admin-staff">
-      <div class="card-header navy">Administrators ({{ admins|length if admins is defined else 0 }})</div>
-      <div class="table-responsive">
-        <table class="table table-sm mb-0">
-          <thead><tr><th>Name</th><th>Email</th><th>Sign-in</th><th></th></tr></thead>
-          <tbody>
-            {% for a in admins %}
-            <tr>
-              <td>{{ a.full_name }}{% if a.id == current_user.id %} <span class="badge badge-live">you</span>{% endif %}</td>
-              <td class="small">{{ a.email }}</td>
-              <td><span class="badge bg-dark text-uppercase">admin</span></td>
-              <td class="text-end">
-                {% if a.id != current_user.id %}
-                <form method="post" action="{{ url_for('admin_demote_admin') }}" class="d-inline"
-                      data-confirm="Remove admin access for {{ a.full_name }}? They become an instructor."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="user_id" value="{{ a.id }}">
-                  <button class="btn btn-sm btn-outline-navy">Make instructor</button>
-                </form>
-                {% else %}
-                <span class="small text-muted">Signed in as this admin</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="4" class="text-muted">No administrators found.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <div class="card-body small text-muted py-2">
-        Create another admin with <strong>Add instructor or admin</strong> on the left (Role = Admin). Demo default: admin@lms.local / admin123.
-      </div>
-    </div>
-
-    <div class="card mt-4">
-      <div class="card-header navy">Instructors ({{ instructors|length }})</div>
-      <div class="table-responsive">
-        <table class="table table-sm mb-0">
-          <thead><tr><th>Name</th><th>Email</th><th>Classes</th><th>Teaching time</th><th></th></tr></thead>
-          <tbody>
-            {% for i in instructors %}
-            <tr>
-              <td>{{ i.full_name }}</td>
-              <td class="small">{{ i.email }}</td>
-              <td class="small">
-                {% set taught = sections|selectattr('instructor_id', 'equalto', i.id)|list %}
-                {{ taught|length }}
-              </td>
-              <td class="small">{{ fmt_seconds(teach_totals.get(i.id, 0)) if fmt_seconds is defined else '—' }}</td>
-              <td class="text-end">
-                <form method="post" action="{{ url_for('admin_remove_instructor') }}" class="d-flex flex-wrap gap-1 justify-content-end"
-                      data-confirm="Remove instructor access for {{ i.full_name }}?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="user_id" value="{{ i.id }}">
-                  {% if instructors|length > 1 %}
-                  <select name="reassign_to" class="form-select form-select-sm u-minw-9" aria-label="Reassign {{ i.full_name }}'s classes to">
-                    <option value="">Reassign classes to…</option>
-                    {% for other in instructors if other.id != i.id %}
-                    <option value="{{ other.id }}">{{ other.full_name }}</option>
-                    {% endfor %}
-                  </select>
-                  {% endif %}
-                  <button class="btn btn-sm btn-outline-danger">Remove</button>
-                </form>
-                <form method="post" action="{{ url_for('admin_make_admin') }}" class="d-inline"
-                      data-confirm="Make {{ i.full_name }} an administrator? Only an admin can do this."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="user_id" value="{{ i.id }}">
-                  <button class="btn btn-sm btn-brand mt-1">Make admin</button>
-                </form>
-              </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="5" class="text-muted">No instructors yet. Add one on the left.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <div class="card-body small text-muted">
-        Remove drops instructor access (account stays as a student). If they own classes, pick a replacement first.
-      </div>
-    </div>
-
-    <div class="card mt-4">
-      <div class="card-header">Users ({{ users|length }})</div>
-      <div class="table-responsive" style="max-height: 320px; overflow:auto">
-        <table class="table table-sm mb-0">
-          <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
-          <tbody>
-            {% for u in users %}
-            <tr>
-              <td>{{ u.full_name }}</td>
-              <td class="small">{{ u.email }}</td>
-              <td><span class="badge bg-secondary text-uppercase">{{ u.role }}</span></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+</section>
+{% endblock %}
+{% block head %}
+<script>
+// The admin tools used to be one long page with #anchors; send old bookmarks to the matching sub-page.
+(function () {
+  var map = {
+    'admin-class': "{{ url_for('admin_classes') }}#admin-class",
+    'admin-sections': "{{ url_for('admin_classes') }}#admin-sections",
+    'admin-course-instr': "{{ url_for('admin_curriculum') }}#admin-course-instr",
+    'admin-people': "{{ url_for('admin_people') }}#admin-people",
+    'admin-staff': "{{ url_for('admin_people') }}#admin-staff"
+  };
+  var target = map[location.hash.slice(1)];
+  if (target) location.replace(target);
+})();
+</script>
 {% endblock %}

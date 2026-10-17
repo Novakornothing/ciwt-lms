@@ -915,3 +915,50 @@ details.card-disclosure:not([open]) > summary { border-bottom: 0; border-radius:
   table.table-stack td[data-label] > .gb-chip { min-width: var(--tap); }
   .tqi-status-link { min-height: var(--tap); display: inline-flex; align-items: center; }
 }
+
+/* ---- Admin sub-pages (overview, classes, people, curriculum, quality) ---- */
+.admin-hero { margin-bottom: .75rem; }
+.admin-tabs { margin-top: -.15rem; }
+.admin-tabs .chip-link[aria-current="page"], .chip-scroll .chip-link[aria-current="true"] {
+  background: var(--navy-800, #0d1b2e); border-color: var(--navy-800, #0d1b2e); color: #fff; font-weight: 600; }
+[data-theme="dark"] .admin-tabs .chip-link[aria-current="page"], [data-theme="dark"] .chip-scroll .chip-link[aria-current="true"] {
+  background: var(--accent); border-color: var(--accent); color: #04121f; }
+.kpi-link { text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; }
+.kpi-link:hover, .kpi-link:focus-visible { border-color: var(--accent); color: inherit; }
+.kpi-warn .kpi-value { color: var(--warning-ink, #8a5a00); }
+[data-theme="dark"] .kpi-warn .kpi-value { color: var(--gold-bright, #f0c14b); }
+.admin-hub { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .75rem; }
+.admin-hub-card { display: flex; gap: .85rem; align-items: flex-start; padding: 1rem 1.1rem; border-radius: var(--radius, 12px);
+  border: 1px solid var(--surface-4); background: var(--surface); color: var(--ink); text-decoration: none; min-height: var(--tap); }
+.admin-hub-card:hover, .admin-hub-card:focus-visible { border-color: var(--accent); color: var(--ink); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.admin-hub-card > .bi { font-size: 1.4rem; color: color-mix(in srgb, var(--accent) 45%, var(--ink)); line-height: 1; margin-top: .1rem; }
+[data-theme="dark"] .admin-hub-card > .bi { color: var(--accent-bright); }
+.admin-hub-card > span { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.admin-hub-card > span > span { font-size: var(--text-sm, .875rem); color: var(--ink-muted); }
+.curriculum-sets { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1rem; }
+@media (max-width: 575.98px) { .curriculum-sets { grid-template-columns: minmax(0, 1fr); } }
+.staff-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem .75rem; }
+.staff-row-main { display: flex; flex-direction: column; min-width: 0; flex: 1 1 14rem; }
+.staff-row-actions { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.role-badge { text-transform: uppercase; letter-spacing: .04em; font-weight: 700; background: var(--surface-3); color: var(--ink-secondary); }
+.role-badge.role-admin { background: var(--navy-800, #0d1b2e); color: #fff; }
+.role-badge.role-instructor { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); color: var(--ink); }
+.admin-sections-table tr.is-inactive { opacity: .72; }
+@media (max-width: 767.98px) {
+  .admin-sections-table .form-select { min-width: 0; }
+}
+/* TQI board (moved from an inline <style> in admin_tqi.html) */
+.tqi-row { cursor: pointer; }
+.tqi-row:hover { background: color-mix(in srgb, var(--accent, #d4b46a) 12%, transparent); }
+.tqi-open-btn { display: inline-block; padding: .4rem .85rem; font-weight: 600; pointer-events: auto; position: relative; z-index: 2; }
+.tqi-status-link { display: inline-block; text-decoration: none; pointer-events: auto; position: relative; z-index: 2; }
+@media (pointer: coarse) { .tqi-status-link { display: inline-flex; align-items: center; min-height: var(--tap); } }
+.tqi-ended { color: var(--warning-ink, #8a5a00); font-weight: 600; }
+[data-theme="dark"] .tqi-ended { color: var(--gold-bright, #f0c14b); }
+@media (pointer: coarse) { .row-title-link { display: inline-flex; align-items: center; min-height: var(--tap); } }
+/* phones: the admin tabs scroll sideways; ciwt-ui.js scrolls the current tab into view, the fade hints at more */
+@media (max-width: 575.98px) {
+  .admin-tabs { margin-left: -.75rem; margin-right: -.75rem; padding-left: .75rem; padding-right: .75rem; scroll-padding-inline: .75rem;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 1.5rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 1.5rem), transparent); }
+}
+@media (max-width: 575.98px) { .admin-tabs.at-end { -webkit-mask-image: none; mask-image: none; } }

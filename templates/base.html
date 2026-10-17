@@ -167,7 +167,7 @@
     <a href="{{ url_for('student_grades') }}" class="{{ 'active' if ep_ in ('student_grades','student_section_grades') }}"><i class="bi bi-mortarboard" aria-hidden="true"></i>Grades</a>
     <a href="{{ url_for('interactive_labs_index') }}" class="{{ 'active' if ep_.startswith('interactive_lab') or ep_ == 'course_labs' }}"><i class="bi bi-terminal" aria-hidden="true"></i>Labs</a>
     {% else %}
-    <a href="{{ url_for('admin_dashboard') if current_user.role == 'admin' and acting_role != 'instructor' else url_for('instructor_dashboard') }}" class="{{ 'active' if ep_ in ('instructor_dashboard','admin_dashboard') }}"><i class="bi bi-house-door" aria-hidden="true"></i>Home</a>
+    <a href="{{ url_for('admin_dashboard') if current_user.role == 'admin' and acting_role != 'instructor' else url_for('instructor_dashboard') }}" class="{{ 'active' if ep_ in ('instructor_dashboard','admin_dashboard','admin_classes','admin_people','admin_curriculum','admin_tqi') }}"><i class="bi bi-house-door" aria-hidden="true"></i>Home</a>
     {% set cur_sec = section if section is defined and section and section.id is defined else ((staff_nav_sections|default([]))|first) %}
     {% if cur_sec %}
     <a href="{{ url_for('instructor_gradebook', section_id=cur_sec.id) }}" class="{{ 'active' if ep_.startswith('instructor_gradebook') }}"><i class="bi bi-table" aria-hidden="true"></i>Grades</a>

@@ -20,7 +20,7 @@ def instructor_pages(i):
             f"/student/module/{s}/{i['module']}/lesson/{i['lesson']}", f'/class/{s}/tqi', f'/class/{s}/skills', '/pilot']
 
 
-ADMIN = ['/admin', '/admin/test-analytics', '/admin/teaching-time', '/admin/audit', '/admin/readiness', '/admin/tickets']
+ADMIN = ['/admin', '/admin/classes', '/admin/people', '/admin/curriculum', '/admin/tqi', '/admin/test-analytics', '/admin/teaching-time', '/admin/audit', '/admin/readiness', '/admin/tickets']
 
 
 @pytest.mark.parametrize('path', PUBLIC)

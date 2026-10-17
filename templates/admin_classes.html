@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Classes — Admin — {{ site_name }}{% endblock %}
+{% block content %}
+{% with title='Classes', lede='Every class section, who teaches it, and how full it is.' %}{% include '_admin_nav.html' %}{% endwith %}
+
+<div class="row g-4">
+  <div class="col-lg-7 order-lg-2">
+    <section class="card" id="admin-sections" aria-labelledby="admin-sections-h">
+      <div class="card-header d-flex justify-content-between align-items-center gap-2">
+        <h2 id="admin-sections-h" class="h6 mb-0">Class sections <span class="chip-count">{{ sections|length }}</span></h2>
+        <a class="btn btn-sm btn-brand d-lg-none" href="#admin-class"><i class="bi bi-plus-lg" aria-hidden="true"></i> New class</a>
+      </div>
+      {% if sections %}
+      <table class="table table-sm align-middle mb-0 table-stack admin-sections-table">
+        <thead><tr><th scope="col">Class</th><th scope="col">Instructor</th><th scope="col">Students</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>
+          {% for s in sections %}
+          <tr class="{% if not s.is_active %}is-inactive{% endif %}">
+            <th scope="row" class="fw-normal">
+              <a class="fw-semibold row-title-link" href="{{ url_for('instructor_section', section_id=s.id) }}">{{ s.name }}</a>
+              <div class="small text-muted">{{ s.course.code }}{% if s.start_date %} · {{ s.start_date }} → {{ s.end_date or '…' }}{% endif %}{% if not s.is_active %} · <span class="badge badge-closed">inactive</span>{% endif %}</div>
+            </th>
+            <td data-label="Instructor">
+              <form method="post" action="{{ url_for('admin_assign_instructor') }}" class="d-flex gap-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="section_id" value="{{ s.id }}">
+                <select name="instructor_id" class="form-select form-select-sm" aria-label="Instructor for {{ s.name }}">
+                  {% for i in instructors %}
+                  <option value="{{ i.id }}" {% if s.instructor_id == i.id %}selected{% endif %}>{{ i.full_name }}</option>
+                  {% endfor %}
+                </select>
+                <button class="btn btn-sm btn-outline-navy">Set</button>
+              </form>
+            </td>
+            <td data-label="Students" class="text-nowrap">{{ s.enrollments|length }} / {{ s.max_students }}</td>
+            <td class="text-end text-nowrap">
+              <form method="post" action="{{ url_for('admin_toggle_section') }}" class="d-inline"{% if s.is_active %} data-confirm="Deactivate {{ s.name }}? Students will no longer see it."{% endif %}><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="section_id" value="{{ s.id }}">
+                <button class="btn btn-sm btn-outline-secondary">{% if s.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      {% from '_ui.html' import empty_state %}
+      {{ empty_state('collection', 'No classes yet', 'Create the first class section with the form on this page.', card=False) }}
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="col-lg-5 order-lg-1">
+    <section class="card" id="admin-class" aria-labelledby="admin-class-h">
+      <div class="card-header"><h2 id="admin-class-h" class="h6 mb-0">Create class section</h2></div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('admin_create_section') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label" for="f-name">Section name</label>
+            <input id="f-name" type="text" name="name" class="form-control" required placeholder="IT Support Fall 2026 — Section D">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="f-course_id">Course</label>
+            <select id="f-course_id" name="course_id" class="form-select" required>
+              {% for c in courses %}<option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="f-instructor_id">Instructor</label>
+            <select id="f-instructor_id" name="instructor_id" class="form-select" required>
+              {% for i in instructors %}<option value="{{ i.id }}">{{ i.full_name }} ({{ i.email }})</option>{% endfor %}
+            </select>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6 col-sm-4">
+              <label class="form-label" for="f-start_date">Start</label>
+              <input id="f-start_date" type="date" name="start_date" class="form-control">
+            </div>
+            <div class="col-6 col-sm-4">
+              <label class="form-label" for="f-end_date">End</label>
+              <input id="f-end_date" type="date" name="end_date" class="form-control">
+            </div>
+            <div class="col-12 col-sm-4">
+              <label class="form-label" for="f-max_students">Max students</label>
+              <input id="f-max_students" type="number" name="max_students" class="form-control" value="25" min="1">
+            </div>
+          </div>
+          <button class="btn btn-brand w-100">Create section</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="card mt-4" id="admin-teaching" aria-labelledby="admin-teaching-h">
+  <div class="card-header navy d-flex justify-content-between align-items-center gap-2">
+    <h2 id="admin-teaching-h" class="h6 mb-0">Teaching time by instructor and class</h2>
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('admin_teaching_time') }}">By course, quarter, year</a>
+  </div>
+  {% if teach_by_class %}
+  <table class="table table-sm mb-0 table-stack">
+    <thead><tr><th scope="col">Instructor</th><th scope="col">Class</th><th scope="col">Time</th></tr></thead>
+    <tbody>
+      {% for row in teach_by_class %}
+      <tr>
+        <td>{{ row.user.full_name if row.user else '—' }}</td>
+        <td>{% if row.section %}<a href="{{ url_for('instructor_section', section_id=row.section.id) }}">{{ row.section.name }}</a>{% else %}<span class="text-muted">No class selected</span>{% endif %}</td>
+        <td class="text-nowrap">{{ fmt_seconds(row.seconds) }}{% if row.open %} <span class="badge badge-live">live</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="card-body text-muted small">No teaching sessions yet. Instructors start the top-bar timer and pick a class.</div>
+  {% endif %}
+</section>
+{% endblock %}

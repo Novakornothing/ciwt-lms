@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}People — Admin — {{ site_name }}{% endblock %}
+{% block content %}
+{% with title='People', lede='Students, instructors and administrators. Find someone, add an account or change a role.' %}{% include '_admin_nav.html' %}{% endwith %}
+
+<div class="row g-3 mb-4" id="admin-people">
+  <div class="col-md-6">
+    <details class="card card-disclosure" {% if not role_counts.get('instructor') %}open{% endif %}>
+      <summary class="card-header"><i class="bi bi-person-badge" aria-hidden="true"></i> Add instructor or admin</summary>
+      <div class="card-body">
+        <p class="small text-muted">Creates a staff account. If the email already exists, that person is updated to the selected role.</p>
+        <form method="post" action="{{ url_for('admin_create_instructor') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-2 mb-2">
+            <div class="col-sm"><label class="form-label" for="f-first_name">First name</label>
+              <input id="f-first_name" type="text" name="first_name" class="form-control" placeholder="e.g. Jordan" required autocomplete="off"></div>
+            <div class="col-sm"><label class="form-label" for="f-last_name">Last name</label>
+              <input id="f-last_name" type="text" name="last_name" class="form-control" placeholder="e.g. Lee" required autocomplete="off"></div>
+          </div>
+          <div class="mb-2"><label class="form-label" for="f-email">Work email (sign-in)</label>
+            <input id="f-email" type="email" name="email" class="form-control" placeholder="e.g. jordan.lee@lms.local" required autocomplete="off"></div>
+          <div class="row g-2 mb-3">
+            <div class="col-sm"><label class="form-label" for="f-role">Role</label>
+              <select id="f-role" name="role" class="form-select" required>
+                <option value="instructor" selected>Instructor — teach classes, release tests</option>
+                <option value="admin">Admin — manage people, classes, tickets</option>
+              </select></div>
+            <div class="col-sm"><label class="form-label" for="f-password">Temporary password</label>
+              <input id="f-password" type="text" name="password" class="form-control" placeholder="Blank = changeme123" autocomplete="off"></div>
+          </div>
+          <button class="btn btn-brand w-100">Create staff account</button>
+        </form>
+      </div>
+    </details>
+  </div>
+  <div class="col-md-6">
+    <details class="card card-disclosure">
+      <summary class="card-header"><i class="bi bi-person-plus" aria-hidden="true"></i> Add student</summary>
+      <div class="card-body">
+        <p class="small text-muted">Students by default; pick Instructor or Admin to create staff here instead.</p>
+        <form method="post" action="{{ url_for('admin_create_user') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-2 mb-2">
+            <div class="col-sm"><label class="form-label" for="f-first_name-2">First name</label>
+              <input id="f-first_name-2" type="text" name="first_name" class="form-control" placeholder="e.g. Alex" required autocomplete="off"></div>
+            <div class="col-sm"><label class="form-label" for="f-last_name-2">Last name</label>
+              <input id="f-last_name-2" type="text" name="last_name" class="form-control" placeholder="e.g. Rivera" required autocomplete="off"></div>
+          </div>
+          <div class="mb-2"><label class="form-label" for="f-email-2">Email (sign-in)</label>
+            <input id="f-email-2" type="email" name="email" class="form-control" placeholder="e.g. student12@lms.local" required autocomplete="off"></div>
+          <div class="row g-2 mb-3">
+            <div class="col-sm"><label class="form-label" for="f-role-2">Role</label>
+              <select id="f-role-2" name="role" class="form-select" required>
+                <option value="student" selected>Student — takes lessons and tests</option>
+                <option value="instructor">Instructor — teaches classes</option>
+                <option value="admin">Admin — full control</option>
+              </select></div>
+            <div class="col-sm"><label class="form-label" for="f-password-2">Temporary password</label>
+              <input id="f-password-2" type="text" name="password" class="form-control" placeholder="Blank = changeme123" autocomplete="off"></div>
+          </div>
+          <button class="btn btn-outline-navy w-100">Create user</button>
+        </form>
+      </div>
+    </details>
+  </div>
+</div>
+
+<section class="card mb-4" id="admin-users" aria-labelledby="admin-users-h">
+  <div class="card-header"><h2 id="admin-users-h" class="h6 mb-0">Everyone <span class="chip-count">{{ users|length }}</span></h2></div>
+  <div class="card-body pb-2">
+    <form method="get" action="{{ url_for('admin_people') }}" class="d-flex gap-2 mb-2" role="search">
+      {% if role %}<input type="hidden" name="role" value="{{ role }}">{% endif %}
+      <label class="visually-hidden" for="f-q">Find by name or email</label>
+      <input id="f-q" type="search" name="q" value="{{ q }}" class="form-control" placeholder="Find by name or email">
+      <button class="btn btn-outline-navy">Find</button>
+    </form>
+    <nav class="chip-scroll" aria-label="Filter by role">
+      {% for r, label in [('', 'All'), ('student', 'Students'), ('instructor', 'Instructors'), ('admin', 'Admins')] %}
+      <a class="chip-link" href="{{ url_for('admin_people', role=r or None, q=q or None) }}#admin-users"{% if role == r %} aria-current="true"{% endif %}>{{ label }} <span class="chip-count">{{ role_counts.values()|sum if not r else role_counts.get(r, 0) }}</span></a>
+      {% endfor %}
+    </nav>
+  </div>
+  {% if users %}
+  <table class="table table-sm align-middle mb-0 table-stack">
+    <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th></tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.full_name }}{% if u.id == current_user.id %} <span class="badge badge-live">you</span>{% endif %}</td>
+        <td class="small text-break">{{ u.email }}</td>
+        <td><span class="badge role-badge role-{{ u.role }}">{{ u.role }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {% from '_ui.html' import empty_state %}
+  {{ empty_state('search', 'Nobody matches', 'Try part of a name or email, or clear the role filter.', url_for('admin_people'), 'Show everyone', card=False) }}
+  {% endif %}
+</section>
+
+<div class="row g-4" id="admin-staff">
+  <div class="col-lg-7">
+    <section class="card" aria-labelledby="admin-instr-h">
+      <div class="card-header navy"><h2 id="admin-instr-h" class="h6 mb-0">Instructors <span class="chip-count">{{ instructors|length }}</span></h2></div>
+      {% if instructors %}
+      <ul class="list-group list-group-flush">
+        {% for i in instructors %}
+        {% set taught = sections|selectattr('instructor_id', 'equalto', i.id)|list %}
+        <li class="list-group-item staff-row">
+          <div class="staff-row-main">
+            <strong>{{ i.full_name }}</strong>
+            <span class="small text-muted text-break">{{ i.email }}</span>
+            <span class="small text-muted">{{ taught|length }} class{{ 'es' if taught|length != 1 }} · {{ fmt_seconds(teach_totals.get(i.id, 0)) }} teaching</span>
+          </div>
+          <div class="staff-row-actions">
+            <form method="post" action="{{ url_for('admin_make_admin') }}" data-confirm="Make {{ i.full_name }} an administrator?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="user_id" value="{{ i.id }}">
+              <button class="btn btn-sm btn-outline-navy">Make admin</button>
+            </form>
+            <form method="post" action="{{ url_for('admin_remove_instructor') }}" class="d-flex flex-wrap gap-1" data-confirm="Remove instructor access for {{ i.full_name }}? The account stays as a student."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="user_id" value="{{ i.id }}">
+              {% if taught and instructors|length > 1 %}
+              <select name="reassign_to" class="form-select form-select-sm w-auto" aria-label="Reassign {{ i.full_name }}'s classes to">
+                <option value="">Reassign classes to…</option>
+                {% for other in instructors if other.id != i.id %}<option value="{{ other.id }}">{{ other.full_name }}</option>{% endfor %}
+              </select>
+              {% endif %}
+              <button class="btn btn-sm btn-outline-danger">Remove</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="card-body text-muted small">No instructors yet. Use <strong>Add instructor or admin</strong> above.</div>
+      {% endif %}
+      <div class="card-body small text-muted py-2 border-top">Remove drops instructor access (the account stays as a student). If they own classes, pick who takes them over first.</div>
+    </section>
+  </div>
+  <div class="col-lg-5">
+    <section class="card" aria-labelledby="admin-admins-h">
+      <div class="card-header navy"><h2 id="admin-admins-h" class="h6 mb-0">Administrators <span class="chip-count">{{ admins|length }}</span></h2></div>
+      <ul class="list-group list-group-flush">
+        {% for a in admins %}
+        <li class="list-group-item staff-row">
+          <div class="staff-row-main">
+            <strong>{{ a.full_name }}{% if a.id == current_user.id %} <span class="badge badge-live">you</span>{% endif %}</strong>
+            <span class="small text-muted text-break">{{ a.email }}</span>
+          </div>
+          {% if a.id != current_user.id %}
+          <div class="staff-row-actions">
+            <form method="post" action="{{ url_for('admin_demote_admin') }}" data-confirm="Remove admin access for {{ a.full_name }}? They become an instructor."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="user_id" value="{{ a.id }}">
+              <button class="btn btn-sm btn-outline-navy">Make instructor</button>
+            </form>
+          </div>
+          {% endif %}
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted small">No administrators found.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

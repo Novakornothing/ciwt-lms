@@ -1,47 +1,29 @@
 {% extends "base.html" %}
-{% block title %}TQI board — all classes{% endblock %}
+{% block title %}Quality / TQI — Admin — {{ site_name }}{% endblock %}
 {% block content %}
-<style>
-  .tqi-row { cursor: pointer; }
-  .tqi-row:hover { background: color-mix(in srgb, var(--accent, #d4b46a) 12%, transparent); }
-  .tqi-open-btn {
-    display: inline-block;
-    padding: .4rem .85rem;
-    font-weight: 600;
-    pointer-events: auto;
-    position: relative;
-    z-index: 2;
-  }
-  .tqi-status-link {
-    display: inline-block;
-    text-decoration: none;
-    pointer-events: auto;
-    position: relative;
-    z-index: 2;
-  }
-</style>
-<div class="page-hero">
-  <div class="small text-uppercase mb-1 u-eyebrow">Admin</div>
-  <h1 class="h3 mb-1">TQI completion board</h1>
-  <p class="mb-0">Click a class name, the packet status, or <strong>Open packet</strong>. The yellow “open” label is the packet state — it now opens the packet too.</p>
-</div>
+{% with title='Quality / TQI', lede='Training quality packets for every class, most urgent first. Open a packet to see what is still missing.' %}{% include '_admin_nav.html' %}{% endwith %}
+<nav class="chip-links mb-3" aria-label="Quality tools">
+  <a class="chip-link" href="https://novakornothing.com/tqi" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> TQI site<span class="visually-hidden"> (opens in a new tab)</span></a>
+  <a class="chip-link" href="{{ url_for('admin_test_analytics') }}"><i class="bi bi-bar-chart" aria-hidden="true"></i> Test analytics</a>
+  <a class="chip-link" href="{{ url_for('admin_readiness') }}"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Product readiness</a>
+</nav>
 
-<div class="d-flex flex-wrap gap-2 mb-3">
+<div class="d-flex flex-wrap gap-2 mb-3" aria-label="Summary">
   <span class="stat-pill">Classes <strong>{{ cards|length }}</strong></span>
   <span class="stat-pill">Not complete <strong>{{ open_n }}</strong></span>
   <span class="stat-pill">Missing items <strong>{{ missing_n }}</strong></span>
 </div>
 
-<div class="table-responsive">
-  <table class="table table-sm align-middle">
+<div class="card">
+  <table class="table table-sm align-middle mb-0 table-stack">
     <thead>
       <tr>
-        <th>Class</th>
-        <th>Schedule</th>
-        <th>Instructor</th>
-        <th>Packet</th>
-        <th>Missing</th>
-        <th></th>
+        <th scope="col">Class</th>
+        <th scope="col">Schedule</th>
+        <th scope="col">Instructor</th>
+        <th scope="col">Packet</th>
+        <th scope="col">Missing</th>
+        <th scope="col"><span class="visually-hidden">Actions</span></th>
       </tr>
     </thead>
     <tbody>
@@ -50,13 +32,13 @@
       {% set st = card.status %}
       {% set packet_url = url_for('tqi_class', section_id=s.id) %}
       <tr class="tqi-row" data-href="{{ packet_url }}">
-        <td>
-          <a class="fw-semibold" href="{{ packet_url }}">{{ s.name }}</a>
+        <th scope="row" class="fw-normal">
+          <a class="fw-semibold row-title-link" href="{{ packet_url }}">{{ s.name }}</a>
           <div class="small text-muted">{{ s.course.code if s.course else '' }} · {{ st.n_enrolled }} enrolled</div>
-        </td>
+        </th>
         <td class="small">
           {{ s.start_date or '—' }} → {{ s.end_date or '—' }}
-          {% if st.ended %}<div class="text-warning">Ended</div>{% elif st.started %}<div>In session</div>{% else %}<div>Upcoming</div>{% endif %}
+          {% if st.ended %}<div class="tqi-ended">Ended</div>{% elif st.started %}<div>In session</div>{% else %}<div>Upcoming</div>{% endif %}
         </td>
         <td>
           {{ st.instructor.full_name if st.instructor else 'Unassigned' }}
@@ -65,7 +47,7 @@
         <td>
           <a class="tqi-status-link badge {% if st.packet.status == 'complete' %}text-bg-success{% elif st.packet.status == 'ready' %}text-bg-info{% else %}text-bg-warning{% endif %}" href="{{ packet_url }}">{{ st.packet.status }}</a>
         </td>
-        <td class="small">
+        <td class="small text-wrap text-break">
           {% if st.missing %}
             {{ st.missing|join(' · ') }}
           {% else %}

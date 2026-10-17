@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Curriculum — Admin — {{ site_name }}{% endblock %}
+{% block content %}
+{% with title='Curriculum', lede='What each curriculum set contains, its classes, and which instructors can teach every class in it.' %}{% include '_admin_nav.html' %}{% endwith %}
+
+<nav class="chip-links mb-3" aria-label="Curriculum tools">
+  <a class="chip-link" href="{{ url_for('admin_tickets') }}"><i class="bi bi-ticket-perforated" aria-hidden="true"></i> Content tickets <span class="chip-count">{{ tickets_open }} open</span></a>
+  <a class="chip-link" href="{{ url_for('admin_curriculum_log') }}"><i class="bi bi-clock-history" aria-hidden="true"></i> Change log</a>
+  <a class="chip-link" href="{{ url_for('admin_test_analytics') }}"><i class="bi bi-bar-chart" aria-hidden="true"></i> Test analytics</a>
+</nav>
+
+<div class="curriculum-sets mb-4">
+  {% for r in rows %}
+  <section class="card" aria-labelledby="cs-{{ r.course.id }}">
+    <div class="card-header">
+      <h2 id="cs-{{ r.course.id }}" class="h6 mb-0">{{ r.course.title }} <span class="chip-count">{{ r.course.code }}</span></h2>
+    </div>
+    <div class="card-body">
+      <ul class="meta-pills mb-3" aria-label="Contents">
+        <li><strong>{{ r.chapters }}</strong> chapters</li>
+        <li><strong>{{ r.lessons }}</strong> lessons</li>
+        <li><strong>{{ r.quizzes }}</strong> quizzes</li>
+        <li><strong>{{ r.tests }}</strong> tests</li>
+        <li><strong>{{ r.labs }}</strong> labs</li>
+      </ul>
+      <div class="section-label">Classes</div>
+      {% if r.sections %}
+      <div class="chip-links mb-3">
+        {% for s in r.sections %}
+        <a class="chip-link" href="{{ url_for('curriculum_index', section_id=s.id) }}"><i class="bi bi-door-open" aria-hidden="true"></i> {{ s.name }}{% if not s.is_active %} <span class="badge badge-closed">inactive</span>{% endif %}</a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="small text-muted">No classes use this set yet. <a href="{{ url_for('admin_classes') }}#admin-class">Create one</a>.</p>
+      {% endif %}
+      <div class="section-label">Course instructors</div>
+      {% if r.links %}
+      <div class="chip-links">
+        {% for link in r.links %}
+        <form method="post" action="{{ url_for('admin_remove_course_instructor') }}" data-confirm="Remove {{ link.user.full_name if link.user else 'this instructor' }} from {{ r.course.title }}?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="link_id" value="{{ link.id }}">
+          <span class="person-chip">{{ link.user.full_name if link.user else 'Instructor' }}
+            <button class="person-chip-x" type="submit" aria-label="Remove {{ link.user.full_name if link.user else 'instructor' }} from {{ r.course.title }}"><i class="bi bi-x-lg" aria-hidden="true"></i></button></span>
+        </form>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="small text-muted mb-0">None yet: only each class's own instructor can teach it.</p>
+      {% endif %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+
+<section class="card" id="admin-course-instr" aria-labelledby="admin-course-instr-h">
+  <div class="card-header navy"><h2 id="admin-course-instr-h" class="h6 mb-0">Add instructor to a curriculum set</h2></div>
+  <div class="card-body">
+    <p class="small text-muted mb-3">Gives the instructor access to every class in that set (release content, scores, analytics). Each class still has its own primary instructor.</p>
+    <form method="post" action="{{ url_for('admin_add_course_instructor') }}" class="row g-2 align-items-end"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="col-md-5">
+        <label class="form-label" for="f-course_id-2">Curriculum set</label>
+        <select id="f-course_id-2" name="course_id" class="form-select" required>
+          {% for c in courses %}<option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label" for="f-user_id">Instructor</label>
+        <select id="f-user_id" name="user_id" class="form-select" required>
+          {% for i in instructors %}<option value="{{ i.id }}">{{ i.full_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2"><button class="btn btn-brand w-100">Add</button></div>
+    </form>
+  </div>
+</section>
+{% endblock %}
