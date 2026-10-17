@@ -684,8 +684,10 @@ PILOT_CHECKS = {
 
 
 def quiz_payload(order, title):
+    from curriculum_v2.item_review import review_check
     items = []
-    for item in PILOT_CHECKS.get(order) or []:
+    for i, raw in enumerate(PILOT_CHECKS.get(order) or []):
+        item = review_check(order, i, raw)
         items.append({
             "text": item["q"],
             "options": item["options"],
@@ -695,6 +697,8 @@ def quiz_payload(order, title):
             "focus": item.get("focus") or f"Chapter {order}",
             "keywords": item.get("keywords") or [],
             "study_tip": item.get("study_tip") or "",
+            "explanation": item.get("explanation") or "",
+            **{k: item[k] for k in ("obj", "obj_text", "bank_id") if item.get(k)},
         })
     return items
 

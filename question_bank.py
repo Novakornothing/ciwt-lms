@@ -27,6 +27,8 @@ def _rotate(items):
             "to": q.get("to") or f"{q.get('lo', 'LO-GEN')}: {q.get('lo_text', 'Core technical knowledge')}",
             "category": q.get("category") or "Core Knowledge",
             "explanation": q.get("explanation", ""),
+            # pass 8 item review: assessed objective + bank position travel with the item
+            **{k: q[k] for k in ("obj", "obj_text", "bank_id") if q.get(k)},
         })
     return out
 
@@ -498,6 +500,14 @@ N3 = _rotate([
           "SSH", "HTTP cleartext", "FTP cleartext", "SNMPv1",
           "LO-NO-3.2", "Harden devices and apply zero-trust ideas", "Security"),
 ])
+
+
+# ---------- pass 8: reviewed items (objective mapping, rationales, revised distractors) ----------
+# Original wording stays above (and in git); curriculum_v2.item_review lists every revision and why.
+from curriculum_v2.item_review import review_bank as _review_bank  # noqa: E402
+
+A1, A2, A3 = _review_bank("A1", A1), _review_bank("A2", A2), _review_bank("A3", A3)
+N1, N2, N3 = _review_bank("N1", N1), _review_bank("N2", N2), _review_bank("N3", N3)
 
 
 def _balance_select(pool, n=50, categories=None):

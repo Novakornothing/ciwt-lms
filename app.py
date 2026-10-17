@@ -1674,7 +1674,7 @@ def instructor_pilot():
 
 
 def sync_pilot_slice():
-    """Keep ITSUP 1–13 and CLIENT 1–6 progress checks aligned to the item banks."""
+    """Keep ITSUP 1–13, CLIENT 1–6 and NETOPS chapter checks aligned to the item banks."""
     n = 0
     jobs = [
         (Course.query.filter_by(code='ITSUP').first() or Course.query.filter_by(code='APLUS').first(), lambda order: order),
@@ -1700,6 +1700,24 @@ def sync_pilot_slice():
                 qz.title = title
                 qz.questions = payload
             n += 1
+    # Network Operations (pass 8): chapter-specific checks replace the three generic seed sets
+    # that were rotated across the seven chapters (curriculum_v2/netops_checks.py).
+    from curriculum_v2.netops_checks import NETOPS_CHECKS, netops_quiz_payload
+    net = Course.query.filter_by(code='NETOPS').first() or Course.query.filter_by(code='NETPLUS').first()
+    for mod in (Module.query.filter_by(course_id=net.id).order_by(Module.order).all() if net else []):
+        if mod.order not in NETOPS_CHECKS:
+            continue
+        payload = json.dumps(netops_quiz_payload(mod.order))
+        title = f'Chapter {mod.order} check'
+        qz = Quiz.query.filter_by(module_id=mod.id).order_by(Quiz.id).first()
+        if not qz:
+            db.session.add(Quiz(module_id=mod.id, title=title, questions=payload, is_ungraded=True))
+        elif qz.questions != payload or qz.title != title:
+            qz.title = title
+            qz.questions = payload
+        else:
+            continue
+        n += 1
     if n:
         db.session.commit()
     return n
