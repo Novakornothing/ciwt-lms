@@ -55,7 +55,7 @@
       <div class="card-header navy d-flex justify-content-between align-items-center"><span>Per-student summary</span><span class="small opacity-75">{{ spager.total }} students{% if spager.pages > 1 %} · showing {{ spager.first }}–{{ spager.last }}{% endif %}</span></div>
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 table-stack" aria-describedby="hxStudentsHelp">
-          <thead><tr><th scope="col">Student</th><th scope="col">Sessions</th><th scope="col">Accuracy</th><th scope="col" style="min-width:9rem">Time split</th><th scope="col">Last</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+          <thead><tr><th scope="col">Student</th><th scope="col">Sessions</th><th scope="col">Accuracy</th><th class="u-minw-9" scope="col">Time split</th><th scope="col">Last</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
           <tbody>
           {% for r in students %}
             <tr>

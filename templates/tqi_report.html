@@ -10,7 +10,7 @@
 </nav>
 
 <div class="page-hero">
-  <div class="small text-uppercase mb-1" style="letter-spacing:.12em;color:var(--accent-bright)">TQI packet</div>
+  <div class="small text-uppercase mb-1 u-eyebrow">TQI packet</div>
   <h1 class="h3 mb-1">TQI — {{ section.name }}</h1>
   <p class="mb-0">
     {{ section.course.title if section.course else '' }}
@@ -78,7 +78,7 @@
           <td class="small">{{ c.when.strftime('%Y-%m-%d') if c.when else '' }}</td>
           <td>{{ c.kind }}</td>
           <td>{% if c.rating %}{{ c.rating }}/5{% else %}—{% endif %}</td>
-          <td style="white-space:pre-wrap">{{ c.body }}</td>
+          <td class="u-prewrap">{{ c.body }}</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -92,7 +92,7 @@
 <div class="card mb-3">
   <div class="card-header navy">3. Instructor closeout</div>
   {% if status.packet.closeout_note %}
-  <div class="card-body" style="white-space:pre-wrap">{{ status.packet.closeout_note }}</div>
+  <div class="card-body u-prewrap">{{ status.packet.closeout_note }}</div>
   {% endif %}
   {% if instructor_critiques %}
   <div class="table-responsive">
@@ -105,7 +105,7 @@
           <td>{{ c.author }}</td>
           <td>{{ c.kind }}</td>
           <td>{% if c.rating %}{{ c.rating }}/5{% else %}—{% endif %}</td>
-          <td style="white-space:pre-wrap">{{ c.body }}</td>
+          <td class="u-prewrap">{{ c.body }}</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -127,7 +127,7 @@
         <td>{{ a.area }}</td>
         <td>{{ a.owner or '—' }}</td>
         <td>{{ a.due_on or '—' }}</td>
-        <td style="white-space:pre-wrap">{{ a.body }}</td>
+        <td class="u-prewrap">{{ a.body }}</td>
       </tr>
     {% endfor %}
     </tbody>

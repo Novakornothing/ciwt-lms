@@ -71,7 +71,7 @@
     <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
       <h2 class="h6 mb-0">Q{{ item.index }}. {{ item.text }}
         {% if item.lo or item.to or item.category %}
-        <div class="small mt-1" style="color:var(--ink-secondary)">
+        <div class="small mt-1 u-ink-2">
           {% if item.category %}<span class="badge badge-closed me-1">{{ item.category }}</span>{% endif %}
           {% if item.lo %}<span class="me-1">{{ item.lo }}</span>{% endif %}
           {% if item.to %}<span>{{ item.to }}</span>{% elif item.lo_text %}<span>{{ item.lo_text }}</span>{% endif %}

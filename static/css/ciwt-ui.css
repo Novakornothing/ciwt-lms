@@ -847,3 +847,26 @@ details.card-disclosure:not([open]) > summary { border-bottom: 0; border-radius:
 .lab-kind-switch, .lab-kind-router { background: color-mix(in srgb, var(--gold) 18%, var(--surface)); color: color-mix(in srgb, var(--gold) 55%, var(--ink)); }
 @media (max-width: 575.98px) { .lab-row { grid-template-columns: minmax(0, 1fr) auto; } .lab-kind { grid-column: 1 / -1; justify-self: start; min-width: 0; } .lab-row-go { font-size: 0; } .lab-row-go i { font-size: 1rem; } }
 .lab-row.no-kind { grid-template-columns: minmax(0, 1fr) auto; }
+
+/* ---- Gradebook touch sizing (pass 6) ---- */
+@media (pointer: coarse) {
+  .gb-chip { min-width: 44px; min-height: 44px; height: auto; }
+  .gb-table td > a:not(.gb-chip), .gb-table .gb-sticky a { display: inline-flex; align-items: center; min-height: var(--tap); max-width: 100%; }
+  .gb-sort { min-height: var(--tap); min-width: var(--tap); }
+  .gb-table thead a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); min-width: var(--tap); }
+  table.table-stack .gb-chip { min-width: 44px; }
+  .gb-table .form-check-input { width: 1.5em; height: 1.5em; }
+  .gb-table td:has(> .form-check-input), .gb-table th:has(> .form-check-input) { min-width: 44px; }
+}
+.mw-14 { max-width: 14rem; }
+
+/* ---- Utilities replacing one-off inline styles (pass 6) ---- */
+.u-prewrap { white-space: pre-wrap; }
+.u-eyebrow { letter-spacing: .12em; color: var(--accent-bright); }
+.u-eyebrow-gold { letter-spacing: .08em; font-size: .75rem; font-weight: 700; color: #8a6d12; }
+[data-theme="dark"] .u-eyebrow-gold { color: var(--gold-soft, #f0c14b); }
+.u-pointer { cursor: pointer; } .u-cursor-default { cursor: default; }
+.u-ink-2 { color: var(--ink-secondary); }
+.u-minw-9 { min-width: 9rem; } .u-minw-12 { min-width: 12rem; } .u-minw-16 { min-width: 16rem; }
+.u-maxw-20 { max-width: 20rem; } .u-maxw-34 { max-width: 34rem; } .u-w-14 { width: 14rem; }
+.nav-search { min-width: 9rem; max-width: 14rem; background: rgba(255,255,255,.12); color: inherit; }

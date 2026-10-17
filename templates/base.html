@@ -68,8 +68,8 @@
           {% if current_user.is_authenticated %}
           <form class="d-flex ms-lg-2 my-2 my-lg-0" method="get" action="{{ url_for('curriculum_search') }}" role="search">
             <label class="visually-hidden" for="curricSearch">Search curriculum</label>
-            <input id="curricSearch" class="form-control form-control-sm border-0" type="search" name="q" placeholder="Search curriculum"
-                   style="min-width:9rem;max-width:14rem;background:rgba(255,255,255,.12);color:inherit">
+            <input id="curricSearch" class="form-control form-control-sm border-0 nav-search" type="search" name="q" placeholder="Search curriculum"
+                  >
           </form>
           {% endif %}
           <ul class="navbar-nav align-items-lg-center gap-lg-1">
@@ -112,14 +112,14 @@
         <div class="teach-controls d-flex flex-wrap align-items-center gap-2" id="teachControls">
         <span class="fw-bold me-1 teach-label">Teaching timer</span>
         <label class="visually-hidden" for="teachSection">Class for teaching timer</label>
-        <select id="teachSection" class="form-select form-select-sm" style="width:auto;min-width:12rem">
+        <select id="teachSection" class="form-select form-select-sm w-auto u-minw-12">
           <option value="">Class…</option>
           {% for s in staff_nav_sections %}
           <option value="{{ s.id }}" {% if section is defined and section.id == s.id %}selected{% endif %}>{{ s.name }}</option>
           {% endfor %}
         </select>
         <label class="visually-hidden" for="breakMins">Break reminder</label>
-        <select id="breakMins" class="form-select form-select-sm" style="width:auto">
+        <select id="breakMins" class="form-select form-select-sm w-auto">
           <option value="50" selected>50m</option>
           <option value="10">10m break</option>
           <option value="45">45m</option>

@@ -108,7 +108,7 @@
               {% set due = gb.dues.get((it.type, it.id)) %}
               <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                 <label class="small flex-grow-1 text-truncate" for="due_{{ it.type }}_{{ it.id }}" title="{{ it.title }}">{{ it.title }}</label>
-                <input class="form-control form-control-sm" style="max-width:14rem" type="datetime-local" id="due_{{ it.type }}_{{ it.id }}" name="due_{{ it.type }}_{{ it.id }}" value="{{ due.strftime('%Y-%m-%dT%H:%M') if due else '' }}">
+                <input class="form-control form-control-sm mw-14" type="datetime-local" id="due_{{ it.type }}_{{ it.id }}" name="due_{{ it.type }}_{{ it.id }}" value="{{ due.strftime('%Y-%m-%dT%H:%M') if due else '' }}">
               </div>
             {% endif %}{% endfor %}
             </div>
@@ -134,7 +134,7 @@
           <input class="form-check-input" type="checkbox" role="switch" id="gbRisk" name="risk" value="1" {{ 'checked' if pager.risk }}><label class="form-check-label" for="gbRisk">Below pass only</label>
         </div>
         <label class="visually-hidden" for="gbPer">Students per page</label>
-        <select id="gbPer" name="per" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">{% for n in pager.choices %}<option value="{{ n }}" {{ 'selected' if n == pager.per }}>{{ n }} / page</option>{% endfor %}</select>
+        <select id="gbPer" name="per" class="form-select form-select-sm w-auto" onchange="this.form.submit()">{% for n in pager.choices %}<option value="{{ n }}" {{ 'selected' if n == pager.per }}>{{ n }} / page</option>{% endfor %}</select>
         <noscript><button class="btn btn-sm btn-outline-light">Apply</button></noscript>
       </form>
       {% if not show_quizzes %}<a class="btn btn-sm btn-outline-light" href="?quizzes=1">Show quizzes</a>{% else %}<a class="btn btn-sm btn-outline-light" href="?">Hide quizzes</a>{% endif %}

@@ -60,7 +60,7 @@
     <h2 class="h5">Students ({{ students|length }})</h2>
     {{ mix_legend() }}
     <table class="table table-sm hx-report-table mt-2">
-      <thead><tr><th scope="col">Student</th><th scope="col" class="text-end">Sessions</th><th scope="col">Accuracy</th><th scope="col" style="min-width:9rem">Time split</th><th scope="col" class="text-end">Reading</th><th scope="col">Last</th><th scope="col">Data-quality notes</th></tr></thead>
+      <thead><tr><th scope="col">Student</th><th scope="col" class="text-end">Sessions</th><th scope="col">Accuracy</th><th class="u-minw-9" scope="col">Time split</th><th scope="col" class="text-end">Reading</th><th scope="col">Last</th><th scope="col">Data-quality notes</th></tr></thead>
       <tbody>
       {% for r in students %}<tr>
         <td>{{ r.name }}</td><td class="text-end">{{ r.sessions }}</td>

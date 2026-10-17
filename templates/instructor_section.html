@@ -74,7 +74,7 @@
                 <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_test_preview', section_id=section.id, test_id=t.id) }}">Preview items</a>
               </div>
             </div>
-            <form method="post" action="{{ url_for('toggle_release') }}" style="min-width:16rem"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <form class="u-minw-16" method="post" action="{{ url_for('toggle_release') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="section_id" value="{{ section.id }}">
               <input type="hidden" name="content_type" value="test">
               <input type="hidden" name="content_id" value="{{ t.id }}">
@@ -269,7 +269,7 @@
         <p>{{ section.instructor.full_name if section.instructor else 'Unassigned' }}</p>
         {% if instructors %}
         <form method="post" action="{{ url_for('section_set_instructor', section_id=section.id) }}" class="d-flex flex-wrap gap-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <select name="instructor_id" class="form-select" style="max-width:20rem" aria-label="Instructor for this class">
+          <select name="instructor_id" class="form-select u-maxw-20" aria-label="Instructor for this class">
             {% for i in instructors %}
             <option value="{{ i.id }}" {% if section.instructor_id == i.id %}selected{% endif %}>{{ i.full_name }}</option>
             {% endfor %}

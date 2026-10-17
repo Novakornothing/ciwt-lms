@@ -356,7 +356,7 @@
                       onsubmit="return confirm('Remove instructor access for {{ i.full_name }}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="user_id" value="{{ i.id }}">
                   {% if instructors|length > 1 %}
-                  <select name="reassign_to" class="form-select form-select-sm" style="min-width:9rem" aria-label="Reassign {{ i.full_name }}'s classes to">
+                  <select name="reassign_to" class="form-select form-select-sm u-minw-9" aria-label="Reassign {{ i.full_name }}'s classes to">
                     <option value="">Reassign classes to…</option>
                     {% for other in instructors if other.id != i.id %}
                     <option value="{{ other.id }}">{{ other.full_name }}</option>
