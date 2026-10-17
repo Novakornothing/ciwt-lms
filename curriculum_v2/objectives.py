@@ -62,6 +62,7 @@ _IT = [
     ('IT-9.1', 9, 'Perform basic Linux administration from the command line (navigation, permissions, services, networking)', 'Apply'),
     ('IT-9.2', 9, 'Support macOS and managed Apple devices using equivalent tools and policies', 'Apply'),
     ('IT-9.3', 9, 'Distinguish access and entitlement problems from technical faults in mixed environments', 'Analyze'),
+    ('IT-9.4', 9, 'Move and share files between Windows, macOS and Linux using compatible file systems and protocols', 'Apply'),  # pass 9
     ('IT-10.1', 10, 'Apply authentication and least-privilege controls (MFA, separate admin accounts, password policy)', 'Apply'),
     ('IT-10.2', 10, 'Respond to malware and phishing reports within the support role: contain, record, escalate', 'Apply'),
     ('IT-10.3', 10, 'Apply endpoint protections: encryption, removable-media control, patching, secure disposal', 'Apply'),
