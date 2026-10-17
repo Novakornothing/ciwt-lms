@@ -91,8 +91,11 @@ def lesson_plans_doc(code, section=None, gb=None):
         p = CP.lesson_plan(code, ch['order'])
         if not p:
             continue
-        b += [('pagebreak',), ('h2', p['title']),
-              ('p', f"About {p['minutes']} minutes of LMS content; plan {p['sessions']} block(s)."),
+        b += [('pagebreak',), ('h2', p['title'])]
+        if p.get('review'):
+            b.append(('note', f"{p['review']}: chapter content, objectives, checks and items were expanded in pass 9. "
+                              'Confirm timing and technical detail before teaching.'))
+        b += [('p', f"About {p['minutes']} minutes of LMS content; plan {p['sessions']} block(s)."),
               ('h3', 'Objectives'), ('ul', [f"{o['code']}: {o['text']}" for o in p['objectives']]),
               ('h3', 'Lesson sequence (direct instruction)'), ('ol', p['lessons']),
               ('h3', 'Warm-up'), ('p', p['warmup']),
@@ -100,7 +103,9 @@ def lesson_plans_doc(code, section=None, gb=None):
               ('h3', 'Lab'), ('ul', [f"{l['title']} ({l['id']})" for l in p['labs']] +
                               ([f"…and {p['more_labs']} more in the LMS"] if p['more_labs'] else []) +
                               [f"Classroom lab {l['id']}: {l['title']}" for l in p['classroom_labs']]),
-              ('h3', 'Check for understanding'), ('p', p['check']),
+              ('h3', 'Check for understanding'), ('p', p['check'])] + (
+              [('ul', p['cfu'])] if p.get('cfu') else []) + ([('h3', 'Worked examples'), ('p', p['worked_example'])]
+                                                             if p.get('worked_example') else []) + [
               ('h3', 'Exit ticket'), ('p', p['exit_ticket']),
               ('h3', 'Discussion prompts'), ('ul', p['discussion']),
               ('h3', 'Common misconceptions'), ('ul', p['misconceptions']),
@@ -110,7 +115,10 @@ def lesson_plans_doc(code, section=None, gb=None):
 
 
 def _lab_blocks(f, classroom=False):
-    b = [('h2', f['title']), ('p', f"Objective: {f['objective']}")]
+    b = [('h2', f['title'])]
+    if f.get('review'):
+        b.append(('note', f"{f['review']} (written in pass 9). Trial on your lab equipment before grading."))
+    b.append(('p', f"Objective: {f['objective']}"))
     if f.get('scenario'):
         b.append(('p', f"Scenario: {f['scenario']}"))
     b += [('h3', 'Prerequisites'), ('ul', f['prerequisites']),
@@ -190,14 +198,22 @@ def answer_key_doc(code, section=None, gb=None):
     b = [('h1', f'{title} — Answer keys (instructor only)'),
          ('note', 'Do not share with students. Option order matches the LMS delivery order.')]
     for key in CP.answer_keys(code):
-        b += [('pagebreak',), ('h2', f"{key['title']} ({key['kind']})"),
+        b += [('pagebreak',), ('h2', f"{key['title']} ({key['kind']})")]
+        if key.get('review'):
+            b.append(('note', 'These items were written in pass 9 for IT Support chapters 7–13 and are pending SME review. '
+                              'They are not in the LMS Test A/B/C forms; deliver on paper or add them to a section test.'))
+        b += [
               ('table', ['#', 'Item', 'Key', 'Objective', 'Rationale'],
                [[str(r['n']), r['stem'] + '\n' + '\n'.join(r['options']), r['key'], r['objective'], r['rationale']] for r in key['rows']])]
     return {'title': f'{title} — Answer keys', 'blocks': b}
 
 
 def glossary_doc(code=None, section=None, gb=None):
-    return {'title': 'Glossary', 'blocks': [('h1', 'Glossary'), ('table', ['Term', 'Definition'], [[t, d] for t, d in CP.GLOSSARY])]}
+    from curriculum_v2.itsup_core import PENDING
+    rows = [[t + (' †' if t in CP.GLOSSARY_NEW else ''), d] for t, d in CP.GLOSSARY]
+    return {'title': 'Glossary', 'blocks': [('h1', 'Glossary'),
+                                            ('note', f'† Added for IT Support chapters 7–13 in pass 9 — {PENDING.lower()}.'),
+                                            ('table', ['Term', 'Definition'], rows)]}
 
 
 BUILDERS = {'syllabus': syllabus_doc, 'pacing': pacing_doc, 'lesson-plans': lesson_plans_doc, 'lab-manual': lab_manual_doc,

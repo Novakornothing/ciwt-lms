@@ -74,7 +74,9 @@ def test_every_item_has_key_rationale_and_objective(kind):
 
 
 def test_every_objective_is_assessed():
-    counts = collections.Counter(q['obj'] for q in all_items())
+    from curriculum_v2.exam_supplement import SUPPLEMENT
+    from curriculum_v2.itsup_core import EXPANSION
+    counts = collections.Counter(q['obj'] for q in all_items() + SUPPLEMENT + EXPANSION)
     thin = {k: counts[k] for k in OBJECTIVES if counts[k] < 2}
     assert thin == {}, f'objectives with fewer than 2 items: {thin}'
 
@@ -195,7 +197,8 @@ def test_blueprints_have_no_unassessed_objectives(code):
         bp = CP.blueprint(code, exam)
         assert bp['gaps'] == [], (code, exam, bp['gaps'])
         assert 30 <= bp['n_items'] <= 50
-        known = {q.get('bank_id') for q in _test_items()} | {q['bank_id'] for q in SUPPLEMENT}
+        from curriculum_v2.itsup_core import EXPANSION
+        known = {q.get('bank_id') for q in _test_items()} | {q['bank_id'] for q in SUPPLEMENT + EXPANSION}
         for row in bp['rows']:
             assert set(row['items']) <= known
 

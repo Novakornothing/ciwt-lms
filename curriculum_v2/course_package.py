@@ -598,8 +598,9 @@ def lesson_plan(code, chapter):
     by_id = {l['id']: l for l in interactive_labs.LABS}
     classroom = [cl for cl in CLASSROOM_LABS.values() if (code, chapter) in cl['chapters'] or labs_key in cl['chapters']]
     objs = objectives_for(code, chapter)
+    plan = None  # noqa: F841
     sessions = max(1, round((meta.get('minutes') or 180) / 150))
-    return {
+    plan = {
         'course': code, 'chapter': chapter, 'title': meta['title'], 'minutes': meta.get('minutes'),
         'sessions': sessions,
         'objectives': objs,
@@ -611,6 +612,26 @@ def lesson_plan(code, chapter):
         'check': f'Chapter {chapter} check (LMS, ungraded)',
         **base,
     }
+    return _with_pass9(plan, code, chapter)
+
+
+def _with_pass9(plan, code, chapter):
+    """Merge the pass-9 lesson-plan updates for ITSUP chapters 7–13 (and CLIENT 1–6)."""
+    from curriculum_v2.itsup_core import PENDING, PLAN_UPDATES, is_pending
+    itsup_ch = chapter + 7 if code == 'CLIENT' else chapter
+    upd = PLAN_UPDATES.get(itsup_ch) if code in ('ITSUP', 'CLIENT') else None
+    plan['review'] = PENDING if is_pending(code, chapter) else ''
+    plan.setdefault('worked_example', '')
+    plan.setdefault('cfu', [])
+    if not upd:
+        return plan
+    for k in ('warmup', 'guided', 'exit_ticket', 'worked_example', 'cfu'):
+        if upd.get(k):
+            plan[k] = upd[k]
+    plan['misconceptions'] = list(plan['misconceptions']) + list(upd.get('misconceptions_add', []))
+    if upd.get('materials_add'):
+        plan['materials'] = plan['materials'].rstrip('.') + '. ' + upd['materials_add']
+    return plan
 
 
 # ------------------------------------------------------------------------------------------- labs
@@ -786,6 +807,10 @@ CLASSROOM_LABS = {
 
 
 # ------------------------------------------------------------------------------------------- rubrics
+from curriculum_v2.itsup_core import LABS_ADD as _LABS_ADD  # noqa: E402  (pass 9 classroom labs)
+
+CLASSROOM_LABS.update(_LABS_ADD)
+
 LEVELS = ['Exemplary (4)', 'Proficient (3)', 'Developing (2)', 'Beginning (1)']
 
 RUBRICS = {
@@ -867,7 +892,8 @@ def _pool(code):
             seen.setdefault(q.get('bank_id'), q)
     prefix = {'ITSUP': 'IT-', 'NETOPS': 'NO-', 'CLIENT': 'IT-'}[code]
     from curriculum_v2.exam_supplement import SUPPLEMENT
-    return [q for q in list(seen.values()) + SUPPLEMENT if (q.get('obj') or '').startswith(prefix)]
+    from curriculum_v2.itsup_core import EXPANSION
+    return [q for q in list(seen.values()) + SUPPLEMENT + EXPANSION if (q.get('obj') or '').startswith(prefix)]
 
 
 def _chapter_of(obj):
@@ -957,6 +983,14 @@ def answer_keys(code):
            and (code != 'CLIENT' or (OBJECTIVES[q['obj']]['chapter'] >= 8))]
     if sup:
         keys.append({'title': 'Supplementary exam items', 'kind': 'Exam supplement', 'rows': _key_rows(sup)})
+    from curriculum_v2.itsup_core import EXPANSION, PENDING
+    if code in ('ITSUP', 'CLIENT'):
+        lo = 8 if code == 'CLIENT' else 1
+        exp = sorted((q for q in EXPANSION if OBJECTIVES[q['obj']]['chapter'] >= lo),
+                     key=lambda q: (OBJECTIVES[q['obj']]['chapter'], q['bank_id']))
+        if exp:
+            keys.append({'title': f'Chapter item bank, pass 9 — {PENDING}', 'kind': 'Exam item bank',
+                         'review': PENDING, 'rows': _key_rows(exp)})
     if code == 'NETOPS':
         for order in NETOPS_CHECKS:
             keys.append({'title': f'Chapter {order} check', 'kind': 'Chapter check', 'rows': _key_rows(netops_quiz_payload(order))})
@@ -1049,6 +1083,13 @@ GLOSSARY = [
     ('WPA3', 'Current Wi-Fi security standard; Personal uses SAE, Enterprise uses 802.1X.'),
     ('Zero trust', 'A security model that verifies every request and applies least privilege regardless of network location.'),
 ]
+
+# Pass 9 terms (chapters 7–13), marked in the glossary document as pending SME review.
+from curriculum_v2.itsup_core import GLOSSARY_ADD as _GLOSSARY_ADD  # noqa: E402
+
+_existing = {t.lower() for t, _d in GLOSSARY}
+GLOSSARY_NEW = {t for t, _d in _GLOSSARY_ADD if t.lower() not in _existing}
+GLOSSARY = sorted(GLOSSARY + [(t, d) for t, d in _GLOSSARY_ADD if t in GLOSSARY_NEW], key=lambda td: td[0].lower())
 
 
 ACCESSIBILITY = {

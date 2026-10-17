@@ -4,6 +4,7 @@ from html import escape
 
 from .itsup_reference import OBJECTIVE_REWRITES, REFERENCE, SOURCES
 from .netops_core import CAPSTONE_OBJECTIVES, NETOPS_CORE
+from .itsup_core import ITSUP_CORE, SOURCE_KEYS as _CORE_SOURCES, sources_line as _core_sources
 
 CHANGES = []          # [{'course','chapter','lesson','kind','detail'}] — read by the audit and tests
 
@@ -49,6 +50,30 @@ def apply_itsup(pack, course='ITSUP'):
             src = '<p class="ref-sources small">Sources: ' + '; '.join(escape(SOURCES[s]) for s in srcs) + '.</p>'
         les['html'] += (f'\n<section id="reference" class="sublesson reference-depth"><h3>{heading}</h3>{body}{src}</section>')
         _log(course, ch, les_o, 'reference', heading)
+    apply_itsup_core(pack, course)
+
+
+def apply_itsup_core(pack, course='ITSUP'):
+    """Pass 9: chapters 7–13 core content and measurable lesson objectives (pending SME review)."""
+    last = {}
+    for (ch, les_o) in ITSUP_CORE:
+        last[ch] = max(last.get(ch, 0), les_o)
+    for (ch, les_o), spec in ITSUP_CORE.items():
+        les = _lesson(pack, ch, les_o)
+        if not les or 'class="sublesson core-content"' in les['html']:
+            continue
+        h = les['html']
+        h, n = _LO.subn(lambda _m: _objective_panel(spec['objectives']), h, count=1)
+        if not n:
+            h = _objective_panel(spec['objectives']) + h
+        body = spec['html']
+        if spec.get('sources'):
+            body += _core_sources(spec['sources'])
+        core = f'\n<section id="core" class="sublesson core-content"><h3>Core content</h3>{body}</section>\n'
+        m = _PLAIN.search(h)
+        h = h[:m.end()] + core + h[m.end():] if m else core + h
+        les['html'] = h
+        _log(course, ch, les_o, 'core-content', f'pass 9: objectives ({len(spec["objectives"])}) and core content (pending SME review)')
 
 
 def apply_netops(pack, course='NETOPS'):

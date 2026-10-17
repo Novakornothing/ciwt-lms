@@ -54,6 +54,7 @@ _IT = [
     ('IT-7.1', 7, 'Apply a structured troubleshooting methodology from identification to documentation', 'Apply'),
     ('IT-7.2', 7, 'Determine the fault domain of a symptom before choosing a tool', 'Analyze'),
     ('IT-7.3', 7, 'Verify full functionality with the user and hand off with complete notes', 'Evaluate'),
+    ('IT-7.4', 7, 'Escalate with a complete evidence package and keep users informed on a stated schedule', 'Apply'),  # pass 9
     ('IT-8.1', 8, 'Plan a Windows installation, upgrade or reset that meets hardware and lifecycle requirements', 'Apply'),
     ('IT-8.2', 8, 'Configure and baseline Windows 11 (accounts, updates, services, firewall) through Settings and CLI', 'Apply'),
     ('IT-8.3', 8, 'Use Windows repair tools (SFC, DISM, recovery environment, Event Viewer) before rebuilding', 'Apply'),
