@@ -1,0 +1,111 @@
+"""Supplementary exam items (pass 8).
+
+The knowledge-test banks had no items for 12 IT Support and 3 Network Operations objectives (they were
+assessed only by chapter checks or skills stations). These items close that gap so a midterm or final
+can be built to the blueprint. They are kept out of the LMS Test A/B/C forms so those forms stay stable;
+instructors can deliver them on paper or add them to a section test. Bank ids: S-<objective>.<n>.
+"""
+
+LETTER_SHIFT = 4
+
+
+def s(obj, n, q, correct, wrong, why):
+    assert len(wrong) == 3 and correct not in wrong
+    opts = list(wrong) + [correct]
+    k = (n + len(obj)) % LETTER_SHIFT
+    opts = opts[k:] + opts[:k]
+    return {'bank_id': f'S-{obj}.{n}', 'text': q, 'options': opts, 'correct': correct, 'obj': obj, 'explanation': why}
+
+
+SUPPLEMENT = [
+    s('IT-1.1', 1, 'Thirty users on one floor lost access to the shared drive at 09:10. How do you classify the ticket?',
+      'Incident with high impact (many users)', ['Service request for new access', 'Change request for the file server', 'Low-impact incident for one user'],
+      'An unplanned loss of service affecting many users is a high-impact incident.'),
+    s('IT-1.1', 2, 'A manager asks for a new starter to get a laptop and email account next Monday. What kind of work is this?',
+      'Service request', ['Incident', 'Emergency change', 'Problem record'],
+      'Providing something new that was planned is a service request, not a repair.'),
+    s('IT-1.4', 1, 'A caller says they are the CFO and need their password reset now. What do you do first?',
+      'Verify identity using the approved method', ['Reset it and read it out on the call', 'Email the new password to any address given', 'Disable MFA so they can sign in'],
+      'Identity verification comes before any credential change; urgency is a common social-engineering pressure.'),
+    s('IT-1.4', 2, 'During remote support you see a user’s personal banking tab. What is appropriate?',
+      'Ask them to close it and avoid recording it', ['Take a screenshot for the ticket', 'Mention it to the user’s manager', 'Continue and note the balance'],
+      'Technicians access only what the task needs and do not record unrelated personal information.'),
+    s('IT-2.4', 1, 'Settings shows 8 GB RAM, but two 8 GB modules are installed. What is the most likely cause?',
+      'One module is not seated or not detected', ['Windows always reserves half the RAM', 'The CPU only supports 8 GB', 'The page file is too small'],
+      'A mismatch between installed and reported memory points to seating, compatibility or a failed module.'),
+    s('IT-2.4', 2, 'Before replacing a part, why record the system’s model, serial and current hardware inventory?',
+      'To order the right part and prove what changed', ['To reset the warranty period', 'To speed up the next boot', 'To clear the TPM'],
+      'Inventory ties the ticket to the asset and lets you compare before and after the repair.'),
+    s('IT-6.1', 1, 'Which hypervisor type runs directly on the hardware without a host OS?',
+      'Type 1 (bare-metal)', ['Type 2 (hosted)', 'A container runtime', 'A browser sandbox'],
+      'Type 1 hypervisors (e.g., Hyper-V Server, ESXi) run on the hardware; Type 2 run as applications on a host OS.'),
+    s('IT-6.1', 2, 'A VM must be reachable from other PCs on the classroom LAN with its own address. Which virtual network mode fits?',
+      'Bridged (external) networking', ['NAT networking', 'Host-only networking', 'No network adapter'],
+      'Bridged mode places the VM on the physical LAN; NAT hides it behind the host and host-only isolates it.'),
+    s('IT-6.2', 1, 'A company uses a hosted email service and manages only users and settings. Which model is this?',
+      'SaaS', ['IaaS', 'PaaS', 'On-premises'],
+      'With SaaS the provider runs the application; the customer manages its users, data and configuration.'),
+    s('IT-6.2', 2, 'In IaaS, who is usually responsible for patching the guest operating system?',
+      'The customer', ['The cloud provider', 'The hardware vendor', 'Nobody — IaaS patches itself'],
+      'In IaaS the provider runs the infrastructure; the customer manages the OS and everything above it.'),
+    s('IT-7.1', 1, 'You have confirmed a theory and applied a fix. What comes next in the troubleshooting method?',
+      'Verify full functionality, then document', ['Close the ticket immediately', 'Establish a new theory', 'Escalate to tier 2'],
+      'After implementing, verify the user’s outcome (and preventive measures), then document findings and actions.'),
+    s('IT-7.1', 2, 'Your first theory is disproved by a test. What should you do?',
+      'Establish a new theory or escalate', ['Apply the fix anyway', 'Change several settings at once', 'Close the ticket as cannot reproduce'],
+      'A failed test sends you back to forming a new theory; escalate when out of theories or authority.'),
+    s('IT-7.2', 1, 'A user can open websites by IP address but not by name. Which fault domain is indicated?',
+      'Name resolution (DNS)', ['Physical cabling', 'Application installation', 'User account permissions'],
+      'IP connectivity works, so the path is fine; failure by name isolates the DNS domain.'),
+    s('IT-7.2', 2, 'One user cannot sign in on any PC; others sign in on that user’s PC. Which domain is most likely?',
+      'The user’s account', ['The PC’s hardware', 'The building network', 'The PC’s operating system'],
+      'The failure follows the account, not the device or network.'),
+    s('IT-9.2', 1, 'Which macOS tool is the closest match to Windows Task Manager?',
+      'Activity Monitor', ['Disk Utility', 'Finder', 'Keychain Access'],
+      'Activity Monitor shows processes, CPU, memory, energy, disk and network use.'),
+    s('IT-9.2', 2, 'A managed Mac must get a configuration profile and app. What is the supported way to deliver them?',
+      'Through the organisation’s MDM', ['Emailing the profile to the user', 'Signing in with the technician’s Apple Account', 'Disabling System Integrity Protection'],
+      'MDM delivers profiles and apps under policy; personal workarounds bypass management and auditing.'),
+    s('IT-9.3', 1, 'A Mac user gets “access denied” on a share that colleagues in the same group can open. What do you check first?',
+      'The user’s group membership and share permissions', ['The Mac’s network cable', 'The macOS version', 'The file server’s disk space'],
+      'An access-denied message is an entitlement answer: the network path worked.'),
+    s('IT-9.3', 2, 'A Linux user can reach a server but gets “permission denied” opening a file. What kind of problem is it?',
+      'An access or permissions problem', ['A DNS problem', 'A cabling problem', 'A DHCP problem'],
+      'Reaching the server proves connectivity; permission denied comes from file ownership or mode.'),
+    s('IT-11.1', 1, 'An app crashes for every user after last night’s update; other apps work. What is the likely scope?',
+      'The app or its update, across many users', ['One user’s profile', 'One PC’s hardware', 'The building network'],
+      'Same app failing for everyone after a change points to the app/update, not individual PCs.'),
+    s('IT-11.1', 2, 'Word fails on one PC but works for the same user on another PC. Where do you focus?',
+      'The local installation on the first PC', ['The user’s account', 'The file server', 'The licensing service'],
+      'The fault follows the device, not the user, so look at the local install and its add-ins.'),
+    s('IT-11.2', 1, 'An app is corrupt on one PC; other apps work and the user has unsaved data. What is the best first remedy?',
+      'Repair or reinstall the app', ['Reimage the PC', 'Replace the disk', 'Reset Windows and remove everything'],
+      'Choose the least disruptive fix that addresses the fault; rebuilds are a last resort with backup and approval.'),
+    s('IT-11.2', 2, 'A rebuild is approved. What must be confirmed before you start?',
+      'A tested backup and an approved change', ['The user’s password', 'That antivirus is disabled', 'That the PC has been rebooted'],
+      'A rebuild destroys local data; confirm the backup and the change approval first.'),
+    s('IT-12.2', 1, 'While fixing a PC you find files that may break the acceptable-use policy. What do you do?',
+      'Stop and report through the policy channel', ['Delete the files', 'Confront the user', 'Copy them as evidence to a USB drive'],
+      'Technicians follow the reporting procedure and preserve evidence as the policy directs; they do not investigate alone.'),
+    s('IT-12.2', 2, 'A friend in another department asks you to look up a colleague’s phone number in the HR system. What is appropriate?',
+      'Decline: you may access data only for your job', ['Look it up quickly', 'Ask HR to send it to your friend', 'Give the friend your login'],
+      'Access to personal data is limited to job need; sharing credentials is never allowed.'),
+    s('NO-6.3', 1, 'After fixing a VLAN fault, which item best proves the fix?',
+      'The original failing test now passes', ['The switch has been rebooted', 'The ticket is assigned to you', 'No alerts in five minutes'],
+      'Verification repeats the test that failed and confirms the user outcome.'),
+    s('NO-6.3', 2, 'You changed a trunk’s allowed VLANs to fix an outage. Which document must be updated?',
+      'The network diagram and configuration record', ['The user’s password list', 'The DHCP lease table', 'The printer inventory'],
+      'Documentation must match the running network or the next incident starts from wrong information.'),
+    s('NO-9.1', 1, 'Which command assigns an access port to VLAN 30 in interface configuration mode?',
+      'switchport access vlan 30', ['vlan 30 access', 'ip vlan 30', 'switchport trunk allowed vlan 30'],
+      'switchport access vlan sets an access port’s VLAN; the trunk command applies to trunks only.'),
+    s('NO-9.1', 2, 'After configuring a trunk, which command shows its allowed and active VLANs?',
+      'show interfaces trunk', ['show ip route', 'show mac address-table count', 'show clock'],
+      'show interfaces trunk lists trunk ports, the native VLAN and allowed/active VLANs.'),
+    s('NO-9.2', 1, 'A subinterface for VLAN 20 on a router-on-a-stick needs which command?',
+      'encapsulation dot1Q 20', ['switchport access vlan 20', 'vlan 20', 'ip helper-address 20'],
+      'Each subinterface is tagged with encapsulation dot1Q <vlan> before its IP address is set.'),
+    s('NO-9.2', 2, 'Which command shows interface addresses and up/down status in one short list?',
+      'show ip interface brief', ['show running-config', 'show vlan brief', 'show version'],
+      'show ip interface brief lists each interface with its IP address, status and protocol.'),
+]

@@ -131,3 +131,91 @@ def test_known_factual_fixes_stay_fixed():
     assert 'before the routing decision' in by['N1.4']['correct']
     # A1.13: stem no longer gives away the mask
     assert '/27' not in by['A1.13']['text']
+
+
+# ------------------------------------------------------------------------------------------- course package
+import re  # noqa: E402
+
+import lessons  # noqa: E402
+from curriculum_v2 import course_package as CP  # noqa: E402
+from curriculum_v2.exam_supplement import SUPPLEMENT  # noqa: E402
+
+PACKS = {'ITSUP': lessons.APLUS, 'NETOPS': lessons.NETPLUS, 'CLIENT': lessons.CLIENT}
+
+
+def test_supplement_items_are_keyed_and_mapped():
+    ids = [q['bank_id'] for q in SUPPLEMENT]
+    assert len(ids) == len(set(ids))
+    for q in SUPPLEMENT:
+        assert q['correct'] in q['options'] and len(set(q['options'])) == 4, q['bank_id']
+        assert q['obj'] in OBJECTIVES and q['explanation'], q['bank_id']
+
+
+@pytest.mark.parametrize('code', ['ITSUP', 'NETOPS', 'CLIENT'])
+def test_every_chapter_has_a_complete_lesson_plan(code):
+    for ch in PACKS[code]:
+        plan = CP.lesson_plan(code, ch['order'])
+        assert plan, (code, ch['order'])
+        for field in ('warmup', 'guided', 'exit_ticket', 'discussion', 'misconceptions', 'support', 'extension', 'materials'):
+            assert plan[field], (code, ch['order'], field)
+        assert plan['objectives'], (code, ch['order'])
+        assert plan['labs'] or plan['classroom_labs'], f'{code} ch{ch["order"]} has no lab'
+        assert sum(t['minutes'] for t in plan['timing']) == 150
+
+
+@pytest.mark.parametrize('code', ['ITSUP', 'NETOPS', 'CLIENT'])
+def test_pacing_references_resolve(code):
+    labs = {lab['id'] for lab in interactive_labs.LABS}
+    for weeks in (16, 8, 10):
+        rows = CP.pacing(code, weeks)
+        assert [r['week'] for r in rows] == list(range(1, weeks + 1)), (code, weeks)
+        for r in rows:
+            for token in re.findall(r'\b(?:win|w11|gui|sw|rtr|hw|ticket)-[a-z0-9-]+', r['lab']):
+                assert token in labs, (code, weeks, token)
+            for cl in re.findall(r'CL-\d+', r['lab']):
+                assert cl in CP.CLASSROOM_LABS, (code, weeks, cl)
+        assert any('Final' in r['assessment'] for r in rows), (code, weeks)
+
+
+def test_every_lab_has_standard_format():
+    for lab in interactive_labs.LABS:
+        f = CP.standard_lab(lab)
+        for field in ('objective', 'steps', 'expected', 'equipment', 'low_cost', 'troubleshooting', 'reflection'):
+            assert f[field], (lab['id'], field)
+    for cl in CP.CLASSROOM_LABS.values():
+        for field in ('objective', 'prerequisites', 'equipment', 'low_cost', 'steps', 'expected', 'troubleshooting', 'reflection', 'rubric'):
+            assert cl[field], (cl['id'], field)
+        assert cl['rubric'] in CP.RUBRICS
+        assert set(cl['objectives']) <= set(OBJECTIVES)
+
+
+@pytest.mark.parametrize('code', ['ITSUP', 'NETOPS', 'CLIENT'])
+def test_blueprints_have_no_unassessed_objectives(code):
+    for exam in ('midterm', 'final'):
+        bp = CP.blueprint(code, exam)
+        assert bp['gaps'] == [], (code, exam, bp['gaps'])
+        assert 30 <= bp['n_items'] <= 50
+        known = {q.get('bank_id') for q in _test_items()} | {q['bank_id'] for q in SUPPLEMENT}
+        for row in bp['rows']:
+            assert set(row['items']) <= known
+
+
+def test_syllabus_has_institution_placeholders_and_gradebook_weights():
+    s = CP.syllabus('ITSUP', section={'institution': 'Example College'})
+    by = {f['key']: f for f in s['fields']}
+    assert by['institution']['value'] == 'Example College'
+    assert by['term']['value'] == '' and by['term']['placeholder'].startswith('[')
+    keys = {p['key'] for p in s['policies']}
+    assert {'attendance', 'late_work', 'academic_integrity', 'accessibility', 'ai_use'} <= keys
+    assert [c['weight'] for c in s['grading']['categories']] == [70, 30, 0]
+    custom = CP.syllabus('ITSUP', gb={'weight_tests': 50, 'weight_skills': 35, 'weight_quizzes': 15, 'pass_mark': 75})
+    assert [c['weight'] for c in custom['grading']['categories']] == [50, 35, 15]
+    assert custom['grading']['pass_mark'] == 75
+    assert 'not affiliated' in s['disclaimer'].lower()
+
+
+def test_answer_keys_cover_every_item_with_a_rationale():
+    for code in ('ITSUP', 'NETOPS', 'CLIENT'):
+        for key in CP.answer_keys(code):
+            for row in key['rows']:
+                assert row['key'] in 'ABCD' and row['rationale'], (code, key['title'], row['n'])
