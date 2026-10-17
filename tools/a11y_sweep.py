@@ -24,7 +24,7 @@ os.makedirs(a.out, exist_ok=True)
 AXE = open(a.axe).read()
 HEIGHT = {390: 844, 820: 1180, 1280: 800}
 PAGES = {
-    'anon': [('landing', '/'), ('login', '/login'), ('policy', '/policy/attention'), ('helix-try', '/helix/try')],
+    'anon': [('landing', '/'), ('login', '/login'), ('login-teach', '/login?as=teach'), ('policy', '/policy/attention'), ('helix-try', '/helix/try')],
     'student1@lms.local:student123': [
         ('student-home', '/student'), ('student-class-goldpath', '/student/section/1'),
         ('lesson', '/student/module/1/1/lesson/1'), ('quiz', '/student/quiz/1/1'),

@@ -271,3 +271,49 @@ def test_reading_recap_is_encouraging():
 def test_lesson_summary_includes_recap(student, ids):
     r = student.get(f"/api/helix/lesson-summary/{ids['lesson']}").get_json()
     assert 'recap' in r and 'headline' in r['recap']
+
+
+# ---------------------------------------------------------------- privacy guard (pass 4)
+def test_helix_refuses_frame_like_uploads(student, ids):
+    assert student.post('/api/helix/consent', json={'agree': True, 'camera_ok': True, 'passive_ok': True}).get_json()['granted']
+    sid = _start(student, ids, client_uuid='uuid-privacy').get_json()['session_id']
+    url = f'/api/helix/session/{sid}/batch'
+    for bad in ({'frame': 'x'}, {'segments': [], 'image': None}, {'buckets': [{'landmarks': [[0.1, 0.2]]}]},
+                {'segments': [{'note': 'data:image/png;base64,AAAA'}]}, {'heat': 'A' * 5000}):
+        r = student.post(url, json=bad)
+        assert r.status_code == 400 and r.get_json()['error'] == 'media_not_accepted', bad
+    # refused even for a session that does not exist (guard runs before any lookup)
+    assert student.post('/api/helix/session/999999/batch', json={'frame': 'x'}).status_code == 400
+    big = student.post(url, data=b'{"segments": "' + b'a' * (300 * 1024) + b'"}', content_type='application/json')
+    assert big.status_code == 413
+    # a normal gaze-derived batch still goes through
+    ok = student.post(url, json={'segments': [], 'buckets': [], 'totals': {}, 'sample_count': 3})
+    assert ok.status_code == 200
+
+
+def test_looks_like_media_unit():
+    from helix.routes import looks_like_media
+    assert looks_like_media({'a': {'b': [{'Face_Landmarks': 1}]}})
+    assert looks_like_media(['blob:http://x/123'])
+    assert not looks_like_media({'segments': [{'key': 'h-1', 'label': 'Intro', 'ms': 1200}], 'heat': [[0, 1], [2, 3]]})
+    assert not looks_like_media({'label': 'Images and video in lessons'})
+
+
+# ---------------------------------------------------------------- public entry (pass 4)
+def test_landing_is_role_picker_with_site_name(anon, app):
+    html = anon.get('/').get_data(as_text=True)
+    name = app.config['SITE_NAME']
+    assert 'CIWT LMS' not in html and f'<title>{name}' in html
+    for key in ('learn', 'teach', 'admin'):
+        assert f'/start/{key}' in html
+    r = anon.get('/start/teach')
+    assert r.status_code == 302 and r.headers['Location'].endswith('/login?as=teach')
+    login = anon.get('/login?as=admin').get_data(as_text=True)
+    assert 'Sign in to Admin' in login and 'aria-current="page"' in login
+    assert anon.get('/start/bogus').headers['Location'].endswith('/')
+
+
+def test_signed_in_entry_goes_home(instructor):
+    r = instructor.get('/start/learn')
+    assert r.status_code == 302 and r.headers['Location'].endswith('/')
+    assert instructor.get('/').headers['Location'].endswith('/instructor')

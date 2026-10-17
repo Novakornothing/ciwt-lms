@@ -23,11 +23,11 @@
     {% endif %}
   </div>
   <div class="card-body">
-    <p class="small text-muted mb-3">Work the chapter in order: lesson, matching lab, ungraded quiz. The graded test appears when your instructor opens it. After a test you see score and category only — not individual items.</p>
+    <p class="small text-muted mb-3">Lesson, then its lab, then the practice quiz. The graded test unlocks when your instructor opens it; afterwards you see your score by category.</p>
     <ol>
       {% for step in gold_path.steps %}
       <li class="gp-step {% if step.done %}done{% endif %} {% if gold_path.next and gold_path.next.key == step.key %}current{% endif %}">
-        <span class="gp-n">{% if step.done %}✓{% else %}{{ step.n }}{% endif %}</span>
+        <span class="gp-n">{% if step.done %}<i class="bi bi-check-lg" aria-hidden="true"></i><span class="visually-hidden">Done:</span>{% else %}{{ step.n }}{% endif %}</span>
         <div class="flex-grow-1">
           <div class="gp-title">{{ step.title }}</div>
           <div class="gp-detail">{{ step.detail }}</div>
@@ -40,7 +40,7 @@
       </li>
       {% endfor %}
     </ol>
-    {% if gold_path.next %}
+    {% if gold_path.next and not hide_path_cta %}
     <a class="btn btn-brand mt-3" href="{{ gold_path.next.url }}">Continue — {{ gold_path.next.title }}</a>
     {% elif gold_path.complete %}
     <p class="small text-muted mb-0 mt-3">You finished the first-chapter path. Open other chapters from the class list when you are ready.</p>

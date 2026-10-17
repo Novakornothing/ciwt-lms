@@ -20,7 +20,10 @@
       audio: false,
       video: {
         facingMode: 'user',                                  // front camera on phones/tablets
-        width: { ideal: mobile ? 480 : 640 }, height: { ideal: mobile ? 640 : 480 },
+        // 720p on laptops: at ~55 cm a 640x480 frame leaves the eyes ~20-30 px wide; the warp
+        // benchmark measured 6.8 deg -> 5.7 deg median error for the same face at 1280x720.
+        // Phones are held closer (eyes are already large), so stay at 480x640 to save CPU/heat.
+        width: { ideal: mobile ? 480 : 1280 }, height: { ideal: mobile ? 640 : 720 },
         frameRate: { ideal: mobile ? 24 : 30, max: 30 }
       }
     };
@@ -36,6 +39,33 @@
   /* ----------------------------------------------------------------- MediaPipe */
   // Keep estimates within the viewport plus a small margin: a gaze far off-screen means
   // "not on the page", which consumers treat the same as a clamped edge value.
+  function isIOS() { return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  function isAndroid() { return /Android/i.test(navigator.userAgent); }
+  // WebAssembly SIMD probe (tiny module using v128); MediaPipe's loader picks the no-SIMD build
+  // itself, this is only reported so a slow device can be explained in the diagnostics.
+  function simdSupported() {
+    try { return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11])); } catch (e) { return false; }
+  }
+  /* Open the camera *inside* the click/tap handler (before any await): iOS Safari and some
+     Android builds only show the permission prompt / allow playback from a user gesture. */
+  var pendingStream = null;
+  function prefetchCamera(mobile) {
+    if (pendingStream || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return pendingStream;
+    var m = mobile == null ? isMobile() : mobile;
+    pendingStream = navigator.mediaDevices.getUserMedia(cameraConstraints(m)).catch(function (e) {
+      if (/Overconstrained/i.test(String(e && e.name))) return navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user' } });
+      throw e;
+    });
+    pendingStream.catch(function () { pendingStream = null; });
+    return pendingStream;
+  }
+  // a prefetched stream that ends up unused (e.g. MediaPipe failed and WebGazer opens its own) must be closed
+  function releasePrefetch() {
+    var p = pendingStream; pendingStream = null;
+    if (p) p.then(function (st) { st.getTracks().forEach(function (t) { t.stop(); }); }, function () {});
+  }
+  function takeStream(mobile) { var p = pendingStream || prefetchCamera(mobile); pendingStream = null; return p; }
+
   function clampPred(p) {
     if (!p || typeof window === 'undefined') return p;
     var w = window.innerWidth || 1, h = window.innerHeight || 1, mx = 0.08 * w, my = 0.08 * h;
@@ -51,12 +81,19 @@
     this.models = new Model.OrientationModels({});
     this.models.use(orientationKey());
     this.listeners = [];
+    this.poseWin = [];
     this.recent = [];              // last ~1 s of features, for implicit samples
     this.collect = null;           // active calibration collection
     this.maxFps = this.mobile ? 15 : 30; this.minFps = 6; this.fps = this.maxFps;
     this.inferEma = 0; this.frames = 0; this.faceFrames = 0; this.fpsWin = [];
     this.paused = false; this.running = false; this.lastFeat = null; this.delegate = null;
-    this.brightness = null;
+    this.brightness = null; this.quality = { brightness: null, contrast: null, glare: null, faces: 0 };
+    this.blinkGate = new Model.BlinkGate();
+    this.primary = null;           // locked face (centre/size) when several faces are in view
+    this.eyeBase = null; this.calPose = null; this.calViewport = null;
+    this.thermal = { base: null, t0: 0, hot: false };
+    this.ios = isIOS(); this.android = isAndroid(); this.simd = simdSupported();
+    this.occluded = null; this.rejected = { blink: 0, occluded: 0, otherFace: 0 };
   }
   MediaPipeEngine.prototype.on = function (fn) { this.listeners.push(fn); return fn; };
   MediaPipeEngine.prototype.off = function (fn) { this.listeners = this.listeners.filter(function (f) { return f !== fn; }); };
@@ -71,13 +108,20 @@
       var make = function (delegate) {
         return self.vision.FaceLandmarker.createFromOptions(fileset, {
           baseOptions: { modelAssetPath: o.modelUrl, delegate: delegate },
-          runningMode: 'VIDEO', numFaces: 1, minFaceDetectionConfidence: 0.5, minTrackingConfidence: 0.5,
+          // 2 faces so a second person (sibling, classmate on the couch) can be ignored instead of
+          // silently swapping who is tracked; _pickFace() locks onto the student
+          runningMode: 'VIDEO', numFaces: o.numFaces || 2, minFaceDetectionConfidence: 0.5, minTrackingConfidence: 0.5,
           outputFacialTransformationMatrixes: true, outputFaceBlendshapes: true
         }).then(function (lm) { self.delegate = delegate; return lm; });
       };
       var order = o.delegate === 'CPU' ? ['CPU'] : ['GPU', 'CPU'];   // GPU (WebGL) first, CPU (WASM) fallback
       return order.reduce(function (p, d) { return p.catch(function () { return make(d); }); }, Promise.reject(new Error('start')));
-    }).then(function (lm) { self.landmarker = lm; return self; });
+    }).then(function (lm) { self.landmarker = lm; return self; }, function (e) {
+      // iOS (≈1.5 GB tab limit) and old Android can run out of memory compiling the WASM/model
+      var msg = String(e && (e.message || e));
+      var err = new Error(/memory|allocation|RangeError/i.test(msg) ? 'not enough memory for the face model on this device' : msg);
+      err.code = 'load_failed'; throw err;
+    });
   };
 
   MediaPipeEngine.prototype.start = function () {
@@ -90,25 +134,29 @@
     var holder = document.getElementById('hxVideoHolder');
     if (!holder) { holder = document.createElement('div'); holder.id = 'hxVideoHolder'; holder.className = 'hx-video-holder'; holder.setAttribute('aria-hidden', 'true'); document.body.appendChild(holder); }
     holder.appendChild(v); this.holder = holder;
-    return navigator.mediaDevices.getUserMedia(cameraConstraints(this.mobile)).catch(function (e) {
-      // some devices reject the ideal size/frame rate: retry with the bare front camera
-      if (/Overconstrained/i.test(String(e && e.name))) return navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user' } });
-      throw e;
-    }).then(function (stream) {
+    return takeStream(this.mobile).then(function (stream) {
       self.stream = stream; v.srcObject = stream;
-      return v.play().catch(function () {});
+      return v.play().catch(function (e) {
+        // autoplay policy (iOS Low Power Mode, some in-app browsers): needs another tap
+        if (e && e.name === 'NotAllowedError') { var err = new Error('tap to start the camera'); err.code = 'play_blocked'; err.name = 'PlayBlocked'; throw err; }
+      });
     }).then(function () {
       return new Promise(function (res) { if (v.videoWidth) res(); else v.addEventListener('loadedmetadata', function () { res(); }, { once: true }); });
     }).then(function () {
       self.running = true; self._loop(); self._watchBattery(); return self;
-    }).catch(function (e) { throw cameraError(e); });
+    }).catch(function (e) { if (e && e.code === 'play_blocked') throw e; throw cameraError(e); });
+  };
+  /* retry playback from a user gesture after 'play_blocked' */
+  MediaPipeEngine.prototype.resumePlayback = function () {
+    var self = this, v = this.video;
+    return v.play().then(function () { if (!self.running) { self.running = true; self._loop(); self._watchBattery(); } return self; });
   };
 
   MediaPipeEngine.prototype._watchBattery = function () {
     var self = this;
     if (!navigator.getBattery) return;
     navigator.getBattery().then(function (b) {
-      var upd = function () { self.maxFps = (!b.charging && b.level < 0.25) ? 10 : (self.mobile ? 15 : 30); if (self.fps > self.maxFps) self.fps = self.maxFps; };
+      var upd = function () { var base = self.mobile ? 15 : 30; if (self.thermal.hot) base = Math.max(self.minFps, Math.round(base * 0.6)); self.lowBattery = !b.charging && b.level < 0.25; self.maxFps = self.lowBattery ? Math.min(10, base) : base; if (self.fps > self.maxFps) self.fps = self.maxFps; };
       upd(); b.addEventListener('levelchange', upd); b.addEventListener('chargingchange', upd);
     }).catch(function () {});
   };
@@ -148,35 +196,129 @@
     else if (this.inferEma < budget * 0.35 && this.fps < this.maxFps) this.fps = Math.min(this.maxFps, this.fps + 1);
     this.frames++;
     this.fpsWin.push(t); while (this.fpsWin.length && t - this.fpsWin[0] > 2000) this.fpsWin.shift();
-    if (this.frames % 15 === 1) this._measureBrightness();
-    var lm = res && res.faceLandmarks && res.faceLandmarks[0];
+    this._thermalCheck(t);
+    var n = res && res.faceLandmarks ? res.faceLandmarks.length : 0;
+    var k = n ? this._pickFace(res.faceLandmarks, t) : -1;
+    var lm = k >= 0 ? res.faceLandmarks[k] : null;
+    if (n > 1 && k !== 0) this.rejected.otherFace++;
+    this.quality.faces = n;
     var feat = null;
     if (lm) {
-      var mat = res.facialTransformationMatrixes && res.facialTransformationMatrixes[0];
-      var bsc = res.faceBlendshapes && res.faceBlendshapes[0];
+      var mat = res.facialTransformationMatrixes && res.facialTransformationMatrixes[k];
+      var bsc = res.faceBlendshapes && res.faceBlendshapes[k];
       feat = Model.eyeFeatures(lm, v.videoWidth, v.videoHeight, mat && mat.data, { blendshapes: bsc && bsc.categories, hfovDeg: this.opts.hfovDeg });
       if (feat) { this.faceFrames++; feat.landmarks = lm; }
     }
-    this.lastFeat = feat;
+    if (this.frames % 10 === 1) this._measureQuality(lm);
     var wall = Date.now();
-    if (feat && !feat.blink) {
+    if (feat) {
+      // temporal blink gate: a blink is a short closure relative to this person's own openness;
+      // long narrowing (looking down at the page) is kept
+      feat.staticBlink = feat.blink;
+      feat.blink = this.blinkGate.update(feat, t);
+      if (feat.blink) this.rejected.blink++;
+      var q = Model.eyeQuality(feat, this.eyeBase);
+      feat.occluded = q.ok ? null : q.reason;
+      if (feat.occluded && this.eyeBase) this.rejected.occluded++;
+    }
+    this.occluded = feat ? feat.occluded : null;
+    this.lastFeat = feat;
+    var usable = feat && !feat.blink && !(feat.occluded && this.eyeBase);
+    if (usable) {
       this.recent.push({ t: wall, feat: feat }); while (this.recent.length && wall - this.recent[0].t > 1200) this.recent.shift();
       if (this.collect && wall >= this.collect.from) this.collect.samples.push(feat);
+      if (this.collect && this.collect.path) this.collect.rows.push({ t: wall, vec: feat.vec, feat: feat });
+      this.poseWin.push({ t: wall, feat: feat }); while (this.poseWin.length && wall - this.poseWin[0].t > 4000) this.poseWin.shift();
     }
     var reg = this.models.current(), pred = null;
-    if (feat && !feat.blink && reg && reg.model) pred = clampPred(reg.predict(feat.vec));
-    this._emit({ t: wall, face: !!feat, blink: !!(feat && feat.blink), feat: feat, pred: pred, inferMs: infer });
+    if (usable && reg && reg.model) {
+      pred = reg.predict(feat.vec);
+      var sh = this.calViewport && typeof window !== 'undefined' ? Model.viewportShift(this.calViewport, { w: window.innerWidth, h: window.innerHeight }, { topBar: this.android }) : 0;
+      if (sh) pred.y += sh;
+      pred = clampPred(pred);
+    }
+    this._emit({ t: wall, face: !!feat, blink: !!(feat && feat.blink), occluded: feat ? feat.occluded : null, faces: n, feat: feat, pred: pred, inferMs: infer, quality: this.quality });
   };
 
-  MediaPipeEngine.prototype._measureBrightness = function () {
-    try {
-      var c = this._bc || (this._bc = document.createElement('canvas')); c.width = 32; c.height = 24;
-      var g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(this.video, 0, 0, 32, 24);
-      var d = g.getImageData(8, 4, 16, 16).data, s = 0;   // centre region, where the face usually is
-      for (var i = 0; i < d.length; i += 4) s += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-      this.brightness = s / (d.length / 4);
-    } catch (e) { this.brightness = null; }
+  /* Several faces: keep the one we locked onto (closest to its last position, then largest).
+     The lock follows the student as they move; it is only released after ~1 s without them. */
+  MediaPipeEngine.prototype._pickFace = function (faces, t) {
+    var info = faces.map(function (lm, i) {
+      var xs = lm[234], xe = lm[454], top = lm[10], chin = lm[152];
+      return { i: i, x: (xs.x + xe.x) / 2, y: (top.y + chin.y) / 2, w: Math.abs(xe.x - xs.x) };
+    });
+    var now = t || nowMs(), p = this.primary, pick = null;
+    if (p && now - p.t < 1000) {
+      info.forEach(function (f) { var d = Math.hypot(f.x - p.x, f.y - p.y); if (d < 0.25 + p.w && (!pick || d < pick.d)) pick = { f: f, d: d }; });
+      pick = pick && pick.f;
+    }
+    if (!pick) info.forEach(function (f) { if (!pick || f.w > pick.w) pick = f; });
+    this.primary = { x: pick.x, y: pick.y, w: pick.w, t: now };
+    return pick.i;
   };
+
+  /* Light and glare from the pixels the tracker actually uses: mean/contrast of the face box and
+     the share of blown-out pixels around the eyes (glasses reflections). Runs every 10th frame
+     on a 64-px thumbnail, so it costs well under 1 ms. Nothing leaves the device. */
+  MediaPipeEngine.prototype._measureQuality = function (lm) {
+    try {
+      var v = this.video, W = v.videoWidth, H = v.videoHeight;
+      var c = this._qc || (this._qc = document.createElement('canvas')), g = c.getContext('2d', { willReadFrequently: true });
+      var box = lm ? [lm[234].x, lm[10].y, lm[454].x, lm[152].y] : [0.3, 0.2, 0.7, 0.8];
+      var x0 = Math.max(0, Math.min(box[0], box[2]) * W), y0 = Math.max(0, box[1] * H), x1 = Math.min(W, Math.max(box[0], box[2]) * W), y1 = Math.min(H, box[3] * H);
+      if (x1 - x0 < 8 || y1 - y0 < 8) return;
+      c.width = 64; c.height = 64; g.drawImage(v, x0, y0, x1 - x0, y1 - y0, 0, 0, 64, 64);
+      var d = g.getImageData(0, 0, 64, 64).data, s = 0, s2 = 0, n = d.length / 4;
+      for (var i = 0; i < d.length; i += 4) { var L = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; s += L; s2 += L * L; }
+      var mean = s / n;
+      this.quality.brightness = Math.round(mean); this.quality.contrast = Math.round(Math.sqrt(Math.max(0, s2 / n - mean * mean)));
+      this.brightness = this.quality.brightness;
+      if (lm) {
+        var gl = 0, tot = 0, eyes = [[33, 133, 159, 145], [362, 263, 386, 374]];
+        for (var e = 0; e < 2; e++) {
+          var a = lm[eyes[e][0]], b = lm[eyes[e][1]], ew = Math.abs(b.x - a.x) * W;
+          var cx = (a.x + b.x) / 2 * W, cy = (lm[eyes[e][2]].y + lm[eyes[e][3]].y) / 2 * H;
+          c.width = 24; c.height = 16; g.drawImage(v, cx - ew, cy - ew * 0.65, ew * 2, ew * 1.3, 0, 0, 24, 16);
+          var q = g.getImageData(0, 0, 24, 16).data;
+          for (var j = 0; j < q.length; j += 4) { tot++; if (q[j] > 245 && q[j + 1] > 245 && q[j + 2] > 245) gl++; }
+        }
+        this.quality.glare = tot ? Math.round(1000 * gl / tot) / 1000 : null;
+      }
+    } catch (err) { /* tainted canvas or zero-size video */ }
+  };
+  MediaPipeEngine.prototype._measureBrightness = function () { this._measureQuality(this.lastFeat && this.lastFeat.landmarks); };
+
+  /* Thermal / low-end CPU back-off: if inference becomes much slower than it was in the first
+     20 s (the phone is heating up and throttling), cap the frame rate harder and say so. */
+  MediaPipeEngine.prototype._thermalCheck = function (t) {
+    var th = this.thermal;
+    if (!th.t0) th.t0 = t;
+    if (!th.base && t - th.t0 > 20000 && this.inferEma) th.base = this.inferEma;
+    if (th.base && !th.hot && this.inferEma > th.base * 1.7 && this.inferEma > 30) {
+      th.hot = true; this.maxFps = Math.max(this.minFps, Math.round(this.maxFps * 0.6)); if (this.fps > this.maxFps) this.fps = this.maxFps;
+      this._emit({ t: Date.now(), notice: 'thermal', face: !!this.lastFeat, feat: this.lastFeat, pred: null });
+    }
+  };
+
+  /* Low light: ask the camera for continuous auto-exposure (and a little exposure compensation)
+     where the browser exposes it (Chrome on Android/desktop). Returns what was applied. */
+  MediaPipeEngine.prototype.exposureHint = function () {
+    var tr = this.stream && this.stream.getVideoTracks()[0];
+    if (!tr || !tr.getCapabilities) return Promise.resolve(null);
+    var cap = tr.getCapabilities(), adv = {};
+    if (cap.exposureMode && cap.exposureMode.indexOf('continuous') >= 0) adv.exposureMode = 'continuous';
+    if (cap.exposureCompensation && cap.exposureCompensation.max > 0) adv.exposureCompensation = Math.min(cap.exposureCompensation.max, 1);
+    if (cap.whiteBalanceMode && cap.whiteBalanceMode.indexOf('continuous') >= 0) adv.whiteBalanceMode = 'continuous';
+    if (!Object.keys(adv).length) return Promise.resolve(null);
+    return tr.applyConstraints({ advanced: [adv] }).then(function () { return adv; }, function () { return null; });
+  };
+
+  /* Should we recalibrate? Compares the last ~4 s of head pose with the calibration snapshot. */
+  MediaPipeEngine.prototype.recalCheck = function () {
+    if (!this.calPose || this.poseWin.length < 8) return null;
+    return Model.recalTrigger(this.calPose, Model.poseSnapshot(this.poseWin.map(function (r) { return r.feat; })));
+  };
+
 
   /* calibration: collect features while the student looks at (x, y) */
   MediaPipeEngine.prototype.beginSample = function (x, y, settleMs) { this.collect = { x: x, y: y, from: Date.now() + (settleMs || 250), samples: [] }; };
@@ -185,11 +327,33 @@
     if (!c) return 0;
     var reg = this.models.current();
     c.samples.forEach(function (f) { reg.addCalibration(f.vec, c.x, c.y); });
+    this.calFeats = (this.calFeats || []).concat(c.samples);
     return c.samples.length;
   };
+  /* smooth pursuit: record features while a dot moves along `path` ({t,x,y} pushed by the UI) */
+  MediaPipeEngine.prototype.beginPursuit = function () { this.collect = { from: Date.now(), samples: [], rows: [], path: [] }; return this.collect.path; };
+  MediaPipeEngine.prototype.endPursuit = function () {
+    var c = this.collect; this.collect = null;
+    if (!c || !c.path) return null;
+    var fit = Model.fitPursuit(c.rows, c.path, { weight: 0.7 });
+    if (!fit) return null;
+    var reg = this.models.current();
+    fit.pairs.forEach(function (p) { reg.addCalibration(p.vec, p.x, p.y, 0.7); });
+    this.calFeats = (this.calFeats || []).concat(c.rows.map(function (r) { return r.feat; }));
+    return { lagMs: fit.lag, samples: fit.pairs.length, rmsPx: Math.round(fit.rms) };
+  };
   MediaPipeEngine.prototype.sampleCount = function () { return this.collect ? this.collect.samples.length : 0; };
-  MediaPipeEngine.prototype.resetCalibration = function () { var reg = this.models.current(); reg.cal = []; reg.model = null; };
-  MediaPipeEngine.prototype.fit = function () { var m = this.models.current().fit(); return !!m; };
+  MediaPipeEngine.prototype.resetCalibration = function () { var reg = this.models.current(); reg.cal = []; reg.model = null; this.calFeats = []; };
+  MediaPipeEngine.prototype.fit = function () {
+    var m = this.models.current().fit();
+    if (m && this.calFeats && this.calFeats.length) {
+      // references for occlusion checks, recalibration triggers and the mobile URL-bar shift
+      this.eyeBase = Model.eyeBaseline(this.calFeats);
+      this.calPose = Model.poseSnapshot(this.calFeats);
+      if (typeof window !== 'undefined') this.calViewport = { w: window.innerWidth, h: window.innerHeight };
+    }
+    return !!m;
+  };
   MediaPipeEngine.prototype.ready = function () { return this.models.ready(); };
 
   /* implicit sample (click / tap / caret): features from ~80 ms before the event, when the eyes
@@ -220,7 +384,7 @@
     try { this.landmarker && this.landmarker.close(); } catch (e) {}
   };
   MediaPipeEngine.prototype.guidance = function () {
-    return Model.poseGuidance(this.lastFeat, { mobile: this.mobile, brightness: this.brightness });
+    return Model.poseGuidance(this.lastFeat, { mobile: this.mobile, brightness: this.brightness, quality: this.quality });
   };
   MediaPipeEngine.prototype.distanceCm = function () { return this.lastFeat ? this.lastFeat.distanceCm : null; };
   MediaPipeEngine.prototype.stats = function () {
@@ -229,6 +393,9 @@
       inferMs: Math.round(this.inferEma * 10) / 10, faceRate: this.frames ? this.faceFrames / this.frames : 0,
       samples: reg ? reg.cal.length : 0, implicit: reg ? reg.implicit.length : 0, lambda: m ? m.lambda : null,
       fitRmsPx: m ? Math.round(m.rmsPx) : null, orientation: this.models.key,
+      faces: this.quality.faces, brightness: this.quality.brightness, contrast: this.quality.contrast, glare: this.quality.glare,
+      occluded: this.occluded, thermal: this.thermal.hot, lowBattery: !!this.lowBattery, simd: this.simd, rejected: this.rejected,
+      resolution: this.video ? this.video.videoWidth + 'x' + this.video.videoHeight : null,
       distanceCm: this.lastFeat && this.lastFeat.distanceCm ? Math.round(this.lastFeat.distanceCm) : null,
       yawDeg: this.lastFeat ? Math.round(this.lastFeat.pose.yaw * 57.3) : null, pitchDeg: this.lastFeat ? Math.round(this.lastFeat.pose.pitch * 57.3) : null };
   };
@@ -304,7 +471,7 @@
     opts = opts || {};
     var want = opts.prefer || 'auto';
     var mp = function () { var e = new MediaPipeEngine(opts); return e.load(); };
-    var wg = function () { var e = new WebGazerEngine(opts); return e.load(); };
+    var wg = function () { releasePrefetch(); var e = new WebGazerEngine(opts); return e.load(); };
     if (want === 'webgazer') return wg();
     if (want === 'mediapipe') return mp();
     return mp().catch(function (err) {
@@ -314,5 +481,5 @@
   }
 
   window.HelixEngine = { create: create, MediaPipeEngine: MediaPipeEngine, WebGazerEngine: WebGazerEngine,
-    isMobile: isMobile, orientationKey: orientationKey };
+    isMobile: isMobile, orientationKey: orientationKey, prefetchCamera: prefetchCamera, releasePrefetch: releasePrefetch, isIOS: isIOS, simdSupported: simdSupported };
 })();

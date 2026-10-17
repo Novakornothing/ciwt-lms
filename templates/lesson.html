@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ lesson.title }} — CIWT LMS{% endblock %}
+{% block title %}{{ lesson.title }} — {{ site_name }}{% endblock %}
 {% block content %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
@@ -26,32 +26,34 @@
       <button type="button" class="btn btn-outline-gold btn-sm" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer">
         <i class="bi bi-list"></i> Chapters
       </button>
-      <button type="button" class="btn btn-outline-gold btn-sm" id="curriculumFullscreenBtn" title="Focus mode — curriculum only">
-        <i class="bi bi-arrows-fullscreen"></i> Full screen
-      </button>
-      <a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}" class="btn btn-outline-light btn-sm">All lessons</a>
-      {% if current_user.is_authenticated %}
-      <a href="{{ url_for('tickets_new', lesson_id=lesson.id, section_id=section_id, course_id=module.course_id) }}"
-         class="btn btn-outline-light btn-sm">Report issue</a>
-      {% endif %}
     </div>
+  </div>
+  <div class="lesson-hero-links small mt-2">
+    <a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">All lessons in this chapter</a>
+    {% if current_user.is_authenticated %}
+    <span aria-hidden="true">·</span>
+    <a href="{{ url_for('tickets_new', lesson_id=lesson.id, section_id=section_id, course_id=module.course_id) }}">Report an issue</a>
+    {% endif %}
   </div>
 </div>
 {# Labs sit under the lesson — not a full catalog dump at the top #}
 
 <div class="card mb-3 narrate-bar">
   <div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
-    <span class="fw-semibold"><i class="bi bi-soundwave"></i> Narrate</span>
+    <span class="fw-semibold d-none d-sm-inline"><i class="bi bi-soundwave" aria-hidden="true"></i> Listen</span>
+    <button type="button" class="btn btn-brand btn-sm" id="ttsPlay"><i class="bi bi-play-fill" aria-hidden="true"></i> Play</button>
+    <button type="button" class="btn btn-outline-navy btn-sm" id="ttsPause"><i class="bi bi-pause-fill" aria-hidden="true"></i> Pause</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="ttsStop"><i class="bi bi-stop-fill" aria-hidden="true"></i> Stop</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm d-sm-none" id="ttsMore" aria-expanded="false" aria-controls="ttsOptions" aria-label="Narration options"><i class="bi bi-three-dots" aria-hidden="true"></i></button>
+    <span class="narrate-options" id="ttsOptions">
     <select id="ttsVoice" class="form-select form-select-sm" style="width:auto" aria-label="Narration voice">
       <option value="en-US-JennyNeural" selected>Jenny — neural</option>
       <option value="en-US-GuyNeural">Guy — neural</option>
     </select>
-    <button type="button" class="btn btn-brand btn-sm" id="ttsPlay"><i class="bi bi-play-fill"></i> Play</button>
-    <button type="button" class="btn btn-outline-navy btn-sm" id="ttsFromHere"><i class="bi bi-cursor-text"></i> From selection</button>
-    <button type="button" class="btn btn-outline-navy btn-sm" id="ttsPause"><i class="bi bi-pause-fill"></i> Pause</button>
-    <button type="button" class="btn btn-outline-secondary btn-sm" id="ttsStop"><i class="bi bi-stop-fill"></i> Stop</button>
-    <span class="small text-muted" id="ttsStatus">Ready</span>
-    <audio id="ttsAudio" controls class="ms-2" style="height:2rem;max-width:14rem"></audio>
+    <button type="button" class="btn btn-outline-navy btn-sm" id="ttsFromHere"><i class="bi bi-cursor-text" aria-hidden="true"></i> From selection</button>
+    </span>
+    <span class="small text-muted" id="ttsStatus" aria-live="polite"></span>
+    <audio id="ttsAudio" controls class="ms-2" style="height:2rem;max-width:14rem" hidden></audio>
   </div>
 </div>
 
@@ -323,6 +325,14 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+/* narration bar: the native player only appears once audio is playing; options fold away on phones */
+(function () {
+  const a = document.getElementById('ttsAudio'), more = document.getElementById('ttsMore'), opts = document.getElementById('ttsOptions');
+  if (a) a.addEventListener('play', () => { a.hidden = false; });
+  if (more && opts) more.addEventListener('click', () => { const on = opts.classList.toggle('open'); more.setAttribute('aria-expanded', String(on)); });
+})();
+</script>
 <script>
 /* Curriculum full-screen focus mode — independent of narration */
 (function () {

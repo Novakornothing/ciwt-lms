@@ -190,7 +190,7 @@
     if (!geo) return (this.model = null);
     // stage 2: residual correction from eye-in-head features only (no head-position terms)
     var resid = rows.map(function (r) { var g = ridgePredict(geo, r.f); return { f: r.f, x: r.x - g.x, y: r.y - g.y, w: r.w }; });
-    var eye = ridgeFit(resid, EYE_IDX, LAMBDAS);
+    var eye = ridgeFit(resid, this.eyeIdx || EYE_IDX, LAMBDAS);
     var rss = 0, W = 0;
     rows.forEach(function (r) { var p = ridgePredict(geo, r.f), q = ridgePredict(eye, r.f); W += r.w; rss += r.w * (Math.pow(p.x + q.x - r.x, 2) + Math.pow(p.y + q.y - r.y, 2)); });
     this.model = { kind: 'hybrid', geo: geo, eye: eye, lambda: eye ? eye.lambda : null, n: rows.length, rmsPx: Math.sqrt(rss / W), bias: { x: 0, y: 0 } };
@@ -318,10 +318,17 @@
     var level = Math.abs(roll) < 10;
     checks.push({ key: 'level', ok: level, label: level ? 'Head level' : 'Head tilted', hint: 'Straighten your head.' });
     checks.push({ key: 'eyes', ok: !feat.blink, label: feat.blink ? 'Eyes not visible' : 'Eyes visible', hint: 'Open your eyes, remove glare (tilt glasses).' });
-    if (opts.brightness != null) {
-      var lit = opts.brightness > 55;
-      checks.push({ key: 'light', ok: lit, label: lit ? 'Lighting OK' : 'Too dark', hint: 'Face a window or lamp; avoid a bright light behind you.' });
+    var q = opts.quality || {}, br = q.brightness != null ? q.brightness : opts.brightness;
+    if (br != null) {
+      // measured on the face itself, so a bright window behind the student shows up as backlight
+      var dark = br < 60, blown = br > 215, flat = q.contrast != null && q.contrast < 14;
+      checks.push(dark ? { key: 'light', ok: false, label: 'Face too dark', hint: 'Turn on a lamp in front of you or face a window. Helix asked the camera for auto-exposure.' }
+        : blown ? { key: 'light', ok: false, label: 'Face over-exposed', hint: 'Move away from direct light or a bright lamp.' }
+        : flat ? { key: 'light', ok: false, label: 'Low contrast (backlit?)', hint: 'Avoid a bright window behind you.' }
+        : { key: 'light', ok: true, label: 'Lighting OK' });
     }
+    if (q.glare != null && q.glare > 0.02) checks.push({ key: 'glare', ok: q.glare < 0.05, label: 'Glare on glasses', hint: 'Tilt your glasses down slightly or move the lamp to the side.' });
+    if (q.faces > 1) checks.push({ key: 'faces', ok: true, label: 'Another face in view: following you (the closest face)', hint: '' });
     return { ok: checks.every(function (c) { return c.ok; }), checks: checks, yawDeg: yaw, pitchDeg: pitch, rollDeg: roll, distanceCm: dist };
   }
 
@@ -371,8 +378,188 @@
     return this.errs.length >= Math.min(5, this.window) && m != null && m > Math.max(120, (baselinePx || 0) * (factor || 1.8));
   };
 
+  /* ---------- fixations (I-DT / I-VT) ----------
+     Reading attention should count where the eyes *rest*, not every noisy sample in between.
+     samples: [{t (ms), x, y}] in time order. Returns [{x, y, start, end, dur, n}].
+     I-DT (dispersion threshold, Salvucci & Goldberg 2000) is the default because webcam
+     estimates are too noisy for velocity thresholds at 15-30 Hz; dispersionPx should scale with
+     the measured precision. */
+  function detectFixations(samples, opts) {
+    opts = opts || {};
+    var method = opts.method || 'idt', minMs = opts.minMs == null ? 100 : opts.minMs, out = [];
+    var emit = function (pts) {
+      if (pts.length < 2) return;
+      var dur = pts[pts.length - 1].t - pts[0].t;
+      if (dur < minMs) return;
+      var sx = 0, sy = 0; pts.forEach(function (p) { sx += p.x; sy += p.y; });
+      out.push({ x: sx / pts.length, y: sy / pts.length, start: pts[0].t, end: pts[pts.length - 1].t, dur: dur, n: pts.length });
+    };
+    if (method === 'ivt') {
+      var vmax = opts.velocityPxPerS || 2500, run = [];
+      for (var i = 0; i < samples.length; i++) {
+        var p = samples[i], q = samples[i - 1];
+        var v = q ? Math.hypot(p.x - q.x, p.y - q.y) / Math.max(1, p.t - q.t) * 1000 : 0;
+        if (q && (v > vmax || p.t - q.t > 250)) { emit(run); run = []; }
+        run.push(p);
+      }
+      emit(run);
+      return out;
+    }
+    var det = new FixationDetector(opts);
+    samples.forEach(function (p) { var f = det.push(p.t, p.x, p.y); if (f) out.push(f); });
+    var last = det.flush(); if (last) out.push(last);
+    return out;
+  }
+
+  /* streaming I-DT: push samples as they arrive; returns a completed fixation when one ends.
+     .current() is the fixation in progress (once it has lasted minMs), or null during saccades. */
+  function FixationDetector(opts) {
+    opts = opts || {};
+    this.disp = opts.dispersionPx || 120; this.minMs = opts.minMs == null ? 100 : opts.minMs;
+    this.maxGapMs = opts.maxGapMs || 250; this.win = [];
+  }
+  FixationDetector.prototype._dispersion = function (pts) {
+    var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    pts.forEach(function (p) { if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y; });
+    return (x1 - x0) + (y1 - y0);
+  };
+  FixationDetector.prototype._summary = function (pts) {
+    var sx = 0, sy = 0; pts.forEach(function (p) { sx += p.x; sy += p.y; });
+    return { x: sx / pts.length, y: sy / pts.length, start: pts[0].t, end: pts[pts.length - 1].t, dur: pts[pts.length - 1].t - pts[0].t, n: pts.length };
+  };
+  FixationDetector.prototype.setDispersion = function (px) { this.disp = Math.max(40, px); };
+  FixationDetector.prototype.push = function (t, x, y) {
+    var w = this.win, done = null, p = { t: t, x: x, y: y };
+    if (w.length && t - w[w.length - 1].t > this.maxGapMs) { done = this.flush(); w = this.win; }
+    w.push(p);
+    if (this._dispersion(w) > this.disp) {
+      var prev = w.slice(0, -1);
+      if (prev.length >= 2 && prev[prev.length - 1].t - prev[0].t >= this.minMs) { done = this._summary(prev); this.win = [p]; }
+      else { while (w.length > 1 && this._dispersion(w) > this.disp) w.shift(); }
+    }
+    return done;
+  };
+  FixationDetector.prototype.current = function () {
+    var w = this.win;
+    return w.length >= 2 && w[w.length - 1].t - w[0].t >= this.minMs ? this._summary(w) : null;
+  };
+  FixationDetector.prototype.flush = function () {
+    var w = this.win; this.win = [];
+    return w.length >= 2 && w[w.length - 1].t - w[0].t >= this.minMs ? this._summary(w) : null;
+  };
+
+  /* ---------- blinks over time ----------
+     A blink is a *sudden, short* closure relative to this person's own recent openness. Looking
+     down narrows the lids for seconds at a time and must not be thrown away (that is someone
+     reading the bottom of the page). */
+  function BlinkGate(opts) { opts = opts || {}; this.hist = []; this.winMs = opts.winMs || 3000; this.maxBlinkMs = opts.maxBlinkMs || 450; this.closedSince = 0; }
+  BlinkGate.prototype.update = function (feat, t) {
+    if (!feat) return false;
+    var open = feat.open, h = this.hist;
+    var base = h.length >= 5 ? h.slice().sort(function (a, b) { return a - b; })[Math.floor(h.length * 0.7)] : null;
+    var rel = base ? open / Math.max(1e-3, base) : 1;
+    var bs = feat.blinkScore, lookDown = feat.lookDown || 0;
+    var closed = open < 0.015 || (rel < 0.45 && lookDown < 0.55) || (bs != null && bs > 0.75 && rel < 0.6 && lookDown < 0.45);
+    if (closed) { if (!this.closedSince) this.closedSince = t; }
+    else { this.closedSince = 0; h.push(open); this._t = (this._t || []); this._t.push(t); while (this._t.length && t - this._t[0] > this.winMs) { this._t.shift(); h.shift(); } }
+    // a "blink" that lasts longer than a blink is the eyes narrowing (looking down, squinting): accept
+    if (closed && t - this.closedSince > this.maxBlinkMs && open >= 0.015) return false;
+    return closed;
+  };
+
+  /* ---------- smooth-pursuit calibration ----------
+     The eyes trail a moving dot by ~100-250 ms. rows: [{t, vec}] features; path: [{t, x, y}] dot
+     positions. Tries lags 0-400 ms and keeps the model that fits best. */
+  function fitPursuit(rows, path, opts) {
+    opts = opts || {};
+    var best = null, step = opts.stepMs || 33;
+    var at = function (t) {   // dot position at time t (linear interpolation)
+      if (!path.length || t < path[0].t || t > path[path.length - 1].t) return null;
+      var lo = 0, hi = path.length - 1;
+      while (hi - lo > 1) { var mid = (lo + hi) >> 1; if (path[mid].t <= t) lo = mid; else hi = mid; }
+      var a = path[lo], b = path[hi], f = b.t > a.t ? (t - a.t) / (b.t - a.t) : 0;
+      return { x: a.x + f * (b.x - a.x), y: a.y + f * (b.y - a.y) };
+    };
+    var maxLag = opts.maxLagMs || 400;
+    // score every lag on the SAME rows (those with a dot position at every candidate lag);
+    // otherwise long lags drop the early rows and win by fitting fewer points
+    var t0 = path.length ? path[0].t + maxLag : 0;
+    var scored = rows.filter(function (r) { return r.t >= t0; });
+    if (scored.length < 20) scored = rows;
+    for (var lag = 0; lag <= maxLag; lag += step) {
+      var reg = new GazeRegressor(opts.regressor || {});
+      scored.forEach(function (r) { var p = at(r.t - lag); if (p) reg.addCalibration(r.vec, p.x, p.y, opts.weight == null ? 1 : opts.weight); });
+      var m = reg.fit();
+      if (m && (!best || m.rmsPx < best.rms)) best = { lag: lag, rms: m.rmsPx, reg: reg };
+    }
+    if (!best) return null;
+    best.pairs = rows.map(function (r) { var p = at(r.t - best.lag); return p ? { vec: r.vec, x: p.x, y: p.y } : null; }).filter(Boolean);
+    return best;
+  }
+
+  /* ---------- partial occlusion ----------
+     A hand, hair or a glasses frame over one eye shows up as that eye's shape departing from how
+     it looked during calibration (width ratio between the eyes, openness asymmetry) or the iris
+     landing outside the eye. base: eyeBaseline(features from calibration). */
+  function eyeBaseline(feats) {
+    var ratios = [], asym = [];
+    feats.forEach(function (f) { if (f && f.eyes && f.eyes.l.width) { ratios.push(Math.log(f.eyes.r.width / f.eyes.l.width)); asym.push(f.eyes.r.open - f.eyes.l.open); } });
+    if (ratios.length < 5) return null;
+    var med = function (a) { var s = a.slice().sort(function (x, y) { return x - y; }); return s[s.length >> 1]; };
+    return { ratio: med(ratios), asym: med(asym), n: ratios.length };
+  }
+  function eyeQuality(feat, base) {
+    if (!feat || !feat.eyes) return { ok: false, reason: 'no_face' };
+    var r = feat.eyes.r, l = feat.eyes.l;
+    if (Math.abs(r.u) > 0.42 || Math.abs(l.u) > 0.42 || Math.abs(r.v) > 0.35 || Math.abs(l.v) > 0.35) return { ok: false, reason: 'iris_outside_eye' };
+    if (base && l.width && r.width) {
+      if (Math.abs(Math.log(r.width / l.width) - base.ratio) > 0.4) return { ok: false, reason: 'eye_shape' };
+      if (Math.abs((r.open - l.open) - base.asym) > 0.22) return { ok: false, reason: 'one_eye_covered' };
+    }
+    return { ok: true };
+  }
+
+  /* ---------- when to recalibrate ----------
+     cal: pose snapshot at calibration {yaw, pitch, distanceCm, faceX, faceY}; feat: current median.
+     Returns null or {reason, label}. */
+  function poseSnapshot(feats) {
+    var ok = feats.filter(function (f) { return f && f.pose; });
+    if (!ok.length) return null;
+    var med = function (fn) { var a = ok.map(fn).filter(function (v) { return v != null && isFinite(v); }).sort(function (x, y) { return x - y; }); return a.length ? a[a.length >> 1] : null; };
+    return { yaw: med(function (f) { return f.pose.yaw; }), pitch: med(function (f) { return f.pose.pitch; }), distanceCm: med(function (f) { return f.distanceCm; }),
+             faceX: med(function (f) { return f.face.x; }), faceY: med(function (f) { return f.face.y; }), n: ok.length };
+  }
+  function recalTrigger(cal, now, opts) {
+    if (!cal || !now) return null;
+    opts = opts || {};
+    var deg = 180 / Math.PI;
+    if (cal.distanceCm && now.distanceCm) {
+      var r = now.distanceCm / cal.distanceCm;
+      if (r < (opts.minRatio || 0.78) || r > (opts.maxRatio || 1.28)) return { reason: 'distance', label: r < 1 ? 'You moved closer to the screen' : 'You moved further from the screen' };
+    }
+    if (Math.abs((now.yaw - cal.yaw) * deg) > (opts.maxYawDeg || 9) || Math.abs((now.pitch - cal.pitch) * deg) > (opts.maxPitchDeg || 9)) return { reason: 'head_turn', label: 'Your head is turned differently from calibration' };
+    if (Math.hypot(now.faceX - cal.faceX, now.faceY - cal.faceY) > (opts.maxShift || 0.16)) return { reason: 'moved', label: 'You moved in front of the camera' };
+    return null;
+  }
+
+  /* ---------- mobile address bar ----------
+     Phones grow/shrink the viewport as the URL bar hides. With a top bar (Android Chrome) the
+     page content moves up by the change in height, so gaze in calibration-time CSS px must be
+     shifted; with a bottom bar (iOS Safari 15+) the top edge stays put. Returns the y offset to
+     add to predictions, or null when the change is too big to be the URL bar (rotate/resize). */
+  function viewportShift(cal, now, opts) {
+    if (!cal || !now) return 0;
+    opts = opts || {};
+    if (Math.abs(now.w - cal.w) > 2) return null;                     // width changed: real resize/rotation
+    var dh = now.h - cal.h;
+    if (Math.abs(dh) > Math.max(140, 0.2 * cal.h)) return null;
+    return opts.topBar ? dh : 0;
+  }
+
   return { LM: LM, FEATURE_NAMES: FEATURE_NAMES, GEO_IDX: GEO_IDX, EYE_IDX: EYE_IDX, ridgeFit: ridgeFit, headPose: headPose, eyeFeatures: eyeFeatures,
     jacobiEigen: jacobiEigen, GazeRegressor: GazeRegressor, OrientationModels: OrientationModels,
     poseGuidance: poseGuidance, angularError: angularError, aoiResolution: aoiResolution,
-    DriftTracker: DriftTracker, CM_PER_CSS_PX: CM_PER_CSS_PX, IRIS_DIAMETER_CM: IRIS_DIAMETER_CM };
+    DriftTracker: DriftTracker, CM_PER_CSS_PX: CM_PER_CSS_PX, IRIS_DIAMETER_CM: IRIS_DIAMETER_CM,
+    detectFixations: detectFixations, FixationDetector: FixationDetector, BlinkGate: BlinkGate, fitPursuit: fitPursuit,
+    eyeBaseline: eyeBaseline, eyeQuality: eyeQuality, poseSnapshot: poseSnapshot, recalTrigger: recalTrigger, viewportShift: viewportShift };
 });

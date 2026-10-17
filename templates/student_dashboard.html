@@ -1,17 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Home — CIWT LMS{% endblock %}
+{% block title %}Home — {{ site_name }}{% endblock %}
 {% block content %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item active">Home</li>
   </ol>
 </nav>
-<div class="page-hero">
-  <h1 class="h3 mb-1">Your training</h1>
-  <p class="mb-0">Work your class in order: lesson, lab, quiz, then the graded test when it is open.</p>
+<div class="page-hero home-hero">
+  <h1 class="h3 mb-1">Welcome back, {{ current_user.first_name }}</h1>
+  {% if gold_path and gold_path.steps %}
+  {% set done_n = gold_path.steps|selectattr('done')|list|length %}
+  <p class="mb-0">{{ gold_path.section.name }}</p>
+  <div class="home-progress">
+    <span class="home-meter" role="progressbar" aria-label="Path progress" aria-valuemin="0" aria-valuemax="{{ gold_path.steps|length }}" aria-valuenow="{{ done_n }}"><span style="width:{{ (100 * done_n / gold_path.steps|length)|round|int }}%"></span></span>
+    <span class="small">{{ done_n }} of {{ gold_path.steps|length }} steps done</span>
+    {% if gold_path.next %}<a class="btn btn-brand" href="{{ gold_path.next.url }}">Continue: {{ gold_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
+  </div>
+  {% else %}
+  <p class="mb-0">Your classes, labs and grades are below.</p>
+  {% endif %}
 </div>
 
-{% include '_gold_path.html' %}
+{% with hide_path_cta = true %}{% include '_gold_path.html' %}{% endwith %}
 
 <div class="row g-4">
   <div class="col-lg-7">

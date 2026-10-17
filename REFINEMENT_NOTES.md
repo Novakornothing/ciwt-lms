@@ -196,3 +196,107 @@ Each pytest run seeds a throwaway SQLite DB through `DATABASE_URL` and never tou
 - The local dev DB `ciwt_lms.db` now holds e2e sessions (students 12 and 13, sessions ~31–36, engine `mediapipe`), created by the fake-camera runs. They are real rows, not demo seed data. Delete them from `/student/attention` as those students if you want a clean demo.
 - `app 2.py`, `tqi(1).html` and the root zips are stale duplicates. They were left in place because the brief says not to delete user content; review and remove them by hand.
 - WebGazer is still vendored as a fallback (large). It could be dropped once MediaPipe is proven on target devices.
+
+---
+
+## Pass 4 (Oct 17 2026): real-world robustness, calibration UX, privacy, entry page, polish
+
+Local branch `refinement` only; nothing pushed, no tunnel, no curriculum removed.
+
+### Public entry + product name
+* **Name: "Novak Learning"**, tagline "Info Systems Training". Both live in one place:
+  `SITE_NAME` / `SITE_TAGLINE` at the top of `app.py` (or the `SITE_NAME` / `SITE_TAGLINE` env
+  vars), exposed to templates as `site_name` / `site_tagline`. They appear in every `<title>`
+  (all templates now end "— {{ site_name }}"), the header wordmark, the footer, the role
+  picker, the sign-in page and the Helix report footer. `site_email_subject()` is the hook for
+  emails; the app sends no email today (messages are in-app only).
+* `/` (signed out) is now a role picker with three large cards: **Learn** (students),
+  **Teach** (instructors), **Admin** (administrators). Each card has a one-line description and
+  links to `/start/<learn|teach|admin>`, which sends signed-in users to their own home and
+  everyone else to `/login?as=<role>`. Sign-in shows a segmented role switcher and a role
+  heading; demo accounts sit in a collapsed "Demo accounts" panel. The account's real role
+  always decides where you land. The "CIWT LMS" wordmark is gone from header, title and footer.
+  The repo, Python identifiers and curriculum text were not renamed.
+
+### Eye tracking robustness (helix-model.js / helix-engine.js / helix-gaze.js)
+* Accuracy proxy on real faces through the real MediaPipe path: tools/helix_eval/warp/*,
+  results and caveats in tools/helix_eval/RESULTS.md ("Pass 4").
+* Light and glare: brightness/contrast measured on the **face box** (backlight shows as low
+  contrast) and glare in the eye regions. Positioning checks now say "Face too dark",
+  "over-exposed", "backlit?" or "Glare on glasses", and ask the camera for continuous
+  exposure / white balance when it is dark. Sustained darkness, glare or occlusion while
+  reading triggers a one-time tip.
+* Multiple faces: `numFaces: 2` plus `_pickFace` locks onto the calibrated person (falls back to
+  the largest face), with a one-time "another face is in view" note.
+* Partial occlusion: frames where one eye departs from its calibration shape, or the iris
+  leaves the eye, are dropped.
+* Blinks: `BlinkGate` compares openness with the person's own recent baseline. Short closures
+  are blinks; sustained narrowing (looking down) is kept.
+* Fixations: `detectFixations` (I-DT / I-VT) and an online `FixationDetector`. Lesson AOI dwell
+  follows the current fixation; saccades/outliers keep the previous block, with a 600 ms
+  fallback to smoothed samples so dwell never freezes on noisy setups.
+* Smart recalibration: pose snapshot at calibration vs a 4 s window (distance ratio, yaw/pitch
+  9°, face shift). It prompts only after ~6 s of sustained change.
+* Viewport: Android top-bar shift compensation; resize keeps filters in bounds.
+* Mobile: camera opened **inside the tap** (`prefetchCamera`, iOS gesture rule), with the
+  prefetched stream released if WebGazer takes over. `play_blocked` gives a "Tap to start
+  camera" button. Load failures name memory limits. WASM SIMD is probed and reported.
+  Thermal back-off cuts fps to 60 % when inference slows 1.7x; low battery caps it at 10 fps,
+  without undoing thermal. Debug HUD shows faces, light, glare, occlusion, power, SIMD and
+  camera resolution.
+* Bug fixed: `fitPursuit` compared lags on different row sets, biasing toward the longest lag.
+
+### Calibration UX (helix-calib.js)
+* Choice on the positioning screen: **Tap 9 dots** (default, "most reliable") or **Follow a
+  moving dot** (9 s Lissajous + 3 anchor dots, no clicking). Follow falls back to dots
+  automatically if the face was lost.
+* Progress bar across all three steps (role=progressbar with value text), encouraging copy
+  ("Nice.", "Halfway there.", "Last one!"), shorter dot hold (0.9 s), friendlier failure text.
+* Time-to-calibrate measured: `score.calibMs` (first dot -> end of check), `score.totalMs`
+  (with positioning) and `score.calibMode`, shown on the result card. Automated e2e with the
+  CC0 face video: **23.5 s for dots and 23.5 s for follow**, including the ~8 s accuracy check
+  and robot pacing (1.35 s per dot). Not a human measurement.
+
+### Privacy
+* Server: a blueprint `before_request` on `/api/helix/*` refuses (400 `media_not_accepted`)
+  any body with image/video/landmark keys, `data:`/`blob:` URLs or long base64 strings, and
+  bodies over 256 KB (413). This runs before any session lookup.
+* E2E audit (tools/helix_lesson_e2e.py) records every request during a real camera session.
+  Result: 5 Helix uploads, 11.2-11.5 KB total, largest 6.7 KB, no media-like content, no
+  off-site posts, and the forged frame upload is refused with 400. **pass: true.**
+* Policy page has a new "What leaves your device (and what never does)" section; the
+  calibration, blink, fixation and battery behaviour is documented there too.
+
+### UX polish (weakest 8 things, from critical screenshot review)
+1. Student home: the generic "Your training" banner repeated the gold-path text. It is now a
+   greeting with a progress meter ("3 of 4 steps done") and the **Continue** button above the
+   fold on phones.
+2. Gold path: a graded test already taken but now closed read "closed until an instructor
+   opens it" next to a check mark. It now shows "your score NN%".
+3. Gold path step details were #8aa0b8 on white (2.6:1); now the AA ink-muted colour. The
+   check mark has a screen-reader "Done:" label.
+4. Lesson reader (phone): five hero buttons plus a two-row narration bar pushed the lesson
+   below the fold. Now there are two hero buttons, text links for All lessons / Report an
+   issue, and a one-row Listen bar with options behind "⋯". The native audio player is hidden
+   until playback starts.
+5. Lesson reader: removed the duplicate Full screen button (the content-header one remains).
+6. Lesson reader (desktop): the Helix card auto-opened over the lesson text; it now starts as
+   the small pill.
+7. Instructor class page: "Run class" sat below two duplicated lists (skills tests, chapter
+   list). The tabs now follow the hero (sticky), with a live status ("2 tests open now",
+   "13 of 13 chapters unlocked"). Hero links switch tabs; the broken `#roster` / `#chapters`
+   anchors are fixed.
+8. Instructor: Open/Closed and Locked/Unlocked use icon + text (not colour alone), "until —"
+   reads "with no end time", and the tabs have proper tab roles.
+
+### Tests
+* pytest: 63 passed (new: media guard, size limit, entry page, signed-in redirect).
+* node: 24 passed (new: I-DT/I-VT, FixationDetector, BlinkGate, fitPursuit lag, recalTrigger).
+* axe-core 4 (WCAG 2.0/2.1 A+AA): 22 pages x 3 widths = 63 checks, **0 violations**.
+* Synthetic regression: unchanged (4 cm/5° drift 4.09° -> 1.88° after 20 clicks).
+
+### Still untested on real devices
+Real iOS Safari (gesture/playsinline/low-power play block, memory on older iPhones), real
+Android low-end throttling and thermal behaviour, real glasses glare and room lighting,
+exposure constraints (support varies by camera), a real second person in view, and accuracy
+with real people looking at a real screen.

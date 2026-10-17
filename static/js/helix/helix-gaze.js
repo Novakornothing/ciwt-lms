@@ -218,7 +218,11 @@
     if (dev === 'tablet' && camOk) html += '<p class="hx-note">Tablet: prop it up at eye level for camera gaze.</p>';
     html += '<p class="hx-links"><a href="' + esc(CFG.tryUrl || '/helix/try') + '">Try the live gaze dot first</a> · <a href="' + esc(CFG.policyUrl) + '">How Helix works</a> · <a href="' + esc(CFG.myDataUrl) + '">My data</a></p>';
     body(html);
-    on('hxCam', function () { ensureConsent('gaze'); });
+    on('hxCam', function () {
+      // iOS Safari: getUserMedia must start inside the tap, before any network round-trip
+      if (S.server.consent.granted && S.server.consent.camera_ok) prefetch();
+      ensureConsent('gaze');
+    });
     on('hxPassive', function () { ensureConsent('passive'); });
     on('hxSkip', function () {
       var st = store(); if (st) st.setItem(DISMISS_KEY, String(now()));
@@ -252,6 +256,7 @@
       e.preventDefault();
       if (!$('hxAgree').checked) { status('Tick the agreement box to continue.'); return; }
       var cam = $('hxCamOk').checked, pas = $('hxPassOk').checked;
+      if (cam && mode !== 'passive') prefetch();
       if ((mode === 'gaze' && !cam) || (mode === 'passive' && !pas)) mode = cam ? 'gaze' : (pas ? 'passive' : null);
       if (!mode) { status('Choose at least one signal type.'); return; }
       status('Saving consent…');
@@ -364,6 +369,7 @@
         S.driftPrompted = true;
         toast('It has been a while since calibration — accuracy drifts as you move. Recalibrate (about 30 seconds)?', [{ label: 'Recalibrate', fn: recalibrate }], 20000);
       }
+      qualityCheck(t);
       var tl = S.timeline && S.timeline.totals;
       if (tl && tl.total > 60000 && tl.low_conf / tl.total > 0.35 && !S.lowPrompted) {
         S.lowPrompted = true;
@@ -433,7 +439,11 @@
       ['Inference', st.inferMs != null ? st.inferMs + ' ms' : '—'], ['Face', Math.round((st.faceRate || 0) * 100) + '%'],
       ['Distance', st.distanceCm ? st.distanceCm + ' cm' : '—'], ['Yaw/pitch', st.yawDeg != null ? st.yawDeg + '°/' + st.pitchDeg + '°' : '—'],
       ['Samples', (st.samples || 0) + ' + ' + (S.implicitN || 0) + ' implicit'], ['Click error', dm != null ? Math.round(dm) + ' px' : '—'],
-      ['AOI', S.lastHit ? S.lastHit.label : '—']];
+      ['AOI', S.lastHit ? S.lastHit.label : '—'], ['Fixations', S.fixN ? S.fixN + ' · ' + Math.round(S.fixMs / S.fixN) + ' ms avg' : '—'],
+      ['Faces', st.faces != null ? String(st.faces) : '—'], ['Light', st.brightness != null ? Math.round(st.brightness) + (st.brightness < 55 ? ' (dark)' : '') : '—'],
+      ['Glare', st.glare != null ? Math.round(st.glare * 1000) / 10 + '%' : '—'], ['Occluded', st.occluded ? 'yes' : 'no'],
+      ['Power', st.thermal ? 'warm: slowed' : st.lowBattery ? 'low battery: slowed' : 'normal'], ['SIMD', st.simd == null ? '—' : st.simd ? 'yes' : 'no'],
+      ['Camera', st.resolution || '—']];
     n.innerHTML = rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('');
   }
 
@@ -535,6 +545,19 @@
   var Engine = window.HelixEngine, Calib = window.HelixCalib, Model = window.HelixModel;
   var IMPLICIT_GATE = 0.25, DRIFT_FACTOR = 1.8;
 
+  function prefetch() { if (Engine && Engine.prefetchCamera && cameraPossible()) { try { Engine.prefetchCamera(); } catch (e) {} } }
+
+  /* iOS can refuse video.play() outside a gesture (low-power mode, autoplay policy): ask for one tap */
+  function tapToStart(engine) {
+    return new Promise(function (resolve, reject) {
+      setPhase('consent');
+      body('<p class="hx-copy">Your browser needs one more tap to show the camera.</p><div class="hx-actions">' +
+        '<button type="button" class="btn btn-brand btn-sm" id="hxTapStart"><i class="bi bi-camera-video" aria-hidden="true"></i> Tap to start camera</button></div>');
+      var b = $('hxTapStart'); if (b) b.focus();
+      on('hxTapStart', function () { engine.resumePlayback().then(function () { resolve(engine); }, reject); });
+    });
+  }
+
   function startCamera() {
     if (!Engine || !Calib) return Promise.reject(new Error('gaze engine missing'));
     status('Loading gaze engine…');
@@ -544,8 +567,13 @@
       S.engine = engine;
       status('Waiting for camera permission…');
       return engine.start();
+    }).catch(function (err) {
+      if (err && err.code === 'play_blocked' && S.engine && S.engine.resumePlayback) return tapToStart(S.engine);
+      throw err;
     }).then(function (engine) {
       engine.on(onFrame);
+      S.fix = Model.FixationDetector ? new Model.FixationDetector({ dispersionPx: 160, minMs: 100 }) : null;
+      S.quality = { darkSince: 0, glareSince: 0, occSince: 0, warned: {} };
       S.drift = new Model.DriftTracker({ window: 7 });
       S.implicitN = 0; S.orientation = Engine.orientationKey();
       attachImplicit();
@@ -562,6 +590,10 @@
 
   var calSink = null;
   function onFrame(ev) {
+    if (ev.notice === 'thermal' && !S.quality.warned.thermal) {
+      S.quality.warned.thermal = true;
+      toast('Your device is running warm, so Helix is checking your gaze less often to save power. Tracking continues.', null, 8000);
+    }
     if (ev.face) S.lastFaceOk = now();
     if (ev.pred) onGaze(ev.pred);
   }
@@ -574,7 +606,16 @@
     S.samples++;
     var f = S.filter.push(raw.x, raw.y);
     if (!f.ok) return;
-    S.lastHit = S.debounce.feed(hitAoi(f.x, f.y), t);
+    // AOI dwell from fixations: a sample counts toward the block the current fixation sits in;
+    // saccades and one-off outliers keep the previous block. If the estimate is too noisy to form
+    // fixations for 600 ms, fall back to the smoothed sample so dwell never freezes.
+    var at = f;
+    if (S.fix) {
+      var done = S.fix.push(t, f.x, f.y), cur = S.fix.current();
+      if (done) { S.fixN = (S.fixN || 0) + 1; S.fixMs = (S.fixMs || 0) + done.dur; }
+      if (cur) { at = cur; S.lastFixT = t; } else if (t - (S.lastFixT || 0) < 600) at = null;
+    }
+    if (at) S.lastHit = S.debounce.feed(hitAoi(at.x, at.y), t);
     trackFine(f.x, f.y, dt);
     if (S.body) {
       var br = S.body.getBoundingClientRect();
@@ -668,6 +709,42 @@
     window.removeEventListener('resize', onResize);
     implicitHandlers = null;
   }
+  /* camera-condition prompts while reading; each shown at most once per session */
+  function qualityCheck(t) {
+    var q = S.quality, e = S.engine; if (!q || !e || !e.stats || $('helixCalib')) return;
+    var st = e.stats();
+    var since = function (k, cond) { if (cond) { if (!q[k]) q[k] = t; } else q[k] = 0; return q[k] ? t - q[k] : 0; };
+    if (since('darkSince', st.brightness != null && st.brightness < 55) > 5000 && !q.warned.dark) {
+      q.warned.dark = true; if (e.exposureHint) e.exposureHint();
+      toast('<strong>It\u2019s a bit dark</strong> for the camera. A lamp in front of you (not behind) makes tracking much steadier.', null, 12000);
+    }
+    if (since('glareSince', st.glare != null && st.glare > 0.04) > 6000 && !q.warned.glare) {
+      q.warned.glare = true;
+      toast('Reflections on your glasses are hiding your eyes. Tilting them down slightly or moving the lamp to the side helps.', null, 12000);
+    }
+    if (since('occSince', !!st.occluded) > 5000 && !q.warned.occ) {
+      q.warned.occ = true;
+      toast('Something is covering part of your face or one eye. Helix pauses estimates until both eyes are visible.', null, 10000);
+    }
+    if (st.faces > 1 && !q.warned.faces) {
+      q.warned.faces = true;
+      toast('Another face is in view. Helix keeps following you, the person it calibrated with.', null, 6000);
+    }
+    // smart recalibration: posture changed enough that the calibration no longer fits
+    if (e.recalCheck && !S.recalPrompted && (!q.lastRecalCheck || t - q.lastRecalCheck > 2000)) {
+      q.lastRecalCheck = t;
+      var r = e.recalCheck();
+      if (r) {
+        q.recalHits = (q.recalHits || 0) + 1;
+        if (q.recalHits >= 3) {   // persisted for ~6 s, not a quick lean
+          S.recalPrompted = true;
+          toast('<strong>You\u2019ve moved</strong> since calibrating: ' + esc((r.label || 'new position').replace(/^Y/, 'y')) + '. A 15-second refresh keeps tracking accurate.',
+            [{ label: 'Quick recalibrate', fn: function () { recalibrate(true); } }], 20000);
+        }
+      } else q.recalHits = 0;
+    }
+  }
+
   function checkDrift() {
     if (!S.calibration || !S.calibration.errorPx || S.recalPrompted) return;
     if (S.drift.drifting(S.calibration.errorPx, DRIFT_FACTOR)) {
@@ -700,7 +777,7 @@
 
   function calibrate(isRecal, quick) {
     setPhase('calibrating', 'Helix · calibrating');
-    body('<p class="hx-copy">Calibrating — ' + (Engine.isMobile() ? 'tap' : 'click') + ' the dots on screen. Press Esc to cancel.</p>');
+    body('<p class="hx-copy">Calibrating — follow the steps on screen. Press Esc to cancel.</p>');
     calSink = true;
     return Calib.run(S.engine, {
       quick: !!quick, skipPositioning: !!quick, minAccuracy: S.server.min_accuracy || 45, goLabel: 'Start reading',
@@ -806,7 +883,8 @@
       renderOffer();
       var dismissed = st && +st.getItem(DISMISS_KEY) > now() - 7 * 864e5;
       if (dismissed && !open) setPhase('idle', 'Helix off');
-      setOpen(!!open || (!dismissed && window.innerWidth >= 992));
+      // start as the small pill: an auto-opened card covered lesson text on first visit
+      setOpen(!!open);
       flushLeftovers();
     }).catch(function () { /* Helix is optional: fail silently */ });
   }

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Helix attention policy — CIWT LMS{% endblock %}
+{% block title %}Helix attention policy — {{ site_name }}{% endblock %}
 {% block content %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
@@ -42,13 +42,24 @@
       <div class="card-body">
         <ol class="mb-0">
           <li><strong>In-browser engine.</strong> MediaPipe Face Landmarker (served from this site, no third-party calls) finds 478 face points including the irises and your head pose; a small per-person model maps them to screen positions. If it cannot load, WebGazer is used instead. Frames are processed in memory and discarded.</li>
-          <li><strong>Calibration.</strong> A short positioning check (distance, centring, head angle, lighting), then you click or tap nine dots while looking at them, then look at five dots without clicking. Helix reports the gap between the dots and its estimate in pixels and degrees of visual angle, and uses it to decide how fine-grained tracking can honestly be (heading, paragraph or line). Below your class threshold it suggests recalibrating, and offers the reading signal instead.</li>
+          <li><strong>Calibration.</strong> A short positioning check (distance, centring, head angle, lighting), then either follow one moving dot with your eyes for about nine seconds and look at three dots, or click/tap nine dots while looking at them; then look at five dots without clicking. Helix reports the gap between the dots and its estimate in pixels and degrees of visual angle, and uses it to decide how fine-grained tracking can honestly be (heading, paragraph or line). Below your class threshold it suggests recalibrating, and offers the reading signal instead.</li>
           <li><strong>Learning as you go.</strong> When you click, tap or type, Helix assumes you were looking there and quietly refines the model. Only the gap (in pixels) is stored, to chart accuracy drift; if it grows, Helix offers a 15-second refresh. Rotating a phone switches to a calibration for that orientation.</li>
           <li><strong>See it yourself.</strong> <a href="{{ url_for('helix.try_page') }}">Try Helix</a> shows a live gaze dot and diagnostics on your own device; nothing on that page is uploaded or saved.</li>
           <li><strong>Smoothing.</strong> Single-frame spikes are rejected against a rolling median, real eye jumps are confirmed over several frames, and a Kalman filter steadies the estimate. Switching between headings needs ~150&nbsp;ms of agreement so jitter is not counted as reading.</li>
           <li><strong>Honest gaps.</strong> If your face is not detected, the tab is hidden, or the estimate is too noisy, that time is labelled as such — never counted as reading and never as “not paying attention”.</li>
-          <li><strong>Drift.</strong> After 12 minutes, if clicks drift away from the estimate, or if confidence stays low, Helix offers a quick recalibration.</li>
+          <li><strong>Drift.</strong> After 12 minutes, if clicks drift away from the estimate, if confidence stays low, or if you have clearly moved (closer, further, turned) for several seconds, Helix offers a quick recalibration.</li>
+          <li><strong>Blinks, glasses and other faces.</strong> Blinks are skipped (looking down at the page is not mistaken for a blink); frames where an eye is covered are dropped; if someone else appears in view Helix keeps following the person it calibrated with. Dwell is counted from <em>fixations</em> (the eye resting in one place), not from every noisy sample.</li>
+          <li><strong>Battery and heat.</strong> On a low battery or a device that is getting warm, Helix checks your gaze less often.</li>
         </ol>
+      </div>
+    </div>
+    <div class="card mb-3" id="on-device">
+      <div class="card-header navy">What leaves your device (and what never does)</div>
+      <div class="card-body">
+        <p class="mb-2"><strong>Never uploaded:</strong> camera video, still frames or snapshots, face images, face-mesh points, iris positions, or the calibration model built from them. All of that lives only in this tab's memory and is gone when the tab closes or you press Stop.</p>
+        <p class="mb-2"><strong>Uploaded (gaze-derived only):</strong> which lesson block you were looking at and for how long, time labelled “face not detected / tab hidden / low confidence / paused”, a coarse 20&nbsp;&times;&nbsp;60 dwell grid of the lesson body, calibration accuracy in pixels and degrees, approximate distance from the screen, and click-versus-estimate gaps for drift charts.</p>
+        <p class="mb-2"><strong>Enforced on the server too.</strong> The Helix upload endpoints refuse any request carrying image, video or face-landmark fields, <code>data:</code> URLs, long encoded blobs, or bodies over 256&nbsp;KB, so even a modified browser cannot store frames here.</p>
+        <p class="mb-0 small text-muted">The face model and its code are served from this site; no third-party service sees your camera. Our automated tests record every network request during a camera session and check that none carries image data.</p>
       </div>
     </div>
     <div class="card mb-3">

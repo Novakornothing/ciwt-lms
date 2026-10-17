@@ -33,6 +33,25 @@ def utcnow():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 app = Flask(__name__)
+
+# ---- Product name: change it here (or set the SITE_NAME / SITE_TAGLINE env vars). Used in every
+# page <title>, the header wordmark, the footer, the sign-in page and site_email_subject().
+SITE_NAME = os.environ.get('SITE_NAME', 'Novak Learning')
+SITE_TAGLINE = os.environ.get('SITE_TAGLINE', 'Info Systems Training')
+app.config['SITE_NAME'] = SITE_NAME
+app.config['SITE_TAGLINE'] = SITE_TAGLINE
+
+
+def site_email_subject(subject):
+    """Subject line for any outgoing email/notification, e.g. '[Novak Learning] Grades posted'."""
+    return f"[{app.config['SITE_NAME']}] {subject}"
+
+
+@app.context_processor
+def _site_brand():
+    return {'site_name': app.config['SITE_NAME'], 'site_tagline': app.config['SITE_TAGLINE']}
+
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ciwt-lms-demo-key-change-in-production')
 
 
@@ -762,11 +781,10 @@ def student_gold_path(user, section):
             'n': len(steps) + 1,
             'title': 'Take the graded test',
             'detail': (
-                test.title + (
-                    ' · last score %.0f%%' % (test_attempt.score or 0)
-                    if test_attempt and test_attempt.score is not None else ''
-                )
-                if test_open else test.title + ' · closed until an instructor opens it'
+                test.title + (' · your score %.0f%%' % test_attempt.score
+                              if test_attempt.score is not None else ' · submitted')
+                if test_attempt else
+                test.title + (' · open now' if test_open else ' · opens when your instructor releases it')
             ),
             'url': url_for('take_test', section_id=section.id, test_id=test.id) if test_open else None,
             'done': bool(test_attempt),
@@ -1275,7 +1293,7 @@ def index():
         if current_user.role == 'instructor':
             return redirect(url_for('instructor_dashboard'))
         return redirect(url_for('student_dashboard'))
-    return render_template('index.html')
+    return render_template('index.html', entry_roles=ENTRY_ROLES)
 
 
 def audit(action, detail=''):
@@ -1294,10 +1312,30 @@ def audit(action, detail=''):
         db.session.rollback()
 
 
+ENTRY_ROLES = {
+    # public role picker -> login hint. key: (label, account role, one-line description)
+    'learn': ('Learn', 'student', 'Lessons, labs, quizzes and your progress.'),
+    'teach': ('Teach', 'instructor', 'Run class, release lessons, grade and review.'),
+    'admin': ('Admin', 'admin', 'Classes, people, curriculum and quality reports.'),
+}
+
+
+@app.route('/start/<entry>')
+def enter(entry):
+    """Role-picker target: signed-in users go to their own home; others to sign-in with a hint."""
+    if entry not in ENTRY_ROLES:
+        return redirect(url_for('index'))
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    return redirect(url_for('login', **{'as': entry}))
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
+    hint = request.values.get('as')
+    hint = hint if hint in ENTRY_ROLES else None
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
@@ -1308,7 +1346,7 @@ def login():
             flash(f'Welcome back, {user.first_name}!', 'success')
             return redirect(url_for('index'))
         flash('Invalid email or password.', 'danger')
-    return render_template('login.html')
+    return render_template('login.html', hint=hint, entry_roles=ENTRY_ROLES)
 
 
 @app.route('/logout')

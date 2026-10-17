@@ -73,6 +73,6 @@
     </table>
     {% if not_opted %}<p class="small text-muted">Enrolled without data ({{ not_opted|length }}): {{ not_opted|map(attribute='full_name')|join(', ') }}. Not taking part is always fine.</p>{% endif %}
   </section>
-  <footer class="hx-report-foot small text-muted">CIWT LMS · Helix attention report · {{ section.name }} · generated {{ generated.strftime('%Y-%m-%d %H:%M') }} UTC · policy v{{ policy_version }}</footer>
+  <footer class="hx-report-foot small text-muted">{{ site_name }} · Helix attention report · {{ section.name }} · generated {{ generated.strftime('%Y-%m-%d %H:%M') }} UTC · policy v{{ policy_version }}</footer>
 </div>
 {% endblock %}

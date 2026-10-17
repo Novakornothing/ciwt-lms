@@ -1,71 +1,38 @@
 {% extends "base.html" %}
-{% block title %}CIWT LMS — Home
-{% endblock %}
+{% block title %}{{ site_name }} — Choose how you're signing in{% endblock %}
 {% block content %}
-<div class="page-hero card-elevated">
-  <div class="row align-items-center g-4">
-    <div class="col-lg-8 position-relative" style="z-index:1">
-      <p class="text-uppercase small mb-2" style="letter-spacing:0.12em;color:var(--accent-bright);font-weight:600">Center for Information Warfare Training</p>
-      <h1 class="h2 mb-2">CIWT Learning Management System</h1>
-      <p class="mb-0">Instructor-controlled release of modules, progress checks, and graded knowledge tests — with class sections, enrollments, and item analysis for Navy Information Systems Technician training.</p>
-    </div>
-    <div class="col-lg-4 text-center position-relative" style="z-index:1">
-      <div class="hero-logo-wrap">
-        <span class="logo-live" role="img" aria-label="Navy mark"></span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card mb-4">
-  <div class="card-header navy">TQI — Training Quality Indicator</div>
-  <div class="card-body">
-    <p class="mb-2">Each class has a TQI packet: end-of-course student critiques (anonymous), instructor closeout, and test item analysis. Sign in to open it.</p>
-    <ul class="mb-3">
-      <li><strong>Student</strong> — home page shows EOC complete / not complete for each class</li>
-      <li><strong>Instructor</strong> — home page shows packet status and missing items</li>
-      <li><strong>Admin</strong> — home page lists every class packet and the TQI board</li>
-    </ul>
-    <a class="btn btn-brand" href="{{ url_for('login') }}">Sign in to open TQI</a>
-  </div>
-</div>
-
-<div class="row g-4">
-  <div class="col-lg-7">
-    <div class="card h-100">
-      <div class="card-header">Sign-in accounts (demo)</div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-sm mb-0 align-middle">
-            <thead class="table-light"><tr><th>Role</th><th>Email</th><th>Password</th></tr></thead>
-            <tbody>
-              <tr><td><span class="role-chip" style="background:#0a1628;color:#e8d48b">Admin</span></td><td><code>admin@lms.local</code></td><td><code>admin123</code></td></tr>
-              <tr><td><span class="badge badge-gold">Instructor</span></td><td><code>instructor@lms.local</code></td><td><code>teach123</code></td></tr>
-              <tr><td><span class="badge badge-live">Student</span></td><td><code>student1@lms.local</code> … <code>student25</code></td><td><code>student123</code></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card-body border-top">
-        <a href="{{ url_for('login') }}" class="btn btn-brand px-4">Sign in to demo</a>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-5">
-    <div class="card h-100">
-      <div class="card-header">Demonstration scope</div>
-      <div class="card-body">
-        <ul class="list-unstyled mb-0">
-          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Admin creates classes &amp; assigns instructors</li>
-          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Instructors enroll students</li>
-          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Timed release of modules &amp; graded tests</li>
-          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Student progress quizzes &amp; knowledge tests</li>
-          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>TQI packet per class (EOC critiques, instructor closeout, item analysis)</li>
-          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Test item analysis for authorized roles</li>
-          <li class="mb-0"><i class="bi bi-check2-circle text-success me-2"></i>Courses: IT Support &amp; Network Operations</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+{% set icons = {'learn': 'bi-book', 'teach': 'bi-easel2', 'admin': 'bi-sliders'} %}
+{% set who = {'learn': 'Students', 'teach': 'Instructors', 'admin': 'Administrators'} %}
+<section class="entry" aria-labelledby="entryTitle">
+  <header class="entry-head">
+    <span class="entry-mark"><span class="logo-live" aria-hidden="true"></span></span>
+    <h1 id="entryTitle" class="entry-title">{{ site_name }}</h1>
+    <p class="entry-sub">{{ site_tagline }}. Choose how you're here today.</p>
+  </header>
+  <ul class="entry-cards" role="list">
+    {% for key, r in entry_roles.items() %}
+    <li>
+      <a class="entry-card entry-{{ key }}" href="{{ url_for('enter', entry=key) }}">
+        <span class="entry-icon"><i class="bi {{ icons[key] }}" aria-hidden="true"></i></span>
+        <span class="entry-text">
+          <span class="entry-name">{{ r[0] }}</span>
+          <span class="entry-who">{{ who[key] }}</span>
+          <span class="entry-desc">{{ r[2] }}</span>
+        </span>
+        <i class="bi bi-arrow-right entry-go" aria-hidden="true"></i>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  <details class="entry-demo">
+    <summary>Demo accounts</summary>
+    <p class="small mb-2">This build ships with demo data. Sign in with:</p>
+    <dl class="entry-demo-list">
+      <dt>Learn</dt><dd><code>student1@lms.local</code> … <code>student25</code> / <code>student123</code></dd>
+      <dt>Teach</dt><dd><code>instructor@lms.local</code> / <code>teach123</code></dd>
+      <dt>Admin</dt><dd><code>admin@lms.local</code> / <code>admin123</code></dd>
+    </dl>
+    <p class="small mb-0"><a href="{{ url_for('demo_guide') }}">Demo walkthrough</a> · <a href="{{ url_for('gaps') }}">Gaps &amp; roadmap</a></p>
+  </details>
+</section>
 {% endblock %}

@@ -1,17 +1,45 @@
 """Helix blueprint: consent, session lifecycle API, dashboards, exports."""
 import csv
 import json
+import re
 from types import SimpleNamespace
 from datetime import datetime, timedelta, timezone
 from io import StringIO
 
-from flask import (Blueprint, Response, abort, current_app, flash, jsonify, redirect,
+from flask import (Blueprint, Response, abort, current_app, flash, jsonify, make_response, redirect,
                    render_template, request, url_for)
 from flask_login import current_user, login_required
 
 from . import analytics as A
 from .models import ENGINE, NON_READING_KEYS, POLICY_VERSION, STATE_KEYS
 
+
+
+PAYLOAD_MAX_BYTES = 256 * 1024
+MEDIA_KEYS = {'frame', 'frames', 'image', 'images', 'img', 'video', 'snapshot', 'jpeg', 'jpg', 'png', 'webp',
+              'pixels', 'imagedata', 'blob', 'landmarks', 'facelandmarks', 'mesh', 'iris'}
+_B64 = re.compile(r'^[A-Za-z0-9+/=_-]{2000,}$')
+
+
+def looks_like_media(obj, depth=0):
+    """True if a JSON payload carries anything resembling camera frames or face geometry."""
+    if depth > 6:
+        return False
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if str(k).lower().replace('_', '').replace('-', '') in MEDIA_KEYS:
+                return True
+            if looks_like_media(v, depth + 1):
+                return True
+    elif isinstance(obj, list):
+        return any(looks_like_media(v, depth + 1) for v in obj[:2000])
+    elif isinstance(obj, str):
+        low = obj[:16].lower()
+        if low.startswith('data:image') or low.startswith('data:video') or low.startswith('blob:'):
+            return True
+        if len(obj) >= 2000 and _B64.match(obj[:5000]):
+            return True
+    return False
 
 def utcnow():
     """Naive UTC now. Replaces the deprecated datetime.utcnow(); stored columns stay naive UTC."""
@@ -88,9 +116,28 @@ def create_blueprint(d, m):
             abort(403)
         return section
 
+    @bp.before_request
+    def _refuse_media_uploads():
+        # runs before auth/session lookups so the refusal does not depend on route order
+        if request.method in ('POST', 'PUT', 'PATCH') and request.path.startswith('/api/helix/'):
+            if (request.content_length or 0) > PAYLOAD_MAX_BYTES:
+                return jsonify(ok=False, error='payload_too_large'), 413
+            if looks_like_media(request.get_json(force=True, silent=True) or {}):
+                return jsonify(ok=False, error='media_not_accepted'), 400
+        return None
+
     def payload():
         # sendBeacon posts with a Blob; accept JSON regardless of content-type.
-        return request.get_json(force=True, silent=True) or {}
+        # Privacy guard: Helix only ever uploads gaze-derived numbers (AOI dwell, segments, a
+        # coarse heat grid, quality stats). Anything that looks like camera data -- image/video
+        # fields, data: URLs, long base64 blobs, raw landmarks -- is refused outright, even from
+        # a modified client, and so are oversized bodies.
+        if (request.content_length or 0) > PAYLOAD_MAX_BYTES:
+            abort(make_response(jsonify(ok=False, error='payload_too_large'), 413))
+        data = request.get_json(force=True, silent=True) or {}
+        if looks_like_media(data):
+            abort(make_response(jsonify(ok=False, error='media_not_accepted'), 400))
+        return data
 
     def mark_stale(sessions):
         cutoff = utcnow() - STALE_AFTER

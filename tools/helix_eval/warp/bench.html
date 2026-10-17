@@ -1,0 +1,53 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Helix warp bench</title>
+<!-- Feeds a directory of JPEG frames through the real Helix MediaPipe engine (_process, the same
+     code path a camera frame takes) and dumps per-frame features / landmarks as JSON.
+     ?seq=<url dir with frames.json>&mode=features|landmarks -->
+<script src="../../../static/js/helix/helix-core.js"></script>
+<script src="../../../static/js/helix/helix-model.js"></script>
+<script src="../../../static/js/helix/helix-engine.js"></script>
+<body>
+<pre id="log">loading…</pre>
+<script>
+(async function () {
+  const q = new URLSearchParams(location.search), seq = q.get('seq'), mode = q.get('mode') || 'features';
+  const log = (s) => { document.getElementById('log').textContent = s; };
+  const base = new URL('../../../static/vendor/mediapipe/', location.href).href;
+  const eng = new HelixEngine.MediaPipeEngine({ numFaces: +(q.get('nf') || 2), bundleUrl: base + 'vision_bundle.mjs', wasmBase: base + 'wasm',
+    modelUrl: base + 'models/face_landmarker.task', delegate: q.get('delegate') || 'CPU', mobile: q.get('mobile') === '1' });
+  await eng.load();
+  const meta = await (await fetch(seq + '/frames.json')).json();
+  const c = document.createElement('canvas'); c.width = meta.w || 640; c.height = meta.h || 480;
+  c.videoWidth = c.width; c.videoHeight = c.height;            // engine reads video.videoWidth/Height
+  const g = c.getContext('2d', { willReadFrequently: true });
+  eng.video = c; eng.running = true;
+  let ev = null; eng.on((e) => { ev = e; });
+  const out = [], fps = meta.fps || 15, t0 = performance.now();
+  const loadImg = (src) => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+  let next = loadImg(seq + '/' + meta.frames[0]);
+  for (let i = 0; i < meta.frames.length; i++) {
+    const im = await next;
+    if (i + 1 < meta.frames.length) next = loadImg(seq + '/' + meta.frames[i + 1]);
+    g.drawImage(im, 0, 0, c.width, c.height);
+    ev = null;
+    eng._process(Math.round(1000 + i * 1000 / fps));
+    const f = ev && ev.feat;
+    if (mode === 'landmarks') {
+      out.push(f ? { lm: f.landmarks.map((p) => [Math.round(p.x * c.width * 100) / 100, Math.round(p.y * c.height * 100) / 100]),
+        pose: f.pose, dist: f.distanceCm } : null);
+    } else {
+      out.push(f ? { vec: f.vec, blink: f.blink, staticBlink: f.staticBlink, occluded: (eng.eyeBase && f.occluded) || null, dist: f.distanceCm, pose: f.pose,
+        q: Object.assign({}, eng.quality), faces: ev.faces, open: f.open, look: f.lookDown, bs: f.blinkScore, face: f.face,
+        eyes: { r: f.eyes.r, l: f.eyes.l } } : { none: true, faces: ev ? ev.faces || 0 : 0, q: Object.assign({}, eng.quality) });
+      // occlusion baseline: the engine sets it at fit(); here, after the calibration phase
+      if (meta.calEnd && i === meta.calEnd) eng.eyeBase = HelixModel.eyeBaseline(out.slice(0, i).filter((x) => x && x.eyes).map((x) => ({ eyes: x.eyes })));
+    }
+    if (i % 25 === 0) log(i + '/' + meta.frames.length);
+  }
+  window.BENCH_OUT = { seq, mode, n: out.length, ms: Math.round(performance.now() - t0), inferMs: Math.round(eng.inferEma * 10) / 10,
+    brightness: eng.brightness, frames: out };
+  window.BENCH_DONE = true; log('done ' + out.length);
+})().catch((e) => { window.BENCH_ERR = String(e && e.stack || e); document.getElementById('log').textContent = 'ERR ' + e; });
+</script>
+</body>

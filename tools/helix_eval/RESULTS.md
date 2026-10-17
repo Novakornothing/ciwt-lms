@@ -117,3 +117,63 @@ error this large.
   thermal/battery throttling, rotation on real hardware.
 - WebGL GPU delegate on a real GPU.
 - Glasses, low light, darker or lighter skin tones, and multiple faces.
+
+## Pass 4: real-face warp proxy (real MediaPipe on real faces, known targets)
+
+**Why:** the synthetic eval feeds the model ideal landmarks. Here the **real MediaPipe Face
+Landmarker (tasks-vision 1.1.1, CPU/WASM, same `HelixEngine._process` code path as the browser)**
+runs on real face video whose eyes were re-rendered to look at known screen points.
+
+**Sources (licence-clean, outside the repo in /workspace/ciwt/testdata):** U.S. CBP vlog (public
+domain, 1080p; used as 640x480 and 1280x720), Presidential Press and Information Office interview
+(CC BY 4.0, 384x288 upscaled), Zara Kay interview (CC0). Datasets with screen targets were checked
+and **not used**: MPIIFaceGaze (CC BY-NC-SA), EOTT / WEyeDS (registration). WebQAmGaze (CC BY 4.0)
+only has WebGazer outputs (its reported validation offsets of ~65-117 px median are context, not
+comparable).
+
+**Warp (tools/helix_eval/warp/gen.py):** per frame, landmarks + head pose are smoothed
+(sigma 1.5 frames); the target's eye-in-head angle is computed from a 1440x900 screen (0.0213
+cm/px, camera top-centre) at the iris-estimated distance; the iris is removed (sclera fill) and
+re-rendered at that angle (4x supersampled), lids follow vertical gaze, iris clipped by the lid
+mask. Conditions: clean, webcam (noise + blur + JPEG 55), low light, glasses glare (frame +
+specular blob), a second face, partial occlusion (hand / one eye), and "moved" (4 cm + 10 %
+closer after calibration, then 12 implicit clicks). Protocol: 9-point calibration (20 frames
+each) -> 16 **unseen** validation points (per-point median error), smooth pursuit (Lissajous,
+9 s, eye trails 2 frames), reading phase with known fixations.
+
+Run: `run.py features <suffix> <dirs>` (headless Chromium, ~25 ms/frame) then
+`node tools/helix_eval/warp/warp_eval.js <suffix> <dirs>`. Full table: warp/RESULTS_v2.md.
+
+| median over 4 sequence sets | baseline engine (pass 3) | pass-4 engine |
+|---|---|---|
+| 9-point -> 16 unseen points, all 28 sequences | 7.74° | 7.97° |
+| held-out subjects only (medvedev, cbp720) | 7.26° | 7.56° |
+| clean / webcam / low light / glare | 7.1 / 7.85 / 8.3 / 8.72° | 6.79 / 7.56 / 8.64 / 9.59° |
+| second face / occlusion | 7.53 / 7.95° | 7.76 / 8.43° |
+| follow-the-dot + 3 dots (what the UI does) | 8.09° | 7.59° |
+| follow-the-dot only | 10.19° | 7.41° |
+| moved 4 cm + 10 % closer, no clicks -> 12 clicks | 7.68 -> 8.20° | 8.70 -> 8.10° |
+| face found | 99-100 % | 99-100 % |
+
+Honest reading of these numbers:
+* **About 7-8° median (~300-400 px at 60 cm) is the floor on this proxy**, for every condition.
+  Base vs pass-4 differences are within about ±1° and change sign by subject. A deterministic
+  A/B of `numFaces` 1 vs 2 moved the medians by a similar amount, so treat sub-1° changes as
+  noise. Per subject: cbp720 (1280x720) ~5.7°, cbp ~6.8°, medvedev ~7°, zara 11-15°
+  (smallest eyes in frame).
+* Diagnostics: MediaPipe's iris landmarks capture only ~40 % of the rendered horizontal iris
+  shift and almost none of the vertical; vertical gaze comes from lid openness / blendshapes.
+  That limits accuracy no matter which model sits on top. The new blink gate keeps looking-down
+  frames (the old rule rejected them) but did not move the medians.
+* After head movement the error is mostly **scatter, not offset**: even an oracle bias
+  correction barely helps (e.g. cbp 350 -> 356 px). So 12 clicks recover only ~0.6°. Tuning
+  head compensation further on this proxy would be fitting noise; the synthetic 4 cm/5° case is
+  unchanged (4.09° -> 1.88° after 20 clicks).
+* Fixations from reading at this accuracy: I-DT finds 2-16 of 57 true fixations with ~0-33 %
+  on the correct line. **Line-level reading is not supported**; heading-level AOIs are what the
+  accuracy supports, which matches what `aoiResolution` already chooses.
+* Caveats: 3 people, only iris/lids are synthesised (no corneal reflection, no real
+  eye-rotation shading), source videos were not looking at a screen, talking and expressions
+  are present, and the pose of low-res sources is noisy. Real users at a real screen can be
+  better (real eye rotation moves more than the iris disc) or worse (real glare, real fatigue).
+  **Nothing here replaces a test with people at a screen.**

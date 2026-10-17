@@ -137,3 +137,49 @@ test('DriftTracker: median window, drift threshold with 120 px floor, recal mark
   assert.strictEqual(d.points[d.points.length - 1].src, 'recal');
   assert.strictEqual(d.points.length, 11);
 });
+
+// ---------------------------------------------------------------- pass 4 robustness helpers
+test('I-DT fixation detector finds fixations and ignores saccade samples', () => {
+  const s = []; let t = 0;
+  const fix = (x, y, n) => { for (let i = 0; i < n; i++) { s.push({ t, x: x + (i % 3) * 5, y: y + (i % 2) * 5 }); t += 33; } };
+  fix(100, 100, 8); s.push({ t, x: 400, y: 120 }); t += 33; fix(700, 140, 9);
+  const f = M.detectFixations(s, { method: 'idt', dispersionPx: 60, minMs: 100 });
+  assert.strictEqual(f.length, 2);
+  assert.ok(Math.abs(f[0].x - 105) < 10 && Math.abs(f[1].x - 705) < 10);
+  const v = M.detectFixations(s, { method: 'ivt', velocityPxPerS: 1500, minMs: 100 });
+  assert.strictEqual(v.length, 2);
+  const d = new M.FixationDetector({ dispersionPx: 60, minMs: 100 });
+  let done = 0; s.forEach((p) => { if (d.push(p.t, p.x, p.y)) done++; });
+  assert.strictEqual(done, 1); assert.ok(d.current() && Math.abs(d.current().x - 705) < 10);
+});
+
+test('BlinkGate: short closure is a blink, sustained narrowing (looking down) is kept', () => {
+  const g = new M.BlinkGate(); let t = 0, blinks = 0, kept = 0;
+  const f = (open, look) => ({ open, lookDown: look || 0, blinkScore: 0 });
+  for (let i = 0; i < 60; i++) { g.update(f(0.3), t); t += 33; }
+  for (let i = 0; i < 4; i++) { if (g.update(f(0.01), t)) blinks++; t += 33; }
+  for (let i = 0; i < 30; i++) { g.update(f(0.3), t); t += 33; }
+  for (let i = 0; i < 40; i++) { if (!g.update(f(0.12, 0.7), t)) kept++; t += 33; }
+  assert.strictEqual(blinks, 4); assert.ok(kept >= 35, 'looking-down frames kept: ' + kept);
+});
+
+test('fitPursuit recovers the eye lag behind a moving dot', () => {
+  const { u } = calibrated(41);
+  const path = [], rows = [];
+  for (let k = 0; k < 300; k++) {
+    const tt = k * 33, s = tt / 1000;
+    path.push({ t: tt, x: u.screenW / 2 + 0.4 * u.screenW * Math.sin(2 * Math.PI * s / 4.5), y: u.screenH / 2 + 0.38 * u.screenH * Math.sin(2 * Math.PI * s / 3 + 0.6) });
+  }
+  for (let k = 5; k < 300; k++) {   // eye trails the dot by 5 frames (165 ms)
+    const f = feats(u, [path[k - 5].x, path[k - 5].y]); if (f && !f.blink) rows.push({ t: path[k].t, vec: f.vec });
+  }
+  const fit = M.fitPursuit(rows, path);
+  assert.ok(fit && Math.abs(fit.lag - 165) <= 40, 'lag ' + (fit && fit.lag));
+});
+
+test('recalTrigger fires on distance and head-turn changes, not on small moves', () => {
+  const base = { distanceCm: 60, yaw: 0, pitch: 0, faceX: 0.5, faceY: 0.5 };
+  assert.strictEqual(M.recalTrigger(base, Object.assign({}, base, { distanceCm: 63, yaw: 0.05 })), null);
+  assert.strictEqual(M.recalTrigger(base, Object.assign({}, base, { distanceCm: 44 })).reason, 'distance');
+  assert.strictEqual(M.recalTrigger(base, Object.assign({}, base, { yaw: 0.25 })).reason, 'head_turn');
+});
