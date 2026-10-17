@@ -66,6 +66,33 @@ On the real lesson page (`helix_lesson_e2e.py`), the server stored:
 Implicit samples were 0 because the gate correctly rejected clicks that were 450+ px from the
 estimate. The video person was not looking at what the script clicked.
 
+### Final re-run (2026-10-17 ~15:20 UTC, same clip, CPU delegate)
+
+| run | engine / delegate | inference | fps (cap) | face | live estimates | validation "error" (not accuracy) |
+|---|---|---|---|---|---|---|
+| Try page, desktop 1280×800 | mediapipe / CPU | 24.8 ms | 10 (15) | 100% | 124 in ~9 s, x SD 287 px, y SD 234 px | 419 px ≈ 16.7° at ~37 cm |
+| Try page, phone emu 390×844 | mediapipe / CPU | 27.3 ms | 11 (15) | 100% | 191, x SD 73 px, y SD 203 px | 321 px ≈ 17.0° at ~28 cm |
+| Lesson page, desktop | mediapipe / CPU | 25.1 ms | 13 (17) | 100% | stored session 35: 140 samples, 6 AOI buckets | 527 px ≈ 20.5° |
+| Lesson page, phone emu | mediapipe / CPU | 22.2 ms | 10 (15) | 100% | stored session 36: 141 samples, 6 AOI buckets, orientation=portrait | 374 px ≈ 19.6° |
+| Try page, SwiftShader "GPU" (desktop) | mediapipe / GPU | 99 ms | 5 (adaptive 6) | 100% | 66, moving | 14.3° |
+
+Every request (`config`, `consent`, `session/start`, `calibrated`, `batch`, `lesson-summary`) returned 200
+with CSRF on. In all runs AOI resolution fell back to `heading`, which is correct for a validation
+error this large.
+
+### Mobile code paths (`tools/helix_mobile_check.py`, emulated Pixel UA, touch, DPR 3)
+
+- `HelixEngine.isMobile()` = true; the track constraint was `facingMode: "user"`; the video had
+  `playsinline` + `webkit-playsinline` + `muted`; the fake camera gave 480×480 @ 15 fps; mobile
+  fps cap = 15.
+- Positioning guidance passed at ~28 cm. Calibration dots used the `touch` class, and 9 taps → 9 dots.
+- Rotate to 844×390: no landscape model existed yet, so a **quick 5-dot** calibration opened. It
+  was completed by tapping.
+- Rotate back to 390×844: "Rotated: using your portrait calibration". No recalibration ran, and
+  31 new estimates followed within 2.5 s.
+- This is *emulation*. Real iOS Safari/Android Chrome permission prompts, `orientationchange`
+  timing, and thermal behaviour are untested.
+
 ## 3. Landmark replay (`node tools/helix_eval/replay.js` → `replay_results.json`)
 
 **Input:** 401 recorded MediaPipe frames (`tests/fixtures/mp_landmarks_face_clip.json`).

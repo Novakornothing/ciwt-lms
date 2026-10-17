@@ -6875,4 +6875,7 @@ _ensure_section_access_table()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5050))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # FLASK_DEBUG=0 turns the Werkzeug debugger off; do that whenever the app is exposed
+    # (e.g. through a cloudflared tunnel for phone testing). Default stays on for local dev.
+    debug = os.environ.get('FLASK_DEBUG', '1').lower() not in ('0', 'false', 'no', 'off')
+    app.run(host='0.0.0.0', port=port, debug=debug)

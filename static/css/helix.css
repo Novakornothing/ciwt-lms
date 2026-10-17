@@ -133,8 +133,8 @@ body.has-mobile-tabbar .helix-dock { bottom: calc(var(--tabbar-h, 64px) + .75rem
 /* try page */
 .hx-try-hero { background: linear-gradient(135deg, #0b1f3a, #12355e); color: #fff; border-radius: 16px; padding: 1.1rem 1.25rem; }
 .hx-try-hero .eyebrow { color: #f0c14b; }
-.hx-try-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
-.hx-try-tile { aspect-ratio: 16 / 9; min-height: 64px; border-radius: 12px; border: 2px solid var(--surface-3, #d8e0ea); background: var(--surface-1, #fff); font-weight: 700; font-size: 1.2rem; color: var(--ink-muted, #5b6b80); transition: background .12s, border-color .12s; }
+.hx-try-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
+.hx-try-tile { min-width: 0; aspect-ratio: 16 / 9; min-height: 64px; border-radius: 12px; border: 2px solid var(--surface-3, #d8e0ea); background: var(--surface-1, #fff); font-weight: 700; font-size: 1.2rem; color: var(--ink-muted, #5b6b80); transition: background .12s, border-color .12s; }
 .hx-try-tile.hot { background: #0ea5e9; border-color: #0369a1; color: #fff; }
 .hx-try-drift { width: 100%; height: 80px; background: var(--surface-2, #f4f7fb); border-radius: 8px; }
 .hx-hud { display: grid; grid-template-columns: auto 1fr; gap: .15rem .75rem; margin: 0; padding: .75rem 1rem; font-size: .85rem; }

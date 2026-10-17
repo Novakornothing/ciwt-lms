@@ -87,6 +87,64 @@ tools/                 shots.py (Playwright screenshots + overflow check) · hel
 - **Student:** `/student/grades` (all sections) and `/student/section/<id>/grades`: a grade ring, letter grade, status, per-item attempts and best/last score, and buttons to take open tests.
 - Built only on the existing `TestAttempt`, `QuizAttempt` and skills-exam data. It never uses Helix data.
 
+## 2b. Pass 3 (2026-10-17): real camera gaze, CSRF, gradebook rules, a11y, deprecations
+
+Commits on `refinement`: `d3f28dd` CSRF · `2bda572` MediaPipe camera pipeline · `dfd8096` deprecations · `9aef0d3` a11y ·
+`288f574` gradebook · `0603182` Helix recap/dashboard/report · plus a final commit (results, mobile check, notes, Try-page grid fix, `FLASK_DEBUG` toggle).
+
+### Camera gaze (top priority)
+- **Engine** (`static/js/helix/helix-engine.js`):
+  - MediaPipe Face Landmarker (tasks-vision 1.1.1, float16 v1 model), **self-hosted** in `static/vendor/mediapipe/`: bundle, WASM and the 3.7 MB `face_landmarker.task`. No CDN at runtime.
+  - Runs in VIDEO mode on 1 face, with iris landmarks, the facial transformation matrix (head pose) and blendshapes.
+  - Delegate: GPU first, then CPU. `?delegate=CPU` forces CPU.
+  - Frame-rate throttle via `requestVideoFrameCallback` with an adaptive target: 15 fps cap on mobile, and it backs off while inference is slow.
+  - Falls back to WebGazer if MediaPipe fails to load. If the camera is denied or unavailable, it falls back to the no-camera reading signal.
+- **Model** (`helix-model.js`): eye features (iris offset in the eye frame, lid openness, gaze-aware blink) plus head pose (yaw/pitch/roll, distance from iris size). These feed a hybrid model: a geometric gaze-ray projection, then a per-user affine ridge, then a residual ridge. It is trained on calibration and **implicit samples** (click, tap and caret focus within a gate radius), adapts online, keeps **one model per orientation**, and logs drift with a `DriftTracker`.
+- **Calibration** (`helix-calib.js`):
+  1. Positioning guidance checks distance, centring, facing, level head, eyes visible and light.
+  2. A 9-dot calibration (click or **tap** on touch devices); 5 dots for a quick recal after rotation.
+  3. A 5-dot validation reports median error in **px and degrees** (96 CSS px/in and the camera's distance estimate), plus precision and band.
+  - **AOI resolution adapts** to the error: heading → paragraph → line.
+- **Mobile:**
+  - front camera (`facingMode: 'user'`), `playsinline`/`webkit-playsinline`/muted video
+  - portrait coordinate mapping and a separate model per orientation: rotating to an orientation that hasn't been calibrated runs a quick 5-dot calibration; rotating back reuses the stored model
+  - phone distance band, battery/heat throttling
+- **Live preview / debug:**
+  - `/helix/try` is public and stores nothing. It shows a gaze dot, gaze-target tiles, implicit click-to-teach, a drift chart and a diagnostics HUD (engine, delegate, fps, inference ms, face %, distance, yaw/pitch, samples).
+  - The lesson dock has a "Debug" HUD toggle and the gaze dot.
+- **Server:** sessions store engine, delegate, validation °, distance, AOI resolution, orientation, implicit sample count, a drift series, and fine (paragraph/line) dwell. **No landmarks or video are ever stored.** Instructor student pages show the drift sparkline.
+- **Measurement:** see `tools/helix_eval/RESULTS.md`; the summary follows.
+  - The synthetic harness (`node tools/helix_eval/eval.js --users 20`) is deterministic.
+    - Baseline: **1.63° median (75 px)**. Low noise: 0.69°. High noise: 4.03°. Phone geometry: 0.88°.
+    - Head moved 4 cm + 5° after calibration: 4.09°, then 1.88° after 20 implicit clicks. A single-ridge ablation scored 9.2° on the same test.
+  - Real-face fake camera (CC0 clip as y4m via `--use-file-for-fake-video-capture`): real MediaPipe on CPU ran at 22–27 ms/frame, found a face in 100% of frames, and gave moving estimates at 10–13 fps on desktop and phone emulation. All API calls returned 200 with CSRF on, and sessions were stored with metadata. The validation "error" (16–20°) is **not accuracy**: the person in the clip isn't looking at the dots.
+  - Replay of 401 recorded frames found that the old blink rule discarded 28% of frames (the person was looking down, not blinking). The fixed rule discards 1%.
+  - **No real person on a real device has been measured yet.** The first live validation will give that number.
+
+### Other pass-3 items
+- **CSRF:**
+  - Flask-WTF `CSRFProtect` covers every form; fetch POSTs send an `X-CSRFToken` header.
+  - Helix `sendBeacon` sends the token in the body, and the server validates it.
+  - Bearer-token APIs are exempt.
+  - Tests cover rejection and acceptance.
+- **Helix extras:**
+  - an encouraging student **reading recap** after each session, with jump links to thin sections and no judgmental wording
+  - an SQL-aggregated, paginated attention dashboard. On a 300-student bench: 345 ms/1.3 MB → about 90–140 ms/250 KB.
+  - a printable/PDF **attention report** (`/instructor/section/<id>/attention/report`)
+- **Gradebook:**
+  - `QuizAttempt.section_id` is set when a quiz is taken. Older attempts are included only if they fall inside the student's enrollment window, and the excluded ones are counted.
+  - a letter-scale editor (validated JSON scale)
+  - late penalties: % per day, a cap, grace hours, and per-item due dates. The grid shows an "L" marker with a tooltip, and the CSV includes the penalty.
+  - signature-checked result cache, invalidated on every write
+  - server-side filter and pagination
+  - fixed a gold-path crash on modules that have labs
+- **Accessibility:**
+  - `tools/a11y_sweep.py` runs axe-core (WCAG 2.1 AA) over 57 page/width combinations: 294 → **0 violations**
+  - fixes: contrast tokens, labels on selects and inputs, keyboard-focusable scroll regions, icon roles
+  - Try-page tile grid no longer overflows at 390 px
+- **Deprecations:** `datetime.utcnow()` → `utcnow()` helper; `Query.get()`/`get_or_404` → `db.session.get`/`db.get_or_404`. pytest runs with 0 warnings.
+- `app.py` honours `FLASK_DEBUG=0`. The default is unchanged (debug on); turn it off whenever the app is exposed through a tunnel.
+
 ## 3. How to run and test
 
 ```bash
@@ -98,19 +156,43 @@ Demo logins: `admin@lms.local / admin123`, `instructor@lms.local / teach123`, `s
 Tests and tools:
 ```bash
 ./venv/bin/pip install -r requirements-dev.txt && ./venv/bin/playwright install chromium
-./venv/bin/python -m pytest -q tests      # 39 tests: per-role 200s, Helix API, gradebook, analytics
-node --test tests/js/                     # 10 tests: helix-core filters, validation, debounce, queue
+./venv/bin/python -m pytest -q tests      # 59 tests: per-role 200s, CSRF, Helix API/engine meta/recap/report, gradebook rules
+node --test tests/js/                     # 20 tests: helix-core + helix-model (features, blink, regressor, orientation, drift)
 ./venv/bin/python smoke_test.py           # public routes
 ./venv/bin/python tools/shots.py <outdir> http://127.0.0.1:5050      # screenshots + overflow check
 ./venv/bin/python tools/helix_e2e.py http://127.0.0.1:5050 <outdir>  # real-browser Helix run (passive + camera UI)
+./venv/bin/python tools/a11y_sweep.py                                  # axe-core WCAG 2.1 AA sweep
+node tools/helix_eval/eval.js --users 20 --json tools/helix_eval/results.json   # synthetic gaze accuracy
+node tools/helix_eval/replay.js --json tools/helix_eval/replay_results.json     # recorded-landmark replay
+# real MediaPipe with a face video as the camera (y4m):
+./venv/bin/python tools/helix_mp_e2e.py http://127.0.0.1:5050 face.y4m <outdir> --delegate CPU [--mobile --viewport 390x844 --tag mobile]
+./venv/bin/python tools/helix_lesson_e2e.py http://127.0.0.1:5050 face.y4m <outdir> --db ciwt_lms.db [--mobile --viewport 390x844 --tag mobile]
+./venv/bin/python tools/helix_mobile_check.py http://127.0.0.1:5050 face.y4m <outdir>   # front cam, playsinline, taps, rotation
 ```
+
+### Testing camera gaze on a real laptop and phone
+- **Laptop:** run `./start_lms.sh` and open `http://localhost:5050/helix/try`. Browsers treat localhost as a secure context.
+  1. Click **Start camera & calibrate** and allow the camera.
+  2. Follow the positioning checks, then click each of the 9 dots while looking at it.
+  3. Look at the 5 validation dots and read the px/° error.
+  4. Look at the tiles. Click a tile while looking at it to teach the model, and watch the drift chart drop.
+  - For a lesson, log in as `student1@lms.local / student123`, open a lesson, choose camera in the Helix dock, and use "Debug" to see the HUD.
+- **Phone (needs HTTPS):**
+  1. On this machine, start the app with the debugger off: `FLASK_DEBUG=0 ./start_lms.sh`.
+  2. Start a tunnel: `/workspace/ciwt/bin/cloudflared tunnel --no-autoupdate --url http://localhost:5050`.
+  3. Open the printed `https://<random>.trycloudflare.com/helix/try` on the phone, with the phone at about 30 cm and at eye level.
+  4. Tap **Start**, allow the camera, then tap each dot while looking at it.
+  5. Rotate the phone and do the quick 5-dot recal; rotate back and check that the portrait model is reused.
+  - Stop the tunnel with Ctrl-C. The URL is public while it runs, so share it only with testers.
 Each pytest run seeds a throwaway SQLite DB through `DATABASE_URL` and never touches `ciwt_lms.db`.
 
 ## 4. Remaining issues and next-pass ideas
-- **No CSRF protection** on any POST form, which is pre-existing app-wide. Add Flask-WTF `CSRFProtect` and exempt the beacon endpoint by token.
-- WebGazer accuracy is limited: it is realistically about 100–200 px under good light. The dashboards therefore work at heading level and show accuracy bands. Line-level claims would not be honest.
-- `datetime.utcnow()` and `Query.get()` deprecation warnings across `app.py`.
+- **Real-device accuracy is unmeasured.** Every camera number so far comes from synthetic landmarks or from a recorded face that isn't looking at the targets. The first real sessions must be checked against the validation readout. The synthetic 1.6–4° figures are a model-level estimate, not a promise.
+- **Untested on real hardware:**
+  - iOS Safari and Android Chrome: permission prompts, `orientationchange` timing, the WebGL GPU delegate, thermal throttling
+  - real GPUs. SwiftShader "GPU" here was 100+ ms/frame, so the e2e runs force CPU.
+  - glasses, low light, varied skin tones, multiple faces
+- Paragraph AOIs need validation error ≤ 0.6 × paragraph height (about 66 px), and line AOIs ≤ 0.75 × line height (about 20 px). Expect heading level on most webcams.
+- The local dev DB `ciwt_lms.db` now holds e2e sessions (students 12 and 13, sessions ~31–36, engine `mediapipe`), created by the fake-camera runs. They are real rows, not demo seed data. Delete them from `/student/attention` as those students if you want a clean demo.
 - `app 2.py`, `tqi(1).html` and the root zips are stale duplicates. They were left in place because the brief says not to delete user content; review and remove them by hand.
-- The gradebook has no letter-scale editor or late-penalty rules yet. Quizzes have no section, so quiz columns count attempts from any section.
-- Helix: a real-camera validation was only exercised with Chromium's fake camera, so it still needs testing on a real laptop. Also possible: a per-heading "reteach" export, and showing students their own heat map.
-- Very large classes would benefit from pagination of the per-student table and from server-side aggregation caching.
+- WebGazer is still vendored as a fallback (large). It could be dropped once MediaPipe is proven on target devices.
