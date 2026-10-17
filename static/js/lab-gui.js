@@ -322,6 +322,7 @@
       if (u.note) det.appendChild(el('p', { class: 'small text-muted', text: u.note }));
     }
     var dlg = dialog ? buildDialog(ad, u) : null;
+    if (!dialog) openedDialog = null;
     var body = el('div', { class: 'w11-aduc' }, [el('div', { class: 'w11-aduc-left' }, [el('div', { class: 'w11-sub small', text: ad.domain }), tree]),
       el('div', { class: 'w11-aduc-right' }, [tb, dlg, list, det])]);
     return frame('Active Directory Users and Computers', 'bi-people', body);
@@ -349,6 +350,7 @@
     return el('div', { class: 'w11-field' }, [el('label', { for: id, class: 'form-label small', text: label }), s]);
   }
   function v(id) { var n = document.getElementById(id); return n ? (n.type === 'checkbox' ? n.checked : n.value) : ''; }
+  var openedDialog = null;
   function buildDialog(ad, u) {
     var box = el('div', { class: 'w11-dialog', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'dlgTitle' });
     var cancel = el('button', { type: 'button', class: 'btn btn-sm btn-outline-navy', text: 'Cancel', onclick: function () { dialog = null; render(); } });
@@ -378,13 +380,23 @@
       box.appendChild(select('mvSel', 'Move to OU', ad.ous));
       box.appendChild(el('div', { class: 'w11-dlg-actions' }, [ok('OK', function () { send('ad:move', { sam: u.sam, ou: v('mvSel') }).then(function (p) { selOU = v('mvSel') || selOU; done(p); }); }), cancel]));
     } else return null;
-    setTimeout(function () { var f = box.querySelector('input, select'); if (f) f.focus(); }, 20);
+    if (openedDialog !== dialog) {   // focus the first field only when the dialog first opens, never on re-render
+      openedDialog = dialog;
+      setTimeout(function () {
+        var live = winHost.querySelector('.w11-dialog');
+        if (!live || live.contains(document.activeElement)) return;   // the user is already typing in it
+        var f = live.querySelector('input, select'); if (f) f.focus();
+      }, 20);
+    }
     return box;
   }
 
   /* ---------------- render */
   function render() {
     var w = gui.win;
+    // keep what the user typed in an open dialog when the window re-renders (server responses re-render)
+    var keep = {}, focusId = document.activeElement && winHost.contains(document.activeElement) ? document.activeElement.id : null;
+    winHost.querySelectorAll('.w11-dialog input, .w11-dialog select').forEach(function (n) { if (n.id) keep[n.id] = n.type === 'checkbox' ? n.checked : n.value; });
     winHost.innerHTML = '';
     document.querySelectorAll('[data-app]').forEach(function (b) { b.classList.toggle('running', b.getAttribute('data-app') === w); });
     if (!w || w === 'start') { winHost.hidden = true; return; }
@@ -392,6 +404,8 @@
     if (!make) { winHost.hidden = true; return; }
     winHost.hidden = false;
     winHost.appendChild(make());
+    Object.keys(keep).forEach(function (id) { var n = document.getElementById(id); if (n) { if (n.type === 'checkbox') n.checked = keep[id]; else n.value = keep[id]; } });
+    if (focusId) { var f = document.getElementById(focusId); if (f) f.focus({ preventScroll: true }); }
   }
 
   /* ---------------- sizing: fit the desk to the visible viewport (portrait + landscape) */
