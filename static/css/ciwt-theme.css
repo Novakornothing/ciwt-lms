@@ -25,7 +25,7 @@
   --surface-4: #c9d6e8;
   --ink: #0a1424;
   --ink-secondary: #33475f;
-  --ink-muted: #5f738c;
+  --ink-muted: #4d5f75;  /* was #5f738c: 4.0:1 on tinted cards, below WCAG AA */
   --success: #0d9f6e;
   --success-bg: #e4f8f1;
   --danger: #d13b3b;
@@ -1706,3 +1706,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   }
 }
 
+
+/* ---- pass 3 accessibility (axe-core WCAG 2.1 AA sweep, tools/a11y_sweep.py) ---- */
+footer, footer span, footer a { color: #aab7c9; }                      /* 9:1 on #030711 */
+.badge-live { color: #07633f; }                                         /* 6.5:1 on success-bg */
+.badge-gold { color: color-mix(in srgb, var(--accent) 45%, #000); }
+.btn-outline-gold { color: color-mix(in srgb, var(--accent) 50%, #000); }
+.ui-callout a:not(.btn) { color: #0a4fb5; }
+[data-theme="dark"] .btn-outline-gold { color: var(--accent-soft); }
+[data-theme="dark"] .ui-callout a:not(.btn) { color: #9cc7ff; }
+/* scrollable tables are keyboard-focusable (tabindex added in templates); show where focus is */
+.table-responsive:focus-visible, .ui-table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -27,7 +27,7 @@
     {% endif %}
     <div class="mb-3">
       <label class="form-label">Category</label>
-      <select name="category" class="form-select" required>
+      <select name="category" class="form-select" required aria-label="Category">
         <option value="error" selected>Error or inaccuracy</option>
         <option value="content">Content question / clarification</option>
         <option value="request">Improvement request</option>
@@ -36,7 +36,7 @@
     </div>
     <div class="mb-3">
       <label class="form-label">Curriculum set</label>
-      <select name="course_id" class="form-select">
+      <select name="course_id" class="form-select" aria-label="Curriculum set">
         <option value="">— Optional —</option>
         {% for c in courses %}
         <option value="{{ c.id }}" {% if pre_course == c.id or (lesson and lesson.module and lesson.module.course_id == c.id) %}selected{% endif %}>

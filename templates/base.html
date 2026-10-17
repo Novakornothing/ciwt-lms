@@ -427,5 +427,30 @@
 })();
 </script>
 {% endif %}
+<script>
+/* a11y: scrollable table wrappers must be reachable by keyboard (WCAG 2.1.1, axe scrollable-region-focusable) */
+(function () {
+  function label(el) {
+    var card = el.closest('.card'), h = card && card.querySelector('.card-header, h2, h3');
+    var cap = el.querySelector('caption');
+    return ((cap && cap.textContent) || (h && h.textContent) || 'Table').replace(/\s+/g, ' ').trim().slice(0, 80) + ' (scrollable)';
+  }
+  function mark() {
+    document.querySelectorAll('.table-responsive, .ui-table-wrap, [data-scroll-region]').forEach(function (el) {
+      var scrolls = el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
+      if (scrolls && !el.hasAttribute('tabindex')) {
+        el.setAttribute('tabindex', '0'); el.setAttribute('role', 'region');
+        if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', label(el));
+        el.setAttribute('data-a11y-scroll', '1');
+      } else if (!scrolls && el.getAttribute('data-a11y-scroll')) {
+        el.removeAttribute('tabindex'); el.removeAttribute('role'); el.removeAttribute('data-a11y-scroll');
+      }
+    });
+  }
+  var t; window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(mark, 250); });
+  if (document.readyState !== 'loading') mark(); else document.addEventListener('DOMContentLoaded', mark);
+  window.addEventListener('load', mark);
+})();
+</script>
 </body>
 </html>

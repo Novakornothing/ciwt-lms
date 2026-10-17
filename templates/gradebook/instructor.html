@@ -111,7 +111,7 @@
       <tbody>
         {% for r in gb.rows %}
         <tr data-risk="{{ 1 if r.at_risk else 0 }}" data-name="{{ r.user.full_name|lower }}">
-          <th scope="row" class="gb-sticky" data-v="{{ r.user.last_name }} {{ r.user.first_name }}"><a href="{{ url_for('instructor_gradebook_student', section_id=section.id, user_id=r.user.id) }}">{{ r.user.last_name }}, {{ r.user.first_name }}</a>{% if r.at_risk %} <i class="bi bi-exclamation-circle-fill text-danger" aria-label="below pass mark"></i>{% endif %}</th>
+          <th scope="row" class="gb-sticky" data-v="{{ r.user.last_name }} {{ r.user.first_name }}"><a href="{{ url_for('instructor_gradebook_student', section_id=section.id, user_id=r.user.id) }}">{{ r.user.last_name }}, {{ r.user.first_name }}</a>{% if r.at_risk %} <i class="bi bi-exclamation-circle-fill text-danger" role="img" aria-label="below pass mark"></i>{% endif %}</th>
           <td data-v="{{ r.grade if r.grade is not none else -1 }}"><strong>{{ r.grade if r.grade is not none else '—' }}</strong> <span class="small text-muted">{{ r.letter if r.grade is not none }}</span></td>
           <td data-v="{{ r.completion }}"><span class="small">{{ r.completion }}%</span></td>
           {% for c in r.cells %}{% if c.item.category != 'quizzes' or show_quizzes %}

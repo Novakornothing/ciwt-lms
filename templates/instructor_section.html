@@ -109,7 +109,7 @@
               <input type="hidden" name="content_id" value="{{ t.id }}">
               <input type="hidden" name="schedule_mode" value="duration">
               <label class="form-label small mb-0">Open for</label>
-              <select name="duration_minutes" class="form-select form-select-sm mb-1">
+              <select name="duration_minutes" class="form-select form-select-sm mb-1" aria-label="Open for">
                 <option value="45">45 min</option>
                 <option value="60">1 hour</option>
                 <option value="75">75 min</option>
@@ -119,7 +119,7 @@
                 <option value="1440">24 hours</option>
               </select>
               <label class="form-label small mb-0">Who</label>
-              <select name="audience" class="form-select form-select-sm mb-1 js-audience">
+              <select name="audience" class="form-select form-select-sm mb-1 js-audience" aria-label="Who">
                 <option value="class" selected>Whole class</option>
                 <option value="students">Selected students</option>
               </select>
@@ -197,7 +197,7 @@
               <input type="hidden" name="section_id" value="{{ section.id }}">
               <div class="mb-3">
                 <label class="form-label">From existing students</label>
-                <select name="user_id" class="form-select">
+                <select name="user_id" class="form-select" aria-label="From existing students">
                   <option value="">— Select —</option>
                   {% for s in available_students %}
                   <option value="{{ s.id }}">{{ s.full_name }} ({{ s.email }})</option>
@@ -206,11 +206,11 @@
               </div>
               <p class="text-center text-muted small">or create by email</p>
               <div class="mb-2">
-                <input type="email" name="email" class="form-control" placeholder="student@example.com">
+                <input type="email" name="email" class="form-control" placeholder="student@example.com" aria-label="New student email">
               </div>
               <div class="row g-2 mb-3">
-                <div class="col"><input type="text" name="first_name" class="form-control" placeholder="First name"></div>
-                <div class="col"><input type="text" name="last_name" class="form-control" placeholder="Last name"></div>
+                <div class="col"><input type="text" name="first_name" class="form-control" placeholder="First name" aria-label="First name"></div>
+                <div class="col"><input type="text" name="last_name" class="form-control" placeholder="Last name" aria-label="Last name"></div>
               </div>
               <button class="btn btn-brand">Enroll</button>
             </form>
@@ -298,7 +298,7 @@
         <p>{{ section.instructor.full_name if section.instructor else 'Unassigned' }}</p>
         {% if instructors %}
         <form method="post" action="{{ url_for('section_set_instructor', section_id=section.id) }}" class="d-flex flex-wrap gap-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <select name="instructor_id" class="form-select" style="max-width:20rem">
+          <select name="instructor_id" class="form-select" style="max-width:20rem" aria-label="Instructor for this class">
             {% for i in instructors %}
             <option value="{{ i.id }}" {% if section.instructor_id == i.id %}selected{% endif %}>{{ i.full_name }}</option>
             {% endfor %}
