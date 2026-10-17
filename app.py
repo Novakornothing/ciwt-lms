@@ -840,9 +840,10 @@ def role_required(*roles):
         from functools import wraps
         @wraps(f)
         def wrapped(*args, **kwargs):
-            if not current_user.is_authenticated or current_user.role not in roles:
-                flash('Access denied.', 'danger')
-                return redirect(url_for('index'))
+            if not current_user.is_authenticated:
+                return login_manager.unauthorized()
+            if current_user.role not in roles:
+                abort(403)
             return f(*args, **kwargs)
         return wrapped
     return decorator
@@ -6778,6 +6779,62 @@ helix_pkg.init_app(app, db, dict(
     can_access_section=lambda user, section: instructor_can_access_section(user, section),
     audit=lambda action, detail='': audit(action, detail),
 ))
+
+_ERRORS = {
+    403: ('bi-shield-lock', "You don't have access to this page",
+          'This page belongs to a different role or class. If you think you should see it, ask your instructor or an administrator.'),
+    404: ('bi-signpost-split', "We couldn't find that page",
+          'The link may be old, or the lesson, class or item may have moved. Check the address or start again from your home page.'),
+    405: ('bi-slash-circle', "That action isn't available here",
+          'The page was opened in a way it does not support. Go back and use the buttons on the page.'),
+    500: ('bi-tools', 'Something went wrong on our side',
+          'The error has been logged. Try again in a moment.'),
+}
+
+
+def _home_url():
+    try:
+        r = current_user.role if current_user.is_authenticated else None
+    except Exception:
+        r = None
+    return url_for({'admin': 'admin_dashboard', 'instructor': 'instructor_dashboard', 'student': 'student_dashboard'}.get(r, 'index'))
+
+
+def _error_page(code, detail=None):
+    if request.path.startswith('/api/') or request.accept_mimetypes.best == 'application/json':
+        return jsonify({'error': {403: 'forbidden', 404: 'not_found', 405: 'method_not_allowed', 500: 'server_error'}.get(code, 'error')}), code
+    icon, title, msg = _ERRORS[code]
+    try:
+        return render_template('error.html', code=code, icon=icon, title=title, message=msg, detail=detail, home_url=_home_url()), code
+    except Exception:   # never let the error page itself fail (e.g. DB down during a 500)
+        return (f'<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title>'
+                f'<main style="font-family:system-ui;max-width:32rem;margin:15vh auto;padding:0 1rem"><h1>{title}</h1><p>{msg}</p>'
+                f'<p><a href="/">Home</a></p></main>'), code
+
+
+@app.errorhandler(403)
+def _e403(e):
+    return _error_page(403)
+
+
+@app.errorhandler(404)
+def _e404(e):
+    return _error_page(404)
+
+
+@app.errorhandler(405)
+def _e405(e):
+    return _error_page(405)
+
+
+@app.errorhandler(500)
+def _e500(e):
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+    return _error_page(500)
+
 
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
