@@ -46,7 +46,7 @@ body.has-mobile-tabbar .helix-dock { bottom: calc(var(--tabbar-h, 64px) + .75rem
 
 /* calibration overlay */
 .helix-calib { position: fixed; inset: 0; z-index: 2100; background: rgba(4,10,20,.92); color: #fff; }
-.hx-cal-help { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(30rem, 80vw); text-align: center; background: rgba(10,20,36,.9);
+.hx-cal-help { position: absolute; left: 50%; top: 32%; transform: translate(-50%, -50%); width: min(30rem, 80vw); text-align: center; background: rgba(10,20,36,.9);
   border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 1rem 1.2rem; }
 .hx-cal-step { font-size: .7rem; font-family: var(--mono, monospace); color: #9fdcff; margin-left: .4rem; vertical-align: middle; }
 .hx-cal-pt { position: absolute; transform: translate(-50%, -50%); width: 44px; height: 44px; border-radius: 50%; border: 0; padding: 0; background: transparent; cursor: crosshair; }
@@ -61,7 +61,10 @@ body.has-mobile-tabbar .helix-dock { bottom: calc(var(--tabbar-h, 64px) + .75rem
 .hx-val-target, .hx-val-est { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; }
 .hx-val-target { width: 26px; height: 26px; border: 2px solid #f0c14b; }
 .hx-val-est { width: 10px; height: 10px; background: #3ec7ff; }
-#webgazerVideoContainer { z-index: 2110 !important; border-radius: 10px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
+#webgazerVideoContainer { z-index: 2110 !important; border-radius: 10px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,.4);
+  /* centred between the 50% and 80/90% target rows; click-through so it can never block a dot */
+  top: calc(64% - 75px) !important; left: calc(50% - 100px) !important; pointer-events: none !important; }
+#webgazerVideoContainer * { pointer-events: none !important; }
 
 @media (max-width: 575.98px) {
   .helix-card { width: calc(100vw - 1.5rem); max-height: 70vh; }
@@ -102,3 +105,6 @@ body.has-mobile-tabbar .helix-dock { bottom: calc(var(--tabbar-h, 64px) + .75rem
   .hx-heat-wrap { grid-template-columns: 1fr; }
   .hx-heat-canvas { max-width: 200px; margin: 0 auto; }
 }
+
+/* instructions sit between target rows (10/20% and 50%); the result card returns to centre once targets are done */
+.hx-cal-help.is-result { top: 50%; z-index: 10; }

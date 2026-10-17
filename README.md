@@ -50,3 +50,7 @@ python smoke_test.py http://127.0.0.1:5050
 - Network Operations Fundamentals
 
 Original instructional content for demonstration only.
+
+## Refinement (2026-10)
+
+See [REFINEMENT_NOTES.md](REFINEMENT_NOTES.md) for the Helix attention package, the gradebook, the mobile shell, and how to run the tests.

@@ -513,6 +513,9 @@
       webgazer.params.showFaceOverlay = true;
       webgazer.params.showFaceFeedbackBox = true;
       webgazer.params.showGazeDot = false;
+      // small preview, parked between calibration rows (see helix.css) so it never covers a target
+      webgazer.params.videoViewerWidth = 200;
+      webgazer.params.videoViewerHeight = 150;
       if (webgazer.saveDataAcrossSessions) webgazer.saveDataAcrossSessions(false);
       if (webgazer.applyKalmanFilter) webgazer.applyKalmanFilter(false); // we run our own median gate + Kalman
       if (webgazer.setRegression) { try { webgazer.setRegression('ridge'); } catch (e) {} }
@@ -567,6 +570,7 @@
   function calibrate(isRecal) {
     return new Promise(function (resolve) {
       setPhase('calibrating', 'Helix · calibrating');
+      body('<p class="hx-copy">Calibrating — follow the dots on screen. Press Esc to cancel.</p>');
       try { webgazer.showVideoPreview(true); webgazer.showFaceFeedbackBox && webgazer.showFaceFeedbackBox(true); } catch (e) {}
       try { webgazer.clearData && isRecal && S.calAttempts > 1 && webgazer.clearData(); } catch (e) {}
       var ov = el('div', { id: 'helixCalib', 'class': 'helix-calib', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'hxCalTitle' });
@@ -651,9 +655,14 @@
       }).join('');
       ov.querySelectorAll('.hx-val-pt').forEach(function (n) { n.remove(); });
       ov.insertAdjacentHTML('beforeend', marks);
-      ov.querySelector('.hx-cal-help').innerHTML =
-        '<h2 class="h5">Accuracy: ' + score.score + '% <span class="hx-acc hx-acc-' + score.band + '">' + score.band + '</span></h2>' +
-        '<p class="mb-2">Average error \u2248 ' + score.errorPx + ' px (rings = targets, dots = Helix estimate).</p>' +
+      var help = ov.querySelector('.hx-cal-help');
+      help.classList.add('is-result');
+      help.innerHTML =
+        (score.valid
+          ? '<h2 class="h5">Accuracy: ' + score.score + '% <span class="hx-acc hx-acc-' + score.band + '">' + score.band + '</span></h2>' +
+            '<p class="mb-2">Average error \u2248 ' + score.errorPx + ' px (rings = targets, dots = Helix estimate).</p>'
+          : '<h2 class="h5">No gaze estimates received <span class="hx-acc hx-acc-poor">poor</span></h2>' +
+            '<p class="mb-2">Helix could not find your face during the check. Make sure your face is inside the camera box and outlined in green.</p>') +
         (ok ? '<p class="mb-2">Good enough for heading-level areas of interest.</p>' : '<p class="mb-2"><strong>Below the class threshold (' + min + '%).</strong> Recalibrating usually helps:</p>' + tips) +
         '<div class="d-flex flex-wrap gap-2 justify-content-center">' +
         (ok ? '<button type="button" class="btn btn-brand" id="hxGo">Start reading</button>' : '') +

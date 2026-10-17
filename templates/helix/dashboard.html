@@ -49,7 +49,7 @@
 </div>
 
 <div class="row g-4">
-  <div class="col-xl-7">
+  <div class="col-12">
     <div class="card h-100">
       <div class="card-header navy d-flex justify-content-between align-items-center"><span>Per-student summary</span><span class="small opacity-75">{{ students|length }} students</span></div>
       <div class="table-responsive">
@@ -76,8 +76,8 @@
         {% if not_opted %}<details class="mt-1"><summary>{{ not_opted|length }} enrolled without data</summary>{{ not_opted|map(attribute='full_name')|join(', ') }}</details>{% endif %}</div>
     </div>
   </div>
-  <div class="col-xl-5">
-    <div class="card mb-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
       <div class="card-header navy">Lessons with timelines</div>
       <div class="list-group list-group-flush">
         {% for L in lessons %}
@@ -91,7 +91,9 @@
         {% endfor %}
       </div>
     </div>
-    <div class="card">
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
       <div class="card-header navy">Class dwell by heading (all lessons)</div>
       <div class="list-group list-group-flush">
         {% for a in aois[:10] %}
