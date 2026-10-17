@@ -80,6 +80,37 @@ def run_flow(pg, kind, path, shot):
     left = pg.evaluate("() => Object.keys(sessionStorage).filter(k => k.startsWith('ciwt-assess:')).length")
     check(f'{kind}: saved answers cleared after submit', left == 0, f'{left} keys')
     pg.screenshot(path=shot('04-results'), full_page=True)
+    # Post/Redirect/Get: results live at their own URL; a reload is a plain GET and records nothing new
+    check(f'{kind}: results have their own URL', '/result/' in pg.url, pg.url)
+    before = attempts(kind)
+    resp = pg.reload(); pg.wait_for_load_state('networkidle')
+    check(f'{kind}: reload is a GET, no resubmit', resp is not None and resp.request.method == 'GET' and '/result/' in pg.url
+          and attempts(kind) == before, f'{resp.request.method if resp else None} attempts {before}->{attempts(kind)}')
+
+def attempts(kind):
+    """Completed attempts for student1 in the DB copy (None without --db)."""
+    if not a.db:
+        return None
+    import sqlite3
+    con = sqlite3.connect(a.db)
+    if kind == 'quiz':
+        n = con.execute('select count(*) from quiz_attempt where user_id=4').fetchone()[0]
+    else:
+        n = con.execute('select count(*) from test_attempt where user_id=4 and completed_at is not null').fetchone()[0]
+    con.close()
+    return n
+
+
+if a.db:
+    # the test must be released to student1; on a fresh DB copy grant it (copy only, never the real DB)
+    import sqlite3
+    con = sqlite3.connect(a.db)
+    sec, tid = a.test.rstrip('/').split('/')[-2:]
+    if not con.execute("select 1 from content_release where section_id=? and content_type='test' and content_id=? and is_active=1",
+                       (sec, tid)).fetchone():
+        con.execute("insert into content_release (section_id, content_type, content_id, user_id, is_active) values (?, 'test', ?, 4, 1)",
+                    (sec, tid)); con.commit()
+    con.close()
 
 with sync_playwright() as p:
     b = p.chromium.launch()
@@ -107,12 +138,9 @@ with sync_playwright() as p:
         cls = pg.locator('#testTimer').get_attribute('class')
         check('test: last-minute timer turns red', 'danger' in (cls or ''), cls)
         pg.screenshot(path=os.path.join(a.out, f'phone-test-05-last-seconds-{a.theme}.png'))
-        try:
-            pg.wait_for_url('**/student/test/**', timeout=1)  # same URL after POST; wait for results text instead
-        except Exception:
-            pass
+        pg.wait_for_url('**/result/**', timeout=15000)
         pg.wait_for_function("() => document.body.innerText.includes('Time expired')", timeout=15000)
-        check('test: auto-submits at zero with a notice', 'Time expired' in pg.locator('main').inner_text())
+        check('test: auto-submits at zero with a notice', 'Time expired' in pg.locator('main').inner_text() and 'timed_out=1' in pg.url, pg.url)
     check('no page JS errors', not errs, '; '.join(errs[:3]))
     b.close()
 json.dump(results, open(os.path.join(a.out, f'phone-e2e-{a.theme}.json'), 'w'), indent=1)

@@ -2945,48 +2945,8 @@ def take_quiz(section_id, quiz_id):
         return redirect(url_for('student_section', section_id=section_id))
     questions = json.loads(quiz.questions)
     if request.method == 'POST':
-        answers = {}
-        correct = 0
-        # Aggregate by focus area — never expose item stems/keys to the student
-        focus_map = {}
-        for i, q in enumerate(questions):
-            ans = request.form.get(f'q{i}')
-            answers[str(i)] = ans
-            is_ok = ans == q.get('correct')
-            if is_ok:
-                correct += 1
-            focus = (
-                q.get('focus')
-                or q.get('lo_text')
-                or q.get('category')
-                or q.get('lo')
-                or 'Core topics in this chapter'
-            )
-            tip = q.get('study_tip') or (
-                'Revisit the related chapter lessons, practice the ordered checks, '
-                'and be able to explain the idea to a peer without looking at notes.'
-            )
-            keywords = q.get('keywords') or []
-            if isinstance(keywords, str):
-                keywords = [k.strip() for k in keywords.split(',') if k.strip()]
-            bucket = focus_map.setdefault(focus, {
-                'focus': focus,
-                'wrong': 0,
-                'total': 0,
-                'tips': [],
-                'keywords': set(),
-            })
-            bucket['total'] += 1
-            if not is_ok:
-                bucket['wrong'] += 1
-                if tip and tip not in bucket['tips']:
-                    bucket['tips'].append(tip)
-            for kw in keywords:
-                bucket['keywords'].add(kw.lower())
-            # derive keywords from focus text for lesson matching
-            for token in re.findall(r'[a-z0-9]{4,}', focus.lower()):
-                bucket['keywords'].add(token)
-
+        answers = {str(i): request.form.get(f'q{i}') for i in range(len(questions))}
+        correct, _ = _quiz_outcome(quiz, module, questions, answers)
         score = (correct / len(questions)) * 100 if questions else 0
         enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first()
         attempt = QuizAttempt(
@@ -2998,46 +2958,107 @@ def take_quiz(section_id, quiz_id):
         if enr:
             enr.progress_percent = min(100.0, enr.progress_percent + 5)
         db.session.commit()
-
-        lessons = Lesson.query.filter_by(module_id=quiz.module_id).order_by(Lesson.order).all()
-        # also pull neighboring modules in the same course for broader study links
-        sibling_lessons = lessons
-        if module and module.course_id:
-            mod_ids = [m.id for m in Module.query.filter_by(course_id=module.course_id).all()]
-            sibling_lessons = Lesson.query.filter(Lesson.module_id.in_(mod_ids)).order_by(Lesson.order).all()
-
-        focus_areas = []
-        for bucket in focus_map.values():
-            if bucket['wrong'] == 0:
-                continue
-            matched = []
-            kws = bucket['keywords']
-            for les in sibling_lessons:
-                title_l = (les.title or '').lower()
-                content_snip = (les.content or '')[:400].lower()
-                if any(kw in title_l or kw in content_snip for kw in kws):
-                    matched.append(les)
-            if not matched:
-                matched = lessons[:3]  # fall back to this chapter's lessons
-            focus_areas.append({
-                'focus': bucket['focus'],
-                'wrong': bucket['wrong'],
-                'total': bucket['total'],
-                'tips': bucket['tips'][:3],
-                'lessons': matched[:5],
-            })
-        focus_areas.sort(key=lambda x: (-x['wrong'], x['focus']))
-
-        section = db.session.get(ClassSection, section_id)
-        return render_template(
-            'quiz_results.html',
-            quiz=quiz, section_id=section_id, module_id=quiz.module_id,
-            score=score, correct=correct, total=len(questions),
-            focus_areas=focus_areas, module=module,
-            gold_path=student_gold_path(current_user, section) if section else None,
-        )
+        # Post/Redirect/Get: the results page has its own URL, so a reload never resubmits the quiz
+        return redirect(url_for('quiz_result', section_id=section_id, quiz_id=quiz_id, attempt_id=attempt.id), code=303)
     mod = db.session.get(Module, quiz.module_id)
     return render_template('quiz.html', quiz=quiz, questions=questions, section_id=section_id, course_id=mod.course_id if mod else None)
+
+
+@app.route('/student/quiz/<int:section_id>/<int:quiz_id>/result/<int:attempt_id>')
+@login_required
+def quiz_result(section_id, quiz_id, attempt_id):
+    attempt = db.get_or_404(QuizAttempt, attempt_id)
+    if attempt.quiz_id != quiz_id or (attempt.user_id != current_user.id and current_user.role not in ('admin', 'instructor')):
+        abort(404)
+    quiz = db.get_or_404(Quiz, quiz_id)
+    module = db.session.get(Module, quiz.module_id)
+    questions = json.loads(quiz.questions)
+    answers = json.loads(attempt.answers or '{}')
+    correct, focus_areas = _quiz_outcome(quiz, module, questions, answers)
+    section = db.session.get(ClassSection, section_id)
+    return render_template(
+        'quiz_results.html',
+        quiz=quiz, section_id=section_id, module_id=quiz.module_id,
+        score=attempt.score if attempt.score is not None else ((correct / len(questions)) * 100 if questions else 0),
+        correct=correct, total=len(questions),
+        focus_areas=focus_areas, module=module,
+        gold_path=student_gold_path(current_user, section) if section and attempt.user_id == current_user.id else None,
+    )
+
+
+def _quiz_outcome(quiz, module, questions, answers):
+    """Score and most-missed focus areas for a quiz attempt, from its stored answers {"0": "B", ...}.
+    Shared by the submit handler and the results page (Post/Redirect/Get)."""
+    correct = 0
+    # Aggregate by focus area — never expose item stems/keys to the student
+    focus_map = {}
+    for i, q in enumerate(questions):
+        ans = answers.get(str(i))
+        is_ok = ans == q.get('correct')
+        if is_ok:
+            correct += 1
+        focus = (
+            q.get('focus')
+            or q.get('lo_text')
+            or q.get('category')
+            or q.get('lo')
+            or 'Core topics in this chapter'
+        )
+        tip = q.get('study_tip') or (
+            'Revisit the related chapter lessons, practice the ordered checks, '
+            'and be able to explain the idea to a peer without looking at notes.'
+        )
+        keywords = q.get('keywords') or []
+        if isinstance(keywords, str):
+            keywords = [k.strip() for k in keywords.split(',') if k.strip()]
+        bucket = focus_map.setdefault(focus, {
+            'focus': focus,
+            'wrong': 0,
+            'total': 0,
+            'tips': [],
+            'keywords': set(),
+        })
+        bucket['total'] += 1
+        if not is_ok:
+            bucket['wrong'] += 1
+            if tip and tip not in bucket['tips']:
+                bucket['tips'].append(tip)
+        for kw in keywords:
+            bucket['keywords'].add(kw.lower())
+        # derive keywords from focus text for lesson matching
+        for token in re.findall(r'[a-z0-9]{4,}', focus.lower()):
+            bucket['keywords'].add(token)
+
+    lessons = Lesson.query.filter_by(module_id=quiz.module_id).order_by(Lesson.order).all()
+    # also pull neighboring modules in the same course for broader study links
+    sibling_lessons = lessons
+    if module and module.course_id:
+        mod_ids = [m.id for m in Module.query.filter_by(course_id=module.course_id).all()]
+        sibling_lessons = Lesson.query.filter(Lesson.module_id.in_(mod_ids)).order_by(Lesson.order).all()
+
+    focus_areas = []
+    for bucket in focus_map.values():
+        if bucket['wrong'] == 0:
+            continue
+        matched = []
+        kws = bucket['keywords']
+        for les in sibling_lessons:
+            title_l = (les.title or '').lower()
+            content_snip = (les.content or '')[:400].lower()
+            if any(kw in title_l or kw in content_snip for kw in kws):
+                matched.append(les)
+        if not matched:
+            matched = lessons[:3]  # fall back to this chapter's lessons
+        focus_areas.append({
+            'focus': bucket['focus'],
+            'wrong': bucket['wrong'],
+            'total': bucket['total'],
+            'tips': bucket['tips'][:3],
+            'lessons': matched[:5],
+        })
+    focus_areas.sort(key=lambda x: (-x['wrong'], x['focus']))
+
+    return correct, focus_areas
 
 
 def _lab_objectives_met(lab_id, done):
@@ -3115,16 +3136,6 @@ def _take_practical(section_id, test, payload):
         answers.update({r['lab_id']: ('pass' if r['done'] else 'fail') for r in rows})
         score = finished / total * 100
         passed = score >= (test.passing_score or 80)
-        categories = []
-        buckets = {}
-        for r in rows:
-            b = buckets.setdefault(r['area'], {'correct': 0, 'total': 0})
-            b['total'] += 1
-            if r['done']:
-                b['correct'] += 1
-        for cat, v in sorted(buckets.items()):
-            pct = round(v['correct'] / v['total'] * 100, 1) if v['total'] else 0
-            categories.append({'category': cat, 'correct': v['correct'], 'total': v['total'], 'pct': pct})
         open_attempt.answers = json.dumps(answers)
         open_attempt.score = score
         open_attempt.passed = passed
@@ -3132,13 +3143,7 @@ def _take_practical(section_id, test, payload):
         db.session.commit()
         if timed_out:
             flash('Time expired — stations completed so far were graded.', 'info')
-        return render_template(
-            'test_results.html',
-            test=test, section_id=section_id, score=score, passed=passed,
-            correct=finished, total=len(rows), categories=categories,
-            attempt_id=open_attempt.id, timed_out=timed_out,
-            gold_path=None,
-        )
+        return _redirect_to_test_result(section_id, test.id, open_attempt.id, timed_out)
     return render_template(
         'skills_practical.html',
         test=test, section_id=section_id, stations=rows,
@@ -3185,7 +3190,6 @@ def take_test(section_id, test_id):
                 correct += 1
         score = (correct / len(questions)) * 100 if questions else 0
         passed = score >= test.passing_score
-        categories = _category_breakdown(questions, answers)
         open_attempt.answers = json.dumps(answers)
         open_attempt.score = score
         open_attempt.passed = passed
@@ -3194,14 +3198,7 @@ def take_test(section_id, test_id):
         audit('test_submit', f'test={test_id} section={section_id} score={score:.0f}')
         if timed_out:
             flash('Time expired — your answers were submitted and graded automatically.', 'info')
-        section = db.session.get(ClassSection, section_id)
-        return render_template(
-            'test_results.html',
-            test=test, section_id=section_id, score=score, passed=passed,
-            correct=correct, total=len(questions), categories=categories,
-            attempt_id=open_attempt.id, timed_out=timed_out,
-            gold_path=student_gold_path(current_user, section) if section else None,
-        )
+        return _redirect_to_test_result(section_id, test_id, open_attempt.id, timed_out)
 
     # GET — start or resume attempt; compute remaining seconds for timer
     if not open_attempt:
@@ -3227,6 +3224,57 @@ def take_test(section_id, test_id):
         course_id=test.course_id, remaining_seconds=remaining, attempt_id=open_attempt.id,
     )
 
+
+
+def _redirect_to_test_result(section_id, test_id, attempt_id, timed_out=False):
+    """Post/Redirect/Get: after grading, send the browser to the attempt's own results URL so a reload
+    (or Back then Forward) never offers to resubmit the test. 303 makes the follow-up request a GET."""
+    return redirect(url_for('test_result', section_id=section_id, test_id=test_id, attempt_id=attempt_id,
+                            timed_out=1 if timed_out else None), code=303)
+
+
+@app.route('/student/test/<int:section_id>/<int:test_id>/result/<int:attempt_id>')
+@login_required
+def test_result(section_id, test_id, attempt_id):
+    attempt = db.get_or_404(TestAttempt, attempt_id)
+    if (attempt.test_id != test_id or attempt.section_id not in (None, section_id)
+            or (attempt.user_id != current_user.id and current_user.role not in ('admin', 'instructor'))):
+        abort(404)
+    if attempt.completed_at is None:          # still in progress: back to the test itself
+        return redirect(url_for('take_test', section_id=section_id, test_id=test_id))
+    test = db.get_or_404(KnowledgeTest, test_id)
+    questions = json.loads(test.questions or '[]')
+    answers = json.loads(attempt.answers or '{}')
+    own = attempt.user_id == current_user.id
+    gold_path = None
+    if is_practical_payload(questions):
+        buckets, correct, total = {}, 0, 0
+        for i, st in enumerate(stations_of(questions)):
+            lab = get_lab(st['lab_id']) or {}
+            area = st.get('area') or lab.get('title') or st['lab_id']
+            done = answers.get(st['lab_id'], answers.get(str(i))) == 'pass'
+            b = buckets.setdefault(area, {'correct': 0, 'total': 0})
+            b['total'] += 1; total += 1
+            if done:
+                b['correct'] += 1; correct += 1
+        categories = [{'category': c, 'correct': v['correct'], 'total': v['total'],
+                       'pct': round(v['correct'] / v['total'] * 100, 1) if v['total'] else 0}
+                      for c, v in sorted(buckets.items())]
+    else:
+        correct = sum(1 for i, q in enumerate(questions)
+                      if answers.get(str(i)) is not None and answers.get(str(i)) == q.get('correct'))
+        total = len(questions)
+        categories = _category_breakdown(questions, answers)
+        section = db.session.get(ClassSection, section_id)
+        if section and own:
+            gold_path = student_gold_path(current_user, section)
+    return render_template(
+        'test_results.html',
+        test=test, section_id=section_id, score=attempt.score or 0, passed=bool(attempt.passed),
+        correct=correct, total=total, categories=categories,
+        attempt_id=attempt.id, timed_out=request.args.get('timed_out') == '1',
+        gold_path=gold_path,
+    )
 
 # ---------- Instructor ----------
 

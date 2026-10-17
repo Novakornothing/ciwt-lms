@@ -139,7 +139,7 @@ def test_take_quiz_records_section(student, app, mod, ids):
         q = mod.db.session.get(mod.Quiz, ids['quiz'])
         n_q = len(q.questions) if hasattr(q, 'questions') else 0
     r = student.post(f"/student/quiz/{ids['section']}/{ids['quiz']}", data={}, follow_redirects=False)
-    assert r.status_code in (200, 302)
+    assert r.status_code == 303 and '/result/' in r.headers['Location']
     with app.app_context():
         a = mod.QuizAttempt.query.filter_by(user_id=ids['student1'], quiz_id=ids['quiz']).order_by(mod.QuizAttempt.id.desc()).first()
         assert a is not None and a.section_id == ids['section']
