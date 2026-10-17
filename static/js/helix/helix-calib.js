@@ -46,7 +46,8 @@
         '<div class="hx-pos"><div class="hx-pos-video"><svg class="hx-pos-oval" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="48" rx="23" ry="33"/></svg></div>' +
         '<ul class="hx-pos-checks" id="hxPosChecks"></ul></div>' +
         '<p class="small mb-2" id="hxPosHint">' + (engine.mobile ? 'Hold the phone upright at about a forearm\u2019s length, camera at eye level.' : 'Sit about an arm\u2019s length from the screen, camera at eye level.') + '</p>' +
-        (canFollow(engine) ? '<fieldset class="hx-method mb-2"><legend class="small mb-1">How would you like to calibrate?</legend>' +
+        (canFollow(engine) && opts.lockMethod ? '<p class="small mb-2">This round uses <strong>' + (opts.method === 'follow' ? 'follow the dot' : 'dots') + '</strong> (assigned by the study so methods stay balanced).</p>' : '') +
+        (canFollow(engine) && !opts.lockMethod ? '<fieldset class="hx-method mb-2"><legend class="small mb-1">How would you like to calibrate?</legend>' +
           '<label class="hx-method-opt"><input type="radio" name="hxMethod" value="follow"' + (opts.method === 'follow' ? ' checked' : '') + '> <span><strong>Follow a moving dot</strong><small>about 15 s, no clicking</small></span></label>' +
           '<label class="hx-method-opt"><input type="radio" name="hxMethod" value="dots"' + (opts.method !== 'follow' ? ' checked' : '') + '> <span><strong>Tap ' + (opts.quick ? 5 : 9) + ' dots</strong><small>about 15 s, most reliable</small></span></label></fieldset>' : '') +
         '<div class="d-flex flex-wrap gap-2 justify-content-center"><button type="button" class="btn btn-brand" id="hxPosGo" disabled>Start calibration</button>' +

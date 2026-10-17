@@ -45,7 +45,7 @@
       return E.create(Object.assign({ prefer: 'auto' }, ENG)).then(function (eng) { engine = eng; return eng.start(); })
         .then(function () {
           state('Round ' + (round + 1) + ': ' + label(a));
-          return Calib.run(engine, { method: a.method, minAccuracy: 0, goLabel: 'Save this result', allowPassive: false, quick: false });
+          return Calib.run(engine, { method: a.method, lockMethod: true, minAccuracy: 0, goLabel: 'Save this result', allowPassive: false, quick: false });
         });
     }).then(function (r) {
       if (!r) return;
