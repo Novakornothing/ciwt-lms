@@ -47,7 +47,7 @@ def test_every_core_lesson_has_required_parts(key):
              'Diagnose', 'Isolate', 'Select', 'Collect', 'Distinguish', 'Respond', 'Contain', 'Preserve', 'Evaluate',
              'Create', 'Navigate', 'Read', 'Set', 'Recover', 'Map', 'Describe', 'Calculate', 'Document', 'Prepare',
              'Test', 'Replace', 'Confirm', 'Reset', 'Locate', 'Draft', 'Perform', 'Protect', 'Analyze', 'Recognise',
-             'Estimate', 'Troubleshoot', 'Restore', 'Move', 'Share', 'Back', 'Route', 'Connect', 'Manage', 'Triage', 'Repair')
+             'Estimate', 'Troubleshoot', 'Restore', 'Move', 'Share', 'Back', 'Route', 'Connect', 'Manage', 'Triage', 'Repair', 'Update')
     for o in spec['objectives']:
         assert o.split()[0] in verbs, f'{key}: objective does not start with a measurable verb: {o}'
     assert 'class="check-box cfu"' in html and html.count('<details>') >= 2, f'{key}: needs ≥ 2 check-for-understanding questions'

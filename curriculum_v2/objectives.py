@@ -74,6 +74,7 @@ _IT = [
     ('IT-12.1', 12, 'Follow change management: approvals, windows, rollback and documentation', 'Apply'),
     ('IT-12.2', 12, 'Apply privacy, acceptable-use and professional-conduct policies', 'Apply'),
     ('IT-12.3', 12, 'Plan and verify backup and recovery, distinguishing backup, RAID and snapshots', 'Evaluate'),
+    ('IT-12.4', 12, 'Write operational documentation: knowledge-base articles, runbooks and asset records another technician can use', 'Create'),  # pass 9
     ('IT-13.1', 13, 'Collect system and network evidence from the Windows command line and PowerShell', 'Apply'),
     ('IT-13.2', 13, 'Resolve a client name-resolution or lease fault end to end in a lab VM', 'Apply'),
     ('IT-13.3', 13, 'Use process, netsh and Settings views to confirm a state before changing it', 'Apply'),
