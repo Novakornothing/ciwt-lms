@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "helix/_macros.html" import band_badge, demo_ribbon with context %}
+{% block title %}Calibration quality — {{ section.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My classes</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('helix.instructor_attention', section_id=section.id) }}">Attention</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Calibration</li></ol></nav>
+
+<div class="page-hero">
+  <div class="eyebrow">Helix attention · calibration quality</div>
+  <h1 class="h3 mb-1">How well the camera worked for each student</h1>
+  <p class="mb-0">Use this to judge how far to trust the attention data and who might need help setting up (lighting, camera position). It says nothing about how well anyone learns.</p>
+</div>
+<div class="d-flex flex-wrap gap-2 mb-3">{{ demo_ribbon(demo) }}</div>
+
+<div class="hx-kpis mb-3">
+  <div class="kpi-card"><div class="kpi-label">Camera sessions</div><div class="kpi-value">{{ kpi.sessions }}</div><div class="kpi-sub">{{ kpi.students }} student{{ 's' if kpi.students != 1 }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Median calibration time</div><div class="kpi-value">{{ kpi.median_calib_s if kpi.median_calib_s is not none else '—' }}{% if kpi.median_calib_s is not none %}<small> s</small>{% endif %}</div><div class="kpi-sub">{{ kpi.timed_sessions }} timed session{{ 's' if kpi.timed_sessions != 1 }} (timing recorded since pass 10)</div></div>
+  <div class="kpi-card"><div class="kpi-label">Median error</div><div class="kpi-value">{{ (kpi.median_deg ~ '°') if kpi.median_deg else '—' }}</div><div class="kpi-sub">Good {{ kpi.bands['Good'] }} · Fair {{ kpi.bands['Fair'] }} · Poor {{ kpi.bands['Poor'] }} · none {{ kpi.bands['Not calibrated'] }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Recalibrations · re-checks</div><div class="kpi-value">{{ kpi.recals }} · {{ kpi.rechecks }}</div><div class="kpi-sub">{{ kpi.camera_losses }} camera interruption{{ 's' if kpi.camera_losses != 1 }}</div></div>
+</div>
+
+<div class="card">
+  <div class="card-header navy">Per student (lowest accuracy first)</div>
+  <div class="table-responsive"><table class="table table-sm align-middle mb-0 table-stack">
+    <thead><tr><th>Student</th><th>Camera sessions</th><th>Accuracy</th><th>Median error</th><th>Calibration time</th><th>Recal. · re-checks</th><th>Last re-check</th><th>Interruptions</th><th>Device / camera</th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr>
+        <td data-label="Student"><a href="{{ url_for('helix.instructor_attention_student', section_id=section.id, user_id=r.user_id) }}">{{ r.name }}</a>{% if r.demo %} <span class="badge text-bg-warning">demo</span>{% endif %}</td>
+        <td data-label="Camera sessions">{{ r.sessions }}</td>
+        <td data-label="Accuracy">{{ (r.median_score|int ~ '%') if r.median_score is not none else '—' }} {{ band_badge(r.band) }}</td>
+        <td data-label="Median error">{{ (r.median_deg ~ '°') if r.median_deg is not none else '—' }}</td>
+        <td data-label="Calibration time">{{ (r.median_calib_s ~ ' s') if r.median_calib_s is not none else '—' }}{% if r.modes %} <span class="small text-muted">({{ r.modes|dictsort|map('first')|join(', ') }})</span>{% endif %}</td>
+        <td data-label="Recal. · re-checks">{{ r.recals }} · {{ r.rechecks }}</td>
+        <td data-label="Last re-check">{% if r.recheck_px is not none %}~{{ r.recheck_px }} px{% if r.recheck_deg is not none %} / {{ r.recheck_deg }}°{% endif %}{% else %}—{% endif %}</td>
+        <td data-label="Interruptions"><span title="camera lost · device asleep · moved to another tab">{{ r.camera_losses }} · {{ r.sleeps }} · {{ r.tab_yields }}</span></td>
+        <td data-label="Device / camera">{{ r.devices|join(', ') }}{% if r.res %} · {{ r.res|join(', ') }}{% endif %}</td>
+      </tr>{% else %}<tr><td colspan="9" class="text-muted">No camera sessions in this class yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+  <div class="card-footer small text-muted">Interruptions: camera lost (unplugged, permission turned off or taken by another app) · device asleep or page suspended · Helix moved to another tab. Those periods are not counted as reading time.</div>
+</div>
+{% endblock %}

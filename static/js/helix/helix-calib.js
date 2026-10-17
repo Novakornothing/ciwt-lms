@@ -203,7 +203,7 @@
   function validate(ov, engine, opts) {
     ov.querySelectorAll('.hx-cal-pt').forEach(function (b) { b.remove(); });
     if (engine.showPreview) engine.showPreview(false);
-    help(ov, '<h2 id="hxCalTitle" class="h5">Quick check <span class="hx-cal-step">step 3 of 3</span></h2><p class="mb-0">Just <strong>look</strong> at each dot as it appears \u2014 no clicking. About 8 seconds.</p>');
+    help(ov, '<h2 id="hxCalTitle" class="h5">' + (opts.checkOnly ? 'Accuracy re-check' : 'Quick check <span class="hx-cal-step">step 3 of 3</span>') + '</h2><p class="mb-0">Just <strong>look</strong> at each dot as it appears \u2014 no clicking. About 8 seconds.</p>');
     progress(ov, 0.7, 'Checking accuracy');
     var nDone = 0;
     var target = el('div', { 'class': 'hx-val-pt', 'aria-hidden': 'true' }); ov.appendChild(target);
@@ -237,6 +237,12 @@
       if (score.errorDeg != null) score.errorDeg = Math.round(score.errorDeg * 10) / 10;
       score.resolution = score.valid ? Model.aoiResolution(score.errorPx, opts.metrics) : 'heading';
       score.engine = engine.kind; score.delegate = engine.delegate; score.points = results.length;
+      // per-target summary for the accuracy study: target position as a fraction of the viewport,
+      // median distance of the filtered estimates from it, and how many estimates there were
+      score.perPoint = results.map(function (r) {
+        var ds = r.samples.map(function (q) { return Math.hypot(q.x - r.x, q.y - r.y); }).sort(function (a, b) { return a - b; });
+        return { fx: Math.round(r.x / w * 1000) / 1000, fy: Math.round(r.y / h * 1000) / 1000, err: ds.length ? Math.round(ds[ds.length >> 1]) : null, n: ds.length };
+      });
       return { score: score, results: results };
     });
   }
@@ -322,5 +328,47 @@
     return once().then(close, function (e) { close(); throw e; });
   }
 
-  window.HelixCalib = { run: run, FULL: FULL, QUICK: QUICK, VAL: VAL, ANCHORS: ANCHORS, pursuitPos: pursuitPos, PURSUIT_S: PURSUIT_S };
+  /* Pass 10: "Re-check accuracy". Runs only the 5-dot look-only check (about 8 s) through the
+     current model, without positioning or retraining, and shows the result next to the error
+     measured at calibration. Resolves {action: 'go'|'retry', score}. */
+  function check(engine, opts) {
+    opts = opts || {};
+    var ov = overlay(), t0 = Date.now();
+    opts = Object.assign({ checkOnly: true }, opts);
+    var esck = function (e) { if (e.key === 'Escape' && ov._esc) ov._esc(); };
+    document.addEventListener('keydown', esck);
+    var close = function (out) { document.removeEventListener('keydown', esck); ov.remove(); return out; };
+    return validate(ov, engine, opts).then(function (v) {
+      v.score.calibMs = Date.now() - t0; v.score.calibMode = 'recheck';
+      if (opts.onValidated) opts.onValidated(v.score, 1);
+      return new Promise(function (resolve) {
+        var s = v.score, prev = opts.previous, min = opts.minAccuracy || 45, ok = s.valid && s.score >= min;
+        var cmp = prev && prev.errorPx != null && s.valid
+          ? '<p class="small mb-2">At calibration: ~' + prev.errorPx + ' px' + (prev.errorDeg != null ? ' (' + prev.errorDeg + '\u00b0)' : '') + '. Now: ~' + s.errorPx + ' px' + (s.errorDeg != null ? ' (' + s.errorDeg + '\u00b0)' : '') + '.</p>' : '';
+        help(ov, (s.valid ? '<h2 id="hxCalTitle" class="h5">Accuracy now: ' + s.score + '% <span class="hx-acc hx-acc-' + s.band + '">' + s.band + '</span></h2>' + cmp
+            : '<h2 id="hxCalTitle" class="h5">No gaze estimates during the check <span class="hx-acc hx-acc-poor">poor</span></h2><p class="mb-2">Helix could not see your eyes. Check the lighting and that your face is in view.</p>') +
+          (ok ? '<p class="small mb-2">Your calibration still fits. Nothing was retrained.</p>' : '<p class="small mb-2"><strong>Below ' + min + '%.</strong> A recalibration (about 30 s) usually fixes this.</p>') +
+          '<div class="d-flex flex-wrap gap-2 justify-content-center"><button type="button" class="btn ' + (ok ? 'btn-brand' : 'btn-outline-light') + '" id="hxChkDone">Back to reading</button>' +
+          '<button type="button" class="btn ' + (ok ? 'btn-outline-light' : 'btn-brand') + '" id="hxChkRecal">Recalibrate</button></div>', 'is-result');
+        ov.querySelector('#hxChkDone').addEventListener('click', function () { resolve({ action: 'go', score: s }); });
+        ov.querySelector('#hxChkRecal').addEventListener('click', function () { resolve({ action: 'retry', score: s }); });
+        ov._esc = function () { resolve({ action: 'go', score: s }); };
+        var first = ov.querySelector('.hx-cal-help .btn'); if (first) first.focus();
+      });
+    }).then(close, function (e) { close(); throw e; });
+  }
+
+  /* Accuracy-study record (pass 10): numbers only. No frames, landmarks or gaze samples. */
+  window.HelixStudy = window.HelixStudy || {};
+  window.HelixStudy.payload = function (sc, st) {
+    sc = sc || {}; st = st || {};
+    return {
+      valid: !!sc.valid, score: sc.score, error_px: sc.errorPx, error_deg: sc.errorDeg, precision_px: sc.precisionPx,
+      distance_cm: sc.distanceCm, calib_ms: sc.calibMs, engine: sc.engine || st.engine || '', delegate: sc.delegate || st.delegate || '',
+      camera_res: st.videoW ? st.videoW + 'x' + st.videoH : '', viewport_w: innerWidth, viewport_h: innerHeight,
+      dpr: Math.round((window.devicePixelRatio || 1) * 100) / 100, points: sc.perPoint || []
+    };
+  };
+
+  window.HelixCalib = { run: run, check: check, FULL: FULL, QUICK: QUICK, VAL: VAL, ANCHORS: ANCHORS, pursuitPos: pursuitPos, PURSUIT_S: PURSUIT_S };
 })();

@@ -130,8 +130,11 @@
   };
 
   /* ---------- State timeline: segments, buckets, totals ---------- */
+  // pass 10: camera off (unplugged / permission revoked) counts as no face; another tab holding
+  // Helix and a sleeping device count as hidden. None of these is ever reading attention.
   var CATEGORY = { off_page: 'off_page', chrome: 'off_page', _idle: 'off_page', _paused: 'off_page',
-                   _face_lost: 'face_lost', _hidden: 'hidden', _low_conf: 'low_conf' };
+                   _face_lost: 'face_lost', _camera_off: 'face_lost', _hidden: 'hidden', _other_tab: 'hidden',
+                   _asleep: 'hidden', _low_conf: 'low_conf' };
   function categoryOf(key) { return CATEGORY[key] || 'attentive'; }
 
   function StateTimeline(t0) {

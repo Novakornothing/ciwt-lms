@@ -24,7 +24,7 @@ mimetypes.add_type('text/javascript', '.mjs')
 
 from types import SimpleNamespace
 
-from .models import ENGINE, POLICY_VERSION, define_models, ensure_schema  # noqa: F401
+from .models import ENGINE, POLICY_VERSION, STUDY_VERSION, define_models, ensure_schema  # noqa: F401
 
 
 def init_app(app, db, deps):

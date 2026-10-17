@@ -11,7 +11,7 @@ from flask import (Blueprint, Response, abort, current_app, flash, jsonify, make
 from flask_login import current_user, login_required
 
 from . import analytics as A
-from .models import ENGINE, NON_READING_KEYS, POLICY_VERSION, STATE_KEYS
+from .models import ENGINE, NON_READING_KEYS, POLICY_VERSION, STATE_KEYS, STUDY_VERSION
 
 
 
@@ -187,7 +187,31 @@ def create_blueprint(d, m):
                 'granted_at': c.granted_at.isoformat() + 'Z' if c else None,
             },
             'can_record': can_record(section_id),
+            'study': {'granted': study_consented(current_user.id), 'version': STUDY_VERSION},
+            'calib_defaults': calib_defaults(),
         })
+
+    # ------------------------------------------------------------ accuracy study (pass 10)
+    DEVICES = ('desktop', 'tablet', 'mobile')
+    BUILTIN_DEFAULTS = {dv: {'method': 'dots', 'hires': False, 'basis': 'built-in default (no study evidence yet)'}
+                        for dv in DEVICES}
+    StudyConsent, Record, CalibDefault = m.HelixStudyConsent, m.HelixAccuracyRecord, m.HelixCalibDefault
+
+    def study_consent_row(user_id):
+        return (StudyConsent.query.filter_by(user_id=user_id, revoked_at=None)
+                .order_by(StudyConsent.granted_at.desc()).first())
+
+    def study_consented(user_id):
+        c = study_consent_row(user_id)
+        return bool(c and c.version == STUDY_VERSION)
+
+    def calib_defaults():
+        out = {k: dict(v) for k, v in BUILTIN_DEFAULTS.items()}
+        for row in CalibDefault.query.all():
+            if row.device in out:
+                out[row.device] = {'method': row.method if row.method in ('dots', 'follow') else 'dots',
+                                   'hires': bool(row.hires) and row.device == 'desktop', 'basis': row.basis or ''}
+        return out
 
     def grant(camera_ok, passive_ok):
         for old in Consent.query.filter_by(user_id=current_user.id, revoked_at=None).all():
@@ -277,6 +301,20 @@ def create_blueprint(d, m):
     def session_calibrated(session_id):
         sess = owned_session(session_id)
         data = payload()
+        if data.get('recheck'):
+            # "Re-check accuracy": validation only, the calibration itself is unchanged
+            sess.rechecks = (sess.rechecks or 0) + 1
+            sess.recheck_error_px = A._int(data.get('recheck_error_px'), lo=0, hi=10000)
+            sess.recheck_error_deg = A._float(data.get('recheck_error_deg'), lo=0.0, hi=90.0)
+            meta = {k: v for k, v in data.items() if k not in ('validation_error_deg', 'distance_cm', 'aoi_resolution', 'drift')}
+            apply_engine_meta(sess, meta)
+            sess.last_seen_at = utcnow()
+            db.session.commit()
+            return jsonify({'ok': True, 'band': A.accuracy_band(A._int(data.get('recheck_score'), lo=0, hi=100))['label']})
+        if data.get('calib_ms') is not None and not data.get('recalibration'):
+            sess.calib_ms = A._int(data.get('calib_ms'), lo=0, hi=3_600_000) or None
+        if data.get('calib_mode') in ('dots', 'follow', 'follow+dots'):
+            sess.calib_mode = data.get('calib_mode')
         sess.calibration_points = A._int(data.get('calibration_points'), lo=0, hi=64)
         sess.calibration_score = A._int(data.get('calibration_score'), lo=0, hi=100)
         sess.validation_error_px = A._int(data.get('validation_error_px'), lo=0, hi=10000)
@@ -323,6 +361,15 @@ def create_blueprint(d, m):
             sess.aoi_resolution = data.get('aoi_resolution')
         if data.get('orientation') in ('portrait', 'landscape'):
             sess.orientation = data.get('orientation')
+        for k in ('camera_losses', 'sleeps', 'tab_yields', 'rechecks'):
+            if data.get(k) is not None:   # client counters only grow; never let a stale batch lower them
+                setattr(sess, k, max(getattr(sess, k) or 0, A._int(data.get(k), lo=0, hi=10000)))
+        if data.get('camera_res') and re.match(r'^\d{2,5}x\d{2,5}$', str(data.get('camera_res'))):
+            sess.camera_res = str(data.get('camera_res'))
+        if data.get('hires') is not None:
+            sess.hires = bool(data.get('hires'))
+        if data.get('browser'):
+            sess.browser = A.browser_tag(data.get('browser'))
         if data.get('implicit_samples') is not None:
             sess.implicit_samples = A._int(data.get('implicit_samples'), lo=0, hi=100000)
         drift = data.get('drift')
@@ -767,5 +814,201 @@ def create_blueprint(d, m):
                         int(bool(s.is_demo))])
         return Response(buf.getvalue(), mimetype='text/csv',
                         headers={'Content-Disposition': f'attachment; filename=attention-sessions-{section_id}.csv'})
+
+    # ------------------------------------------------------------ accuracy study: API + pages
+    STUDY_DAILY_MAX = 40
+
+    @bp.route('/api/helix/study/record', methods=['POST'])
+    @login_required
+    def study_record():
+        data = payload()
+        if not study_consented(current_user.id):
+            return jsonify({'ok': False, 'error': 'study_consent_required'}), 403
+        now = utcnow()
+        recent = (Record.query.filter(Record.user_id == current_user.id, Record.created_at >= now - timedelta(days=1))
+                  .order_by(Record.created_at.desc()).all())
+        if len(recent) >= STUDY_DAILY_MAX:
+            return jsonify({'ok': False, 'error': 'rate_limited'}), 429
+        if recent and recent[0].created_at and (now - recent[0].created_at).total_seconds() < 3:
+            return jsonify({'ok': False, 'error': 'rate_limited'}), 429
+        device = data.get('device') if data.get('device') in DEVICES else 'desktop'
+        kind = data.get('kind') if data.get('kind') in ('calibration', 'recal', 'quick', 'recheck') else 'calibration'
+        method = data.get('arm_method') if data.get('arm_method') in ('dots', 'follow', 'follow+dots', 'recheck') else ''
+        res = str(data.get('camera_res') or '')
+        pts = []
+        for p_ in (data.get('points') or [])[:16]:
+            if isinstance(p_, dict):
+                pts.append({'fx': A._float(p_.get('fx'), 0.0, 0.0, 1.0), 'fy': A._float(p_.get('fy'), 0.0, 0.0, 1.0),
+                            'err': A._int(p_.get('err'), lo=0, hi=10000) if p_.get('err') is not None else None,
+                            'n': A._int(p_.get('n'), lo=0, hi=1000)})
+        valid = bool(data.get('valid'))
+        r = Record(
+            user_id=current_user.id, created_at=now, study_version=STUDY_VERSION,
+            context='study' if data.get('context') == 'study' else 'lesson', kind=kind,
+            pair_id=re.sub(r'[^A-Za-z0-9-]', '', str(data.get('pair_id') or ''))[:40], arm_method=method,
+            arm_hires=bool(data.get('arm_hires')) and device == 'desktop', device=device,
+            browser=A.browser_tag(data.get('browser')),
+            camera_res=res if re.match(r'^\d{2,5}x\d{2,5}$', res) else '',
+            viewport_w=A._int(data.get('viewport_w'), lo=0, hi=10000), viewport_h=A._int(data.get('viewport_h'), lo=0, hi=10000),
+            dpr=A._float(data.get('dpr'), None, 0.5, 6.0), engine=str(data.get('engine') or '')[:20],
+            delegate=str(data.get('delegate') or '')[:40], calib_points=A._int(data.get('calib_points'), lo=0, hi=64),
+            calib_ms=A._int(data.get('calib_ms'), lo=0, hi=3_600_000) or None, valid=valid,
+            score=A._int(data.get('score'), lo=0, hi=100),
+            error_px=A._int(data.get('error_px'), lo=0, hi=10000) if valid and data.get('error_px') is not None else None,
+            error_deg=A._float(data.get('error_deg'), None, 0.0, 90.0) if valid else None,
+            precision_px=A._int(data.get('precision_px'), lo=0, hi=10000) if data.get('precision_px') is not None else None,
+            distance_cm=A._int(data.get('distance_cm'), lo=0, hi=300) if data.get('distance_cm') is not None else None,
+            points_json=json.dumps(pts))
+        db.session.add(r)
+        db.session.commit()
+        return jsonify({'ok': True, 'id': r.id})
+
+    @bp.route('/api/helix/study/arm')
+    @login_required
+    def study_arm():
+        """Balanced assignment: the least-filled arm for this device class, among arms the device
+        can run. With ?pair=<id> the next arm is the one this user has not done in that visit."""
+        device = request.args.get('device') if request.args.get('device') in DEVICES else 'desktop'
+        capable = request.args.get('hires_capable') == '1' and device == 'desktop'
+        arms = [('dots', False), ('follow', False)] + ([('dots', True), ('follow', True)] if capable else [])
+        counts = {a: 0 for a in arms}
+        for r in Record.query.filter_by(context='study', device=device).filter(Record.kind != 'recheck').all():
+            k = ('follow' if (r.arm_method or '').startswith('follow') else 'dots', bool(r.arm_hires))
+            if k in counts:
+                counts[k] += 1
+        pair = re.sub(r'[^A-Za-z0-9-]', '', request.args.get('pair') or '')[:40]
+        done = set()
+        if pair:
+            for r in Record.query.filter_by(user_id=current_user.id, pair_id=pair, context='study').all():
+                done.add(('follow' if (r.arm_method or '').startswith('follow') else 'dots', bool(r.arm_hires)))
+        todo = [a for a in arms if a not in done]
+        if not todo:
+            return jsonify({'ok': True, 'done': True})
+        if done:   # second round: change exactly one factor where possible, so the pair is informative
+            last = list(done)[-1]
+            one = [a for a in todo if (a[0] == last[0]) != (a[1] == last[1])]
+            todo = one or todo
+        method, hires = min(todo, key=lambda a: (counts[a], arms.index(a)))
+        return jsonify({'ok': True, 'done': False, 'method': method, 'hires': hires, 'counts_shown': False})
+
+    @bp.route('/helix/study', methods=['GET', 'POST'])
+    @login_required
+    def study_page():
+        if request.method == 'POST':
+            action = request.form.get('action')
+            if action == 'join':
+                if not request.form.get('agree'):
+                    flash('Tick the box to join the accuracy study, or leave this page.', 'warning')
+                    return redirect(url_for('helix.study_page'))
+                for old in StudyConsent.query.filter_by(user_id=current_user.id, revoked_at=None).all():
+                    old.revoked_at = utcnow()
+                db.session.add(StudyConsent(user_id=current_user.id, version=STUDY_VERSION))
+                db.session.commit()
+                d.audit('helix_study_join', f'v={STUDY_VERSION}')
+                flash('Thanks. You joined the Helix accuracy study. You can leave or delete your records at any time.', 'success')
+            elif action in ('leave', 'delete'):
+                for old in StudyConsent.query.filter_by(user_id=current_user.id, revoked_at=None).all():
+                    old.revoked_at = utcnow()
+                n = 0
+                if action == 'delete':
+                    n = Record.query.filter_by(user_id=current_user.id).delete(synchronize_session=False)
+                db.session.commit()
+                d.audit('helix_study_' + action, f'records={n}')
+                flash('You left the accuracy study.' + (f' Deleted {n} accuracy record{"s" if n != 1 else ""}.' if action == 'delete' else
+                      ' Records you already gave stay (numbers only); you can delete them below.'), 'info')
+            nxt = request.form.get('next') or ''
+            return redirect(nxt if nxt.startswith('/') else url_for('helix.study_page'))
+        mine = Record.query.filter_by(user_id=current_user.id).order_by(Record.created_at.desc()).limit(100).all()
+        return render_template('helix/study.html', joined=study_consented(current_user.id), mine=mine,
+                               study_version=STUDY_VERSION, n_mine=Record.query.filter_by(user_id=current_user.id).count())
+
+    def admin_or_403():
+        if current_user.role != 'admin':
+            abort(403)
+
+    @bp.route('/admin/helix/accuracy')
+    @login_required
+    def admin_accuracy():
+        admin_or_403()
+        ctx = request.args.get('context') if request.args.get('context') in ('study', 'lesson') else 'all'
+        q = Record.query
+        if ctx != 'all':
+            q = q.filter_by(context=ctx)
+        records = q.all()
+        groups = A.study_groups(records)
+        by_device = A.study_groups(records, key=('device',))
+        by_res = A.study_groups(records, key=('device', 'res'))
+        cmp_ = [A.arm_comparison(records, dv, f) for dv in DEVICES for f in ('method', 'hires')
+                if not (f == 'hires' and dv != 'desktop')]
+        checks = [r for r in records if r.kind == 'recheck']
+        return render_template('helix/admin_accuracy.html', groups=groups, by_device=by_device, by_res=by_res,
+                               comparisons=cmp_, n_records=len(records), n_users=len({r.user_id for r in records}),
+                               n_checks=len(checks), n_participants=StudyConsent.query.filter_by(revoked_at=None).count(),
+                               defaults=calib_defaults(), ctx=ctx, min_users=A.STUDY_MIN_USERS,
+                               min_pairs=A.STUDY_MIN_PAIRS, min_gain=A.STUDY_MIN_GAIN_DEG, study_version=STUDY_VERSION)
+
+    @bp.route('/admin/helix/accuracy.csv')
+    @login_required
+    def admin_accuracy_csv():
+        """Aggregates only (no user ids, no per-user rows)."""
+        admin_or_403()
+        groups = A.study_groups(Record.query.all())
+        buf = StringIO()
+        w = csv.writer(buf)
+        w.writerow(['device', 'browser_family', 'camera_res', 'users', 'records', 'valid_pct', 'median_error_deg',
+                    'q1_deg', 'q3_deg', 'median_error_px', 'median_calib_s', 'enough_users'])
+        for g in groups:
+            k = g['key']
+            w.writerow([k['device'], k['browser_family'], k['res'], g['users'], g['records'], g['valid_pct'],
+                        g['median_deg'] if g['median_deg'] is not None else '', g['q1_deg'] if g['q1_deg'] is not None else '',
+                        g['q3_deg'] if g['q3_deg'] is not None else '', g['median_px'] if g['median_px'] is not None else '',
+                        g['median_calib_s'] if g['median_calib_s'] is not None else '', int(g['enough'])])
+        return Response(buf.getvalue(), mimetype='text/csv',
+                        headers={'Content-Disposition': 'attachment; filename=helix-accuracy-groups.csv'})
+
+    @bp.route('/admin/helix/defaults', methods=['POST'])
+    @login_required
+    def admin_defaults():
+        admin_or_403()
+        device = request.form.get('device')
+        if device not in DEVICES:
+            abort(400)
+        row = CalibDefault.query.filter_by(device=device).first() or CalibDefault(device=device)
+        row.method = 'follow' if request.form.get('method') == 'follow' else 'dots'
+        row.hires = bool(request.form.get('hires')) and device == 'desktop'
+        row.basis = (request.form.get('basis') or '').strip()[:500] or 'set by admin'
+        row.decided_at = utcnow()
+        row.decided_by = current_user.id
+        db.session.add(row)
+        db.session.commit()
+        d.audit('helix_calib_default', f'device={device} method={row.method} hires={row.hires}')
+        flash(f'Calibration default for {device} set to {row.method}{" + 1080p" if row.hires else ""}.', 'success')
+        return redirect(url_for('helix.admin_accuracy'))
+
+    @bp.route('/instructor/section/<int:section_id>/attention/calibration')
+    @login_required
+    def instructor_calibration(section_id):
+        section = staff_section_or_403(section_id)
+        from sqlalchemy.orm import defer
+        sessions = (Session.query.filter_by(section_id=section.id)
+                    .options(defer(Session.heat_json), defer(Session.layout_json), defer(Session.drift_json),
+                             defer(Session.fine_json), defer(Session.timeline_json)).all())
+        users = users_by_id({s.user_id for s in sessions})
+        rows = A.calibration_class_rows(sessions, users)
+        gaze = [s for s in sessions if (s.mode or 'gaze') == 'gaze']
+        bands = {'Good': 0, 'Fair': 0, 'Poor': 0, 'Not calibrated': 0}
+        for s in gaze:
+            lab = A.accuracy_band(s.calibration_score or 0)['label'] if s.calibration_score else 'Not calibrated'
+            bands[lab if lab in bands else 'Poor'] += 1
+        times = [s.calib_ms for s in gaze if s.calib_ms]
+        kpi = {'students': len(rows), 'sessions': len(gaze),
+               'median_calib_s': round(A.median_or_none(times) / 1000.0, 1) if times else None,
+               'timed_sessions': len(times),
+               'median_deg': A.median_or_none([s.validation_error_deg for s in gaze if s.validation_error_deg]),
+               'recals': sum(s.recalibrations or 0 for s in gaze), 'rechecks': sum(s.rechecks or 0 for s in gaze),
+               'camera_losses': sum(s.camera_losses or 0 for s in gaze), 'bands': bands}
+        return render_template('helix/calibration.html', section=section, rows=rows, kpi=kpi,
+                               setting=section_setting(section.id),
+                               demo=any(getattr(s, 'is_demo', False) for s in sessions))
 
     return bp

@@ -14,6 +14,8 @@
 
   var TICK_MS = 250, BATCH_MS = 5000, FACE_LOST_MS = 1200, LOW_CONF = 0.25;
   var HIDDEN_END_MS = 15 * 60 * 1000, IDLE_MS = 45000, DRIFT_CHECK_MS = 12 * 60 * 1000;
+  // a visible page ticks every 250 ms; a gap this long means the device slept or the page was frozen
+  var SLEEP_GAP_MS = 8000;
   var DISMISS_KEY = 'ciwt-helix-dismissed', DOT_KEY = 'ciwt-helix-dot';
   var CAL_POINTS = [[10, 10], [50, 10], [90, 10], [10, 50], [50, 50], [90, 50], [10, 90], [50, 90], [90, 90]];
   var CAL_CLICKS = 5;
@@ -26,8 +28,12 @@
     lastInteraction: Date.now(), hiddenAt: 0, paused: false, calibration: null,
     calAttempts: 0, lastCalibratedAt: 0, layoutDirty: true, samples: 0,
     aoiList: [], body: null, lastHit: null, conf: 0, faceLostSince: 0, warnedFace: false,
-    uuid: null, showDot: false
+    uuid: null, showDot: false,
+    // pass 10: session hardening counters (uploaded as quality metadata)
+    cameraLost: null, cameraLostAt: 0, cameraLosses: 0, sleeps: 0, tabYields: 0, yielded: false, lastTickAt: 0,
+    rechecks: 0, lastCheck: null
   };
+  var TAB_ID = 'tab-' + Math.random().toString(36).slice(2, 10);
 
   function $(id) { return document.getElementById(id); }
   function now() { return Date.now(); }
@@ -145,7 +151,11 @@
     _face_lost: { key: '_face_lost', label: 'Face not detected', order: 996, kind: 'state' },
     _low_conf: { key: '_low_conf', label: 'Low-confidence estimate', order: 995, kind: 'state' },
     _idle: { key: '_idle', label: 'No activity (passive mode)', order: 994, kind: 'state' },
-    _paused: { key: '_paused', label: 'Paused by student', order: 993, kind: 'state' }
+    _paused: { key: '_paused', label: 'Paused by student', order: 993, kind: 'state' },
+    // pass 10 session hardening
+    _camera_off: { key: '_camera_off', label: 'Camera disconnected or blocked', order: 992, kind: 'state' },
+    _other_tab: { key: '_other_tab', label: 'Helix active in another tab', order: 991, kind: 'state' },
+    _asleep: { key: '_asleep', label: 'Device asleep / page suspended', order: 990, kind: 'state' }
   };
 
   /* ------------------------------------------------------------ dock UI */
@@ -272,6 +282,7 @@
   function start(mode) {
     S.mode = mode;
     S.uuid = uuid();
+    S.cameraLost = null; S.cameraLosses = 0; S.sleeps = 0; S.tabYields = 0; S.yielded = false; S.rechecks = 0; S.lastCheck = null;
     tagAois();
     status(mode === 'gaze' ? 'Starting camera session…' : 'Starting reading signal…');
     var w = window.innerWidth, h = window.innerHeight;
@@ -322,7 +333,8 @@
   }
 
   function beginLive() {
-    S.t0 = now();
+    announce('claim');
+    S.t0 = now(); S.lastTickAt = 0;
     S.timeline = new Core.StateTimeline(S.t0);
     S.lastSample = S.lastFaceOk = now();
     clearInterval(S.tick); clearInterval(S.batchTimer);
@@ -341,13 +353,31 @@
     };
     if (S.layoutDirty) { batch.layout = computeLayout(); S.layoutDirty = false; }
     if (S.mode === 'gaze' && S.engine) { Object.assign(batch, engineMeta()); batch.fine = fineList(); }
+    else Object.assign(batch, { sleeps: S.sleeps, tab_yields: S.tabYields, browser: browserTag() });
     S.queue.push(batch);
   }
 
   function tick() {
     var t = now();
     var state;
-    if (S.paused) state = STATES._paused;
+    var gap = S.lastTickAt ? t - S.lastTickAt : 0;
+    S.lastTickAt = t;
+    if (gap > SLEEP_GAP_MS && S.timeline) {
+      // the device slept or the browser froze the page: the gap is not reading time (and not "hidden"
+      // unless the page was already hidden). Attribute it to _asleep from the last tick we saw.
+      var cur = S.timeline.cur;
+      if (!cur || cur.key !== '_hidden') S.timeline.enter(STATES._asleep, t - gap + TICK_MS);
+      S.sleeps++;
+      if (gap > HIDDEN_END_MS) { autoEnd('the device was asleep for 15+ minutes'); return; }
+      S.lastSample = S.lastFaceOk = t;      // do not report a face-lost burst for the time we were asleep
+      if (S.queue) { queueBatch(false); S.queue.flush(); }
+    }
+    if (S.yielded) state = STATES._other_tab;
+    else if (S.cameraLost && S.mode === 'gaze') {
+      state = STATES._camera_off;
+      if (t - S.cameraLostAt > HIDDEN_END_MS) { autoEnd('the camera was off for 15+ minutes'); return; }
+    }
+    else if (S.paused) state = STATES._paused;
     else if (document.hidden) state = STATES._hidden;
     else if (S.mode === 'gaze') {
       if (t - S.lastFaceOk > FACE_LOST_MS || t - S.lastSample > FACE_LOST_MS + 300) {
@@ -414,13 +444,16 @@
     body('<div class="hx-live">' + band + '<p class="hx-now" id="hxNow">Starting…</p></div>' +
       '<div class="hx-actions">' +
       '<button type="button" class="btn btn-outline-navy btn-sm" id="hxPause" aria-pressed="false"><i class="bi bi-pause-fill" aria-hidden="true"></i> Pause</button>' +
+      (passive ? '' : '<button type="button" class="btn btn-outline-navy btn-sm" id="hxCheck" title="Look at 5 dots for about 8 seconds; nothing is retrained"><i class="bi bi-crosshair" aria-hidden="true"></i> Re-check accuracy</button>') +
       (passive ? '' : '<button type="button" class="btn btn-outline-navy btn-sm" id="hxRecal"><i class="bi bi-bullseye" aria-hidden="true"></i> Recalibrate</button>') +
       (passive ? '' : '<button type="button" class="btn btn-outline-secondary btn-sm" id="hxDotBtn" aria-pressed="' + S.showDot + '">' + (S.showDot ? 'Hide' : 'Show') + ' gaze dot</button>') +
       (passive ? '' : '<button type="button" class="btn btn-outline-secondary btn-sm" id="hxDbgBtn" aria-pressed="' + !!S.debug + '">Debug</button>') +
       '<button type="button" class="btn btn-danger btn-sm" id="hxStop"><i class="bi bi-stop-fill" aria-hidden="true"></i> Stop</button></div>' +
       (passive ? '' : '<dl class="hx-debug-hud" id="hxDbg"' + (S.debug ? '' : ' hidden') + '></dl>') +
-      '<p class="hx-note">' + (passive ? 'Uses which block sits on your reading line, screen visibility and recent scrolling/touch.' : 'Video stays in this browser. Clicks, taps and typing quietly refine the calibration.') + '</p>');
-    on('hxPause', togglePause); on('hxRecal', recalibrate); on('hxStop', function () { stopSession(); });
+      (S.lastCheck ? '<p class="hx-note" id="hxLastCheck">Last check: ~' + S.lastCheck.errorPx + ' px' + (S.lastCheck.errorDeg != null ? ' (' + S.lastCheck.errorDeg + '°)' : '') + ' · ' + esc(S.lastCheck.band) + '</p>' : '') +
+      '<p class="hx-note">' + (passive ? 'Uses which block sits on your reading line, screen visibility and recent scrolling/touch.' : 'Video stays in this browser. Clicks, taps and typing quietly refine the calibration.') + '</p>' +
+      (!passive && S.server && S.server.study && S.server.study.granted ? '<p class="hx-note">Accuracy checks also go to the <a href="' + esc(CFG.studyUrl || '/helix/study') + '">accuracy study</a> (numbers only).</p>' : ''));
+    on('hxPause', togglePause); on('hxRecal', recalibrate); on('hxCheck', recheck); on('hxStop', function () { stopSession(); });
     on('hxDotBtn', function () {
       S.showDot = !S.showDot; var st = store(); if (st) st.setItem(DOT_KEY, S.showDot ? '1' : '0');
       if (!S.showDot) $('helixGazeDot').style.display = 'none';
@@ -590,6 +623,8 @@
 
   var calSink = null;
   function onFrame(ev) {
+    if (ev.notice === 'camera_lost') { onCameraLost(ev.reason); return; }
+    if (ev.notice === 'camera_back') { if (S.cameraLost === 'muted') { S.cameraLost = null; renderLive(); status('Camera is back.'); } return; }
     if (ev.notice === 'thermal' && !S.quality.warned.thermal) {
       S.quality.warned.thermal = true;
       toast('Your device is running warm, so Helix is checking your gaze less often to save power. Tracking continues.', null, 8000);
@@ -771,6 +806,8 @@
       engine: S.engine ? S.engine.kind : S.mode, delegate: st.delegate || '', validation_error_deg: sc.errorDeg,
       distance_cm: st.distanceCm || sc.distanceCm, aoi_resolution: S.resolution || 'heading', orientation: st.orientation || S.orientation,
       implicit_samples: S.implicitN || 0,
+      camera_losses: S.cameraLosses, sleeps: S.sleeps, tab_yields: S.tabYields, rechecks: S.rechecks,
+      camera_res: st.videoW ? st.videoW + 'x' + st.videoH : '', hires: !!st.hiRes, browser: browserTag(),
       drift: S.drift ? S.drift.points.map(function (p) { return p.src === 'recal' ? { t: Math.round(p.t), src: 'recal' } : { t: Math.round(p.t), err: Math.round(p.err), med: Math.round(p.med), src: p.src }; }) : []
     };
   }
@@ -781,6 +818,7 @@
     calSink = true;
     return Calib.run(S.engine, {
       quick: !!quick, skipPositioning: !!quick, minAccuracy: S.server.min_accuracy || 45, goLabel: 'Start reading',
+      method: quick ? 'dots' : (S.calibMethod || 'dots'),
       allowPassive: !!S.server.passive_enabled
     }).then(function (r) {
       calSink = null;
@@ -790,8 +828,10 @@
         S.resolution = sc.resolution || 'heading';
         postJSON(url(CFG.calibratedUrl, S.sessionId), Object.assign({
           calibration_points: quick ? 5 : 9, calibration_score: sc.score,
-          validation_error_px: sc.errorPx, validation_precision_px: sc.precisionPx, recalibration: !!isRecal
+          validation_error_px: sc.errorPx, validation_precision_px: sc.precisionPx, recalibration: !!isRecal,
+          calib_ms: sc.calibMs, calib_mode: sc.calibMode
         }, engineMeta())).catch(function () {});
+        studyRecord(sc, quick ? 'quick' : (isRecal ? 'recal' : 'calibration'), quick ? 5 : 9);
       }
       if (r.action === 'cancel') {
         if (isRecal && S.engine && S.engine.ready()) { S.paused = false; renderLive(); return; }
@@ -838,6 +878,143 @@
     passiveHandlers = null;
   }
 
+  /* ------------------------------------------------------------ pass 10: re-check, study, hardening */
+  function browserTag() {
+    // coarse family + major version only (never the full user-agent string)
+    var ua = navigator.userAgent || '', m;
+    if ((m = /Edg\/(\d+)/.exec(ua))) return 'Edge ' + m[1];
+    if ((m = /OPR\/(\d+)/.exec(ua))) return 'Opera ' + m[1];
+    if ((m = /SamsungBrowser\/(\d+)/.exec(ua))) return 'Samsung ' + m[1];
+    if ((m = /Firefox\/(\d+)/.exec(ua)) || (m = /FxiOS\/(\d+)/.exec(ua))) return 'Firefox ' + m[1];
+    if ((m = /CriOS\/(\d+)/.exec(ua))) return 'Chrome iOS ' + m[1];
+    if ((m = /Chrome\/(\d+)/.exec(ua))) return 'Chrome ' + m[1];
+    if ((m = /Version\/(\d+).*Safari/.exec(ua))) return 'Safari ' + m[1];
+    return 'Other';
+  }
+  /* Accuracy study (separately consented; see /helix/study): the validation targets are the ground
+     truth, so every check yields a real error measurement. Only numbers are sent. */
+  function studyRecord(sc, kind, points) {
+    if (!S.server || !S.server.study || !S.server.study.granted || !CFG.studyRecordUrl || !sc) return;
+    var st = S.engine && S.engine.stats ? S.engine.stats() : {};
+    postJSON(CFG.studyRecordUrl, Object.assign(window.HelixStudy ? window.HelixStudy.payload(sc, st) : {}, {
+      context: 'lesson', kind: kind, calib_points: points, device: device(), browser: browserTag(),
+      arm_method: sc.calibMode, arm_hires: !!st.hiRes
+    })).catch(function () {});
+  }
+  /* "Re-check accuracy": 5 look-only dots (~8 s) through the current model. Nothing is retrained,
+     so the result says how well the existing calibration still fits. */
+  function recheck() {
+    if (S.mode !== 'gaze' || !S.engine || !Calib.check || S.cameraLost || S.yielded) return;
+    var wasPaused = S.paused;
+    S.paused = true; calSink = true;
+    setPhase('calibrating', 'Helix · checking');
+    Calib.check(S.engine, { minAccuracy: S.server.min_accuracy || 45, previous: S.calibration }).then(function (r) {
+      calSink = null; S.paused = wasPaused;
+      if (r.score && r.score.valid) {
+        S.rechecks++;
+        S.lastCheck = { errorPx: r.score.errorPx, errorDeg: r.score.errorDeg, band: r.score.band, score: r.score.score };
+        postJSON(url(CFG.calibratedUrl, S.sessionId), Object.assign({ recheck: true, recheck_error_px: r.score.errorPx,
+          recheck_error_deg: r.score.errorDeg, recheck_score: r.score.score }, engineMeta())).catch(function () {});
+        studyRecord(r.score, 'recheck', 5);
+      }
+      if (r.action === 'retry') { recalibrate(); return; }
+      renderLive();
+    }, function () { calSink = null; S.paused = wasPaused; renderLive(); });
+  }
+
+  /* camera unplugged / permission revoked / track ended mid-session */
+  function onCameraLost(reason) {
+    if (S.yielded) return;               // we released it ourselves for another tab
+    if (S.cameraLost && S.cameraLost !== 'muted') return;
+    S.cameraLost = reason; S.cameraLostAt = now(); S.cameraLosses++;
+    var dot = $('helixGazeDot'); if (dot) dot.style.display = 'none';
+    var cal = $('helixCalib'); if (cal) { cal.remove(); calSink = null; }
+    if (!S.timeline) {
+      // lost before the session went live (during positioning or the first calibration): nothing to keep
+      endSession(true).then(function () {
+        setPhase('error');
+        body('<p class="hx-copy">The camera stopped before calibration finished (' + esc(reason === 'permission' ? 'permission was turned off' : 'it was disconnected or taken by another app') + '). Nothing was recorded.</p>' +
+          '<div class="hx-actions"><button type="button" class="btn btn-brand btn-sm" id="hxAgain">Try again</button></div>');
+        on('hxAgain', function () { boot(true); });
+        setOpen(true);
+      });
+      return;
+    }
+    renderCameraLost();
+    if (S.queue && S.timeline) { queueBatch(false); S.queue.flush(); }
+  }
+  function renderCameraLost() {
+    var r = S.cameraLost;
+    var why = r === 'permission' ? 'Camera permission was turned off for this site, so Helix stopped using the camera.'
+      : r === 'unplugged' ? 'The camera was disconnected.'
+      : r === 'muted' ? 'The camera stopped sending video (a privacy shutter or another app may be using it).'
+      : 'The camera stopped (it may have been unplugged, used by another app, or switched off while the device slept).';
+    setPhase('paused', 'Helix · camera off');
+    body('<div class="hx-live"><span class="hx-acc hx-acc-poor">Camera off</span><p class="hx-copy">' + esc(why) +
+      ' Nothing is being measured; this time is recorded as “camera off”, not reading.</p></div>' +
+      '<div class="hx-actions">' + (r === 'muted' ? '' : '<button type="button" class="btn btn-brand btn-sm" id="hxReconnect"><i class="bi bi-camera-video" aria-hidden="true"></i> Reconnect camera</button>') +
+      (S.server.passive_enabled ? '<button type="button" class="btn btn-outline-navy btn-sm" id="hxToPassive">Use reading signal</button>' : '') +
+      '<button type="button" class="btn btn-danger btn-sm" id="hxStop"><i class="bi bi-stop-fill" aria-hidden="true"></i> Stop</button></div>' +
+      (r === 'permission' ? '<p class="hx-note">To use the camera again, allow it in the browser’s site settings (the camera icon in the address bar), then press Reconnect.</p>' : ''));
+    on('hxReconnect', reconnectCamera); on('hxToPassive', switchToPassive); on('hxStop', function () { stopSession(); });
+    setOpen(true);
+  }
+  function reconnectCamera() {
+    if (!S.engine || !S.engine.reconnect) return;
+    status('Reconnecting camera…');
+    S.engine.reconnect().then(function (res) {
+      S.cameraLost = null; S.lastFaceOk = S.lastSample = now();
+      if (!res.sameDevice) { status('A different camera was connected, so Helix needs a new calibration.'); recalibrate(); return; }
+      renderLive(); status('Camera reconnected. Your calibration is kept; use Re-check accuracy if you moved.');
+    }, function (err) {
+      status('Could not reconnect: ' + (err && err.message || err) + '.');
+    });
+  }
+
+  /* several tabs: only one tab measures at a time. The tab where Helix was started (or resumed) most
+     recently wins; the others release the camera and record "Helix active in another tab". */
+  var bc = null;
+  try { if (window.BroadcastChannel) bc = new BroadcastChannel('ciwt-helix'); } catch (e) { bc = null; }
+  function announce(type) {
+    var m = { type: type, tab: TAB_ID, lesson: CFG.lessonId, t: now() };
+    if (bc) { try { bc.postMessage(m); } catch (e) {} return; }
+    var st = store(); if (st) { try { st.setItem('ciwt-helix-claim', JSON.stringify(m)); } catch (e) {} }
+  }
+  function onPeer(m) {
+    if (!m || m.tab === TAB_ID) return;
+    if (m.type === 'claim' && S.sessionId && S.timeline && !S.yielded) yieldToOtherTab();
+  }
+  if (bc) bc.onmessage = function (e) { onPeer(e.data); };
+  else window.addEventListener('storage', function (e) { if (e.key === 'ciwt-helix-claim' && e.newValue) { try { onPeer(JSON.parse(e.newValue)); } catch (x) {} } });
+  function yieldToOtherTab() {
+    S.yielded = true; S.tabYields++;
+    if (S.mode === 'gaze' && S.engine) {
+      try { if (S.engine._unwatch) S.engine._unwatch(); if (S.engine.stream) S.engine.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+      S.engine.lost = 'yielded';
+    }
+    var dot = $('helixGazeDot'); if (dot) dot.style.display = 'none';
+    var cal = $('helixCalib'); if (cal) { cal.remove(); calSink = null; }
+    setPhase('paused', 'Helix · other tab');
+    body('<div class="hx-live"><span class="hx-acc hx-acc-info">Paused here</span><p class="hx-copy">Helix is running in another tab, so it is paused in this one. Nothing is measured here' +
+      (S.mode === 'gaze' ? ' and the camera is released' : '') + '.</p></div>' +
+      '<div class="hx-actions"><button type="button" class="btn btn-brand btn-sm" id="hxUseHere">Use Helix in this tab</button>' +
+      '<button type="button" class="btn btn-danger btn-sm" id="hxStop"><i class="bi bi-stop-fill" aria-hidden="true"></i> Stop</button></div>');
+    on('hxUseHere', reclaimTab); on('hxStop', function () { stopSession(); });
+    if (S.queue && S.timeline) { queueBatch(false); S.queue.flush(); }
+  }
+  function reclaimTab() {
+    announce('claim');
+    if (S.mode !== 'gaze' || !S.engine) { S.yielded = false; renderLive(); return; }
+    status('Re-opening the camera…');
+    S.engine.lost = null;
+    S.engine.reconnect().then(function (res) {
+      S.yielded = false; S.lastFaceOk = S.lastSample = now();
+      if (!res.sameDevice) { recalibrate(); return; }
+      renderLive(); status('');
+    }, function (err) { S.yielded = false; S.engine.lost = 'ended'; onCameraLost('ended'); status('Could not re-open the camera: ' + (err && err.message || err) + '.'); });
+  }
+  window.addEventListener('freeze', function () { if (S.queue && S.timeline) { queueBatch(false); try { S.queue._save(); } catch (e) {} } });
+
   /* ------------------------------------------------------------ page lifecycle */
   function beaconAll(q, sid) {
     if (!q || !navigator.sendBeacon) return;
@@ -877,6 +1054,11 @@
     fetch(CFG.configUrl, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (cfg) {
       S.server = cfg;
       if (!cfg.enabled || !cfg.can_record) return; // Helix off for this class: render nothing
+      // per-device-class calibration defaults (admin-set from real study data; built-in: dots, 720p).
+      // An explicit ?hires=1 or a page-level HELIX_ENGINE.hiRes still wins.
+      var dflt = (cfg.calib_defaults || {})[device()] || {};
+      S.calibMethod = dflt.method === 'follow' ? 'follow' : 'dots';
+      if (window.HELIX_ENGINE && window.HELIX_ENGINE.hiRes == null && dflt.hires) window.HELIX_ENGINE.hiRes = true;
       buildDock();
       var st = store();
       S.showDot = !!(st && st.getItem(DOT_KEY) === '1');
@@ -899,7 +1081,8 @@
     clearTimeout(resizeT);
     resizeT = setTimeout(function () { S.layoutDirty = true; if (S.filter) S.filter.bounds = { w: innerWidth, h: innerHeight }; }, 300);
   });
-  window.HelixRuntime = { state: S, tagAois: tagAois, computeLayout: computeLayout, hitAoi: hitAoi, stop: stopSession };
+  window.HelixRuntime = { state: S, tagAois: tagAois, computeLayout: computeLayout, hitAoi: hitAoi, stop: stopSession,
+    tabId: TAB_ID, recheck: recheck, reconnect: reconnectCamera };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { boot(false); });
   else boot(false);

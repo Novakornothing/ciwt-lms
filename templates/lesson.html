@@ -634,7 +634,9 @@ window.HELIX = {
   calibratedUrl: "{{ url_for('helix.session_calibrated', session_id=0) }}",
   summaryUrl: "{{ url_for('helix.lesson_summary', lesson_id=lesson.id) }}",
   engineUrl: "{{ url_for('static', filename='vendor/webgazer.js') }}",
-  tryUrl: "{{ url_for('helix.try_page') }}"
+  tryUrl: "{{ url_for('helix.try_page') }}",
+  studyUrl: "{{ url_for('helix.study_page') }}",
+  studyRecordUrl: "{{ url_for('helix.study_record') }}"
 };
 </script>
 {% include 'helix/_engine_assets.html' %}
