@@ -610,3 +610,10 @@ See `tools/helix_eval/RESULTS.md` (pass 10). On recorded proxy video, follow-the
 - **Admin → Privacy** (`/admin/privacy`, link per student in People): preview, export (JSON, secrets such as password hashes and API tokens removed) and delete a student's full record. The table list comes from the database schema (`privacy_tools.plan`), so new tables are covered automatically: rows owned by the student are deleted, shared rows that only mention them (audit log, "updated by") are kept with the reference set to NULL and the audit IP blanked. Deletion requires typing the student's email, is refused for staff accounts, and every export/delete/cleanup is written to the audit log (by user id, not email).
 - **Helix retention:** `CIWT_HELIX_RETENTION_DAYS` (default 365, 0 = keep). `flask --app app helix-cleanup [--dry-run]` for cron, or the button on the admin page, deletes sessions (with AOI rows), attention events and accuracy records older than the cutoff. Consent records are kept.
 - Tests: `tests/test_privacy.py` (run settings, TTS switch, privacy page, admin-only access, export, delete with a throwaway student, retention, CLI).
+
+### ITSUP chapters 3–6 (pending SME review)
+Chapters 3–6 now have the same core-content layer as 7–13 (`curriculum_v2/itsup_core/ch03.py`–`ch06.py`): measurable lesson
+objectives, explanations, worked examples and scenarios, eight described SVG figures, CFUs, 55 glossary terms, lesson-plan
+updates and 46 items (IT-3.1–6.3, ≥2 per objective). Facts were checked against the named sources; details, the SME notes and the
+**lab gaps for the labs worker** are in CURRICULUM_AUDIT.md (“Pass 10”). No lab formats were changed. Documents and docstrings
+that said “chapters 7–13” now say 3–13.

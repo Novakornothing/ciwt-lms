@@ -33,7 +33,8 @@ All originals stay recoverable: the revised content is a layer (`curriculum_v2/`
    Reference sections were added (DDR4/DDR5, storage interfaces, USB/Thunderbolt/display naming, ports, Wi-Fi 4–7
    and SOHO baseline, Windows 11 requirements/lifecycle, Linux commands, MFA/passkeys/NIST 800-63B-4). Chapters
    7–13 still needed expansion after pass 8. → **Pass 9:** chapters 7–13 expanded to 3,355–4,643 words each (see
-   “Pass 9” below); the new content is tagged *Pending SME review*.
+   “Pass 9” below); the new content is tagged *Pending SME review*. **Pass 10:** chapters 3–6 expanded the same way
+   (2,475–3,399 core words added; 4,250–6,222 words of page text each).
 7. **Assessment coverage gaps.** 12 ITSUP and 3 NETOPS objectives had no knowledge-test item. → 30 supplementary exam
    items (`curriculum_v2/exam_supplement.py`); every objective now has ≥ 2 items (test-enforced). The CLI-track
    objectives (ITSUP 13, NETOPS 9) are assessed practically in the skills exams and marked so in the blueprints.
@@ -202,7 +203,43 @@ reliably, and no statistics or citations were invented.
 - CL-7/8/10/11/13 on real hardware.
 - Whether to add any `X-IT` items to the live forms.
 
-ITSUP chapters 3–6 (1,393–2,500 words) are the next thinnest. They were not in scope for this pass.
+ITSUP chapters 3–6 (1,393–2,500 words) are the next thinnest. They were not in scope for this pass. → **Pass 10:** expanded (see below).
+
+## Pass 10 (Oct 17 2026): ITSUP chapters 3–6 expanded — pending SME review
+
+Same standard and the same layer (`curriculum_v2/itsup_core/ch03.py` … `ch06.py`, applied by `curriculum_v2.apply`;
+the original lesson text is unchanged). Everything is tagged *Pending SME review*.
+
+| Chapter | Words now (page text, as the tests count it) | Core words added | Figures | Items | Glossary |
+|---|---|---|---|---|---|
+| 3 Storage, power, ports | 6,222 | 3,258 | f3-2 RAID vs backup, f3-4 display isolation | 14 (IT-3.1–3.4) | 13 |
+| 4 Mobile devices & printing | 5,258 | 3,399 | f4-2 retire/wipe decision, f4-3 print path | 10 (IT-4.1–4.3) | 14 |
+| 5 Networking for support | 5,626 | 3,044 | f5-2 DHCP DORA, f5-3 isolation order | 13 (IT-5.1–5.4) | 14 |
+| 6 Virtualization & cloud | 4,250 | 2,475 | f6-2 SaaS provider-or-local, f6-3 checkpoint chain | 9 (IT-6.1–6.3) | 14 |
+
+Per lesson: 3–5 measurable objectives, core explanation, ≥1 worked example or scenario per chapter (most lessons have one),
+check-for-understanding questions with hidden answers, and sources. Per chapter: a lesson-plan update (warm-up, guided
+practice, CFU, exit ticket, misconceptions, materials) and items (≥2 per objective, distractor lengths balanced, key
+positions balanced across the whole bank, rationale for each).
+
+**Facts checked against named sources** (keys in `itsup_core.SOURCES`): NVMe specification; Microsoft storage, display, print
+(Print Spooler, protected print mode) and Hyper-V documentation (requirements, switch types, standard/production checkpoints);
+PCI-SIG CEM; USB-IF naming and USB PD (100 W SPR, 240 W EPR); CISA backup, ransomware and home-wireless guidance; U.S. EPA
+used lithium-ion batteries; Microsoft Intune retire/wipe and compliance; Apple Platform Deployment (Activation Lock, private
+Wi-Fi address); IETF RFC 8011 (IPP), RFC 1918, 3927, 6598, 4291, 4193, 4862, 2131 (T1 50 %, T2 87.5 %), RFC 6335/IANA ports;
+netsh wlan; NIST SP 800-145 and 800-125; Microsoft shared responsibility and Microsoft 365 Service health.
+
+**For the SME:** the Hyper-V Paused-Critical wording avoids a free-space threshold on purpose; the 2.4 GHz “1, 6, 11” rule is
+stated for North America; printer defect causes are typical, and the vendor’s defect guide is authoritative. Chapter 3 and
+4 items were committed with ch03 (8062cbd) and ch04–06 in one commit (8e0ff0d).
+
+**Lab gaps (for the labs worker; no lab formats were changed):**
+- 4.1: no lab for `powercfg /batteryreport` (a VM has no battery, so this needs a physical laptop or a canned report).
+- 4.3: no hands-on spooler lab (stop Print Spooler, clear `spool\PRINTERS`, start, test page — could use a Print-to-PDF queue); CL-4 is paper-based.
+- 5.1–5.2: no interactive subnet drill or `Test-NetConnection -Port` / `nslookup -type=MX` lab; the existing win-ipconfig / win-dns-break / win-full-triage labs cover 5.3 and 5.5.
+- 5.4: w11-wlan needs a wireless adapter; on VM benches `netsh wlan show interfaces` reports no interface.
+- 6.1: the “Virtual machine: Yes” / systeminfo check could be added to w11-inventory or gui-about.
+- 6.3: virtual switch and checkpoint practice needs a Hyper-V host or nested virtualization; CL-6 covers it on classroom hardware only.
 
 ## Sources consulted
 
