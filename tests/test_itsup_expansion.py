@@ -24,10 +24,10 @@ STRONG_FLOOR = 3000   # chapter 2, one of the two strongest originals, has about
 
 def test_expanded_chapters_exist():
     assert EXPANDED_CHAPTERS, 'no pass-9 chapters loaded'
-    assert set(EXPANDED_CHAPTERS) <= set(range(7, 14))
+    assert set(EXPANDED_CHAPTERS) <= set(range(3, 14))
 
 
-@pytest.mark.parametrize('n', range(7, 14))
+@pytest.mark.parametrize('n', range(3, 14))
 def test_chapter_depth_matches_strong_chapters(n):
     if n not in EXPANDED_CHAPTERS:
         pytest.skip(f'chapter {n} not expanded yet')
@@ -55,7 +55,7 @@ def test_every_core_lesson_has_required_parts(key):
     assert _words(html) >= 300, f'{key}: core content too short'
 
 
-@pytest.mark.parametrize('n', range(7, 14))
+@pytest.mark.parametrize('n', range(3, 14))
 def test_each_chapter_has_worked_example_scenario_and_described_diagram(n):
     if n not in EXPANDED_CHAPTERS:
         pytest.skip()
@@ -164,4 +164,4 @@ def test_answer_key_has_tagged_item_bank():
 
 def test_sources_are_named_not_invented():
     for k, v in SOURCES.items():
-        assert any(org in v for org in ('Microsoft', 'Apple', 'NIST', 'CISA', 'IETF', 'Linux', 'IEEE')), k
+        assert any(org in v for org in ('Microsoft', 'Apple', 'NIST', 'CISA', 'IETF', 'Linux', 'IEEE', 'NVM Express', 'PCI-SIG', 'USB-IF', 'U.S. EPA')), k
