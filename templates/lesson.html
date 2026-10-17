@@ -46,10 +46,10 @@
     <button type="button" class="btn btn-outline-secondary btn-sm" id="ttsStop"><i class="bi bi-stop-fill" aria-hidden="true"></i> Stop</button>
     <button type="button" class="btn btn-outline-secondary btn-sm d-sm-none" id="ttsMore" aria-expanded="false" aria-controls="ttsOptions" aria-label="Narration options"><i class="bi bi-three-dots" aria-hidden="true"></i></button>
     <span class="narrate-options" id="ttsOptions">
-    <select id="ttsVoice" class="form-select form-select-sm w-auto" aria-label="Narration voice">
+    {% if config.NEURAL_TTS_ENABLED %}<select id="ttsVoice" class="form-select form-select-sm w-auto" aria-label="Narration voice">
       <option value="en-US-JennyNeural" selected>Jenny — neural</option>
       <option value="en-US-GuyNeural">Guy — neural</option>
-    </select>
+    </select>{% else %}<span class="small text-muted" title="The online neural voice is turned off on this server">Browser voice</span>{% endif %}
     <button type="button" class="btn btn-outline-navy btn-sm" id="ttsFromHere"><i class="bi bi-cursor-text" aria-hidden="true"></i> From selection</button>
     </span>
     <span class="small text-muted" id="ttsStatus" aria-live="polite"></span>
@@ -497,6 +497,7 @@
     }
   }
 
+  const NEURAL_TTS = {{ 'true' if config.NEURAL_TTS_ENABLED else 'false' }};
   function browserFallback(text) {
     if (!('speechSynthesis' in window)) {
       setStatus('No speech available in this browser');
@@ -506,8 +507,11 @@
     const u = new SpeechSynthesisUtterance(text.slice(0, 6000));
     u.rate = 0.92;
     const voices = window.speechSynthesis.getVoices() || [];
-    const prefer = voices.find(v => /en-US/i.test(v.lang) && /Google|Samantha|Microsoft|Neural/i.test(v.name))
-      || voices.find(v => /^en/i.test(v.lang));
+    // with the neural voice switched off, prefer voices the browser marks as on-device (localService)
+    const local = NEURAL_TTS ? voices : voices.filter(v => v.localService);
+    const pool = local.length ? local : voices;
+    const prefer = pool.find(v => /en-US/i.test(v.lang) && /Google|Samantha|Microsoft|Neural/i.test(v.name))
+      || pool.find(v => /^en/i.test(v.lang));
     if (prefer) u.voice = prefer;
     u.onstart = () => setStatus('Narrating (browser voice)');
     u.onend = () => setStatus('Finished');
@@ -516,6 +520,7 @@
 
   async function speakNeural(text, label, offset) {
     if (!text) { setStatus('Nothing to read'); return; }
+    if (!NEURAL_TTS) { browserFallback(text); return; }   // neural voice turned off on this server (privacy switch)
     startOffsetInFull = offset || 0;
     highlightAtTime._map = null;
     playBtn.disabled = true;

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Data &amp; privacy — {{ site_name }}{% endblock %}
+{% block content %}
+{% with title='Data & privacy', lede='Export or delete a student’s full record, and apply the Helix retention period. Every action is written to the audit log.' %}{% include '_admin_nav.html' %}{% endwith %}
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header navy">Student record</div>
+      <div class="card-body">
+        <form class="d-flex gap-2 mb-3" method="get" role="search">
+          <label class="visually-hidden" for="pq">Find a student</label>
+          <input class="form-control form-control-sm" id="pq" name="q" value="{{ q }}" placeholder="Name or email">
+          <button class="btn btn-sm btn-brand">Find</button>
+        </form>
+        {% if q and not students %}<p class="small text-muted">No students match.</p>{% endif %}
+        {% if students %}<ul class="list-unstyled small">{% for u in students %}
+          <li><a href="{{ url_for('admin_privacy', user_id=u.id, q=q) }}">{{ u.full_name }}</a> · {{ u.email }}</li>{% endfor %}</ul>{% endif %}
+        {% if preview %}
+        <h2 class="h6 mt-3">{{ preview.user.full_name }} · {{ preview.user.email }}</h2>
+        <p class="small mb-1">Rows that belong to this student (found from the database schema, Helix included):</p>
+        <ul class="small columns-2 mb-2" id="privacyTables">{% for t, n in preview.tables %}<li><code>{{ t }}</code>: {{ n }}</li>{% endfor %}</ul>
+        {% if preview.anonymised %}<p class="small mb-1">Shared rows that only <em>mention</em> the student and would be kept with the reference removed:</p>
+        <ul class="small mb-2">{% for t, n in preview.anonymised %}<li><code>{{ t }}</code>: {{ n }}</li>{% endfor %}</ul>{% endif %}
+        <div class="d-flex flex-wrap gap-2 align-items-end">
+          <a class="btn btn-sm btn-outline-navy" href="{{ url_for('admin_student_export', user_id=preview.user.id) }}"><i class="bi bi-download" aria-hidden="true"></i> Export full record (JSON)</a>
+          <form method="post" action="{{ url_for('admin_student_delete', user_id=preview.user.id) }}" class="d-flex flex-wrap gap-2 align-items-end" data-confirm="Delete this student’s whole record? This cannot be undone.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div><label class="form-label small mb-0" for="ce">Type the email to confirm</label>
+              <input class="form-control form-control-sm" id="ce" name="confirm_email" autocomplete="off"></div>
+            <button class="btn btn-sm btn-danger"><i class="bi bi-trash" aria-hidden="true"></i> Delete full record</button>
+          </form>
+        </div>
+        <p class="small text-muted mt-2 mb-0">Export first if the student asked for a copy. Deletion removes the account, enrolments, attempts, lab completions, time logs, grades, feedback, messages, tickets and all Helix data; references in shared records (audit log, “updated by”) are set to empty.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header navy">Helix retention</div>
+      <div class="card-body small">
+        {% if days > 0 %}
+        <p>Retention: <strong>{{ days }} days</strong> (<code>CIWT_HELIX_RETENTION_DAYS</code>). Older than {{ due.cutoff[:10] }} now: {{ due.sessions }} sessions, {{ due.buckets }} AOI rows, {{ due.events }} events, {{ due.accuracy_records }} accuracy records.</p>
+        <form method="post" action="{{ url_for('admin_helix_cleanup') }}" data-confirm="Delete Helix data older than {{ days }} days?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-danger"{% if not (due.sessions or due.events or due.accuracy_records) %} disabled{% endif %}>Run cleanup now</button></form>
+        <p class="mt-2 mb-0">For a scheduled job: <code>flask --app app helix-cleanup</code> (add <code>--dry-run</code> to count only) from cron or a systemd timer. Consent records are kept as proof of what was agreed.</p>
+        {% else %}<p class="mb-0">Retention is 0: Helix data is kept until students or admins delete it.</p>{% endif %}
+      </div>
+    </div>
+    <div class="card mb-3"><div class="card-header navy">Third-party narration</div>
+      <div class="card-body small">The neural Listen voice (edge-tts → Microsoft’s online speech service) is <strong>{{ 'on' if neural_tts else 'off' }}</strong>. Set <code>CIWT_NEURAL_TTS=0</code> to turn it off. See the <a href="{{ url_for('privacy_page') }}">privacy page</a>.</div></div>
+    <div class="card"><div class="card-header navy">Recent data actions (audit log)</div>
+      <ul class="list-group list-group-flush small">{% for e in log %}
+        <li class="list-group-item">{{ e.created_at.strftime('%Y-%m-%d %H:%M') }} · {{ e.action }} · {{ e.detail }}</li>{% else %}<li class="list-group-item text-muted">None yet.</li>{% endfor %}</ul></div>
+  </div>
+</div>
+{% endblock %}

@@ -72,6 +72,7 @@
           <li>Do not require Helix to sit any quiz or test.</li>
           <li>Treat thin dwell as a prompt to ask a question or revisit a heading.</li>
           <li>Students may stop any session, withdraw consent, and delete their stored sessions from <a href="{{ url_for('helix.my_data') }}">My attention data</a>.</li>
+          <li>Retention: {% if config.HELIX_RETENTION_DAYS and config.HELIX_RETENTION_DAYS > 0 %}sessions and attention data are deleted after {{ config.HELIX_RETENTION_DAYS }} days{% else %}kept until deleted by the student or an administrator{% endif %}. See also the site <a href="{{ url_for('privacy_page') }}">privacy page</a>.</li>
         </ol>
         <p class="mb-0 small text-muted">If a command or contract requires a different rule, write it down and keep this page as the product default until it is replaced.</p>
       </div>

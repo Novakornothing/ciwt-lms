@@ -143,7 +143,7 @@ Commits on `refinement`: `d3f28dd` CSRF · `2bda572` MediaPipe camera pipeline �
   - fixes: contrast tokens, labels on selects and inputs, keyboard-focusable scroll regions, icon roles
   - Try-page tile grid no longer overflows at 390 px
 - **Deprecations:** `datetime.utcnow()` → `utcnow()` helper; `Query.get()`/`get_or_404` → `db.session.get`/`db.get_or_404`. pytest runs with 0 warnings.
-- `app.py` honours `FLASK_DEBUG=0`. The default is unchanged (debug on); turn it off whenever the app is exposed through a tunnel.
+- `app.py` honours `FLASK_DEBUG`. Since pass 10 the default is **off**; `FLASK_DEBUG=1` turns it on and binds to 127.0.0.1.
 
 ## 3. How to run and test
 
@@ -178,7 +178,7 @@ node tools/helix_eval/replay.js --json tools/helix_eval/replay_results.json     
   4. Look at the tiles. Click a tile while looking at it to teach the model, and watch the drift chart drop.
   - For a lesson, log in as `student1@lms.local / student123`, open a lesson, choose camera in the Helix dock, and use "Debug" to see the HUD.
 - **Phone (needs HTTPS):**
-  1. On this machine, start the app with the debugger off: `FLASK_DEBUG=0 ./start_lms.sh`.
+  1. On this machine, start the app: `./start_lms.sh` (the debugger is off by default since pass 10; never set `FLASK_DEBUG=1` behind a tunnel).
   2. Start a tunnel: `/workspace/ciwt/bin/cloudflared tunnel --no-autoupdate --url http://localhost:5050`.
   3. Open the printed `https://<random>.trycloudflare.com/helix/try` on the phone, with the phone at about 30 cm and at eye level.
   4. Tap **Start**, allow the camera, then tap each dot while looking at it.
@@ -580,3 +580,30 @@ lesson as a “Lesson objectives” panel and a `Core content` section. The orig
 - The course package was rebuilt: 44 DOCX/PDF files in `/workspace/artifacts/course-package/` and `course-package.zip`.
 
 **Still open:** SME review of everything tagged. Chapters 3–6 are the next thinnest. A separate worker is overhauling the interactive labs on the `labs` branch. `course_package.py` (CLASSROOM_LABS, pacing rows) changed here too, so expect a merge point there.
+
+## Pass 10 (Oct 17 2026): accuracy study, calibration quality, session hardening, privacy tools, ITSUP ch 3–6
+
+### Helix: accuracy study (consented, ground truth only)
+- **Separate consent** at `/helix/study` (`HelixStudyConsent`, version `2026-10-17.s1`), independent of lesson consent. Students can leave at any time; leaving offers to delete their study records.
+- **What is collected:** only gaze-derived ground truth from calibration/validation: error in px and degrees, precision, estimated distance, calibration time, per-validation-point error (`points_json`), and the device class, browser family + major version, camera resolution, viewport and DPR. No images, no landmarks, no lesson data. `POST /api/helix/study/record` needs study consent and is rate-limited.
+- **A/B arms:** `/api/helix/study/arm` assigns the calibration method (9 dots / follow-the-dot) and hiRes on/off, balanced per device class; the second round in a visit changes exactly one factor, so each visit gives a within-person pair (`pair_id`).
+- **Admin view** `/admin/helix/accuracy` (+ `.csv`): aggregates per device class, browser and resolution, plus paired arm comparisons. It shows nothing for groups under 5 users, and only reports an arm difference with ≥10 pairs, p<0.05 (sign test) and a gain of ≥0.5°. It **never switches defaults by itself**; an admin can set per-device-class defaults (`HelixCalibDefault`) by hand, and the page shows the evidence next to the control.
+- **No real-user records exist yet.** The e2e study run (`tools/helix_study_e2e.py`) uses a fake camera with no ground truth and deletes its own records.
+
+### Helix: re-check and the instructor calibration view
+- Students get **Re-check accuracy** in the dock: a validate-only pass showing the accuracy now against the last calibration, with "Keep going" / "Recalibrate". Stored per session as `rechecks`, `recheck_error_px/deg`.
+- Sessions now also record `calib_ms`, `calib_mode` (full/quick/recheck), `camera_losses`, `sleeps`, `tab_yields`, `camera_res`, `hires`, `browser` (disclosed in the policy table; policy version bumped to `2026-10-17.3`).
+- Instructors: **Calibration quality** (`/instructor/section/<id>/attention/calibration`) shows per student the median validation error, the share of sessions with a good calibration, the median calibration time, re-checks and interruptions, with a plain-language note that a poor calibration means the attention data for that student is unreliable, not that the student did anything wrong.
+
+### Helix: session hardening (simulated in `tools/helix_hardening_e2e.py`, all six steps pass)
+Multiple tabs (only one tab tracks; the other yields and shows why), sleep/resume (resumes with a recheck prompt if the gap was long), camera unplugged mid-session (track `ended` → session paused, clear message, never silently scored), permission revoked (same path; restart needs a fresh permission), and an end-before-live case. These are browser simulations (fake device, `track.stop()`, visibility events), not real hardware tests.
+
+### A/B: hiRes and follow-the-dot
+See `tools/helix_eval/RESULTS.md` (pass 10). On recorded proxy video, follow-the-dot + 3 points improved with 1080p input on both subjects (16/20 sequences, p=0.012) but that is only 2 people and costs ~48 vs 33 ms per frame. **Defaults are unchanged** (9 dots; 720p on desktop/tablet; 480×640 on phones). The study above is how they should change: ≥10 real pairs, p<0.05, ≥0.5°.
+
+### Privacy and operations (steering items)
+- **Debugger off by default.** `python app.py` / `./start_lms.sh` run with debug off; `FLASK_DEBUG=1` turns it on and binds to 127.0.0.1 (overridable only with `CIWT_ALLOW_DEBUG_ON_NETWORK=1`). `run_settings()` in `app.py` holds the rule; README documents it.
+- **Neural Listen voice switch.** `CIWT_NEURAL_TTS=0` disables `/api/narrate` (403 `{fallback, disabled}`); lessons then hide the neural voice picker and use the browser voice, preferring voices marked on-device. Default is still **on**. The new `/privacy` page (linked from the footer and the Helix policy) says that the neural voice sends lesson text to Microsoft's online speech service through edge-tts.
+- **Admin → Privacy** (`/admin/privacy`, link per student in People): preview, export (JSON, secrets such as password hashes and API tokens removed) and delete a student's full record. The table list comes from the database schema (`privacy_tools.plan`), so new tables are covered automatically: rows owned by the student are deleted, shared rows that only mention them (audit log, "updated by") are kept with the reference set to NULL and the audit IP blanked. Deletion requires typing the student's email, is refused for staff accounts, and every export/delete/cleanup is written to the audit log (by user id, not email).
+- **Helix retention:** `CIWT_HELIX_RETENTION_DAYS` (default 365, 0 = keep). `flask --app app helix-cleanup [--dry-run]` for cron, or the button on the admin page, deletes sessions (with AOI rows), attention events and accuracy records older than the cutoff. Consent records are kept.
+- Tests: `tests/test_privacy.py` (run settings, TTS switch, privacy page, admin-only access, export, delete with a throwaway student, retention, CLI).

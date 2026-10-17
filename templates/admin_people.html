@@ -86,7 +86,7 @@
       <tr>
         <td>{{ u.full_name }}{% if u.id == current_user.id %} <span class="badge badge-live">you</span>{% endif %}</td>
         <td class="small text-break">{{ u.email }}</td>
-        <td><span class="badge role-badge role-{{ u.role }}">{{ u.role }}</span></td>
+        <td><span class="badge role-badge role-{{ u.role }}">{{ u.role }}</span>{% if u.role == 'student' %} <a class="small ms-1" href="{{ url_for('admin_privacy', user_id=u.id) }}" aria-label="Data record for {{ u.full_name }}">Record</a>{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>
