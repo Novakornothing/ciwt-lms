@@ -1,6 +1,7 @@
 """Helix blueprint: consent, session lifecycle API, dashboards, exports."""
 import csv
 import json
+from types import SimpleNamespace
 from datetime import datetime, timedelta, timezone
 from io import StringIO
 
@@ -241,6 +242,19 @@ def create_blueprint(d, m):
         band = A.accuracy_band(sess.calibration_score)
         return jsonify({'ok': True, 'band': band['label']})
 
+    def aggregated_buckets(section_id, lesson_id=None):
+        """AOI dwell summed in SQL per (lesson, student, AOI); rows quack like Bucket for analytics."""
+        from sqlalchemy import func
+        q = (db.session.query(Bucket.lesson_id, Bucket.user_id, Bucket.aoi_key, Bucket.aoi_label, Bucket.aoi_kind,
+                              func.min(Bucket.aoi_order), func.sum(Bucket.dwell_ms), func.sum(Bucket.visits))
+             .filter(Bucket.section_id == section_id))
+        if lesson_id is not None:
+            q = q.filter(Bucket.lesson_id == lesson_id)
+        q = q.group_by(Bucket.lesson_id, Bucket.user_id, Bucket.aoi_key, Bucket.aoi_label, Bucket.aoi_kind)
+        return [SimpleNamespace(lesson_id=r[0], user_id=r[1], aoi_key=r[2], aoi_label=r[3], aoi_kind=r[4],
+                                aoi_order=r[5] or 0, dwell_ms=int(r[6] or 0), visits=int(r[7] or 0))
+                for r in q.all()]
+
     ENGINES = ('mediapipe', 'webgazer', 'passive')
     RESOLUTIONS = ('heading', 'paragraph', 'line')
 
@@ -400,7 +414,11 @@ def create_blueprint(d, m):
                    'dwell_ms': r['dwell_ms'], 'focus': r['share'], 'key': r['key']}
                   for r in rows if r['thin']]
         review.sort(key=lambda x: x['dwell_ms'])
-        return jsonify({'review': review[:8], 'policy': POLICY_VERSION, 'total_ms': total})
+        sessions = Session.query.filter_by(user_id=current_user.id, lesson_id=lesson_id).order_by(Session.id.desc()).limit(50).all()
+        layout = next((A.loads(s.layout_json or '[]', []) for s in sessions if s.layout_json and s.layout_json != '[]'), [])
+        n_sections = len([x for x in layout if isinstance(x, dict) and (x.get('kind') or 'heading') == 'heading']) or None
+        recap = A.reading_recap(rows, total, n_sections, sessions)
+        return jsonify({'review': review[:8], 'policy': POLICY_VERSION, 'total_ms': total, 'recap': recap})
 
     @bp.route('/api/helix/section/<int:section_id>/summary.json')
     @login_required
@@ -485,18 +503,40 @@ def create_blueprint(d, m):
 
     # ------------------------------------------------------------ instructor dashboards
     @bp.route('/instructor/section/<int:section_id>/attention')
+    @bp.route('/instructor/section/<int:section_id>/attention/report', endpoint='attention_report')
     @login_required
     def instructor_attention(section_id):
         section = staff_section_or_403(section_id)
-        sessions = Session.query.filter_by(section_id=section.id).order_by(Session.started_at.desc()).all()
+        report = request.endpoint == 'helix.attention_report'
+        # Large classes: never pull the big JSON blobs for the overview, and aggregate AOI dwell
+        # in SQL (one row per lesson x student x AOI instead of one per session bucket).
+        from sqlalchemy.orm import defer
+        sessions = (Session.query.filter_by(section_id=section.id)
+                    .options(defer(Session.heat_json), defer(Session.layout_json), defer(Session.drift_json),
+                             defer(Session.fine_json), defer(Session.timeline_json))
+                    .order_by(Session.started_at.desc()).all())
         mark_stale(sessions)
         lessons = valid_lesson_ids({s.lesson_id for s in sessions})
         sessions = [s for s in sessions if s.lesson_id in lessons]
         users = users_by_id({s.user_id for s in sessions})
         enrolled = enrolled_ids(section)
         students, missing = A.student_summaries(sessions, users, enrolled)
-        buckets = [b for b in Bucket.query.filter_by(section_id=section.id).all() if b.lesson_id in lessons]
+        buckets = [b for b in aggregated_buckets(section.id) if b.lesson_id in lessons]
+        by_lesson = {}
+        for b in buckets:
+            by_lesson.setdefault(b.lesson_id, []).append(b)
         aois, total_ms = A.aoi_rollup(buckets)
+        # paginate the per-student table (KPIs and charts still use everyone)
+        per = request.args.get('per', type=int) or 50
+        per = per if per in (25, 50, 100, 200) else 50
+        if report:
+            per = max(1, 10 ** 6)          # the printable report lists everyone
+        spages = max(1, -(-len(students) // per))
+        spage = min(max(1, request.args.get('spage', type=int) or 1), spages)
+        students_all = students
+        students = students_all[(spage - 1) * per: spage * per]
+        spager = {'page': spage, 'pages': spages, 'per': per, 'total': len(students_all),
+                  'first': (spage - 1) * per + 1 if students_all else 0, 'last': min(spage * per, len(students_all))}
         # lesson table
         per_lesson = {}
         for s in sessions:
@@ -511,8 +551,7 @@ def create_blueprint(d, m):
         lesson_rows = []
         for lid, r in per_lesson.items():
             L = lessons[lid]
-            lb = [b for b in buckets if b.lesson_id == lid]
-            la, _ = A.aoi_rollup(lb)
+            la, _ = A.aoi_rollup(by_lesson.get(lid, []))
             lesson_rows.append({
                 'id': lid, 'title': L.title, 'module_id': L.module_id, 'sessions': r['sessions'],
                 'students': len(r['students']),
@@ -524,7 +563,10 @@ def create_blueprint(d, m):
         focus_id = request.args.get('lesson', type=int)
         if focus_id not in per_lesson and lesson_rows:
             focus_id = max(lesson_rows, key=lambda r: r['sessions'])['id']
-        matrix = A.aoi_matrix([b for b in buckets if b.lesson_id == focus_id], users) if focus_id else None
+        matrix = A.aoi_matrix(by_lesson.get(focus_id, []), users) if focus_id else None
+        if matrix:   # class means use everyone; rows follow the student-table page
+            matrix['rows_total'] = len(matrix['rows'])
+            matrix['rows'] = matrix['rows'][(spage - 1) * per: spage * per]
         gaze = [s for s in sessions if (s.mode or 'gaze') == 'gaze' and s.calibration_score]
         tot = {'attentive': 0, 'off_page': 0, 'face_lost': 0, 'hidden': 0, 'low_conf': 0, 'total': 0}
         for s in sessions:
@@ -533,7 +575,7 @@ def create_blueprint(d, m):
                 tot[k] += b[k]
         kpi = {
             'sessions': len(sessions),
-            'students': len(students),
+            'students': len(students_all),
             'enrolled': len(enrolled),
             'not_opted_in': len(missing),
             'avg_accuracy': int(sum(s.calibration_score for s in gaze) / len(gaze)) if gaze else 0,
@@ -551,8 +593,21 @@ def create_blueprint(d, m):
         setting = section_setting(section.id)
         demo = any(getattr(s, 'is_demo', False) for s in sessions)
         not_opted = [users_by_id(missing).get(uid) for uid in missing]
+        if report:
+            d.audit('helix_report', f'section={section.id}')
+            engines = {}
+            for s_ in sessions:
+                k = 'reading signal' if s_.mode == 'passive' else ({'mediapipe': 'MediaPipe'}.get(s_.engine) or 'WebGazer')
+                engines[k] = engines.get(k, 0) + 1
+            return render_template(
+                'helix/report.html', section=section, students=students, aois=aois[:40], total_ms=total_ms,
+                lessons=lesson_rows, kpi=kpi, setting=setting, demo=demo, not_opted=[u for u in not_opted if u],
+                policy_version=POLICY_VERSION, band=A.accuracy_band(kpi['avg_accuracy']), engines=engines,
+                generated=utcnow(), generated_by=current_user,
+                date_range=(min((s_.started_at for s_ in sessions if s_.started_at), default=None),
+                            max((s_.started_at for s_ in sessions if s_.started_at), default=None)))
         return render_template(
-            'helix/dashboard.html', section=section, students=students, aois=aois[:24], total_ms=total_ms,
+            'helix/dashboard.html', section=section, students=students, spager=spager, aois=aois[:24], total_ms=total_ms,
             lessons=lesson_rows, focus_id=focus_id, focus_lesson=lessons.get(focus_id), matrix=matrix,
             kpi=kpi, setting=setting, demo=demo, not_opted=[u for u in not_opted if u],
             policy_version=POLICY_VERSION, band=A.accuracy_band(kpi['avg_accuracy']),

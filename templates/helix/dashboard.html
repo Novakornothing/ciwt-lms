@@ -18,6 +18,7 @@
       <p class="mb-0">{{ section.name }} · {{ section.course.title }}</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.attention_report', section_id=section.id) }}"><i class="bi bi-printer" aria-hidden="true"></i> Printable report</a>
       <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.attention_csv', section_id=section.id) }}"><i class="bi bi-download" aria-hidden="true"></i> AOI CSV</a>
       <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.attention_sessions_csv', section_id=section.id) }}"><i class="bi bi-download" aria-hidden="true"></i> Sessions CSV</a>
       <a class="btn btn-sm btn-brand" href="{{ url_for('instructor_gradebook', section_id=section.id) }}"><i class="bi bi-table" aria-hidden="true"></i> Gradebook</a>
@@ -51,7 +52,7 @@
 <div class="row g-4">
   <div class="col-12">
     <div class="card h-100">
-      <div class="card-header navy d-flex justify-content-between align-items-center"><span>Per-student summary</span><span class="small opacity-75">{{ students|length }} students</span></div>
+      <div class="card-header navy d-flex justify-content-between align-items-center"><span>Per-student summary</span><span class="small opacity-75">{{ spager.total }} students{% if spager.pages > 1 %} · showing {{ spager.first }}–{{ spager.last }}{% endif %}</span></div>
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 table-stack" aria-describedby="hxStudentsHelp">
           <thead><tr><th scope="col">Student</th><th scope="col">Sessions</th><th scope="col">Accuracy</th><th scope="col" style="min-width:9rem">Time split</th><th scope="col">Last</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
@@ -72,6 +73,16 @@
           </tbody>
         </table>
       </div>
+      {% if spager.pages > 1 %}
+      <nav class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-3 py-2 border-top" aria-label="Student pages">
+        <span class="small text-muted">Page {{ spager.page }} of {{ spager.pages }}</span>
+        <ul class="pagination pagination-sm mb-0">
+          {% for n in range(1, spager.pages + 1) %}{% if n == 1 or n == spager.pages or (n - spager.page)|abs <= 2 %}
+          <li class="page-item {{ 'active' if n == spager.page }}"><a class="page-link" href="{{ url_for('helix.instructor_attention', section_id=section.id, spage=n, per=spager.per, lesson=focus_id) }}" {% if n == spager.page %}aria-current="page"{% endif %}>{{ n }}</a></li>
+          {% elif (n - spager.page)|abs == 3 %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}{% endfor %}
+        </ul>
+      </nav>
+      {% endif %}
       <div class="card-footer small text-muted" id="hxStudentsHelp">Time split = share of recorded session time. "Face not detected" and "Tab hidden" are data-quality states, not misconduct.
         {% if not_opted %}<details class="mt-1"><summary>{{ not_opted|length }} enrolled without data</summary>{{ not_opted|map(attribute='full_name')|join(', ') }}</details>{% endif %}</div>
     </div>
@@ -115,6 +126,7 @@
     <span>Student × heading heatmap — {{ focus_lesson.title if focus_lesson else '' }}</span>
     <form method="get" class="d-flex gap-2 align-items-center">
       <label for="hxLessonSel" class="small">Lesson</label>
+      {% if spager.page > 1 %}<input type="hidden" name="spage" value="{{ spager.page }}">{% endif %}<input type="hidden" name="per" value="{{ spager.per }}">
       <select id="hxLessonSel" name="lesson" class="form-select form-select-sm" onchange="this.form.submit()">
         {% for L in lessons %}<option value="{{ L.id }}" {% if L.id == focus_id %}selected{% endif %}>{{ L.title }}</option>{% endfor %}
       </select>
@@ -122,6 +134,7 @@
     </form>
   </div>
   <div class="card-body">
+    {% if matrix.rows_total and matrix.rows_total > matrix.rows|length %}<p class="small text-muted mb-1">Showing {{ matrix.rows|length }} of {{ matrix.rows_total }} students (same page as the table above); class means use everyone.</p>{% endif %}
     <p class="small text-muted">Each cell = share of that student’s reading time on the heading. Dashed red = less than half the class average for that heading.</p>
     <div class="table-responsive">
       <table class="hx-matrix">

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "helix/_macros.html" import mix_bar, mix_legend, band_badge with context %}
+{% block title %}Attention report — {{ section.name }}{% endblock %}
+{% block content %}
+<div class="hx-report">
+  <div class="hx-report-tools d-print-none d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+    <a href="{{ url_for('helix.instructor_attention', section_id=section.id) }}" class="btn btn-sm btn-outline-navy"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to dashboard</a>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('helix.attention_csv', section_id=section.id) }}"><i class="bi bi-download" aria-hidden="true"></i> AOI CSV</a>
+      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('helix.attention_sessions_csv', section_id=section.id) }}"><i class="bi bi-download" aria-hidden="true"></i> Sessions CSV</a>
+      <button type="button" class="btn btn-sm btn-brand" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i> Print / save as PDF</button>
+    </div>
+  </div>
+
+  <header class="hx-report-head">
+    <div>
+      <div class="hx-report-eyebrow">CIWT · Helix attention report</div>
+      <h1 class="h3 mb-1">{{ section.name }}</h1>
+      <p class="mb-0">{{ section.course.title }}{% if date_range[0] %} · sessions {{ date_range[0].strftime('%d %b %Y') }} – {{ date_range[1].strftime('%d %b %Y') }}{% endif %}</p>
+    </div>
+    <div class="text-end small">
+      Generated {{ generated.strftime('%d %b %Y %H:%M') }} UTC<br>by {{ generated_by.full_name }}<br>Policy v{{ policy_version }}
+    </div>
+  </header>
+
+  <p class="hx-report-note" role="note"><strong>Signal, not an assessment.</strong> Use this to decide what to reteach and whom to check in with. Do not put these numbers on a score sheet or counseling record, or use them for attendance or discipline.{% if demo %} <strong>Includes demo seed data</strong> (generated to evaluate the dashboard; real sessions are not labelled).{% endif %}</p>
+
+  <section class="hx-report-kpis" aria-label="Summary">
+    <div><span class="v">{{ kpi.students }}<small>/{{ kpi.enrolled }}</small></span><span class="l">students opted in</span></div>
+    <div><span class="v">{{ kpi.sessions }}</span><span class="l">sessions ({{ kpi.gaze_sessions }} camera · {{ kpi.passive_sessions }} reading signal)</span></div>
+    <div><span class="v">{{ kpi.avg_accuracy }}<small>%</small></span><span class="l">avg calibration accuracy{% if kpi.median_error_deg %} · median {{ kpi.median_error_deg }}°{% endif %}</span></div>
+    <div><span class="v">{{ kpi.attentive_pct }}<small>%</small></span><span class="l">time on lesson content of {{ kpi.minutes }} min</span></div>
+  </section>
+  <p class="small text-muted">Engines: {% for k, v in engines.items() %}{{ k }} {{ v }}{{ ' · ' if not loop.last }}{% else %}none{% endfor %}. Time split = share of recorded time; "face not detected" and "tab hidden" are data-quality states, not misconduct.</p>
+
+  <section class="hx-report-sec">
+    <h2 class="h5">Lessons</h2>
+    <table class="table table-sm hx-report-table">
+      <thead><tr><th scope="col">Lesson</th><th scope="col" class="text-end">Students</th><th scope="col" class="text-end">Sessions</th><th scope="col" class="text-end">Accuracy</th><th scope="col" class="text-end">On content</th><th scope="col">Thin headings (consider reteaching)</th></tr></thead>
+      <tbody>
+      {% for L in lessons %}<tr><td>{{ L.title }}</td><td class="text-end">{{ L.students }}</td><td class="text-end">{{ L.sessions }}</td><td class="text-end">{{ L.accuracy or '—' }}{{ '%' if L.accuracy }}</td><td class="text-end">{{ L.attentive_pct }}%</td><td class="small">{{ L.thin|join('; ') or '—' }}</td></tr>
+      {% else %}<tr><td colspan="6" class="text-muted">No sessions yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="hx-report-sec">
+    <h2 class="h5">Class dwell by heading</h2>
+    <table class="table table-sm hx-report-table">
+      <thead><tr><th scope="col">Heading</th><th scope="col" class="text-end">Share</th><th scope="col" class="text-end">Minutes</th><th scope="col" class="text-end">Students</th><th scope="col" style="width:30%"><span class="visually-hidden">Bar</span></th></tr></thead>
+      <tbody>
+      {% for a in aois %}<tr class="{{ 'hx-thin' if a.thin }}"><td>{{ a.label }}{% if a.thin %} <span class="badge text-bg-warning">thin</span>{% endif %}</td><td class="text-end">{{ a.share }}%</td><td class="text-end">{{ a.minutes|round(1) }}</td><td class="text-end">{{ a.students }}</td>
+        <td><div class="hx-aoi-bar {{ 'thin' if a.thin }}"><span style="width:{{ a.bar }}%"></span></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="hx-report-sec hx-break">
+    <h2 class="h5">Students ({{ students|length }})</h2>
+    {{ mix_legend() }}
+    <table class="table table-sm hx-report-table mt-2">
+      <thead><tr><th scope="col">Student</th><th scope="col" class="text-end">Sessions</th><th scope="col">Accuracy</th><th scope="col" style="min-width:9rem">Time split</th><th scope="col" class="text-end">Reading</th><th scope="col">Last</th><th scope="col">Data-quality notes</th></tr></thead>
+      <tbody>
+      {% for r in students %}<tr>
+        <td>{{ r.name }}</td><td class="text-end">{{ r.sessions }}</td>
+        <td>{% if r.gaze_sessions %}{{ r.accuracy }}% {% endif %}{{ band_badge(r.band) }}</td>
+        <td>{{ mix_bar(r) }}</td><td class="text-end">{{ r.attentive_pct }}% · {{ r.minutes }} min</td>
+        <td class="small">{{ r.last.strftime('%d %b') if r.last else '—' }}</td>
+        <td class="small">{{ r.flags|join('; ') or '—' }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if not_opted %}<p class="small text-muted">Enrolled without data ({{ not_opted|length }}): {{ not_opted|map(attribute='full_name')|join(', ') }}. Not taking part is always fine.</p>{% endif %}
+  </section>
+  <footer class="hx-report-foot small text-muted">CIWT LMS · Helix attention report · {{ section.name }} · generated {{ generated.strftime('%Y-%m-%d %H:%M') }} UTC · policy v{{ policy_version }}</footer>
+</div>
+{% endblock %}

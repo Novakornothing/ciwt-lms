@@ -237,3 +237,37 @@ def test_drift_svg_renders_and_escapes():
     assert svg.startswith('<svg') and 'stroke-dasharray' in svg and '<b>' not in svg
     assert A.drift_svg('[]') == '' and A.drift_svg('not json') == ''
     assert A.median_or_none([3, None, 1, 2]) == 2 and A.median_or_none([]) is None
+
+
+def test_printable_report_and_dashboard_pagination(instructor, ids):
+    sid = ids['section']
+    r = instructor.get(f'/instructor/section/{sid}/attention/report')
+    assert r.status_code == 200
+    html = r.get_data(as_text=True)
+    assert 'Helix attention report' in html and 'window.print()' in html and 'Signal, not an assessment' in html
+    d = instructor.get(f'/instructor/section/{sid}/attention?per=25&spage=99')
+    assert d.status_code == 200 and 'Printable report' in d.get_data(as_text=True)
+
+
+def test_report_forbidden_for_students(student, ids):
+    assert student.get(f"/instructor/section/{ids['section']}/attention/report").status_code in (302, 403)
+
+
+def test_reading_recap_is_encouraging():
+    rows = [{'label': 'Intro', 'key': 'h0', 'kind': 'heading', 'dwell_ms': 60000, 'seconds': 60.0, 'thin': False},
+            {'label': 'Ports', 'key': 'h1', 'kind': 'heading', 'dwell_ms': 2000, 'seconds': 2.0, 'thin': True},
+            {'label': 'Intro > Code', 'key': 'h0~code0', 'kind': 'code', 'dwell_ms': 5000, 'seconds': 5.0, 'thin': False}]
+    rc = A.reading_recap(rows, 67000, n_sections=3)
+    assert rc['sections_read'] == 1 and rc['sections_total'] == 3 and rc['top']['label'] == 'Intro'
+    assert rc['second_look'][0]['label'] == 'Ports' and 'Nice work' in rc['headline']
+    text = (rc['headline'] + ' '.join(rc['notes'])).lower()
+    assert not any(w in text for w in ('inattentive', 'distracted', 'failed', 'poor'))
+    assert 'completely fine' in A.reading_recap([], 0)['headline']
+    from types import SimpleNamespace as NS
+    lossy = A.reading_recap(rows, 67000, 3, [NS(face_lost_ms=40000, low_conf_ms=0, total_ms=100000)])
+    assert any('never counts against you' in n for n in lossy['notes'])
+
+
+def test_lesson_summary_includes_recap(student, ids):
+    r = student.get(f"/api/helix/lesson-summary/{ids['lesson']}").get_json()
+    assert 'recap' in r and 'headline' in r['recap']

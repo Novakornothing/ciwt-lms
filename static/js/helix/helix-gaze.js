@@ -502,12 +502,23 @@
     fetch(CFG.summaryUrl, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (data) {
       var box = $('hxReview');
       if (!box) return;
-      var review = (data && data.review) || [];
-      if (!review.length) { box.innerHTML = '<p class="hx-note">No thin spots across your sessions on this lesson.</p>'; return; }
-      box.innerHTML = '<p class="hx-copy mb-1"><strong>Worth a second look</strong> (little time spent):</p><ul class="hx-list">' +
-        review.slice(0, 5).map(function (r) {
-          return '<li><a href="#" data-jump="' + esc(r.key || '') + '">' + esc(r.heading) + '</a> <span class="text-muted">· ' + r.seconds + 's</span></li>';
-        }).join('') + '</ul>';
+      var rc = (data && data.recap) || {}, review = (rc.second_look && rc.second_look.length ? rc.second_look : ((data && data.review) || []).map(function (r) { return { label: r.heading, key: r.key, seconds: r.seconds }; }));
+      var html = '<div class="hx-recap" role="status"><p class="hx-recap-head"><i class="bi bi-stars" aria-hidden="true"></i> <strong>Your reading recap</strong></p>' +
+        (rc.headline ? '<p class="hx-copy mb-1">' + esc(rc.headline) + '</p>' : '');
+      if (rc.sections_total) {
+        var pct = Math.round(100 * rc.sections_read / rc.sections_total);
+        html += '<div class="hx-recap-bar" role="img" aria-label="' + rc.sections_read + ' of ' + rc.sections_total + ' sections"><span style="width:' + pct + '%"></span></div>';
+      }
+      if (rc.top) html += '<p class="hx-note">Most time on <a href="#" data-jump="' + esc(rc.top.key || '') + '">' + esc(rc.top.label) + '</a> (' + rc.top.seconds + 's).</p>';
+      if (review.length) {
+        html += '<p class="hx-copy mb-1 mt-2">Worth a quick second look:</p><ul class="hx-list">' +
+          review.slice(0, 3).map(function (r) {
+            return '<li><a href="#" data-jump="' + esc(r.key || '') + '">' + esc(r.label) + '</a> <span class="text-muted">· ' + r.seconds + 's</span></li>';
+          }).join('') + '</ul>';
+      } else if (rc.minutes) html += '<p class="hx-note">No thin spots — every section got some time.</p>';
+      (rc.notes || []).forEach(function (n) { html += '<p class="hx-note">' + esc(n) + '</p>'; });
+      html += '<p class="hx-note">This is just for you and your instructor’s planning — never a grade.</p></div>';
+      box.innerHTML = html;
       box.querySelectorAll('[data-jump]').forEach(function (a) {
         a.addEventListener('click', function (e) {
           e.preventDefault();

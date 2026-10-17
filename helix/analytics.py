@@ -392,3 +392,39 @@ def median_or_none(values):
         return None
     h = len(vals) // 2
     return round(vals[h] if len(vals) % 2 else (vals[h - 1] + vals[h]) / 2, 1)
+
+
+def reading_recap(aois, total_ms, n_sections=None, sessions=()):
+    """Student-facing, encouraging summary of their own reading on one lesson.
+
+    aois: aoi_rollup() rows for this student + lesson. Never compares with classmates and never
+    uses words like 'inattentive'; unmeasured time is described as unmeasured, not as a fault.
+    """
+    heads = [a for a in aois if (a.get('kind') or 'heading') == 'heading']
+    read = [a for a in heads if a['dwell_ms'] >= 3000]
+    n_total = max(n_sections or 0, len(heads)) or None
+    minutes = round(total_ms / 60000.0, 1)
+    out = {'minutes': minutes, 'sections_read': len(read), 'sections_total': n_total, 'sessions': len(sessions),
+           'top': None, 'second_look': [], 'headline': '', 'notes': []}
+    if not total_ms:
+        out['headline'] = 'No reading time recorded yet for this lesson — that is completely fine.'
+        return out
+    if n_total and len(read) >= n_total:
+        out['headline'] = f'Great coverage: you spent time on every section ({n_total}) over {minutes} min.'
+    elif n_total:
+        out['headline'] = f'Nice work: {minutes} min of reading across {len(read)} of {n_total} sections.'
+    else:
+        out['headline'] = f'Nice work: {minutes} min of reading on this lesson.'
+    if heads:
+        top = max(heads, key=lambda a: a['dwell_ms'])
+        out['top'] = {'label': top['label'], 'key': top['key'], 'seconds': top['seconds']}
+    thin = sorted([a for a in heads if a.get('thin')], key=lambda a: a['dwell_ms'])[:3]
+    out['second_look'] = [{'label': a['label'], 'key': a['key'], 'seconds': a['seconds']} for a in thin]
+    lost = sum((getattr(s, 'face_lost_ms', 0) or 0) + (getattr(s, 'low_conf_ms', 0) or 0) for s in sessions)
+    tracked = sum(getattr(s, 'total_ms', 0) or 0 for s in sessions)
+    if tracked and lost / tracked > 0.25:
+        out['notes'].append('Some of your time was not measured (the camera could not see your eyes clearly). '
+                            'That is normal and never counts against you.')
+    if out['second_look']:
+        out['notes'].append('Short sections are fine if you already know the material; a quick skim is all it takes.')
+    return out
