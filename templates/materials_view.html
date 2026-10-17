@@ -16,6 +16,7 @@
   {% endif %}
 </div>
 {% if instructor_only %}<div class="alert alert-warning py-2 small" role="note"><i class="bi bi-shield-lock" aria-hidden="true"></i> Instructor-only document. Do not share with students.</div>{% endif %}
+{% if section and kind == 'syllabus' and placeholders %}<div class="alert alert-info py-2 small" role="note">Items in [square brackets] have not been filled in for this section yet{% if staff %}. <a href="{{ url_for('syllabus_settings', section_id=section.id) }}">Edit this section’s syllabus</a>.{% else %}; your instructor will confirm them.{% endif %}</div>{% endif %}
 {% if staff and kind == 'syllabus' and not section %}<div class="alert alert-info py-2 small" role="note">Showing the course template. Open a section’s syllabus from Course materials to see its own institution, term, meeting and policy details and its gradebook weights.</div>{% endif %}
 <article class="doc-body card"><div class="card-body">
   <h1 class="h3">{{ doc.title }}</h1>

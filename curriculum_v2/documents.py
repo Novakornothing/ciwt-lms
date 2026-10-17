@@ -208,6 +208,17 @@ def build(kind, code, section=None, gb=None):
     return BUILDERS[kind](code, section, gb)
 
 
+def has_placeholders(doc):
+    """True when any text in the document still contains a [bracketed] placeholder."""
+    def walk(x):
+        if isinstance(x, str):
+            return '[' in x
+        if isinstance(x, (list, tuple)):
+            return any(walk(i) for i in x)
+        return False
+    return walk(doc['blocks'])
+
+
 # ------------------------------------------------------------------------------------------- DOCX
 def to_docx(doc):
     from docx import Document

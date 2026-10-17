@@ -981,6 +981,12 @@ html[data-theme="dark"] .chip-scroll a.chip-link[aria-current] .chip-count { col
 .doc-body { max-width: 62rem; }
 .doc-body .doc-table th[scope="row"] { min-width: 8rem; }
 .doc-body .doc-table td, .doc-body .doc-table th { font-size: .85rem; }
+/* Two-column (item/details) tables stack on phones instead of scrolling sideways. */
+@media (max-width: 575.98px) {
+  .doc-body .doc-kv thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .doc-body .doc-kv tr, .doc-body .doc-kv th[scope="row"], .doc-body .doc-kv td { display: block; width: 100%; }
+  .doc-body .doc-kv th[scope="row"] { font-weight: 600 !important; border-bottom: 0; padding-bottom: 0; }
+}
 .doc-break { margin: 2rem 0 1rem; border-top: 2px dashed var(--surface-4); opacity: 1; }
 .lab-assessment > summary { cursor: pointer; }
 @media print {

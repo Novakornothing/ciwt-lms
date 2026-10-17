@@ -163,3 +163,9 @@ def test_instructor_notes_hidden_from_students_shown_to_staff(app, mod):
 def test_student_lesson_page_has_no_instructor_note(student, ids):
     body = student.get(f"/student/module/{ids['section']}/{ids['module']}", follow_redirects=True).get_data(as_text=True)
     assert 'class="instructor-note"' not in body
+
+
+def test_placeholder_helper():
+    from curriculum_v2 import documents as D
+    assert D.has_placeholders({'blocks': [('p', 'Room [TBD]')]})
+    assert not D.has_placeholders({'blocks': [('table', ['A', 'B'], [['x', 'y']])]})

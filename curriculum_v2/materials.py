@@ -139,7 +139,7 @@ def register(app, db, deps):
         doc = build(kind, code, section)
         audit('materials_view', f'{code}/{kind}')
         return render_template('materials_view.html', doc=doc, code=code, kind=kind, section=section,
-                               instructor_only=kind not in D.STUDENT_DOCS, staff=True,
+                               instructor_only=kind not in D.STUDENT_DOCS, staff=True, placeholders=D.has_placeholders(doc),
                                download=lambda fmt: url_for('materials_download', code=code, kind=kind, fmt=fmt,
                                                             **({'section': section.id} if section else {})))
 
@@ -206,7 +206,7 @@ def register(app, db, deps):
             abort(404)
         doc = build(kind, code, section)
         return render_template('materials_view.html', doc=doc, code=code, kind=kind, section=section,
-                               instructor_only=False, staff=is_staff(),
+                               instructor_only=False, staff=is_staff(), placeholders=D.has_placeholders(doc),
                                student_docs=[(k, t) for k, t, a in D.DOCS if a == 'all'],
                                download=lambda fmt: url_for('section_material_download', section_id=section.id,
                                                             kind=kind, fmt=fmt))
