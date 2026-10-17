@@ -11,33 +11,22 @@
   <h1 class="h3 mb-1">Live labs</h1>
   <p class="mb-0">Work in order. Windows first, then switch, then router. Capstones reuse earlier commands.</p>
 </div>
-<div class="mb-3 d-flex flex-wrap gap-2">
-  <a class="btn btn-sm btn-outline-navy" href="#windows">Windows 11 CLI</a>
-  <a class="btn btn-sm btn-outline-navy" href="#win11gui">Windows 11 GUI</a>
-  <a class="btn btn-sm btn-outline-navy" href="#switch">Switch</a>
-  <a class="btn btn-sm btn-outline-navy" href="#router">Router</a>
-  {% if current_user.role in ('admin', 'instructor') %}
-  <a class="btn btn-sm btn-outline-navy ms-auto" href="{{ url_for('interactive_labs_verify') }}">Self-test</a>
-  {% endif %}
-</div>
+{% from '_lab_row.html' import lab_row with context %}
+{% set groups = [('windows','Windows 11 command line','CMD and PowerShell'), ('win11gui','Windows 11 settings and services','GUI walk-throughs'), ('switch','Switch CLI','Cisco IOS access switch'), ('router','Router CLI','Cisco IOS router')] %}
+<nav class="chip-scroll mb-3" aria-label="Jump to lab type">
+  {% for kind, heading, _ in groups %}{% set n = labs|selectattr('kind', 'equalto', kind)|list|length %}<a class="chip-link" href="#{{ kind }}">{{ heading }} <span class="chip-count">{{ n }}</span></a>{% endfor %}
+  {% if current_user.role in ('admin', 'instructor') %}<a class="chip-link" href="{{ url_for('interactive_labs_verify') }}"><i class="bi bi-check2-circle" aria-hidden="true"></i> Self-test</a>{% endif %}
+</nav>
 
-{% for kind, heading in [('windows','Windows 11 VM — Command Prompt / PowerShell'), ('win11gui','Windows 11 VM — Settings / Services GUI'), ('switch','Switch CLI'), ('router','Router CLI')] %}
-<h2 class="h5 mt-4 mb-2" id="{{ kind }}">{{ heading }}</h2>
-<div class="row g-3 mb-2">
-  {% for lab in labs if lab.kind == kind %}
-  <div class="col-md-6 col-lg-4">
-    <div class="card h-100">
-      <div class="card-body d-flex flex-column">
-        <div class="small text-muted mb-1">{{ lab.title.split('.', 1)[0] if '.' in lab.title else lab.kind }}</div>
-        <h3 class="h6">{{ lab.title }}</h3>
-        <p class="text-muted small flex-grow-1">{{ lab.blurb }}</p>
-        <a class="btn btn-brand btn-sm" href="{{ url_for('interactive_lab', lab_id=lab.id) }}">Launch terminal</a>
-      </div>
-    </div>
-  </div>
+{% for kind, heading, sub in groups %}
+{% set group = labs|selectattr('kind', 'equalto', kind)|list %}
+<section class="mb-4" aria-labelledby="{{ kind }}">
+  <h2 class="h6 section-label" id="{{ kind }}">{{ heading }} <span class="fw-normal text-muted">· {{ sub }}</span></h2>
+  {% if group %}
+  <div class="list-group">{% for lab in group %}{{ lab_row(lab, lab.blurb, false) }}{% endfor %}</div>
   {% else %}
-  <div class="col-12 text-muted">No {{ kind }} labs loaded.</div>
-  {% endfor %}
-</div>
+  <div class="card"><div class="empty-state empty-state-sm"><i class="bi bi-terminal" aria-hidden="true"></i><p class="mb-0">No {{ heading|lower }} labs are loaded yet.</p></div></div>
+  {% endif %}
+</section>
 {% endfor %}
 {% endblock %}

@@ -1,0 +1,9 @@
+{# Shared lab list row: kind tag, title, one-line purpose, chevron. Import with: {% from '_lab_row.html' import lab_row %} #}
+{% macro lab_row(lab, sub=None, show_kind=True) %}
+  <a class="list-group-item list-group-item-action lab-row{{ ' no-kind' if not show_kind }}" href="{{ url_for('interactive_lab', lab_id=lab.id) }}">
+    {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ lab.kind|upper }}</span>{% endif %}
+    <span class="lab-row-main"><span class="lab-row-title">{{ lab.title }}</span>
+      {% set s = sub or lab.align or lab.blurb %}{% if s %}<span class="lab-row-sub">{{ s }}</span>{% endif %}</span>
+    <span class="lab-row-go" aria-hidden="true">Launch <i class="bi bi-chevron-right"></i></span>
+  </a>
+{% endmacro %}
