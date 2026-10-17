@@ -63,7 +63,7 @@ function buildModel(rows, cfg) {   // rows: {vec, crop, x, y, w}
   // assemble extended feature vectors
   const extras = cfg.groups.map((g) => ({ g, raw: rows.map((r) => GROUPS[g.n](r.crop)) }));
   const pcas = extras.map((e) => e.g.pca ? pcaFit(e.raw, e.g.pca) : null);
-  const featOf = (vec, crop) => { let f = vec.slice(); cfg.groups.forEach((g, i) => { const raw = GROUPS[g.n](crop); f = f.concat(pcas[i] ? pcas[i].proj(raw) : raw); }); return f; };
+  const featOf = (vec, crop) => { let f = vec.slice(0, 23); /* base features only; crop groups are added explicitly */ cfg.groups.forEach((g, i) => { const raw = GROUPS[g.n](crop); f = f.concat(pcas[i] ? pcas[i].proj(raw) : raw); }); return f; };
   const R = rows.map((r) => ({ f: featOf(r.vec, r.crop), x: r.x, y: r.y, w: r.w, key: r.key }));
   const geo = M.ridgeFit(R, M.GEO_IDX, [1e-3]);
   const resid = R.map((r) => { const g = pred1(geo, r.f); return { f: r.f, x: r.x - g.x, y: r.y - g.y, w: r.w, key: r.key }; });

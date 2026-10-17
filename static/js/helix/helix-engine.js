@@ -15,10 +15,14 @@
   function orientationKey() { return window.innerWidth >= window.innerHeight ? 'landscape' : 'portrait'; }
   function nowMs() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
 
-  /* Pass 5: 1080p on desktops with enough cores (the eye-crop stage then gets ~1 camera px per crop
-     px; at 720p it upsamples). Falls back to 720p at runtime if the frame budget is missed (_resCheck). */
+  /* Pass 5 (opt-in): 1080p on desktops with enough cores (the eye-crop stage then gets ~1 camera px per
+     crop px; at 720p it upsamples). Falls back to 720p at runtime if the frame budget is missed (_resCheck). */
   function hiResCapable(mobile) {
-    if (mobile || typeof navigator === 'undefined') return false;
+    // opt-in (window.HELIX_ENGINE.hiRes or ?hires=1): 1080p helped follow-the-dot calibration on the one
+    // subject with a 1080p source (9/10 pairs) but 9-point results were mixed, so it is not the default
+    var cfg = typeof window !== 'undefined' && window.HELIX_ENGINE || {};
+    var asked = cfg.hiRes || (typeof location !== 'undefined' && /[?&]hires=1\b/.test(location.search));
+    if (!asked || mobile || typeof navigator === 'undefined') return false;
     var cores = navigator.hardwareConcurrency || 4, mem = navigator.deviceMemory;
     return cores >= 8 && !(mem && mem < 4);
   }
