@@ -979,7 +979,10 @@ html[data-theme="dark"] .chip-scroll a.chip-link[aria-current] .chip-count { col
 
 /* pass 8: course materials documents */
 .doc-body { max-width: 62rem; }
-.doc-body .doc-table th[scope="row"] { min-width: 8rem; }
+.doc-body .doc-table td, .doc-body .doc-table th { white-space: normal; }
+.doc-body .doc-table td { min-width: 4.5rem; }
+.doc-body .doc-table th[scope="row"] { min-width: 2.5rem; max-width: 16rem; }
+.doc-body .doc-kv th[scope="row"] { min-width: 8rem; }
 .doc-body .doc-table td, .doc-body .doc-table th { font-size: .85rem; }
 /* Two-column (item/details) tables stack on phones instead of scrolling sideways. */
 @media (max-width: 575.98px) {
