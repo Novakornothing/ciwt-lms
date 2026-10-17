@@ -345,5 +345,5 @@ def test_privacy_delete_covers_lab_records(student, mod):
     solve_http(student, "win-ipconfig")
     _, uid = _row(mod, "student1@lms.local", "win-ipconfig")
     with mod.app.app_context():
-        doomed, _ = privacy_tools.plan(mod.db, uid)
+        doomed = privacy_tools.plan(mod.db, uid)[0]
         assert doomed.get("lab_progress") and doomed.get("lab_event")
