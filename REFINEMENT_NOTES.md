@@ -596,7 +596,10 @@ lesson as a “Lesson objectives” panel and a `Core content` section. The orig
 - Instructors: **Calibration quality** (`/instructor/section/<id>/attention/calibration`) shows per student the median validation error, the share of sessions with a good calibration, the median calibration time, re-checks and interruptions, with a plain-language note that a poor calibration means the attention data for that student is unreliable, not that the student did anything wrong.
 
 ### Helix: session hardening (simulated in `tools/helix_hardening_e2e.py`, all six steps pass)
-Multiple tabs (only one tab tracks; the other yields and shows why), sleep/resume (resumes with a recheck prompt if the gap was long), camera unplugged mid-session (track `ended` → session paused, clear message, never silently scored), permission revoked (same path; restart needs a fresh permission), and an end-before-live case. These are browser simulations (fake device, `track.stop()`, visibility events), not real hardware tests.
+- **Multiple tabs:** tabs coordinate over a `BroadcastChannel`; when another tab starts tracking, this one releases the camera (time recorded as "other tab", `tab_yields`) and can take it back.
+- **Sleep/resume:** a timer gap is recorded as "Device asleep / page suspended" (`sleeps`) instead of face-lost time; a gap over 15 minutes ends the session automatically with a "Resume with a new session" button.
+- **Camera unplugged, track ended, permission revoked:** the session switches to a "Camera off" state (`camera_losses`), says plainly that nothing is being measured, and reconnects when the camera comes back; a loss before the session goes live ends it cleanly.
+- These are browser simulations (fake device, `track.stop()`, visibility and timer events), not tests on real hardware.
 
 ### A/B: hiRes and follow-the-dot
 See `tools/helix_eval/RESULTS.md` (pass 10). On recorded proxy video, follow-the-dot + 3 points improved with 1080p input on both subjects (16/20 sequences, p=0.012) but that is only 2 people and costs ~48 vs 33 ms per frame. **Defaults are unchanged** (9 dots; 720p on desktop/tablet; 480×640 on phones). The study above is how they should change: ≥10 real pairs, p<0.05, ≥0.5°.
