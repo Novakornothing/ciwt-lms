@@ -232,6 +232,7 @@
       if (feat) { this.faceFrames++; feat.landmarks = lm; }
       if (feat && this._cropOn()) this._cropStage(feat, lm);
     }
+    if (!feat) this.lastCrops = null;      // never show a stale crop when the face is lost
     if (this.frames % 10 === 1) this._measureQuality(lm);
     var wall = Date.now();
     if (feat) {

@@ -91,8 +91,13 @@ with sync_playwright() as p:
     pg.wait_for_timeout(9000)
     pg.screenshot(path=f'{a.out}/mp-live-{a.tag}.png')
     # pass 5: diagnostics card with the live eye crops (Try page only)
+    for _ in range(60):   # wait for a frame with a face so the crops are current
+        if pg.evaluate('!!(window.HelixTry.engine && window.HelixTry.engine.lastCrops)'):
+            break
+        pg.wait_for_timeout(250)
+    pg.wait_for_timeout(250)
     if pg.locator('#hxTryCropsWrap:not([hidden])').count():
-        card = pg.locator('#hxTryHud').locator('xpath=ancestor::div[contains(@class,"card")][1]')
+        card = pg.locator('#hxTryHud').locator('xpath=ancestor::div[contains(concat(" ",@class," ")," card ")][1]')
         card.scroll_into_view_if_needed(); pg.wait_for_timeout(400)
         card.screenshot(path=f'{a.out}/mp-hud-crops-{a.tag}.png')
         log['crop_hud'] = True

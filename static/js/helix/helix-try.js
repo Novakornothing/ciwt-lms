@@ -30,7 +30,8 @@
      the lid contour, Timm & Barth pupil (red cross) and dark-centroid estimate (blue ring). Local only. */
   function drawCrops() {
     var c = $('hxTryCrops'), cs = T.engine && T.engine.lastCrops;
-    if (!c || !cs || !cs.r) return;
+    if (c && (!cs || !cs.r)) { $('hxTryCropsWrap').hidden = true; return; }
+    if (!c) return;
     var W = Model.CROP.W, H = Model.CROP.H, Z = 2, g = c.getContext('2d');
     if (c.width !== 2 * W * Z + 8) { c.width = 2 * W * Z + 8; c.height = H * Z; }
     $('hxTryCropsWrap').hidden = false;
