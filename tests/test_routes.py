@@ -79,5 +79,5 @@ def test_anonymous_redirected(anon, ids):
 
 def test_mobile_shell_markup(student):
     html = student.get('/student').get_data(as_text=True)
-    assert 'mobile-tabbar' in html and 'rail-scrim' in html and 'ciwt-ui.css' in html
+    assert 'mobile-tabbar' in html and 'rail-scrim' in html and '/assets/app-' in html
     assert 'aria-controls="staffRail"' in html

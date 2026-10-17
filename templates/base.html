@@ -32,13 +32,9 @@
      connections before first paint. The body font is preloaded (same URL as fonts.css uses, so it is fetched once); the icon CSS is a
      generated subset (tools/build_icon_subset.py) and loads without blocking paint. #}
   <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ url_for('static', filename='vendor/fonts/v1/ibm-plex-sans-400-700-latin.woff2', v=None) }}">
-  <link href="{{ url_for('static', filename='vendor/bootstrap/5.3.3/bootstrap.min.css') }}" rel="stylesheet">
-  <link href="{{ url_for('static', filename='vendor/fonts/v1/fonts.css') }}" rel="stylesheet">
+  <link href="{{ css_bundle_url() }}" rel="stylesheet">
   <link rel="preload" as="style" href="{{ url_for('static', filename='vendor/bootstrap-icons/1.11.3/bootstrap-icons-subset.css') }}" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link href="{{ url_for('static', filename='vendor/bootstrap-icons/1.11.3/bootstrap-icons-subset.css') }}" rel="stylesheet"></noscript>
-  <link href="{{ url_for('static', filename='css/ciwt-theme.css') }}" rel="stylesheet">
-  <link href="{{ url_for('static', filename='css/ciwt-ui.css') }}" rel="stylesheet">
-  <link href="{{ url_for('static', filename='css/helix.css') }}" rel="stylesheet">
   <meta name="theme-color" content="#060d18">
   <script>try{if(localStorage.getItem('ciwt-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
   {% block head %}{% endblock %}

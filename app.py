@@ -16,6 +16,8 @@ import csv
 from io import StringIO, BytesIO
 import shutil
 import logging
+import gzip
+import hashlib
 import random
 import os
 from pathlib import Path
@@ -183,6 +185,74 @@ def _static_cache(resp):
             resp.headers['Cache-Control'] = 'public, max-age=86400'
     return resp
 
+
+
+# ---- One render-blocking stylesheet. Bootstrap, the self-hosted font faces and the app's own CSS are
+# concatenated (in cascade order) into /assets/app-<hash>.css. Built from the source files on demand and rebuilt
+# when any of them changes, so there is no build step to forget; the URL carries a content hash, so it is
+# cached immutable. Relative url()s are rewritten to versioned /static URLs. Brotli/gzip bodies are made once.
+CSS_BUNDLE_PARTS = (
+    'vendor/bootstrap/5.3.3/bootstrap.min.css',
+    'vendor/fonts/v1/fonts.css',
+    'css/ciwt-theme.css',
+    'css/ciwt-ui.css',
+    'css/helix.css',
+)
+_css_bundle = {'key': None}
+_CSS_URL = re.compile(r'url\(\s*([\'"]?)([^)\'"]+)\1\s*\)')
+
+
+def _css_bundle_build():
+    paths = [os.path.join(app.static_folder, rel) for rel in CSS_BUNDLE_PARTS]
+    key = tuple(int(os.stat(p_).st_mtime_ns) for p_ in paths)
+    if _css_bundle['key'] == key:
+        return _css_bundle
+    chunks = []
+    for rel, path in zip(CSS_BUNDLE_PARTS, paths):
+        base = os.path.dirname(rel)
+        css = open(path, encoding='utf-8').read()
+
+        def _abs(m, base=base):
+            q, ref = m.group(1), m.group(2).strip()
+            if ref.startswith(('data:', 'http:', 'https:', '/', '#')):
+                return m.group(0)
+            target = os.path.normpath(os.path.join(base, ref.split('?')[0].split('#')[0])).replace(os.sep, '/')
+            if os.path.isfile(os.path.join(app.static_folder, target)):
+                return f'url({q}{url_for("static", filename=target, v=None)}{q})'  # unversioned: must match the font preload URL
+            return f'url({q}/static/{target}{q})'
+        chunks.append(f'/* ---- {rel} ---- */\n' + _CSS_URL.sub(_abs, css))
+    body = '\n'.join(chunks).encode('utf-8')
+    variants = {'identity': body, 'gzip': gzip.compress(body, 9)}
+    try:
+        import brotli
+        variants['br'] = brotli.compress(body, quality=11)
+    except ImportError:
+        pass
+    _css_bundle.update(key=key, hash=hashlib.sha256(body).hexdigest()[:12], variants=variants)
+    return _css_bundle
+
+
+@app.context_processor
+def _css_bundle_ctx():
+    def css_bundle_url():
+        return url_for('css_bundle', digest=_css_bundle_build()['hash'])
+    return {'css_bundle_url': css_bundle_url}
+
+
+@app.route('/assets/app-<digest>.css')
+def css_bundle(digest):
+    b = _css_bundle_build()
+    if digest != b['hash']:      # an old page asking for a superseded bundle gets the current one
+        return redirect(url_for('css_bundle', digest=b['hash']), code=302)
+    accept = request.headers.get('Accept-Encoding', '').lower()
+    enc = 'br' if 'br' in accept and 'br' in b['variants'] else ('gzip' if 'gzip' in accept else 'identity')
+    resp = Response(b['variants'][enc], mimetype='text/css')
+    if enc != 'identity':
+        resp.headers['Content-Encoding'] = enc
+    resp.headers['Vary'] = 'Accept-Encoding'
+    resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    resp.set_etag(f"{b['hash']}-{enc}")
+    return resp.make_conditional(request)
 
 @app.route('/api/tqi/ping', methods=['GET', 'OPTIONS'])
 def api_tqi_ping():

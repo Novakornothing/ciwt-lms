@@ -128,3 +128,25 @@ def test_icon_subset_covers_every_icon_used():
     assert used - have == set(), f'run tools/build_icon_subset.py; missing: {sorted(used - have)}'
     font = re.search(r'url\("fonts/([^"]+)"\)', css).group(1)
     assert (b.ICONS / 'fonts' / font).is_file()
+
+
+def test_single_blocking_css_bundle(anon):
+    import re
+    html = anon.get('/login').get_data(as_text=True)
+    blocking = re.findall(r'<link[^>]+rel="stylesheet"[^>]*>', re.sub(r'<noscript>.*?</noscript>', '', html, flags=re.S))
+    assert len(blocking) == 1 and '/assets/app-' in blocking[0]
+    url = re.search(r'/assets/app-[0-9a-f]{12}\.css', blocking[0]).group(0)
+    r = anon.get(url, headers={'Accept-Encoding': 'identity'})
+    css = r.get_data(as_text=True)
+    assert r.status_code == 200 and r.mimetype == 'text/css'
+    assert 'immutable' in r.headers['Cache-Control']
+    # cascade order: Bootstrap first, app CSS after it
+    assert css.index('bootstrap.min.css') < css.index('ciwt-theme.css') < css.index('ciwt-ui.css') < css.index('helix.css')
+    assert '.mobile-tabbar' in css and '@font-face' in css
+    assert '../img/' not in css and 'url(/static/vendor/fonts/v1/ibm-plex-sans-400-700-latin.woff2)' in css
+    # the font preload uses the same URL, so the font is fetched once
+    assert 'href="/static/vendor/fonts/v1/ibm-plex-sans-400-700-latin.woff2"' in html
+    br = anon.get(url, headers={'Accept-Encoding': 'br, gzip'})
+    assert br.headers.get('Content-Encoding') in ('br', 'gzip') and len(br.data) < len(r.data) / 3
+    stale = anon.get('/assets/app-000000000000.css')
+    assert stale.status_code == 302 and stale.headers['Location'].endswith(url)
