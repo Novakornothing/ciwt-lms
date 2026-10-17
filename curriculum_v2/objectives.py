@@ -70,6 +70,7 @@ _IT = [
     ('IT-11.1', 11, 'Recognise software failure patterns and scope them (one app, one PC, many users)', 'Analyze'),
     ('IT-11.2', 11, 'Choose between repair, in-place and rebuild with backup and change control', 'Evaluate'),
     ('IT-11.3', 11, 'Diagnose OS and resource problems (processes, memory, storage latency) with system tools', 'Analyze'),
+    ('IT-11.4', 11, 'Isolate start-up and application conflicts with clean boot, Safe Mode and app repair or reset', 'Analyze'),  # pass 9
     ('IT-12.1', 12, 'Follow change management: approvals, windows, rollback and documentation', 'Apply'),
     ('IT-12.2', 12, 'Apply privacy, acceptable-use and professional-conduct policies', 'Apply'),
     ('IT-12.3', 12, 'Plan and verify backup and recovery, distinguishing backup, RAID and snapshots', 'Evaluate'),
