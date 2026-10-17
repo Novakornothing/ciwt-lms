@@ -476,3 +476,68 @@ pytest **96 passed** (was 73); node **31 passed**; phone quiz/test e2e **43/43**
 - The People list shows everyone (28 in the demo; 4,629 px on a phone). Add pagination if the user count grows.
 - `n74-ops-worker 4.js` in the repo root looks like another stale duplicate. It was outside this pass's list, so it is untouched.
 - Small-target counts at 1280 are mouse context (touch rules apply below 1000 px).
+
+---
+
+## Pass 8 (Oct 17 2026): classroom-ready curriculum
+
+The full audit is in **CURRICULUM_AUDIT.md**. The revised content is a layer in `curriculum_v2/`; the original lesson,
+bank and pilot text is unchanged in place and in git.
+
+**Assessment and content corrections**
+- Item review for all 270 bank and check items (`curriculum_v2/item_review.py`): 226 revised, 173 keys reworded so
+  answer length is no longer a cue, 21 stems rewritten, key positions rotated. Each item now has an objective code and
+  a rationale.
+- Two wrong items fixed: N1.2 had two correct options, and N1.4's key was hedged. A1.13's stem gave the answer away.
+- The NETOPS chapter checks were three generic sets rotated across chapters. They are replaced by 56
+  chapter-specific items (`netops_checks.py`).
+- 30 supplementary exam items cover 15 objectives that had no test item (`exam_supplement.py`). They are kept out of
+  the LMS A/B/C forms, so live forms stay stable.
+- Labs: three unused labs are now mapped, existing labs are attached to ITSUP 7/11 and NETOPS 5, and four classroom
+  labs were written (CL-4/6/9/12).
+- Factual updates:
+  - Windows 11 25H2 (23H2 service ends 10 Nov 2026)
+  - Windows 10 end of support and ESU dates
+  - VM hosts and vTPM requirements
+  - NIST SP 800-63B-4 password guidance
+  - Wi-Fi 4–7, USB-IF naming, DDR5, Cat6 10GBASE-T distance
+- Leaks fixed: teaching notes (`.instructor-note`) are stripped server-side for students, and answer keys no longer
+  appear in quiz page source.
+
+**Course package (`curriculum_v2/course_package.py`, `documents.py`)**
+- Syllabus template with:
+  - credit hours (34 CFR 600.2: ITSUP and NETOPS 4 credits, CLIENT 3)
+  - CLOs, objectives and grading taken from the section's gradebook settings
+  - policy placeholders and an accessibility statement
+- Pacing guides for 16, 8 and 10 weeks, and a 150-minute session template.
+- Lesson plans for every chapter.
+- Lab manual in a standard format (objective, equipment, safety, steps, evidence, rubric).
+- Rubrics (lab, skills exam with critical errors, ticket, discussion).
+- Midterm and final blueprints with form coverage.
+- Answer keys as a separate instructor-only document.
+- A glossary of about 60 terms.
+- `tools/build_course_package.py` writes DOCX and PDF to `/workspace/artifacts/course-package/<CODE>/` (student-safe
+  files) and `<CODE>/instructor-only/`, 44 files in total.
+
+**In the app (`curriculum_v2/materials.py`)**
+- `/instructor/materials` lets instructors view, print and download every document (DOCX or PDF).
+- `/instructor/section/<id>/syllabus` sets per-section syllabus details (institution, term, meetings, instructor,
+  policies, pacing length) in a new `syllabus_settings` table. Grading weights, pass mark and scale come from the
+  gradebook settings.
+- Students get a Syllabus button on the class page (`/section/<id>/materials/syllabus|pacing|rubrics|glossary`).
+  They can reach only student-safe documents, and only for sections they are enrolled in. Unfilled `[placeholders]`
+  are flagged.
+- Each lab page has a "How this lab is assessed" panel (rubric criteria plus the linked skills-exam station).
+- On phones, item/details document tables stack. Document tables wrap: the answer key now fits 927 px, where it was
+  3112 px.
+
+**Tests (end of pass)**
+- pytest: 157 passed, including `test_curriculum_integrity.py` and `test_materials.py`.
+- node: 31 passed.
+- Phone e2e: 43/43 in light and 43/43 in dark.
+- axe-core: 216 page/width checks with 0 violation nodes in light and dark. The sweep now includes the materials,
+  syllabus, rubrics, syllabus-settings and lab pages. After the table CSS change the document pages were re-run
+  (42 checks, 0 violations, no overflow).
+- Screenshots are in `/workspace/ciwt/screenshots/pass8/`.
+
+**Still open (SME or institution):** see the "Still needs" section of CURRICULUM_AUDIT.md.
