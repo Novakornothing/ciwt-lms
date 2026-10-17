@@ -131,15 +131,15 @@
       </div>
       <div class="row g-2 align-items-end mt-3">
         <div class="col-6 col-md-2">
-          <label class="form-label small mb-1">Year</label>
-          <select name="year" class="form-select form-select-sm" aria-label="Year">
+          <label class="form-label small mb-1" for="f-year">Year</label>
+          <select id="f-year" name="year" class="form-select form-select-sm" aria-label="Year">
             <option value="">All</option>
             {% for y in years %}<option value="{{ y }}" {% if filter_year == y %}selected{% endif %}>{{ y }}</option>{% endfor %}
           </select>
         </div>
         <div class="col-6 col-md-2">
-          <label class="form-label small mb-1">Quarter</label>
-          <select name="quarter" class="form-select form-select-sm" aria-label="Quarter">
+          <label class="form-label small mb-1" for="f-quarter">Quarter</label>
+          <select id="f-quarter" name="quarter" class="form-select form-select-sm" aria-label="Quarter">
             <option value="">All</option>
             {% for qq in ['Q1','Q2','Q3','Q4'] %}
             <option value="{{ qq }}" {% if filter_quarter == qq %}selected{% endif %}>{{ qq }}</option>

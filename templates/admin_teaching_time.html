@@ -15,12 +15,12 @@
 <form method="get" class="card card-body mb-4">
   <div class="row g-2 align-items-end">
     <div class="col-md-3">
-      <label class="form-label">Search</label>
-      <input type="search" name="q" class="form-control" value="{{ filter_q or '' }}" placeholder="Name, class, course…" aria-label="Search">
+      <label class="form-label" for="f-q">Search</label>
+      <input id="f-q" type="search" name="q" class="form-control" value="{{ filter_q or '' }}" placeholder="Name, class, course…" aria-label="Search">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Instructor</label>
-      <select name="instructor_id" class="form-select" aria-label="Instructor">
+      <label class="form-label" for="f-instructor_id">Instructor</label>
+      <select id="f-instructor_id" name="instructor_id" class="form-select" aria-label="Instructor">
         <option value="">All instructors</option>
         {% for i in instructors %}
         <option value="{{ i.id }}" {% if filter_instructor_id == i.id %}selected{% endif %}>{{ i.full_name }}</option>
@@ -28,8 +28,8 @@
       </select>
     </div>
     <div class="col-md-3">
-      <label class="form-label">Course</label>
-      <select name="course_id" class="form-select" aria-label="Course">
+      <label class="form-label" for="f-course_id">Course</label>
+      <select id="f-course_id" name="course_id" class="form-select" aria-label="Course">
         <option value="">All courses</option>
         {% for c in courses %}
         <option value="{{ c.id }}" {% if filter_course_id == c.id %}selected{% endif %}>{{ c.code }} — {{ c.title }}</option>
@@ -37,8 +37,8 @@
       </select>
     </div>
     <div class="col-md-3">
-      <label class="form-label">Class</label>
-      <select name="section_id" class="form-select" aria-label="Class">
+      <label class="form-label" for="f-section_id">Class</label>
+      <select id="f-section_id" name="section_id" class="form-select" aria-label="Class">
         <option value="">All classes</option>
         {% for s in sections %}
         <option value="{{ s.id }}" {% if filter_section_id == s.id %}selected{% endif %}>{{ s.name }}</option>
@@ -46,8 +46,8 @@
       </select>
     </div>
     <div class="col-md-2">
-      <label class="form-label">Year</label>
-      <select name="year" class="form-select" aria-label="Year">
+      <label class="form-label" for="f-year">Year</label>
+      <select id="f-year" name="year" class="form-select" aria-label="Year">
         <option value="">All years</option>
         {% for y in years %}
         <option value="{{ y }}" {% if filter_year == y %}selected{% endif %}>{{ y }}</option>
@@ -55,8 +55,8 @@
       </select>
     </div>
     <div class="col-md-2">
-      <label class="form-label">Quarter</label>
-      <select name="quarter" class="form-select" aria-label="Quarter">
+      <label class="form-label" for="f-quarter">Quarter</label>
+      <select id="f-quarter" name="quarter" class="form-select" aria-label="Quarter">
         <option value="">All quarters</option>
         {% for qq in ['Q1','Q2','Q3','Q4'] %}
         <option value="{{ qq }}" {% if filter_quarter == qq %}selected{% endif %}>{{ qq }}</option>
@@ -64,8 +64,8 @@
       </select>
     </div>
     <div class="col-md-2">
-      <label class="form-label">Sort</label>
-      <select name="sort" class="form-select" aria-label="Sort">
+      <label class="form-label" for="f-sort">Sort</label>
+      <select id="f-sort" name="sort" class="form-select" aria-label="Sort">
         <option value="instructor" {% if filter_sort == 'instructor' %}selected{% endif %}>Instructor A–Z</option>
         <option value="time" {% if filter_sort == 'time' %}selected{% endif %}>Most time</option>
         <option value="class" {% if filter_sort == 'class' %}selected{% endif %}>Class name</option>

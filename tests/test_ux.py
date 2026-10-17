@@ -64,3 +64,14 @@ def test_password_change_validation_and_success(app, student2):
     r = student2.post('/account', data={'current_password': 'longer-pass-1', 'new_password': 'student123',
                                         'confirm_password': 'student123'})
     assert r.status_code in (302, 303)
+
+
+def test_favicon_redirects_to_small_png(anon):
+    r = anon.get('/favicon.ico')
+    assert r.status_code == 301 and 'favicon-32.png' in r.headers['Location']
+
+
+def test_base_loads_icons_without_blocking(student):
+    body = student.get('/student').get_data(as_text=True)
+    assert 'rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/bootstrap-icons' in body
+    assert 'onsubmit="return confirm' not in body

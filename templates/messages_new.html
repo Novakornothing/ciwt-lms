@@ -52,8 +52,8 @@
     </div>
     {% else %}
     <div class="mb-3">
-      <label class="form-label">To</label>
-      <select name="recipient_id" class="form-select" required>
+      <label class="form-label" for="f-recipient_id">To</label>
+      <select id="f-recipient_id" name="recipient_id" class="form-select" required>
         <option value="">Select…</option>
         {% for u in contacts %}
         <option value="{{ u.id }}" {% if pre_recipient == u.id %}selected{% endif %}>
@@ -64,8 +64,8 @@
     </div>
     {% if sections %}
     <div class="mb-3">
-      <label class="form-label">Related class (optional)</label>
-      <select name="section_id" class="form-select">
+      <label class="form-label" for="f-section_id">Related class (optional)</label>
+      <select id="f-section_id" name="section_id" class="form-select">
         <option value="">—</option>
         {% for s in sections %}
         <option value="{{ s.id }}">{{ s.name }}{% if s.course %} · {{ s.course.code }}{% endif %}</option>
@@ -75,12 +75,12 @@
     {% endif %}
     {% endif %}
     <div class="mb-3">
-      <label class="form-label">Subject</label>
-      <input type="text" name="subject" class="form-control" required maxlength="200" placeholder="Short subject">
+      <label class="form-label" for="f-subject">Subject</label>
+      <input id="f-subject" type="text" name="subject" class="form-control" required maxlength="200" placeholder="Short subject">
     </div>
     <div class="mb-3">
-      <label class="form-label">Message</label>
-      <textarea name="body" class="form-control" rows="6" required placeholder="Your message…"></textarea>
+      <label class="form-label" for="f-body">Message</label>
+      <textarea id="f-body" name="body" class="form-control" rows="6" required placeholder="Your message…"></textarea>
     </div>
     <button type="submit" class="btn btn-brand">Send</button>
     <a href="{{ url_for('messages_inbox') }}" class="btn btn-outline-navy">Cancel</a>

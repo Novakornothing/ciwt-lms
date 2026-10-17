@@ -26,8 +26,8 @@
     </div>
     {% endif %}
     <div class="mb-3">
-      <label class="form-label">Category</label>
-      <select name="category" class="form-select" required aria-label="Category">
+      <label class="form-label" for="f-category">Category</label>
+      <select id="f-category" name="category" class="form-select" required aria-label="Category">
         <option value="error" selected>Error or inaccuracy</option>
         <option value="content">Content question / clarification</option>
         <option value="request">Improvement request</option>
@@ -35,8 +35,8 @@
       </select>
     </div>
     <div class="mb-3">
-      <label class="form-label">Curriculum set</label>
-      <select name="course_id" class="form-select" aria-label="Curriculum set">
+      <label class="form-label" for="f-course_id">Curriculum set</label>
+      <select id="f-course_id" name="course_id" class="form-select" aria-label="Curriculum set">
         <option value="">— Optional —</option>
         {% for c in courses %}
         <option value="{{ c.id }}" {% if pre_course == c.id or (lesson and lesson.module and lesson.module.course_id == c.id) %}selected{% endif %}>
@@ -55,20 +55,20 @@
     <div class="alert alert-info py-2 small mb-3">Linked test: <strong>{{ test.title }}</strong></div>
     {% endif %}
     <div class="mb-3">
-      <label class="form-label">Subject</label>
-      <input type="text" name="subject" class="form-control" required maxlength="200"
+      <label class="form-label" for="f-subject">Subject</label>
+      <input id="f-subject" type="text" name="subject" class="form-control" required maxlength="200"
              placeholder="Short label for the issue"
              value="{% if pre_quote %}Issue in selected text{% elif quiz %}Quiz: {{ quiz.title }}{% elif test %}Test: {{ test.title }}{% elif lesson %}{{ lesson.title }}{% endif %}">
     </div>
     <div class="mb-3">
-      <label class="form-label">What should change? <span class="text-muted">(optional if you highlighted text)</span></label>
-      <textarea name="body" class="form-control" rows="4"
+      <label class="form-label" for="f-body">What should change? <span class="text-muted">(optional if you highlighted text)</span></label>
+      <textarea id="f-body" name="body" class="form-control" rows="4"
                 placeholder="Optional: what is wrong or what you want fixed."></textarea>
     </div>
     {% if not pre_quote %}
     <div class="mb-3">
-      <label class="form-label">Paste the problem sentence (optional)</label>
-      <textarea name="quoted_text" class="form-control" rows="2" placeholder="Or highlight text on a lesson page instead"></textarea>
+      <label class="form-label" for="f-quoted_text">Paste the problem sentence (optional)</label>
+      <textarea id="f-quoted_text" name="quoted_text" class="form-control" rows="2" placeholder="Or highlight text on a lesson page instead"></textarea>
     </div>
     {% endif %}
     <button class="btn btn-brand">Submit ticket</button>

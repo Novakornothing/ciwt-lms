@@ -889,3 +889,14 @@ details.card-disclosure:not([open]) > summary { border-bottom: 0; border-radius:
 .person-chip-x:hover, .person-chip-x:focus-visible { background: var(--danger-bg); color: var(--danger); }
 @media (pointer: coarse) { .person-chip-x { width: 40px; height: 40px; } }
 [id^="admin-"] { scroll-margin-top: 1rem; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: .75rem; }
+@media (max-width: 575.98px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; } .kpi-grid .kpi-card { padding: .6rem .65rem; } .kpi-grid .kpi-value { font-size: 1.3rem; } .kpi-grid .kpi-label { font-size: .62rem; letter-spacing: .05em; } }
+.meta-pills { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+.meta-pills li { padding: .3rem .7rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--surface-3); font-size: var(--text-sm, .875rem); color: var(--ink-secondary); }
+.meta-pills strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.meta-pills .is-ok { border-color: color-mix(in srgb, var(--success) 45%, transparent); }
+.meta-pills .is-warn { border-color: color-mix(in srgb, var(--gold) 55%, transparent); }
+.meta-pills .is-flag { border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+.page-hero-split { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
+.page-hero-split > div { min-width: 0; flex: 1 1 16rem; }
+@media (max-width: 575.98px) { .page-hero-split > .btn { width: 100%; } }

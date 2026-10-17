@@ -2,21 +2,12 @@
 {% block title %}Messages — {{ site_name }}{% endblock %}
 {% block content %}
 {% from '_ui.html' import empty_state %}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<div class="page-hero page-hero-split">
   <div>
-    <h1 class="h3 mb-0">{% if mode == 'staff' %}Instructor / admin inbox{% else %}Messages to staff{% endif %}</h1>
-    <p class="text-muted small mb-0">
-      {% if mode == 'staff' %}
-      Students may contact instructors and admins only — not other students.
-      {% else %}
-      Ask your instructor or an administrator. You cannot message other students.
-      {% endif %}
-      {% if unread %}<span class="badge badge-gold ms-1">{{ unread }} unread</span>{% endif %}
-    </p>
+    <h1 class="h3 mb-1">{% if mode == 'staff' %}Inbox{% else %}Messages{% endif %}{% if unread %} <span class="badge badge-gold align-middle">{{ unread }} unread</span>{% endif %}</h1>
+    <p class="mb-0">{% if mode == 'staff' %}Messages from students and staff. Students can only write to instructors and admins.{% else %}Ask your instructor or an administrator. Messages to other students are not possible.{% endif %}</p>
   </div>
-  <a class="btn btn-brand" href="{{ url_for('messages_new') }}">
-    {% if mode == 'staff' %}Message a student{% else %}Ask instructor{% endif %}
-  </a>
+  <a class="btn btn-brand" href="{{ url_for('messages_new') }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> {% if mode == 'staff' %}Message a student{% else %}Ask instructor{% endif %}</a>
 </div>
 
 {% if threads %}
@@ -37,6 +28,6 @@
   {% endfor %}
 </div>
 {% else %}
-{{ empty_state('envelope-open', 'No messages yet', 'Questions about a lesson, lab or grade? Your instructor sees them here.' if mode != 'staff' else 'Messages from students and staff show up here.', url_for('messages_new'), 'Ask instructor' if mode != 'staff' else 'Message a student') }}
+{{ empty_state('envelope-open', 'No messages yet', 'Questions about a lesson, lab or grade? Your instructor sees them here.' if mode != 'staff' else 'Messages from students and staff show up here.' ) }}
 {% endif %}
 {% endblock %}

@@ -12,22 +12,21 @@
   <p class="mb-0">NAVEDTRA-aligned item analysis (P, d, alternatives){% if section %} · {{ section.name }}{% endif %}</p>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">Attempts</div><div class="fs-4 fw-bold">{{ summary.n_attempts }}</div></div></div>
-  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">Average</div><div class="fs-4 fw-bold">{% if summary.mean_score is not none %}{{ summary.mean_score }}%{% else %}—{% endif %}</div></div></div>
-  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">Median</div><div class="fs-4 fw-bold">{% if summary.median_score is not none %}{{ summary.median_score }}%{% else %}—{% endif %}</div></div></div>
-  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">High / low</div><div class="fs-5 fw-bold">{% if summary.high_score is not none %}{{ summary.high_score }} / {{ summary.low_score }}{% else %}—{% endif %}</div></div></div>
-  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">SD</div><div class="fs-4 fw-bold">{% if summary.stdev is not none %}{{ summary.stdev }}{% else %}—{% endif %}</div></div></div>
-  <div class="col-6 col-lg"><div class="card text-center p-3"><div class="text-muted small">Pass rate</div><div class="fs-4 fw-bold">{% if summary.pass_rate is not none %}{{ summary.pass_rate }}%{% else %}—{% endif %}</div></div></div>
+<div class="kpi-grid mb-4">
+  <div class="kpi-card"><div class="kpi-label">Attempts</div><div class="kpi-value">{{ summary.n_attempts }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Average</div><div class="kpi-value">{% if summary.mean_score is not none %}{{ summary.mean_score }}%{% else %}—{% endif %}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Median</div><div class="kpi-value">{% if summary.median_score is not none %}{{ summary.median_score }}%{% else %}—{% endif %}</div></div>
+  <div class="kpi-card"><div class="kpi-label">High / low</div><div class="kpi-value">{% if summary.high_score is not none %}{{ summary.high_score }} / {{ summary.low_score }}{% else %}—{% endif %}</div></div>
+  <div class="kpi-card"><div class="kpi-label">SD</div><div class="kpi-value">{% if summary.stdev is not none %}{{ summary.stdev }}{% else %}—{% endif %}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Pass rate</div><div class="kpi-value">{% if summary.pass_rate is not none %}{{ summary.pass_rate }}%{% else %}—{% endif %}</div></div>
 </div>
-<p class="small text-muted mb-3">
-  {{ summary.n_items or analysis|length }} items ·
-  In-band P {{ summary.items_in_band or 0 }} · Out-of-band {{ summary.items_out_of_band or 0 }} ·
-  Flagged {{ summary.n_flagged or 0 }}
-  · Pass mark {{ summary.passing_score }}%
-  · Acceptable P band {{ summary.p_band or '0.60–0.95' }}
-  · Groups: {{ summary.group_method or 'Upper/lower 27%' }}
-</p>
+<ul class="meta-pills mb-2" aria-label="Item summary">
+  <li><strong>{{ summary.n_items or analysis|length }}</strong> items</li>
+  <li class="is-ok"><strong>{{ summary.items_in_band or 0 }}</strong> in P band</li>
+  <li class="is-warn"><strong>{{ summary.items_out_of_band or 0 }}</strong> out of band</li>
+  <li class="is-flag"><strong>{{ summary.n_flagged or 0 }}</strong> flagged</li>
+</ul>
+<p class="field-hint mb-3">Pass mark {{ summary.passing_score }}% · acceptable P {{ summary.p_band or '0.60–0.95' }} · groups {{ summary.group_method or 'upper/lower 27%' }}</p>
 
 {% if summary.lo_rows %}
 <div class="card mb-4">

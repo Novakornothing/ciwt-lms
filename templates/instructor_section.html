@@ -79,8 +79,8 @@
               <input type="hidden" name="content_type" value="test">
               <input type="hidden" name="content_id" value="{{ t.id }}">
               <input type="hidden" name="schedule_mode" value="duration">
-              <label class="form-label small mb-0">Open for</label>
-              <select name="duration_minutes" class="form-select form-select-sm mb-1" aria-label="Open for">
+              <label class="form-label small mb-0" for="f-duration_minutes-{{ t.id }}">Open for</label>
+              <select id="f-duration_minutes-{{ t.id }}" name="duration_minutes" class="form-select form-select-sm mb-1" aria-label="Open for">
                 <option value="45">45 min</option>
                 <option value="60">1 hour</option>
                 <option value="75">75 min</option>
@@ -89,8 +89,8 @@
                 <option value="180">3 hours</option>
                 <option value="1440">24 hours</option>
               </select>
-              <label class="form-label small mb-0">Who</label>
-              <select name="audience" class="form-select form-select-sm mb-1 js-audience" aria-label="Who">
+              <label class="form-label small mb-0" for="f-audience-{{ t.id }}">Who</label>
+              <select id="f-audience-{{ t.id }}" name="audience" class="form-select form-select-sm mb-1 js-audience" aria-label="Who">
                 <option value="class" selected>Whole class</option>
                 <option value="students">Selected students</option>
               </select>
@@ -167,8 +167,8 @@
             <form method="post" action="{{ url_for('instructor_enroll') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="section_id" value="{{ section.id }}">
               <div class="mb-3">
-                <label class="form-label">From existing students</label>
-                <select name="user_id" class="form-select" aria-label="From existing students">
+                <label class="form-label" for="f-user_id">From existing students</label>
+                <select id="f-user_id" name="user_id" class="form-select" aria-label="From existing students">
                   <option value="">— Select —</option>
                   {% for s in available_students %}
                   <option value="{{ s.id }}">{{ s.full_name }} ({{ s.email }})</option>

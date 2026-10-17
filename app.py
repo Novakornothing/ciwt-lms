@@ -150,6 +150,12 @@ def _static_version(endpoint, values):
     values['v'] = v
 
 
+@app.route('/favicon.ico')
+def favicon():
+    # browsers ask for /favicon.ico on every origin; answer with the small PNG instead of a full 404 page
+    return redirect(url_for('static', filename='img/favicon-32.png'), code=301)
+
+
 @app.after_request
 def _static_cache(resp):
     if request.endpoint == 'static' and resp.status_code in (200, 304):

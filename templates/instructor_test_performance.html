@@ -82,14 +82,14 @@
   <p class="mb-0">{{ section.name }} · Class performance · Pass mark {{ test.passing_score }}%</p>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Attempts</div><div class="fs-4 fw-bold">{{ stats.n }}</div></div></div>
-  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Class average</div><div class="fs-4 fw-bold">{% if stats.mean is not none %}{{ stats.mean }}%{% else %}—{% endif %}</div></div></div>
-  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Median</div><div class="fs-4 fw-bold">{% if stats.median is not none %}{{ stats.median }}%{% else %}—{% endif %}</div></div></div>
-  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Pass rate</div><div class="fs-4 fw-bold">{% if stats.pass_rate is not none %}{{ stats.pass_rate }}%{% else %}—{% endif %}</div></div></div>
-  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">High score</div><div class="fs-4 fw-bold">{% if stats.high is not none %}{{ stats.high }}%{% else %}—{% endif %}</div></div></div>
-  <div class="col-6 col-md-3"><div class="card text-center p-3"><div class="text-muted small">Low score</div><div class="fs-4 fw-bold">{% if stats.low is not none %}{{ stats.low }}%{% else %}—{% endif %}</div></div></div>
-  <div class="col-md-6"><div class="card text-center p-3"><div class="text-muted small">Your historical average (all sections you teach)</div><div class="fs-4 fw-bold">{% if hist_avg is not none %}{{ hist_avg }}% <span class="fs-6 text-muted">({{ hist_n }} attempts)</span>{% else %}—{% endif %}</div></div></div>
+<div class="kpi-grid mb-4">
+  <div class="kpi-card"><div class="kpi-label">Attempts</div><div class="kpi-value">{{ stats.n }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Class average</div><div class="kpi-value">{% if stats.mean is not none %}{{ stats.mean }}%{% else %}—{% endif %}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Median</div><div class="kpi-value">{% if stats.median is not none %}{{ stats.median }}%{% else %}—{% endif %}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Pass rate</div><div class="kpi-value">{% if stats.pass_rate is not none %}{{ stats.pass_rate }}%{% else %}—{% endif %}</div></div>
+  <div class="kpi-card"><div class="kpi-label">High score</div><div class="kpi-value">{% if stats.high is not none %}{{ stats.high }}%{% else %}—{% endif %}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Low score</div><div class="kpi-value">{% if stats.low is not none %}{{ stats.low }}%{% else %}—{% endif %}</div></div>
+  <div class="kpi-card" title="Your historical average on this test across all sections you teach"><div class="kpi-label">All your sections</div><div class="kpi-value">{% if hist_avg is not none %}{{ hist_avg }}<small>%</small>{% else %}—{% endif %}</div>{% if hist_avg is not none %}<div class="kpi-sub">{{ hist_n }} attempts</div>{% endif %}</div>
 </div>
 
 <div class="card mb-4">
@@ -132,7 +132,7 @@
     <form method="get" class="row g-3 align-items-start">
       <div class="col-lg-6">
         <div class="d-flex justify-content-between align-items-center mb-1">
-          <label class="form-label mb-0 fw-semibold">Students</label>
+          <label class="form-label mb-0 fw-semibold" for="f-result">Students</label>
           <span>
             <button type="button" class="btn btn-link btn-sm p-0" id="stuAll">All</button>
             <span class="text-muted">·</span>
@@ -153,7 +153,7 @@
       </div>
       <div class="col-lg-3 col-md-6">
         <label class="form-label fw-semibold">Result</label>
-        <select name="result" class="form-select">
+        <select id="f-result" name="result" class="form-select">
           <option value="" {% if not result_filter %}selected{% endif %}>All results</option>
           <option value="pass" {% if result_filter == 'pass' %}selected{% endif %}>Passed only</option>
           <option value="fail" {% if result_filter == 'fail' %}selected{% endif %}>Below pass only</option>

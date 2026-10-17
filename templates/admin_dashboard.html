@@ -15,7 +15,7 @@
 <div class="card mb-4">
   <div class="card-header navy d-flex justify-content-between align-items-center">
     <span>TQI packets</span>
-    <a class="btn btn-sm btn-brand" href="https://novakornothing.com/tqi" target="_blank" rel="noopener">Open TQI site</a>
+    <a class="btn btn-sm btn-outline-light" href="https://novakornothing.com/tqi" target="_blank" rel="noopener">Open TQI site <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> (opens in a new tab)</span></a>
   </div>
   <div class="card-body py-2">
     <span class="stat-pill">Complete <strong>{{ tqi_complete|default(0) }}</strong></span>
@@ -66,21 +66,21 @@
       <div class="card-body">
         <form method="post" action="{{ url_for('admin_create_section') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
-            <label class="form-label">Section name</label>
-            <input type="text" name="name" class="form-control" required
+            <label class="form-label" for="f-name">Section name</label>
+            <input id="f-name" type="text" name="name" class="form-control" required
                    placeholder="IT Support Fall 2026 — Section D">
           </div>
           <div class="mb-3">
-            <label class="form-label">Course</label>
-            <select name="course_id" class="form-select" required aria-label="Course">
+            <label class="form-label" for="f-course_id">Course</label>
+            <select id="f-course_id" name="course_id" class="form-select" required aria-label="Course">
               {% for c in courses %}
               <option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>
               {% endfor %}
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Assign instructor</label>
-            <select name="instructor_id" class="form-select" required aria-label="Assign instructor">
+            <label class="form-label" for="f-instructor_id">Assign instructor</label>
+            <select id="f-instructor_id" name="instructor_id" class="form-select" required aria-label="Assign instructor">
               {% for i in instructors %}
               <option value="{{ i.id }}">{{ i.full_name }} ({{ i.email }})</option>
               {% endfor %}
@@ -88,16 +88,16 @@
           </div>
           <div class="row g-2 mb-3">
             <div class="col">
-              <label class="form-label">Start</label>
-              <input type="date" name="start_date" class="form-control" aria-label="Start">
+              <label class="form-label" for="f-start_date">Start</label>
+              <input id="f-start_date" type="date" name="start_date" class="form-control" aria-label="Start">
             </div>
             <div class="col">
-              <label class="form-label">End</label>
-              <input type="date" name="end_date" class="form-control" aria-label="End">
+              <label class="form-label" for="f-end_date">End</label>
+              <input id="f-end_date" type="date" name="end_date" class="form-control" aria-label="End">
             </div>
             <div class="col">
-              <label class="form-label">Max students</label>
-              <input type="number" name="max_students" class="form-control" value="25" min="1" aria-label="Max students">
+              <label class="form-label" for="f-max_students">Max students</label>
+              <input id="f-max_students" type="number" name="max_students" class="form-control" value="25" min="1" aria-label="Max students">
             </div>
           </div>
           <button class="btn btn-brand">Create section</button>
@@ -112,16 +112,16 @@
         <p class="small text-muted mb-3">Gives the instructor access to every class in that course (release content, scores, analytics). You can still set a primary instructor per class below.</p>
         <form method="post" action="{{ url_for('admin_add_course_instructor') }}" class="row g-2 align-items-end"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="col-md-5">
-            <label class="form-label">Curriculum set</label>
-            <select name="course_id" class="form-select" required aria-label="Curriculum set">
+            <label class="form-label" for="f-course_id-2">Curriculum set</label>
+            <select id="f-course_id-2" name="course_id" class="form-select" required aria-label="Curriculum set">
               {% for c in courses %}
               <option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>
               {% endfor %}
             </select>
           </div>
           <div class="col-md-5">
-            <label class="form-label">Instructor</label>
-            <select name="user_id" class="form-select" required aria-label="Instructor">
+            <label class="form-label" for="f-user_id">Instructor</label>
+            <select id="f-user_id" name="user_id" class="form-select" required aria-label="Instructor">
               {% for i in instructors %}
               <option value="{{ i.id }}">{{ i.full_name }}</option>
               {% endfor %}
@@ -160,29 +160,29 @@
         <form method="post" action="{{ url_for('admin_create_instructor') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="row g-2 mb-2">
             <div class="col">
-              <label class="form-label">First name</label>
-              <input type="text" name="first_name" class="form-control" placeholder="e.g. Jordan" required aria-label="First name">
+              <label class="form-label" for="f-first_name">First name</label>
+              <input id="f-first_name" type="text" name="first_name" class="form-control" placeholder="e.g. Jordan" required aria-label="First name">
             </div>
             <div class="col">
-              <label class="form-label">Last name</label>
-              <input type="text" name="last_name" class="form-control" placeholder="e.g. Lee" required aria-label="Last name">
+              <label class="form-label" for="f-last_name">Last name</label>
+              <input id="f-last_name" type="text" name="last_name" class="form-control" placeholder="e.g. Lee" required aria-label="Last name">
             </div>
           </div>
           <div class="mb-2">
-            <label class="form-label">Work email (sign-in)</label>
-            <input type="email" name="email" class="form-control" placeholder="e.g. jordan.lee@lms.local" required aria-label="Work email (sign-in)">
+            <label class="form-label" for="f-email">Work email (sign-in)</label>
+            <input id="f-email" type="email" name="email" class="form-control" placeholder="e.g. jordan.lee@lms.local" required aria-label="Work email (sign-in)">
           </div>
           <div class="row g-2 mb-3">
             <div class="col">
-              <label class="form-label">Role</label>
-              <select name="role" class="form-select" required aria-label="Role">
+              <label class="form-label" for="f-role">Role</label>
+              <select id="f-role" name="role" class="form-select" required aria-label="Role">
                 <option value="instructor" selected>Instructor — teach classes, release tests</option>
                 <option value="admin">Admin — manage people, classes, tickets</option>
               </select>
             </div>
             <div class="col">
-              <label class="form-label">Temporary password</label>
-              <input type="text" name="password" class="form-control" placeholder="Leave blank for changeme123" aria-label="Temporary password">
+              <label class="form-label" for="f-password">Temporary password</label>
+              <input id="f-password" type="text" name="password" class="form-control" placeholder="Leave blank for changeme123" aria-label="Temporary password">
             </div>
           </div>
           <button class="btn btn-brand">Create staff account</button>
@@ -197,30 +197,30 @@
         <form method="post" action="{{ url_for('admin_create_user') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="row g-2 mb-2">
             <div class="col">
-              <label class="form-label">First name</label>
-              <input type="text" name="first_name" class="form-control" placeholder="e.g. Alex" required aria-label="First name">
+              <label class="form-label" for="f-first_name-2">First name</label>
+              <input id="f-first_name-2" type="text" name="first_name" class="form-control" placeholder="e.g. Alex" required aria-label="First name">
             </div>
             <div class="col">
-              <label class="form-label">Last name</label>
-              <input type="text" name="last_name" class="form-control" placeholder="e.g. Rivera" required aria-label="Last name">
+              <label class="form-label" for="f-last_name-2">Last name</label>
+              <input id="f-last_name-2" type="text" name="last_name" class="form-control" placeholder="e.g. Rivera" required aria-label="Last name">
             </div>
           </div>
           <div class="mb-2">
-            <label class="form-label">Email (sign-in)</label>
-            <input type="email" name="email" class="form-control" placeholder="e.g. student12@lms.local" required aria-label="Email (sign-in)">
+            <label class="form-label" for="f-email-2">Email (sign-in)</label>
+            <input id="f-email-2" type="email" name="email" class="form-control" placeholder="e.g. student12@lms.local" required aria-label="Email (sign-in)">
           </div>
           <div class="row g-2 mb-3">
             <div class="col">
-              <label class="form-label">Role</label>
-              <select name="role" class="form-select" required aria-label="Role">
+              <label class="form-label" for="f-role-2">Role</label>
+              <select id="f-role-2" name="role" class="form-select" required aria-label="Role">
                 <option value="student" selected>Student — takes lessons and tests</option>
                 <option value="instructor">Instructor — teaches classes</option>
                 <option value="admin">Admin — full control</option>
               </select>
             </div>
             <div class="col">
-              <label class="form-label">Temporary password</label>
-              <input type="text" name="password" class="form-control" placeholder="Leave blank for changeme123" aria-label="Temporary password">
+              <label class="form-label" for="f-password-2">Temporary password</label>
+              <input id="f-password-2" type="text" name="password" class="form-control" placeholder="Leave blank for changeme123" aria-label="Temporary password">
             </div>
           </div>
           <button class="btn btn-outline-dark">Create user</button>

@@ -75,7 +75,7 @@
           <p class="small text-muted">Student reaction items aligned to NAVEDTRA M-142.5 (content, instructor, labs, testing, safety, site). Not a grade.</p>
           {% for key, group, label in eoc_items %}
           <div class="mb-2">
-            <label class="form-label mb-1"><span class="small text-muted">{{ group }}</span> — {{ label }}</label>
+            <label class="form-label mb-1" for="f-body"><span class="small text-muted">{{ group }}</span> — {{ label }}</label>
             <select name="{{ key }}" class="form-select form-select-sm" required>
               <option value="">Select</option>
               <option value="5" {% if my_answers.get(key)|string == '5' %}selected{% endif %}>5 — Strongly agree</option>
@@ -88,13 +88,13 @@
           {% endfor %}
           <div class="mb-3">
             <label class="form-label">Comments</label>
-            <textarea name="body" class="form-control" rows="4">{{ my_eoc.comment if my_eoc else '' }}</textarea>
+            <textarea id="f-body" name="body" class="form-control" rows="4">{{ my_eoc.comment if my_eoc else '' }}</textarea>
           </div>
           {% else %}
           <p class="small text-muted">Comments stay on this class packet. Student names never appear on the official report.</p>
           <div class="mb-2">
-            <label class="form-label">Kind</label>
-            <select name="kind" class="form-select">
+            <label class="form-label" for="f-kind">Kind</label>
+            <select id="f-kind" name="kind" class="form-select">
               <option value="comment">Class comment</option>
               <option value="instruction">Instruction</option>
               <option value="curriculum">Curriculum</option>
@@ -105,8 +105,8 @@
             </select>
           </div>
           <div class="mb-2">
-            <label class="form-label">Rating</label>
-            <select name="rating" class="form-select">
+            <label class="form-label" for="f-rating">Rating</label>
+            <select id="f-rating" name="rating" class="form-select">
               <option value="5">5 — convening solid</option>
               <option value="4">4</option>
               <option value="3" selected>3 — mixed / follow-up</option>
@@ -115,8 +115,8 @@
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Instructor comment</label>
-            <textarea name="body" class="form-control" rows="5" required minlength="8" placeholder="What the EOC and item analysis showed, what happened in class, and what you will change next convening.">{{ status.packet.closeout_note or '' }}</textarea>
+            <label class="form-label" for="f-body-2">Instructor comment</label>
+            <textarea id="f-body-2" name="body" class="form-control" rows="5" required minlength="8" placeholder="What the EOC and item analysis showed, what happened in class, and what you will change next convening.">{{ status.packet.closeout_note or '' }}</textarea>
           </div>
           {% endif %}
           <button class="btn btn-brand">Save to TQI</button>
