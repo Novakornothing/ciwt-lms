@@ -1849,9 +1849,12 @@ def _run_windows_base(cmd, state, done):
         out.append("Host Name:                 " + state.get("hostname", ""))
         out.append("OS Name:                   " + state.get("edition", ""))
         out.append("OS Version:                10.0." + str(state.get("build")))
+        out.append("System Manufacturer:       Microsoft Corporation")
+        out.append("System Model:              Virtual Machine")
         out.append("System Type:               x64-based PC")
         out.append("Domain:                    " + state.get("domain", "TRAINING"))
         out.append("Network Card(s):           Ethernet  IPv4 " + str(state.get("ipv4")))
+        out.append("Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed.")
         _mark(done, "systeminfo")
         return out, state, done
 

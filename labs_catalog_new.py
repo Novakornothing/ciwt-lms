@@ -613,6 +613,26 @@ def _print_auto(state, done, cmd, lines):
     return None
 
 
+def _print_pre(state, done, cmd):
+    """cmd path for the stuck queue: net stop spooler, del ...\\spool\\PRINTERS\\*, net start spooler."""
+    cl = re.sub(r"\s+", " ", (cmd or "").strip().lower())
+    if not re.match(r"^(del|erase|remove-item|rm|ri)\b.*spool\\printers", cl):
+        return None
+    if not state.get("spooler_stopped"):
+        return ["The process cannot access the file because it is being used by another process.",
+                "(Stop the spooler first: net stop spooler — or prefer removing only the job in Error.)"]
+    hr = next((p for p in state.get("printers") or [] if p["name"] == "HR-LaserJet"), None)
+    n = len(hr["jobs"]) if hr else 0
+    if hr:
+        hr["jobs"] = []
+    state["removed_good_jobs"] = True
+    state["spooler_hung"] = False
+    return [f"C:\\Windows\\System32\\spool\\PRINTERS\\*, Are you sure (Y/N)? Y", f"({n} spool files deleted.)",
+            "(That cleared EVERY queued job, including the healthy Leave-form and Memo jobs — those users must resend.",
+            " It is the last resort when one job can't be removed; this time Remove-PrintJob -ID 7 would have kept their work.",
+            " The objective 'remove only the job in Error' can't be met in this attempt any more — Start over to practise it.)"]
+
+
 PRINT_TROUBLE = _lab(
     "print-trouble", "PowerShell — clear a stuck print queue", "windows",
     "Walk the print path: printer status, network path, queue, the stuck job, spooler, verify, test page.",
@@ -639,7 +659,7 @@ PRINT_TROUBLE = _lab(
                                        {"id": 9, "doc": "Memo.pdf", "status": "Spooling"}]},
                              {"name": "Microsoft Print to PDF", "driver": "Microsoft Print To PDF", "port": "PORTPROMPT:",
                               "ip": "-", "status": "Normal", "shared": False, "jobs": []}]),
-    course_objectives=["IT-4.3", "IT-13.1"], minutes=20, auto=_print_auto,
+    course_objectives=["IT-4.3", "IT-13.1"], minutes=20, auto=_print_auto, pre=_print_pre,
     hints=["powershell", "Get-Printer", "Test-Connection 10.20.30.60", "Get-PrintJob -PrinterName \"HR-LaserJet\"",
            "Remove-PrintJob -PrinterName \"HR-LaserJet\" -ID 7", "Restart-Service Spooler", "Get-PrintJob -PrinterName \"HR-LaserJet\"",
            "\"test page\" | Out-Printer -Name \"HR-LaserJet\""],
@@ -1398,9 +1418,264 @@ WIN_LAPTOP_PORTS = _lab(
 )
 
 
+
+# ────────────────────────────────────────────────────────────── win-wifi-survey (ITSUP 5.4: a laptop WITH a Wi-Fi adapter)
+
+_NETS = [("CIWT-Staff", "WPA3-Personal", "CCMP", [("a4:2b:b0:11:20:01", 34, "802.11ax", 1, "2.4 GHz"), ("a4:2b:b0:11:20:05", 86, "802.11ax", 44, "5 GHz")]),
+         ("CIWT-Guest", "WPA2-Personal", "CCMP", [("a4:2b:b0:11:21:01", 31, "802.11ax", 1, "2.4 GHz")]),
+         ("HP-Print-3F-LaserJet", "Open", "None", [("f0:92:1c:3f:00:aa", 70, "802.11n", 6, "2.4 GHz")]),
+         ("NETGEAR-3F2A", "WPA2-Personal", "CCMP", [("9c:3d:cf:2a:3f:10", 64, "802.11ac", 1, "2.4 GHz")])]
+
+
+def _wifi_pre(state, done, cmd):
+    cl = re.sub(r"\s+", " ", (cmd or "").strip().lower())
+
+    def mark(o):
+        if o not in done:
+            done.append(o)
+    band5 = state.get("band") == "5"
+    if cl in ("netsh wlan show interfaces", "netsh wlan show interface", "netsh wlan sh int"):
+        mark("show_if")
+        ch, sig, band, bssid = (44, 86, "5 GHz", "a4:2b:b0:11:20:05") if band5 else (1, 34, "2.4 GHz", "a4:2b:b0:11:20:01")
+        if band5:
+            mark("verify")
+        return ["There is 1 interface on the system:", "", "    Name                   : Wi-Fi", "    Description            : Intel(R) Wi-Fi 6E AX211 160MHz",
+                "    State                  : connected", "    SSID                   : CIWT-Staff", f"    BSSID                  : {bssid}",
+                "    Network type           : Infrastructure", "    Radio type             : 802.11ax", "    Authentication         : WPA3-Personal",
+                f"    Band                   : {band}", f"    Channel                : {ch}", f"    Receive rate (Mbps)    : {'960' if band5 else '28.9'}",
+                f"    Signal                 : {sig}%", "    Profile                : CIWT-Staff"]
+    if cl.startswith("netsh wlan show networks") or cl.startswith("netsh wlan sh net"):
+        bssid_mode = "bssid" in cl
+        if bssid_mode:
+            mark("survey")
+        out = [f"Interface name : Wi-Fi", f"There are {len(_NETS)} networks currently visible.", ""]
+        for i, (ssid, auth, enc, aps) in enumerate(_NETS, 1):
+            out += [f"SSID {i} : {ssid}", "    Network type            : Infrastructure", f"    Authentication          : {auth}",
+                    f"    Encryption              : {enc}"]
+            if bssid_mode:
+                for j, (b, sig, radio, ch, band) in enumerate(aps, 1):
+                    out += [f"    BSSID {j}                 : {b}", f"         Signal             : {sig}%", f"         Radio type         : {radio}",
+                            f"         Band               : {band}", f"         Channel            : {ch}"]
+            out.append("")
+        if not bssid_mode:
+            out.append("(Add mode=bssid to see each access point's signal, band and channel.)")
+        return out
+    if cl in ("netsh wlan show profiles", "netsh wlan show profile"):
+        mark("profiles")
+        return ["Profiles on interface Wi-Fi:", "", "User profiles", "-------------", "    All User Profile     : CIWT-Staff",
+                "    All User Profile     : CIWT-Guest", "    All User Profile     : Starbucks WiFi"]
+    m = re.match(r'^netsh wlan show profile (?:name=)?"?([^"]+?)"?(?: key=clear)?$', cl)
+    if m and m.group(1).strip() == "ciwt-staff":
+        mark("profiles")
+        return ["Profile CIWT-Staff on interface Wi-Fi:", "    Connection mode        : Connect automatically", "    Authentication         : WPA3-Personal",
+                "    Cipher                 : CCMP", "    Security key           : Present", "    Key Content            : (hidden by policy on this training laptop)"]
+    if cl.startswith("netsh wlan connect") or cl.startswith("netsh wlan disconnect"):
+        if "disconnect" in cl:
+            return ["Disconnection request was completed successfully for interface \"Wi-Fi\"."]
+        if "ciwt-staff" in cl:
+            state["band"] = "5"
+            mark("reconnect")
+            return ["Connection request was completed successfully.",
+                    "(Windows chose the strongest BSSID for the profile: the 5 GHz radio on channel 44.)"]
+        return ["There is no profile \"%s\" assigned to the specified interface." % cmd.split("name=")[-1].strip('" ')]
+    return None
+
+
+WIN_WIFI_SURVEY = _lab(
+    "win-wifi-survey", "Windows CLI — Wi-Fi survey on a laptop (signal, band, channel)", "windows",
+    "A laptop WITH a Wi-Fi adapter (works on any bench, VM or phone): read the interface, survey the access points, "
+    "reconnect to the better band and verify.",
+    [
+        {"id": "show_if", "text": "netsh wlan show interfaces — read signal, band and channel"},
+        {"id": "survey", "text": "netsh wlan show networks mode=bssid — survey every access point"},
+        {"id": "profiles", "text": "netsh wlan show profiles — confirm the saved CIWT-Staff profile"},
+        {"id": "reconnect", "text": "Reconnect to CIWT-Staff (netsh wlan connect name=CIWT-Staff)"},
+        {"id": "verify", "text": "Verify with show interfaces: 5 GHz, strong signal"},
+        {"id": "q_wifi", "text": "Checkpoint: why was it slow?"},
+    ],
+    "INC-31107 (LT-0388, 3rd floor): \"Teams keeps freezing on Wi-Fi.\" The laptop is in the meeting room next to the printer. "
+    "This simulated laptop has an Intel AX211 Wi-Fi adapter, so the netsh wlan commands work here even though bench VMs have none.",
+    "Diagnosed a weak 2.4 GHz connection on a crowded channel 1 and moved the laptop to the 5 GHz radio of the same network.",
+    _win(shell="cmd"),
+    course_objectives=["IT-5.4", "NO-3.3"], minutes=20, pre=_wifi_pre,
+    hints=["netsh wlan show interfaces", "netsh wlan show networks mode=bssid", "netsh wlan show profiles",
+           "netsh wlan connect name=CIWT-Staff", "netsh wlan show interfaces"],
+    obj_hints={
+        "show_if": ["Start with the adapter's own view of the link.", "netsh wlan show interfaces"],
+        "survey": ["List the networks with each access point (BSSID) to compare bands and channels.", "netsh wlan show networks mode=bssid"],
+        "profiles": ["Check the laptop has the right saved network before reconnecting.", "netsh wlan show profiles"],
+        "reconnect": ["Reconnecting lets Windows pick the strongest BSSID for the profile.", "netsh wlan connect name=CIWT-Staff"],
+        "verify": ["Prove the fix with the same command you diagnosed with.", "netsh wlan show interfaces"],
+    },
+    palette=["netsh wlan show interfaces", "netsh wlan show networks mode=bssid", "netsh wlan show profiles", "netsh wlan connect name=", "cls"],
+    steps=[
+        _choice("q_wifi", "q_wifi", "Before the fix: CIWT-Staff at 34% on 2.4 GHz channel 1, which NETGEAR-3F2A and CIWT-Guest also use; "
+                "the same SSID offered 86% on 5 GHz channel 44. Best explanation?",
+                ["The WPA3 password is wrong", "The laptop held a weak 2.4 GHz link on a busy channel instead of the strong 5 GHz radio",
+                 "The DHCP server is down", "The printer's open network is blocking Teams"], 1,
+                {0: "It was connected and authenticated — a wrong key would not connect at all.",
+                 2: "It had a working connection; the issue was link quality.",
+                 3: "An open SSID on channel 6 doesn't block anything; the shared channel 1 and weak signal do."},
+                right="Correct: weak signal + co-channel contention on 2.4 GHz; the 5 GHz radio was the fix.", title="Checkpoint"),
+    ],
+    solution={"commands": ["netsh wlan show interfaces", "netsh wlan show networks mode=bssid", "netsh wlan show profiles",
+                           "netsh wlan connect name=CIWT-Staff", "netsh wlan show interfaces"], "answers": {"q_wifi": 1}},
+)
+
+# ────────────────────────────────────────────────────────────── hv-vswitch (ITSUP 6.3: Hyper-V host, simulated)
+
+def _hv_pre(state, done, cmd):
+    c = re.sub(r"\s+", " ", (cmd or "").strip())
+    cl = c.lower()
+    hv = state.setdefault("hv", {"switches": [{"name": "Default Switch", "type": "Internal"}],
+                                 "vms": {"LAB-W11": {"state": "Running", "switch": "Default Switch", "cps": []},
+                                         "LAB-SRV": {"state": "Off", "switch": "", "cps": []}}})
+
+    def mark(o):
+        if o not in done:
+            done.append(o)
+
+    def arg(name):
+        m = re.search(r"-" + name + r"\s+(\"[^\"]+\"|'[^']+'|\S+)", c, re.I)
+        return m.group(1).strip("\"'") if m else None
+    if cl in ("get-vm",):
+        mark("get_vm")
+        out = ["Name    State   CPUUsage(%) MemoryAssigned(M) Uptime   Status             Version", "----    -----   ----------- ----------------- ------   ------             -------"]
+        for n, v in hv["vms"].items():
+            out.append(f"{n:<8}{v['state']:<8}{'3' if v['state'] == 'Running' else '0':<12}{'4096' if v['state'] == 'Running' else '0':<18}"
+                       f"{'02:14:07' if v['state'] == 'Running' else '00:00:00':<9}Operating normally 11.0")
+        return out
+    if cl.startswith("get-vmswitch"):
+        mark("get_switch")
+        out = ["Name           SwitchType NetAdapterInterfaceDescription", "----           ---------- ------------------------------"]
+        for sw in hv["switches"]:
+            out.append(f"{sw['name']:<15}{sw['type']:<11}{'Intel(R) Ethernet I219-LM' if sw['type'] == 'External' else ''}")
+        return out
+    if cl.startswith("new-vmswitch"):
+        name, typ = arg("name"), (arg("switchtype") or "")
+        if not name:
+            return ["New-VMSwitch : Cannot validate argument on parameter 'Name'. Example: New-VMSwitch -Name Lab-Private -SwitchType Private"]
+        if any(sw["name"].lower() == name.lower() for sw in hv["switches"]):
+            return [f"New-VMSwitch : A virtual switch named '{name}' already exists."]
+        if arg("netadaptername"):
+            typ = "External"
+        if typ.lower() not in ("private", "internal", "external"):
+            return ["New-VMSwitch : -SwitchType must be Private, Internal or External (External needs -NetAdapterName instead)."]
+        hv["switches"].append({"name": name, "type": typ.capitalize()})
+        state["_hv_last_switch"] = name
+        if typ.lower() == "private":
+            mark("new_switch")
+            note = []
+        else:
+            note = [f"(Created a {typ.capitalize()} switch. The ticket needs an isolated lab network: VMs only, no host or LAN access — that is Private.)"]
+        return [f"Name           SwitchType", "----           ----------", f"{name:<15}{typ.capitalize()}"] + note
+    if cl.startswith("remove-vmswitch"):
+        name = arg("name") or (c.split()[1] if len(c.split()) > 1 else "")
+        hv["switches"] = [sw for sw in hv["switches"] if sw["name"].lower() != name.strip("\"'").lower() or sw["name"] == "Default Switch"]
+        return [f"(Removed virtual switch {name})"]
+    if cl.startswith("connect-vmnetworkadapter"):
+        vm, sw = arg("vmname"), arg("switchname")
+        if vm not in hv["vms"]:
+            return [f"Connect-VMNetworkAdapter : Hyper-V was unable to find a virtual machine with name \"{vm}\".  (Get-VM lists them.)"]
+        swo = next((x for x in hv["switches"] if x["name"].lower() == (sw or "").lower()), None)
+        if not swo:
+            return [f"Connect-VMNetworkAdapter : Virtual switch \"{sw}\" not found.  (Get-VMSwitch lists them.)"]
+        hv["vms"][vm]["switch"] = swo["name"]
+        if swo["type"] == "Private" and hv["vms"]["LAB-W11"]["switch"] == hv["vms"]["LAB-SRV"]["switch"] == swo["name"]:
+            mark("connect")
+        return []
+    if cl.startswith("get-vmnetworkadapter"):
+        out = ["VMName  Name             SwitchName     MacAddress   Status", "------  ----             ----------     ----------   ------"]
+        for n, v in hv["vms"].items():
+            out.append(f"{n:<8}Network Adapter  {v['switch'] or '(not connected)':<15}00155D0A1E{47 if n == 'LAB-W11' else 48}   {'{Ok}' if v['state'] == 'Running' else ''}")
+        return out
+    if cl.startswith("start-vm"):
+        vm = arg("name") or (c.split()[1] if len(c.split()) > 1 else "")
+        if vm in hv["vms"]:
+            hv["vms"][vm]["state"] = "Running"
+            return []
+        return [f"Start-VM : Hyper-V was unable to find a virtual machine with name \"{vm}\"."]
+    if cl.startswith("checkpoint-vm"):
+        vm, snap = arg("name") or arg("vmname"), arg("snapshotname")
+        if vm not in hv["vms"]:
+            return [f"Checkpoint-VM : Hyper-V was unable to find a virtual machine with name \"{vm}\"."]
+        snap = snap or f"{vm} - ({len(hv['vms'][vm]['cps']) + 1})"
+        hv["vms"][vm]["cps"].append(snap)
+        if vm == "LAB-W11":
+            mark("checkpoint")
+        return []
+    if cl.startswith("get-vmcheckpoint") or cl.startswith("get-vmsnapshot"):
+        vm = arg("vmname") or arg("name") or "LAB-W11"
+        cps = hv["vms"].get(vm, {}).get("cps", [])
+        if cps and vm == "LAB-W11":
+            mark("list_cp")
+        if not cps:
+            return [f"(No checkpoints for {vm}.)"]
+        return ["VMName  Name                 SnapshotType CreationTime", "------  ----                 ------------ ------------"] + \
+               [f"{vm:<8}{n:<21}Standard     10/17/2026 4:1{i} PM" for i, n in enumerate(cps)]
+    if cl.startswith("restore-vmcheckpoint") or cl.startswith("restore-vmsnapshot"):
+        vm, name = arg("vmname"), arg("name")
+        if vm in hv["vms"] and name in hv["vms"][vm]["cps"]:
+            state["restored"] = True
+            mark("restore")
+            return ["Confirm", f"Are you sure you want to apply checkpoint \"{name}\"? [Y] Yes: Y", f"(LAB-W11 returned to \"{name}\". Changes since then are discarded.)"]
+        return ["Restore-VMCheckpoint : the checkpoint was not found. Example: Restore-VMCheckpoint -VMName LAB-W11 -Name pre-update"]
+    return None
+
+
+HV_VSWITCH = _lab(
+    "hv-vswitch", "Hyper-V host — isolated virtual switch and checkpoints (PowerShell)", "windows",
+    "On a simulated Hyper-V host: build a Private switch for a lab network, connect two VMs, checkpoint before an update and roll back.",
+    [
+        {"id": "get_vm", "text": "Get-VM — list the virtual machines"},
+        {"id": "get_switch", "text": "Get-VMSwitch — list the existing virtual switches"},
+        {"id": "new_switch", "text": "Create an isolated switch: New-VMSwitch -Name Lab-Private -SwitchType Private"},
+        {"id": "connect", "text": "Connect LAB-W11 and LAB-SRV to Lab-Private (Connect-VMNetworkAdapter)"},
+        {"id": "checkpoint", "text": "Checkpoint LAB-W11 before the update (Checkpoint-VM -Name LAB-W11 -SnapshotName pre-update)"},
+        {"id": "list_cp", "text": "Get-VMCheckpoint -VMName LAB-W11 — confirm it exists"},
+        {"id": "restore", "text": "The update broke the VM: Restore-VMCheckpoint -VMName LAB-W11 -Name pre-update"},
+        {"id": "q_switch", "text": "Checkpoint: switch types"},
+    ],
+    "CHG-2207 on HV-LAB01 (a Hyper-V host; you are in an elevated PowerShell): the trainers need LAB-W11 and LAB-SRV on a network "
+    "that can't reach the host or the office LAN, and a safe rollback point before a risky update.",
+    "Isolated lab network built, both VMs attached, update rolled back from a checkpoint — no host or LAN exposure.",
+    _win(shell="ps", hostname="HV-LAB01"),
+    course_objectives=["IT-6.1", "IT-6.3"], minutes=25, pre=_hv_pre,
+    hints=["Get-VM", "Get-VMSwitch", "New-VMSwitch -Name Lab-Private -SwitchType Private",
+           "Connect-VMNetworkAdapter -VMName LAB-W11 -SwitchName Lab-Private", "Connect-VMNetworkAdapter -VMName LAB-SRV -SwitchName Lab-Private",
+           "Checkpoint-VM -Name LAB-W11 -SnapshotName pre-update", "Get-VMCheckpoint -VMName LAB-W11",
+           "Restore-VMCheckpoint -VMName LAB-W11 -Name pre-update"],
+    obj_hints={
+        "get_vm": ["Inventory first: which VMs are on this host?", "Get-VM"],
+        "get_switch": ["Which virtual switches exist already, and of what type?", "Get-VMSwitch"],
+        "new_switch": ["Private = VMs talk only to each other; Internal adds the host; External adds the physical LAN.",
+                       "New-VMSwitch -Name Lab-Private -SwitchType Private"],
+        "connect": ["Each VM's network adapter is attached to one switch.",
+                    "Connect-VMNetworkAdapter -VMName LAB-W11 -SwitchName Lab-Private  (then the same for LAB-SRV)"],
+        "checkpoint": ["Take the checkpoint BEFORE the change.", "Checkpoint-VM -Name LAB-W11 -SnapshotName pre-update"],
+        "list_cp": ["Prove the rollback point exists.", "Get-VMCheckpoint -VMName LAB-W11"],
+        "restore": ["Apply the checkpoint to roll back.", "Restore-VMCheckpoint -VMName LAB-W11 -Name pre-update"],
+    },
+    palette=["Get-VM", "Get-VMSwitch", "New-VMSwitch -Name ", "-SwitchType Private", "Connect-VMNetworkAdapter -VMName ", "-SwitchName ",
+             "Checkpoint-VM -Name ", "Get-VMCheckpoint -VMName ", "Restore-VMCheckpoint -VMName ", "Get-VMNetworkAdapter *"],
+    steps=[
+        _choice("q_switch", "q_switch", "A trainer now wants the host itself to reach the lab VMs, but still no office LAN access. Which switch type?",
+                ["Private", "Internal", "External", "Default Switch with NAT disabled"], 1,
+                {0: "Private excludes the host.", 2: "External bridges to the physical LAN.", 3: "Default Switch is an Internal switch with NAT to the LAN — it gives LAN/internet access."},
+                right="Correct: Internal = VMs + host, no physical LAN.", title="Checkpoint"),
+    ],
+    solution={"commands": ["Get-VM", "Get-VMSwitch", "New-VMSwitch -Name Lab-Private -SwitchType Private",
+                           "Connect-VMNetworkAdapter -VMName LAB-W11 -SwitchName Lab-Private",
+                           "Connect-VMNetworkAdapter -VMName LAB-SRV -SwitchName Lab-Private",
+                           "Checkpoint-VM -Name LAB-W11 -SnapshotName pre-update", "Get-VMCheckpoint -VMName LAB-W11",
+                           "Restore-VMCheckpoint -VMName LAB-W11 -Name pre-update"],
+              "answers": {"q_switch": 1}},
+)
+
+
 NEW_LABS = [NET_SUBNET, HW_CABLES, HW_PC_BUILD, TICKET_METHOD, WIN_NET_CLI, LINUX_SHELL, PRINT_TROUBLE, RTR_VLAN_ACL, SW_VLAN_MULTI,
             WIFI_SECURE, SEC_MALWARE, OPS_BACKUP, VIRT_VM, MOB_MDM, WIN_AD_USERS,
-            WIN_LAPTOP_PORTS]
+            WIN_LAPTOP_PORTS, WIN_WIFI_SURVEY, HV_VSWITCH]
 
 # Real-environment labs (a genuine Linux VM in the browser, v86) — see labs_vm.py
 from labs_vm import VM_LABS as _VM_LABS  # noqa: E402
@@ -1416,8 +1691,8 @@ NEW_CHAPTER_LABS = {
     ("ITSUP", 2): ["hw-pc-build"],
     ("ITSUP", 3): ["hw-cables", "hw-pc-build"],
     ("ITSUP", 4): ["print-trouble", "mob-mdm", "win-laptop-ports"],
-    ("ITSUP", 5): ["net-subnet", "win-net-cli", "wifi-secure", "win-laptop-ports"],
-    ("ITSUP", 6): ["virt-vm", "win-laptop-ports"],
+    ("ITSUP", 5): ["net-subnet", "win-net-cli", "wifi-secure", "win-laptop-ports", "win-wifi-survey"],
+    ("ITSUP", 6): ["virt-vm", "win-laptop-ports", "hv-vswitch"],
     ("ITSUP", 7): ["ticket-method"],
     ("ITSUP", 8): ["win-ad-users"],
     ("ITSUP", 9): ["linux-shell", "linux-vm-perms"],
@@ -1426,7 +1701,7 @@ NEW_CHAPTER_LABS = {
     ("ITSUP", 13): ["win-net-cli", "print-trouble"],
     ("NETOPS", 1): ["net-subnet"],
     ("NETOPS", 2): ["sw-vlan-multi", "hw-cables"],
-    ("NETOPS", 3): ["wifi-secure"],
+    ("NETOPS", 3): ["wifi-secure", "win-wifi-survey"],
     ("NETOPS", 4): ["win-net-cli", "rtr-vlan-acl"],
     ("NETOPS", 5): ["rtr-vlan-acl", "wifi-secure"],
     ("NETOPS", 6): ["ticket-method"],
