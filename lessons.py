@@ -5915,6 +5915,10 @@ apply_hours_ch1(APLUS)
 apply_hours_rest(APLUS)
 apply_ground_up(APLUS)
 
+# Pass 8: reference/depth sections, factual currency updates and measurable objectives (curriculum_v2/).
+from curriculum_v2.apply import apply_itsup, apply_netops
+apply_itsup(APLUS)
+
 import copy
 
 def _as_course_chapter(src, new_order):
@@ -5940,3 +5944,4 @@ CLIENT = [
 # Hands-on switch/router CLI lab track (simulators / isolated lab only)
 NETPLUS = NETPLUS + NETWORK_LAB_CHAPTERS
 _apply_ciwt_deepen(NETWORK_LAB_CHAPTERS)
+apply_netops(NETPLUS)
