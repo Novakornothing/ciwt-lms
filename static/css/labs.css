@@ -38,6 +38,8 @@
 [data-theme="dark"] .lab-objectives .obj-item.done .ck::after { border-color: #062014; }
 .lab-objectives .obj-item.done { color: var(--ink-secondary); }
 .lab-success { background: var(--success-bg, #e6f6ef); border: 1px solid color-mix(in srgb, var(--success) 50%, transparent); border-radius: 10px; padding: .6rem .75rem; margin-bottom: .75rem; color: var(--ink); }
+#labSuccess.lab-success { display: block; }
+#labSuccess.lab-success[hidden] { display: none; }
 .lab-tools { display: flex; flex-wrap: wrap; gap: .5rem; }
 .lab-tools .btn { min-height: 44px; }
 .lab-hint { margin-top: .75rem; background: var(--info-bg, #eaf6fd); border-radius: 10px; padding: .6rem .75rem; font-size: .9rem; color: var(--ink); }
@@ -261,3 +263,7 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
 .w11-desk.short .w11-icon i { font-size: 1.2rem; }
 .w11-desk.short .w11-icon { min-height: 48px; }
 @media (prefers-reduced-motion: reduce) { .lab-toast { transition: none; } }
+/* instructor: process log */
+.lab-events { padding-left: 1.2rem; max-height: 420px; overflow: auto; }
+.lab-events li { margin-bottom: .2rem; overflow-wrap: anywhere; }
+.lab-events code { white-space: pre-wrap; }

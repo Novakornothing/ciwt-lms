@@ -64,7 +64,25 @@ def define_models(db):
         rubric_json = db.Column(db.Text)                # classroom sign-off: [4 criterion levels]
         feedback = db.Column(db.Text)
 
-    _models['m'] = SimpleNamespace(LabProgress=LabProgress)
+    class LabEvent(db.Model):
+        """Ordered action log per lab attempt, for process grading (how a student troubleshot, not just whether
+        they finished). One row per command, GUI action, answer check, hint, undo, reset and completion."""
+        __tablename__ = 'lab_event'
+        __table_args__ = (db.Index('ix_lab_event_attempt', 'user_id', 'lab_id', 'attempt', 'seq'),)
+        id = db.Column(db.Integer, primary_key=True)
+        user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+        lab_id = db.Column(db.String(80), nullable=False)
+        attempt = db.Column(db.Integer, nullable=False, default=1)     # 1 + number of resets before it
+        seq = db.Column(db.Integer, nullable=False, default=0)
+        at = db.Column(db.DateTime, default=utcnow)
+        kind = db.Column(db.String(16), nullable=False)               # cmd|event|check|hint|undo|reset|complete|vm
+        action = db.Column(db.Text)                                   # the command / event / step id (+ answer JSON)
+        outcome = db.Column(db.String(16))                            # ok|unknown|wrong|error|progress
+        newly = db.Column(db.Text)                                    # objective ids earned by this action (JSON)
+        score = db.Column(db.Float)                                   # score after the action
+        detail = db.Column(db.Text)                                   # short output excerpt / feedback
+
+    _models['m'] = SimpleNamespace(LabProgress=LabProgress, LabEvent=LabEvent)
     return _models['m']
 
 
@@ -80,9 +98,52 @@ def register(app, db, deps):
     record_completion(lab_id, done, section_id, test_id), audit(action, detail)."""
     m = define_models(db)
     LP = m.LabProgress
+    LE = m.LabEvent
     d = SimpleNamespace(**deps)
     with app.app_context():
         LP.__table__.create(db.engine, checkfirst=True)
+        LE.__table__.create(db.engine, checkfirst=True)
+
+    def log(row, kind, action, outcome='ok', newly=None, detail=None):
+        """Queue one event-log row (committed with the caller's commit)."""
+        attempt = (row.resets or 0) + 1
+        last = (db.session.query(db.func.max(LE.seq)).filter_by(user_id=row.user_id, lab_id=row.lab_id, attempt=attempt).scalar() or 0)
+        db.session.add(LE(user_id=row.user_id, lab_id=row.lab_id, attempt=attempt, seq=last + 1, at=utcnow(), kind=kind,
+                          action=(action or '')[:1000], outcome=outcome, newly=json.dumps(list(newly or [])) if newly else None,
+                          score=row.score, detail=(detail or '')[:400] or None))
+
+    def process_summary(evs):
+        """Per attempt: actions, unknown/wrong, hints, undo, first-progress and completion times (process grading inputs)."""
+        out = {}
+        for e in evs:
+            a = out.setdefault(e.attempt, {'attempt': e.attempt, 'start': e.at, 'end': e.at, 'actions': 0, 'unknown': 0, 'wrong': 0,
+                                           'errors': 0, 'hints': 0, 'undo': 0, 'progress': 0, 'complete': None, 'repeats': 0, '_last': None})
+            a['end'] = e.at
+            if e.kind in ('cmd', 'event', 'check', 'vm'):
+                a['actions'] += 1
+                if e.action and e.action == a['_last']:
+                    a['repeats'] += 1
+                a['_last'] = e.action
+            a['unknown'] += e.outcome == 'unknown'
+            a['wrong'] += e.outcome == 'wrong'
+            a['errors'] += e.outcome == 'error'
+            a['hints'] += e.kind == 'hint' and e.outcome == 'ok'
+            a['undo'] += e.kind == 'undo'
+            a['progress'] += bool(e.newly)
+            if e.kind == 'complete' and not a['complete']:
+                a['complete'] = e.at
+        rows = []
+        for a in out.values():
+            a.pop('_last', None)
+            a['minutes'] = round(((a['complete'] or a['end']) - a['start']).total_seconds() / 60, 1)
+            rows.append(a)
+        return rows
+
+    def events_for(user_id, lab_id, attempt=None):
+        q = LE.query.filter_by(user_id=user_id, lab_id=lab_id)
+        if attempt:
+            q = q.filter_by(attempt=attempt)
+        return q.order_by(LE.attempt, LE.seq).all()
 
     # ------------------------------------------------------------------ persistence helpers
     def get_row(lab_id, create=True, user_id=None):
@@ -114,7 +175,9 @@ def register(app, db, deps):
             tid = None
         return sid, tid
 
-    def save(row, lab, state, done, lines=None, snapshot=None, wrong=False, count=True):
+    def save(row, lab, state, done, lines=None, snapshot=None, wrong=False, count=True, ev=None):
+        """Persist state; ev = (kind, action, outcome, newly, detail) appends to the attempt's event log."""
+        was_complete = RT.is_complete(lab, _j(row.done_json, []))
         if snapshot is not None:
             undo = _j(row.undo_json, [])
             undo.append(snapshot)
@@ -138,6 +201,10 @@ def register(app, db, deps):
         complete = RT.is_complete(lab, done)
         if complete and not row.completed_at:
             row.completed_at = utcnow()
+        if ev:
+            log(row, *ev)
+        if complete and not was_complete:
+            log(row, 'complete', lab['id'], 'ok', None, f'score {row.score:.0f}; hints {row.hints_used or 0}; actions {row.actions or 0}')
         db.session.commit()
         if complete:
             try:
@@ -236,8 +303,12 @@ def register(app, db, deps):
             row.transcript_json = '[]'
             lines = []
         changed = (state != before['state']) or (done != before['done'])
+        newly = [o for o in done if o not in before['done']]
+        out_lines = result.get('lines') or []
         save(row, lab, state, done, lines=lines, snapshot=before if changed else None,
-             wrong=bool(result.get('unknown')), count=bool(command.strip()))
+             wrong=bool(result.get('unknown')), count=bool(command.strip()),
+             ev=('cmd', command, 'unknown' if result.get('unknown') else ('progress' if newly else 'ok'), newly,
+                 ' | '.join(str(x) for x in out_lines[:3])) if command.strip() else None)
         return jsonify(payload_for(row, lab, state, done, {'lines': result.get('lines') or [], 'clear': bool(result.get('clear')),
                                                            'newly': [o for o in done if o not in before['done']]}))
 
@@ -252,7 +323,13 @@ def register(app, db, deps):
         before = {'state': state, 'done': list(done)}
         result, state, done = RT.apply_event(lab_id, state, done, str(body.get('ev') or '')[:60], body.get('data') or {})
         changed = done != before['done'] or result.get('changed')
-        save(row, lab, state, done, snapshot=before if changed else None, wrong=bool(result.get('error')))
+        newly = [o for o in done if o not in before['done']]
+        evname = str(body.get('ev') or '')[:60]
+        data = body.get('data') or {}
+        safe = {k: ('***' if 'pass' in k.lower() or k in ('confirm',) else v) for k, v in data.items()} if isinstance(data, dict) else {}
+        save(row, lab, state, done, snapshot=before if changed else None, wrong=bool(result.get('error')),
+             ev=('event', evname + (' ' + json.dumps(safe, sort_keys=True) if safe else ''),
+                 'error' if result.get('error') else ('progress' if newly else 'ok'), newly, result.get('error')))
         return jsonify(payload_for(row, lab, state, done, {'result': result, 'newly': [o for o in done if o not in before['done']]}))
 
     @login_required
@@ -265,7 +342,10 @@ def register(app, db, deps):
         body = request.get_json(silent=True) or {}
         before = {'state': state, 'done': list(done)}
         result, state, done = RT.check_step(lab_id, state, done, str(body.get('step') or ''), body.get('answer'))
-        save(row, lab, state, done, snapshot=before if done != before['done'] else None, wrong=not result.get('correct'))
+        newly = [o for o in done if o not in before['done']]
+        save(row, lab, state, done, snapshot=before if done != before['done'] else None, wrong=not result.get('correct'),
+             ev=('check', str(body.get('step') or '') + ' ' + json.dumps(body.get('answer'), sort_keys=True)[:800],
+                 'ok' if result.get('correct') else 'wrong', newly, result.get('message')))
         return jsonify(payload_for(row, lab, state, done, {'result': result, 'newly': [o for o in done if o not in before['done']]}))
 
     @login_required
@@ -280,7 +360,8 @@ def register(app, db, deps):
             row.hints_used = (row.hints_used or 0) + 1
             state.setdefault('_hint_tier', {})[h['objective']] = h['tier']
             row.state_json = json.dumps(state)
-            db.session.commit()
+        log(row, 'hint', f"{h.get('objective')} tier {h.get('tier')}", 'ok' if h.get('counted') else 'repeat')
+        db.session.commit()
         return jsonify(payload_for(row, lab, state, done, {'hint': h}))
 
     @login_required
@@ -298,7 +379,7 @@ def register(app, db, deps):
         state, done = snap['state'], snap['done']
         # objectives already earned stay earned (undo is for configuration mistakes, not for un-learning)
         done = list(dict.fromkeys(list(done) + _j(row.done_json, [])))
-        save(row, lab, state, done, lines=[{'t': '(undo: last change reverted)', 'c': 'sys'}], count=False)
+        save(row, lab, state, done, lines=[{'t': '(undo: last change reverted)', 'c': 'sys'}], count=False, ev=('undo', '', 'ok'))
         return jsonify(payload_for(row, lab, state, done, {'lines': ['Last change undone.'], 'undone': True}))
 
     @login_required
@@ -313,6 +394,7 @@ def register(app, db, deps):
         row.transcript_json = '[]'
         row.undo_json = '[]'
         row.score = 0
+        log(row, 'reset', 'start over', 'ok')     # closes the old attempt
         row.resets = (row.resets or 0) + 1
         row.updated_at = utcnow()
         db.session.commit()      # best_score and completed_at keep the record of earlier work
@@ -421,9 +503,31 @@ def register(app, db, deps):
         if not lab:
             abort(404)
         row = LP.query.filter_by(user_id=user_id, lab_id=lab_id).first()
+        evs = events_for(user_id, lab_id)
         return render_template('instructor_lab_student.html', section=section, student=u, lab=lab, row=row,
+                               attempts=process_summary(evs), events=evs[-400:],
                                done=_j(row.done_json, []) if row else [], transcript=_j(row.transcript_json, []) if row else [],
                                rubric=RT.lab_rubric(), levels=_j(row.rubric_json, []) if row else [])
+
+    @login_required
+    def instructor_lab_events_csv(section_id):
+        """Every student's ordered lab event log for the section (process-grading export)."""
+        import csv
+        import io
+        section = staff_section(section_id)
+        uids = [e.user_id for e in d.Enrollment.query.filter_by(section_id=section.id).all()]
+        q = LE.query.filter(LE.user_id.in_(uids or [0]))
+        if request.args.get('lab'):
+            q = q.filter_by(lab_id=request.args['lab'])
+        buf = io.StringIO()
+        w = csv.writer(buf)
+        w.writerow(['user_id', 'lab_id', 'attempt', 'seq', 'at_utc', 'kind', 'action', 'outcome', 'newly', 'score_after', 'detail'])
+        for e in q.order_by(LE.user_id, LE.lab_id, LE.attempt, LE.seq).limit(200000):
+            w.writerow([e.user_id, e.lab_id, e.attempt, e.seq, e.at.isoformat(timespec='seconds'), e.kind, e.action, e.outcome,
+                        e.newly or '', '' if e.score is None else round(e.score, 1), e.detail or ''])
+        d.audit('lab_events_csv', f'section={section.id}')
+        return Response(buf.getvalue(), mimetype='text/csv',
+                        headers={'Content-Disposition': f'attachment; filename=lab-events-section-{section.id}.csv'})
 
     @login_required
     def instructor_classroom_signoff(section_id):
@@ -465,6 +569,9 @@ def register(app, db, deps):
         row.feedback = (f.get('feedback') or '').strip()[:1000]
         row.completed_at = row.completed_at or utcnow()
         row.updated_at = utcnow()
+        if row.id is None:
+            db.session.flush()
+        log(row, 'signoff', f'levels {levels} by instructor {current_user.id}', 'ok', None, row.feedback)
         db.session.commit()
         d.audit('classroom_lab_signoff', f"section={section.id} user={uid} lab={cl['id']} levels={levels}")
         flash(f"{cl['id']} signed off: {sum(levels)}/16 ({row.score:.0f}%).", 'success')
@@ -516,6 +623,7 @@ def register(app, db, deps):
         ('/instructor/section/<int:section_id>/labs/results', 'instructor_lab_results', instructor_lab_results, ['GET']),
         ('/instructor/section/<int:section_id>/labs/results.csv', 'instructor_lab_results_csv', instructor_lab_results_csv, ['GET']),
         ('/instructor/section/<int:section_id>/labs/student/<int:user_id>/<lab_id>', 'instructor_lab_student', instructor_lab_student, ['GET']),
+        ('/instructor/section/<int:section_id>/labs/events.csv', 'instructor_lab_events_csv', instructor_lab_events_csv, ['GET']),
         ('/instructor/section/<int:section_id>/labs/signoff', 'instructor_classroom_signoff', instructor_classroom_signoff, ['POST']),
     ]:
         app.add_url_rule(rule, ep, fn, methods=methods)
@@ -529,6 +637,6 @@ def register(app, db, deps):
             return progress_map(u.id)
         return {'lab_progress_for': lab_progress_for}
 
-    api = SimpleNamespace(LabProgress=LP, lab_scores=lab_scores, lab_signature=lab_signature, progress_map=progress_map)
+    api = SimpleNamespace(LabProgress=LP, LabEvent=LE, events_for=events_for, process_summary=process_summary, log=log, lab_scores=lab_scores, lab_signature=lab_signature, progress_map=progress_map)
     app.extensions['ciwt_lab_progress'] = api
     return api

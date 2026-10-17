@@ -41,6 +41,26 @@
     {% endif %}
   </div>
   <div class="col-12 col-lg-8">
+    {% if attempts %}
+    <h2 class="h6 section-label">Process (per attempt)</h2>
+    <div class="table-responsive mb-3"><table class="table table-sm align-middle lab-process">
+      <caption class="visually-hidden">How the student worked through each attempt</caption>
+      <thead><tr><th scope="col">Attempt</th><th scope="col">Actions</th><th scope="col">Unrecognised</th><th scope="col">Wrong answers / errors</th>
+        <th scope="col">Repeats</th><th scope="col">Hints</th><th scope="col">Undo</th><th scope="col">Minutes</th><th scope="col">Completed</th></tr></thead>
+      <tbody>{% for a in attempts %}<tr><td>{{ a.attempt }}</td><td>{{ a.actions }}</td><td>{{ a.unknown }}</td><td>{{ a.wrong + a.errors }}</td>
+        <td>{{ a.repeats }}</td><td>{{ a.hints }}</td><td>{{ a.undo }}</td><td>{{ a.minutes }}</td><td>{{ 'Yes' if a.complete else 'No' }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <details class="mb-3"><summary class="fw-semibold">Event log ({{ events|length }} actions, oldest first)</summary>
+      <ol class="lab-events small mt-2">{% for e in events %}
+        <li class="ev-{{ e.outcome or 'ok' }}"><span class="text-muted">#{{ e.attempt }}.{{ e.seq }} {{ e.at.strftime('%H:%M:%S') }}</span>
+          <strong>{{ e.kind }}</strong> <code>{{ e.action|truncate(160) }}</code>
+          {% if e.outcome and e.outcome not in ('ok',) %}<span class="badge text-bg-light">{{ e.outcome }}</span>{% endif %}
+          {% if e.newly %}<span class="badge text-bg-success">+{{ e.newly|replace('"','')|replace('[','')|replace(']','') }}</span>{% endif %}
+          {% if e.detail %}<span class="text-muted"> — {{ e.detail|truncate(140) }}</span>{% endif %}</li>{% endfor %}
+      </ol>
+      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_lab_events_csv', section_id=section.id, lab=lab.id) }}" data-no-busy>Download this lab's events (CSV, all students)</a>
+    </details>
+    {% endif %}
     {% if transcript %}
     <h2 class="h6 section-label">Transcript (last {{ transcript|length }} lines)</h2>
     <pre class="term-transcript" tabindex="0" aria-label="Student terminal transcript">{% for t in transcript %}{{ t.t }}

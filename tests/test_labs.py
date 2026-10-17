@@ -267,3 +267,38 @@ def test_index_lists_every_kind_and_classroom(student):
         assert kind in html, kind
     for cl in ("CL-4", "CL-7", "CL-13"):
         assert cl in html
+
+
+def test_event_log_records_ordered_process(student, instructor, mod):
+    api = mod.app.extensions["ciwt_lab_progress"]
+    student.post("/labs/win-ipconfig/reset")
+    _j(student.post("/labs/win-ipconfig/cmd", json={"command": "ipconfg"}))      # typo -> unknown
+    _j(student.post("/labs/win-ipconfig/hint"))
+    _j(student.post("/labs/win-ipconfig/cmd", json={"command": "hostname"}))
+    _j(student.post("/labs/win-ipconfig/cmd", json={"command": "ipconfig /all"}))
+    row, uid = _row(mod, "student1@lms.local", "win-ipconfig")
+    with mod.app.app_context():
+        evs = api.events_for(uid, "win-ipconfig", attempt=(row.resets or 0) + 1)
+        kinds = [(e.kind, e.outcome) for e in evs]
+        assert kinds[:4] == [("cmd", "unknown"), ("hint", "ok"), ("cmd", "progress"), ("cmd", "progress")], kinds
+        assert kinds[-1][0] == "complete"
+        assert [e.seq for e in evs] == list(range(1, len(evs) + 1))
+        s = api.process_summary(evs)[-1]
+        assert s["unknown"] == 1 and s["hints"] == 1 and s["complete"]
+    page = instructor.get(f"/instructor/section/1/labs/student/{uid}/win-ipconfig").data.decode()
+    assert "Event log" in page and "ipconfg" in page
+    csv = instructor.get("/instructor/section/1/labs/events.csv?lab=win-ipconfig")
+    assert csv.status_code == 200 and b"ipconfg" in csv.data
+
+
+def test_event_log_masks_passwords(student, mod):
+    api = mod.app.extensions["ciwt_lab_progress"]
+    student.post("/labs/win-ad-users/reset")
+    _j(student.post("/labs/win-ad-users/event", json={"ev": "ad:create", "data": {"sam": "x1", "password": "Secret-Pass-123456", "confirm": "Secret-Pass-123456"}}))
+    _, uid = _row(mod, "student1@lms.local", "win-ad-users")
+    with mod.app.app_context():
+        assert not any("Secret-Pass" in (e.action or "") for e in api.events_for(uid, "win-ad-users"))
+
+
+def test_students_cannot_export_events(student):
+    assert student.get("/instructor/section/1/labs/events.csv").status_code in (302, 403)
