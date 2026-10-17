@@ -300,3 +300,65 @@ Real iOS Safari (gesture/playsinline/low-power play block, memory on older iPhon
 Android low-end throttling and thermal behaviour, real glasses glare and room lighting,
 exposure constraints (support varies by camera), a real second person in view, and accuracy
 with real people looking at a real screen.
+
+---
+
+## Pass 5 (Oct 17 2026): high-resolution eye crop, A/B'd on the warp proxy
+
+Local branch `refinement` only; nothing pushed, no tunnel. Full numbers:
+tools/helix_eval/RESULTS.md ("Pass 5") and tools/helix_eval/warp/RESULTS_v5.md.
+
+**Outcome (honest):** the crop features give small average gains on 9-point calibration (best
+-0.45° mean over 55 sequences). **None was consistent across all subjects and both seeds**, and the
+ported version made follow-the-dot calibration slightly worse. Following the acceptance rule,
+**the default gaze model is unchanged from pass 4**. Everything new is behind flags.
+
+### Kept (on by default)
+* Second-stage eye crop in **view-only** mode on the Try page: the "Live diagnostics" card shows
+  both pose-normalised full-resolution eye crops with the lid contour, the gradient (Timm & Barth)
+  pupil centre and the dark-centroid estimate. It costs 2-4 ms/frame on desktop CPU and doesn't
+  touch the model. HUD rows "Camera" and "Eye-crop stage" were added (the lesson debug dock shows
+  "Eye crop" too).
+* Engine guard: crops are cleared when the face is lost; the stage switches itself off below ~12 fps.
+* `ridgeFit` treats missing feature values as the mean (needed by the flagged paths; no effect on
+  23-dim vecs).
+* Eval tooling: warp seeds and a 1080p source (`gen.py --seed`, cbp1080), bench dumps of crop
+  features, `crop_ab.js` (feature-group / lambda A/B with paired statistics), `CROPVEC` in
+  `warp_eval.js`, and an HUD screenshot step in `helix_mp_e2e.py`.
+
+### Behind flags (built, measured, not default)
+* `crop: true` (engine option; Try page `?crop=1`) appends 8 crop features (pupil x/y per eye,
+  upper/lower lid per eye) to vec. `GazeRegressor` then uses them in stage 2 with grouped-CV
+  lambda. All 55: 7.53 → 7.19° median (mean -0.22°, CI includes 0). It is worse on 640x480 cbp
+  (7.53 → 8.48°) and on follow-the-dot + 3 dots (+0.20°).
+* `hiRes` (`window.HELIX_ENGINE.hiRes` or `?hires=1`): requests 1920x1080 on desktops with ≥8
+  cores and falls back to 720p at runtime if inference + crop exceeds 50 ms. Same person and frames:
+  follow-the-dot + 3 dots 6.22 → 5.28° (9/10 pairs), 9-point mixed (7/11). Only one subject has a
+  1080p source, and inference rises from 29 to 40 ms/frame.
+* `detectWidth` (engine option): runs face detection on a downscaled copy (1080p: 39.9 → 36.3 ms).
+  Accuracy not A/B'd.
+
+### Rejected (offline only, not ported)
+* Eye-appearance patches (15x9 → 10x6 PCA-12 or 5x3, rank-equalised, pose-normalised): the
+  biggest average gain (-0.37 to -0.45°, p=0.014), but cbp and cbp1080 got worse over their 7
+  conditions. That is not consistent, and there is no vertical gain.
+* Grouped-CV lambda on its own (no crop features): -0.21° mean, 30/55 wins, 3/5 subjects.
+* Per-user feature-group selection by CV: -0.35° mean, but 3/5 subjects on the 7-condition set.
+* Dark-centroid pupil instead of Timm & Barth: weaker everywhere (it stays as the fallback, and
+  as the cheap phone option at 0.7 ms).
+
+### Why the ceiling barely moved
+At 640x480/720p the eye crop upsamples (0.34-0.72 camera px per crop px). MediaPipe already sees
+the eyes at roughly native resolution, so the crop adds an estimator, not information. The error
+on this proxy is dominated by head-pose-related scatter, not by pupil localisation. The warp moves
+lids but has no eyeball shading or corneal reflection, so a real-eye test could rank the
+appearance features differently.
+
+### Tests
+* `tests/js/helix-crop.test.js` (7 tests) covers: crop transform (level, centred, scale), Timm &
+  Barth / centroid on a synthetic eye (<1.5 / <2.5 px), pupil shift and lid aperture, patch
+  equalisation, `cropVec` NaN handling, crop-aware regressor (grouped CV chosen, vertical error
+  halved on synthetic data), missing-value equivalence, and `cvGroups`.
+* Results: node 31/31, pytest 63 passed, axe 63 pages with 0 violations, fake-camera Try-page
+  e2e (1280x720) OK.
+* Screenshots: /workspace/ciwt/screenshots/pass5/try-hud-eye-crops.png and try-live.png.
