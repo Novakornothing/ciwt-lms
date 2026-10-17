@@ -1020,3 +1020,6 @@ html[data-theme="dark"] .chip-scroll a.chip-link[aria-current] .chip-count { col
 .lesson-figure .figure-desc summary { cursor: pointer; font-size: .88rem; margin-top: .35rem; }
 .lesson-figure .figure-desc p { font-size: .9rem; margin: .35rem 0 0; }
 @media print { .lesson-figure .figure-desc { display: block; } .lesson-figure .figure-desc[open] summary { display: none; } }
+/* pass 9: Bootstrap's pink code colour is 4.2:1 on the pale worked-example/scenario panels; darken it in light theme
+   (dark theme keeps its own !important code colour) */
+.core-content code { color: #a1145a; }

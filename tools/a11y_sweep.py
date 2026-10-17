@@ -33,6 +33,7 @@ PAGES = {
         ('helix-mydata', '/student/attention'), ('class-labs', '/class/1/labs'), ('grades-class', '/student/section/1/grades'),
         ('inbox', '/messages'), ('account', '/account'),
         ('syllabus', '/section/1/materials/syllabus'), ('rubrics', '/section/1/materials/rubrics'), ('lab-cli', '/labs/win-ipconfig'),
+        ('lesson-7.1', '/student/module/1/7/lesson/30'), ('lesson-10.1', '/student/module/1/10/lesson/42'), ('lesson-13.4', '/student/module/1/13/lesson/57'),
     ],
     'instructor@lms.local:teach123': [
         ('instr-home', '/instructor'), ('instr-section', '/instructor/section/1'),
@@ -40,6 +41,7 @@ PAGES = {
         ('gradebook', '/instructor/section/1/gradebook'),
         ('materials', '/instructor/materials'), ('materials-plans', '/instructor/materials/ITSUP/lesson-plans'),
         ('materials-key', '/instructor/materials/ITSUP/answer-key'), ('syllabus-settings', '/instructor/section/1/syllabus'),
+        ('instr-lesson-13.1', '/student/module/1/13/lesson/54'), ('materials-labs', '/instructor/materials/ITSUP/lab-manual'),
     ],
     'admin@lms.local:admin123': [('admin', '/admin'), ('admin-classes', '/admin/classes'), ('admin-people', '/admin/people'),
                                  ('admin-curriculum', '/admin/curriculum'), ('admin-tqi', '/admin/tqi'),

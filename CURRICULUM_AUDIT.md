@@ -32,7 +32,8 @@ All originals stay recoverable: the revised content is a layer (`curriculum_v2/`
 6. **ITSUP chapters 7–13 are thin** (about 800–1,000 words for about 3 hours each) and wireless was nearly absent.
    Reference sections were added (DDR4/DDR5, storage interfaces, USB/Thunderbolt/display naming, ports, Wi-Fi 4–7
    and SOHO baseline, Windows 11 requirements/lifecycle, Linux commands, MFA/passkeys/NIST 800-63B-4). Chapters
-   7–13 still need SME expansion (see below).
+   7–13 still needed expansion after pass 8. → **Pass 9:** chapters 7–13 expanded to 3,355–4,643 words each (see
+   “Pass 9” below); the new content is tagged *Pending SME review*.
 7. **Assessment coverage gaps.** 12 ITSUP and 3 NETOPS objectives had no knowledge-test item. → 30 supplementary exam
    items (`curriculum_v2/exam_supplement.py`); every objective now has ≥ 2 items (test-enforced). The CLI-track
    objectives (ITSUP 13, NETOPS 9) are assessed practically in the skills exams and marked so in the blueprints.
@@ -47,7 +48,7 @@ All originals stay recoverable: the revised content is a layer (`curriculum_v2/`
 11. **Outdated technical content:** a Windows 11 23H2 example and lab VM (Education/Enterprise 23H2 ends
     10 Nov 2026) → 25H2; lab VM setup referenced VMware Player (discontinued) and no virtual TPM → updated.
 
-## Coverage map (after pass 8)
+## Coverage map (after pass 9)
 
 | Course | Ch | LMS min | Lesson objectives | Interactive labs | Classroom lab | Check items | Test + suppl. items |
 |---|---|---|---|---|---|---|---|
@@ -57,13 +58,13 @@ All originals stay recoverable: the revised content is a layer (`curriculum_v2/`
 | ITSUP | 4 Mobile & printing | 205 | 3 | 0 | CL-4 | 10 | yes |
 | ITSUP | 5 Client networking | 280 | 4 | 14 | — | 10 | yes |
 | ITSUP | 6 Virtualisation & cloud | 185 | 3 | 0 | CL-6 | 10 | yes (suppl.) |
-| ITSUP | 7 Troubleshooting method | 185 | 3 | 2 | — | 10 | yes (suppl.) |
-| ITSUP | 8 Windows install & config | 195 | 4 | 8 | — | 10 | yes |
-| ITSUP | 9 Linux, macOS | 175 | 3 | 0 | CL-9 | 10 | yes |
-| ITSUP | 10 Endpoint security | 180 | 4 | 3 | — | 10 | yes |
-| ITSUP | 11 Software troubleshooting | 185 | 3 | 2 | — | 10 | yes (suppl.) |
-| ITSUP | 12 Operational procedures | 175 | 3 | 0 | CL-12 | 10 | yes |
-| ITSUP | 13 Windows CLI & VM track | 230 | 3 | 16 | — | 10 | skills exam |
+| ITSUP | 7 Troubleshooting method | 185 | 4 | 2 | CL-7 | 10 | yes (suppl.) |
+| ITSUP | 8 Windows install & config | 195 | 4 | 8 | CL-8 | 10 | yes |
+| ITSUP | 9 Linux, macOS | 175 | 4 | 0 | CL-9 | 10 | yes |
+| ITSUP | 10 Endpoint security | 180 | 4 | 3 | CL-10 | 10 | yes |
+| ITSUP | 11 Software troubleshooting | 185 | 4 | 2 | CL-11 | 10 | yes (suppl.) |
+| ITSUP | 12 Operational procedures | 175 | 4 | 0 | CL-12 | 10 | yes |
+| ITSUP | 13 Windows CLI & VM track | 230 | 4 | 16 | CL-13 | 10 | skills exam |
 | NETOPS | 1 Models & addressing | 360 | 3 | 3 | — | 8 | yes |
 | NETOPS | 2 Switching, VLANs, cabling | 360 | 3 | 9 | — | 8 | yes |
 | NETOPS | 3 Routing, WAN, wireless | 355 | 3 | 6 | — | 8 | yes |
@@ -79,7 +80,7 @@ assessments; see the pacing guides.
 
 ## Objective quality
 
-- 45 ITSUP and 20 NETOPS chapter-level objectives with Bloom levels (`curriculum_v2/objectives.py`), grouped under
+- 50 ITSUP (5 added in pass 9: IT-7.4, 9.4, 11.4, 12.4, 13.4) and 20 NETOPS chapter-level objectives with Bloom levels (`curriculum_v2/objectives.py`), grouped under
   6 course learning outcomes per course (5 for CLIENT); every objective maps to a CLO (test-enforced).
 - 7 vague ITSUP lesson objectives ("Know…") rewritten with measurable verbs (1.2, 1.4, 2.2, 3.2, 6.1, 6.2, 6.3).
 - NETOPS lesson objectives were one-word fragments; now 3–4 measurable objectives per lesson.
@@ -113,7 +114,9 @@ assessments; see the pacing guides.
 
 ## Accessibility
 
-- Lesson bodies contain no images (nothing needs alt text); 123 data tables, all with header cells; no heading skips.
+- Pass 9 added 8 inline SVG diagrams (ITSUP 7–13). Each has `role="img"` with a `<title>` and `<desc>` (the alt text),
+  a caption and an expandable “Text description of the diagram”; a separate two-column version is shown on phones.
+  Data tables all have header cells; no heading skips.
 - Narration is synthesised from the on-page text, so the page is the transcript; there is no pre-recorded audio or
   video needing captions.
 - Reading level (automated Flesch–Kincaid estimate): ITSUP ≈ grade 7.7, NETOPS ≈ 10.9 (technical terms raise it).
@@ -121,15 +124,85 @@ assessments; see the pacing guides.
 
 ## Still needs a subject-matter expert or the institution
 
-- **SME:** expand ITSUP chapters 7–13 lesson text; review all 30 supplementary items and 56 NETOPS checks; field-test
+- **SME:** review the pass-9 ITSUP 7–13 core content, 85 items and 5 classroom labs (all tagged *Pending SME review*);
+  review all 30 supplementary items and 56 NETOPS checks; field-test
   item difficulty (p-values) and distractor performance after one cohort; confirm lesson minute estimates against real
-  class timing; check classroom labs CL-4/6/9/12 on the institution's hardware; decide whether to publish chapter-limited
+  class timing; check classroom labs CL-4/6/7/8/9/10/11/12/13 on the institution's hardware; decide whether to publish chapter-limited
   midterm forms in the LMS (blueprints list the item IDs).
 - **Institution:** catalog numbers, credit model (lab contact hours per credit), prerequisites, all policy text
   (attendance, late work, academic integrity, AI use, accessibility office, non-discrimination, appeals), Windows and
   virtualisation licensing for labs, and any articulation or accreditation claims (none are made here).
 - **Alignment:** if the program wants a mapping to a publicly published vendor exam objective list, do it as a
   labelled alignment table against the current published version; no such mapping is included.
+
+## Pass 9 (Oct 17 2026): ITSUP chapters 7–13 expanded — pending SME review
+
+Layered in `curriculum_v2/itsup_core/` (one module per chapter). The original lesson HTML is unchanged in `lessons.py`
+and git. Each lesson gets a “Lesson objectives” panel and a `Core content` section with a sources line. CLIENT
+chapters 1–6 inherit ITSUP 8–13. An instructor-only “Pending SME review” note sits in every expanded lesson; students
+don't see it. The tag is also on lesson plans, labs, the answer-key bank and glossary terms (†).
+
+| Ch | Words before → after | Added | Items | Lab |
+|---|---|---|---|---|
+| 7 | ~1,230 → 4,242 | method comparison, 7-step cycle diagram, “Outlook won't send” worked example, printer scenario, fault domains, escalation evidence package (new IT-7.4), capstone drills | 12 | CL-7 staged-fault drills (new) |
+| 8 | ~1,100 → 4,643 | install options, Win 11 requirements and servicing, Win 10 end of support, baseline, LAPS, GPO order and refresh, Kerberos skew and trust failure, DISM → SFC, WinRE, Quick machine recovery, failed-update capstone | 13 | CL-8 recovery ladder (new) |
+| 9 | ~900 → 3,874 | Linux commands, permissions diagram, systemd/journalctl, nginx worked example, macOS recovery, FileVault, Time Machine, MDM/Activation Lock, file-system table, SMB/SSH (new IT-9.4) | 12 | CL-9 (existing) |
+| 10 | ~800 → 3,856 | phishing resistance of MFA types, MFA-fatigue scenario, malware isolate/preserve/report, Defender Offline, BitLocker recovery, NIST 800-88r2 sanitisation, mailbox-rule follow-up, RFC 3227 order of volatility, chain of custody | 12 | CL-10 posture check + tabletop (new) |
+| 11 | ~480 → 3,355 | fault shapes (Event IDs 1000/1002), scoping diagram, clean boot with halving, Safe Mode, repair/reset table, repair-vs-rebuild time boxes, slow-logon stages, Resource Monitor, temporary profiles (new IT-11.4) | 12 | CL-11 slow PC (new) |
+| 12 | ~680 → 3,532 | change types and change request, lifecycle diagram, PII and minimum access, AUP/licensing/BYOD, 3-2-1, full/incremental/differential, RPO/RTO, KB article/runbook/asset record (new IT-12.4), integrated capstone | 12 | CL-12 (existing) |
+| 13 | ~1,130 → 4,178 | VM snapshot loop diagram, baseline inventory, safe vs destructive commands, ipconfig /all and APIPA, WMIC → CIM/NetTCPIP/DnsClient table, network-reset ladder, desk-move scenario, IP-vs-name diagram, hosts/cache/server comparison, Settings ↔ command map, tasklist /svc, netsh, restart decisions (new IT-13.4) | 12 | CL-13 PowerShell evidence + name-resolution repair (new) |
+
+Word counts are visible lesson text after the layer is applied, excluding diagrams and styles. For comparison,
+ch1 is 6,524 and ch2 is 3,493.
+
+**Each lesson has:**
+- 3–5 measurable objectives
+- at least 300 words of core content
+- 2–3 check-for-understanding questions with answers (`<details>`)
+
+**Each chapter has:**
+- a worked example
+- a real-world troubleshooting scenario
+- a described diagram
+- glossary terms (64 in total)
+- lesson-plan additions: warm-up, guided practice, worked examples, CFU questions, exit ticket, misconceptions, lab
+- tests that enforce all of the above (`tests/test_itsup_expansion.py`)
+
+**Items:**
+- 85 new items (bank `X-IT-*`) across 28 objectives, at least 3 per objective, each with a rationale.
+- Key positions are 22/21/21/21. The key is the longest option (including ties) in 22 of 85 items. The longest/shortest option ratio is ≤ 1.5 for every item.
+- No "all/none of the above", and no vendor exam items. Every item was written from the lesson text.
+- The items are in the answer key as “Chapter item bank, pass 9 — Pending SME review” and in the blueprints. Like the supplement, they are not on the live LMS Test A/B/C forms.
+
+**Facts checked against current sources** (Microsoft Learn/Support, Apple Support, NIST, CISA, IETF, man pages):
+
+| Topic | What the lesson says |
+|---|---|
+| WMIC | Removed from Windows 11 24H2/25H2 with the August 2026 update; no longer a Feature on Demand → `Get-CimInstance` |
+| Windows 11 servicing | Home/Pro 24 months, Enterprise/Education 36 months; Windows 10 end of support 14 Oct 2025 |
+| Repair order | DISM /RestoreHealth before `sfc /scannow` (Microsoft's documented order) |
+| Recovery | “Fix problems using Windows Update” keeps apps/files/settings; go back within 10 days; Quick machine recovery present in current Windows 11 |
+| Group Policy | Processing order local → site → domain → OU; background refresh 90 min + random 0–30 min |
+| Kerberos | Default maximum clock skew 5 minutes |
+| BitLocker | Device encryption on automatically with a Microsoft or work account; key at aka.ms/myrecoverykey |
+| macOS Recovery | Apple silicon: press and hold the power button; Intel: Command-R |
+| Sanitisation | NIST SP 800-88 Rev. 2 (final Sep 2025): clear / purge / destroy; cryptographic erase as a purge method |
+| Incident response | NIST SP 800-61 Rev. 3 (Apr 2025) is organised under CSF 2.0; order of volatility from RFC 3227 |
+| Backup | CISA 3-2-1 guidance |
+| Name resolution | `Resolve-DnsName` -DnsOnly / -NoHostsFile / -Server; `Test-NetConnection -Port`; nslookup does not use the hosts file |
+| Network reset | Settings → Network & internet → Advanced network settings → Network reset reinstalls adapters and restarts the PC |
+
+macOS version names, market-share figures and incident statistics were left out on purpose. None could be checked
+reliably, and no statistics or citations were invented.
+
+**Still for the SME:**
+- Accuracy and tone of all pass-9 text.
+- Whether 3,300–4,600 words fits the 175–230 LMS minutes per chapter.
+- Item difficulty after a cohort.
+- CL-7/8/10/11/13 on real hardware.
+- Whether to add any `X-IT` items to the live forms.
+
+ITSUP chapters 3–6 (1,393–2,500 words) are the next thinnest. They were not in scope for this pass.
 
 ## Sources consulted
 
@@ -138,4 +211,8 @@ Microsoft — Windows 11 specifications and system requirements; NIST SP 800-63B
 Wi-Fi Alliance requirements as summarised in vendor design guides; USB-IF Data Performance Language Usage Guidelines
 (Jan 2024); Intel Thunderbolt 5 brief; JEDEC DDR5 (JESD79-5 family); PCI-SIG base specifications; IANA port registry;
 Broadcom/VMware Workstation Pro licensing announcement (Nov 2024); 34 CFR 600.2 credit-hour definition (eCFR, version
-dated 1 Jul 2026).
+dated 1 Jul 2026). Pass 9: Microsoft Learn (Windows commands; NetTCPIP, DnsClient and CimCmdlets modules; System File
+Checker; Windows recovery options; Group Policy processing; Kerberos policy; Windows lifecycle), Microsoft Support
+(WMIC removal; BitLocker/device encryption; Microsoft Defender Offline; network reset), Apple Support (macOS Recovery,
+FileVault, Time Machine), NIST SP 800-88r2, 800-61r3, 800-63B-4, IETF RFC 3227, CISA backup and MFA guidance, Linux
+man-pages and systemd documentation.
