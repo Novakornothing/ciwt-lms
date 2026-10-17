@@ -338,3 +338,12 @@ def test_vm_lab_grades_probe_and_history(student, instructor, mod):
 def test_vm_routes_refuse_other_kinds(student):
     assert student.post("/labs/win-ipconfig/vm-log", json={"lines": ["x"]}).status_code == 400
     assert student.post("/labs/win-ipconfig/vm-check", json={"probe": "x"}).status_code == 400
+
+
+def test_privacy_delete_covers_lab_records(student, mod):
+    import privacy_tools
+    solve_http(student, "win-ipconfig")
+    _, uid = _row(mod, "student1@lms.local", "win-ipconfig")
+    with mod.app.app_context():
+        doomed, _ = privacy_tools.plan(mod.db, uid)
+        assert doomed.get("lab_progress") and doomed.get("lab_event")
