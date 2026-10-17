@@ -399,3 +399,80 @@ pytest 73 passed (new: error pages, account flows, caching headers, favicon, no 
 - The admin dashboard is still long; jump chips help, but it should be split into tabs or pages.
 - At 390 px the only targets under 44 px are inline text links inside sentences (lesson, module and attention pages), which WCAG 2.5.8 exempts.
 - Small-target counts at 1280 are mouse context (no touch rules) and are acceptable.
+
+## Pass 7 (Oct 17 2026): fixes for the issues left after pass 6
+
+Same rules as before: local only, small commits. The real DB was left unchanged; tests and screenshots used a copy.
+
+### 1. Self-hosted assets and compression
+- **Self-hosted:** Bootstrap 5.3.3 CSS/JS, Bootstrap Icons 1.11.3 and the IBM Plex Sans/Mono and Orbitron fonts now live in `static/vendor/<package>/<version>/` (licences included).
+  - No page requests anything from jsDelivr or Google before first paint. The webgazer CDN fallback is removed too (the local copy was already primary).
+- **Fonts:** latin and latin-ext woff2 only. Plex Sans and Orbitron are variable fonts, so each is one file covering all weights. The body font is preloaded with the same URL `fonts.css` uses, so it downloads once.
+- **Icon subset:** the full icon set is about 216 KB (font plus CSS); the app uses about 115 icons.
+  - `tools/build_icon_subset.py` builds a 10 KB font and 5 KB CSS, with a content hash in the font filename.
+  - A test fails if a template uses an icon that isn't in the subset; run the tool again after adding one.
+  - `bi-flask` (the demo-data ribbon) never existed in 1.11.3 and now uses `bi-database-gear`.
+- **Caching:** `?v=` URLs, plus anything under a version directory in `static/vendor/`, are `immutable` for a year. That covers fonts referenced through `url()` inside vendored CSS.
+- **Compression:** Flask-Compress (added to `requirements.txt`). Brotli when the browser accepts it, otherwise gzip; static files stream through the same encoders. Fonts and images are left alone.
+  - It runs inside the app, so it works the same under `flask run`, `python app.py` and **gunicorn as started by the Procfile/render.yaml**. Verified locally with `gunicorn app:app`: `/login` 16 KB becomes 5.3 KB (br) or 5.3 KB (gzip), and `bootstrap.min.css` 233 KB becomes 33 KB (br) or 31 KB (gzip). The gzip body decodes back to the identical file.
+  - No compressed-response cache is used, because pages are per user.
+- **Measurements** (`tools/perf_probe.py`: cold cache, 390 px phone, Lighthouse "slow 4G" 150 ms RTT / 1.6 Mbit/s; JSON in `screenshots/pass7/perf-*.json`):
+
+| Page | Bytes over the wire | First contentful paint | Load | 3rd-party requests |
+|---|---|---|---|---|
+| login | 482 → 242 KB | 1500 → 1120 ms | 2910 → 1635 ms | 4 → 0 |
+| student home | 493 → 245 KB | 1472 → 1116 ms | 2904 → 1635 ms | 4 → 0 |
+| student class | 518 → 248 KB | 1584 → 1108 ms | 3067 → 1672 ms | 4 → 0 |
+| lesson | 706 → 318 KB | 2104 → 1232 ms | 3857 → 1912 ms | 4 → 0 |
+| admin home | 525 → 245 KB | 1600 → 1092 ms | 3059 → 1689 ms | 4 → 0 |
+
+### 2. Post/Redirect/Get
+- Quiz, knowledge-test and skills-practical submissions now save the attempt and answer **303** to `/student/quiz/<section>/<quiz>/result/<attempt>` or `/student/test/<section>/<test>/result/<attempt>`.
+  - The results page is a plain GET rebuilt from the stored answers. Reloading it, or going Back and then Forward, never resubmits.
+  - "Time expired" survives the redirect as a flash plus `?timed_out=1`.
+- Only the attempt's owner or staff can open a result; anyone else gets 404. An attempt that is still open sends you back to the test.
+- The other POST forms already redirected on success. Login and account re-render only to show validation errors (account returns 400), which is normal PRG practice.
+- Tests: `tests/test_prg.py`. The phone e2e now also checks that results have their own URL and that a reload is a GET that adds no attempt (43 checks).
+
+### 3. Admin split
+- `/admin` is now a short **overview**: 6 KPI cards that link through, 4 area cards, more-tools chips, the top teaching time and the demo reset.
+- The rest moved to sub-pages that share a sub-nav (`templates/_admin_nav.html`):
+  - **Classes** `/admin/classes`: sections table that stacks on phones, create form, teaching time.
+  - **People** `/admin/people`: user list with role filter chips and name/email search; the add forms collapse.
+  - **Curriculum** `/admin/curriculum`: a card per curriculum set with chapters, lessons, quizzes, tests, labs, its classes and course instructors, plus the add form.
+  - **Quality / TQI** `/admin/tqi`: the existing board, with the shared header; its inline `<style>` moved to CSS.
+- On phones the sub-nav scrolls sideways, keeps the current tab in view and fades the edge.
+- **Old bookmarks:** `/admin#admin-class|sections|course-instr|people|staff` forward from `<head>` to the matching sub-page and anchor. Admin form POSTs return to their own sub-page. The staff rail and tab bar know the new pages.
+- On a phone the admin home went from 5,223 px to 1,748 px. Tests: `tests/test_admin_pages.py`.
+
+### 4. Archive
+- `git mv` (nothing deleted) of `app 2.py`, the four `templates/*(1).html` duplicates, `navy-n.png` (2.1 MB), `navy-interior-live.webp` (604 KB) and 14 stale root zips into `archive/`. Each was grepped first: nothing referenced them.
+- `archive/README.md` explains each file and how to restore it. `archive/` is `export-ignore`, so the release zip leaves it out.
+
+### 5. Dark-mode accessibility
+- `tools/a11y_sweep.py --themes light,dark` checks 29 pages at 3 widths (now including the admin sub-pages, account, inbox, class labs and grades).
+- 65 dark-mode contrast failures fixed:
+  - The dark role accents never applied. `[data-theme="dark"][data-role=…]` needed a descendant selector, because `data-theme` is on `<html>` and `data-role` on `<body>`. Instructor (gold) and admin (coral) pages now get their dark-tuned colours.
+  - Bootstrap `*-emphasis` text, warning badges with `text-dark`, `btn-outline-danger` and `btn-link` got dark-theme colours.
+  - Chip links keep ink text in dark mode.
+
+### Tests
+pytest **96 passed** (was 73); node **31 passed**; phone quiz/test e2e **43/43** in light and dark; axe **0 violations** (174 page/width/theme checks).
+
+### Screenshots
+`/workspace/ciwt/screenshots/pass7/`:
+- `before/` and `after/`: admin pages at 390/1280, light and dark.
+- `pairs/`:
+  - `admin-390-light-before-vs-after.png`: the old 5,223 px page beside the overview and each sub-page, at the same scale.
+  - `admin-390-overview-top.png`: the first screen on a phone.
+  - `admin-1280-light-before-vs-after.png`
+  - `admin-390-dark-before-vs-after.png`
+- `phone-e2e-light|dark/`, `axe/axe-report.json`, `perf-before.json`, `perf-after.json`.
+
+### Left for later
+- Five same-origin stylesheets still block render (Bootstrap is 33 KB br). Inlining critical CSS, or merging theme, ui and helix CSS into one file, would cut first paint further.
+- `navy-n-512.webp` (60 KB) loads on every page as a CSS background; a smaller variant would save about 50 KB.
+- Compression runs per request. That's fine at this scale; at higher traffic, pre-compress static files at build time or let a CDN/proxy compress.
+- The People list shows everyone (28 in the demo; 4,629 px on a phone). Add pagination if the user count grows.
+- `n74-ops-worker 4.js` in the repo root looks like another stale duplicate. It was outside this pass's list, so it is untouched.
+- Small-target counts at 1280 are mouse context (touch rules apply below 1000 px).
