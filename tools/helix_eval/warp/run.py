@@ -26,7 +26,7 @@ def one(d):
     with sync_playwright() as p:
         b = p.chromium.launch()
         pg = b.new_page(viewport={'width': 1440, 'height': 900})
-        pg.goto(f'http://127.0.0.1:{port}/ciwt-lms/tools/helix_eval/warp/bench.html?mode={mode}&seq=/{rel}&nf={os.environ.get("BENCH_NF", "2")}')
+        pg.goto(f'http://127.0.0.1:{port}/ciwt-lms/tools/helix_eval/warp/bench.html?mode={mode}&seq=/{rel}&nf={os.environ.get("BENCH_NF", "2")}{os.environ.get("BENCH_Q", "")}')
         pg.wait_for_function('window.BENCH_DONE || window.BENCH_ERR', timeout=1_800_000, polling=1000)
         err = pg.evaluate('window.BENCH_ERR || null')
         if err:
@@ -37,7 +37,7 @@ def one(d):
     with open(path, 'w') as fh:
         json.dump(out, fh, separators=(',', ':'))
     found = sum(1 for f in out['frames'] if f and not f.get('none'))
-    return f"{rel}: {out['n']} frames, face {found}, {out['ms']} ms, infer {out['inferMs']} ms"
+    return f"{rel}: {out['n']} frames, face {found}, {out['ms']} ms, infer {out['inferMs']} ms, crop {out.get('cropMs')} ms"
 
 
 with ThreadPoolExecutor(max_workers=int(os.environ.get('BENCH_JOBS', '4'))) as ex:

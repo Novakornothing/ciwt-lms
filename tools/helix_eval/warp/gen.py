@@ -15,6 +15,9 @@ import numpy as np
 
 SUBJ = sys.argv[1].rstrip('/')
 ONLY = None
+# --seed N: a repeat with different source-frame alignment (other head poses / expressions at each
+# target) and different sensor noise; written to <cond>_s<N>/
+SEED = int(sys.argv[sys.argv.index('--seed') + 1]) if '--seed' in sys.argv else 0
 if '--only' in sys.argv:
     ONLY = set(sys.argv[sys.argv.index('--only') + 1].split(','))
 HFOV = 60.0
@@ -26,7 +29,7 @@ EYES = [  # contour, corner a, corner b, upper, lower, iris centre, iris ring
     (R_EYE, 33, 133, 159, 145, 468, [469, 470, 471, 472]),
     (L_EYE, 362, 263, 386, 374, 473, [474, 475, 476, 477]),
 ]
-rng = np.random.default_rng(7)
+rng = np.random.default_rng(7 + 1000 * SEED)
 UPPER = {33: [33, 246, 161, 160, 159, 158, 157, 173, 133], 362: [362, 398, 384, 385, 386, 387, 388, 466, 263]}
 LOWER = {33: [33, 7, 163, 144, 145, 153, 154, 155, 133], 362: [362, 382, 381, 380, 374, 373, 390, 249, 263]}
 
@@ -292,7 +295,7 @@ CONDS = {
     'clean': {}, 'webcam': {}, 'lowlight': {}, 'glare': {'glare': True},
     'twofaces': {'second': True}, 'occlusion': {'occlude': True}, 'moved': {'moved': True},
 }
-other = {'medvedev': 'zara', 'zara': 'cbp', 'cbp': 'medvedev', 'cbp720': 'zara'}.get(os.path.basename(SUBJ), 'zara')
+other = {'medvedev': 'zara', 'zara': 'cbp', 'cbp': 'medvedev', 'cbp720': 'zara', 'cbp1080': 'zara'}.get(os.path.basename(SUBJ), 'zara')
 other_img = cv2.imread(os.path.join(os.path.dirname(SUBJ), other, 'src', '0040.jpg'))
 
 for cond, opt in CONDS.items():
@@ -310,13 +313,13 @@ for cond, opt in CONDS.items():
             for f in fixes:
                 f['start'] += base
             seq += rd
-    od = os.path.join(SUBJ, cond)
+    od = os.path.join(SUBJ, cond + (f'_s{SEED}' if SEED else ''))
     os.makedirs(od, exist_ok=True)
     for f in os.listdir(od):
         if f.endswith('.jpg'):
             os.remove(os.path.join(od, f))
     names, truth = [], []
-    start = 37 if cond != 'clean' else 0          # different conditions start at different clip points
+    start = (37 if cond != 'clean' else 0) + 53 * SEED   # different conditions/seeds start at different clip points
     for k, fr in enumerate(seq):
         si = src_index(start + k)
         img = cv2.imread(os.path.join(src_dir, src_files[si]))
@@ -355,7 +358,7 @@ for cond, opt in CONDS.items():
                       'shift': round(float(np.mean([i['shift_px'] for i in info])) if info else 0, 2),
                       'occl': int(((k // 45) % 3) if opt.get('occlude') else 0)})
     json.dump({'w': W, 'h': H, 'fps': FPS, 'frames': names}, open(os.path.join(od, 'frames.json'), 'w'))
-    json.dump({'subject': os.path.basename(SUBJ), 'cond': cond, 'screen': [SW, SH], 'cmPerPx': CM_PER_PX, 'hfov': HFOV,
+    json.dump({'subject': os.path.basename(SUBJ), 'cond': cond, 'seed': SEED, 'screen': [SW, SH], 'cmPerPx': CM_PER_PX, 'hfov': HFOV,
                'gain': gain, 'sign_corr': sign, 'truth': truth, 'fixations': fixes},
               open(os.path.join(od, 'truth.json'), 'w'))
     print(cond, len(seq), 'frames; head-angle gain', [round(g, 3) for g in gain], 'corr', [round(c, 2) for c in sign], flush=True)

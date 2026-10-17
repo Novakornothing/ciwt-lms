@@ -84,6 +84,10 @@ const rows = [];
 for (const d of dirs) {
   const truth = JSON.parse(fs.readFileSync(path.join(d, 'truth.json'))), T = truth.truth;
   const feat = JSON.parse(fs.readFileSync(path.join(d, `features${suffix}.json`))), F = feat.frames;
+  // CROPVEC=1: rebuild the pass-5 vec (23 + 8 crop features) from dumps that predate the engine change;
+  // CROPVEC=0: strip crop features (pass-4 model on the same frames)
+  if (process.env.CROPVEC != null) F.forEach((f) => { if (!f || !f.vec) return; f.vec = f.vec.slice(0, 23);
+    if (process.env.CROPVEC === '1' && f.crop) f.vec = f.vec.concat(M.cropVec({ r: f.crop.r && { tb: f.crop.r.tb, dc: f.crop.r.dc, upper: f.crop.r.up, lower: f.crop.r.lo }, l: f.crop.l && { tb: f.crop.l.tb, dc: f.crop.l.dc, upper: f.crop.l.up, lower: f.crop.l.lo } })); });
   const faceRate = F.filter((f) => f && !f.none).length / F.length, blinkRate = F.filter((f) => f && f.blink).length / F.length;
   const row = { subject: truth.subject, cond: truth.cond, frames: F.length, faceRate: +faceRate.toFixed(3), blinkRate: +blinkRate.toFixed(3), inferMs: feat.inferMs };
   const r9 = fitFixation(F, T, 'cal');

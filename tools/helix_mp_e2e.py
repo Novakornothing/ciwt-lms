@@ -90,6 +90,12 @@ with sync_playwright() as p:
     btn.click()
     pg.wait_for_timeout(9000)
     pg.screenshot(path=f'{a.out}/mp-live-{a.tag}.png')
+    # pass 5: diagnostics card with the live eye crops (Try page only)
+    if pg.locator('#hxTryCropsWrap:not([hidden])').count():
+        card = pg.locator('#hxTryHud').locator('xpath=ancestor::div[contains(@class,"card")][1]')
+        card.scroll_into_view_if_needed(); pg.wait_for_timeout(400)
+        card.screenshot(path=f'{a.out}/mp-hud-crops-{a.tag}.png')
+        log['crop_hud'] = True
     st = pg.evaluate("""() => ({stats: window.HelixTry.engine.stats(), preds: window.HelixTry.preds,
                                frames: window.HelixTry.frames, hist: window.HelixTry.history.slice(-200)})""")
     hist = st.pop('hist')

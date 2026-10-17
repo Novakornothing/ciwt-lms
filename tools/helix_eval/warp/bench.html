@@ -15,7 +15,8 @@
   const log = (s) => { document.getElementById('log').textContent = s; };
   const base = new URL('../../../static/vendor/mediapipe/', location.href).href;
   const eng = new HelixEngine.MediaPipeEngine({ numFaces: +(q.get('nf') || 2), bundleUrl: base + 'vision_bundle.mjs', wasmBase: base + 'wasm',
-    modelUrl: base + 'models/face_landmarker.task', delegate: q.get('delegate') || 'CPU', mobile: q.get('mobile') === '1' });
+    modelUrl: base + 'models/face_landmarker.task', delegate: q.get('delegate') || 'CPU', mobile: q.get('mobile') === '1',
+    crop: q.get('crop') === '0' ? false : q.get('crop') === 'feat' ? true : 'view', cropTB: q.get('tb') !== '0', detectWidth: q.get('dw') ? +q.get('dw') : null });
   await eng.load();
   const meta = await (await fetch(seq + '/frames.json')).json();
   const c = document.createElement('canvas'); c.width = meta.w || 640; c.height = meta.h || 480;
@@ -23,6 +24,10 @@
   const g = c.getContext('2d', { willReadFrequently: true });
   eng.video = c; eng.running = true;
   let ev = null; eng.on((e) => { ev = e; });
+  const r3 = (v) => v == null ? null : Math.round(v * 1000) / 1000;
+  const packEye = (e) => e ? { tb: e.tb && e.tb.map(r3), dc: e.dc && e.dc.map(r3), up: r3(e.upper), lo: r3(e.lower), ns: r3(e.nativeScale),
+    p: e.patch ? Array.from(e.patch, (v) => Math.round(v * 100) / 100) : null } : null;
+  const packCrop = (c) => ({ r: packEye(c.r), l: packEye(c.l), ms: r3(c.ms) });
   const out = [], fps = meta.fps || 15, t0 = performance.now();
   const loadImg = (src) => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
   let next = loadImg(seq + '/' + meta.frames[0]);
@@ -37,15 +42,15 @@
       out.push(f ? { lm: f.landmarks.map((p) => [Math.round(p.x * c.width * 100) / 100, Math.round(p.y * c.height * 100) / 100]),
         pose: f.pose, dist: f.distanceCm } : null);
     } else {
-      out.push(f ? { vec: f.vec, blink: f.blink, staticBlink: f.staticBlink, occluded: (eng.eyeBase && f.occluded) || null, dist: f.distanceCm, pose: f.pose,
+      out.push(f ? { vec: f.vec.map((v) => (Number.isFinite(v) ? v : null)), blink: f.blink, staticBlink: f.staticBlink, occluded: (eng.eyeBase && f.occluded) || null, dist: f.distanceCm, pose: f.pose,
         q: Object.assign({}, eng.quality), faces: ev.faces, open: f.open, look: f.lookDown, bs: f.blinkScore, face: f.face,
-        eyes: { r: f.eyes.r, l: f.eyes.l } } : { none: true, faces: ev ? ev.faces || 0 : 0, q: Object.assign({}, eng.quality) });
+        eyes: { r: f.eyes.r, l: f.eyes.l }, crop: f.crop ? packCrop(f.crop) : null } : { none: true, faces: ev ? ev.faces || 0 : 0, q: Object.assign({}, eng.quality) });
       // occlusion baseline: the engine sets it at fit(); here, after the calibration phase
       if (meta.calEnd && i === meta.calEnd) eng.eyeBase = HelixModel.eyeBaseline(out.slice(0, i).filter((x) => x && x.eyes).map((x) => ({ eyes: x.eyes })));
     }
     if (i % 25 === 0) log(i + '/' + meta.frames.length);
   }
-  window.BENCH_OUT = { seq, mode, n: out.length, ms: Math.round(performance.now() - t0), inferMs: Math.round(eng.inferEma * 10) / 10,
+  window.BENCH_OUT = { seq, mode, n: out.length, ms: Math.round(performance.now() - t0), inferMs: Math.round(eng.inferEma * 10) / 10, cropMs: eng.cropMsEma ? Math.round(eng.cropMsEma * 10) / 10 : null,
     brightness: eng.brightness, frames: out };
   window.BENCH_DONE = true; log('done ' + out.length);
 })().catch((e) => { window.BENCH_ERR = String(e && e.stack || e); document.getElementById('log').textContent = 'ERR ' + e; });
