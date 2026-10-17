@@ -213,6 +213,7 @@ CSS_BUNDLE_PARTS = (
     'css/ciwt-theme.css',
     'css/ciwt-ui.css',
     'css/helix.css',
+    'css/labs.css',
 )
 _css_bundle = {'key': None}
 _CSS_URL = re.compile(r'url\(\s*([\'"]?)([^)\'"]+)\1\s*\)')
@@ -2381,131 +2382,17 @@ def tickets_new():
     )
 
 
-@app.route('/live-labs')
-@app.route('/labs')
-@login_required
-def interactive_labs_index():
-    """In-browser Windows / switch / router CLI simulators."""
-    return render_template('interactive_labs_index.html', labs=list_labs())
-
-
-@app.route('/labs/verify')
-@login_required
-def interactive_labs_verify():
-    """Run built-in sequences for every lab (instructor/admin)."""
-    if current_user.role not in ('admin', 'instructor'):
-        flash('Lab verify is for instructors and admins.', 'warning')
-        return redirect(url_for('interactive_labs_index'))
-    from interactive_labs import verify_all_labs
-    ok, report = verify_all_labs()
-    return render_template('interactive_labs_verify.html', ok=ok, report=report)
-
-
-@app.route('/labs/<lab_id>')
-@login_required
-def interactive_lab(lab_id):
-    lab = get_lab(lab_id)
-    if not lab:
-        abort(404)
-    key_s = f'lab_state_{lab_id}'
-    key_d = f'lab_done_{lab_id}'
-    if key_s not in session:
-        session[key_s] = fresh_state(lab_id)
-        session[key_d] = []
-    if request.args.get('section_id'):
-        session['lab_section_id'] = request.args.get('section_id')
-    if request.args.get('test_id'):
-        session['lab_test_id'] = request.args.get('test_id')
-    state = session[key_s]
-    audit('lab_open', lab_id)
-    back = None
-    if session.get('lab_test_id') and session.get('lab_section_id'):
-        try:
-            back = url_for('take_test', section_id=int(session['lab_section_id']), test_id=int(session['lab_test_id']))
-        except Exception:
-            back = None
-    if lab.get('kind') == 'win11gui':
-        return render_template('win11_gui_lab.html', lab=lab, practical_back=back)
-    return render_template(
-        'interactive_lab.html',
-        lab=lab,
-        prompt=prompt_for(lab, state),
-        practical_back=back,
-    )
-
-
-@app.route('/labs/<lab_id>/mark-done', methods=['POST'])
-@login_required
-def interactive_lab_mark_done(lab_id):
-    if not get_lab(lab_id):
-        return jsonify({'error': 'unknown lab'}), 404
-    payload = request.get_json(silent=True) or {}
-    done = payload.get('done') or session.get(f'lab_done_{lab_id}') or []
-    session[f'lab_done_{lab_id}'] = list(done)
-    session.modified = True
-    sid = session.get('lab_section_id')
-    tid = session.get('lab_test_id')
-    try:
-        _record_lab_completion(
-            lab_id, done,
-            section_id=int(sid) if sid else None,
-            test_id=int(tid) if tid else None,
-        )
-    except Exception as exc:
-        print('mark-done note:', exc)
-    return jsonify({'ok': True})
-
-
-@app.route('/labs/<lab_id>/complete', methods=['POST'])
-@login_required
-def interactive_lab_complete(lab_id):
-    if not get_lab(lab_id):
-        return jsonify({'error': 'unknown lab'}), 404
-    payload = request.get_json(silent=True) or {}
-    key_s = f'lab_state_{lab_id}'
-    state = session.get(key_s) or {}
-    mode = payload.get('mode') or state.get('mode') or 'user'
-    return jsonify(complete_command(lab_id, payload.get('partial') or '', mode=mode))
-
-
-@app.route('/labs/<lab_id>/cmd', methods=['POST'])
-@login_required
-def interactive_lab_cmd(lab_id):
-    lab = get_lab(lab_id)
-    if not lab:
-        return jsonify({'error': 'unknown lab'}), 404
-    key_s = f'lab_state_{lab_id}'
-    key_d = f'lab_done_{lab_id}'
-    state = session.get(key_s) or fresh_state(lab_id)
-    done = session.get(key_d) or []
-    payload = request.get_json(silent=True) or {}
-    command = payload.get('command') or ''
-    result, state, done = run_command(lab_id, state, done, command)
-    session[key_s] = state
-    session[key_d] = done
-    session.modified = True
-    try:
-        sid = request.args.get('section_id') or session.get('lab_section_id')
-        tid = request.args.get('test_id') or session.get('lab_test_id')
-        _record_lab_completion(
-            lab_id, done,
-            section_id=int(sid) if sid else None,
-            test_id=int(tid) if tid else None,
-        )
-    except Exception as exc:
-        print('lab complete note:', exc)
-    return jsonify(result)
-
-
-@app.route('/labs/<lab_id>/reset', methods=['POST'])
-@login_required
-def interactive_lab_reset(lab_id):
-    if not get_lab(lab_id):
-        return jsonify({'error': 'unknown lab'}), 404
-    session[f'lab_state_{lab_id}'] = fresh_state(lab_id)
-    session[f'lab_done_{lab_id}'] = []
-    session.modified = True
-    return jsonify({'ok': True})
+# Live labs (pass L1): every lab route lives in lab_progress.py — server-side state per student in the lab_progress
+# table (autosave/resume, undo, transcript, hints, scores), instructor results and classroom-lab sign-off.
+# Endpoint names are unchanged (interactive_labs_index, interactive_lab, interactive_lab_cmd, …).
+import lab_progress as lab_progress_mod  # noqa: E402
+import lab_runtime  # noqa: E402
+lab_progress_api = lab_progress_mod.register(app, db, dict(
+    User=User, ClassSection=ClassSection, Enrollment=Enrollment, Module=Module, LabCompletion=LabCompletion,
+    instructor_can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    record_completion=lambda lab_id, done, section_id=None, test_id=None: _record_lab_completion(lab_id, done, section_id, test_id),
+    audit=lambda action, detail='': audit(action, detail),
+))
 
 
 @app.route('/admin/tickets')
@@ -3200,9 +3087,9 @@ def _station_done(user_id, lab_id, section_id, test_id=None):
     row = q.order_by(LabCompletion.completed_at.desc()).first()
     if row:
         return True
-    # session fallback while they are still in this browser
-    done = session.get(f'lab_done_{lab_id}') or []
-    return _lab_objectives_met(lab_id, done)
+    # the lab_progress record is the source of truth (state is server-side; nothing is trusted from the browser)
+    lp = lab_progress_api.LabProgress.query.filter_by(user_id=user_id, lab_id=lab_id).first()
+    return bool(lp and lp.completed_at)
 
 
 def _take_practical(section_id, test, payload):
@@ -4380,6 +4267,8 @@ def course_labs(section_id):
         labs=all_labs,
         by_chapter=by_chapter,
         domains=domains_for_course(section.course),
+        classroom=[l for l in lab_runtime.course_lab_set(section.course) if l['kind'] == 'classroom'],
+        progress=lab_progress_api.progress_map(current_user.id),
     )
 
 

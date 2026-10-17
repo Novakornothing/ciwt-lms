@@ -377,6 +377,10 @@ def classroom_lab(cl_id):
     return out
 
 
+def classroom_ids():
+    return sorted(_cp().CLASSROOM_LABS, key=lambda c: int(c.split("-")[1]) if c.split("-")[1].isdigit() else 99)
+
+
 def lab_rubric():
     return _cp().RUBRICS["lab"]
 
