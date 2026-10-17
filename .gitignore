@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+*.pyc
+ciwt_lms.db
+*.db
+instance/
+.pytest_cache/
+narration_cache/
