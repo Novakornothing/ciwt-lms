@@ -177,3 +177,108 @@ Honest reading of these numbers:
   are present, and the pose of low-res sources is noisy. Real users at a real screen can be
   better (real eye rotation moves more than the iris disc) or worse (real glare, real fatigue).
   **Nothing here replaces a test with people at a screen.**
+
+## Pass 5: high-resolution eye crop, pupil localisation, eye patches, per-user CV (Oct 17 2026)
+
+**Question:** can a second-stage, full-camera-resolution eye crop beat the ~7-8° floor on the warp
+proxy? **Answer: not consistently.** Some variants are about 0.2-0.45° better on average, but none
+improves every subject *and* repeats across seeds. The default model is therefore **unchanged** from
+pass 4. The crop stage ships view-only (Try-page HUD) plus an opt-in experimental model path.
+
+### What was built (all in the real browser path, `HelixEngine._process`)
+* `HelixModel.eyeCropTransform`: per eye, a 90x54 crop drawn from the **full-resolution video**,
+  rotated so the eye-corner line (33/133, 362/263) is level and scaled to 1/1.5 of the crop width
+  (pose-normalised in roll and scale). Face detection input is unchanged.
+* Pupil centre in the crop: `pupilTimmBarth` (Timm & Barth 2011 gradient method, restricted to the
+  lid polygon, darkness-weighted, coarse step 2 + full-res refinement, ≤400 gradients) and
+  `pupilDarkCentroid`. Lid cues: upper/lower lid height where the centre line crosses the lid
+  contour. Appearance: `eyePatch` (15x9 area-average, rank-equalised).
+* `GazeRegressor`: when vec carries the 8 crop values (pupil x/y per eye from Timm & Barth with
+  dark-centroid fallback, plus upper/lower lid per eye), stage 2 uses them, with lambda chosen by
+  **grouped CV** (leave-one-calibration-dot-out, 3x3 target grid) instead of per-frame GCV.
+  Missing values (NaN, or the stage switching off mid-session) count as the mean.
+* Engine: `opts.crop = 'view'` (HUD only), `true` (features into the model, experimental), or off
+  (default). Phones run it only when forced. It turns itself off if inference + crop drops below
+  ~12 fps. `hiRes` / `?hires=1` requests 1920x1080 on desktops with ≥8 cores, and `_resCheck`
+  drops to 720p if inference + crop exceeds 50 ms.
+
+### Data
+Pass-4 warp sequences (cbp 640x480, cbp720, medvedev, zara × 7 conditions), plus **cbp1080**: the
+same frames as cbp720 at native 1920x1080, all 7 conditions. **Seed repeats:** clean and webcam
+re-rendered with seeds 1 and 2 (different noise and target order) for all 5 subjects. That gives
+55 sequences in total. Features were dumped once with the crop stage on (`run.py features _v5`) and
+A/B'd offline with `crop_ab.js`. The ported model was scored with `warp_eval.js` on the same dumps
+(`CROPVEC=0` gives the pass-4 model on identical frames).
+
+**Resolution note:** at 640x480/720p the eye crop *upsamples* (median 0.34-0.72 camera px per crop
+px; MediaPipe's own ~256 px face crop already sees about native resolution). Only at 1080p does
+the crop get real extra detail (1.07 px/px). So at ≤720p the crop adds a different estimator, not
+new pixels.
+
+### Offline A/B, 9-point → 16 unseen points (median per-point error, °; `crop_ab.js`)
+| variant (stage-2 features, lambda) | all 55 | mean Δ vs pass-4 [95% CI] | wins | sign p | subjects better, 7 conditions | subjects better, seeds | main 28 | seeds 20 |
+|---|---|---|---|---|---|---|---|---|
+| pass-4 model (GCV) | 7.53 | — | — | — | — | — | 7.97 | 6.87 |
+| + grouped-CV lambda only | 7.22 | -0.21 [-0.55, +0.09] | 30/55 | 0.59 | 3/5 | 3/5 | 7.69 | 6.96 |
+| + Timm & Barth pupil, CV | 7.17 | -0.29 [-0.60, +0.01] | 35/55 | 0.06 | 4/5 | 3/5 | 7.58 | 6.53 |
+| + lids, CV | 7.27 | -0.16 [-0.52, +0.17] | 30/55 | 0.59 | 3/5 | 2/5 | 7.67 | 6.96 |
+| + pupil + lids, CV (= experimental port) | 7.17 | -0.24 [-0.57, +0.10] | 34/55 | 0.11 | 4/5 | 3/5 | 7.75 | 6.59 |
+| + pupil + lids, GCV | 7.58 | -0.04 [-0.32, +0.23] | 27/55 | 1.00 | 2/5 | 3/5 | 8.09 | 6.53 |
+| + 10x6 patches, PCA 12, CV | 7.12 | -0.37 [-0.72, -0.05] | 37/55 | 0.014 | 3/5 | 5/5 | 7.57 | 6.11 |
+| + 5x3 patches, CV | 7.31 | -0.41 [-0.76, -0.07] | 37/55 | 0.014 | 3/5 | 4/5 | 7.58 | 6.07 |
+| + pupil + lids + patches PCA 12, CV | 6.99 | -0.45 [-0.76, -0.16] | 37/55 | 0.014 | 4/5 | 4/5 | 7.59 | 6.02 |
+| per-user choice by CV (base / pupil+lids / patches) | 7.12 | -0.35 [-0.68, -0.04] | 37/55 | 0.014 | 3/5 | 5/5 | 7.73 | 6.11 |
+
+The best combination still makes **cbp (640x480) 1.2° worse** over its 7 conditions
+(7.53 → 8.74). Patches alone make cbp and cbp1080 worse over theirs. The seed-1 and seed-2 results
+disagree for cbp720 and medvedev. Median vertical error moves 4.74 → 4.36-4.46° with the pupil
+features (patches: no vertical gain). An earlier run that A/B'd a less robust lid definition showed
+"-0.36°, p=0.03" for pupil+lids; after fixing the lid computation (no missing values) that shrank
+to the -0.24° above. That alone shows how fragile these effects are.
+
+### Ported experimental model through the real engine (`crop: true`; warp_eval, 9-point unless noted)
+| set | pass-4 model | pass-5 crop model | wins | mean Δ [95% CI] |
+|---|---|---|---|---|
+| main 28 | 7.97° | 7.75° | 19/28 | -0.28 [-0.82, +0.22] |
+| held-out subjects (medvedev, cbp720) | 7.56° | 7.18° | 9/14 | -0.09 |
+| seed repeats (20) | 6.87° | 6.58° | 11/20 | -0.08 |
+| cbp1080 (7) | 7.02° | 6.63° | 4/7 | -0.38 |
+| all 55 | 7.53° | 7.19° | 34/55 (p=0.11) | -0.22 [-0.55, +0.13] |
+| all 55, follow-the-dot + 3 dots | 7.03° | 7.29° | 20/50 | **+0.20 (worse)** |
+| moved, no clicks → after 12 clicks (5) | 8.83 → 7.39° | 8.57 → 7.89° | | |
+
+| subject (9-point) | clean | 7 conditions | seeds (4) |
+|---|---|---|---|
+| cbp (640x480) | 6.86 → 7.02 | 7.53 → **8.48** | 6.35 → 6.50 |
+| cbp720 | 5.83 → 5.61 | 7.54 → 7.08 | 6.42 → 5.96 |
+| cbp1080 | 5.90 → 5.18 | 7.02 → 6.63 | 5.28 → 5.07 |
+| medvedev | 6.72 → 6.33 | 7.58 → 7.20 | 7.98 → 7.94 |
+| zara | 11.54 → 10.63 | 10.84 → 10.03 | 9.93 → 9.99 |
+
+### Camera resolution (same person, same frames; pass-4 model)
+cbp1080 vs cbp720 over 11 paired sequences: 9-point 6.91 → 6.54° (better in 7/11, mean -0.33°,
+p=0.55); **follow-the-dot + 3 dots 6.22 → 5.28° (better in 9/10, p=0.02)**. Only one subject has
+a 1080p source, so 1080p is opt-in (`hiRes`), not the default. 480p crop → 720p: 6.86 → 6.91° (no
+change).
+
+### CPU cost (headless Chromium, CPU/WASM delegate, this box, one job at a time)
+| input | MediaPipe inference | crop stage, Timm & Barth + centroid (both eyes) | crop stage, centroid only |
+|---|---|---|---|
+| 640x480 desktop | 24.0 ms/frame | +2.0 ms | +0.7 ms |
+| 1280x720 desktop | 29.0 ms | +2.3 ms | +0.8 ms |
+| 1920x1080 desktop | 39.9 ms (36.3 ms with detection on a 1280-wide copy) | +2.4 ms | +0.8 ms |
+| phone emulation (mobile flag, 640x480) | 25.9 ms | off by default; forced centroid-only +0.7 ms | |
+| Try page, fake 1280x720 camera (e2e) | 17-35 ms | +3.3-4.2 ms (view only) | |
+Timm & Barth alone on a synthetic 90x54 crop in node: 18 ms at full resolution → 4.9 ms with
+coarse-to-fine. "Phone emulation" is the desktop CPU with the mobile code path; it is not a phone
+measurement.
+
+### Limitations of this proxy for these questions
+* The warp moves the iris and the lids (upper lid 75 %, lower lid 25 % of the iris travel), so
+  vertical lid cues are measurable. It has **no eyeball shading change, no corneal reflection and
+  no limbus foreshortening**. Appearance (patch) features may therefore be under- or over-rated
+  here compared with real eyes.
+* 3 people (5 resolution variants); seed repeats reuse the same source frames. Effects of 0.2-0.5°
+  are inside the run-to-run spread seen in pass 4.
+* Pose normalisation of the crop (roll + scale) is built in and was not ablated separately,
+  because the features it serves were not adopted.
