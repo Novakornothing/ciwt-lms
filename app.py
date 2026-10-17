@@ -129,6 +129,37 @@ def _tqi_cors(resp):
     return resp
 
 
+# ---- Static assets: url_for('static', ...) carries ?v=<mtime>, so versioned URLs can be cached for a
+# year (immutable); a changed file gets a new URL. Unversioned requests (e.g. url() inside CSS)
+# get a 1-day cache with ETag revalidation.
+_static_mtimes = {}
+
+
+@app.url_defaults
+def _static_version(endpoint, values):
+    if endpoint != 'static' or 'filename' not in values or 'v' in values:
+        return
+    fn = values['filename']
+    v = _static_mtimes.get(fn)
+    if v is None or app.debug:
+        path = os.path.join(app.static_folder, fn)
+        if not os.path.isfile(path):      # directories (e.g. the MediaPipe wasm base) stay unversioned
+            return
+        v = int(os.stat(path).st_mtime)
+        _static_mtimes[fn] = v
+    values['v'] = v
+
+
+@app.after_request
+def _static_cache(resp):
+    if request.endpoint == 'static' and resp.status_code in (200, 304):
+        if request.args.get('v'):
+            resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+        else:
+            resp.headers['Cache-Control'] = 'public, max-age=86400'
+    return resp
+
+
 @app.route('/api/tqi/ping', methods=['GET', 'OPTIONS'])
 def api_tqi_ping():
     if request.method == 'OPTIONS':
