@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ lab.title }} — Live Lab{% endblock %}
+{% block content %}
+{% set kind_label = 'Interactive activity' %}
+{% include '_lab_header.html' %}
+<div class="lab-shell">
+  <div class="lab-main">
+    <p class="small text-muted mb-2">Answers are checked on the server and saved as you go. Each wrong answer tells you what to look at — fix it and check again.</p>
+    <div class="lab-steps" id="labSteps"></div>
+  </div>
+  {% include '_lab_side.html' %}
+</div>
+{% set cfg = {'kind': lab.kind, 'boot': boot,
+  'urls': {'hint': url_for('interactive_lab_hint', lab_id=lab.id), 'undo': url_for('interactive_lab_undo', lab_id=lab.id), 'reset': url_for('interactive_lab_reset', lab_id=lab.id), 'check': url_for('interactive_lab_check', lab_id=lab.id), 'state': url_for('interactive_lab_state', lab_id=lab.id)}} %}
+<script type="application/json" id="labConfig">{{ cfg|tojson }}</script>
+<script src="{{ url_for('static', filename='js/lab-common.js') }}"></script>
+<script>LabKit.init(LabKit.config());</script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{# Objectives, hint / undo / reset and assessment — shared by every live lab page. #}
+<aside class="lab-side" aria-label="Objectives and help">
+  <div class="card">
+    <div class="card-header navy"><h2 class="h6 mb-0">Objectives</h2></div>
+    <div class="card-body">
+      <ol class="lab-objectives" id="labObjectives">
+        {% for o in lab.objectives %}
+        <li class="obj-item" data-oid="{{ o.id }}"><span class="ck" aria-hidden="true"></span><span>{{ o.text }} <span class="visually-hidden">(<span class="sr-state">not done</span>)</span></span></li>
+        {% endfor %}
+      </ol>
+      <div class="lab-success" id="labSuccess" hidden role="status"><strong>Lab complete.</strong> {{ lab.success_msg }}</div>
+      <div class="lab-tools">
+        <button type="button" class="btn btn-sm btn-brand" id="btnHint"><i class="bi bi-lightbulb" aria-hidden="true"></i> Hint</button>
+        {% if lab.kind != 'activity' %}<button type="button" class="btn btn-sm btn-outline-navy" id="btnUndo"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Undo</button>{% endif %}
+        <button type="button" class="btn btn-sm btn-outline-navy" id="btnReset"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Start over</button>
+      </div>
+      <div class="lab-hint" id="hintBox" hidden></div>
+      <p class="small text-muted mt-2 mb-0">Hints are two levels per objective (a nudge, then the exact action) and are recorded for your instructor. Undo reverts your last change; objectives you earned stay earned.</p>
+      {% block lab_help %}{% endblock %}
+      {% if help_html %}<div class="lab-help small mt-3">{{ help_html|safe }}</div>{% endif %}
+    </div>
+  </div>
+  {% include '_lab_assessment.html' %}
+</aside>
+<div class="visually-hidden" id="labLive" aria-live="polite" aria-atomic="true"></div>
+<div class="lab-toast" id="labToast" aria-hidden="true"></div>
