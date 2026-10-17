@@ -10,6 +10,7 @@ Each lab uses the standard lab format (``interactive_labs._lab``) plus:
   minutes            estimated time
 """
 import ipaddress
+import re
 
 from labs_activity import mask_from_any, norm
 from labs_gui import default_ad, gui_state
@@ -1250,8 +1251,156 @@ WIN_AD_USERS = _lab(
     ]},
 )
 
+
+# ────────────────────────────────────────────────────────────── win-laptop-ports (ITSUP ch4–6 gaps from pass 10)
+
+_BATT_REPORT = [
+    "BATTERY REPORT — LT-0442 (Dell Latitude 5440)            generated 10/16/2026 16:02",
+    "",
+    "INSTALLED BATTERIES",
+    "  NAME               DELL 4M1JN35",
+    "  CHEMISTRY          LiP",
+    "  DESIGN CAPACITY    54,000 mWh",
+    "  FULL CHARGE CAPACITY 30,240 mWh",
+    "  CYCLE COUNT        812",
+    "",
+    "BATTERY CAPACITY HISTORY",
+    "  2025-10-13   53,410 mWh",
+    "  2026-04-13   41,880 mWh",
+    "  2026-10-13   30,240 mWh",
+    "",
+    "Technician note from the user: \"it dies by lunch and the touchpad feels raised\".",
+]
+
+
+def _wlp_pre(state, done, cmd):
+    """Commands this lab adds to the Windows simulator (returns None to fall through to the shared engine)."""
+    c = re.sub(r"\s+", " ", (cmd or "").strip())
+    cl = c.lower()
+
+    def mark(o):
+        if o not in done:
+            done.append(o)
+    if cl in ("systeminfo", "systeminfo.exe"):
+        mark("vm_check")
+        return ["Host Name:                 " + state.get("hostname", "CIWT-W11-07"),
+                "OS Name:                   Microsoft Windows 11 Pro", "OS Version:                10.0.26200 N/A Build 26200",
+                "System Manufacturer:       Microsoft Corporation", "System Model:              Virtual Machine",
+                "System Type:               x64-based PC", "Total Physical Memory:     8,192 MB", "Domain:                    training.local",
+                "Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed."]
+    if cl.startswith("powercfg"):
+        if "/batteryreport" in cl or "-batteryreport" in cl:
+            state["tried_batt"] = True
+            return ["Unable to perform operation. An unexpected error (0x10d2) has occurred: The library, drive, or media pool is empty.",
+                    "(This VM has no battery — exactly what powercfg reports on a desktop or VM. The user's laptop report",
+                    " was attached to the ticket: C:\\Tickets\\battery-report-LT-0442.txt)"]
+        return ["powercfg /batteryreport   — battery health report (laptops)", "powercfg /energy          — power efficiency diagnostics",
+                "powercfg /a               — available sleep states"]
+    if cl in ("dir c:\\tickets", "ls c:\\tickets", "gci c:\\tickets", "get-childitem c:\\tickets", "cd c:\\tickets"):
+        return [" Directory of C:\\Tickets", "", "10/16/2026  04:02 PM             1,214 battery-report-LT-0442.txt"]
+    m = re.match(r"^(type|cat|gc|get-content|more)\s+\"?(c:\\tickets\\)?battery-report-lt-0442\.txt\"?$", cl)
+    if m:
+        if state.get("tried_batt"):
+            mark("battery")
+        else:
+            return _BATT_REPORT + ["", "(Also run powercfg /batteryreport yourself first — that is how you get this report on a laptop.)"]
+        return list(_BATT_REPORT)
+    if re.match(r"^nslookup (-type=mx|-q=mx|-querytype=mx) ciwt\.local", cl) or \
+            re.match(r"^resolve-dnsname ciwt\.local -type mx", cl) or re.match(r"^resolve-dnsname -type mx ciwt\.local", cl):
+        mark("mx")
+        if cl.startswith("resolve"):
+            return ["Name                 Type   TTL   Section    NameExchange          Preference",
+                    "----                 ----   ---   -------    ------------          ----------",
+                    "ciwt.local           MX     3600  Answer     mail.ciwt.local       10",
+                    "ciwt.local           MX     3600  Answer     mail2.ciwt.local      20"]
+        return ["Server:  dc01.training.local", "Address:  10.20.30.10", "",
+                "ciwt.local      MX preference = 10, mail exchanger = mail.ciwt.local",
+                "ciwt.local      MX preference = 20, mail exchanger = mail2.ciwt.local", "mail.ciwt.local internet address = 10.20.40.25"]
+    if cl.startswith("nslookup ") and "mx" not in cl and "ciwt.local" in cl:
+        return ["Server:  dc01.training.local", "Address:  10.20.30.10", "", "Name:    ciwt.local", "Address:  10.20.40.5",
+                "(That is the A record. Mail servers are listed in MX records: nslookup -type=MX ciwt.local)"]
+    m = re.match(r"^(test-netconnection|tnc)\s+(\S+)(?:\s+-port\s+(\d+))?(?:\s+-informationlevel\s+\S+)?$", cl)
+    if m:
+        host, port = m.group(2), m.group(3)
+        known = {"mail.ciwt.local": "10.20.40.25", "mail2.ciwt.local": "10.20.40.26", "ciwt.local": "10.20.40.5"}
+        if host not in known:
+            return [f"WARNING: Name resolution of {host} failed", "", f"ComputerName   : {host}", "RemoteAddress  :", "PingSucceeded  : False"]
+        if not port:
+            return [f"ComputerName           : {host}", f"RemoteAddress          : {known[host]}", "InterfaceAlias         : Ethernet",
+                    "SourceAddress          : " + str(state.get("ipv4") or "10.20.30.47"), "PingSucceeded          : True",
+                    "PingReplyDetails (RTT) : 1 ms", "(Ping only proves the host answers. Add -Port to test a service.)"]
+        open_ports = {"587", "443", "993"}
+        ok = port in open_ports and host.startswith("mail")
+        tested = state.setdefault("ports_tested", [])
+        if port not in tested:
+            tested.append(port)
+        if "25" in tested and "587" in tested:
+            mark("ports")
+        out = []
+        if not ok:
+            out.append(f"WARNING: TCP connect to ({known[host]} : {port}) failed")
+        out += [f"ComputerName     : {host}", f"RemoteAddress    : {known[host]}", f"RemotePort       : {port}",
+                "InterfaceAlias   : Ethernet", "SourceAddress    : " + str(state.get("ipv4") or "10.20.30.47"),
+                "PingSucceeded    : True", f"TcpTestSucceeded : {'True' if ok else 'False'}"]
+        return out
+    return None
+
+
+WIN_LAPTOP_PORTS = _lab(
+    "win-laptop-ports", "Windows CLI — battery health, VM check, MX records and port tests", "windows",
+    "A remote laptop dies by lunch and can't send mail: read a battery report, confirm what kind of machine you are on, "
+    "find the mail servers and test the SMTP ports.",
+    [
+        {"id": "vm_check", "text": "systeminfo — is this bench machine physical or virtual?"},
+        {"id": "battery", "text": "powercfg /batteryreport, then read the user's report in C:\\Tickets"},
+        {"id": "mx", "text": "Find the mail servers for ciwt.local (nslookup -type=MX or Resolve-DnsName -Type MX)"},
+        {"id": "ports", "text": "Test-NetConnection mail.ciwt.local on port 25 and on port 587"},
+        {"id": "q_battery", "text": "Checkpoint: battery decision"},
+        {"id": "q_port", "text": "Checkpoint: read the port test"},
+    ],
+    "INC-31022 (LT-0442, sales): \"The battery dies by lunch, and Outlook can't send — it says it can't reach the server.\" "
+    "You are on the help-desk bench machine. The user's battery report is attached in C:\\Tickets. Aliases work (tnc, gc, cat).",
+    "Evidence for both faults: a worn, possibly swelling battery to replace safely, and SMTP 25 blocked while submission port 587 works.",
+    _win(shell="ps"),
+    course_objectives=["IT-4.1", "IT-5.1", "IT-5.2", "IT-6.1"], minutes=25, pre=_wlp_pre,
+    hints=["systeminfo", "powercfg /batteryreport", "type C:\\Tickets\\battery-report-LT-0442.txt", "nslookup -type=MX ciwt.local",
+           "Test-NetConnection mail.ciwt.local -Port 25", "Test-NetConnection mail.ciwt.local -Port 587"],
+    obj_hints={
+        "vm_check": ["systeminfo shows the System Model and whether a hypervisor is running.", "systeminfo"],
+        "battery": ["powercfg makes the battery report on a laptop; on this VM, read the one attached to the ticket.",
+                    "powercfg /batteryreport  then  type C:\\Tickets\\battery-report-LT-0442.txt"],
+        "mx": ["Mail servers are published as MX records, not A records.", "nslookup -type=MX ciwt.local"],
+        "ports": ["Ping proves the host; -Port proves the service. Test SMTP (25) and submission (587).",
+                  "Test-NetConnection mail.ciwt.local -Port 25   then   -Port 587"],
+    },
+    palette=["systeminfo", "powercfg /batteryreport", "dir C:\\Tickets", "type ", "nslookup -type=MX ", "Test-NetConnection ", "-Port ", "cls"],
+    steps=[
+        _choice("q_battery", "q_battery", "The report shows design capacity 54,000 mWh, full charge capacity 30,240 mWh, 812 cycles, and the user "
+                "says the touchpad feels raised. What do you do?",
+                ["Recalibrate the battery and close the ticket", "Order a replacement battery; treat it as possibly swollen: power off, "
+                 "don't charge or press it, remove per the service manual and recycle it properly", "Tell the user to keep it plugged in",
+                 "Puncture-test the cell to confirm swelling"], 1,
+                {0: "56% of design capacity after 812 cycles is wear, not calibration — and a raised touchpad suggests swelling.",
+                 2: "A swelling lithium cell is a safety risk; keeping it on charge makes it worse.",
+                 3: "Never puncture or press a lithium cell."},
+                right="Correct: about 56% health plus a raised touchpad — replace it and handle it as a swollen battery.", title="Checkpoint"),
+        _choice("q_port", "q_port", "mail.ciwt.local: PingSucceeded True; port 25 TcpTestSucceeded False; port 587 True. What does that tell you?",
+                ["The mail server is down", "DNS is broken", "The host is up; port 25 is blocked or not offered to clients — "
+                 "configure the client for submission on 587 (STARTTLS)", "The laptop has no IP address"], 2,
+                {0: "Ping and port 587 both answer — the server is up.", 1: "The name resolved to 10.20.40.25, so DNS works.",
+                 3: "The laptop reached the server on 587, so it has a working address."},
+                right="Correct: the host answers; 25 is blocked for clients, 587 is the submission port to use.", title="Checkpoint"),
+    ],
+    solution={"commands": ["systeminfo", "powercfg /batteryreport", "type C:\\Tickets\\battery-report-LT-0442.txt",
+                           "nslookup -type=MX ciwt.local", "Test-NetConnection mail.ciwt.local -Port 25",
+                           "Test-NetConnection mail.ciwt.local -Port 587"],
+              "answers": {"q_battery": 1, "q_port": 2}},
+)
+
+
 NEW_LABS = [NET_SUBNET, HW_CABLES, HW_PC_BUILD, TICKET_METHOD, WIN_NET_CLI, LINUX_SHELL, PRINT_TROUBLE, RTR_VLAN_ACL, SW_VLAN_MULTI,
-            WIFI_SECURE, SEC_MALWARE, OPS_BACKUP, VIRT_VM, MOB_MDM, WIN_AD_USERS]
+            WIFI_SECURE, SEC_MALWARE, OPS_BACKUP, VIRT_VM, MOB_MDM, WIN_AD_USERS,
+            WIN_LAPTOP_PORTS]
 
 # Real-environment labs (a genuine Linux VM in the browser, v86) — see labs_vm.py
 from labs_vm import VM_LABS as _VM_LABS  # noqa: E402
@@ -1266,9 +1415,9 @@ for _l in NEW_LABS:
 NEW_CHAPTER_LABS = {
     ("ITSUP", 2): ["hw-pc-build"],
     ("ITSUP", 3): ["hw-cables", "hw-pc-build"],
-    ("ITSUP", 4): ["print-trouble", "mob-mdm"],
-    ("ITSUP", 5): ["net-subnet", "win-net-cli", "wifi-secure"],
-    ("ITSUP", 6): ["virt-vm"],
+    ("ITSUP", 4): ["print-trouble", "mob-mdm", "win-laptop-ports"],
+    ("ITSUP", 5): ["net-subnet", "win-net-cli", "wifi-secure", "win-laptop-ports"],
+    ("ITSUP", 6): ["virt-vm", "win-laptop-ports"],
     ("ITSUP", 7): ["ticket-method"],
     ("ITSUP", 8): ["win-ad-users"],
     ("ITSUP", 9): ["linux-shell", "linux-vm-perms"],

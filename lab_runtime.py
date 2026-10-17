@@ -205,7 +205,12 @@ def run_command(lab_id, state, done, command):
                 exp, err = exp2, None
         if not err and exp:
             expanded = exp
-    result, state, done = IL.run_command(lab_id, state, done, cmd)
+    pre = lab.get("pre")
+    pre_lines = pre(state, done, cmd) if pre else None
+    if pre_lines is not None:
+        result = {"lines": pre_lines}
+    else:
+        result, state, done = IL.run_command(lab_id, state, done, cmd)
     lines = list(result.get("lines") or [])
     if result.get("clear"):
         return {"lines": [], "clear": True}, state, _clean(lab, done)
