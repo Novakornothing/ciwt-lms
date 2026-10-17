@@ -78,6 +78,7 @@ _IT = [
     ('IT-13.1', 13, 'Collect system and network evidence from the Windows command line and PowerShell', 'Apply'),
     ('IT-13.2', 13, 'Resolve a client name-resolution or lease fault end to end in a lab VM', 'Apply'),
     ('IT-13.3', 13, 'Use process, netsh and Settings views to confirm a state before changing it', 'Apply'),
+    ('IT-13.4', 13, 'Choose the least disruptive network reset and use PowerShell evidence (CIM, NetTCPIP, DnsClient) in place of WMIC', 'Evaluate'),  # pass 9
 ]
 _NO = [
     ('NO-1.1', 1, 'Map protocols, devices and symptoms to OSI/TCP-IP layers and explain encapsulation', 'Understand'),
