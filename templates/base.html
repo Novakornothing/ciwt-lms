@@ -26,19 +26,16 @@
   })();
   </script>
   <title>{% block title %}{{ site_name }}{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/navy-n-256.png') }}">
-  {# Fonts and icon font load without blocking first paint (text uses fallbacks, icons are decorative) #}
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Orbitron:wght@600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  </noscript>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  {# All CSS, JS and fonts are self-hosted under static/vendor (versioned URLs, cached for a year): no third-party
+     connections before first paint. The body font is preloaded (same URL as fonts.css uses, so it is fetched once); the icon CSS is a
+     generated subset (tools/build_icon_subset.py) and loads without blocking paint. #}
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ url_for('static', filename='vendor/fonts/v1/ibm-plex-sans-400-700-latin.woff2', v=None) }}">
+  <link href="{{ url_for('static', filename='vendor/bootstrap/5.3.3/bootstrap.min.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/fonts/v1/fonts.css') }}" rel="stylesheet">
+  <link rel="preload" as="style" href="{{ url_for('static', filename='vendor/bootstrap-icons/1.11.3/bootstrap-icons-subset.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="{{ url_for('static', filename='vendor/bootstrap-icons/1.11.3/bootstrap-icons-subset.css') }}" rel="stylesheet"></noscript>
   <link href="{{ url_for('static', filename='css/ciwt-theme.css') }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/ciwt-ui.css') }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/helix.css') }}" rel="stylesheet">
@@ -187,7 +184,7 @@
       <span>Original curriculum — not a vendor exam product</span>
     </div>
   </footer>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='vendor/bootstrap/5.3.3/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/ciwt-ui.js') }}"></script>
   {% block scripts %}{% endblock %}
 <script>

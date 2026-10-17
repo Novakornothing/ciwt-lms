@@ -492,7 +492,7 @@
       });
     };
     var self = this;
-    return load(o.webgazerUrl).catch(function () { return load(o.webgazerCdn); }).then(function () { if (!window.webgazer) throw new Error('gaze engine missing'); return self; });
+    return load(o.webgazerUrl).catch(function (e) { if (o.webgazerCdn) return load(o.webgazerCdn); throw e; }).then(function () { if (!window.webgazer) throw new Error('gaze engine missing'); return self; });
   };
   WebGazerEngine.prototype.start = function () {
     var self = this, wg = window.webgazer;
