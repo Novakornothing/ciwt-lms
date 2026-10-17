@@ -97,7 +97,8 @@
   --bs-tertiary-color: #9aadc4;
   --bs-border-color: #24364f;
 }
-[data-theme="dark"][data-role="instructor"] {
+/* role accents tuned for dark: data-theme is on <html>, data-role on <body>, so these are descendant selectors */
+[data-theme="dark"] [data-role="instructor"] {
   --accent: #e0b13a;
   --accent-bright: #f6d56a;
   --accent-soft: #f8e7b0;
@@ -109,7 +110,7 @@
   --gold-dim: var(--accent-dim);
   --gold-border: var(--accent-border);
 }
-[data-theme="dark"][data-role="admin"] {
+[data-theme="dark"] [data-role="admin"] {
   --accent: #ff7a6a;
   --accent-bright: #ffb0a5;
   --accent-soft: #ffd8d2;
@@ -1111,7 +1112,7 @@ p, li {
 [data-theme="dark"] .text-dark { color: var(--ink) !important; }
 [data-theme="dark"] .text-black { color: var(--ink) !important; }
 [data-theme="dark"] .text-white { color: #fff !important; }
-[data-theme="dark"] a:not(.btn):not(.nav-link):not(.dropdown-item):not(.page-link) {
+[data-theme="dark"] a:not(.btn):not(.nav-link):not(.dropdown-item):not(.page-link):not(.chip-link) {
   color: var(--accent-bright);
 }
 [data-theme="dark"] a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
