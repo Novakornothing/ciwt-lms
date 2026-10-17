@@ -593,7 +593,7 @@ lesson as a “Lesson objectives” panel and a `Core content` section. The orig
 ### Helix: re-check and the instructor calibration view
 - Students get **Re-check accuracy** in the dock: a validate-only pass showing the accuracy now against the last calibration, with "Keep going" / "Recalibrate". Stored per session as `rechecks`, `recheck_error_px/deg`.
 - Sessions now also record `calib_ms`, `calib_mode` (full/quick/recheck), `camera_losses`, `sleeps`, `tab_yields`, `camera_res`, `hires`, `browser` (disclosed in the policy table; policy version bumped to `2026-10-17.3`).
-- Instructors: **Calibration quality** (`/instructor/section/<id>/attention/calibration`) shows per student the median validation error, the share of sessions with a good calibration, the median calibration time, re-checks and interruptions, with a plain-language note that a poor calibration means the attention data for that student is unreliable, not that the student did anything wrong.
+- Instructors: **Calibration quality** (`/instructor/section/<id>/attention/calibration`) shows per student their camera sessions, accuracy band and median validation error, median calibration time, recalibrations and re-checks, the last re-check, interruptions (camera losses, sleeps, other-tab) and device/camera. The page says it is for judging how far to trust the attention data and who needs setup help, and that it says nothing about how well anyone learns.
 
 ### Helix: session hardening (simulated in `tools/helix_hardening_e2e.py`, all six steps pass)
 - **Multiple tabs:** tabs coordinate over a `BroadcastChannel`; when another tab starts tracking, this one releases the camera (time recorded as "other tab", `tab_yields`) and can take it back.
