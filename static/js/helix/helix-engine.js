@@ -15,7 +15,15 @@
   function orientationKey() { return window.innerWidth >= window.innerHeight ? 'landscape' : 'portrait'; }
   function nowMs() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
 
-  function cameraConstraints(mobile) {
+  /* Pass 5: 1080p on desktops with enough cores (the eye-crop stage then gets ~1 camera px per crop
+     px; at 720p it upsamples). Falls back to 720p at runtime if the frame budget is missed (_resCheck). */
+  function hiResCapable(mobile) {
+    if (mobile || typeof navigator === 'undefined') return false;
+    var cores = navigator.hardwareConcurrency || 4, mem = navigator.deviceMemory;
+    return cores >= 8 && !(mem && mem < 4);
+  }
+  function cameraConstraints(mobile, hi) {
+    if (hi) return { audio: false, video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30, max: 30 } } };
     return {
       audio: false,
       video: {
@@ -52,7 +60,7 @@
   function prefetchCamera(mobile) {
     if (pendingStream || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return pendingStream;
     var m = mobile == null ? isMobile() : mobile;
-    pendingStream = navigator.mediaDevices.getUserMedia(cameraConstraints(m)).catch(function (e) {
+    pendingStream = navigator.mediaDevices.getUserMedia(cameraConstraints(m, hiResCapable(m))).catch(function (e) {
       if (/Overconstrained/i.test(String(e && e.name))) return navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user' } });
       throw e;
     });
@@ -187,7 +195,16 @@
   MediaPipeEngine.prototype._process = function (t) {
     var res, v = this.video;
     var t0 = nowMs();
-    try { res = this.landmarker.detectForVideo(v, t); } catch (e) { return; }
+    // optional: run face detection/landmarks on a downscaled copy (cheap on 1080p cameras); the
+    // eye-crop stage below still samples the full-resolution frame
+    var src = v, dw = this.opts.detectWidth;
+    if (dw && v.videoWidth > dw * 1.1) {
+      var dc = this._detCanvas || (this._detCanvas = document.createElement('canvas'));
+      var dh = Math.round(dw * v.videoHeight / v.videoWidth);
+      if (dc.width !== dw || dc.height !== dh) { dc.width = dw; dc.height = dh; }
+      dc.getContext('2d').drawImage(v, 0, 0, dw, dh); src = dc;
+    }
+    try { res = this.landmarker.detectForVideo(src, t); } catch (e) { return; }
     var infer = nowMs() - t0;
     this.inferEma = this.inferEma ? this.inferEma * 0.9 + infer * 0.1 : infer;
     // thermal/battery friendly: frame budget adapts to how long inference takes on this device
@@ -197,6 +214,7 @@
     this.frames++;
     this.fpsWin.push(t); while (this.fpsWin.length && t - this.fpsWin[0] > 2000) this.fpsWin.shift();
     this._thermalCheck(t);
+    this._resCheck();
     var n = res && res.faceLandmarks ? res.faceLandmarks.length : 0;
     var k = n ? this._pickFace(res.faceLandmarks, t) : -1;
     var lm = k >= 0 ? res.faceLandmarks[k] : null;
@@ -208,6 +226,7 @@
       var bsc = res.faceBlendshapes && res.faceBlendshapes[k];
       feat = Model.eyeFeatures(lm, v.videoWidth, v.videoHeight, mat && mat.data, { blendshapes: bsc && bsc.categories, hfovDeg: this.opts.hfovDeg });
       if (feat) { this.faceFrames++; feat.landmarks = lm; }
+      if (feat && this._cropOn()) this._cropStage(feat, lm);
     }
     if (this.frames % 10 === 1) this._measureQuality(lm);
     var wall = Date.now();
@@ -290,6 +309,15 @@
 
   /* Thermal / low-end CPU back-off: if inference becomes much slower than it was in the first
      20 s (the phone is heating up and throttling), cap the frame rate harder and say so. */
+  /* adaptive resolution: a 1080p stream that pushes inference + crops past ~20 fps drops to 720p once */
+  MediaPipeEngine.prototype._resCheck = function () {
+    if (this._resDown || this.frames < 90 || !this.video || this.video.videoWidth <= 1280) return;
+    if (this.inferEma + (this.cropMsEma || 0) <= 1000 / 20) return;
+    var tr = this.stream && this.stream.getVideoTracks && this.stream.getVideoTracks()[0];
+    this._resDown = true;
+    if (tr && tr.applyConstraints) tr.applyConstraints({ width: { ideal: 1280 }, height: { ideal: 720 } }).catch(function () {});
+    this._emit({ t: Date.now(), notice: 'res_down', face: !!this.lastFeat, feat: this.lastFeat, pred: null });
+  };
   MediaPipeEngine.prototype._thermalCheck = function (t) {
     var th = this.thermal;
     if (!th.t0) th.t0 = t;
@@ -314,6 +342,46 @@
   };
 
   /* Should we recalibrate? Compares the last ~4 s of head pose with the calibration snapshot. */
+  /* ---- second stage: full-resolution eye crops (see HelixModel.cropEyeFeatures) ----
+     opts.crop: 'view' = compute crops for the diagnostics HUD only (Try page), model unchanged;
+                true   = also append the 8 crop features to vec (experimental: the pass-5 warp A/B
+                         did not show a consistent gain, see tools/helix_eval/RESULTS.md);
+                falsy  = off (default). Phones only run it when explicitly forced with true.
+     Switches itself off if inference + crops no longer fit ~12 fps. */
+  MediaPipeEngine.prototype._cropOn = function () {
+    var o = this.opts.crop;
+    if (!o || this.cropDisabled || !this.video || this.video.videoWidth < 320) return false;
+    return !(this.mobile && o !== true);
+  };
+  MediaPipeEngine.prototype._cropStage = function (feat, lm) {
+    var t0 = nowMs(), v = this.video, W = v.videoWidth, H = v.videoHeight, CW = Model.CROP.W, CH = Model.CROP.H;
+    var c = this._cropCanvas || (this._cropCanvas = document.createElement('canvas'));
+    if (c.width !== CW || c.height !== CH) { c.width = CW; c.height = CH; }
+    var g = c.getContext('2d', { willReadFrequently: true });
+    var P = function (i) { return [lm[i].x * W, lm[i].y * H]; };
+    var out = {}, self = this, pw = this.opts.patch || [15, 9];
+    [['r', 33, 133, Model.R_CONTOUR], ['l', 362, 263, Model.L_CONTOUR]].forEach(function (e) {
+      var T = Model.eyeCropTransform(P(e[1]), P(e[2]));
+      g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#808080'; g.fillRect(0, 0, CW, CH);
+      g.setTransform(T.a, T.b, T.c, T.d, T.e, T.f); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      try { g.drawImage(v, 0, 0); } catch (err) { return; }
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      var d = g.getImageData(0, 0, CW, CH).data, gray = new Float32Array(CW * CH);
+      for (var i = 0, j = 0; i < gray.length; i++, j += 4) gray[i] = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2];
+      var poly = e[3].map(function (k) { return T.apply(P(k)); });
+      var f = Model.cropEyeFeatures(gray, CW, CH, poly, { patch: pw, noTB: self.opts.cropTB === false });
+      f.nativeScale = 1 / T.scale;     // > 1: the crop is downsampling the camera (more detail than MediaPipe saw)
+      out[e[0]] = f;
+      if (self.keepCrops) (self.lastCrops || (self.lastCrops = {}))[e[0]] = { gray: gray, poly: poly, tb: f.tb, dc: f.dc };
+    });
+    out.ms = nowMs() - t0;
+    this.cropMsEma = this.cropMsEma ? this.cropMsEma * 0.9 + out.ms * 0.1 : out.ms;
+    // graceful degradation: if inference + crops no longer fit the frame budget at >= 12 fps, drop the stage
+    if (this.frames > 60 && this.inferEma + this.cropMsEma > 1000 / 12) { this.cropDisabled = true; this._emit({ t: Date.now(), notice: 'crop_off', face: true, feat: feat, pred: null }); }
+    feat.crop = out;
+    if (this.opts.crop === true) feat.vec = feat.vec.concat(Model.cropVec(out));   // GazeRegressor adds these to stage 2 when present
+  };
+
   MediaPipeEngine.prototype.recalCheck = function () {
     if (!this.calPose || this.poseWin.length < 8) return null;
     return Model.recalTrigger(this.calPose, Model.poseSnapshot(this.poseWin.map(function (r) { return r.feat; })));
@@ -392,10 +460,11 @@
     return { engine: 'MediaPipe Face Landmarker', delegate: this.delegate, fps: this.fpsWin.length / 2, targetFps: this.fps,
       inferMs: Math.round(this.inferEma * 10) / 10, faceRate: this.frames ? this.faceFrames / this.frames : 0,
       samples: reg ? reg.cal.length : 0, implicit: reg ? reg.implicit.length : 0, lambda: m ? m.lambda : null,
-      fitRmsPx: m ? Math.round(m.rmsPx) : null, orientation: this.models.key,
+      fitRmsPx: m ? Math.round(m.rmsPx) : null, orientation: this.models.key, modelCrop: m ? !!m.crop : null, lambdaSel: m ? m.lambdaSel : null,
       faces: this.quality.faces, brightness: this.quality.brightness, contrast: this.quality.contrast, glare: this.quality.glare,
       occluded: this.occluded, thermal: this.thermal.hot, lowBattery: !!this.lowBattery, simd: this.simd, rejected: this.rejected,
-      resolution: this.video ? this.video.videoWidth + 'x' + this.video.videoHeight : null,
+      resolution: this.video ? this.video.videoWidth + 'x' + this.video.videoHeight + (this._resDown ? ' (lowered: too slow)' : '') : null,
+      crop: this._cropOn() ? (this.opts.crop === true ? 'features' : 'view only') + (this.cropMsEma ? ', ' + Math.round(this.cropMsEma * 10) / 10 + ' ms/frame' : '') : (this.cropDisabled ? 'off (too slow)' : 'off'),
       distanceCm: this.lastFeat && this.lastFeat.distanceCm ? Math.round(this.lastFeat.distanceCm) : null,
       yawDeg: this.lastFeat ? Math.round(this.lastFeat.pose.yaw * 57.3) : null, pitchDeg: this.lastFeat ? Math.round(this.lastFeat.pose.pitch * 57.3) : null };
   };

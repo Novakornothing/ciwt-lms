@@ -150,6 +150,7 @@ body.has-mobile-tabbar .helix-dock { bottom: calc(var(--tabbar-h, 64px) + .75rem
 .hx-try-tile.hot { background: #0ea5e9; border-color: #0369a1; color: #fff; }
 .hx-try-drift { width: 100%; height: 80px; background: var(--surface-2, #f4f7fb); border-radius: 8px; }
 .hx-hud { display: grid; grid-template-columns: auto 1fr; gap: .15rem .75rem; margin: 0; padding: .75rem 1rem; font-size: .85rem; }
+.hx-try-crops { width: 100%; max-width: 368px; image-rendering: pixelated; border-radius: 4px; background: #0f172a; }
 .hx-hud dt { font-weight: 600; color: var(--ink-muted, #5b6b80); } .hx-hud dd { margin: 0; font-variant-numeric: tabular-nums; word-break: break-word; }
 .hx-try-trail { position: fixed; inset: 0; pointer-events: none; z-index: 2050; }
 #helixGazeDot.hx-dot-try { width: 18px; height: 18px; z-index: 2060; }

@@ -48,6 +48,11 @@
     <div class="card">
       <div class="card-header navy">Live diagnostics</div>
       <div class="card-body p-0"><dl class="hx-hud" id="hxTryHud"><dt>Engine</dt><dd>—</dd></dl></div>
+      <div class="px-3 pb-2" id="hxTryCropsWrap" hidden>
+        <h2 class="h6 mb-1">Eye crops (full camera resolution)</h2>
+        <canvas id="hxTryCrops" class="hx-try-crops" role="img" aria-label="Live crops of both eyes with the eyelid outline and the estimated pupil centre"></canvas>
+        <p class="small text-muted mb-0"><span style="color:#b91c1c">&#x271A;</span> gradient pupil centre · <span style="color:#0369a1">&#x25CB;</span> dark centroid · <span style="color:#a16207">&#x2014;</span> eyelids. Shown only on this page; nothing leaves the device.</p>
+      </div>
       <div class="card-footer small text-muted">Camera needs HTTPS (or localhost). On phones: allow camera, hold the phone upright at eye level.</div>
     </div>
   </div>

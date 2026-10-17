@@ -17,13 +17,40 @@
       ['Inference', s.inferMs != null ? s.inferMs + ' ms/frame' : '—'], ['Face found', Math.round((s.faceRate || 0) * 100) + '% of frames'],
       ['Distance', s.distanceCm ? '~' + s.distanceCm + ' cm' : '—'], ['Head yaw / pitch', s.yawDeg != null ? s.yawDeg + '° / ' + s.pitchDeg + '°' : '—'],
       ['Training samples', (s.samples || 0) + ' calibration' + (s.implicit != null ? ' + ' + s.implicit + ' implicit' : '')],
-      ['Model', s.lambda != null ? 'ridge λ=' + s.lambda + ', fit RMS ' + s.fitRmsPx + ' px' : '—'], ['Orientation', s.orientation || '—'],
+      ['Model', s.lambda != null ? 'ridge λ=' + s.lambda + (s.lambdaSel === 'cv' ? ' (grouped CV)' : ' (GCV)') + (s.modelCrop ? ' + eye-crop features' : '') + ', fit RMS ' + s.fitRmsPx + ' px' : '—'], ['Orientation', s.orientation || '—'],
+      ['Camera', s.resolution || '—'], ['Eye-crop stage', s.crop || '—'],
       ['Implicit error (median)', drift.median() != null ? Math.round(drift.median()) + ' px' : '—'],
       ['Gaze estimates', T.preds + ' (' + (T.lastPred ? Math.round(T.lastPred.x) + ', ' + Math.round(T.lastPred.y) : '—') + ')']
     ];
     $('hxTryHud').innerHTML = rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + String(r[1]).replace(/</g, '&lt;') + '</dd>'; }).join('');
   }
   setInterval(hud, 500);
+
+  /* debug view of the second-stage eye crops: pose-normalised full-resolution crops of both eyes with
+     the lid contour, Timm & Barth pupil (red cross) and dark-centroid estimate (blue ring). Local only. */
+  function drawCrops() {
+    var c = $('hxTryCrops'), cs = T.engine && T.engine.lastCrops;
+    if (!c || !cs || !cs.r) return;
+    var W = Model.CROP.W, H = Model.CROP.H, Z = 2, g = c.getContext('2d');
+    if (c.width !== 2 * W * Z + 8) { c.width = 2 * W * Z + 8; c.height = H * Z; }
+    $('hxTryCropsWrap').hidden = false;
+    var img = g.createImageData(W, H), tmp = drawCrops.tmp || (drawCrops.tmp = document.createElement('canvas'));
+    tmp.width = W; tmp.height = H;
+    g.fillStyle = '#0f172a'; g.fillRect(0, 0, c.width, c.height);
+    ['r', 'l'].forEach(function (k, i) {
+      var e = cs[k]; if (!e) return;
+      for (var p = 0; p < W * H; p++) { var v = e.gray[p]; img.data[4 * p] = img.data[4 * p + 1] = img.data[4 * p + 2] = v; img.data[4 * p + 3] = 255; }
+      tmp.getContext('2d').putImageData(img, 0, 0);
+      var ox = i * (W * Z + 8);
+      g.imageSmoothingEnabled = false; g.drawImage(tmp, ox, 0, W * Z, H * Z);
+      g.strokeStyle = 'rgba(250,204,21,.85)'; g.lineWidth = 1.5; g.beginPath();
+      e.poly.forEach(function (q, j) { var x = ox + q[0] * Z, y = q[1] * Z; if (j) g.lineTo(x, y); else g.moveTo(x, y); }); g.closePath(); g.stroke();
+      var ew = W / Model.CROP.SPAN, P = function (n) { return [ox + (W / 2 + n[0] * ew) * Z, (H / 2 + n[1] * ew) * Z]; };
+      if (e.dc) { var d = P(e.dc); g.strokeStyle = '#38bdf8'; g.lineWidth = 2; g.beginPath(); g.arc(d[0], d[1], 6, 0, 2 * Math.PI); g.stroke(); }
+      if (e.tb) { var t = P(e.tb); g.strokeStyle = '#ef4444'; g.lineWidth = 2; g.beginPath(); g.moveTo(t[0] - 7, t[1]); g.lineTo(t[0] + 7, t[1]); g.moveTo(t[0], t[1] - 7); g.lineTo(t[0], t[1] + 7); g.stroke(); }
+    });
+  }
+  setInterval(drawCrops, 200);
 
   function drawTrail() {
     var c = trail, g = c.getContext('2d');
@@ -74,8 +101,10 @@
     $('hxTryStart').disabled = true; state('Loading gaze engine\u2026');
     var prefer = $('hxTryEngine').value;
     var qd = new URLSearchParams(location.search).get('delegate');
-    E.create(Object.assign({ prefer: prefer, delegate: qd === 'CPU' ? 'CPU' : null }, CFG)).then(function (engine) {
-      T.engine = engine; state('Waiting for camera permission\u2026');
+    // eye-crop HUD: computed for display only; ?crop=1 also feeds the crop features to the model (experimental)
+    var qc = new URLSearchParams(location.search).get('crop');
+    E.create(Object.assign({ prefer: prefer, delegate: qd === 'CPU' ? 'CPU' : null, crop: qc === '1' ? true : qc === '0' ? false : 'view' }, CFG)).then(function (engine) {
+      T.engine = engine; engine.keepCrops = true; state('Waiting for camera permission\u2026');
       return engine.start();
     }).then(function (engine) {
       filt = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });

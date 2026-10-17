@@ -443,7 +443,7 @@
       ['Faces', st.faces != null ? String(st.faces) : '—'], ['Light', st.brightness != null ? Math.round(st.brightness) + (st.brightness < 55 ? ' (dark)' : '') : '—'],
       ['Glare', st.glare != null ? Math.round(st.glare * 1000) / 10 + '%' : '—'], ['Occluded', st.occluded ? 'yes' : 'no'],
       ['Power', st.thermal ? 'warm: slowed' : st.lowBattery ? 'low battery: slowed' : 'normal'], ['SIMD', st.simd == null ? '—' : st.simd ? 'yes' : 'no'],
-      ['Camera', st.resolution || '—']];
+      ['Camera', st.resolution || '—'], ['Eye crop', st.crop || '—']];
     n.innerHTML = rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('');
   }
 
