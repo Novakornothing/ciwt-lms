@@ -4,3 +4,4 @@ flask-sqlalchemy>=3.1
 werkzeug>=3.0
 gunicorn>=22.0
 edge-tts>=6.1.0
+flask-wtf>=1.2

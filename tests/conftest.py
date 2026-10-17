@@ -17,7 +17,8 @@ import app as lms  # noqa: E402  (seeds the temp DB on import)
 
 @pytest.fixture(scope='session')
 def app():
-    lms.app.config.update(TESTING=True)
+    # most tests exercise behaviour, not CSRF; tests/test_csrf.py turns it back on
+    lms.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
     return lms.app
 
 

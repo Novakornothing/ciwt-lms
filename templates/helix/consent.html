@@ -16,7 +16,7 @@
         <div class="ui-callout ui-callout-accent mb-3"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><div>The policy changed since you agreed (v{{ consent.policy_version }}). Please review and agree again.</div></div>
         {% endif %}
         <p>Read the <a href="{{ url_for('helix.policy') }}">full policy</a>. In short: video stays in your browser, only lesson-block timings are stored, it is not a grade, and you can withdraw and delete at any time.</p>
-        <form method="post">
+        <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="next" value="{{ next_url }}">
           <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="agree" name="agree" value="1" required>
             <label class="form-check-label" for="agree">I have read the policy and agree to take part.</label></div>

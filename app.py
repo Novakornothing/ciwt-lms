@@ -80,6 +80,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
+
+# ---- CSRF: every cookie-authenticated POST (forms and fetch/JSON) must carry a token.
+# Forms: hidden csrf_token field. fetch(): X-CSRFToken header (added by the wrapper in base.html).
+# sendBeacon (Helix final batch) cannot set headers, so Helix validates a `_csrf` body field itself.
+# Bearer-token cross-origin APIs (/api/tqi/*) are exempt: they never rely on the session cookie.
+from flask_wtf.csrf import CSRFProtect, CSRFError
+app.config.setdefault('WTF_CSRF_TIME_LIMIT', None)  # token lives as long as the login session
+app.config['WTF_CSRF_ENABLED'] = os.environ.get('CSRF_DISABLED') != '1'
+csrf = CSRFProtect(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
 
@@ -3707,6 +3716,7 @@ def _tqi_payload(section, viewer):
 
 
 @app.route('/api/tqi/login', methods=['POST', 'OPTIONS'])
+@csrf.exempt  # bearer-token API, no session cookie
 def api_tqi_login():
     if request.method == 'OPTIONS':
         return ('', 204)
@@ -3814,6 +3824,7 @@ def api_tqi_class(section_id):
 
 
 @app.route('/api/tqi/<int:section_id>/eoc', methods=['POST', 'OPTIONS'])
+@csrf.exempt  # bearer-token API, no session cookie
 def api_tqi_eoc(section_id):
     if request.method == 'OPTIONS':
         return ('', 204)
@@ -3849,6 +3860,7 @@ def api_tqi_eoc(section_id):
 
 
 @app.route('/api/tqi/<int:section_id>/closeout', methods=['POST', 'OPTIONS'])
+@csrf.exempt  # bearer-token API, no session cookie
 def api_tqi_closeout(section_id):
     if request.method == 'OPTIONS':
         return ('', 204)
@@ -3875,6 +3887,7 @@ def api_tqi_closeout(section_id):
 
 
 @app.route('/api/tqi/<int:section_id>/comment', methods=['POST', 'OPTIONS'])
+@csrf.exempt  # bearer-token API, no session cookie
 def api_tqi_comment(section_id):
     """Instructor / admin running comment on a class. Appears on novakornothing.com/tqi."""
     if request.method == 'OPTIONS':
@@ -6679,6 +6692,15 @@ helix_pkg.init_app(app, db, dict(
     can_access_section=lambda user, section: instructor_can_access_section(user, section),
     audit=lambda action, detail='': audit(action, detail),
 ))
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    wants_json = request.is_json or request.path.startswith('/api/') or \
+        'application/json' in (request.headers.get('Accept') or '')
+    if wants_json:
+        return jsonify({'ok': False, 'error': 'csrf', 'detail': e.description}), 400
+    return render_template('csrf_error.html', reason=e.description), 400
+
 
 with app.app_context():
     init_db()

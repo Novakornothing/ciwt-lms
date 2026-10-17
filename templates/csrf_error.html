@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Form expired{% endblock %}
+{% block content %}
+<div class="empty-state mx-auto my-5" style="max-width:34rem" role="alert">
+  <i class="bi bi-shield-exclamation display-6 d-block mb-2" aria-hidden="true"></i>
+  <h1 class="h4">That form could not be verified</h1>
+  <p class="text-muted">This usually means the page was open for a long time, or you signed in again in another tab.
+    Nothing was saved. Go back, reload the page, and submit again.</p>
+  <div class="d-flex gap-2 justify-content-center flex-wrap">
+    <a class="btn btn-brand" href="{{ request.referrer or url_for('index') }}">Go back</a>
+    <a class="btn btn-outline-navy" href="{{ url_for('index') }}">Home</a>
+  </div>
+</div>
+{% endblock %}

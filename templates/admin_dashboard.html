@@ -46,7 +46,7 @@
       <strong>Reset demo data</strong>
       <div class="small text-muted">Wipes the database and reloads users, classes, curriculum, and sample attempts. Cannot be undone.</div>
     </div>
-    <form method="post" action="{{ url_for('seed_data_route') }}" onsubmit="return confirm('Re-seed the entire demo database? All live changes will be lost.');">
+    <form method="post" action="{{ url_for('seed_data_route') }}" onsubmit="return confirm('Re-seed the entire demo database? All live changes will be lost.');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-outline-navy">Re-seed demo database</button>
     </form>
   </div>
@@ -63,7 +63,7 @@
     <div class="card">
       <div class="card-header">Create class section</div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('admin_create_section') }}">
+        <form method="post" action="{{ url_for('admin_create_section') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
             <label class="form-label">Section name</label>
             <input type="text" name="name" class="form-control" required
@@ -109,7 +109,7 @@
       <div class="card-header navy">Add instructor to a curriculum set</div>
       <div class="card-body">
         <p class="small text-muted mb-3">Gives the instructor access to every class in that course (release content, scores, analytics). You can still set a primary instructor per class below.</p>
-        <form method="post" action="{{ url_for('admin_add_course_instructor') }}" class="row g-2 align-items-end">
+        <form method="post" action="{{ url_for('admin_add_course_instructor') }}" class="row g-2 align-items-end"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="col-md-5">
             <label class="form-label">Curriculum set</label>
             <select name="course_id" class="form-select" required>
@@ -137,7 +137,7 @@
             {% set links = course_instructors.get(c.id, []) if course_instructors is defined else [] %}
             {% if links %}
               {% for link in links %}
-              <form method="post" action="{{ url_for('admin_remove_course_instructor') }}" class="d-inline">
+              <form method="post" action="{{ url_for('admin_remove_course_instructor') }}" class="d-inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="link_id" value="{{ link.id }}">
                 <span class="badge badge-live">{{ link.user.full_name if link.user else 'Instructor' }}</span>
                 <button class="btn btn-sm btn-link text-danger p-0 align-baseline">remove</button>
@@ -156,7 +156,7 @@
       <div class="card-header navy">Add instructor or admin</div>
       <div class="card-body">
         <p class="small text-muted">Creates a staff account. Use Role to choose Instructor (teaches classes) or Admin (full control). If the email already exists, that person is updated to the selected role.</p>
-        <form method="post" action="{{ url_for('admin_create_instructor') }}">
+        <form method="post" action="{{ url_for('admin_create_instructor') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="row g-2 mb-2">
             <div class="col">
               <label class="form-label">First name</label>
@@ -193,7 +193,7 @@
       <div class="card-header">Create student or other user</div>
       <div class="card-body">
         <p class="small text-muted">Use this for students (default). Staff can also be created here if you pick Instructor or Admin.</p>
-        <form method="post" action="{{ url_for('admin_create_user') }}">
+        <form method="post" action="{{ url_for('admin_create_user') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="row g-2 mb-2">
             <div class="col">
               <label class="form-label">First name</label>
@@ -234,7 +234,7 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>Class sections</span>
         <form method="post" action="{{ url_for('seed_data_route') }}"
-              onsubmit="return confirm('This will wipe and re-seed the database. Continue?')">
+              onsubmit="return confirm('This will wipe and re-seed the database. Continue?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button class="btn btn-sm btn-outline-danger">Re-seed demo data</button>
         </form>
       </div>
@@ -249,7 +249,7 @@
               <td>{{ s.name }}</td>
               <td>{{ s.course.code }}</td>
               <td class="small">
-                <form method="post" action="{{ url_for('admin_assign_instructor') }}" class="d-flex gap-1">
+                <form method="post" action="{{ url_for('admin_assign_instructor') }}" class="d-flex gap-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="section_id" value="{{ s.id }}">
                   <select name="instructor_id" class="form-select form-select-sm">
                     {% for i in instructors %}
@@ -262,7 +262,7 @@
               <td>{{ s.enrollments|length }}/{{ s.max_students }}</td>
               <td class="text-end">
                 <a href="{{ url_for('instructor_section', section_id=s.id) }}" class="btn btn-sm btn-outline-primary">Open</a>
-                <form method="post" action="{{ url_for('admin_toggle_section') }}" class="d-inline">
+                <form method="post" action="{{ url_for('admin_toggle_section') }}" class="d-inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="section_id" value="{{ s.id }}">
                   <button class="btn btn-sm btn-outline-secondary">
                     {% if s.is_active %}Deactivate{% else %}Activate{% endif %}
@@ -316,7 +316,7 @@
               <td class="text-end">
                 {% if a.id != current_user.id %}
                 <form method="post" action="{{ url_for('admin_demote_admin') }}" class="d-inline"
-                      onsubmit="return confirm('Remove admin access for {{ a.full_name }}? They become an instructor.')">
+                      onsubmit="return confirm('Remove admin access for {{ a.full_name }}? They become an instructor.')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="user_id" value="{{ a.id }}">
                   <button class="btn btn-sm btn-outline-navy">Make instructor</button>
                 </form>
@@ -353,7 +353,7 @@
               <td class="small">{{ fmt_seconds(teach_totals.get(i.id, 0)) if fmt_seconds is defined else '—' }}</td>
               <td class="text-end">
                 <form method="post" action="{{ url_for('admin_remove_instructor') }}" class="d-flex flex-wrap gap-1 justify-content-end"
-                      onsubmit="return confirm('Remove instructor access for {{ i.full_name }}?')">
+                      onsubmit="return confirm('Remove instructor access for {{ i.full_name }}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="user_id" value="{{ i.id }}">
                   {% if instructors|length > 1 %}
                   <select name="reassign_to" class="form-select form-select-sm" style="min-width:9rem">
@@ -366,7 +366,7 @@
                   <button class="btn btn-sm btn-outline-danger">Remove</button>
                 </form>
                 <form method="post" action="{{ url_for('admin_make_admin') }}" class="d-inline"
-                      onsubmit="return confirm('Make {{ i.full_name }} an administrator? Only an admin can do this.')">
+                      onsubmit="return confirm('Make {{ i.full_name }} an administrator? Only an admin can do this.')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="user_id" value="{{ i.id }}">
                   <button class="btn btn-sm btn-brand mt-1">Make admin</button>
                 </form>

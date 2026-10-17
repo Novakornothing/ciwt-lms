@@ -103,7 +103,7 @@
                 <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_test_preview', section_id=section.id, test_id=t.id) }}">Preview items</a>
               </div>
             </div>
-            <form method="post" action="{{ url_for('toggle_release') }}" style="min-width:16rem">
+            <form method="post" action="{{ url_for('toggle_release') }}" style="min-width:16rem"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="section_id" value="{{ section.id }}">
               <input type="hidden" name="content_type" value="test">
               <input type="hidden" name="content_id" value="{{ t.id }}">
@@ -193,7 +193,7 @@
         <div class="card">
           <div class="card-header">Add student</div>
           <div class="card-body">
-            <form method="post" action="{{ url_for('instructor_enroll') }}">
+            <form method="post" action="{{ url_for('instructor_enroll') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="section_id" value="{{ section.id }}">
               <div class="mb-3">
                 <label class="form-label">From existing students</label>
@@ -234,7 +234,7 @@
                   <td>{{ '%.0f'|format(e.progress_percent) }}%</td>
                   <td class="text-end">
                     <form method="post" action="{{ url_for('instructor_unenroll') }}" class="d-inline"
-                          onsubmit="return confirm('Remove this student?')">
+                          onsubmit="return confirm('Remove this student?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <input type="hidden" name="section_id" value="{{ section.id }}">
                       <input type="hidden" name="enrollment_id" value="{{ e.id }}">
                       <button class="btn btn-sm btn-outline-danger">Remove</button>
@@ -269,7 +269,7 @@
             </div>
             <div class="d-flex flex-column gap-1 text-end">
             <a class="btn btn-sm btn-brand" href="{{ url_for('view_module', section_id=section.id, module_id=m.id) }}">Open chapter</a>
-            <form method="post" action="{{ url_for('toggle_release') }}">
+            <form method="post" action="{{ url_for('toggle_release') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="section_id" value="{{ section.id }}">
               <input type="hidden" name="content_type" value="module">
               <input type="hidden" name="content_id" value="{{ m.id }}">
@@ -297,7 +297,7 @@
       <div class="card-body">
         <p>{{ section.instructor.full_name if section.instructor else 'Unassigned' }}</p>
         {% if instructors %}
-        <form method="post" action="{{ url_for('section_set_instructor', section_id=section.id) }}" class="d-flex flex-wrap gap-2">
+        <form method="post" action="{{ url_for('section_set_instructor', section_id=section.id) }}" class="d-flex flex-wrap gap-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <select name="instructor_id" class="form-select" style="max-width:20rem">
             {% for i in instructors %}
             <option value="{{ i.id }}" {% if section.instructor_id == i.id %}selected{% endif %}>{{ i.full_name }}</option>

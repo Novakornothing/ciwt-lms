@@ -16,7 +16,7 @@
 
   <div class="q-nav mb-3" id="qNav" aria-label="Question navigator"></div>
 
-  <form method="post" id="testForm">
+  <form method="post" id="testForm"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="q-card" id="qCard">
       <div class="q-lo" id="qLo"></div>
       <h2 class="h5 fw-bold mb-3" id="qText"></h2>

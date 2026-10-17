@@ -27,6 +27,11 @@ def init_app(app, db, deps):
     from .routes import create_blueprint
     d = SimpleNamespace(db=db, **deps)
     app.register_blueprint(create_blueprint(d, models))
+    csrf = app.extensions.get('csrf')
+    if csrf is not None:
+        from .routes import BEACON_VIEWS
+        for name in BEACON_VIEWS:
+            csrf.exempt('helix.routes.' + name)
 
     @app.context_processor
     def _helix_ctx():

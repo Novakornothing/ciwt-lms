@@ -62,7 +62,7 @@
         {% endfor %}
         <details class="mt-2">
           <summary class="fw-semibold">Grading settings</summary>
-          <form method="post" action="{{ url_for('gradebook_settings', section_id=section.id) }}" class="row g-2 mt-1">
+          <form method="post" action="{{ url_for('gradebook_settings', section_id=section.id) }}" class="row g-2 mt-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="col-4"><label class="form-label small" for="wT">Tests %</label><input id="wT" class="form-control form-control-sm" type="number" min="0" max="100" name="weight_tests" value="{{ gb.weights.tests }}"></div>
             <div class="col-4"><label class="form-label small" for="wS">Skills %</label><input id="wS" class="form-control form-control-sm" type="number" min="0" max="100" name="weight_skills" value="{{ gb.weights.skills }}"></div>
             <div class="col-4"><label class="form-label small" for="wQ">Quizzes %</label><input id="wQ" class="form-control form-control-sm" type="number" min="0" max="100" name="weight_quizzes" value="{{ gb.weights.quizzes }}"></div>

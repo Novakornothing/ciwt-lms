@@ -25,7 +25,7 @@
     </div>
     {% endfor %}
   </div>
-  <form method="post" id="testForm">
+  <form method="post" id="testForm"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="timed_out" value="0" id="timedOutField">
     <button type="submit" class="btn btn-brand" id="submitBtn">Submit skills exam</button>
   </form>

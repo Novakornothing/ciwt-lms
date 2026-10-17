@@ -127,7 +127,7 @@
               {% else %}
                 <span class="badge badge-closed">Closed</span>
                 {% if current_user.role in ('admin', 'instructor') %}
-                <form method="post" action="{{ url_for('toggle_release') }}" class="mt-1">
+                <form method="post" action="{{ url_for('toggle_release') }}" class="mt-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="section_id" value="{{ section.id }}">
                   <input type="hidden" name="content_type" value="test">
                   <input type="hidden" name="content_id" value="{{ item.test.id }}">
@@ -154,7 +154,7 @@
   <div class="card-header navy">End-of-course critique</div>
   <div class="card-body">
     <p class="small text-muted mb-3">Anonymous after you save. Ratings are not a grade. Staff see counts and comments, not your name.</p>
-    <form method="post" action="{{ url_for('tqi_add_critique', section_id=section.id) }}">
+    <form method="post" action="{{ url_for('tqi_add_critique', section_id=section.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="next" value="student">
       {% for key, group, label in eoc_items %}
       <div class="mb-2">

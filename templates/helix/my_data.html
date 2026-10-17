@@ -26,7 +26,7 @@
   <div class="card-header navy d-flex justify-content-between align-items-center flex-wrap gap-2">
     <span>Stored sessions ({{ rows|length }})</span>
     {% if rows %}
-    <form method="post" action="{{ url_for('helix.my_data_delete') }}" onsubmit="return confirm('Delete all of your Helix sessions? This cannot be undone.');">
+    <form method="post" action="{{ url_for('helix.my_data_delete') }}" onsubmit="return confirm('Delete all of your Helix sessions? This cannot be undone.');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-sm btn-outline-light"><i class="bi bi-trash" aria-hidden="true"></i> Delete all</button>
     </form>
     {% endif %}
@@ -43,7 +43,7 @@
           <td data-label="Accuracy">{% if r.s.mode != 'passive' %}{{ r.s.calibration_score }}%{% endif %} <span class="badge text-bg-{{ r.band.tone }}">{{ r.band.label }}</span></td>
           <td data-label="Reading">{{ r.attentive_pct }}%</td>
           <td class="text-end">
-            <form method="post" action="{{ url_for('helix.my_data_delete') }}">
+            <form method="post" action="{{ url_for('helix.my_data_delete') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="session_id" value="{{ r.s.id }}">
               <button class="btn btn-sm btn-outline-danger" aria-label="Delete session from {{ r.s.started_at.strftime('%b %d %H:%M') if r.s.started_at }}"><i class="bi bi-trash" aria-hidden="true"></i></button>
             </form>

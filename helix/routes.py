@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 from io import StringIO
 
-from flask import (Blueprint, Response, abort, flash, jsonify, redirect,
+from flask import (Blueprint, Response, abort, current_app, flash, jsonify, redirect,
                    render_template, request, url_for)
 from flask_login import current_user, login_required
 
@@ -12,6 +12,24 @@ from . import analytics as A
 from .models import ENGINE, NON_READING_KEYS, POLICY_VERSION, STATE_KEYS
 
 STALE_AFTER = timedelta(minutes=10)
+
+# Upload endpoints are exempt from CSRFProtect's header/form check because
+# navigator.sendBeacon cannot set headers; they validate the token themselves
+# from the X-CSRFToken header *or* a `_csrf` field in the JSON body.
+BEACON_VIEWS = ('session_batch', 'session_timeline', 'session_end', 'beat')
+
+
+def beacon_csrf_ok(data):
+    if not current_app.config.get('WTF_CSRF_ENABLED', True) or 'csrf' not in current_app.extensions:
+        return True
+    from flask_wtf.csrf import validate_csrf
+    from wtforms.validators import ValidationError
+    token = request.headers.get('X-CSRFToken') or request.headers.get('X-CSRF-Token') or (data or {}).get('_csrf')
+    try:
+        validate_csrf(token)
+        return True
+    except ValidationError:
+        return False
 
 
 def create_blueprint(d, m):
@@ -153,6 +171,8 @@ def create_blueprint(d, m):
     @login_required
     def session_start():
         data = payload()
+        if not beacon_csrf_ok(data):
+            return jsonify({'ok': False, 'error': 'csrf'}), 400
         lesson_id = data.get('lesson_id')
         if not lesson_id:
             return jsonify({'ok': False, 'error': 'lesson required'}), 400
@@ -271,20 +291,28 @@ def create_blueprint(d, m):
     @login_required
     def session_batch(session_id):
         sess = owned_session(session_id)
-        return jsonify(apply_batch(sess, payload()))
+        data = payload()
+        if not beacon_csrf_ok(data):
+            return jsonify({'ok': False, 'error': 'csrf'}), 400
+        return jsonify(apply_batch(sess, data))
 
     @bp.route('/api/helix/session/<int:session_id>/timeline', methods=['POST'])
     @login_required
     def session_timeline(session_id):
         """Legacy (v1 client) endpoint: unsequenced timeline append."""
         sess = owned_session(session_id)
-        return jsonify(apply_batch(sess, payload(), legacy=True))
+        data = payload()
+        if not beacon_csrf_ok(data):
+            return jsonify({'ok': False, 'error': 'csrf'}), 400
+        return jsonify(apply_batch(sess, data, legacy=True))
 
     @bp.route('/api/helix/session/<int:session_id>/end', methods=['POST'])
     @login_required
     def session_end(session_id):
         sess = owned_session(session_id)
         data = payload()
+        if not beacon_csrf_ok(data):
+            return jsonify({'ok': False, 'error': 'csrf'}), 400
         data['end'] = True
         return jsonify(apply_batch(sess, data))
 

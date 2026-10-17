@@ -13,7 +13,7 @@
 </div>
 
 <div class="card card-body">
-  <form method="post" action="{{ url_for('tickets_new') }}">
+  <form method="post" action="{{ url_for('tickets_new') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% if pre_section %}<input type="hidden" name="section_id" value="{{ pre_section }}">{% endif %}
     {% if pre_lesson %}<input type="hidden" name="lesson_id" value="{{ pre_lesson }}">{% endif %}
     {% if pre_quiz %}<input type="hidden" name="quiz_id" value="{{ pre_quiz }}">{% endif %}

@@ -75,7 +75,7 @@
         </tr>
         {% if staff %}
         <tr class="collapse gb-ov-row" id="ov-{{ c.item.type }}-{{ c.item.id }}"><td colspan="6">
-          <form method="post" action="{{ url_for('gradebook_override', section_id=section.id) }}" class="row g-2 align-items-end">
+          <form method="post" action="{{ url_for('gradebook_override', section_id=section.id) }}" class="row g-2 align-items-end"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="user_id" value="{{ row.user.id }}"><input type="hidden" name="item_type" value="{{ c.item.type }}"><input type="hidden" name="item_id" value="{{ c.item.id }}">
             <div class="col-6 col-md-2"><label class="form-label small" for="sc-{{ c.item.type }}-{{ c.item.id }}">Score %</label>
               <input class="form-control form-control-sm" type="number" step="0.1" min="0" max="100" id="sc-{{ c.item.type }}-{{ c.item.id }}" name="score" value="{{ c.override.score if c.override and c.override.score is not none else '' }}"></div>

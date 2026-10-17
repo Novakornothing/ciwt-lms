@@ -51,10 +51,14 @@
   function cameraPossible() {
     return !!(window.isSecureContext !== false && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   }
+  function csrfToken() {
+    if (window.CIWT_CSRF) return window.CIWT_CSRF;
+    var m = document.querySelector('meta[name="csrf-token"]'); return m ? m.content : '';
+  }
   function postJSON(u, body) {
     return fetch(u, {
       method: 'POST', credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': csrfToken() },
       body: JSON.stringify(body || {})
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) { j._status = r.status; return j; });
@@ -299,7 +303,7 @@
     return function (batch) {
       return fetch(url(CFG.batchUrl, sid), {
         method: 'POST', credentials: 'same-origin', keepalive: true,
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(batch)
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': csrfToken() }, body: JSON.stringify(batch)
       }).then(function (r) {
         if (r.status >= 400 && r.status < 500) {
           // not retryable (session deleted, consent revoked, logged out): drop it
@@ -718,7 +722,9 @@
     var left = [];
     q.items.forEach(function (b) {
       var ok = false;
-      try { ok = navigator.sendBeacon(url(CFG.batchUrl, sid), new Blob([JSON.stringify(b)], { type: 'application/json' })); } catch (e) {}
+      try { // beacons cannot carry headers: the token rides in the body (added at send time, never persisted)
+      var withTok = Object.assign({}, b, { _csrf: csrfToken() });
+      ok = navigator.sendBeacon(url(CFG.batchUrl, sid), new Blob([JSON.stringify(withTok)], { type: 'application/json' })); } catch (e) {}
       if (!ok) left.push(b);
     });
     q.items = left; q._save();

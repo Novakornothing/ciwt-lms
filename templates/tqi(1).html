@@ -51,7 +51,7 @@
   </div>
   {% if status.packet.status != 'complete' %}
   <div class="card-body">
-    <form method="post" action="{{ url_for('tqi_mark_complete', section_id=section.id) }}">
+    <form method="post" action="{{ url_for('tqi_mark_complete', section_id=section.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-brand" {% if not status.all_ok and current_user.role != 'admin' %}disabled{% endif %}>Mark TQI complete</button>
       <span class="small text-muted ms-2">
         {% if status.all_ok and status.ended %}Auto-completes after the scheduled end date.{% elif status.all_ok %}All artifacts present — ready to close.{% else %}Finish missing items or an admin can close.{% endif %}
@@ -69,7 +69,7 @@
         {% if current_user.role == 'student' %}End-of-course critique{% else %}Instructor closeout{% endif %}
       </div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('tqi_add_critique', section_id=section.id) }}">
+        <form method="post" action="{{ url_for('tqi_add_critique', section_id=section.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           {% if current_user.role == 'student' %}
           <p class="small text-muted">Student reaction items aligned to NAVEDTRA M-142.5 (content, instructor, labs, testing, safety, site). Not a grade.</p>
           {% for key, group, label in eoc_items %}

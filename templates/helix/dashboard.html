@@ -144,7 +144,7 @@
 <div class="card mt-4">
   <div class="card-header navy">Helix settings for this class</div>
   <div class="card-body">
-    <form method="post" action="{{ url_for('helix.instructor_attention_settings', section_id=section.id) }}" class="row g-3 align-items-end">
+    <form method="post" action="{{ url_for('helix.instructor_attention_settings', section_id=section.id) }}" class="row g-3 align-items-end"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="col-sm-6 col-lg-3"><div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" role="switch" id="hxEnabled" name="enabled" value="1" {% if not setting or setting.enabled %}checked{% endif %}>
         <label class="form-check-label" for="hxEnabled">Offer Helix on lesson pages</label></div></div>

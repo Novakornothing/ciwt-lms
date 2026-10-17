@@ -24,7 +24,7 @@
     <ul class="list-unstyled mb-0">
       {% for e in b.eos %}
       <li class="d-flex gap-2 align-items-start mb-2" id="{{ e.id }}">
-        <form method="post" action="{{ url_for('aschool_toggle_eo', eo_id=e.id) }}">
+        <form method="post" action="{{ url_for('aschool_toggle_eo', eo_id=e.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="next" value="{{ request.path }}">
           <button type="submit" class="btn btn-sm {% if e.id in done %}btn-success{% else %}btn-outline-navy{% endif %}">
             {% if e.id in done %}Done{% else %}Mark{% endif %}

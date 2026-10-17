@@ -22,7 +22,7 @@
   <div class="q-nav mb-3" id="qNav" aria-label="Question navigator"></div>
   <p class="small mb-2" style="color:var(--ink-muted)">Navigator: answered · <span class="text-warning">flagged</span> · current. Use <strong>Flag for review</strong> then <strong>Review unanswered</strong> before submit.</p>
 
-  <form method="post" id="testForm">
+  <form method="post" id="testForm"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="timed_out" value="0" id="timedOutField">
     <div class="q-card" id="qCard">
       <div class="q-lo" id="qLo"></div>
