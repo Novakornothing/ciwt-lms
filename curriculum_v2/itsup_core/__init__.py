@@ -60,17 +60,17 @@ def _lines(label):
     return label.split('\n')
 
 
-def figure(fid, title, nodes, desc, caption, cols=4, loop=None):
-    """A described flow diagram. ``nodes`` are short labels ('\\n' splits lines). ``desc`` is the long-text
-    alternative shown under the figure; the SVG carries <title>/<desc> and role="img"."""
-    W, H, GX, GY, PAD = 168, 70, 38, 48, 12
+def _svg(fid, title, nodes, desc, cols, loop, cls):
+    W, H, GX, PAD = 168, 70, 38, 20
+    GY = 64 if loop else 48
     n = len(nodes)
     cols = min(cols, n)
     rows = math.ceil(n / cols)
+    top = 32 if loop else PAD
     width = cols * W + (cols - 1) * GX + 2 * PAD
-    height = rows * H + (rows - 1) * GY + 2 * PAD + (34 if loop else 0)
-    pos = [(PAD + (i % cols) * (W + GX), PAD + (i // cols) * (H + GY)) for i in range(n)]
-    parts = [f'<svg class="flow-svg" viewBox="0 0 {width} {height}" role="img" aria-labelledby="{fid}-t {fid}-d" '
+    height = top + rows * H + (rows - 1) * GY + PAD
+    pos = [(PAD + (i % cols) * (W + GX), top + (i // cols) * (H + GY)) for i in range(n)]
+    parts = [f'<svg class="flow-svg {cls}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="{fid}-t {fid}-d" '
              f'xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">',
              f'<title id="{fid}-t">{escape(title)}</title><desc id="{fid}-d">{escape(desc)}</desc>',
              f'<defs><marker id="{fid}-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
@@ -89,13 +89,30 @@ def figure(fid, title, nodes, desc, caption, cols=4, loop=None):
             mid = y1 + H + GY / 2
             parts.append(f'<path d="M{x1 + W / 2},{y1 + H} V{mid} H{x2 + W / 2} V{y2 - 2}" class="flow-edge" fill="none" marker-end="url(#{fid}-a)"/>')
     if loop:
+        # Return arrow: rises into the channel just above the source row, runs along it (and up the left margin when
+        # the target is on an earlier row) and drops into the top of the target box, so it never crosses a box.
         a, b, label = loop
         (xa, ya), (xb, yb) = pos[a], pos[b]
-        yl = height - PAD - 6
-        parts.append(f'<path d="M{xa + W / 2},{ya + H} V{yl} H{xb + W / 2} V{yb + H + 2}" class="flow-edge flow-loop" fill="none" marker-end="url(#{fid}-a)"/>')
-        parts.append(f'<text x="{(xa + xb + W) / 2}" y="{yl - 6}" text-anchor="middle" class="flow-text flow-small">{escape(label)}</text>')
+        ca, cb = ya - 14, yb - 14
+        if ya == yb:
+            d = f'M{xa + W / 2 - 20},{ya} V{ca} H{xb + W / 2 + 20} V{yb - 2}'
+            lx = (xa + xb + W) / 2
+        else:
+            d = f'M{xa + W / 2 - 20},{ya} V{ca} H{PAD / 2} V{cb} H{xb + W / 2 + 20} V{yb - 2}'
+            lx = (PAD + xb + W / 2) / 2 + 40
+        parts.append(f'<path d="{d}" class="flow-edge flow-loop" fill="none" marker-end="url(#{fid}-a)"/>')
+        parts.append(f'<text x="{lx}" y="{cb - 4}" text-anchor="middle" class="flow-text flow-small">{escape(label)}</text>')
     parts.append('</svg>')
-    return (f'<figure class="lesson-figure" id="{fid}">{"".join(parts)}'
+    return ''.join(parts)
+
+
+def figure(fid, title, nodes, desc, caption, cols=4, loop=None):
+    """A described flow diagram. ``nodes`` are short labels ('\\n' splits lines); ``desc`` is the long-text
+    alternative, used as the SVG <desc> and shown in a disclosure under the figure. Two layouts are emitted —
+    wide for tablets and desktops, two columns for phones — and CSS displays exactly one of them."""
+    wide = _svg(fid, title, nodes, desc, cols, loop, 'flow-wide')
+    narrow = _svg(f'{fid}-n', title, nodes, desc, 2, loop, 'flow-narrow')
+    return (f'<figure class="lesson-figure" id="{fid}">{wide}{narrow}'
             f'<figcaption><strong>Figure.</strong> {caption}</figcaption>'
             f'<details class="figure-desc"><summary>Text description of the diagram</summary><p>{escape(desc)}</p></details></figure>')
 

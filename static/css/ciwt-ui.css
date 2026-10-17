@@ -1005,11 +1005,15 @@ html[data-theme="dark"] .chip-scroll a.chip-link[aria-current] .chip-count { col
 .scenario-box { border: 1px solid var(--surface-4); border-left: 4px solid var(--accent); border-radius: 0 10px 10px 0; padding: .9rem 1rem; margin: 1rem 0; background: var(--surface); }
 .scenario-box h4, .worked-example h4 { margin: 0 0 .5rem; font-size: 1rem; }
 .lesson-figure { margin: 1.25rem 0; padding: .75rem; border: 1px solid var(--surface-4); border-radius: 10px; background: var(--surface); color: var(--ink); }
-.lesson-figure .flow-svg { display: block; width: 100%; height: auto; max-height: 340px; }
+.lesson-figure .flow-svg { display: block; width: 100%; height: auto; max-height: 360px; }
+.lesson-figure .flow-narrow { display: none; max-height: none; }
+@media (max-width: 575.98px) { .lesson-figure .flow-wide { display: none; } .lesson-figure .flow-narrow { display: block; } }
 .flow-svg .flow-node { fill: var(--surface-2, transparent); stroke: currentColor; stroke-width: 1.5; }
 .flow-svg .flow-first { stroke: var(--accent); stroke-width: 2.5; }
 .flow-svg .flow-text { fill: currentColor; font: 600 13px/1 var(--font, system-ui, sans-serif); }
 .flow-svg .flow-small { font-size: 12px; font-weight: 500; }
+.flow-narrow .flow-text { font-size: 15px; }
+.flow-narrow .flow-small { font-size: 13px; }
 .flow-svg .flow-edge { stroke: currentColor; stroke-width: 1.5; }
 .flow-svg .flow-loop { stroke-dasharray: 5 4; }
 .lesson-figure figcaption { font-size: .9rem; margin-top: .5rem; color: var(--ink-secondary); }
