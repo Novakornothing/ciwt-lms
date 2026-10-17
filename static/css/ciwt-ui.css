@@ -974,3 +974,5 @@ html[data-theme="dark"] .chip-scroll a.chip-link[aria-current] .chip-count { col
 [data-theme="dark"] .btn-outline-danger { --bs-btn-color: #ff8f86; --bs-btn-border-color: #ff8f86; --bs-btn-hover-bg: #ff8f86; --bs-btn-hover-border-color: #ff8f86;
   --bs-btn-hover-color: #1a0606; --bs-btn-active-bg: #ff8f86; --bs-btn-active-color: #1a0606; }
 [data-theme="dark"] .btn-link { --bs-btn-color: var(--accent-bright, #7adcff); --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff; }
+@media (min-width: 768px) { .admin-hub { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1400px) { .admin-hub { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
