@@ -9,8 +9,12 @@
   <div class="home-progress">
     <span class="home-meter" role="progressbar" aria-label="Path progress" aria-valuemin="0" aria-valuemax="{{ gold_path.steps|length }}" aria-valuenow="{{ done_n }}"><span style="width:{{ (100 * done_n / gold_path.steps|length)|round|int }}%"></span></span>
     <span class="small">{{ done_n }} of {{ gold_path.steps|length }} steps done</span>
-    {% if gold_path.next %}<a class="btn btn-brand" href="{{ gold_path.next.url }}">Continue: {{ gold_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
+    {% set mx_first = mastery_path.next if (mastery_path and mastery_path.next and mastery_path.next.kind in ('review', 'alt_review')) else none %}
+    {% if mx_first %}<a class="btn btn-brand" href="{{ mx_first.url }}">Continue: {{ mx_first.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    {% elif gold_path.next %}<a class="btn btn-brand" href="{{ gold_path.next.url }}">Continue: {{ gold_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
   </div>
+  {% elif mastery_path and mastery_path.next %}
+  <div class="home-progress"><a class="btn btn-brand" href="{{ mastery_path.next.url }}">Continue: {{ mastery_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div>
   {% else %}
   <p class="mb-0">Your classes, labs and grades are below.</p>
   {% endif %}

@@ -13,6 +13,8 @@
       <ul class="mb-0">
         <li>Your account (name, email, role) and the classes you are enrolled in.</li>
         <li>Training records: quiz and test attempts, lab completions, time on lessons, grades and instructor overrides, end-of-course feedback, messages and content tickets.</li>
+        <li><strong>Lesson study time</strong>: while a lesson tab is visible and you have used it in the last minute, the page records the seconds you spend on it (sent every 30 seconds). It is never graded.</li>
+        <li><strong>Mastery estimates</strong>: per learning objective, worked out from your quiz, test, lab and review answers plus lesson study time. Reviews, test-out checks, instructor overrides and every recommendation are logged with their reasons, which you can read under “My mastery” in each class. Estimates never change a grade. Helix data, only with your current consent, can at most offer an optional review.</li>
         <li>An audit log of sign-ins and administrative actions.</li>
         <li><strong>Helix attention data</strong>, only if you opt in: see the <a href="{{ url_for('helix.policy') }}">Helix attention policy</a>. Camera video never leaves your browser.
           {% if helix_days > 0 %}Helix sessions, attention events and accuracy-study records are deleted after <strong>{{ helix_days }} days</strong>.{% else %}This server keeps Helix data until you or an administrator delete it.{% endif %}</li>

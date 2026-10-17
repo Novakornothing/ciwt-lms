@@ -36,6 +36,7 @@
     {% endif %}
   </div>
 </div>
+{% if mastery_gate is defined %}{% include 'mastery/_lesson_banner.html' %}{% endif %}
 {# Labs sit under the lesson — not a full catalog dump at the top #}
 
 <div class="card mb-3 narrate-bar">
@@ -325,6 +326,40 @@
 {% endblock %}
 
 {% block scripts %}
+{% if current_user.is_authenticated and current_user.role == 'student' %}
+<script>
+/* pass 11: lesson study time (time on task) for the mastery engine. Counts only while this tab is visible and
+   you used the page in the last minute; sent every 30 s. Disclosed on the privacy page. Never graded. */
+(function () {
+  var URL_ = "{{ url_for('time_study_heartbeat') }}", LID = {{ lesson.id }}, SID = {{ section_id|int }};
+  var tok = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+  var last = Date.now(), acc = 0, tick = Date.now();
+  ['scroll', 'keydown', 'pointerdown', 'pointermove', 'touchstart'].forEach(function (e) {
+    window.addEventListener(e, function () { last = Date.now(); }, { passive: true });
+  });
+  function count() {
+    var now = Date.now();
+    if (document.visibilityState === 'visible' && now - last < 60000) acc += (now - tick) / 1000;
+    tick = now;
+  }
+  function send(keep) {
+    count();
+    var s = Math.round(acc);
+    if (s < 5) return;
+    acc -= s;
+    try {
+      fetch(URL_, { method: 'POST', credentials: 'same-origin', keepalive: !!keep,
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': tok },
+        body: JSON.stringify({ lesson_id: LID, section_id: SID, seconds: Math.min(s, 120) }) }).catch(function () {});
+    } catch (e) { /* ignore */ }
+  }
+  setInterval(function () { send(false); }, 30000);
+  setInterval(count, 5000);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') send(true); else tick = Date.now(); });
+  window.addEventListener('pagehide', function () { send(true); });
+})();
+</script>
+{% endif %}
 <script>
 /* narration bar: the native player only appears once audio is playing; options fold away on phones */
 (function () {

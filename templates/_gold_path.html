@@ -23,6 +23,7 @@
     {% endif %}
   </div>
   <div class="card-body">
+    {% if mastery_path is defined and mastery_path and mastery_path.steps %}<div class="mb-3 pb-3 border-bottom">{% include 'mastery/_path.html' %}</div>{% endif %}
     <p class="small text-muted mb-3">Lesson, then its lab, then the practice quiz. The graded test unlocks when your instructor opens it; afterwards you see your score by category.</p>
     <ol>
       {% for step in gold_path.steps %}
@@ -46,5 +47,10 @@
     <p class="small text-muted mb-0 mt-3">You finished the first-chapter path. Open other chapters from the class list when you are ready.</p>
     {% endif %}
   </div>
+</div>
+{% elif mastery_path is defined and mastery_path and mastery_path.steps %}
+<div class="card mb-4">
+  <div class="card-header navy">Your path</div>
+  <div class="card-body">{% include 'mastery/_path.html' %}</div>
 </div>
 {% endif %}

@@ -231,6 +231,7 @@ CSS_BUNDLE_PARTS = (
     'css/ciwt-theme.css',
     'css/ciwt-ui.css',
     'css/helix.css',
+    'css/mastery.css',
 )
 _css_bundle = {'key': None}
 _CSS_URL = re.compile(r'url\(\s*([\'"]?)([^)\'"]+)\1\s*\)')
@@ -2688,16 +2689,22 @@ def _fmt_seconds(sec):
 @login_required
 def time_study_heartbeat():
     data = request.get_json(silent=True) or {}
-    lesson_id = data.get('lesson_id')
-    section_id = data.get('section_id')
-    seconds = max(0, min(int(data.get('seconds') or 0), 120))
-    if not lesson_id or seconds <= 0:
+    try:
+        lesson_id = int(data.get('lesson_id') or 0)
+        section_id = int(data.get('section_id') or 0) or None
+        seconds = max(0, min(int(data.get('seconds') or 0), 120))
+    except (TypeError, ValueError):
         return jsonify({'ok': False}), 400
+    if not lesson_id or seconds <= 0 or not db.session.get(Lesson, lesson_id):
+        return jsonify({'ok': False}), 400
+    if section_id and current_user.role == 'student' and not Enrollment.query.filter_by(
+            user_id=current_user.id, section_id=section_id).first():
+        return jsonify({'ok': False}), 403
     log = TimeLog(
         user_id=current_user.id,
         kind='study',
         section_id=int(section_id) if section_id else None,
-        lesson_id=int(lesson_id),
+        lesson_id=lesson_id,
         seconds=seconds,
         started_at=utcnow() - timedelta(seconds=seconds),
         ended_at=utcnow(),
@@ -2840,11 +2847,14 @@ def student_dashboard():
             gold_path = student_gold_path(current_user, sections[0])
         except Exception as exc:
             print('gold_path student dashboard:', exc)
+    mastery_path = _safe_mastery_path(current_user, sections[0]) if sections else None
     return render_template(
         'student_dashboard.html',
         sections=sections,
         progress=progress,
         gold_path=gold_path,
+        mastery_path=mastery_path,
+        mastery_section_id=sections[0].id if sections else None,
     )
 
 
@@ -2903,6 +2913,8 @@ def student_section(section_id):
         enrollment=enr,
         course_labs=labs_for_course(section.course) if section.course else [],
         gold_path=_safe_gold_path(current_user, section),
+        mastery_path=_safe_mastery_path(current_user, section),
+        mastery_section_id=section.id,
         eoc_items=TQI_EOC_ITEMS,
         my_eoc=my_eoc,
         my_answers=my_answers,
@@ -3042,8 +3054,20 @@ def view_lesson(section_id, module_id, lesson_id):
             gold_path = student_gold_path(current_user, section)
         except Exception as exc:
             print('gold_path lesson:', exc)
+    mastery_gate = mastery_review_url = None
+    if (section and current_user.role == 'student'
+            and Enrollment.query.filter_by(user_id=current_user.id, section_id=section.id).first()):
+        try:
+            mastery_gate, mastery_review_url = mastery_api.lesson_gate(current_user, section, module, lesson)
+        except Exception as exc:
+            db.session.rollback()
+            print('mastery gate:', exc)
+        if mastery_gate and mastery_gate.get('block'):
+            flash('Before this lesson: a short review your instructor asked for. It takes about five minutes.', 'info')
+            return redirect(mastery_review_url, code=303)
     return render_template(
         'lesson.html', module=module, lesson=lesson, lessons=lessons,
+        mastery_gate=mastery_gate, mastery_review_url=mastery_review_url,
         prev_l=prev_l, next_l=next_l, section_id=section_id, quizzes=quizzes,
         chapter_labs=chapter_labs,
         lesson_labs=lesson_labs,
@@ -7103,6 +7127,38 @@ SyllabusSettings = materials_mod.register(app, db, dict(
     instructor_course_ids=lambda uid: instructor_course_ids(uid),
     audit=lambda action, detail='': audit(action, detail),
 ))
+
+# pass 11: adaptive mastery engine (per-objective BKT estimates, inserted reviews, test-out, overrides)
+import mastery as mastery_mod  # noqa: E402
+from interactive_labs import LESSON_LABS as _MX_LESSON_LABS  # noqa: E402
+from curriculum_v2.course_package import GLOSSARY as _MX_GLOSSARY, GLOSSARY_NEW as _MX_GLOSSARY_NEW  # noqa: E402
+mastery_api = mastery_mod.register(app, db, dict(
+    User=User, ClassSection=ClassSection, Enrollment=Enrollment, Course=Course, Module=Module, Lesson=Lesson,
+    Quiz=Quiz, QuizAttempt=QuizAttempt, KnowledgeTest=KnowledgeTest, TestAttempt=TestAttempt,
+    LabCompletion=LabCompletion, TimeLog=TimeLog,
+    is_content_available=lambda *a, **k: is_content_available(*a, **k),
+    is_practical_payload=is_practical_payload, stations_of=stations_of, LESSON_LABS=_MX_LESSON_LABS,
+    HelixConsent=HelixConsent, HelixSectionSetting=HelixSectionSetting, HelixGazeSession=HelixGazeSession,
+    HelixAoiBucket=HelixAoiBucket, HELIX_POLICY_VERSION=HELIX_POLICY_VERSION,
+    glossary=_MX_GLOSSARY, glossary_marked=_MX_GLOSSARY_NEW,
+    can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    audit=lambda action, detail='': audit(action, detail),
+))
+
+
+def _safe_mastery_path(user, section):
+    """Recommended next steps for an enrolled student; never breaks the page it sits on."""
+    if not section or getattr(user, 'role', None) != 'student':
+        return None
+    if not Enrollment.query.filter_by(user_id=user.id, section_id=section.id).first():
+        return None
+    try:
+        return mastery_api.student_path(user, section)
+    except Exception as exc:
+        db.session.rollback()
+        print('mastery path:', exc)
+        return None
+
 
 _ERRORS = {
     403: ('bi-shield-lock', "You don't have access to this page",
