@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Lab results — {{ section.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">Classes</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Lab results</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h3 mb-1">Lab results — {{ section.course.code }}</h1>
+  <p class="mb-0">{{ labs|length }} labs in this course ({{ classroom|length }} classroom). Best score per student; hints and resets are shown so you can see who struggled.</p>
+  <div class="d-flex flex-wrap gap-2 mt-2">
+    <a class="btn btn-sm btn-light" href="{{ url_for('instructor_lab_results_csv', section_id=section.id) }}" data-no-busy><i class="bi bi-download" aria-hidden="true"></i> CSV</a>
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('instructor_gradebook', section_id=section.id) }}">Gradebook</a>
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('course_labs', section_id=section.id) }}">Labs list</a>
+  </div>
+</div>
+
+{% if not table %}
+<div class="card"><div class="empty-state"><i class="bi bi-people" aria-hidden="true"></i><p class="mb-0">No students are enrolled in this class yet.</p></div></div>
+{% else %}
+<h2 class="h6 section-label">By lab</h2>
+<div class="table-responsive mb-4">
+  <table class="table table-sm align-middle lab-col-table">
+    <caption class="visually-hidden">Completion by lab</caption>
+    <thead><tr><th scope="col">Lab</th><th scope="col">Ch</th><th scope="col">Started</th><th scope="col">Complete</th></tr></thead>
+    <tbody>
+      {% for c in col %}
+      <tr class="{{ 'table-active' if focus == c.lab.id }}">
+        <th scope="row"><span class="lab-kind lab-kind-{{ c.lab.kind }}">{{ {'win11gui': 'GUI', 'classroom': 'CLASS'}.get(c.lab.kind, c.lab.kind|upper) }}</span> {{ c.lab.title }}</th>
+        <td>{{ c.lab.chapter }}</td><td>{{ c.started }}/{{ c.n }}</td>
+        <td><div class="d-flex align-items-center gap-2"><div class="progress flex-grow-1 lab-mini" role="progressbar" aria-label="{{ c.lab.title }} completion" aria-valuemin="0" aria-valuemax="{{ c.n }}" aria-valuenow="{{ c.complete }}"><div class="progress-bar bg-success" style="width:{{ (100 * c.complete / c.n) if c.n else 0 }}%"></div></div><span class="small">{{ c.complete }}/{{ c.n }}</span></div></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h2 class="h6 section-label">By student</h2>
+<div class="lab-results-cards">
+  {% for t in table %}
+  <details class="card lab-student-card">
+    <summary class="card-header d-flex flex-wrap justify-content-between gap-2">
+      <span class="fw-semibold">{{ t.user.last_name }}, {{ t.user.first_name }}</span>
+      <span class="small">{{ t.done }}/{{ labs|length }} complete · mean {{ t.mean }}% · {{ t.hints }} hint{{ 's' if t.hints != 1 }}{% if t.last %} · last {{ t.last.strftime('%d %b') }}{% endif %}</span>
+    </summary>
+    <ul class="list-group list-group-flush">
+      {% for c in t.cells %}
+      <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
+        <span class="lab-kind lab-kind-{{ c.lab.kind }}">{{ {'win11gui': 'GUI', 'classroom': 'CLASS'}.get(c.lab.kind, c.lab.kind|upper) }}</span>
+        <a href="{{ url_for('instructor_lab_student', section_id=section.id, user_id=t.user.id, lab_id=c.lab.id) }}" class="flex-grow-1">{{ c.lab.title }}</a>
+        {% if c.complete %}<span class="badge text-bg-success">{{ c.score }}%</span>
+        {% elif c.started %}<span class="badge text-bg-warning">{{ c.score }}% in progress</span>
+        {% else %}<span class="badge text-bg-light border">not started</span>{% endif %}
+        {% if c.row and c.row.hints_used %}<span class="small text-muted">{{ c.row.hints_used }} hint{{ 's' if c.row.hints_used != 1 }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endfor %}
+</div>
+
+{% if classroom %}
+<h2 class="h6 section-label mt-4" id="signoff">Classroom lab sign-off</h2>
+<div class="card mb-4"><div class="card-body">
+  <form method="post" action="{{ url_for('instructor_classroom_signoff', section_id=section.id) }}" class="row g-2" id="signoffForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="col-12 col-md-6"><label class="form-label small" for="soLab">Classroom lab</label>
+      <select class="form-select" id="soLab" name="lab_id">{% for l in classroom %}<option value="{{ l.id }}" {% if focus == l.id %}selected{% endif %}>{{ l.id }} — {{ l.title }}</option>{% endfor %}</select></div>
+    <div class="col-12 col-md-6"><label class="form-label small" for="soUser">Student</label>
+      <select class="form-select" id="soUser" name="user_id">{% for t in table %}<option value="{{ t.user.id }}">{{ t.user.last_name }}, {{ t.user.first_name }}</option>{% endfor %}</select></div>
+    {% for name, descs in rubric.criteria %}
+    <fieldset class="col-12 col-md-6 lab-rubric-crit">
+      <legend class="form-label small fw-semibold mb-1">{{ name }}</legend>
+      <div class="lab-levels">
+        {% set ci = loop.index0 %}
+        {% for lv in [4, 3, 2, 1] %}
+        <label class="lab-level" for="soc{{ ci }}l{{ lv }}"><input type="radio" name="c{{ ci }}" id="soc{{ ci }}l{{ lv }}" value="{{ lv }}" {% if lv == 3 %}checked{% endif %}> <strong>{{ lv }}</strong> <span class="small">{{ descs[4 - lv] }}</span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    {% endfor %}
+    <div class="col-12"><label class="form-label small" for="soFb">Feedback for the student (optional)</label>
+      <textarea class="form-control" id="soFb" name="feedback" rows="2" maxlength="1000"></textarea></div>
+    <div class="col-12 d-flex flex-wrap gap-2">
+      <button class="btn btn-brand" type="submit" id="soSave">Save sign-off</button>
+      <button class="btn btn-outline-danger" type="submit" name="clear" value="1" formnovalidate>Remove sign-off</button>
+    </div>
+  </form>
+</div></div>
+{% endif %}
+{% endif %}
+{% endblock %}

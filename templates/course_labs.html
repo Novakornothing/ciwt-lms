@@ -18,6 +18,7 @@
   <p class="mb-0">Live labs mapped to CIWT IT Support and Network Operations skill areas. Knowledge-only topics stay in the chapter.</p>
   {% if current_user.role != 'student' %}
   <div class="d-flex flex-wrap gap-2 mt-2">
+    <a class="btn btn-sm btn-light" href="{{ url_for('instructor_lab_results', section_id=section.id) }}"><i class="bi bi-clipboard-data" aria-hidden="true"></i> Lab results &amp; sign-off</a>
     <a class="btn btn-sm btn-outline-light" href="{{ url_for('section_pilot_pack', section_id=section.id) }}" data-no-busy><i class="bi bi-download" aria-hidden="true"></i> Pilot data pack (CSV)</a>
     <a class="btn btn-sm btn-outline-light" href="{{ url_for('aschool_outline') }}">A-school outline</a>
   </div>
@@ -35,19 +36,26 @@
 <nav class="chip-scroll mb-3" aria-label="Jump to chapter">
   {% for block in by_chapter %}<a class="chip-link" href="#ch-{{ block.module.order }}">Ch {{ block.module.order }} <span class="chip-count">{{ block.labs|length }}</span></a>{% endfor %}
   {% if other %}<a class="chip-link" href="#ch-other">Other <span class="chip-count">{{ other|length }}</span></a>{% endif %}
+  {% if classroom %}<a class="chip-link" href="#ch-classroom">Classroom labs <span class="chip-count">{{ classroom|length }}</span></a>{% endif %}
 </nav>
 <p class="field-hint">{{ labs|length }} labs, grouped by the chapter that teaches them.</p>
 
 {% for block in by_chapter %}
 <section class="mb-4" aria-labelledby="ch-{{ block.module.order }}">
   <h2 class="h6 section-label" id="ch-{{ block.module.order }}">{{ block.module.title }}</h2>
-  <div class="list-group">{% for lab in block.labs %}{{ lab_row(lab) }}{% endfor %}</div>
+  <div class="list-group">{% for lab in block.labs %}{{ lab_row(lab, None, True, progress.get(lab.id)) }}{% endfor %}</div>
 </section>
 {% endfor %}
 {% if other %}
 <section class="mb-4" aria-labelledby="ch-other">
   <h2 class="h6 section-label" id="ch-other">Other labs</h2>
-  <div class="list-group">{% for lab in other %}{{ lab_row(lab) }}{% endfor %}</div>
+  <div class="list-group">{% for lab in other %}{{ lab_row(lab, None, True, progress.get(lab.id)) }}{% endfor %}</div>
+</section>
+{% endif %}
+{% if classroom %}
+<section class="mb-4" aria-labelledby="ch-classroom">
+  <h2 class="h6 section-label" id="ch-classroom">Classroom labs <span class="fw-normal text-muted">· signed off by the instructor</span></h2>
+  <div class="list-group">{% for cl in classroom %}{{ lab_row(cl, 'Chapter ' ~ cl.chapter, True, progress.get(cl.id), url_for('classroom_lab', cl_id=cl.id)) }}{% endfor %}</div>
 </section>
 {% endif %}
 {% endif %}

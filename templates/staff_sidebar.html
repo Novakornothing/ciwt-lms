@@ -252,6 +252,10 @@
                  href="{{ url_for('course_labs', section_id=s.id) }}">
                 <i class="bi bi-terminal"></i><span>Labs</span>
               </a>
+              <a class="rail-link rail-sublink {% if ep in ('instructor_lab_results','instructor_lab_student') and open_section_id == s.id %}active{% endif %}"
+                 href="{{ url_for('instructor_lab_results', section_id=s.id) }}">
+                <i class="bi bi-clipboard-data"></i><span>Lab results</span>
+              </a>
               <a class="rail-link rail-sublink {% if ep in ('instructor_gradebook','instructor_gradebook_student') and open_section_id == s.id %}active{% endif %}"
                  href="{{ url_for('instructor_gradebook', section_id=s.id) }}">
                 <i class="bi bi-table"></i><span>Gradebook</span>

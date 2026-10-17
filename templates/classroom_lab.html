@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ cl.id }} {{ cl.title }} — Classroom lab{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('interactive_labs_index') }}">Live labs</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ cl.id }}</li>
+  </ol>
+</nav>
+<header class="lab-head">
+  <div class="lab-head-main">
+    <p class="lab-kicker mb-1"><span class="lab-kind lab-kind-classroom">Classroom lab</span>
+      {% for c, ch in cl.chapters or [] %}<span class="lab-obj-code">{{ c }} Ch {{ ch }}</span>{% endfor %}
+      {% if cl.minutes %}<span class="text-muted small">· about {{ cl.minutes }} min</span>{% endif %}</p>
+    <h1 class="h4 mb-1">{{ cl.id }} — {{ cl.title }}</h1>
+    <p class="mb-0 lab-scenario">{{ cl.objective }}</p>
+  </div>
+  <div class="lab-progress-box">
+    {% if row and row.completed_at %}
+      <p class="mb-1 fw-semibold"><i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i> Signed off: {{ levels|sum }}/16 ({{ row.score|round|int }}%)</p>
+      <p class="small text-muted mb-0">{{ row.completed_at.strftime('%d %b %Y') }}</p>
+    {% else %}
+      <p class="mb-1 fw-semibold">Not signed off yet</p>
+      <p class="small text-muted mb-0">Your instructor scores this lab in class with the rubric below.</p>
+    {% endif %}
+  </div>
+</header>
+<div class="lab-shell">
+  <div class="lab-main">
+    <div class="card mb-3"><div class="card-body">
+      <h2 class="h6">Before you start</h2>
+      <dl class="row small mb-0">
+        <dt class="col-sm-3">Prerequisites</dt><dd class="col-sm-9">{{ (cl.prerequisites or [])|join('; ') }}</dd>
+        <dt class="col-sm-3">Equipment</dt><dd class="col-sm-9">{{ cl.equipment }}</dd>
+        <dt class="col-sm-3">Low-cost option</dt><dd class="col-sm-9">{{ cl.low_cost }}</dd>
+        {% if cl.safety %}<dt class="col-sm-3">Safety</dt><dd class="col-sm-9">{{ cl.safety if cl.safety is string else cl.safety|join('; ') }}</dd>{% endif %}
+      </dl>
+    </div></div>
+    <div class="card mb-3"><div class="card-body">
+      <h2 class="h6">Steps</h2>
+      <ol class="lab-cl-steps">{% for s in cl.steps %}<li>{{ s }}</li>{% endfor %}</ol>
+      <h2 class="h6 mt-3">Expected result</h2>
+      <p class="mb-0">{{ cl.expected }}</p>
+    </div></div>
+    <div class="card mb-3"><div class="card-body">
+      <h2 class="h6">If it doesn't work</h2>
+      <ul class="mb-3">{% for t in cl.troubleshooting %}<li>{{ t }}</li>{% endfor %}</ul>
+      <h2 class="h6">Reflection</h2>
+      <ol class="mb-0">{% for q in cl.reflection %}<li>{{ q }}</li>{% endfor %}</ol>
+    </div></div>
+  </div>
+  <aside class="lab-side" aria-label="Rubric">
+    <div class="card">
+      <div class="card-header navy"><h2 class="h6 mb-0">{{ rubric.title }} ({{ rubric.points }} points)</h2></div>
+      <div class="card-body small">
+        <p>{{ rubric.use }}</p>
+        {% for name, descs in rubric.criteria %}
+        <div class="mb-2"><div class="fw-semibold">{{ name }}{% if levels %} — <span class="badge text-bg-secondary">{{ levels[loop.index0] }}/4</span>{% endif %}</div>
+          <div class="text-muted">Proficient (3): {{ descs[1] }}</div></div>
+        {% endfor %}
+        {% if row and row.feedback %}<div class="lab-hint mt-2"><div class="fw-semibold">Instructor feedback</div>{{ row.feedback }}</div>{% endif %}
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
