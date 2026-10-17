@@ -294,7 +294,8 @@ def pacing(code, weeks):
         elif weeks == 10:
             rows = [(r[0], r[1], r[2], r[3]) for r in base[:3]] + [(4, 'Ch 3 (continued)', 'Station practice', '')] + \
                    [(r[0] + 1, r[1], r[2], r[3]) for r in base[3:7]] + [(9, 'Review', 'Station practice', ''), (10, base[7][1], base[7][2], base[7][3])]
-    return [{'week': w, 'topics': t, 'lab': l, 'assessment': a} for w, t, l, a in (rows or [])]
+    out = [{'week': w, 'topics': t, 'lab': l, 'assessment': a} for w, t, l, a in (rows or [])]
+    return __import__('curriculum_v2.lab_additions', fromlist=['x']).augment_pacing(code, out)  # labs branch: new LMS labs
 
 
 # ------------------------------------------------------------------------------------------- lesson plans
@@ -690,6 +691,9 @@ KIND_EQUIPMENT = {
         'troubleshooting': ['Re-read the scenario for scope (how many users) and safety cues before choosing an action.'],
     },
 }
+
+
+KIND_EQUIPMENT.update(__import__('curriculum_v2.lab_additions', fromlist=['x']).EXTRA_KIND_EQUIPMENT)  # labs branch: linux, activity
 
 
 def standard_lab(lab, course=None, chapter=None):

@@ -172,7 +172,7 @@ def test_pacing_references_resolve(code):
         rows = CP.pacing(code, weeks)
         assert [r['week'] for r in rows] == list(range(1, weeks + 1)), (code, weeks)
         for r in rows:
-            for token in re.findall(r'\b(?:win|w11|gui|sw|rtr|hw|ticket)-[a-z0-9-]+', r['lab']):
+            for token in re.findall(r'\b(?:win|w11|gui|sw|rtr|hw|ticket|net|linux|wifi|sec|ops|print|virt|mob)-[a-z0-9-]+', r['lab']):
                 assert token in labs, (code, weeks, token)
             for cl in re.findall(r'CL-\d+', r['lab']):
                 assert cl in CP.CLASSROOM_LABS, (code, weeks, cl)

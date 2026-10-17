@@ -3,6 +3,7 @@ CIWT Interactive Lab Engine — progressive CLI simulators.
 Windows → Switch → Router skills build across labs; later labs reuse earlier commands.
 """
 
+import re
 from copy import deepcopy
 
 
@@ -275,13 +276,14 @@ LABS = [
         [
             {"id": "open_settings", "text": "Open Settings"},
             {"id": "open_network", "text": "Open Network & internet"},
-            {"id": "open_ethernet", "text": "Open Advanced network settings / Network Connections"},
+            {"id": "open_ethernet", "text": "Open Advanced network settings (or Network Connections, ncpa.cpl)"},
             {"id": "toggle_lease", "text": "Disable the Ethernet adapter, then Enable it"},
         ],
-        "Do not hunt for Renew on the Ethernet page — Windows 11 does not put it there. Use ncpa.cpl Disable/Enable.",
+        "Do not hunt for Renew on the Ethernet page — Windows 11 does not put it there. Use Advanced network settings (or ncpa.cpl): Disable, then Enable.",
         "You recycled the GUI connection the way a Win11 user would.",
         _win_state(),
-        hints=["Settings → Network & internet → Ethernet", "Disconnect", "Connect"],
+        hints=["Start → Settings → Network & internet", "Advanced network settings (or search ncpa.cpl)",
+               "Disable the Ethernet adapter, then Enable it (long-press or right-click in Network Connections)"],
         builds_on=["gui-ethernet"],
     ),
     _lab(
@@ -308,11 +310,12 @@ LABS = [
         [
             {"id": "open_settings", "text": "Open Settings"},
             {"id": "open_update", "text": "Open Windows Update"},
+            {"id": "check_updates", "text": "Select Check for updates and read the result"},
         ],
         "On a real PC this is the first place you look before blaming an app for a broken patch Tuesday.",
         "You opened the same Windows Update page a user sees.",
         _win_state(),
-        hints=["Settings", "Windows Update"],
+        hints=["Settings", "Windows Update", "Check for updates"],
     ),
     _lab(
         "gui-accounts",
@@ -798,6 +801,7 @@ LABS = [
             "impact": None,
             "escalate": None,
             "note": "",
+            "expect": {"classify": "incident", "impact": "many", "escalate": "yes"},
         },
         hints=["help", "show ticket", "classify incident", "impact many", "escalate yes", "note ...", "submit"],
     ),
@@ -850,7 +854,7 @@ LABS_BY_ID = {l["id"]: l for l in LABS}
 _COMMON_SHOW_SW = [
     ("show", "vlan", "brief"), ("show", "vlan"),
     ("show", "running-config"), ("show", "startup-config"),
-    ("show", "interfaces", "status"), ("show", "interface", "status"),
+    ("show", "interfaces", "status"), ("show", "interfaces", "trunk"),
     ("show", "interfaces"), ("show", "ip", "interface", "brief"),
     ("show", "mac", "address-table"), ("show", "mac", "address", "table"),
     ("show", "version"), ("show", "clock"),
@@ -859,7 +863,7 @@ _SW_BY_MODE = {
     "user": [
         ("enable",), ("exit",), ("help",), ("?",), ("clear",),
         ("show", "vlan", "brief"), ("show", "vlan"),
-        ("show", "interfaces", "status"), ("show", "interface", "status"),
+        ("show", "interfaces", "status"),
         ("show", "version"),
     ],
     "priv": [
@@ -873,10 +877,9 @@ _SW_BY_MODE = {
     ],
     "config": [
         ("hostname", "*"), ("vlan", "*"), ("interface", "*"),
-        ("banner", "login"),
-        ("banner", "login", "*"),
-        ("banner", "motd"),
-        ("banner", "motd", "*"),
+        ("interface", "range", "**"),
+        ("banner", "login", "**"),
+        ("banner", "motd", "**"),
         ("ip", "default-gateway", "*"),
         ("no", "vlan", "*"),
         ("exit",), ("end",),
@@ -887,7 +890,7 @@ _SW_BY_MODE = {
         ("help",), ("?",),
     ],
     "config-vlan": [
-        ("name", "*"), ("vlan", "*"), ("interface", "*"),
+        ("name", "**"), ("vlan", "*"), ("interface", "*"),
         ("exit",), ("end",),
         ("do", "show", "vlan", "brief"),
         ("help",), ("?",),
@@ -902,13 +905,14 @@ _SW_BY_MODE = {
         ("switchport", "port-security", "maximum", "*"),
         ("switchport", "port-security", "mac-address", "sticky"),
         ("switchport", "port-security", "violation", "*"),
-        ("description", "*"),
+        ("description", "**"),
         ("speed", "*"), ("duplex", "*"),
         ("no", "shutdown"), ("shutdown",),
         ("interface", "*"),
         ("exit",), ("end",),
         ("do", "show", "vlan", "brief"),
         ("do", "show", "running-config"),
+        ("do", "show", "interfaces", "trunk"),
         ("help",), ("?",),
     ],
 }
@@ -927,6 +931,8 @@ _RTR_BY_MODE = {
         ("show", "running-config"), ("show", "startup-config"),
         ("show", "interfaces"), ("show", "version"),
         ("show", "arp"), ("show", "clock"),
+        ("show", "access-lists"), ("show", "ip", "access-lists"),
+        ("show", "ip", "interface"),
         ("ping", "*"), ("traceroute", "*"),
         ("copy", "running-config", "startup-config"),
         ("write", "memory"), ("write",),
@@ -936,6 +942,9 @@ _RTR_BY_MODE = {
         ("hostname", "*"), ("interface", "*"),
         ("ip", "route", "*", "*", "*"),
         ("ip", "route", "*", "*"),
+        ("access-list", "*", "**"),
+        ("no", "access-list", "*"),
+        ("no", "ip", "route", "**"),
         ("exit",), ("end",),
         ("do", "show", "ip", "interface", "brief"),
         ("do", "show", "ip", "route"),
@@ -943,15 +952,22 @@ _RTR_BY_MODE = {
     ],
     "config-if": [
         ("ip", "address", "*", "*"),
+        ("ip", "access-group", "*", "*"),
+        ("no", "ip", "access-group", "**"),
+        ("encapsulation", "dot1q", "*"),
         ("no", "shutdown"), ("shutdown",),
-        ("description", "*"),
+        ("description", "**"),
         ("bandwidth", "*"),
         ("interface", "*"),
         ("exit",), ("end",),
         ("do", "show", "ip", "interface", "brief"),
+        ("do", "show", "access-lists"),
         ("help",), ("?",),
     ],
 }
+_RTR_BY_MODE["config"] += [("do", "show", "access-lists"), ("do", "show", "running-config")]
+_RTR_BY_MODE["config-if"] += [("do", "show", "running-config")]
+_RTR_BY_MODE["config-subif"] = _RTR_BY_MODE["config-if"]
 
 _SWITCH_TEMPLATES = [t for group in _SW_BY_MODE.values() for t in group]
 _ROUTER_TEMPLATES = [t for group in _RTR_BY_MODE.values() for t in group]
@@ -1013,6 +1029,9 @@ def _matching_templates(tokens, templates, partial_last=False):
                 ok = False
                 break
             word = tmpl[i]
+            if word == "**":          # rest of the line (descriptions, banners, names, ACL entries)
+                used = len(tokens)
+                break
             if partial_last and i == len(tokens) - 1:
                 if word != "*" and not word.lower().startswith(tok.lower()):
                     ok = False
@@ -1073,6 +1092,15 @@ _IOS_HELP = {
     "bandwidth": "Informational bandwidth",
     "default-gateway": "Default gateway on L2 switch",
     "help": "Description of the interactive help system",
+    "access-list": "Add an access list entry",
+    "access-lists": "List access lists",
+    "access-group": "Apply an access list to this interface",
+    "encapsulation": "Set encapsulation type (802.1Q subinterface)",
+    "dot1q": "IEEE 802.1Q VLAN tag",
+    "range": "Configure several interfaces at once",
+    "login": "Banner shown before login",
+    "motd": "Message-of-the-day banner",
+    "**": "Text",
     "?": "Context-sensitive help",
     "clear": "Clear the terminal screen",
 }
@@ -1113,10 +1141,10 @@ def ios_help(kind, mode, raw):
             nxt["<cr>"] = "Carriage return — execute command"
             continue
         word = tmpl[len(tokens)]
-        label = "<id>" if word == "*" else word
+        label = "<text>" if word == "**" else ("<id>" if word == "*" else word)
         if prefix and word != "*" and not word.lower().startswith(prefix):
             continue
-        if prefix and word == "*" and not label.startswith(prefix):
+        if prefix and word in ("*", "**") and not label.startswith(prefix):
             continue
         nxt[label] = _IOS_HELP.get(word, "Command keyword")
 
@@ -1156,7 +1184,7 @@ def expand_ios_line(line, kind, mode=None):
     if not hits:
         return None, ["% Invalid input detected at '^' marker.", "% Incomplete command."]
     # A command is incomplete unless every template slot is filled
-    complete_hits = [t for t in hits if len(tokens) >= len(t)]
+    complete_hits = [t for t in hits if len(tokens) >= len(t) or (t[-1] == "**" and len(tokens) >= len(t) - 1 and len(tokens) >= 2)]
     if not complete_hits:
         return None, ["% Incomplete command."]
     hits = complete_hits
@@ -1164,8 +1192,12 @@ def expand_ios_line(line, kind, mode=None):
     expanded_opts = []
     for tmpl in hits:
         parts = []
+        rest = False
         for i, tok in enumerate(tokens):
-            word = tmpl[i] if i < len(tmpl) else tok
+            word = tmpl[i] if i < len(tmpl) and not rest else "*"
+            if word == "**":
+                rest = True
+                word = "*"
             parts.append(tok if word == "*" else word)
         expanded_opts.append(" ".join(parts))
     uniq = sorted(set(expanded_opts))
@@ -1202,7 +1234,7 @@ def complete_ios_line(line, kind, mode=None):
     else:
         templates = _RTR_BY_MODE.get(mode) or _RTR_BY_MODE["user"]
     if not tokens:
-        nexts = sorted({t[0] for t in templates if t[0] != "*"})
+        nexts = sorted({t[0] for t in templates if t[0] not in ("*", "**")})
         return {"text": raw, "options": nexts, "beep": True}
 
     if ends_space:
@@ -1211,7 +1243,7 @@ def complete_ios_line(line, kind, mode=None):
         for tmpl in hits:
             if len(tmpl) > len(tokens):
                 w = tmpl[len(tokens)]
-                if w != "*":
+                if w not in ("*", "**"):
                     nxt.append(w)
         nxt = sorted(set(nxt))
         if len(nxt) == 1:
@@ -1223,7 +1255,7 @@ def complete_ios_line(line, kind, mode=None):
     nxt = []
     for tmpl in hits:
         idx = len(head)
-        if idx < len(tmpl) and tmpl[idx] != "*":
+        if idx < len(tmpl) and tmpl[idx] not in ("*", "**"):
             if tmpl[idx].lower().startswith(last.lower()):
                 nxt.append(tmpl[idx])
     nxt = sorted(set(nxt))
@@ -1589,7 +1621,7 @@ LAB_ALIGN = {
     "hw-board": "show board, then form-factor, socket, memory, storage, post, submit — Chapter 2.",
     "gui-about": "Click Settings → System → About. Read edition and device name.",
     "gui-ethernet": "Click Settings → Network & internet → Ethernet. Read IPv4, gateway, and DNS.",
-    "gui-renew": "On Ethernet, Disconnect then Connect to recycle the lease.",
+    "gui-renew": "Advanced network settings (or ncpa.cpl): Disable the Ethernet adapter, then Enable it to recycle the lease.",
     "gui-services": "Open Services and confirm DHCP Client, DNS Client, and Defender are Running.",
     "w11-inventory": "On the Windows 11 VM run winver, systeminfo, whoami, and hostname before you change anything.",
     "w11-powershell-net": "Switch to PowerShell, then Get-NetIPConfiguration, Get-NetAdapter, Test-Connection 10.20.30.1.",
@@ -1677,6 +1709,8 @@ def prompt_for(lab, state):
         return f"{host}(config-if)#"
     if mode == "config-vlan":
         return f"{host}(config-vlan)#"
+    if mode == "config-subif":
+        return f"{host}(config-subif)#"
     return f"{host}>"
 
 
@@ -1741,11 +1775,19 @@ def _norm_if_rtr(ifname, interfaces):
     import re
     raw = (ifname or "").strip()
     key = raw.lower().replace(" ", "")
-    m = re.match(r"^(gi|g|gigabitethernet|fa|f|fastethernet)(\d+)/(\d+)$", key)
+    m = re.match(r"^(gi|g|gigabitethernet|fa|f|fastethernet)(\d+)/(\d+)(?:\.(\d+))?$", key)
     if m:
-        slot, port = m.group(2), m.group(3)
+        slot, port, sub = m.group(2), m.group(3), m.group(4)
         kind = m.group(1)
         canon = f"FastEthernet{slot}/{port}" if kind in ("fa", "f", "fastethernet") else f"GigabitEthernet{slot}/{port}"
+        if sub:
+            if canon not in interfaces:
+                return raw
+            canon = f"{canon}.{sub}"
+            if canon not in interfaces:
+                # subinterfaces are administratively up by default; they need encapsulation + an address
+                interfaces[canon] = {"ip": None, "mask": None, "up": False, "admin": True, "vlan": None}
+            return canon
         if canon not in interfaces:
             interfaces[canon] = {"ip": None, "mask": None, "up": False, "admin": False}
         return canon
@@ -1757,7 +1799,7 @@ def _norm_if_rtr(ifname, interfaces):
 
 # ── Windows ─────────────────────────────────────────────────────────
 
-def run_windows(cmd, state, done):
+def _run_windows_base(cmd, state, done):
     c = cmd.strip()
     cl = c.lower()
     out = []
@@ -2140,6 +2182,281 @@ def run_windows(cmd, state, done):
     return out, state, done
 
 
+# ── Windows: normalisation, aliases and the newer scenarios ─────────
+_WIN_ALIASES = {
+    "gip": "get-netipconfiguration", "gsv": "get-service", "gps": "get-process", "ps": "get-process",
+    "ipconfig/all": "ipconfig /all", "ipconfig -all": "ipconfig /all", "ipconfig /all.": "ipconfig /all",
+    "ipconfig -release": "ipconfig /release", "ipconfig -renew": "ipconfig /renew", "ipconfig -flushdns": "ipconfig /flushdns",
+    "ipconfig/release": "ipconfig /release", "ipconfig/renew": "ipconfig /renew", "ipconfig/flushdns": "ipconfig /flushdns",
+    "get-netipaddress": "get-netipconfiguration", "hostname.exe": "hostname", "whoami.exe": "whoami",
+    "netstat -ano": "netstat -an", "netstat -a -n": "netstat -an", "netstat -na": "netstat -an", "netstat -n": "netstat -an",
+    "route print -4": "route print", "arp -g": "arp -a", "get-netneighbor": "arp -a", "get-netroute": "route print",
+    "get-nettcpconnection": "netstat -an", "get-dnsclientcache": "ipconfig /displaydns", "clear-dnsclientcache": "ipconfig /flushdns",
+    "get-computername": "hostname", "$env:computername": "hostname", "echo %computername%": "hostname",
+    "systeminfo.exe": "systeminfo", "tasklist.exe": "tasklist", "getmac /v": "getmac",
+}
+_WIN_USAGE = {
+    "ipconfig": ["USAGE:", "    ipconfig [/allcompartments] [/? | /all | /renew [adapter] | /release [adapter] |",
+                 "              /flushdns | /displaydns | /registerdns ]",
+                 "Examples:  ipconfig /all   ipconfig /release   ipconfig /renew   ipconfig /flushdns"],
+    "ping": ["Usage: ping [-t] [-n count] [-l size] [-4] [-6] target_name", "Example: ping 10.20.30.1   ping -n 2 files.training.local"],
+    "tracert": ["Usage: tracert [-d] [-h maximum_hops] [-w timeout] target_name", "Example: tracert -d 1.1.1.1"],
+    "nslookup": ["Usage: nslookup name [server]", "Example: nslookup files.training.local   nslookup intranet.training.local 10.20.30.11"],
+    "netstat": ["Usage: netstat [-a] [-n] [-o] [-b]", "Example: netstat -ano  (all connections, numeric, with process IDs)"],
+}
+
+
+def _ps_args(text):
+    """Split a PowerShell line into (cmdlet, {param: value}, positional). Quotes are honoured."""
+    import shlex
+    try:
+        toks = shlex.split(text, posix=True)
+    except ValueError:
+        toks = text.split()
+    if not toks:
+        return "", {}, []
+    name, params, pos = toks[0].lower(), {}, []
+    i = 1
+    while i < len(toks):
+        t = toks[i]
+        if t.startswith("-") and len(t) > 1 and not t[1:].replace(".", "").isdigit():
+            key = t[1:].lower()
+            if i + 1 < len(toks) and not toks[i + 1].startswith("-"):
+                params[key] = toks[i + 1]
+                i += 2
+                continue
+            params[key] = True
+        else:
+            pos.append(t)
+        i += 1
+    return name, params, pos
+
+
+def _win_closest(cl):
+    import difflib
+    words = [w.lower() for w in _WIN_COMMANDS] + ["get-printer", "get-printjob", "remove-printjob", "restart-service",
+                                                  "out-printer", "test-netconnection", "nslookup", "tracert", "netstat -ano"]
+    got = difflib.get_close_matches(cl.split()[0] if cl.split() else cl, list(dict.fromkeys(w.split()[0] for w in words)), n=3, cutoff=0.6)
+    return got
+
+
+def _win_printers(c, cl, state, done):
+    """PowerShell print-management cmdlets for the printer troubleshooting lab."""
+    printers = state.get("printers")
+    if printers is None:
+        return None
+    name, params, pos = _ps_args(c)
+    out = []
+
+    def find(pname):
+        for pr in printers:
+            if pr["name"].lower() == str(pname or "").lower():
+                return pr
+        return None
+
+    if name == "get-printer":
+        out.append("Name               ComputerName  Type   DriverName                      PortName      Shared  JobCount  PrinterStatus")
+        out.append("----               ------------  ----   ----------                      --------      ------  --------  -------------")
+        for pr in printers:
+            out.append(f"{pr['name']:<18} {'':<13} Local  {pr['driver']:<31} {pr['port']:<13} {'True' if pr.get('shared') else 'False':<7} "
+                       f"{len(pr['jobs']):<9} {pr['status']}")
+        _mark(done, "get_printer")
+        return out
+    if name in ("get-printjob",):
+        pr = find(params.get("printername") or (pos[0] if pos else None))
+        if not pr:
+            return ["Get-PrintJob : The specified printer was not found.",
+                    '    Use: Get-PrintJob -PrinterName "HR-LaserJet"   (Get-Printer lists the names)']
+        if not pr["jobs"]:
+            return ["(no jobs in the queue)"]
+        out.append("Id    ComputerName    PrinterName     DocumentName         SubmittedTime          JobStatus")
+        out.append("--    ------------    -----------     ------------         -------------          ---------")
+        for j in pr["jobs"]:
+            out.append(f"{j['id']:<5} CIWT-W11-07     {pr['name']:<15} {j['doc']:<20} 10/17/2026 9:{j['id']:02d}:00 AM  {j['status']}")
+        _mark(done, "get_jobs")
+        if state.get("job_removed"):
+            _mark(done, "verify_queue")
+        return out
+    if name == "remove-printjob":
+        pr = find(params.get("printername") or None)
+        jid = params.get("id")
+        if not pr or not str(jid or "").isdigit():
+            return ['Remove-PrintJob : Use: Remove-PrintJob -PrinterName "HR-LaserJet" -ID <Id>  (Get-PrintJob shows the Id)']
+        job = next((j for j in pr["jobs"] if j["id"] == int(jid)), None)
+        if not job:
+            return [f"Remove-PrintJob : No job with Id {jid} on {pr['name']}."]
+        if job["status"].lower().startswith("error"):
+            if state.get("spooler_hung"):
+                job["status"] = "Deleting, Error"
+                state["job_deleting"] = True
+                return [f"(Job {jid} is now 'Deleting, Error' — the spooler is holding it. Restart the Print Spooler service to clear it.)"]
+            pr["jobs"].remove(job)
+            state["job_removed"] = True
+            _mark(done, "remove_job")
+            return []
+        pr["jobs"].remove(job)
+        state.setdefault("removed_good_jobs", []).append(job["doc"])
+        return [f"(Removed job {jid}, '{job['doc']}'. That job was healthy — the user will have to print it again. Only the job in Error was blocking the queue.)"]
+    if name in ("restart-service", "stop-service", "start-service") or cl in ("net stop spooler", "net start spooler"):
+        svc = str(params.get("name") or (pos[0] if pos else "")).lower()
+        if cl.startswith("net "):
+            svc = "spooler"
+        if svc != "spooler":
+            return None
+        if name == "stop-service" or cl == "net stop spooler":
+            state["spooler_stopped"] = True
+            return ["The Print Spooler service is stopping.", "The Print Spooler service was stopped successfully."] if cl.startswith("net") else []
+        # restart or start
+        state["spooler_stopped"] = False
+        state["spooler_hung"] = False
+        pr = printers[0]
+        before = len(pr["jobs"])
+        pr["jobs"] = [j for j in pr["jobs"] if not j["status"].lower().startswith(("error", "deleting"))]
+        if len(pr["jobs"]) < before:
+            state["job_removed"] = True
+            _mark(done, "remove_job")
+        for j in pr["jobs"]:
+            j["status"] = "Printing" if j is pr["jobs"][0] else "Spooling"
+        pr["status"] = "Normal"
+        _mark(done, "restart_spooler")
+        return (["The Print Spooler service is starting.", "The Print Spooler service was started successfully."]
+                if cl.startswith("net") else ["WARNING: Waiting for service 'Print Spooler (Spooler)' to start..."])
+    if name == "get-service" and (str(params.get("name") or (pos[0] if pos else "")).lower() == "spooler"):
+        st = "Stopped" if state.get("spooler_stopped") else "Running"
+        _mark(done, "svc_spooler")
+        return ["Status   Name               DisplayName", "------   ----               -----------", f"{st:<8} Spooler            Print Spooler"]
+    if "out-printer" in cl:
+        m = re.search(r"-name\s+\"?([\w-]+)\"?", cl)
+        pr = find(m.group(1) if m else None) if m else printers[0]
+        if not pr:
+            return ['Out-Printer : printer not found. Example: "test page" | Out-Printer -Name "HR-LaserJet"']
+        if state.get("spooler_stopped"):
+            return ["Out-Printer : The spooler service is not reachable. Start it: Start-Service Spooler"]
+        if any(j["status"].lower().startswith(("error", "deleting")) for j in pr["jobs"]):
+            pr["jobs"].append({"id": 20 + len(pr["jobs"]), "doc": "Test page", "status": "Spooling"})
+            return ["(Sent. The test page is waiting in the queue behind a job in Error — it will not print until that job is cleared.)"]
+        _mark(done, "test_page")
+        return ["(Test page sent to " + pr["name"] + ". The printer output tray shows it printed.)"]
+    if cl.startswith("rundll32 printui.dll"):
+        if any(j["status"].lower().startswith(("error", "deleting")) for j in printers[0]["jobs"]):
+            return ["(Printer test page queued behind the job in Error. Clear the queue first.)"]
+        _mark(done, "test_page")
+        return ["(Windows printer test page submitted to HR-LaserJet. Printed.)"]
+    if name == "get-printerport":
+        out.append("Name           ComputerName  Description          PortMonitor   PrinterHostAddress")
+        for pr in printers:
+            out.append(f"{pr['port']:<14} {'':<13} Standard TCP/IP Port TCPMON.DLL    {pr['ip']}")
+        return out
+    return None
+
+
+def run_windows(cmd, state, done):
+    c = re.sub(r"\s+", " ", (cmd or "").strip())
+    if c.lower().endswith(".exe") and " " not in c:
+        c = c[:-4]
+    cl = c.lower()
+    cl = _WIN_ALIASES.get(cl, cl)
+    if cl != c.lower():
+        c = cl
+    out = []
+    if cl in ("exit",) and state.get("shell") == "ps":
+        state["shell"] = "cmd"
+        return [], state, done
+    if cl.endswith(" /?") or cl.endswith(" -?") or cl.startswith("help ") or cl.startswith("get-help "):
+        word = cl.split()[1] if cl.startswith(("help ", "get-help ")) else cl.split()[0]
+        return (_WIN_USAGE.get(word) or [f"No extra help for '{word}' in this simulator. Type help for the supported commands."]), state, done
+    if cl in ("ls", "dir", "get-childitem", "gci"):
+        return [" Directory of C:\\Users\\Trainee", "", "10/17/2026  09:12 AM    <DIR>          Desktop",
+                "10/17/2026  09:12 AM    <DIR>          Documents", "10/17/2026  09:12 AM    <DIR>          Downloads"], state, done
+    pr = _win_printers(c, cl, state, done)
+    if pr is not None:
+        return pr, state, done
+    # released lease: nothing off-box answers
+    if state.get("released") and (cl.startswith("ping ") or cl.startswith("test-connection ") or cl.startswith("tracert ")):
+        target = c.split()[-1]
+        if target not in ("127.0.0.1", "localhost"):
+            return [f"Pinging {target} with 32 bytes of data:", "PING: transmit failed. General failure.",
+                    "PING: transmit failed. General failure.", "",
+                    "(No IPv4 address after ipconfig /release — renew the lease first: ipconfig /renew)"], state, done
+    if cl.startswith("ping ") and state.get("objectives") and "renew" in state["objectives"] and "renew" not in done:
+        target = c.split()[-1]
+        if target == state.get("gateway"):
+            lines, state, done = _run_windows_base(c, state, done)
+            if "ping_gw" in done and "renew" not in done:
+                done.remove("ping_gw")
+                lines.append("(Good baseline. The ticket asks for this gateway test AFTER release/renew, so it is not ticked yet.)")
+            return lines, state, done
+    # name resolution with a failed primary DNS server and external hosts (win-net-cli)
+    if cl.startswith("nslookup ") and state.get("dns_primary_down") is not None:
+        parts = c.split()
+        name = parts[1] if len(parts) > 1 else ""
+        server = parts[2] if len(parts) > 2 else (state.get("dns") or ["10.20.30.10"])[0]
+        if server == state["dns"][0] and state["dns_primary_down"]:
+            out = ["DNS request timed out.", "    timeout was 2 seconds.", "Server:  UnKnown", f"Address:  {server}", "",
+                   "DNS request timed out.", "    timeout was 2 seconds.", f"*** Request to UnKnown timed-out"]
+            _mark(done, "ns_primary_fail")
+            return out, state, done
+        nm = {k.lower(): v for k, v in (state.get("name_map") or {}).items()}
+        out = [f"Server:  {'dns2.training.local' if server == '10.20.30.11' else 'UnKnown'}", f"Address:  {server}", ""]
+        if name.lower() in nm:
+            out += ["Name:    " + name, "Address:  " + nm[name.lower()]]
+            if server != state["dns"][0]:
+                _mark(done, "ns_secondary_ok")
+        else:
+            out.append(f"*** {server} can't find {name}: Non-existent domain")
+        return out, state, done
+    if cl.startswith("ping ") and state.get("dns_primary_down") is not None:
+        target = c.split()[-1]
+        if any(ch.isalpha() for ch in target) and target.lower() not in ("localhost",):
+            out = [f"Ping request could not find host {target}. Please check the name and try again."]
+            _mark(done, "ping_name_fail")
+            return out, state, done
+        ext = state.get("ext_hosts") or {}
+        if target in ext:
+            out = [f"Pinging {target} with 32 bytes of data:"] + [f"Reply from {target}: bytes=32 time={ext[target]}ms TTL=57"] * 4 + \
+                  ["", f"Ping statistics for {target}:", "    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),"]
+            _mark(done, "ping_ext")
+            return out, state, done
+        if target == state["dns"][0] and state["dns_primary_down"]:
+            out = [f"Pinging {target} with 32 bytes of data:", "Request timed out.", "Request timed out.", "Request timed out.",
+                   "Request timed out.", "", f"Ping statistics for {target}:", "    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss),"]
+            _mark(done, "ping_dns_fail")
+            return out, state, done
+    if cl.startswith("tracert") and state.get("ext_hosts") is not None:
+        target = c.split()[-1]
+        ext = state.get("ext_hosts") or {}
+        if any(ch.isalpha() for ch in target):
+            return [f"Unable to resolve target system name {target}."], state, done
+        out = [f"Tracing route to {target} over a maximum of 30 hops", "",
+               f"  1    <1 ms    <1 ms    <1 ms  {state.get('gateway')}",
+               "  2     2 ms     2 ms     3 ms  203.0.113.1", "  3     9 ms     8 ms     9 ms  198.51.100.14"]
+        if target in ext:
+            out.append(f"  4    {ext[target]} ms    {ext[target]} ms    {ext[target]} ms  {target}")
+            _mark(done, "tracert_ext")
+        else:
+            out.append("  4     *        *        *     Request timed out.")
+        out += ["", "Trace complete."]
+        return out, state, done
+    if cl in ("netstat -an",) and state.get("ext_hosts") is not None:
+        out = ["Active Connections", "", "  Proto  Local Address          Foreign Address        State           PID",
+               f"  TCP    {state.get('ipv4')}:49712      1.1.1.1:443            ESTABLISHED     5120",
+               f"  TCP    {state.get('ipv4')}:49720      10.20.30.50:445        ESTABLISHED     4",
+               f"  UDP    {state.get('ipv4')}:58831      10.20.30.10:53         *:*             2280",
+               "  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING       1048"]
+        _mark(done, "netstat")
+        return out, state, done
+    lines, state, done = _run_windows_base(c, state, done)
+    if lines and "is not recognized as an internal or external command" in lines[0]:
+        near = _win_closest(cl)
+        if near:
+            lines.append("Did you mean: " + ", ".join(near) + " ?   (Type help for the list; Tab completes.)")
+        else:
+            lines.append("Type help for the commands this simulator supports.")
+        if state.get("shell") == "ps":
+            lines = [f"{c.split()[0]} : The term '{c.split()[0]}' is not recognized as the name of a cmdlet, function, script file, or operable program."] + lines[2:]
+    return lines, state, done
+
+
 # ── Switch ──────────────────────────────────────────────────────────
 
 def run_switch(cmd, state, done):
@@ -2235,6 +2552,10 @@ def run_switch(cmd, state, done):
             _mark(done, "vlan20")
         return out, state, done
 
+    if cl.startswith("interface range"):
+        out.append("% interface range is not simulated here — configure each port: interface fa0/2, then interface fa0/3")
+        return out, state, done
+
     if cl.startswith("interface "):
         if mode not in ("config", "config-if", "config-vlan"):
             out.append("% Requires configure terminal first.")
@@ -2286,9 +2607,29 @@ def run_switch(cmd, state, done):
             return out, state, done
         if cl.startswith("description ") or cl.startswith("speed ") or cl.startswith("duplex "):
             if cl.startswith("description "):
+                iface["desc"] = c.split(None, 1)[1]
+                state["interfaces"][ifn] = iface
                 _mark(done, "desc")
             return out, state, done
-        if cl.startswith("switchport trunk allowed vlan") or cl == "switchport nonegotiate":
+        if cl.startswith("switchport trunk allowed vlan"):
+            spec = cl.split("vlan", 1)[1].strip()
+            allowed = []
+            for part in spec.replace(" ", "").split(","):
+                if "-" in part:
+                    a, _, b = part.partition("-")
+                    if a.isdigit() and b.isdigit():
+                        allowed += list(range(int(a), int(b) + 1))
+                elif part.isdigit():
+                    allowed.append(int(part))
+            if not allowed:
+                out.append("% Example: switchport trunk allowed vlan 10,20")
+                return out, state, done
+            iface["allowed"] = sorted(set(allowed))
+            state["interfaces"][ifn] = iface
+            if iface.get("mode") != "trunk":
+                out.append("(Allowed list stored. It takes effect when the port is a trunk: switchport mode trunk)")
+            return out, state, done
+        if cl == "switchport nonegotiate":
             return out, state, done
         if cl.startswith("switchport port-security"):
             iface["portsec"] = True
@@ -2300,11 +2641,30 @@ def run_switch(cmd, state, done):
         out.append("VLAN Name                             Status    Ports")
         out.append("---- -------------------------------- --------- -------------------------------")
         for vid, name in sorted(state["vlans"].items(), key=lambda x: int(x[0])):
-            ports = [p for p, cfg in state["interfaces"].items() if int(cfg.get("vlan") or 0) == int(vid)]
+            # trunk ports are not listed against a VLAN (same as IOS)
+            ports = [p for p, cfg in state["interfaces"].items() if int(cfg.get("vlan") or 0) == int(vid)
+                     and cfg.get("mode") != "trunk"]
             short = ",".join(p.replace("FastEthernet", "Fa") for p in ports)
             out.append(f"{int(vid):<4} {name:<32} active    {short}")
         if 20 in state["vlans"] and any(int(cfg.get("vlan") or 0) == 20 for cfg in state["interfaces"].values()):
             _mark(done, "verify")
+        return out, state, done
+
+    if cl in ("show interfaces trunk",):
+        trunks = [(p, cfg) for p, cfg in state["interfaces"].items() if cfg.get("mode") == "trunk"]
+        if not trunks:
+            out.append("(no trunking ports — set one with: interface fa0/1, switchport mode trunk)")
+        else:
+            out.append("Port        Mode         Encapsulation  Status        Native vlan")
+            for p, cfg in trunks:
+                out.append(f"{p.replace('FastEthernet', 'Fa'):<11} on           802.1q         trunking      1")
+            out.append("")
+            out.append("Port        Vlans allowed on trunk")
+            for p, cfg in trunks:
+                al = cfg.get("allowed")
+                out.append(f"{p.replace('FastEthernet', 'Fa'):<11} {','.join(map(str, al)) if al else '1-4094'}")
+        state["seen_trunk"] = True
+        _mark(done, "show_trunk")
         return out, state, done
 
     if cl in ("show interfaces status", "sh int status", "show interface status"):
@@ -2323,13 +2683,24 @@ def run_switch(cmd, state, done):
                 continue
             out.append(f"vlan {vid}")
             out.append(f" name {name}")
+        if state.get("banner"):
+            out.append(state["banner"])
         for p, cfg in state["interfaces"].items():
             out.append(f"interface {p}")
+            if cfg.get("desc"):
+                out.append(f" description {cfg['desc']}")
             out.append(f" switchport mode {cfg.get('mode') or 'access'}")
             if cfg.get("mode") == "trunk" or cfg.get("trunk"):
+                if cfg.get("allowed"):
+                    out.append(f" switchport trunk allowed vlan {','.join(map(str, cfg['allowed']))}")
                 _mark(done, "verify_trunk")
             else:
                 out.append(f" switchport access vlan {cfg.get('vlan', 1)}")
+            if cfg.get("portsec"):
+                out.append(" switchport port-security")
+            if not cfg.get("up", True):
+                out.append(" shutdown")
+        out.append("end")
         return out, state, done
 
     if cl in ("show version", "sh ver", "show ver"):
@@ -2389,6 +2760,89 @@ def run_switch(cmd, state, done):
 
 # ── Router ──────────────────────────────────────────────────────────
 
+def _rtr_refresh(state):
+    """Recompute line state: a physical port is up when admin-up and addressed (or carrying subinterfaces);
+    a subinterface is up when its parent is up and it has an 802.1Q tag and an address."""
+    ifs = state["interfaces"]
+    for name, cfg in ifs.items():
+        if "." in name:
+            continue
+        has_sub = any(k.startswith(name + ".") for k in ifs)
+        cfg["up"] = bool(cfg.get("admin")) and (bool(cfg.get("ip")) or has_sub or cfg.get("cabled", False))
+    for name, cfg in ifs.items():
+        if "." not in name:
+            continue
+        parent = ifs.get(name.split(".")[0]) or {}
+        cfg["up"] = bool(parent.get("admin")) and cfg.get("admin", True) and bool(cfg.get("vlan")) and bool(cfg.get("ip"))
+    return state
+
+
+def _rtr_connected(state, target):
+    import ipaddress
+    try:
+        t = ipaddress.ip_address(target)
+    except ValueError:
+        return None
+    for name, cfg in state["interfaces"].items():
+        if cfg.get("up") and cfg.get("ip") and cfg.get("mask"):
+            try:
+                net = ipaddress.ip_network(f"{cfg['ip']}/{cfg['mask']}", strict=False)
+            except ValueError:
+                continue
+            if t in net:
+                return name
+    return None
+
+
+def _acl_parse(num, words):
+    """Parse the part after 'access-list <num>'. Returns (entry dict, error)."""
+    if not words or words[0] not in ("permit", "deny", "remark"):
+        return None, "% Use: access-list <n> permit|deny <source> [wildcard]   (or: any / host a.b.c.d)"
+    if words[0] == "remark":
+        return {"action": "remark", "text": " ".join(words[1:])}, None
+    act = words[0]
+    rest = words[1:]
+    try:
+        n = int(num)
+    except ValueError:
+        return None, "% Access list number: 1-99 standard, 100-199 extended"
+    def addr(ws):
+        if not ws:
+            return None, ws
+        if ws[0] == "any":
+            return "any", ws[1:]
+        if ws[0] == "host" and len(ws) > 1:
+            return f"host {ws[1]}", ws[2:]
+        if len(ws) >= 2 and ws[1].count(".") == 3:
+            return f"{ws[0]} {ws[1]}", ws[2:]
+        return ws[0], ws[1:]
+    if 1 <= n <= 99:
+        src, left = addr(rest)
+        if not src:
+            return None, "% Incomplete command. Example: access-list 10 deny 192.168.20.0 0.0.0.255"
+        if left:
+            return None, "% Standard ACLs match the SOURCE address only. Use 100-199 for extended entries."
+        return {"action": act, "src": src}, None
+    if 100 <= n <= 199:
+        if not rest:
+            return None, "% Example: access-list 110 deny ip 192.168.20.0 0.0.0.255 10.10.10.0 0.0.0.255"
+        proto = rest[0]
+        src, left = addr(rest[1:])
+        dst, left = addr(left)
+        if not src or not dst:
+            return None, "% Extended entry needs: protocol source [wildcard] destination [wildcard]"
+        return {"action": act, "proto": proto, "src": src, "dst": dst, "extra": " ".join(left)}, None
+    return None, "% Access list number: 1-99 standard, 100-199 extended"
+
+
+def _acl_line(e):
+    if e["action"] == "remark":
+        return f"remark {e['text']}"
+    if "proto" in e:
+        return f"{e['action']} {e['proto']} {e['src']} {e['dst']} {e.get('extra', '')}".rstrip()
+    return f"{e['action']} {e['src']}"
+
+
 def run_router(cmd, state, done):
     c = cmd.strip()
     cl = c.lower().strip()
@@ -2396,11 +2850,14 @@ def run_router(cmd, state, done):
         cl = cl[3:].strip()
         c = c[3:].strip()
     mode = state.get("mode", "user")
+    state.setdefault("acls", {})
+    _rtr_refresh(state)
     out = []
 
     if cl in ("help", "?"):
-        out.append("Exec: enable | exit | end | show ip interface brief | show ip route | ping")
-        out.append("Config: configure terminal | interface | ip address | no shutdown")
+        out.append("Exec: enable | exit | end | show ip interface brief | show ip route | show access-lists | ping | traceroute")
+        out.append("Config: configure terminal | interface | ip address | no shutdown | ip route | access-list")
+        out.append("Subinterface: interface g0/0.10 | encapsulation dot1Q 10 | ip address ...")
         return out, state, done
 
     if cl == "enable":
@@ -2411,11 +2868,16 @@ def run_router(cmd, state, done):
         _mark(done, "enable")
         return out, state, done
 
+    if cl == "disable":
+        state["mode"] = "user"
+        return out, state, done
+
     if _is_conf_t(cl):
         if mode != "priv":
             out.append("% Invalid input detected at '^' marker.")
             return out, state, done
         state["mode"] = "config"
+        out.append("Enter configuration commands, one per line.  End with CNTL/Z.")
         return out, state, done
 
     if cl == "end":
@@ -2424,7 +2886,7 @@ def run_router(cmd, state, done):
         return out, state, done
 
     if cl == "exit":
-        if mode == "config-if":
+        if mode in ("config-if", "config-subif"):
             state["mode"] = "config"
             state["prompt_if"] = None
         elif mode == "config":
@@ -2434,37 +2896,70 @@ def run_router(cmd, state, done):
         return out, state, done
 
     if cl.startswith("interface "):
-        if mode not in ("config", "config-if"):
+        if mode not in ("config", "config-if", "config-subif"):
             out.append("% Requires configure terminal first.")
             return out, state, done
         ifname = _norm_if_rtr(c.split(None, 1)[1], state["interfaces"])
         if ifname not in state["interfaces"]:
-            out.append("% Invalid interface. Try: interface GigabitEthernet0/0")
+            out.append("% Invalid interface. Try: interface GigabitEthernet0/0  (subinterface: interface g0/0.10)")
             return out, state, done
-        state["mode"] = "config-if"
+        state["mode"] = "config-subif" if "." in ifname else "config-if"
         state["prompt_if"] = ifname
         return out, state, done
 
-    if mode == "config-if":
+    if mode in ("config-if", "config-subif"):
         ifn = state["prompt_if"]
         iface = state["interfaces"][ifn]
         if cl.startswith("ip address "):
             parts = c.split()
-            if len(parts) >= 4:
+            if len(parts) >= 4 and parts[2].count(".") == 3 and parts[3].count(".") == 3:
+                if mode == "config-subif" and not iface.get("vlan"):
+                    out.append("% Configuring IP routing on a LAN subinterface is only allowed if that")
+                    out.append("subinterface is already configured as part of an IEEE 802.10, IEEE 802.1Q,")
+                    out.append("or ISL vLAN.   (Enter: encapsulation dot1Q <vlan> first)")
+                    return out, state, done
                 iface["ip"] = parts[2]
                 iface["mask"] = parts[3]
-                state["interfaces"][ifn] = iface
                 if ifn.endswith("0/0") and parts[2] == "10.20.0.1":
                     _mark(done, "addr")
                 if ifn.endswith("0/1") and parts[2] == "10.30.0.1":
                     _mark(done, "addr2")
             else:
-                out.append("% Example: ip address 10.20.0.1 255.255.255.0")
+                out.append("% Incomplete command. Example: ip address 10.20.0.1 255.255.255.0")
+            _rtr_refresh(state)
+            return out, state, done
+        if cl.startswith("encapsulation "):
+            parts = cl.split()
+            if mode != "config-subif":
+                out.append("% Encapsulation is set on a subinterface (interface g0/0.10).")
+            elif len(parts) == 3 and parts[1] == "dot1q" and parts[2].isdigit():
+                iface["vlan"] = int(parts[2])
+            else:
+                out.append("% Example: encapsulation dot1Q 10")
+            _rtr_refresh(state)
+            return out, state, done
+        if cl.startswith("ip access-group "):
+            parts = cl.split()
+            if len(parts) != 4 or parts[3] not in ("in", "out"):
+                out.append("% Example: ip access-group 10 out")
+                return out, state, done
+            iface["acl_" + parts[3]] = parts[2]
+            if parts[2] not in state["acls"]:
+                out.append(f"% Note: access list {parts[2]} is not defined yet (an undefined ACL permits all traffic).")
+            return out, state, done
+        if cl.startswith("no ip access-group"):
+            parts = cl.split()
+            direction = parts[-1] if parts[-1] in ("in", "out") else None
+            for dname in ([direction] if direction else ["in", "out"]):
+                iface.pop("acl_" + dname, None)
             return out, state, done
         if cl == "no shutdown":
             iface["admin"] = True
-            iface["up"] = bool(iface.get("ip"))
-            state["interfaces"][ifn] = iface
+            _rtr_refresh(state)
+            if not iface.get("ip") and "." not in ifn and not any(k.startswith(ifn + ".") for k in state["interfaces"]):
+                out.append(f"%LINK-3-UPDOWN: Interface {ifn}, changed state to up  (no IP address yet: line protocol stays down)")
+            else:
+                out.append(f"%LINK-3-UPDOWN: Interface {ifn}, changed state to up")
             if ifn.endswith("0/0") and iface.get("ip") == "10.20.0.1":
                 _mark(done, "addr")
             if ifn.endswith("0/1") and iface.get("ip") == "10.30.0.1":
@@ -2472,12 +2967,13 @@ def run_router(cmd, state, done):
             return out, state, done
         if cl.startswith("description ") or cl.startswith("bandwidth "):
             if cl.startswith("description "):
+                iface["desc"] = c.split(None, 1)[1]
                 _mark(done, "desc")
             return out, state, done
         if cl == "shutdown":
             iface["admin"] = False
-            iface["up"] = False
-            state["interfaces"][ifn] = iface
+            _rtr_refresh(state)
+            out.append(f"%LINK-5-CHANGED: Interface {ifn}, changed state to administratively down")
             return out, state, done
 
     if mode == "config" and cl.startswith("hostname "):
@@ -2486,112 +2982,191 @@ def run_router(cmd, state, done):
         return out, state, done
 
     if mode == "config" and cl.startswith("ip route "):
+        parts = c.split()
+        if len(parts) < 5:
+            out.append("% Example: ip route 0.0.0.0 0.0.0.0 10.20.0.2")
+            return out, state, done
         state.setdefault("static", []).append(c)
-        if "0.0.0.0" in cl:
+        if parts[2] == "0.0.0.0":
             _mark(done, "defroute")
+        return out, state, done
+
+    if mode == "config" and cl.startswith("no ip route "):
+        state["static"] = [r for r in state.get("static") or [] if r.lower() != cl[3:]]
+        return out, state, done
+
+    if mode == "config" and cl.startswith("access-list "):
+        parts = c.split()
+        entry, err = _acl_parse(parts[1], [w.lower() for w in parts[2:]])
+        if err:
+            out.append(err)
+            return out, state, done
+        state["acls"].setdefault(parts[1], []).append(entry)
+        return out, state, done
+
+    if mode == "config" and cl.startswith("no access-list "):
+        state["acls"].pop(cl.split()[2], None)
+        out.append(f"(access list {cl.split()[2]} removed — re-enter its lines in the order you want them matched)")
         return out, state, done
 
     if cl in ("show ip interface brief", "sh ip int brief", "sh ip interface brief"):
         out.append("Interface                  IP-Address      OK? Method Status                Protocol")
-        for p, cfg in state["interfaces"].items():
+        for p, cfg in sorted(state["interfaces"].items()):
             ip = cfg.get("ip") or "unassigned"
             status = "up" if cfg.get("up") else ("administratively down" if not cfg.get("admin") else "down")
             proto = "up" if cfg.get("up") else "down"
             out.append(f"{p:<26} {ip:<15} YES manual {status:<21} {proto}")
         g0 = state["interfaces"].get("GigabitEthernet0/0", {})
-        g1 = state["interfaces"].get("GigabitEthernet0/1", {})
         if g0.get("ip") == "10.20.0.1" and g0.get("up"):
-            _mark(done, "show_ip")
-        if g0.get("ip") == "10.20.0.1" and g0.get("up") and g1.get("ip") == "10.30.0.1" and g1.get("up"):
             _mark(done, "show_ip")
         return out, state, done
 
     if cl in ("show ip route", "sh ip route"):
-        out.append("Codes: C - connected")
+        out.append("Codes: C - connected, L - local, S - static, * - candidate default")
+        out.append("")
+        import ipaddress
         any_route = False
-        for p, cfg in state["interfaces"].items():
-            if cfg.get("up") and cfg.get("ip"):
-                ip = cfg["ip"]
-                net = ".".join(ip.split(".")[:3]) + ".0/24"
+        for p, cfg in sorted(state["interfaces"].items()):
+            if cfg.get("up") and cfg.get("ip") and cfg.get("mask"):
+                try:
+                    net = ipaddress.ip_network(f"{cfg['ip']}/{cfg['mask']}", strict=False)
+                except ValueError:
+                    continue
                 out.append(f"C    {net} is directly connected, {p}")
+                out.append(f"L    {cfg['ip']}/32 is directly connected, {p}")
                 any_route = True
-        for s in state.get("static") or []:
-            parts = s.split()
+        for r in state.get("static") or []:
+            parts = r.split()
             if len(parts) >= 5:
-                out.append(f"S*   {parts[2]}/{parts[3]} via {parts[4]}")
+                try:
+                    pl = ipaddress.ip_network(f"{parts[2]}/{parts[3]}", strict=False).prefixlen
+                except ValueError:
+                    pl = parts[3]
+                star = "*" if parts[2] == "0.0.0.0" else " "
+                out.append(f"S{star}   {parts[2]}/{pl} [1/0] via {parts[4]}")
                 any_route = True
                 if parts[2] == "0.0.0.0":
                     _mark(done, "defroute")
         if any_route:
             _mark(done, "show_route")
         else:
-            out.append("  (no connected routes yet)")
+            out.append("  (no routes yet: an interface needs an address and no shutdown to add a connected route)")
+        return out, state, done
+
+    if cl in ("show access-lists", "show ip access-lists"):
+        if not state["acls"]:
+            out.append("(no access lists configured)")
+        for num, entries in sorted(state["acls"].items(), key=lambda x: int(x[0]) if x[0].isdigit() else 0):
+            kind = "Standard" if num.isdigit() and int(num) < 100 else "Extended"
+            out.append(f"{kind} IP access list {num}")
+            seq = 10
+            for e in entries:
+                if e["action"] == "remark":
+                    continue
+                out.append(f"    {seq} {_acl_line(e)}")
+                seq += 10
+            out.append("    (implicit deny any at the end)")
+        state["seen_acls"] = True
         return out, state, done
 
     if cl.startswith("ping "):
-        target = c.split(None, 1)[1].strip()
-        any_up = any(cfg.get("up") and cfg.get("ip") for cfg in state["interfaces"].values())
-        if not any_up:
-            out.append("Type escape sequence to abort.")
-            out.append(".....")
-            out.append("Success rate is 0 percent (0/5)")
-            out.append("% Interface appears down — configure IP and no shutdown first.")
-            return out, state, done
+        target = c.split()[1]
+        out.append("Type escape sequence to abort.")
+        out.append(f"Sending 5, 100-byte ICMP Echos to {target}, timeout is 2 seconds:")
+        via = _rtr_connected(state, target)
         hosts = state.get("hosts") or {}
-        if hosts.get(target):
-            out.append("Type escape sequence to abort.")
-            out.append(f"Sending 5, 100-byte ICMP Echos to {target}, timeout is 2 seconds:")
+        if via and hosts.get(target):
             out.append("!!!!!")
-            out.append("Success rate is 100 percent (5/5)")
+            out.append("Success rate is 100 percent (5/5), round-trip min/avg/max = 1/1/2 ms")
             if target == "10.20.0.10":
                 _mark(done, "ping_pc")
             if target == "10.30.0.20":
                 _mark(done, "ping_pc2")
         else:
-            out.append("Type escape sequence to abort.")
-            out.append(f"Sending 5, 100-byte ICMP Echos to {target}, timeout is 2 seconds:")
             out.append(".....")
             out.append("Success rate is 0 percent (0/5)")
+            if not via:
+                out.append("% No up interface has a network containing " + target +
+                           " — check the address, mask and no shutdown with show ip interface brief.")
         return out, state, done
 
     if cl.startswith("traceroute "):
-        target = c.split(None, 1)[1].strip()
+        target = c.split()[1]
+        out.append("Type escape sequence to abort.")
         out.append(f"Tracing the route to {target}")
-        out.append("  1 10.20.0.10 4 msec 4 msec 4 msec")
-        _mark(done, "trace")
+        if _rtr_connected(state, target) and (state.get("hosts") or {}).get(target):
+            out.append(f"  1 {target} 4 msec 4 msec 4 msec")
+            _mark(done, "trace")
+        else:
+            out.append("  1  *  *  *")
+            out.append("  2  *  *  *")
+            out.append("% No connected route to " + target + " yet.")
         return out, state, done
 
     if cl in ("show version", "sh ver"):
-        out.append(f"{state.get('hostname')} uptime is 2 days")
-        out.append("Cisco IOS Software, Router Training Image")
+        out.append(f"{state.get('hostname')} uptime is 2 days, 3 hours")
+        out.append("Cisco IOS Software, Router Training Image (CIWT simulator)")
         return out, state, done
 
-    if cl in ("show interfaces", "show interface", "sh int"):
-        for p, cfg in state["interfaces"].items():
-            st = "up" if cfg.get("up") else "administratively down"
-            out.append(f"{p} is {st}")
+    if cl in ("show interfaces", "show interface", "sh int", "show ip interface"):
+        for p, cfg in sorted(state["interfaces"].items()):
+            st = "up" if cfg.get("up") else ("administratively down" if not cfg.get("admin") else "down")
+            out.append(f"{p} is {st}, line protocol is {'up' if cfg.get('up') else 'down'}")
+            if cfg.get("desc"):
+                out.append(f"  Description: {cfg['desc']}")
+            if cfg.get("vlan"):
+                out.append(f"  Encapsulation 802.1Q Virtual LAN, Vlan ID  {cfg['vlan']}.")
             if cfg.get("ip"):
                 out.append(f"  Internet address is {cfg['ip']}/{cfg.get('mask')}")
+            if cl == "show ip interface":
+                out.append(f"  Outgoing access list is {cfg.get('acl_out') or 'not set'}")
+                out.append(f"  Inbound  access list is {cfg.get('acl_in') or 'not set'}")
         return out, state, done
 
     if cl in ("show running-config", "show run", "sh run"):
+        out.append("Building configuration...")
         out.append(f"hostname {state.get('hostname')}")
-        for p, cfg in state["interfaces"].items():
+        for p, cfg in sorted(state["interfaces"].items()):
             out.append(f"interface {p}")
+            if cfg.get("desc"):
+                out.append(f" description {cfg['desc']}")
+            if cfg.get("vlan"):
+                out.append(f" encapsulation dot1Q {cfg['vlan']}")
             if cfg.get("ip"):
                 out.append(f" ip address {cfg['ip']} {cfg.get('mask')}")
-            out.append(" no shutdown" if cfg.get("admin") else " shutdown")
+            for dname in ("in", "out"):
+                if cfg.get("acl_" + dname):
+                    out.append(f" ip access-group {cfg['acl_' + dname]} {dname}")
+            if "." not in p:
+                out.append(" no shutdown" if cfg.get("admin") else " shutdown")
+        for r in state.get("static") or []:
+            out.append(r)
+        for num, entries in sorted(state["acls"].items()):
+            for e in entries:
+                out.append(f"access-list {num} {_acl_line(e)}")
+        if state.get("banner"):
+            out.append(state["banner"])
+        out.append("end")
         return out, state, done
 
     if cl in ("copy running-config startup-config", "copy run start", "write memory", "write mem", "write"):
         out.append("Destination filename [startup-config]?")
+        out.append("Building configuration...")
         out.append("[OK]")
+        state["saved"] = True
         _mark(done, "write")
         return out, state, done
 
     if cl in ("show arp", "sh arp"):
         out.append("Protocol  Address          Age (min)  Hardware Addr   Type   Interface")
-        out.append("Internet  10.20.0.10              1   000c.29aa.0001  ARPA   GigabitEthernet0/0")
+        for h in (state.get("hosts") or {}):
+            via = _rtr_connected(state, h)
+            if via:
+                out.append(f"Internet  {h:<15}         1   000c.29aa.{abs(hash(h)) % 9999:04d}  ARPA   {via}")
+        return out, state, done
+
+    if cl in ("show startup-config",):
+        out.append("startup-config is saved" if state.get("saved") else "startup-config is not present")
         return out, state, done
 
     out.append("% Invalid input detected at '^' marker.")
@@ -2698,6 +3273,9 @@ def run_ticket(cmd, state, done):
         if val not in aliases:
             return ["Unknown type. Use classify break-fix | request | incident"], state, done
         state["classify"] = aliases[val]
+        exp = (state.get("expect") or {}).get("classify")
+        if exp and state["classify"] != exp:
+            return ["Classified as %s." % state["classify"], 'Not quite. Many users lost a working service (badges) and the reader is warm — that is an unplanned interruption, so it is an incident, not a request.'], state, done
         _mark(done, "classified")
         return ["Classified as %s." % state["classify"]], state, done
     if cl.startswith("impact "):
@@ -2708,6 +3286,9 @@ def run_ticket(cmd, state, done):
             state["impact"] = "many"
         else:
             return ["Use impact 1 or impact many"], state, done
+        exp = (state.get("expect") or {}).get("impact")
+        if exp and state["impact"] != exp:
+            return ["Impact set to %s." % state["impact"], "Re-read the ticket: 'half the quarterdeck badges' means many users are affected."], state, done
         _mark(done, "impact")
         return ["Impact set to %s." % state["impact"]], state, done
     if cl.startswith("escalate "):
@@ -2718,6 +3299,9 @@ def run_ticket(cmd, state, done):
             state["escalate"] = "no"
         else:
             return ["Use escalate yes or escalate no"], state, done
+        exp = (state.get("expect") or {}).get("escalate")
+        if exp and state["escalate"] != exp:
+            return ["Escalate = %s." % state["escalate"], 'A warm reader is a possible electrical/safety hazard and many users are affected — this goes to facilities/escalation.'], state, done
         _mark(done, "escalated")
         return ["Escalate = %s." % state["escalate"]], state, done
     if cl == "note" or cl.startswith("note "):
@@ -2737,6 +3321,9 @@ def run_ticket(cmd, state, done):
             missing.append("escalate")
         if len(state.get("note") or "") < 24:
             missing.append("note")
+        wrong = [k for k, oid in (("classify", "classified"), ("impact", "impact"), ("escalate", "escalated"))
+                 if state.get("expect") and state.get(k) and oid not in done]
+        missing += [k + " (re-check)" for k in wrong if k not in missing]
         if missing:
             return ["Cannot submit. Still need: " + ", ".join(missing)], state, done
         _mark(done, "submitted")
@@ -2859,6 +3446,30 @@ def verify_all_labs():
         else:
             report.append(f"PASS {lab_id} abbreviations")
     return ok, report
+
+
+# ── Labs added in pass L1 (labs_catalog_new.py) ─────────────────────
+def _install_new_labs():
+    import labs_catalog_new as _N
+    for lab in _N.NEW_LABS:
+        st = lab["initial_state"]
+        if isinstance(st, dict) and st.get("_base") == "win":
+            extra = {k: v for k, v in st.items() if k != "_base"}
+            lab["initial_state"] = _win_state(**extra)
+        if lab["id"] not in LABS_BY_ID:
+            LABS.append(lab)
+            LABS_BY_ID[lab["id"]] = lab
+    for key, ids in _N.NEW_CHAPTER_LABS.items():
+        if key[0] == "CLIENT" and key not in CHAPTER_LABS:
+            # CLIENT chapters 1-6 are ITSUP 8-13: start from the ITSUP chapter's labs
+            CHAPTER_LABS[key] = list(CHAPTER_LABS.get(("ITSUP", key[1] + 7), []))
+        cur = CHAPTER_LABS.setdefault(key, [])
+        cur += [i for i in ids if i not in cur]
+    for k, v in _N.NEW_LAB_ALIGN.items():
+        LAB_ALIGN.setdefault(k, v)
+
+
+_install_new_labs()
 
 
 if __name__ == "__main__":
