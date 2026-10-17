@@ -187,6 +187,22 @@ def _static_cache(resp):
 
 
 
+# ---- Assessment items sent to the browser carry only what the player renders. The answer key, rationales and
+# study tips stay on the server (they used to ship inside the page's JSON, readable with View Source).
+_PUBLIC_ITEM_FIELDS = ('options', 'lo', 'lo_code', 'lo_text')
+
+
+@app.template_filter('public_questions')
+def _public_questions(questions):
+    out = []
+    for q in questions or []:
+        if not isinstance(q, dict):
+            continue
+        item = {k: q[k] for k in _PUBLIC_ITEM_FIELDS if k in q}
+        item['text'] = q.get('text') or q.get('q') or ''
+        out.append(item)
+    return out
+
 # ---- One render-blocking stylesheet. Bootstrap, the self-hosted font faces and the app's own CSS are
 # concatenated (in cascade order) into /assets/app-<hash>.css. Built from the source files on demand and rebuilt
 # when any of them changes, so there is no build step to forget; the URL carries a content hash, so it is
