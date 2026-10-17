@@ -18,8 +18,9 @@
   /* Pass 5 (opt-in): 1080p on desktops with enough cores (the eye-crop stage then gets ~1 camera px per
      crop px; at 720p it upsamples). Falls back to 720p at runtime if the frame budget is missed (_resCheck). */
   function hiResCapable(mobile) {
-    // opt-in (window.HELIX_ENGINE.hiRes or ?hires=1): 1080p helped follow-the-dot calibration on the one
-    // subject with a 1080p source (9/10 pairs) but 9-point results were mixed, so it is not the default
+    // opt-in (window.HELIX_ENGINE.hiRes, ?hires=1, or an admin-set desktop default): on the two proxy
+    // subjects with a 1080p source it helped follow-the-dot (2/2 people, 16/20 sequences) but not 9-point
+    // (13/22); proxies are not real webcams, so 720p stays the default until study data says otherwise
     var cfg = typeof window !== 'undefined' && window.HELIX_ENGINE || {};
     var asked = cfg.hiRes || (typeof location !== 'undefined' && /[?&]hires=1\b/.test(location.search));
     if (!asked || mobile || typeof navigator === 'undefined') return false;
