@@ -267,3 +267,4 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
 .lab-events { padding-left: 1.2rem; max-height: 420px; overflow: auto; }
 .lab-events li { margin-bottom: .2rem; overflow-wrap: anywhere; }
 .lab-events code { white-space: pre-wrap; }
+.term-keys .tkey-check { background: var(--brand, #0a5fc4); color: #fff; font-weight: 600; }

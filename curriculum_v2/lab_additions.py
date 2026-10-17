@@ -7,6 +7,18 @@ Pure data + functions; must not import course_package (it is imported by it).
 import re
 
 EXTRA_KIND_EQUIPMENT = {
+    'vm': {
+        'equipment': 'A real Linux VM that boots inside the browser (v86 emulator + Buildroot Linux; ~12.5 MB download once, '
+                     'then cached). Desktop or laptop recommended; recent phones work (see the lab page for timings).',
+        'real': 'Any Linux machine or VM: the commands are identical (BusyBox; on Ubuntu use sudo adduser instead of adduser -D).',
+        'low_cost': 'The in-browser VM is the low-cost option: nothing to install. Offline: Ubuntu in VirtualBox, WSL or a Raspberry Pi.',
+        'reflection': ['Which of your commands changed the system, and how did you prove each change?',
+                       'What did the real error messages tell you that a simulator might not?',
+                       'Explain 640 in words: owner, group, others.'],
+        'troubleshooting': ['adduser complains about /home: BusyBox still creates the account — check with id tech1.',
+                            'Permission denied running ./check.sh means the x bit is missing (chmod +x).',
+                            'If the VM is slow on a phone, close other tabs; Restart VM gives a clean machine.'],
+    },
     'linux': {
         'equipment': 'LMS Linux shell simulator (bash-style; any modern browser, phone or desktop).',
         'real': 'A Linux VM or server (Ubuntu/Debian) with a standard user account and sudo for the steps that need it.',

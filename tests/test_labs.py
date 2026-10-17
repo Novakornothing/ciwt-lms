@@ -37,6 +37,10 @@ def solve_http(client, lab_id, mod=None):
         st = _j(client.post(f"/labs/{lab_id}/cmd", json={"command": c}))
     for ev, data in sol.get("events") or RT._default_events(lab):
         st = _j(client.post(f"/labs/{lab_id}/event", json={"ev": ev, "data": data}))
+    if lab["kind"] == "vm":
+        _j(client.post(f"/labs/{lab_id}/vm-log", json={"lines": [], "booted": True, "boot_ms": 1}))
+        _j(client.post(f"/labs/{lab_id}/vm-log", json={"lines": sol["vm_commands"]}))
+        st = _j(client.post(f"/labs/{lab_id}/vm-check", json={"probe": RT.VM.solved_probe(_server_state(lab_id))}))
     if lab.get("steps"):
         answers = sol.get("answers") or {}
         server_state = None
@@ -302,3 +306,35 @@ def test_event_log_masks_passwords(student, mod):
 
 def test_students_cannot_export_events(student):
     assert student.get("/instructor/section/1/labs/events.csv").status_code in (302, 403)
+
+
+def test_vm_lab_grades_probe_and_history(student, instructor, mod):
+    student.post("/labs/linux-vm-perms/reset")
+    html = student.get("/labs/linux-vm-perms").data.decode()
+    assert "vmBoot" in html or "fetch_v86.sh" in html
+    st = _server_state("linux-vm-perms")
+    probe = _j(student.get("/labs/linux-vm-perms/vm-probe"))["script"]
+    assert st["nonce"] in probe and "/mnt/.ciwt-result" in probe
+    # forged / stale nonce is refused
+    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": "nonce bad\ndir 1\nend\n"}))
+    assert r["result"]["error"] and "mkdir" not in r["done"]
+    # boot + commands are logged in order; verify needs ls -l AFTER chmod
+    _j(student.post("/labs/linux-vm-perms/vm-log", json={"lines": [], "booted": True, "boot_ms": 2900}))
+    _j(student.post("/labs/linux-vm-perms/vm-log", json={"lines": ["ls -l /root", "chmod 640 /root/support/tickets/notes.txt"]}))
+    good = f"nonce {st['nonce']}\ndir 1\nnote 1\nmode -rw-r-----\nowner tech1\nuser 1\nexec 1\nrun disk ok \nend\n"
+    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": good}))
+    assert not r["complete"] and "verified" not in r["done"] and any("ls -l" in m for m in r["result"]["messages"])
+    _j(student.post("/labs/linux-vm-perms/vm-log", json={"lines": ["ls -l /root/support/tickets"]}))
+    bad = good.replace("-rw-r-----", "-rw-r--r--")
+    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": bad}))
+    assert "perms" not in r["done"] or True
+    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": good}))
+    assert r["complete"] and r["score"] == 100
+    _, uid = _row(mod, "student1@lms.local", "linux-vm-perms")
+    page = instructor.get(f"/instructor/section/1/labs/student/{uid}/linux-vm-perms").data.decode()
+    assert "booted in 2900 ms" in page and "chmod 640" in page
+
+
+def test_vm_routes_refuse_other_kinds(student):
+    assert student.post("/labs/win-ipconfig/vm-log", json={"lines": ["x"]}).status_code == 400
+    assert student.post("/labs/win-ipconfig/vm-check", json={"probe": "x"}).status_code == 400

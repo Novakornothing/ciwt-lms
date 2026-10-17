@@ -12,6 +12,7 @@ import interactive_labs as IL
 import labs_activity as LA
 import labs_gui as LG
 import labs_linux as LX
+import labs_vm as VM
 
 KIND_GROUPS = [
     ("ticket", "Help desk & bench", "Ticket intake and the hardware bench card."),
@@ -21,6 +22,7 @@ KIND_GROUPS = [
     ("linux", "Linux shell", "bash on a support server."),
     ("switch", "Switch (IOS)", "VLANs, access ports, trunks, port security."),
     ("router", "Router (IOS)", "Interfaces, routes, inter-VLAN routing and ACLs."),
+    ("vm", "Real Linux VM (runs in your browser)", "A genuine Linux machine boots on your device — real commands, graded by inspecting the VM."),
 ]
 KIND_LABEL = {k: t for k, t, _ in KIND_GROUPS}
 IOS_SUBMODES = ("config-if", "config-vlan", "config-subif")
@@ -55,6 +57,8 @@ def fresh_state(lab_id, uid=0, reseed=0):
     if lab["kind"] == "win11gui" and not st.get("gui"):
         st["gui"] = LG.gui_state()
     st["seed"] = _seed(lab_id, uid, reseed)
+    if lab["kind"] == "vm":
+        st.update(VM.fresh(lab, st["seed"]))
     st["objectives"] = [o["id"] for o in lab["objectives"]]
     if lab.get("steps"):
         LA.ensure_generated(lab["steps"], st)
@@ -64,7 +68,7 @@ def fresh_state(lab_id, uid=0, reseed=0):
 def prompt(lab, state):
     if lab["kind"] == "linux":
         return LX.prompt(state)
-    if lab["kind"] in ("activity", "win11gui"):
+    if lab["kind"] in ("activity", "win11gui", "vm"):
         return ""
     return IL.prompt_for(lab, state)
 
@@ -261,6 +265,21 @@ def complete(lab, state, partial):
 # ------------------------------------------------------------------ GUI events and graded steps
 
 
+def vm_log(lab_id, state, done, lines, booted=False):
+    """Record command lines the student sent to a real VM (ordered)."""
+    lab = get_lab(lab_id)
+    VM.record_commands(state, lines)
+    if "boot" not in done and (lines or booted):
+        done = done + ["boot"]
+    return state, _clean(lab, done)
+
+
+def vm_check(lab_id, state, done, probe_text, booted=True):
+    lab = get_lab(lab_id)
+    res, state, done = VM.grade(lab, state, list(done), probe_text, booted)
+    return res, state, _clean(lab, done)
+
+
 def apply_event(lab_id, state, done, ev, data):
     lab = get_lab(lab_id)
     state = deepcopy(state) if state else fresh_state(lab_id)
@@ -425,6 +444,10 @@ def solve(lab_id, uid=0):
     for ev, data in sol.get("events") or _default_events(lab):
         res, state, done = apply_event(lab_id, state, done, ev, data)
         log.append((ev, res))
+    if lab["kind"] == "vm":
+        state, done = vm_log(lab_id, state, done, sol.get("vm_commands") or [])
+        res, state, done = vm_check(lab_id, state, done, VM.solved_probe(state))
+        log.append(("vm-check", res))
     answers = sol.get("answers") or {}
     if callable(answers):
         answers = answers(state)

@@ -272,8 +272,15 @@ def register(app, db, deps):
                 back = None
         boot = payload_for(row, lab, state, done)
         boot['transcript'] = _j(row.transcript_json, [])
-        tpl = {'win11gui': 'win11_gui_lab.html', 'activity': 'activity_lab.html'}.get(lab.get('kind'), 'interactive_lab.html')
-        return render_template(tpl, lab=lab, boot=boot, prompt=boot.get('prompt', ''), practical_back=back,
+        if lab.get('kind') == 'vm':
+            boot['vm_nonce'] = state.get('nonce')
+        tpl = {'win11gui': 'win11_gui_lab.html', 'activity': 'activity_lab.html', 'vm': 'vm_lab.html'}.get(lab.get('kind'), 'interactive_lab.html')
+        vm_ok = None
+        if lab.get('kind') == 'vm':
+            import os
+            vdir = os.path.join(app.static_folder, 'vendor', 'v86')
+            vm_ok = all(os.path.isfile(os.path.join(vdir, f)) for f in ('libv86.js', 'v86.wasm', 'seabios.bin', 'vgabios.bin', lab['vm']['image']))
+        return render_template(tpl, lab=lab, boot=boot, prompt=boot.get('prompt', ''), practical_back=back, vm_assets_ok=vm_ok,
                                palette=RT.palette(lab), steps=RT.public_steps(lab, state))
 
     @login_required
@@ -412,6 +419,57 @@ def register(app, db, deps):
         state, _ = load(row)
         partial = ((request.get_json(silent=True) or {}).get('partial') or '')[:300]
         return jsonify(RT.complete(lab, state, partial))
+
+    @login_required
+    def interactive_lab_vm_log(lab_id):
+        """Real-VM labs: the page reports each command line the student sent to the VM (and the boot time)."""
+        lab, err = lab_or_json_404(lab_id)
+        if err:
+            return err
+        if lab.get('kind') != 'vm':
+            return jsonify({'error': 'not a VM lab'}), 400
+        row = get_row(lab_id)
+        state, done = load(row)
+        body = request.get_json(silent=True) or {}
+        lines = [str(x)[:500] for x in (body.get('lines') or [])][:50]
+        before = list(done)
+        state, done = RT.vm_log(lab_id, state, done, lines, booted=bool(body.get('booted')))
+        if body.get('booted'):
+            log(row, 'vm', 'boot', 'ok', None, f"booted in {body.get('boot_ms')} ms; {str(body.get('ua') or '')[:120]}")
+        for i, ln in enumerate(lines):
+            log(row, 'vm', ln, 'ok')
+        tr = [{'t': '$ ' + ln, 'c': 'cmd'} for ln in lines]
+        save(row, lab, state, done, lines=tr, count=bool(lines))
+        return jsonify(payload_for(row, lab, state, done, {'newly': [o for o in done if o not in before]}))
+
+    @login_required
+    def interactive_lab_vm_check(lab_id):
+        """Real-VM labs: grade the probe output the page read back from the VM."""
+        lab, err = lab_or_json_404(lab_id)
+        if err:
+            return err
+        if lab.get('kind') != 'vm':
+            return jsonify({'error': 'not a VM lab'}), 400
+        row = get_row(lab_id)
+        state, done = load(row)
+        body = request.get_json(silent=True) or {}
+        before = list(done)
+        res, state, done = RT.vm_check(lab_id, state, done, str(body.get('probe') or '')[:4000], booted=True)
+        newly = [o for o in done if o not in before]
+        save(row, lab, state, done, wrong=bool(res.get('error')) or bool(res.get('messages')),
+             ev=('check', 'vm probe ' + json.dumps(state.get('probe_last') or {}, sort_keys=True),
+                 'error' if res.get('error') else ('ok' if RT.is_complete(lab, done) else ('progress' if newly else 'wrong')),
+                 newly, res.get('error') or '; '.join(res.get('messages') or [])))
+        return jsonify(payload_for(row, lab, state, done, {'result': res, 'newly': newly}))
+
+    @login_required
+    def interactive_lab_vm_probe(lab_id):
+        lab, err = lab_or_json_404(lab_id)
+        if err:
+            return err
+        row = get_row(lab_id)
+        state, _ = load(row)
+        return jsonify({'script': RT.VM.probe_script(state)})
 
     @login_required
     def interactive_lab_mark_done(lab_id):
@@ -619,6 +677,9 @@ def register(app, db, deps):
         ('/labs/<lab_id>/undo', 'interactive_lab_undo', interactive_lab_undo, ['POST']),
         ('/labs/<lab_id>/reset', 'interactive_lab_reset', interactive_lab_reset, ['POST']),
         ('/labs/<lab_id>/complete', 'interactive_lab_complete', interactive_lab_complete, ['POST']),
+        ('/labs/<lab_id>/vm-log', 'interactive_lab_vm_log', interactive_lab_vm_log, ['POST']),
+        ('/labs/<lab_id>/vm-check', 'interactive_lab_vm_check', interactive_lab_vm_check, ['POST']),
+        ('/labs/<lab_id>/vm-probe', 'interactive_lab_vm_probe', interactive_lab_vm_probe, ['GET']),
         ('/labs/<lab_id>/mark-done', 'interactive_lab_mark_done', interactive_lab_mark_done, ['POST']),
         ('/instructor/section/<int:section_id>/labs/results', 'instructor_lab_results', instructor_lab_results, ['GET']),
         ('/instructor/section/<int:section_id>/labs/results.csv', 'instructor_lab_results_csv', instructor_lab_results_csv, ['GET']),

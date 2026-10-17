@@ -55,6 +55,7 @@
       setPrompt(p.prompt);
       kit.apply(p);
       scroll();
+      checkpointDue(p);
     }).catch(function () {
       echo.classList.add('failed');
       var r = line('(not sent — connection problem) ', 'err');
@@ -67,6 +68,22 @@
       busy = false;
       if (queue.length) send(queue.shift());
     });
+  }
+
+  // when every command objective is met but a checkpoint question remains, leave focus mode and show it
+  var cpShown = false;
+  function checkpointDue(p) {
+    if (cpShown || !p.steps || !p.steps.length) return;
+    var done = p.done || [];
+    var stepObj = p.steps.map(function (s) { return s.objective; });
+    var cmdLeft = (p.objectives || []).some(function (o) { return stepObj.indexOf(o.id) < 0 && done.indexOf(o.id) < 0; });
+    var open = p.steps.filter(function (s) { return done.indexOf(s.objective) < 0; })[0];
+    if (cmdLeft || !open) return;
+    cpShown = true;
+    if (wrap.classList.contains('term-focus')) exitFocus();
+    kit.toast('Commands done — answer the checkpoint below.', 'ok');
+    var card = document.querySelector('[data-step="' + open.id + '"]');
+    if (card) setTimeout(function () { card.scrollIntoView({ block: 'start', behavior: 'smooth' }); var h = card.querySelector('h2'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } }, 150);
   }
 
   function tab() {

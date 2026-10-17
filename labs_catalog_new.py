@@ -1253,6 +1253,10 @@ WIN_AD_USERS = _lab(
 NEW_LABS = [NET_SUBNET, HW_CABLES, HW_PC_BUILD, TICKET_METHOD, WIN_NET_CLI, LINUX_SHELL, PRINT_TROUBLE, RTR_VLAN_ACL, SW_VLAN_MULTI,
             WIFI_SECURE, SEC_MALWARE, OPS_BACKUP, VIRT_VM, MOB_MDM, WIN_AD_USERS]
 
+# Real-environment labs (a genuine Linux VM in the browser, v86) — see labs_vm.py
+from labs_vm import VM_LABS as _VM_LABS  # noqa: E402
+NEW_LABS += _VM_LABS
+
 for _l in NEW_LABS:
     if _l["kind"] == "win11gui":
         _l["initial_state"] = _win(gui=gui_state(default_ad() if _l.get("gui_ad") else None))
@@ -1267,7 +1271,7 @@ NEW_CHAPTER_LABS = {
     ("ITSUP", 6): ["virt-vm"],
     ("ITSUP", 7): ["ticket-method"],
     ("ITSUP", 8): ["win-ad-users"],
-    ("ITSUP", 9): ["linux-shell"],
+    ("ITSUP", 9): ["linux-shell", "linux-vm-perms"],
     ("ITSUP", 10): ["sec-malware", "win-ad-users"],
     ("ITSUP", 12): ["ops-backup"],
     ("ITSUP", 13): ["win-net-cli", "print-trouble"],
