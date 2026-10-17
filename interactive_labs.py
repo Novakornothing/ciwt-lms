@@ -1427,14 +1427,18 @@ CHAPTER_LABS = {
     ("ITSUP", 1): ["ticket-intake"],
     ("ITSUP", 2): ["hw-board"],
     ("ITSUP", 3): ["w11-disk", "gui-devices"],
-    ("ITSUP", 5): ["win-ipconfig", "win-dns-break", "w11-inventory", "w11-netsh", "gui-ethernet", "win-hostname", "win-ping-loop", "win-nslookup-ok", "win-flushdns", "win-arp", "win-route", "w11-wlan"],
+    ("ITSUP", 5): ["win-ipconfig", "win-dns-break", "w11-inventory", "w11-netsh", "gui-ethernet", "win-hostname", "win-ping-loop", "win-nslookup-ok", "win-flushdns", "win-arp", "win-route", "w11-wlan", "win-getmac", "win-netstat"],
+    # pass 8: chapters 7 and 11 had no lab; these existing labs apply the method each chapter teaches
+    ("ITSUP", 7): ["win-dns-break", "win-full-triage"],
     ("ITSUP", 8): ["w11-inventory", "w11-powershell-net", "w11-services", "win-dhcp-renew", "gui-about", "gui-services", "gui-update", "gui-accounts"],
     ("ITSUP", 10): ["gui-accounts", "gui-services", "w11-firewall"],
+    ("ITSUP", 11): ["w11-processes", "w11-services"],
     ("ITSUP", 13): ["w11-inventory", "win-ipconfig", "win-dns-break", "win-dhcp-renew", "win-full-triage", "w11-powershell-net", "w11-netsh", "w11-processes", "w11-firewall", "w11-disk", "gui-about", "gui-ethernet", "gui-renew", "gui-update", "gui-accounts", "gui-devices"],
-    ("NETOPS", 1): ["win-ipconfig"],
+    ("NETOPS", 1): ["win-ipconfig", "win-arp", "win-netstat"],
     ("NETOPS", 2): ["sw-vlan-access", "sw-trunk-basics", "sw-vlan-and-trunk", "sw-port-security", "sw-mac-table", "sw-banner", "sw-int-status", "sw-show-ver", "sw-describe"],
-    ("NETOPS", 3): ["rtr-gateway", "rtr-two-interfaces", "rtr-edge-complete", "rtr-default-route", "rtr-describe"],
+    ("NETOPS", 3): ["rtr-gateway", "rtr-two-interfaces", "rtr-edge-complete", "rtr-default-route", "rtr-describe", "rtr-trace"],
     ("NETOPS", 4): ["win-dns-break", "win-dhcp-renew"],
+    ("NETOPS", 5): ["sw-port-security", "sw-banner", "sw-int-status"],  # pass 8: chapter 5 had no lab
     ("NETOPS", 6): ["win-full-triage", "sw-vlan-and-trunk", "rtr-edge-complete"],
     ("NETOPS", 9): [
         "sw-vlan-access", "sw-trunk-basics", "sw-vlan-and-trunk",
