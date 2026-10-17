@@ -144,3 +144,22 @@ def test_lab_pages_show_rubric_before_starting(student):
 
 def test_staff_rail_links_course_materials(instructor):
     assert '/instructor/materials' in instructor.get('/instructor').get_data(as_text=True)
+
+
+def test_instructor_notes_hidden_from_students_shown_to_staff(app, mod):
+    with app.test_request_context():
+        from flask_login import login_user, logout_user
+        html = '<p>Lesson</p><div class="instructor-note"><h4>Instructor — 50 minutes</h4><p>Pace.</p></div><p>More</p>'
+        stu = mod.User.query.filter_by(email='student1@lms.local').first()
+        ins = mod.User.query.filter_by(email='instructor@lms.local').first()
+        login_user(stu)
+        out = mod.render_lesson_filter(html)
+        assert 'Instructor — 50 minutes' not in out and '<p>More</p>' in out
+        logout_user()
+        login_user(ins)
+        assert 'Instructor — 50 minutes' in mod.render_lesson_filter(html)
+
+
+def test_student_lesson_page_has_no_instructor_note(student, ids):
+    body = student.get(f"/student/module/{ids['section']}/{ids['module']}", follow_redirects=True).get_data(as_text=True)
+    assert 'class="instructor-note"' not in body

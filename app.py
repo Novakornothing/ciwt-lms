@@ -6814,9 +6814,18 @@ def simple_md(text):
     return render_lesson_html(text)
 
 
+_INSTRUCTOR_NOTE_RE = re.compile(r'<div class="instructor-note">.*?</div>', re.S)
+
+
 @app.template_filter('render_lesson')
 def render_lesson_filter(text):
-    return render_lesson_html(text)
+    out = render_lesson_html(text)
+    # pass 8: per-lesson teaching notes (timing, common misses) are for staff; students get the lesson only
+    try:
+        staff = current_user.is_authenticated and current_user.role in ('instructor', 'admin')
+    except Exception:
+        staff = False
+    return out if staff else _INSTRUCTOR_NOTE_RE.sub('', out)
 
 
 def sync_curriculum():
