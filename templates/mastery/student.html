@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "mastery/_macros.html" import why, status_chip, demo_ribbon with context %}
+{% block title %}My mastery — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">My mastery</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">My mastery</div>
+  <h1 class="h3 mb-1">What you have mastered, and what is next</h1>
+  <p class="mb-0">One estimate per course objective, from your answers, labs and lesson time. It is a learning aid, never a grade.</p>
+</div>
+<div class="d-flex flex-wrap gap-2 mb-3">{{ demo_ribbon(st.demo) }}</div>
+
+{% set mastery_path = path %}{% set mastery_section_id = section.id %}
+<div class="card mb-4"><div class="card-body">{% include "mastery/_path.html" %}
+{% if not path.steps %}<p class="mb-0">Nothing to recommend right now. Keep going with your lessons.</p>{% endif %}</div></div>
+
+<div class="card mb-4">
+  <div class="card-header navy"><h2 class="h6 mb-0">How the estimate works</h2></div>
+  <div class="card-body small">
+    <p>Each objective starts at {{ (model_params.p_init * 100)|round|int }}%. Every answer moves it: a right answer raises it, a wrong one lowers it, allowing for lucky guesses ({{ (model_params.guess * 100)|round|int }}%) and slips ({{ (model_params.slip * 100)|round|int }}%). Graded test and mastery-check questions count fully, chapter checks {{ (weights.quiz * 100)|round|int }}%, review checks {{ (weights.review_check * 100)|round|int }}% and lab results {{ (weights.lab * 100)|round|int }}%. Reading a lesson for at least half its time adds a little; reading less never takes anything away.</p>
+    <p class="mb-0">{% if st.helix_status == 'ok' %}Helix is on for you, so a quick pass over a section may <em>offer</em> an optional review. It never changes an estimate or a grade.{% else %}Helix is not used for you{% if st.helix_status == 'no_consent' %} (no current consent){% elif st.helix_status == 'disabled' %} (off for this class){% endif %}, so these estimates come only from your answers, labs and lesson time.{% endif %}</p>
+  </div>
+</div>
+
+{% for c in chapters %}
+<section class="card mb-3" aria-labelledby="mxCh{{ c.chapter }}">
+  <div class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
+    <h2 class="h6 mb-0" id="mxCh{{ c.chapter }}">Chapter {{ c.chapter }}</h2>
+    {% if c.tested_out %}<span class="mx-chip mx-s-mastered"><span class="mx-glyph" aria-hidden="true">✓</span> Mastery check passed</span>{% endif %}
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for r in c.rows %}
+    <li class="list-group-item mx-obj-row">
+      <div class="d-flex flex-wrap justify-content-between gap-2">
+        <div class="mx-obj-text"><span class="mx-code">{{ r.obj }}</span> {{ r.text }}</div>
+        {{ status_chip(r.row.state, r.est.pct, r.est.confidence) }}
+      </div>
+      {% set rs = (r.row.action.reasons if r.row.action else []) + r.row.notes %}
+      {% if rs or r.est.status != 'not_started' %}
+      {{ why(rs or ['This is your current estimate. No action is needed right now.'], evidence=r.evidence, label='Why this estimate?') }}
+      {% endif %}
+      <div class="small mt-1">
+        {% if r.row.action %}<a href="{{ url_for('mastery_review', section_id=section.id, obj=r.obj) }}">Open the review</a>
+        {% elif r.lesson %}<a href="{{ url_for('mastery_review', section_id=section.id, obj=r.obj) }}">Review this objective</a> <span class="mx-muted">(optional)</span>{% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+
+<section class="card mb-4" aria-labelledby="mxLogH">
+  <div class="card-header navy"><h2 class="h6 mb-0" id="mxLogH">What the engine did, and why</h2></div>
+  {% if log %}
+  <ul class="list-group list-group-flush">
+    {% for e in log %}
+    <li class="list-group-item small">
+      <div class="d-flex flex-wrap justify-content-between gap-2"><strong>{{ mastery_action_label.get(e.action, e.action) }} · {{ e.target }}</strong><span class="mx-muted">{{ e.created_at.strftime('%d %b %H:%M') }} UTC{% if e.status == 'resolved' %} · no longer applies{% elif e.status == 'done' %} · done{% elif e.status == 'skipped' %} · skipped{% endif %}</span></div>
+      <ul class="mb-0">{% for r in reasons_of(e) %}<li>{{ r }}</li>{% endfor %}</ul>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<div class="card-body small">No decisions yet.</div>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Mastery check result — chapter {{ chapter }} — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="eyebrow">Mastery check · not graded</div>
+  <h1 class="h3 mb-1">{% if check.passed %}Chapter {{ chapter }}: you tested out{% else %}Chapter {{ chapter }}: not yet{% endif %}</h1>
+  <p class="mb-0">{{ check.correct }} of {{ check.total }} right ({{ ((100 * check.correct / check.total) if check.total else 0)|round|int }}%). Passing needs {{ pass_pct }}% and at least one right answer per objective.</p>
+</div>
+<div class="card mb-3"><div class="card-body">
+  {% if check.passed %}<p>Your path now skips chapter {{ chapter }}. Its lessons stay open whenever you want them, and nothing in your gradebook changed.</p>
+  {% else %}<p>No problem: your answers still help the engine pick what to show you. Work through the chapter's lessons; your path is updated.</p>{% endif %}
+  <h2 class="h6">By objective</h2>
+  <ul class="mb-0">{% for r in rows %}<li><span class="mx-glyph" aria-hidden="true">{{ '✓' if r.ok == r.n else ('~' if r.ok else '·') }}</span> {{ r.obj }}: {{ r.ok }} of {{ r.n }} right <span class="mx-muted">— {{ r.text }}</span></li>{% endfor %}</ul>
+</div></div>
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <a class="btn btn-brand" href="{{ continue_url }}">Continue on your path</a>
+  <a class="btn btn-outline-navy" href="{{ url_for('mastery_student', section_id=section.id) }}">My mastery</a>
+</div>
+{% endblock %}

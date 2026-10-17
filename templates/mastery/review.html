@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "mastery/_macros.html" import why, status_chip with context %}
+{% block title %}Review {{ obj }} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('mastery_student', section_id=section.id) }}">My mastery</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Review {{ obj }}</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">{% if variant == 'alt' %}Another way to see it{% else %}Short review{% endif %} · about 5 minutes</div>
+  <h1 class="h3 mb-1">{{ o.text }}</h1>
+  <p class="mb-0">{{ obj }} · from {{ lesson.title if lesson else 'this chapter' }}{% if required %} · <strong>required by your instructor</strong>{% endif %}</p>
+</div>
+
+<div class="mx-review-why mb-3">
+  {{ status_chip(est.status if est.status else 'not_started', est.pct, est.confidence) }}
+  {{ why(reasons, evidence=evidence, section_id=section.id, open=true) }}
+</div>
+
+<p class="mx-frame">{% if variant == 'alt' %}Here is the same idea from a different angle: a plain-language summary, an analogy and a worked example, all taken from your course lessons. Read it once, then try the questions at the end.{% else %}These are the parts of the lesson that teach this objective. Read them, check yourself, then answer the questions at the end. They are not graded.{% endif %}</p>
+
+{% for b in review.blocks %}
+<section class="card mb-3 mx-block mx-block-{{ b.kind }}" aria-labelledby="mxB{{ loop.index }}">
+  <div class="card-header"><h2 class="h6 mb-0" id="mxB{{ loop.index }}">{% if b.kind == 'section' %}From {{ lesson.label if lesson else 'the lesson' }}: {% endif %}{{ b.label }}</h2></div>
+  <div class="card-body module-content mx-excerpt">{{ b.html|safe }}</div>
+</section>
+{% else %}
+<p>There is no lesson excerpt for this objective yet. <a href="{{ lesson_link }}">Open the lesson</a>.</p>
+{% endfor %}
+
+{% if review.glossary %}
+<section class="card mb-3" aria-labelledby="mxGloss">
+  <div class="card-header"><h2 class="h6 mb-0" id="mxGloss">Key terms (course glossary)</h2></div>
+  <dl class="card-body mb-0 mx-gloss">
+    {% for g in review.glossary %}<dt>{{ g.term }}{% if g.pending %} <span class="mx-muted" title="Added in pass 9-10, pending SME review">†</span>{% endif %}</dt><dd>{{ g.definition }}</dd>{% endfor %}
+  </dl>
+</section>
+{% endif %}
+
+<section class="card mb-3" aria-labelledby="mxChecks">
+  <div class="card-header navy"><h2 class="h6 mb-0" id="mxChecks">Check yourself ({{ items|length }} question{{ 's' if items|length != 1 }}, not graded)</h2></div>
+  <div class="card-body">
+    {% if items %}
+    <form method="post" action="{{ url_for('mastery_review', section_id=section.id, obj=obj) }}" id="mxReviewForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="check_id" value="{{ check.id }}">
+      {% for it in items %}{% set qi = loop.index0 %}
+      <fieldset class="mx-q mb-3">
+        <legend class="h6">{{ loop.index }}. {{ it.text }}</legend>
+        {% for opt in it.options %}
+        <div class="form-check mx-opt">
+          <input class="form-check-input" type="radio" name="q{{ qi }}" id="q{{ qi }}o{{ loop.index0 }}" value="{{ opt }}">
+          <label class="form-check-label" for="q{{ qi }}o{{ loop.index0 }}">{{ opt }}</label>
+        </div>
+        {% endfor %}
+      </fieldset>
+      {% endfor %}
+      <button type="submit" class="btn btn-brand">Finish review</button>
+    </form>
+    {% else %}
+    <form method="post" action="{{ url_for('mastery_review', section_id=section.id, obj=obj) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="check_id" value="{{ check.id }}">
+      <p>No check questions are available for this objective yet.</p>
+      <button type="submit" class="btn btn-brand">Mark review as done</button>
+    </form>
+    {% endif %}
+  </div>
+</section>
+
+<div class="d-flex flex-wrap gap-2 mb-4 align-items-center">
+  {% if not required %}
+  <form method="post" action="{{ url_for('mastery_review_skip', section_id=section.id, obj=obj) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-outline-navy">Skip for now</button>
+  </form>
+  {% endif %}
+  {% if variant != 'alt' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, variant='alt') }}">Explain it another way</a>{% endif %}
+  {% if lesson_link %}<a class="btn btn-outline-navy" href="{{ lesson_link }}">Open the full lesson</a>{% endif %}
+</div>
+{% endblock %}
