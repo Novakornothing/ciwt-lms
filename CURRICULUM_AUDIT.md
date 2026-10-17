@@ -58,9 +58,9 @@ All originals stay recoverable: the revised content is a layer (`curriculum_v2/`
 | ITSUP | 5 Client networking | 280 | 4 | 14 | — | 10 | yes |
 | ITSUP | 6 Virtualisation & cloud | 185 | 3 | 0 | CL-6 | 10 | yes (suppl.) |
 | ITSUP | 7 Troubleshooting method | 185 | 3 | 2 | — | 10 | yes (suppl.) |
-| ITSUP | 8 Windows install & config | 195 | 3 | 8 | — | 10 | yes |
+| ITSUP | 8 Windows install & config | 195 | 4 | 8 | — | 10 | yes |
 | ITSUP | 9 Linux, macOS | 175 | 3 | 0 | CL-9 | 10 | yes |
-| ITSUP | 10 Endpoint security | 180 | 3 | 3 | — | 10 | yes |
+| ITSUP | 10 Endpoint security | 180 | 4 | 3 | — | 10 | yes |
 | ITSUP | 11 Software troubleshooting | 185 | 3 | 2 | — | 10 | yes (suppl.) |
 | ITSUP | 12 Operational procedures | 175 | 3 | 0 | CL-12 | 10 | yes |
 | ITSUP | 13 Windows CLI & VM track | 230 | 3 | 16 | — | 10 | skills exam |
