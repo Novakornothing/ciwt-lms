@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}My curriculum tickets{% endblock %}
 {% block content %}
+{% from '_ui.html' import empty_state %}
 <div class="page-hero d-flex flex-wrap justify-content-between align-items-start gap-2">
   <div>
     <h1 class="h3 mb-1">Curriculum tickets</h1>
@@ -34,6 +35,6 @@
   {% endfor %}
 </div>
 {% else %}
-<div class="card card-body text-muted">No tickets yet. Use <a href="{{ url_for('tickets_new') }}">New ticket</a> or the link on a lesson page.</div>
+{{ empty_state('ticket-perforated', 'No tickets yet', 'Spotted a mistake in a lesson or question? Report it and the curriculum team will follow up.', url_for('tickets_new'), 'New ticket') }}
 {% endif %}
 {% endblock %}

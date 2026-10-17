@@ -1,0 +1,9 @@
+{# Shared UI macros (pass 6). {% from '_ui.html' import empty_state %} #}
+{% macro empty_state(icon, title, text=None, action_url=None, action_label=None, card=True) %}
+<div class="{{ 'card ' if card }}empty-state" role="status">
+  <i class="bi bi-{{ icon }}" aria-hidden="true"></i>
+  <p class="empty-title">{{ title }}</p>
+  {% if text %}<p class="empty-text">{{ text }}</p>{% endif %}
+  {% if action_url %}<a class="btn btn-brand mt-2" href="{{ action_url }}">{{ action_label }}</a>{% endif %}
+</div>
+{% endmacro %}

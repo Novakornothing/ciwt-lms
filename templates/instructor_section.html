@@ -205,7 +205,7 @@
                   <td>{{ '%.0f'|format(e.progress_percent) }}%</td>
                   <td class="text-end">
                     <form method="post" action="{{ url_for('instructor_unenroll') }}" class="d-inline"
-                          onsubmit="return confirm('Remove this student?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          data-confirm="Remove this student?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <input type="hidden" name="section_id" value="{{ section.id }}">
                       <input type="hidden" name="enrollment_id" value="{{ e.id }}">
                       <button class="btn btn-sm btn-outline-danger">Remove</button>

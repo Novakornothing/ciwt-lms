@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Search curriculum{% endblock %}
 {% block content %}
+{% from '_ui.html' import empty_state %}
 <div class="page-hero">
   <h1 class="h3 mb-1">Find curriculum</h1>
   <p class="mb-0">Search lessons, chapters, and knowledge tests.</p>
@@ -30,9 +31,9 @@
     {% endfor %}
   </div>
   {% else %}
-  <div class="card card-body text-muted">No matching curriculum. Try a shorter term (RAM, VLAN, DNS).</div>
+  {{ empty_state('search', 'No lessons match “' ~ q ~ '”', 'Try a shorter or more general term, such as RAM, VLAN or DNS.') }}
   {% endif %}
 {% else %}
-  <div class="card card-body text-muted">Enter a topic, tool, or chapter name to jump straight to the lesson.</div>
+  {{ empty_state('search', 'Search the curriculum', 'Type a topic, tool or chapter name to jump straight to the lesson.') }}
 {% endif %}
 {% endblock %}

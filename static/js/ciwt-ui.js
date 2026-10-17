@@ -3,6 +3,14 @@
 (function () {
   'use strict';
 
+  // form[data-confirm]: one confirm() for destructive actions (text comes from an escaped attribute, never inline JS)
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (f && f.matches && f.matches('form[data-confirm]') && !window.confirm(f.getAttribute('data-confirm'))) {
+      e.preventDefault(); e.stopImmediatePropagation();
+    }
+  }, true);
+
   // [data-history-back]: go back if there is somewhere to go, else home
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-history-back]');
