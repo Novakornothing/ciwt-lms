@@ -1022,4 +1022,4 @@ html[data-theme="dark"] .chip-scroll a.chip-link[aria-current] .chip-count { col
 @media print { .lesson-figure .figure-desc { display: block; } .lesson-figure .figure-desc[open] summary { display: none; } }
 /* pass 9: Bootstrap's pink code colour is 4.2:1 on the pale worked-example/scenario panels; darken it in light theme
    (dark theme keeps its own !important code colour) */
-.core-content code { color: #a1145a; }
+.core-content code, .live-demo code { color: #a1145a; }   /* pass 10: also the pale live-demo boxes (lesson 5.1) */
