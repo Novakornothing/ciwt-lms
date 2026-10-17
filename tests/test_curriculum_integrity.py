@@ -210,9 +210,9 @@ def test_syllabus_has_institution_placeholders_and_gradebook_weights():
     assert by['term']['value'] == '' and by['term']['placeholder'].startswith('[')
     keys = {p['key'] for p in s['policies']}
     assert {'attendance', 'late_work', 'academic_integrity', 'accessibility', 'ai_use'} <= keys
-    assert [c['weight'] for c in s['grading']['categories']] == [70, 30, 0]
+    assert [c['weight'] for c in s['grading']['categories']] == [70, 30, 0, 0]
     custom = CP.syllabus('ITSUP', gb={'weight_tests': 50, 'weight_skills': 35, 'weight_quizzes': 15, 'pass_mark': 75})
-    assert [c['weight'] for c in custom['grading']['categories']] == [50, 35, 15]
+    assert [c['weight'] for c in custom['grading']['categories']] == [50, 35, 15, 0]
     assert custom['grading']['pass_mark'] == 75
     assert 'not affiliated' in s['disclaimer'].lower()
 

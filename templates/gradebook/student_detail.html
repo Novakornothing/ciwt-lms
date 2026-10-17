@@ -68,6 +68,7 @@
             {% if c.status == 'excused' %}<span class="badge text-bg-secondary">Excused</span>
             {% elif c.score is not none %}<span class="badge text-bg-{{ 'success' if c.passed else 'warning' }}">{{ 'Passed' if c.passed else 'Below pass' }}</span>
             {% elif c.available is defined and not c.available %}<span class="badge text-bg-light border">Not released</span>
+            {% elif c.item.type == 'lab' %}<a class="btn btn-sm btn-outline-navy" href="{{ url_for('course_labs', section_id=section.id) }}">Open labs</a>
             {% elif c.item.type == 'test' %}<a class="btn btn-sm btn-brand" href="{{ url_for('take_test', section_id=section.id, test_id=c.item.id) }}">Take test</a>
             {% else %}<a class="btn btn-sm btn-outline-navy" href="{{ url_for('take_quiz', section_id=section.id, quiz_id=c.item.id) }}">Practice</a>{% endif %}
           </td>

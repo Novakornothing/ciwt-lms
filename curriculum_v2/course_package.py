@@ -113,7 +113,9 @@ def grading(weights=None, pass_mark=80, scale=None, policy='best', late_per_day=
         'tests': 'Knowledge tests (multiple choice, scenario-based, timed). Forms A, B and C.',
         'skills': 'Skills exams (practical stations scored against the skills rubric): midterm and final.',
         'quizzes': 'Chapter checks (practice). Weight 0 by default: they give feedback and study tips without grade pressure.',
-    }[k]} for k, _ in CATEGORIES]
+        'labs': 'Live labs (simulated terminals, desktops and activities, auto-graded; classroom labs signed off by the instructor). '
+                'Weight 0 by default: formative practice unless the section gives them a weight.',  # labs branch
+    }.get(k, '')} for k, _ in CATEGORIES]
     policy_text = {'best': 'the best attempt counts', 'latest': 'the most recent attempt counts',
                    'average': 'attempts are averaged', 'first': 'the first attempt counts'}.get(policy, policy)
     late = ('No automatic late penalty is configured.' if not late_per_day else
@@ -1134,7 +1136,7 @@ def syllabus(code, section=None, gb=None):
             scale = [tuple(x) if not isinstance(x, dict) else (x['min'], x['label']) for x in _json.loads(scale)] if isinstance(scale, str) else scale
         except (ValueError, TypeError, KeyError):
             scale = None
-        gbd = dict(weights={'tests': get('weight_tests', 70), 'skills': get('weight_skills', 30), 'quizzes': get('weight_quizzes', 0)},
+        gbd = dict(weights={'tests': get('weight_tests', 70), 'skills': get('weight_skills', 30), 'quizzes': get('weight_quizzes', 0), 'labs': get('weight_labs', 0)},
                    pass_mark=get('pass_mark', 80) or 80, scale=scale, policy=get('policy', 'best') or 'best',
                    late_per_day=get('late_per_day', 0) or 0, late_max=get('late_max', 0) or 0)
     fields = [{'key': k, 'label': lab, 'value': (section.get(k) or '').strip(), 'placeholder': ph} for k, lab, ph in SECTION_FIELDS]
