@@ -900,3 +900,9 @@ details.card-disclosure:not([open]) > summary { border-bottom: 0; border-radius:
 .page-hero-split { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
 .page-hero-split > div { min-width: 0; flex: 1 1 16rem; }
 @media (max-width: 575.98px) { .page-hero-split > .btn { width: 100%; } }
+
+/* touch overrides that must come after the component blocks above */
+@media (pointer: coarse) {
+  .lab-disclosure > summary { min-height: var(--tap); }
+  .person-chip-x { width: var(--tap); height: var(--tap); }
+}
