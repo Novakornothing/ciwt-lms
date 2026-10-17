@@ -907,3 +907,11 @@ details.card-disclosure:not([open]) > summary { border-bottom: 0; border-radius:
   .lab-disclosure > summary { min-height: var(--tap); }
   .person-chip-x { width: var(--tap); height: var(--tap); }
 }
+@media (pointer: coarse) {
+  #flagBtn, #reportQBtn, #ttsMore { min-height: var(--tap); min-width: var(--tap); display: inline-flex; align-items: center; justify-content: center; }
+  .entry-demo > summary { min-height: var(--tap); display: flex; align-items: center; }
+  .table-stack .btn-sm, .table .btn-sm[aria-label] { min-width: var(--tap); min-height: var(--tap); }
+  .gb-chip { min-width: var(--tap); flex-shrink: 0; }
+  table.table-stack td[data-label] > .gb-chip { min-width: var(--tap); }
+  .tqi-status-link { min-height: var(--tap); display: inline-flex; align-items: center; }
+}
