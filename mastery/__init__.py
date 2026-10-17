@@ -23,6 +23,7 @@ from . import model as M
 from . import policy as P
 from .engine import (DEMO_DOMAIN, REVIEW_ITEMS, TESTOUT_MAX, TESTOUT_PASS, TESTOUT_PER_OBJ, Engine, short_text)
 from .models import define_models, utcnow
+from curriculum_v2 import misconceptions as MCS
 
 OBJ_RE = re.compile(r'^(IT|NO)-\d{1,2}\.\d{1,2}$')
 TARGET_RE = re.compile(r'^((IT|NO)-\d{1,2}\.\d{1,2}|CH-\d{1,2})$')
@@ -42,6 +43,12 @@ def register(app, db, deps):
     eng = Engine(db, d, m)
 
     # ------------------------------------------------------------------ helpers
+    plan_pref_ref = {}
+
+    def plan_pref(section_id, user_id):
+        fn = plan_pref_ref.get('fn')
+        return fn(section_id, user_id) if fn else None
+
     def enrolled_section(section_id):
         section = db.get_or_404(d.ClassSection, section_id)
         if current_user.role != 'student':
@@ -171,7 +178,18 @@ def register(app, db, deps):
         o = obj_or_404(cmap, obj)
         row = st['decision']['rows'][obj]
         action = row['action']
-        variant = 'alt' if (action and action['type'] == 'alt_review') or request.args.get('variant') == 'alt' else 'review'
+        asked, mc = request.args.get('variant'), request.args.get('mc')
+        if mc and (mc not in MCS.MISCONCEPTIONS or MCS.MISCONCEPTIONS[mc]['obj'] != obj):
+            mc = None
+        if asked in ('alt', 'review', 'practice'):
+            variant, mc = asked, None                       # the student's explicit choice
+        elif mc:
+            variant = 'mc'
+        elif action and action['type'] == 'misconception':
+            variant, mc = 'mc', action['mc']
+        else:
+            pref = plan_pref(section.id, current_user.id)
+            variant = pref or ('alt' if action and action['type'] == 'alt_review' else 'review')
         required = bool(action and action['required'])
         if request.method == 'POST':
             check = db.session.get(m.MasteryCheck, request.form.get('check_id', type=int) or 0)
@@ -184,7 +202,7 @@ def register(app, db, deps):
             check.answers_json, check.correct, check.completed_at = json.dumps(answers), correct, utcnow()
             for r in m.MasteryDecision.query.filter_by(section_id=section.id, user_id=current_user.id, target=obj,
                                                        status='active').all():
-                if r.action in ('review', 'alt_review', 'helix_offer'):
+                if r.action in ('review', 'alt_review', 'misconception', 'helix_offer'):
                     r.status, r.resolved_at = 'done', utcnow()
             eng.log(section.id, current_user.id, obj, 'review_completed', 'student',
                     [f'You finished the {"alternate explanation" if check.variant == "alt" else "review"} and answered '
@@ -193,13 +211,27 @@ def register(app, db, deps):
             return redirect(url_for('mastery_review_done', section_id=section.id, obj=obj, check_id=check.id), code=303)
         info = cmap['obj_lesson'].get(obj)
         les = cmap['lesson_by_id'].get(info['lesson_id']) if info else None
-        review = C.build_review(obj, o['text'], les, variant=variant, chapter_lessons=cmap['by_ch'].get(o['chapter'], []),
-                                glossary=d.glossary, marked=d.glossary_marked)
-        items = eng.pick_items(cmap, [obj], REVIEW_ITEMS, REVIEW_ITEMS, st['checks'], st['settings']['testout_bank'])
-        check = _open_check(section, current_user, 'review', obj, variant, items)
-        reasons = action['reasons'] if action else ['You opened this review yourself. It is optional.',
-                                                     P.evidence_reason(st['states'][obj], M.describe_counts)]
+        chapter_lessons = cmap['by_ch'].get(o['chapter'], [])
+        mcinfo = None
+        if variant == 'mc':
+            mcinfo = dict(MCS.MISCONCEPTIONS[mc], id=mc, seen=(st['misconceptions'].get(mc) or {}).get('hits', 0))
+            review = C.build_correction(obj, o['text'], mcinfo, les, chapter_lessons=chapter_lessons,
+                                        glossary=d.glossary, marked=d.glossary_marked)
+        elif variant == 'practice':
+            review = {'obj': obj, 'variant': 'practice', 'blocks': [], 'glossary': [], 'lesson': les}
+        else:
+            review = C.build_review(obj, o['text'], les, variant=variant, chapter_lessons=chapter_lessons,
+                                    glossary=d.glossary, marked=d.glossary_marked)
+        prefer = {b for (b, _d), m in MCS.TAGS.items() if m == mc} if mc else None
+        n_items = 5 if variant == 'practice' else REVIEW_ITEMS
+        items = eng.pick_items(cmap, [obj], n_items, n_items, st['checks'], st['settings']['testout_bank'], prefer=prefer)
+        check = _open_check(section, current_user, 'review', obj, variant if not mc else f'mc:{mc}', items)
+        reasons = action['reasons'] if action and (variant != 'mc' or action.get('mc') == mc) else [
+            'You opened this review yourself. It is optional.', P.evidence_reason(st['states'][obj], M.describe_counts)]
+        mc_opts = [dict(MCS.MISCONCEPTIONS[k], id=k, hits=v['hits']) for k, v in st['misconceptions'].items()
+                   if v['obj'] == obj and v['active']]
         return render_template('mastery/review.html', section=section, obj=obj, o=o, review=review, check=check,
+                               mcinfo=mcinfo, mc_opts=mc_opts,
                                items=json.loads(check.items_json or '[]'), action=action, required=required,
                                reasons=reasons, est=st['states'][obj], lesson=les, map_info=info, st=st,
                                lesson_link=lesson_url(section, les) if les else None, variant=variant,
@@ -216,7 +248,7 @@ def register(app, db, deps):
             return redirect(url_for('mastery_review', section_id=section.id, obj=obj), code=303)
         for r in m.MasteryDecision.query.filter_by(section_id=section.id, user_id=current_user.id, target=obj,
                                                    status='active').all():
-            if r.action in ('review', 'alt_review', 'helix_offer'):
+            if r.action in ('review', 'alt_review', 'misconception', 'helix_offer'):
                 r.status, r.resolved_at = 'skipped', utcnow()
         eng.log(section.id, current_user.id, obj, 'review_skipped', 'student',
                 ['You chose “Skip for now”. The review comes back only if new answers suggest it would help.'],
@@ -463,6 +495,13 @@ def register(app, db, deps):
         return Response(buf.getvalue(), mimetype='text/csv',
                         headers={'Content-Disposition': f'attachment; filename=mastery-section-{section.id}.csv'})
 
+    from . import lab_diagnosis
+    from .features import register_features
+    feats = register_features(app, db, SimpleNamespace(
+        eng=eng, m=m, d=d, enrolled_section=enrolled_section, staff_section=staff_section, grade=_grade,
+        open_check=_open_check, class_rows=class_rows, diagnose=lab_diagnosis.diagnose))
+    plan_pref_ref['fn'] = feats['plan_pref']
+
     for rule, ep, fn, methods in [
         ('/student/section/<int:section_id>/mastery', 'mastery_student', mastery_student, ['GET']),
         ('/student/section/<int:section_id>/review/<obj>', 'mastery_review', mastery_review, ['GET', 'POST']),
@@ -477,6 +516,8 @@ def register(app, db, deps):
         ('/instructor/section/<int:section_id>/mastery.csv', 'mastery_csv', mastery_csv, ['GET']),
     ]:
         app.add_url_rule(rule, ep, fn, methods=methods)
-    api = SimpleNamespace(engine=eng, models=m, student_path=student_path, lesson_gate=lesson_gate)
+    api = SimpleNamespace(engine=eng, models=m, student_path=student_path, lesson_gate=lesson_gate,
+                          daily_summary=feats['daily_summary'], lesson_quickcheck=feats['lesson_quickcheck'],
+                          features=feats, diagnose=lab_diagnosis.diagnose)
     app.extensions['ciwt_mastery'] = api
     return api

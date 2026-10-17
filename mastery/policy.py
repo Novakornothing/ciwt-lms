@@ -196,3 +196,56 @@ def gate(decision, chapter_of, lesson_chapter):
         if chapter_of.get(a['obj'], 0) <= lesson_chapter:
             return a
     return None
+
+
+MC_REPEAT = 2   # the same misconception this many times (unresolved) earns an optional correction on its own
+
+
+def apply_misconceptions(decision, misconceptions, *, settings, history=None, labels=None):
+    """Turn reviews into targeted corrections where the student's wrong answers signal a known misconception.
+
+    misconceptions: {mc_id: {'obj', 'hits', 'last_hit', 'resolved_at', 'active'}}; labels: {mc_id: label}.
+    * an inserted review/alt review on an objective with an active misconception becomes a 'misconception'
+      action (same required flag, same source), aimed at the most frequent one;
+    * with adaptivity on, an unresolved misconception seen MC_REPEAT+ times on an objective with no other
+      action gets an optional correction (respecting a skip made after the last hit).
+    Pure: returns a new decision dict."""
+    labels = labels or {}
+    history = history or {}
+    by_obj = {}
+    for mc, m in (misconceptions or {}).items():
+        if m.get('active'):
+            by_obj.setdefault(m['obj'], []).append((m['hits'], m['last_hit'], mc))
+    for v in by_obj.values():
+        v.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    actions = []
+    rows = {k: dict(r) for k, r in decision['rows'].items()}
+    have = set()
+    for a in decision['actions']:
+        a = dict(a)
+        cands = by_obj.get(a['obj'])
+        if a['type'] in ('review', 'alt_review') and cands:
+            hits, _last, mc = cands[0]
+            a['type'], a['mc'] = 'misconception', mc
+            a['reasons'] = ([f'Your answers suggest this mix-up: {labels.get(mc, mc)} (seen {hits} time{"s" if hits != 1 else ""}).',
+                             'So this review goes straight at that idea instead of re-reading the whole lesson.'] + list(a['reasons']))
+            rows[a['obj']]['action'] = a
+        actions.append(a)
+        have.add(a['obj'])
+    if settings.get('enabled'):
+        for obj, cands in by_obj.items():
+            hits, last, mc = cands[0]
+            row = rows.get(obj)
+            if obj in have or not row or row['state'] in ('waived', 'mastered') or hits < MC_REPEAT:
+                continue
+            sk = (history.get(obj) or {}).get('skipped_at')
+            if sk and last and sk >= last:
+                continue
+            a = {'type': 'misconception', 'obj': obj, 'mc': mc, 'required': False, 'source': 'engine',
+                 'reasons': [f'Your answers suggest this mix-up: {labels.get(mc, mc)} (seen {hits} times).',
+                             'A two-minute correction is offered. It is optional and never graded.']}
+            rows[obj]['action'] = a
+            actions.append(a)
+    order = {'review': 1, 'alt_review': 1, 'misconception': 1, 'helix_offer': 3}
+    actions.sort(key=lambda a: (0 if a.get('required') else 1, order.get(a['type'], 5)))
+    return dict(decision, rows=rows, actions=actions)

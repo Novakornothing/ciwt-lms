@@ -3,7 +3,7 @@
 <div class="mx-gate ui-callout ui-callout-accent mb-3" role="region" aria-labelledby="mxGateH">
   <i class="bi {{ 'bi-eye' if mastery_gate.type == 'helix_offer' else 'bi-journal-bookmark' }}" aria-hidden="true"></i>
   <div class="flex-grow-1">
-    <h2 class="h6 mb-1" id="mxGateH">{% if mastery_gate.type == 'helix_offer' %}Optional: a quick look back before this lesson{% elif mastery_gate.type == 'alt_review' %}Before this lesson: another way to see {{ mastery_gate.obj }}{% else %}Before this lesson: a 5-minute review of {{ mastery_gate.obj }}{% endif %}</h2>
+    <h2 class="h6 mb-1" id="mxGateH">{% if mastery_gate.type == 'helix_offer' %}Optional: a quick look back before this lesson{% elif mastery_gate.type == 'misconception' %}Before this lesson: fix a mix-up on {{ mastery_gate.obj }}{% elif mastery_gate.type == 'alt_review' %}Before this lesson: another way to see {{ mastery_gate.obj }}{% else %}Before this lesson: a 5-minute review of {{ mastery_gate.obj }}{% endif %}</h2>
     <p class="mb-2 small">{{ mastery_gate.text }}</p>
     <div class="d-flex flex-wrap gap-2 align-items-center">
       <a class="btn btn-sm btn-brand" href="{{ mastery_review_url }}">Start the review</a>

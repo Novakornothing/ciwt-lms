@@ -94,3 +94,22 @@
   .mx-heat-wrap { max-height: none; }
   .mx-heat .mx-heat-name { max-width: 7.5rem; }
 }
+
+/* Daily review, quick check, plan, who needs me */
+.mx-wide { width: 100%; min-height: 48px; }
+@media (min-width: 576px) { .mx-wide { width: auto; } }
+.mx-daily-q legend { font-size: 1.02rem; }
+.mx-daily-card { border-left: 4px solid var(--accent); }
+.mx-quick .mx-q legend { font-size: 1rem; }
+.mx-quick-result:focus { outline: none; }
+.mx-quick-result:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.mx-struggle { border: 1px solid var(--surface-3); border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: .75rem 1rem; background: var(--surface-2); color: var(--ink); }
+.mx-struggle .btn { min-height: 44px; }
+.mx-mc { border-left-color: #c43636; }
+.mx-weeks { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.mx-week { border: 1px solid var(--surface-3); border-radius: var(--radius-sm); padding: .55rem .75rem; }
+.mx-need .btn { min-height: 44px; display: inline-flex; align-items: center; gap: .3rem; }
+.mx-need input[type="date"] { min-height: 44px; }
+.mx-reasons { padding-left: 0; list-style: none; }
+.mx-reasons li { padding: .2rem 0; }
+.mx-obj-row .btn { min-height: 44px; display: inline-flex; align-items: center; }

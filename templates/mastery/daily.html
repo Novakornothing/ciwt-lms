@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Daily review — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('mastery_plan', section_id=section.id) }}">My plan</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Daily review</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">Daily review · {{ section.name }}</div>
+  <h1 class="h3 mb-1">{% if items %}{{ items|length }} question{{ 's' if items|length != 1 }} · about {{ minutes }} min{% else %}Nothing to review yet{% endif %}</h1>
+  <p class="mb-0">Short retrieval practice, timed for just before you would start to forget. Not graded.</p>
+</div>
+{% if items %}
+<details class="mx-why mb-3">
+  <summary><i class="bi bi-info-circle" aria-hidden="true"></i> Why these questions today?</summary>
+  <div class="mx-why-body">
+    <p class="mb-2">Each objective you have answered before has a review date from an SM-2-style schedule: right answers push the next review further out (1 day, 3 days, then longer), a miss brings it back tomorrow. An objective is due when its predicted recall drops to 90%.</p>
+    <ul class="mb-0">{% for it in items %}<li><span class="mx-code">{{ it.obj }}</span> {{ 'due now' if it.why == 'due' else 'coming due soon' }}{% if it.recall is not none %} · predicted recall {{ (it.recall * 100)|round|int }}%{% endif %}</li>{% endfor %}</ul>
+  </div>
+</details>
+<form method="post" action="{{ url_for('mastery_daily', section_id=section.id) }}" id="mxDailyForm" class="mb-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="check_id" value="{{ check.id }}">
+  {% for it in items %}{% set qi = loop.index0 %}
+  <fieldset class="mx-q mx-daily-q">
+    <legend><span class="mx-muted small d-block">{{ loop.index }} of {{ items|length }} · {{ it.obj }}</span>{{ it.text }}</legend>
+    {% for opt in it.options %}
+    <div class="form-check mx-opt">
+      <input class="form-check-input" type="radio" name="q{{ qi }}" id="d{{ qi }}o{{ loop.index0 }}" value="{{ opt }}">
+      <label class="form-check-label" for="d{{ qi }}o{{ loop.index0 }}">{{ opt }}</label>
+    </div>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+  <button type="submit" class="btn btn-brand mx-wide">Finish today’s review</button>
+</form>
+{% else %}
+<div class="card mb-4"><div class="card-body">
+  <p class="mb-2">{% if learned %}Nothing is due today. Come back tomorrow.{% else %}Daily review starts once you have answered questions on at least one objective (a chapter check, a review or a lesson quick check).{% endif %}</p>
+  <a class="btn btn-brand" href="{{ url_for('student_section', section_id=section.id) }}">Go to the class</a>
+</div></div>
+{% endif %}
+{% endblock %}

@@ -43,6 +43,8 @@ WEIGHTS = {
     'testout': 1.0,
     'quiz': 0.8,
     'review_check': 0.6,
+    'daily': 0.6,         # spaced-retrieval daily review answer
+    'inline': 0.6,        # in-lesson quick check
     'lab': 0.7,
 }
 KIND_LABEL = {

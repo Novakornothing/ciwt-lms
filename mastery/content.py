@@ -225,3 +225,37 @@ def build_review(obj, obj_text, lesson, variant='review', chapter_lessons=(), gl
     return {'obj': obj, 'variant': variant, 'blocks': [b for b in blocks if b['html']],
             'glossary': glossary_for(text, glossary, marked=marked),
             'lesson': lesson}
+
+
+def _term_score(terms, text):
+    low = ' ' + (text or '').lower() + ' '
+    score = 0.0
+    for t in terms or []:
+        n = len(re.findall(r'(?<![a-z0-9])' + re.escape(t.lower()) + r'(?![a-z0-9])', low))
+        score += min(n, 4) * (1.5 if ' ' in t else 1.0)
+    return score
+
+
+def build_correction(obj, obj_text, mc, lesson, chapter_lessons=(), glossary=(), marked=()):
+    """Corrective explanation for one misconception: the lesson sections (mapped lesson first, then the rest of
+    the chapter) that best address the misconception's terms. Framing text comes from the template."""
+    cands = []
+    seen = set()
+    for les in ([lesson] if lesson else []) + [x for x in chapter_lessons if not lesson or x['id'] != lesson['id']]:
+        if les['id'] in seen:
+            continue
+        seen.add(les['id'])
+        for s in sections(les['html']):
+            sc = _term_score(mc.get('terms'), s['heading'] + ' ' + s['text']) + 0.5 * overlap(tokens(obj_text), tokens(s['heading']))
+            if sc > 0:
+                cands.append((sc + (0.5 if lesson and les['id'] == lesson['id'] else 0), -s['order'], les, s))
+    cands.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    blocks = []
+    for sc, _o, les, s in cands[:2]:
+        blocks.append({'kind': 'section', 'label': s['heading'], 'html': clean(s['html']), 'lesson': les['label']})
+    if not blocks and lesson:
+        for s in pick_sections(obj_text, sections(lesson['html']), n=1):
+            blocks.append({'kind': 'section', 'label': s['heading'], 'html': clean(s['html']), 'lesson': lesson['label']})
+    text = ' '.join(mc.get('terms') or []) + ' ' + ' '.join(text_of(b['html']) for b in blocks)
+    return {'obj': obj, 'variant': 'mc', 'blocks': [b for b in blocks if b['html']],
+            'glossary': glossary_for(text, glossary, marked=marked), 'lesson': lesson}

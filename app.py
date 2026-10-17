@@ -2848,12 +2848,20 @@ def student_dashboard():
         except Exception as exc:
             print('gold_path student dashboard:', exc)
     mastery_path = _safe_mastery_path(current_user, sections[0]) if sections else None
+    mastery_daily = None
+    if sections and current_user.role == 'student':
+        try:
+            mastery_daily = mastery_api.daily_summary(current_user, sections[0])
+        except Exception as exc:
+            db.session.rollback()
+            print('mastery daily:', exc)
     return render_template(
         'student_dashboard.html',
         sections=sections,
         progress=progress,
         gold_path=gold_path,
         mastery_path=mastery_path,
+        mastery_daily=mastery_daily,
         mastery_section_id=sections[0].id if sections else None,
     )
 
@@ -3055,6 +3063,7 @@ def view_lesson(section_id, module_id, lesson_id):
         except Exception as exc:
             print('gold_path lesson:', exc)
     mastery_gate = mastery_review_url = None
+    mastery_quick = []
     if (section and current_user.role == 'student'
             and Enrollment.query.filter_by(user_id=current_user.id, section_id=section.id).first()):
         try:
@@ -3062,12 +3071,17 @@ def view_lesson(section_id, module_id, lesson_id):
         except Exception as exc:
             db.session.rollback()
             print('mastery gate:', exc)
+        try:
+            mastery_quick = mastery_api.lesson_quickcheck(current_user, section, lesson)
+        except Exception as exc:
+            db.session.rollback()
+            print('mastery quick check:', exc)
         if mastery_gate and mastery_gate.get('block'):
             flash('Before this lesson: a short review your instructor asked for. It takes about five minutes.', 'info')
             return redirect(mastery_review_url, code=303)
     return render_template(
         'lesson.html', module=module, lesson=lesson, lessons=lessons,
-        mastery_gate=mastery_gate, mastery_review_url=mastery_review_url,
+        mastery_gate=mastery_gate, mastery_review_url=mastery_review_url, mastery_quick=mastery_quick,
         prev_l=prev_l, next_l=next_l, section_id=section_id, quizzes=quizzes,
         chapter_labs=chapter_labs,
         lesson_labs=lesson_labs,

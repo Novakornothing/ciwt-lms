@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "mastery/_macros.html" import why with context %}
+{% block title %}Daily review done — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="eyebrow">Daily review · {{ section.name }}</div>
+  <h1 class="h3 mb-1">Done for today: {{ check.correct }} of {{ check.total }} right</h1>
+  <p class="mb-0">Your schedule has been updated. Not graded.</p>
+</div>
+<section class="card mb-3" aria-labelledby="mxDr">
+  <div class="card-header navy"><h2 class="h6 mb-0" id="mxDr">What comes back when</h2></div>
+  <ul class="list-group list-group-flush">
+    {% for r in rows %}
+    <li class="list-group-item d-flex flex-wrap justify-content-between gap-2">
+      <span><span class="mx-glyph" aria-hidden="true">{{ '✓' if r.ok else '✗' }}</span> <span class="visually-hidden">{{ 'Right' if r.ok else ('Not answered' if not r.answered else 'Not right') }}:</span> <span class="mx-code">{{ r.obj }}</span> {{ r.text }}</span>
+      <span class="small mx-muted">{% if r.next %}next review {{ r.next.strftime('%a %d %b') }}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+<p class="small mx-muted">Answer keys are not shown here, the same as for chapter checks. The lessons and reviews cover every question.</p>
+<div class="d-flex flex-wrap gap-2 mb-4">
+  {% if path and path.next %}<a class="btn btn-brand" href="{{ path.next.url }}">Next: {{ path.next.title }}</a>{% endif %}
+  <a class="btn btn-outline-navy" href="{{ url_for('mastery_plan', section_id=section.id) }}">My plan</a>
+</div>
+{% endblock %}

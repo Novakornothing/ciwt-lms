@@ -10,7 +10,7 @@
   </ol>
 </nav>
 <div class="page-hero">
-  <div class="eyebrow">{% if variant == 'alt' %}Another way to see it{% else %}Short review{% endif %} · about 5 minutes</div>
+  <div class="eyebrow">{% if variant == 'alt' %}Another way to see it{% elif variant == 'mc' %}Fix a mix-up{% elif variant == 'practice' %}Practice questions{% else %}Short review{% endif %} · about {{ 2 if variant in ('mc', 'practice') else 5 }} minutes</div>
   <h1 class="h3 mb-1">{{ o.text }}</h1>
   <p class="mb-0">{{ obj }} · from {{ lesson.title if lesson else 'this chapter' }}{% if required %} · <strong>required by your instructor</strong>{% endif %}</p>
 </div>
@@ -20,15 +20,23 @@
   {{ why(reasons, evidence=evidence, section_id=section.id, open=true) }}
 </div>
 
-<p class="mx-frame">{% if variant == 'alt' %}Here is the same idea from a different angle: a plain-language summary, an analogy and a worked example, all taken from your course lessons. Read it once, then try the questions at the end.{% else %}These are the parts of the lesson that teach this objective. Read them, check yourself, then answer the questions at the end. They are not graded.{% endif %}</p>
+{% if variant == 'mc' and mcinfo %}
+<section class="mx-frame mx-mc" aria-labelledby="mxMcH">
+  <h2 class="h6 mb-1" id="mxMcH">The mix-up</h2>
+  <p class="mb-1">Some of your answers{% if mcinfo.seen %} ({{ mcinfo.seen }} so far){% endif %} suggest this idea: <strong>{{ mcinfo.label }}</strong>.</p>
+  <p class="mb-0">What the course teaches instead: {{ mcinfo.fix }} The lesson sections below explain it; the questions at the end check it.</p>
+</section>
+{% else %}
+<p class="mx-frame">{% if variant == 'practice' %}Practice questions only, as you chose. They are not graded.{% elif variant == 'alt' %}Here is the same idea from a different angle: a plain-language summary, an analogy and a worked example, all taken from your course lessons. Read it once, then try the questions at the end.{% else %}These are the parts of the lesson that teach this objective. Read them, check yourself, then answer the questions at the end. They are not graded.{% endif %}</p>
+{% endif %}
 
 {% for b in review.blocks %}
 <section class="card mb-3 mx-block mx-block-{{ b.kind }}" aria-labelledby="mxB{{ loop.index }}">
-  <div class="card-header"><h2 class="h6 mb-0" id="mxB{{ loop.index }}">{% if b.kind == 'section' %}From {{ lesson.label if lesson else 'the lesson' }}: {% endif %}{{ b.label }}</h2></div>
+  <div class="card-header"><h2 class="h6 mb-0" id="mxB{{ loop.index }}">{% if b.kind == 'section' %}From {{ b.lesson or (lesson.label if lesson else 'the lesson') }}: {% endif %}{{ b.label }}</h2></div>
   <div class="card-body module-content mx-excerpt">{{ b.html|safe }}</div>
 </section>
 {% else %}
-<p>There is no lesson excerpt for this objective yet. <a href="{{ lesson_link }}">Open the lesson</a>.</p>
+{% if variant != 'practice' %}<p>There is no lesson excerpt for this objective yet. <a href="{{ lesson_link }}">Open the lesson</a>.</p>{% endif %}
 {% endfor %}
 
 {% if review.glossary %}
@@ -79,6 +87,9 @@
   </form>
   {% endif %}
   {% if variant != 'alt' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, variant='alt') }}">Explain it another way</a>{% endif %}
+  {% if variant != 'review' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, variant='review') }}">Short review instead</a>{% endif %}
+  {% if variant != 'practice' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, variant='practice') }}">Just practice questions</a>{% endif %}
+  {% for x in mc_opts if not mcinfo or x.id != mcinfo.id %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, mc=x.id) }}">Fix: {{ x.label|truncate(50) }}</a>{% endfor %}
   {% if lesson_link %}<a class="btn btn-outline-navy" href="{{ lesson_link }}">Open the full lesson</a>{% endif %}
 </div>
 {% endblock %}

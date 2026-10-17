@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "mastery/_macros.html" import demo_ribbon with context %}
+{% block title %}Who needs me — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('mastery_class', section_id=section.id) }}">Mastery</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Who needs me</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">Today, {{ today.strftime('%a %d %b') }}</div>
+  <h1 class="h3 mb-1">Who needs me</h1>
+  <p class="mb-0">{{ focus|length }} of {{ n_students }} students have a reason to look at them today. No risk score: every reason is shown.</p>
+</div>
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-center">{{ demo_ribbon(demo) }}
+  <span class="small mx-muted">Ordered by how many different reasons apply, then the most serious (stuck, repeated mix-up, waiting review, drop, lab, inactivity).</span></div>
+
+{% if focus %}
+<ol class="mx-needs list-unstyled">
+  {% for p in focus %}
+  <li class="card mb-3 mx-need">
+    <div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start">
+        <h2 class="h6 mb-1"><span class="mx-muted">{{ loop.index }}.</span> <a href="{{ url_for('mastery_class_student', section_id=section.id, user_id=p.user.id) }}">{{ p.user.full_name }}</a></h2>
+        <span class="small mx-muted">{% if p.last %}last active {{ p.last.strftime('%d %b') }}{% else %}no recorded activity{% endif %}</span>
+      </div>
+      <ul class="mb-2 mx-reasons">{% for r in p.reasons %}<li><span class="mx-badge">{{ {'stuck': 'Stuck', 'misconception': 'Mix-up', 'missed_review': 'Review waiting', 'drop': 'Drop', 'lab': 'Lab', 'inactive': 'Inactive'}[r.kind] }}</span> {{ r.text }}</li>{% endfor %}</ul>
+      <div class="d-flex flex-wrap gap-2 align-items-end">
+        <a class="btn btn-sm btn-brand" href="{{ url_for('messages_new', to=p.user.id) }}"><i class="bi bi-envelope" aria-hidden="true"></i> Message<span class="visually-hidden"> {{ p.user.full_name }}</span></a>
+        {% if p.top_obj %}
+        <form method="post" action="{{ url_for('mastery_override', section_id=section.id) }}" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ p.user.id }}"><input type="hidden" name="target" value="{{ p.top_obj }}">
+          <input type="hidden" name="kind" value="force_review"><input type="hidden" name="note" value="Assigned from Who needs me: {{ p.reasons[0].text|truncate(200) }}">
+          <input type="hidden" name="next" value="{{ url_for('mastery_today', section_id=section.id) }}">
+          <button class="btn btn-sm btn-outline-navy" type="submit">Assign review on {{ p.top_obj }}<span class="visually-hidden"> to {{ p.user.full_name }}</span></button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url_for('mastery_checkin', section_id=section.id) }}" class="d-flex flex-wrap gap-2 align-items-end">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ p.user.id }}">
+          <div><label class="form-label small mb-0" for="ciD{{ p.user.id }}">Check-in date</label>
+            <input class="form-control form-control-sm" type="date" id="ciD{{ p.user.id }}" name="on_date" value="{{ tomorrow }}" min="{{ today.isoformat() }}" required></div>
+          <button class="btn btn-sm btn-outline-navy" type="submit">Schedule check-in<span class="visually-hidden"> with {{ p.user.full_name }}</span></button>
+        </form>
+      </div>
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<div class="card mb-3"><div class="card-body">Nobody is stuck, waiting on a review or showing a repeated mix-up today.</div></div>
+{% endif %}
+
+{% if inactive %}
+<details class="mx-why mb-4">
+  <summary>{{ inactive|length }} student{{ 's' if inactive|length != 1 }} with inactivity as the only reason</summary>
+  <div class="mx-why-body"><ul class="mb-0">{% for p in inactive %}<li><a href="{{ url_for('mastery_class_student', section_id=section.id, user_id=p.user.id) }}">{{ p.user.full_name }}</a>: {{ p.reasons[0].text }} · <a href="{{ url_for('messages_new', to=p.user.id) }}">Message<span class="visually-hidden"> {{ p.user.full_name }}</span></a></li>{% endfor %}</ul></div>
+</details>
+{% endif %}
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-7">
+    <section class="card h-100" aria-labelledby="mxMcH">
+      <div class="card-header navy"><h2 class="h6 mb-0" id="mxMcH">Mix-ups in this class</h2></div>
+      {% if mc_counts %}
+      <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
+        <thead><tr><th scope="col">Misconception</th><th scope="col">Objective</th><th scope="col">Students</th><th scope="col">Times picked</th><th scope="col">Still open</th></tr></thead>
+        <tbody>{% for c in mc_counts %}<tr><td data-label="Misconception">{{ c.label }}</td><td data-label="Objective">{{ c.obj }}</td><td data-label="Students">{{ c.students }}</td><td data-label="Times picked">{{ c.hits }}</td><td data-label="Still open">{{ c.active }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="card-body">No tagged wrong answers yet. Tags cover the most-used objectives first.</div>{% endif %}
+    </section>
+  </div>
+  <div class="col-lg-5">
+    <section class="card h-100" aria-labelledby="mxCiH">
+      <div class="card-header"><h2 class="h6 mb-0" id="mxCiH">Upcoming check-ins</h2></div>
+      {% if checkins %}
+      <ul class="list-group list-group-flush">{% for c, u in checkins %}
+        <li class="list-group-item d-flex flex-wrap justify-content-between gap-2 align-items-center"><span>{{ c.on_date.strftime('%a %d %b') }} · {{ u.full_name }}</span>
+          <form method="post" action="{{ url_for('mastery_checkin', section_id=section.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="user_id" value="{{ u.id }}"><input type="hidden" name="checkin_id" value="{{ c.id }}"><input type="hidden" name="done" value="1"><button class="btn btn-sm btn-outline-navy" type="submit">Mark done<span class="visually-hidden"> for {{ u.full_name }}</span></button></form></li>
+      {% endfor %}</ul>
+      {% else %}<div class="card-body small">None scheduled.</div>{% endif %}
+      {% if not lab_wired %}<div class="card-body small mx-muted border-top">Lab process reasons appear once the lab event log (labs branch) is merged.</div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

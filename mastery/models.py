@@ -62,9 +62,9 @@ def define_models(db):
         id = db.Column(db.Integer, primary_key=True)
         section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False, index=True)
         user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
-        kind = db.Column(db.String(12), nullable=False)          # review | testout
+        kind = db.Column(db.String(12), nullable=False)          # review | testout | daily | inline
         target = db.Column(db.String(20), nullable=False)        # objective or CH-<n>
-        variant = db.Column(db.String(12), default='review')     # review | alt
+        variant = db.Column(db.String(40), default='review')     # review | alt | practice | mc:<id> | inline
         items_json = db.Column(db.Text, default='[]')            # served items, keys stay on the server
         answers_json = db.Column(db.Text, default='{}')
         correct = db.Column(db.Integer, default=0)
@@ -74,6 +74,31 @@ def define_models(db):
         started_at = db.Column(db.DateTime, default=utcnow)
         completed_at = db.Column(db.DateTime)
 
+    class LearningPlan(db.Model):
+        """A student's own plan for one class: target exam date and preferred kind of review."""
+        __tablename__ = 'learning_plan'
+        id = db.Column(db.Integer, primary_key=True)
+        section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False, index=True)
+        user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+        exam_date = db.Column(db.Date)
+        review_pref = db.Column(db.String(12), default='')       # '' (engine picks) | review | alt | practice
+        daily_size = db.Column(db.Integer, default=8)
+        updated_at = db.Column(db.DateTime, default=utcnow)
+
+    class MasteryCheckin(db.Model):
+        """A check-in an instructor scheduled from the 'Who needs me' list. Shown to the student."""
+        __tablename__ = 'mastery_checkin'
+        id = db.Column(db.Integer, primary_key=True)
+        section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False, index=True)
+        user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+        on_date = db.Column(db.Date, nullable=False)
+        note = db.Column(db.String(300), default='')
+        reasons_json = db.Column(db.Text, default='[]')
+        created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+        created_at = db.Column(db.DateTime, default=utcnow)
+        done_at = db.Column(db.DateTime)
+
     _cache['m'] = SimpleNamespace(MasterySetting=MasterySetting, MasteryOverride=MasteryOverride,
-                                  MasteryDecision=MasteryDecision, MasteryCheck=MasteryCheck)
+                                  MasteryDecision=MasteryDecision, MasteryCheck=MasteryCheck,
+                                  LearningPlan=LearningPlan, MasteryCheckin=MasteryCheckin)
     return _cache['m']

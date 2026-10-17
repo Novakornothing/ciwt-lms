@@ -12,8 +12,10 @@ from datetime import datetime
 from sqlalchemy import func
 
 from . import content as C
+from . import memory as MEM
 from . import model as M
 from . import policy as P
+from curriculum_v2 import misconceptions as MCS
 from .models import utcnow
 
 DEMO_DOMAIN = '@lms.local'          # accounts created by seed_database(); their test attempts are generated
@@ -24,6 +26,9 @@ REVIEW_ITEMS = 3
 TESTOUT_PER_OBJ = 2
 TESTOUT_MAX = 12
 TESTOUT_PASS = 80
+DAILY_MIN, DAILY_MAX = 5, 10
+CHECK_KIND = {'review': 'review_check', 'testout': 'testout', 'daily': 'daily', 'inline': 'inline'}
+CHECK_SOURCE = {'review_check': 'Review check', 'testout': 'Mastery check', 'daily': 'Daily review', 'inline': 'In-lesson check'}
 
 _lock = threading.Lock()
 _course_cache = {}
@@ -32,6 +37,34 @@ _course_cache = {}
 def short_text(text, n=70):
     t = (text or '').strip()
     return t if len(t) <= n else t[:n - 1].rsplit(' ', 1)[0] + '…'
+
+
+def misconception_summary(ev):
+    """{mc_id: {obj, hits, last_hit, resolved_at, active, refs}} from tagged wrong answers. A misconception is
+    resolved by a later right answer on an item that carries a tag for it (the student now avoids that trap)."""
+    tagged_items = {}
+    for (bank, _d), mc in MCS.TAGS.items():
+        tagged_items.setdefault(bank, set()).add(mc)
+    out = {}
+    for obj, obs in ev.items():
+        for o in sorted(obs, key=lambda x: x.get('when') or datetime.min):
+            mc = o.get('mc')
+            if mc:
+                m = out.setdefault(mc, {'obj': obj, 'hits': 0, 'last_hit': None, 'resolved_at': None, 'refs': []})
+                m['hits'] += 1
+                m['last_hit'] = max(m['last_hit'] or datetime.min, o.get('when') or datetime.min)
+                m['refs'].append({'source': o.get('source'), 'when': o.get('when')})
+        for o in obs:
+            if o.get('correct') and o.get('bank_id') in tagged_items:
+                for mc in tagged_items[o['bank_id']]:
+                    if mc in out and (o.get('when') or datetime.min) > (out[mc]['last_hit'] or datetime.min):
+                        out[mc]['resolved_at'] = max(out[mc]['resolved_at'] or datetime.min, o['when'])
+    for m in out.values():
+        m['active'] = not m['resolved_at']
+        m['label'] = ''
+    for mc, m in out.items():
+        m['label'] = MCS.MISCONCEPTIONS[mc]['label']
+    return out
 
 
 class Engine:
@@ -189,7 +222,8 @@ class Engine:
                     sources['stale'] += 1   # answered an older wording of this question: cannot be judged now
                     continue
                 ev[obj].append({'kind': 'test', 'correct': ans is not None and ans == q.get('correct'),
-                                'when': a.completed_at, 'ref': q.get('bank_id') or f'test:{a.test_id}:{i}', 'source': t['title']})
+                                'when': a.completed_at, 'ref': q.get('bank_id') or f'test:{a.test_id}:{i}', 'source': t['title'],
+                                'mc': MCS.tag_for(q, ans), 'bank_id': q.get('bank_id')})
                 sources['test'] += 1
         # chapter checks (ungraded quizzes), taken in this class or before classes were recorded
         qids = list(cmap['quizzes'])
@@ -209,7 +243,8 @@ class Engine:
                     sources['stale'] += 1
                     continue
                 ev[obj].append({'kind': 'quiz', 'correct': ans is not None and ans == q.get('correct'),
-                                'when': a.completed_at, 'ref': q.get('bank_id') or f'quiz:{a.quiz_id}:{i}', 'source': qz['title']})
+                                'when': a.completed_at, 'ref': q.get('bank_id') or f'quiz:{a.quiz_id}:{i}', 'source': qz['title'],
+                                'mc': MCS.tag_for(q, ans), 'bank_id': q.get('bank_id')})
                 sources['quiz'] += 1
         # the engine's own review checks and mastery checks
         for c in checks:
@@ -219,15 +254,17 @@ class Engine:
                 items, answers = json.loads(c.items_json or '[]'), json.loads(c.answers_json or '{}')
             except ValueError:
                 continue
-            kind = 'review_check' if c.kind == 'review' else 'testout'
+            kind = CHECK_KIND.get(c.kind, 'review_check')
             for i, it in enumerate(items):
                 obj = it.get('obj')
                 if obj not in cmap['objs']:
                     continue
                 ans = answers.get(str(i))
+                if ans is None and c.kind == 'inline':
+                    continue          # an in-lesson check only holds the one question that was answered
                 ev[obj].append({'kind': kind, 'correct': ans is not None and ans == it.get('correct'),
-                                'when': c.completed_at, 'ref': it.get('bank_id', ''),
-                                'source': 'Mastery check' if kind == 'testout' else 'Review check'})
+                                'when': c.completed_at, 'ref': it.get('bank_id', ''), 'source': CHECK_SOURCE.get(kind, 'Review check'),
+                                'mc': MCS.tag_for(it, ans), 'bank_id': it.get('bank_id')})
                 sources[kind] += 1
         # interactive lab completions (all lab objectives met)
         seen_lab = set()
@@ -318,10 +355,14 @@ class Engine:
         decision = P.decide(states, chapters={k: o['chapter'] for k, o in cmap['objs'].items()}, settings=settings,
                             overrides=overrides, history=hist, helix=helix, describe=M.describe_counts,
                             testout_history=tout, upcoming=upcoming)
+        mcs = misconception_summary(ev)
+        decision = P.apply_misconceptions(decision, mcs, settings=settings, history=hist,
+                                          labels={k: v['label'] for k, v in MCS.MISCONCEPTIONS.items()})
+        memory = {obj: MEM.schedule(ev.get(obj, [])) for obj in cmap['objs']}
         st = {'section': section, 'user': user, 'cmap': cmap, 'settings': settings, 'overrides': overrides,
               'checks': checks, 'history': hist, 'testout_history': tout, 'evidence': ev, 'sources': sources,
               'states': states, 'helix_status': helix_status, 'helix': helix, 'decision': decision,
-              'next_lesson': nxt, 'upcoming': upcoming, 'reading': reading,
+              'next_lesson': nxt, 'upcoming': upcoming, 'reading': reading, 'misconceptions': mcs, 'memory': memory,
               'demo': (user.email or '').endswith(DEMO_DOMAIN) and sources.get('test', 0) > 0}
         if log:
             self.sync_log(st)
@@ -390,7 +431,7 @@ class Engine:
                                       evidence_json=json.dumps(self.snapshot(est), default=str), created_at=now))
                 changed = True
         for r in live.values():
-            if r.action in ('review', 'alt_review', 'helix_offer', 'testout_offer', 'stuck_flag'):
+            if r.action in ('review', 'alt_review', 'misconception', 'helix_offer', 'testout_offer', 'stuck_flag', 'struggle_offer'):
                 r.status, r.resolved_at = 'resolved', now
                 changed = True
         if changed:
@@ -436,12 +477,12 @@ class Engine:
                 pass
         return ids
 
-    def pick_items(self, cmap, objs, per_obj, cap, checks, include_bank):
+    def pick_items(self, cmap, objs, per_obj, cap, checks, include_bank, prefer=None):
         used = self._answered(checks)
         out = []
         for obj in objs:
             pool = self.pool(cmap, obj, include_bank)
-            pool.sort(key=lambda it: (used.get(it['bank_id'], 0), it['bank_id'] or ''))
+            pool.sort(key=lambda it: (0 if prefer and it['bank_id'] in prefer else 1, used.get(it['bank_id'], 0), it['bank_id'] or ''))
             out.extend(pool[:per_obj])
         return out[:cap]
 
@@ -458,8 +499,9 @@ class Engine:
             o = cmap['objs'][a['obj']]
             les = cmap['obj_lesson'].get(a['obj'], {})
             title = {'review': 'Short review', 'alt_review': 'Another way to see it',
-                     'helix_offer': 'Optional review'}[a['type']]
-            steps.append({'kind': a['type'], 'title': f"{title}: {short_text(o['text'], 64)}",
+                     'helix_offer': 'Optional review', 'misconception': 'Fix a mix-up'}[a['type']]
+            subject = MCS.MISCONCEPTIONS[a['mc']]['label'] if a.get('mc') else o['text']
+            steps.append({'kind': a['type'], 'title': f"{title}: {short_text(subject, 64)}",
                           'detail': f"{a['obj']} · about 5 min · uses lesson {les.get('label', '')}"
                                     + (' · required by your instructor' if a['required'] and a['source'] == 'instructor'
                                        else (' · required' if a['required'] else '')),

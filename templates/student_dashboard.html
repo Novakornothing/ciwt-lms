@@ -9,7 +9,7 @@
   <div class="home-progress">
     <span class="home-meter" role="progressbar" aria-label="Path progress" aria-valuemin="0" aria-valuemax="{{ gold_path.steps|length }}" aria-valuenow="{{ done_n }}"><span style="width:{{ (100 * done_n / gold_path.steps|length)|round|int }}%"></span></span>
     <span class="small">{{ done_n }} of {{ gold_path.steps|length }} steps done</span>
-    {% set mx_first = mastery_path.next if (mastery_path and mastery_path.next and mastery_path.next.kind in ('review', 'alt_review')) else none %}
+    {% set mx_first = mastery_path.next if (mastery_path and mastery_path.next and mastery_path.next.kind in ('review', 'alt_review', 'misconception')) else none %}
     {% if mx_first %}<a class="btn btn-brand" href="{{ mx_first.url }}">Continue: {{ mx_first.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
     {% elif gold_path.next %}<a class="btn btn-brand" href="{{ gold_path.next.url }}">Continue: {{ gold_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
   </div>
@@ -20,6 +20,20 @@
   {% endif %}
 </div>
 
+{% if mastery_daily %}
+<section class="card mb-4 mx-daily-card" aria-labelledby="mxDailyH">
+  <div class="card-body d-flex flex-wrap gap-3 align-items-center justify-content-between">
+    <div>
+      <h2 class="h6 mb-1" id="mxDailyH"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Daily review · {{ mastery_daily.section.name }}</h2>
+      <p class="mb-0 small">{% if mastery_daily.done_today %}Done for today. {% if mastery_daily.next_due %}Next questions come due {{ mastery_daily.next_due.strftime('%a %d %b') }}.{% endif %}{% elif mastery_daily.n %}{{ mastery_daily.n }} question{{ 's' if mastery_daily.n != 1 }} · about {{ mastery_daily.minutes }} min · timed for just before you would forget.{% else %}Starts after your first answers on an objective.{% endif %}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      {% if mastery_daily.n and not mastery_daily.done_today %}<a class="btn btn-brand" href="{{ mastery_daily.url }}">Start daily review</a>{% endif %}
+      <a class="btn btn-outline-navy" href="{{ url_for('mastery_plan', section_id=mastery_daily.section.id) }}">My plan</a>
+    </div>
+  </div>
+</section>
+{% endif %}
 {% with hide_path_cta = true %}{% include '_gold_path.html' %}{% endwith %}
 
 <div class="row g-4">
