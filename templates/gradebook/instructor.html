@@ -15,7 +15,7 @@
     <div>
       <div class="eyebrow">Gradebook</div>
       <h1 class="h3 mb-1">{{ section.name }}</h1>
-      <p class="mb-0">{{ section.course.title }} · {{ S.students }} students · {{ st.policy|capitalize }} attempt counts · pass mark {{ st.pass_mark }}%</p>
+      <p class="mb-0">{{ section.course.title }} · {{ S.students }} students · {{ st.policy|capitalize }} attempt counts · pass mark {{ st.pass_mark }}%{% if st.late_per_day %} · late −{{ st.late_per_day|round(1) }}/day{% if st.late_max %} (max {{ st.late_max|round(1) }}){% endif %}{% endif %}{% if gb.cached %} · <span title="Served from the gradebook cache; refreshed automatically when attempts, overrides or settings change">cached</span>{% endif %}</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
       <a class="btn btn-sm btn-brand" href="{{ url_for('gradebook_csv', section_id=section.id) }}"><i class="bi bi-filetype-csv" aria-hidden="true"></i> Export CSV</a>
@@ -69,10 +69,54 @@
             <div class="col-6"><label class="form-label small" for="gbPolicy">Multiple attempts</label>
               <select id="gbPolicy" class="form-select form-select-sm" name="policy"><option value="best" {% if st.policy == 'best' %}selected{% endif %}>Best score counts</option><option value="latest" {% if st.policy == 'latest' %}selected{% endif %}>Latest score counts</option></select></div>
             <div class="col-6"><label class="form-label small" for="gbPass">Pass mark %</label><input id="gbPass" class="form-control form-control-sm" type="number" min="1" max="100" name="pass_mark" value="{{ st.pass_mark }}"></div>
+            <div class="col-4"><label class="form-label small" for="gbLate">Late: points/day</label><input id="gbLate" class="form-control form-control-sm" type="number" min="0" max="100" step="0.5" name="late_per_day" value="{{ st.late_per_day|round(1) }}"></div>
+            <div class="col-4"><label class="form-label small" for="gbLateMax">Max deduction</label><input id="gbLateMax" class="form-control form-control-sm" type="number" min="0" max="100" step="0.5" name="late_max" value="{{ st.late_max|round(1) }}"></div>
+            <div class="col-4"><label class="form-label small" for="gbGrace">Grace (hours)</label><input id="gbGrace" class="form-control form-control-sm" type="number" min="0" max="336" name="late_grace_hours" value="{{ st.late_grace_hours }}"></div>
+            <div class="col-12 small text-muted">Late penalties apply only to items with a due date (below), per started day after due + grace; 0 points/day turns them off. Overrides are never penalised.</div>
             <div class="col-12 small text-muted">Weights are renormalised over categories that have scores, so they need not add to 100. Progress quizzes are practice by default (weight 0).</div>
             <div class="col-12"><button class="btn btn-sm btn-brand">Save settings</button></div>
           </form>
         </details>
+        <details class="mt-2" id="gbScale">
+          <summary class="fw-semibold">Letter scale {% if st.custom_scale %}<span class="badge text-bg-info">custom</span>{% endif %}</summary>
+          <form method="post" action="{{ url_for('gradebook_scale', section_id=section.id) }}" class="mt-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <table class="table table-sm align-middle mb-2 gb-scale">
+              <caption class="small text-muted caption-top">A grade gets the first letter whose minimum it meets (high to low). Leave rows blank to remove them.</caption>
+              <thead><tr><th scope="col">Minimum %</th><th scope="col">Letter</th><th scope="col" class="text-end">Students</th></tr></thead>
+              <tbody>
+              {% set counts = {} %}{% for b in S.letters %}{% set _ = counts.update({b.label: b.n}) %}{% endfor %}
+              {% for lo, lab in st.scale %}
+                <tr><td><input class="form-control form-control-sm" type="number" min="0" max="100" step="0.5" name="scale_min" value="{{ lo }}" aria-label="Minimum percent for row {{ loop.index }}"></td>
+                    <td><input class="form-control form-control-sm" type="text" maxlength="4" name="scale_label" value="{{ lab }}" aria-label="Letter for row {{ loop.index }}"></td>
+                    <td class="text-end small">{{ counts.get(lab, 0) }}</td></tr>
+              {% endfor %}
+              {% for i in range(2) %}
+                <tr><td><input class="form-control form-control-sm" type="number" min="0" max="100" step="0.5" name="scale_min" placeholder="add" aria-label="New minimum percent {{ i + 1 }}"></td>
+                    <td><input class="form-control form-control-sm" type="text" maxlength="4" name="scale_label" placeholder="e.g. P" aria-label="New letter {{ i + 1 }}"></td><td></td></tr>
+              {% endfor %}
+              </tbody>
+            </table>
+            <div class="d-flex gap-2"><button class="btn btn-sm btn-brand">Save scale</button>
+              {% if st.custom_scale %}<button class="btn btn-sm btn-outline-secondary" name="action" value="reset">Reset to default</button>{% endif %}</div>
+          </form>
+        </details>
+        <details class="mt-2" id="gbDue">
+          <summary class="fw-semibold">Due dates <span class="text-muted fw-normal small">({{ gb.dues|length }} set{% if S.late_cells %} · {{ S.late_cells }} late score{{ 's' if S.late_cells != 1 }}{% endif %})</span></summary>
+          <form method="post" action="{{ url_for('gradebook_due', section_id=section.id) }}" class="mt-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="gb-due-list">
+            {% for it in gb.columns %}{% if it.category != 'quizzes' or show_quizzes %}
+              {% set due = gb.dues.get((it.type, it.id)) %}
+              <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                <label class="small flex-grow-1 text-truncate" for="due_{{ it.type }}_{{ it.id }}" title="{{ it.title }}">{{ it.title }}</label>
+                <input class="form-control form-control-sm" style="max-width:14rem" type="datetime-local" id="due_{{ it.type }}_{{ it.id }}" name="due_{{ it.type }}_{{ it.id }}" value="{{ due.strftime('%Y-%m-%dT%H:%M') if due else '' }}">
+              </div>
+            {% endif %}{% endfor %}
+            </div>
+            <p class="small text-muted mb-2">Times are server time (UTC). Clear a field to remove its due date.</p>
+            <button class="btn btn-sm btn-brand">Save due dates</button>
+          </form>
+        </details>
+        {% if S.quiz_attempts_excluded %}<p class="small text-muted mt-2 mb-0"><i class="bi bi-info-circle" aria-hidden="true"></i> {{ S.quiz_attempts_excluded }} quiz attempt{{ 's' if S.quiz_attempts_excluded != 1 }} from other classes or outside the enrollment window {{ 'are' if S.quiz_attempts_excluded != 1 else 'is' }} not counted here.</p>{% endif %}
       </div>
     </div>
   </div>
@@ -82,11 +126,17 @@
   <div class="card-header navy d-flex flex-wrap gap-2 justify-content-between align-items-center">
     <span>Grade grid</span>
     <div class="d-flex flex-wrap gap-2 align-items-center">
-      <label class="visually-hidden" for="gbFilter">Filter students</label>
-      <input id="gbFilter" type="search" class="form-control form-control-sm gb-filter" placeholder="Filter students…" autocomplete="off">
-      <div class="form-check form-switch mb-0 small">
-        <input class="form-check-input" type="checkbox" role="switch" id="gbRisk"><label class="form-check-label" for="gbRisk">Below pass only</label>
-      </div>
+      <form method="get" class="d-flex flex-wrap gap-2 align-items-center" role="search">
+        {% if show_quizzes and gb.weights.quizzes == 0 %}<input type="hidden" name="quizzes" value="1">{% endif %}
+        <label class="visually-hidden" for="gbFilter">Filter students</label>
+        <input id="gbFilter" name="q" value="{{ pager.q }}" type="search" class="form-control form-control-sm gb-filter" placeholder="Filter students…" autocomplete="off">
+        <div class="form-check form-switch mb-0 small">
+          <input class="form-check-input" type="checkbox" role="switch" id="gbRisk" name="risk" value="1" {{ 'checked' if pager.risk }}><label class="form-check-label" for="gbRisk">Below pass only</label>
+        </div>
+        <label class="visually-hidden" for="gbPer">Students per page</label>
+        <select id="gbPer" name="per" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">{% for n in pager.choices %}<option value="{{ n }}" {{ 'selected' if n == pager.per }}>{{ n }} / page</option>{% endfor %}</select>
+        <noscript><button class="btn btn-sm btn-outline-light">Apply</button></noscript>
+      </form>
       {% if not show_quizzes %}<a class="btn btn-sm btn-outline-light" href="?quizzes=1">Show quizzes</a>{% else %}<a class="btn btn-sm btn-outline-light" href="?">Hide quizzes</a>{% endif %}
     </div>
   </div>
@@ -124,8 +174,23 @@
       </tbody>
     </table>
   </div>
+  {% if pager.pages > 1 or pager.q or pager.risk %}
+  <nav class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-3 py-2 border-top" aria-label="Gradebook pages">
+    <span class="small text-muted">Students {{ pager.first }}–{{ pager.last }} of {{ pager.total }}{% if pager.q or pager.risk %} (filtered from {{ full.rows|length }}){% endif %}</span>
+    {% if pager.pages > 1 %}
+    {% set base = {'q': pager.q or None, 'risk': 1 if pager.risk else None, 'per': pager.per, 'quizzes': 1 if (show_quizzes and gb.weights.quizzes == 0) else None} %}
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item {{ 'disabled' if pager.page == 1 }}"><a class="page-link" href="{{ url_for('instructor_gradebook', section_id=section.id, page=pager.page - 1, **base) }}" aria-label="Previous page">‹</a></li>
+      {% for n in range(1, pager.pages + 1) %}{% if n == 1 or n == pager.pages or (n - pager.page)|abs <= 2 %}
+      <li class="page-item {{ 'active' if n == pager.page }}"><a class="page-link" href="{{ url_for('instructor_gradebook', section_id=section.id, page=n, **base) }}" {% if n == pager.page %}aria-current="page"{% endif %}>{{ n }}</a></li>
+      {% elif (n - pager.page)|abs == 3 %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}{% endfor %}
+      <li class="page-item {{ 'disabled' if pager.page == pager.pages }}"><a class="page-link" href="{{ url_for('instructor_gradebook', section_id=section.id, page=pager.page + 1, **base) }}" aria-label="Next page">›</a></li>
+    </ul>{% endif %}
+  </nav>
+  {% endif %}
   <div class="card-footer small text-muted d-flex flex-wrap gap-3">
     <span><span class="gb-chip gb-pass">85</span> at/above item pass mark</span>
+    <span><span class="gb-chip gb-fail">70<span class="gb-late" aria-hidden="true">L</span></span> late penalty applied</span>
     <span><span class="gb-chip gb-fail">62</span> below</span>
     <span><span class="gb-chip gb-pass gb-ov">90</span> instructor override</span>
     <span><span class="gb-chip gb-ex">EX</span> excused</span>

@@ -429,6 +429,9 @@ class QuizAttempt(db.Model):
     answers = db.Column(db.Text)
     score = db.Column(db.Float)
     completed_at = db.Column(db.DateTime, default=utcnow)
+    # class the attempt was taken in (pass 3). NULL for older attempts: the gradebook then
+    # counts them only inside the student's enrollment window.
+    section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), index=True)
     quiz = db.relationship('Quiz')
 
 
@@ -700,13 +703,17 @@ def student_gold_path(user, section):
     labs = labs_for_module(module) if module else []
     lab = labs[0] if labs else None
     lab_id = lab.get('id') if isinstance(lab, dict) else getattr(lab, 'id', None)
+    # labs_for_module returns dicts; older callers passed objects
+    lab_title = (lab.get('title') if isinstance(lab, dict) else getattr(lab, 'title', None)) or 'Hands-on lab'
     quizzes = Quiz.query.filter_by(module_id=module.id).all() if module else []
     quiz = quizzes[0] if quizzes else None
     tests = KnowledgeTest.query.filter_by(course_id=section.course_id).order_by(KnowledgeTest.order).all()
     test = tests[0] if tests else None
     quiz_attempt = None
     if quiz:
-        quiz_attempt = QuizAttempt.query.filter_by(user_id=user.id, quiz_id=quiz.id).order_by(QuizAttempt.id.desc()).first()
+        quiz_attempt = (QuizAttempt.query.filter_by(user_id=user.id, quiz_id=quiz.id)
+                        .filter(db.or_(QuizAttempt.section_id == section.id, QuizAttempt.section_id.is_(None)))
+                        .order_by(QuizAttempt.id.desc()).first())
     test_attempt = None
     if test:
         test_attempt = TestAttempt.query.filter_by(
@@ -732,7 +739,7 @@ def student_gold_path(user, section):
             'key': 'lab',
             'n': len(steps) + 1,
             'title': 'Run the matching lab',
-            'detail': lab.title,
+            'detail': lab_title,
             'url': url_for('interactive_lab', lab_id=lab_id) if lab_id else None,
             'done': bool(quiz_attempt or test_attempt),
             'available': True,
@@ -2857,12 +2864,13 @@ def take_quiz(section_id, quiz_id):
                 bucket['keywords'].add(token)
 
         score = (correct / len(questions)) * 100 if questions else 0
+        enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first()
         attempt = QuizAttempt(
             user_id=current_user.id, quiz_id=quiz_id,
-            answers=json.dumps(answers), score=score
+            answers=json.dumps(answers), score=score,
+            section_id=section_id if enr else None
         )
         db.session.add(attempt)
-        enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first()
         if enr:
             enr.progress_percent = min(100.0, enr.progress_percent + 5)
         db.session.commit()
@@ -6622,6 +6630,9 @@ def _ensure_schema():
                     conn.execute(text('ALTER TABLE curriculum_ticket ADD COLUMN quiz_id INTEGER'))
                 if 'test_id' not in cols:
                     conn.execute(text('ALTER TABLE curriculum_ticket ADD COLUMN test_id INTEGER'))
+        if 'quiz_attempt' in tables and 'section_id' not in {c['name'] for c in insp.get_columns('quiz_attempt')}:
+            with db.engine.begin() as conn:
+                conn.execute(text('ALTER TABLE quiz_attempt ADD COLUMN section_id INTEGER'))
         if 'content_release' in tables:
             rcols = {c['name'] for c in insp.get_columns('content_release')}
             if 'user_id' not in rcols:
@@ -6640,6 +6651,7 @@ def init_db():
     db.create_all()
     _ensure_schema()
     helix_pkg.ensure_schema(db)
+    gradebook_mod.ensure_schema(db)
     if User.query.count() == 0:
         print('Seeding database...')
         seed_database()

@@ -5,11 +5,19 @@ LabCompletion, Enrollment). Adds two small tables: per-section settings
 (category weights + best/latest policy) and per-cell instructor overrides
 (score override or excused, with a required note and audit trail).
 
+Pass 3: an editable letter scale, late-penalty rules with per-item due dates, quiz
+attempts tied to the class they were taken in (older attempts without a class are
+counted only inside the student's enrollment window), and a signature-checked cache
+plus pagination for large classes.
+
 Helix attention data is deliberately NOT an input to any grade.
 """
 import csv
+import json
+import math
 import statistics
-from datetime import datetime, timezone
+import threading
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 from types import SimpleNamespace
 
@@ -27,7 +35,31 @@ CATEGORIES = [
     ('quizzes', 'Progress quizzes'),
 ]
 DEFAULT_WEIGHTS = {'tests': 70, 'skills': 30, 'quizzes': 0}
+DEFAULT_SCALE = [(93, 'A'), (90, 'A-'), (87, 'B+'), (83, 'B'), (80, 'B-'), (77, 'C+'), (73, 'C'), (70, 'C-'), (60, 'D'), (0, 'F')]
+PER_PAGE_CHOICES = (25, 50, 100, 200)
 _cache = {}
+_gb_cache = {}           # (section_id,) -> (signature, data)
+_gb_lock = threading.Lock()
+MIGRATIONS = [
+    ('gradebook_setting', 'letter_scale', 'TEXT'),
+    ('gradebook_setting', 'late_per_day', 'FLOAT DEFAULT 0'),
+    ('gradebook_setting', 'late_max', 'FLOAT DEFAULT 0'),
+    ('gradebook_setting', 'late_grace_hours', 'INTEGER DEFAULT 0'),
+]
+
+
+def ensure_schema(db):
+    """Add pass-3 columns to an existing database without touching data."""
+    from sqlalchemy import inspect, text
+    try:
+        insp = inspect(db.engine)
+        tables = set(insp.get_table_names())
+        with db.engine.begin() as conn:
+            for table, col, ddl in MIGRATIONS:
+                if table in tables and col not in {c['name'] for c in insp.get_columns(table)}:
+                    conn.execute(text(f'ALTER TABLE {table} ADD COLUMN {col} {ddl}'))
+    except Exception as exc:  # pragma: no cover
+        print('Gradebook schema note:', exc)
 
 
 def define_models(db):
@@ -45,6 +77,21 @@ def define_models(db):
         pass_mark = db.Column(db.Integer, default=80)
         updated_at = db.Column(db.DateTime, default=utcnow)
         updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+        letter_scale = db.Column(db.Text)                 # JSON [[min, label], ...] high to low; NULL = default
+        late_per_day = db.Column(db.Float, default=0)     # percentage points off per (started) day late
+        late_max = db.Column(db.Float, default=0)         # cap on the late deduction (points)
+        late_grace_hours = db.Column(db.Integer, default=0)
+
+    class GradeDue(db.Model):
+        """Optional due date for one graded item in one class (drives late penalties)."""
+        __tablename__ = 'grade_due'
+        id = db.Column(db.Integer, primary_key=True)
+        section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False, index=True)
+        item_type = db.Column(db.String(10), nullable=False)  # test | quiz
+        item_id = db.Column(db.Integer, nullable=False)
+        due_at = db.Column(db.DateTime, nullable=False)
+        updated_at = db.Column(db.DateTime, default=utcnow)
+        updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     class GradeOverride(db.Model):
         __tablename__ = 'grade_override'
@@ -59,18 +106,75 @@ def define_models(db):
         updated_at = db.Column(db.DateTime, default=utcnow)
         updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    _cache['m'] = SimpleNamespace(GradebookSetting=GradebookSetting, GradeOverride=GradeOverride)
+    _cache['m'] = SimpleNamespace(GradebookSetting=GradebookSetting, GradeOverride=GradeOverride, GradeDue=GradeDue)
     return _cache['m']
 
 
 # ---------------------------------------------------------------- pure computation
-def letter(score, pass_mark=80):
+def parse_scale(raw):
+    """JSON or list -> validated [(min, label)] high-to-low ending at 0, or the default scale."""
+    try:
+        data = json.loads(raw) if isinstance(raw, str) else raw
+        rows = []
+        for item in data or []:
+            lo, lab = (item['min'], item['label']) if isinstance(item, dict) else (item[0], item[1])
+            lo, lab = float(lo), str(lab).strip()[:4]
+            if lab and 0 <= lo <= 100:
+                rows.append((lo, lab))
+        rows = sorted({lo: lab for lo, lab in rows}.items(), key=lambda x: -x[0])
+        if not rows:
+            return list(DEFAULT_SCALE)
+        if rows[-1][0] > 0:
+            rows.append((0, 'F'))
+        return [(int(lo) if float(lo).is_integer() else lo, lab) for lo, lab in rows]
+    except (TypeError, ValueError, KeyError, IndexError):
+        return list(DEFAULT_SCALE)
+
+
+def letter(score, pass_mark=80, scale=None):
     if score is None:
         return '—'
-    for cut, lab in ((93, 'A'), (90, 'A-'), (87, 'B+'), (83, 'B'), (80, 'B-'), (77, 'C+'), (73, 'C'), (70, 'C-'), (60, 'D')):
+    for cut, lab in (scale or DEFAULT_SCALE):
         if score >= cut:
             return lab
-    return 'F'
+    return (scale or DEFAULT_SCALE)[-1][1]
+
+
+def letter_counts(grades, scale):
+    out = []
+    for lo, lab in scale:
+        out.append({'label': lab, 'min': lo, 'n': 0})
+    for g in grades:
+        for b in out:
+            if g >= b['min']:
+                b['n'] += 1
+                break
+    return out
+
+
+def late_penalty(completed_at, due_at, per_day, cap, grace_hours=0):
+    """(days_late, points_off) for one attempt. Each started day after due + grace costs per_day."""
+    if not completed_at or not due_at or not per_day:
+        return 0, 0.0
+    over = completed_at - (due_at + timedelta(hours=grace_hours or 0))
+    if over.total_seconds() <= 0:
+        return 0, 0.0
+    days = math.ceil(over.total_seconds() / 86400.0)
+    off = days * float(per_day)
+    if cap:
+        off = min(off, float(cap))
+    return days, round(off, 1)
+
+
+def in_window(when, enrolled_at, end_date):
+    """Whether an attempt with no class recorded falls inside this enrollment."""
+    if when is None:
+        return False
+    if enrolled_at and when < enrolled_at - timedelta(hours=12):
+        return False
+    if end_date and when.date() > end_date + timedelta(days=1):
+        return False
+    return True
 
 
 def pick(attempt_scores, policy):
@@ -121,14 +225,43 @@ def register(app, db, deps):
     Module, LabCompletion, can_access_section, is_content_available, audit, role_required."""
     m = define_models(db)
     d = SimpleNamespace(**deps)
-    Setting, Override = m.GradebookSetting, m.GradeOverride
+    Setting, Override, Due = m.GradebookSetting, m.GradeOverride, m.GradeDue
 
     def settings_for(section_id):
         s = Setting.query.filter_by(section_id=section_id).first()
         if s is None:
             s = SimpleNamespace(weight_tests=DEFAULT_WEIGHTS['tests'], weight_skills=DEFAULT_WEIGHTS['skills'],
-                                weight_quizzes=DEFAULT_WEIGHTS['quizzes'], policy='best', pass_mark=80, id=None)
-        return s
+                                weight_quizzes=DEFAULT_WEIGHTS['quizzes'], policy='best', pass_mark=80, id=None,
+                                letter_scale=None, late_per_day=0, late_max=0, late_grace_hours=0, updated_at=None)
+        # plain snapshot: safe to cache across requests
+        return SimpleNamespace(id=s.id, weight_tests=s.weight_tests, weight_skills=s.weight_skills,
+                               weight_quizzes=s.weight_quizzes, policy=s.policy or 'best', pass_mark=s.pass_mark or 80,
+                               scale=parse_scale(getattr(s, 'letter_scale', None)),
+                               custom_scale=bool(getattr(s, 'letter_scale', None)),
+                               late_per_day=getattr(s, 'late_per_day', 0) or 0, late_max=getattr(s, 'late_max', 0) or 0,
+                               late_grace_hours=getattr(s, 'late_grace_hours', 0) or 0, updated_at=s.updated_at)
+
+    def signature(section, quiz_ids):
+        """Cheap aggregate fingerprint of everything compute() reads; changes invalidate the cache."""
+        from sqlalchemy import func
+        q = db.session.query
+        sig = [
+            q(func.count(d.Enrollment.id), func.max(d.Enrollment.id), func.sum(d.Enrollment.progress_percent))
+            .filter(d.Enrollment.section_id == section.id).first(),
+            q(func.count(d.TestAttempt.id), func.max(d.TestAttempt.id), func.max(d.TestAttempt.completed_at))
+            .filter(d.TestAttempt.section_id == section.id).first(),
+            q(func.count(d.QuizAttempt.id), func.max(d.QuizAttempt.id)).filter(d.QuizAttempt.quiz_id.in_(quiz_ids or [0])).first(),
+            q(func.count(Override.id), func.max(Override.updated_at)).filter(Override.section_id == section.id).first(),
+            q(func.count(Due.id), func.max(Due.updated_at)).filter(Due.section_id == section.id).first(),
+            q(Setting.updated_at).filter(Setting.section_id == section.id).first(),
+            q(func.count(d.KnowledgeTest.id), func.max(d.KnowledgeTest.id)).filter(d.KnowledgeTest.course_id == section.course_id).first(),
+            (section.end_date, section.course_id),
+        ]
+        return repr([tuple(x) if x is not None and not isinstance(x, tuple) else x for x in sig])
+
+    def invalidate(section_id):
+        with _gb_lock:
+            _gb_cache.pop(section_id, None)
 
     def staff_section(section_id):
         section = db.get_or_404(d.ClassSection, section_id)
@@ -157,29 +290,69 @@ def register(app, db, deps):
         words = t.split()
         return ' '.join(words[-2:]) if len(t) > 14 else t
 
-    def compute(section, user_ids=None):
+    def compute(section, user_ids=None, use_cache=True):
+        """Grade grid for a class. Full-class results are cached and re-used until the
+        signature (attempts, overrides, settings, due dates, enrollments) changes."""
+        items = items_for(section)
+        quiz_ids = [i['id'] for i in items if i['type'] == 'quiz']
+        if user_ids is None and use_cache:
+            sig = signature(section, quiz_ids)
+            with _gb_lock:
+                hit = _gb_cache.get(section.id)
+            if hit and hit[0] == sig:
+                data = dict(hit[1]); data['cached'] = True
+                return data
+        data = _compute(section, items, user_ids)
+        if user_ids is None and use_cache:
+            with _gb_lock:
+                _gb_cache[section.id] = (sig, data)
+                if len(_gb_cache) > 64:
+                    _gb_cache.pop(next(iter(_gb_cache)))
+        data = dict(data); data['cached'] = False
+        return data
+
+    def _compute(section, items, user_ids=None):
         st = settings_for(section.id)
         weights = {'tests': st.weight_tests or 0, 'skills': st.weight_skills or 0, 'quizzes': st.weight_quizzes or 0}
-        items = items_for(section)
+        for it in items:
+            it.pop('obj', None)          # keep the cached structure free of ORM objects
         enrolls = d.Enrollment.query.filter_by(section_id=section.id).all()
         if user_ids is not None:
             enrolls = [e for e in enrolls if e.user_id in user_ids]
         uids = [e.user_id for e in enrolls] or [0]
-        users = {u.id: u for u in d.User.query.filter(d.User.id.in_(uids)).all()}
+        users = {u.id: SimpleNamespace(id=u.id, first_name=u.first_name, last_name=u.last_name, email=u.email,
+                                       full_name=u.full_name)
+                 for u in d.User.query.filter(d.User.id.in_(uids)).all()}
         test_ids = [i['id'] for i in items if i['type'] == 'test'] or [0]
         quiz_ids = [i['id'] for i in items if i['type'] == 'quiz'] or [0]
+        dues = {(x.item_type, x.item_id): x.due_at for x in Due.query.filter_by(section_id=section.id).all()}
+        late_on = bool(st.late_per_day)
         t_att = {}
         for a in d.TestAttempt.query.filter(d.TestAttempt.section_id == section.id,
                                             d.TestAttempt.test_id.in_(test_ids),
                                             d.TestAttempt.user_id.in_(uids)).all():
             if a.completed_at is None:
                 continue
-            t_att.setdefault((a.user_id, a.test_id), []).append(a)
-        q_att = {}
+            t_att.setdefault((a.user_id, a.test_id), []).append(SimpleNamespace(id=a.id, completed_at=a.completed_at, score=a.score))
+        # Quiz attempts: those recorded for THIS class, plus legacy attempts with no class recorded
+        # that fall inside the student's enrollment window (so a repeat course doesn't import old scores).
+        enrolled_at = {e.user_id: e.enrolled_at for e in enrolls}
+        has_sec = hasattr(d.QuizAttempt, 'section_id')
+        q_att, q_excluded = {}, 0
         for a in d.QuizAttempt.query.filter(d.QuizAttempt.quiz_id.in_(quiz_ids), d.QuizAttempt.user_id.in_(uids)).all():
-            q_att.setdefault((a.user_id, a.quiz_id), []).append(a)
-        overrides = {(o.user_id, o.item_type, o.item_id): o for o in Override.query.filter_by(section_id=section.id).all()}
+            sid = getattr(a, 'section_id', None) if has_sec else None
+            if sid is not None and sid != section.id:
+                q_excluded += 1
+                continue
+            if sid is None and not in_window(a.completed_at, enrolled_at.get(a.user_id), section.end_date):
+                q_excluded += 1
+                continue
+            q_att.setdefault((a.user_id, a.quiz_id), []).append(SimpleNamespace(id=a.id, completed_at=a.completed_at, score=a.score))
+        overrides = {(o.user_id, o.item_type, o.item_id): SimpleNamespace(score=o.score, excused=o.excused, note=o.note,
+                                                                         updated_at=o.updated_at)
+                     for o in Override.query.filter_by(section_id=section.id).all()}
         rows = []
+        late_cells = 0
         for e in enrolls:
             u = users.get(e.user_id)
             if not u:
@@ -189,13 +362,22 @@ def register(app, db, deps):
             for it in items:
                 atts = (t_att if it['type'] == 'test' else q_att).get((u.id, it['id']), [])
                 atts = sorted(atts, key=lambda a: a.completed_at or datetime.min, reverse=True)
-                raw = pick([(a.completed_at, a.score) for a in atts], st.policy)
+                due = dues.get((it['type'], it['id']))
+                adj = []
+                for a in atts:
+                    days, off = late_penalty(a.completed_at, due, st.late_per_day, st.late_max, st.late_grace_hours) if late_on else (0, 0.0)
+                    adj.append((a.completed_at, None if a.score is None else max(0.0, a.score - off), days, off))
+                raw = pick([(t, sc) for t, sc, _, _ in adj], st.policy)
+                chosen = next((x for x in adj if x[1] == raw), None) if raw is not None else None
                 ov = overrides.get((u.id, it['type'], it['id']))
                 score, status = raw, ('scored' if raw is not None else 'missing')
                 if ov and ov.excused:
                     score, status = None, 'excused'
                 elif ov and ov.score is not None:
                     score, status = ov.score, 'override'
+                late_days, late_off = (chosen[2], chosen[3]) if chosen and status == 'scored' else (0, 0.0)
+                if late_off:
+                    late_cells += 1
                 if score is not None:
                     cat_scores[it['category']].append(score)
                     done += 1
@@ -203,13 +385,15 @@ def register(app, db, deps):
                               'status': status, 'attempts': len(atts), 'override': ov,
                               'latest_id': atts[0].id if atts and it['type'] == 'test' else None,
                               'latest_at': atts[0].completed_at if atts else None,
+                              'due_at': due, 'late_days': late_days, 'late_off': late_off,
                               'passed': score is not None and score >= it['passing']})
             cat_avgs = {k: (round(sum(v) / len(v), 1) if v else None) for k, v in cat_scores.items()}
             grade = weighted_grade(cat_avgs, weights)
             gradable = len([c for c in cells if c['status'] != 'excused' and (weights.get(c['item']['category'], 0) > 0)])
             done_gradable = len([c for c in cells if c['score'] is not None and weights.get(c['item']['category'], 0) > 0])
-            rows.append({'user': u, 'enrollment': e, 'cells': cells, 'cat_avgs': cat_avgs, 'grade': grade,
-                         'letter': letter(grade, st.pass_mark), 'completion': int(round(100.0 * done_gradable / gradable)) if gradable else 0,
+            rows.append({'user': u, 'enrollment': SimpleNamespace(id=e.id, enrolled_at=e.enrolled_at, progress_percent=e.progress_percent),
+                         'cells': cells, 'cat_avgs': cat_avgs, 'grade': grade,
+                         'letter': letter(grade, st.pass_mark, st.scale), 'completion': int(round(100.0 * done_gradable / gradable)) if gradable else 0,
                          'at_risk': grade is not None and grade < st.pass_mark,
                          'progress': int(e.progress_percent or 0)})
         rows.sort(key=lambda r: (r['user'].last_name, r['user'].first_name))
@@ -230,8 +414,11 @@ def register(app, db, deps):
             'completion': int(round(sum(r['completion'] for r in rows) / len(rows))) if rows else 0,
             'histogram': histogram(grades),
             'cat_means': {k: describe([r['cat_avgs'][k] for r in rows])['mean'] for k, _ in CATEGORIES},
+            'late_cells': late_cells, 'quiz_attempts_excluded': q_excluded,
+            'letters': letter_counts(grades, st.scale),
         })
-        return {'settings': st, 'weights': weights, 'columns': items, 'rows': rows, 'col_stats': col_stats, 'summary': summary}
+        return {'settings': st, 'weights': weights, 'columns': items, 'rows': rows, 'col_stats': col_stats,
+                'summary': summary, 'dues': dues}
 
     # ---------------------------------------------------------------- instructor
     @login_required
@@ -239,8 +426,21 @@ def register(app, db, deps):
         section = staff_section(section_id)
         data = compute(section)
         show_quizzes = request.args.get('quizzes') == '1' or data['weights']['quizzes'] > 0
-        return render_template('gradebook/instructor.html', section=section, gb=data, categories=CATEGORIES,
-                               show_quizzes=show_quizzes)
+        # server-side filter + pagination (client-side sort/filter still works within a page)
+        q = (request.args.get('q') or '').strip().lower()
+        risk = request.args.get('risk') == '1'
+        per = request.args.get('per', type=int) or 50
+        per = per if per in PER_PAGE_CHOICES else 50
+        rows = [r for r in data['rows'] if (not q or q in r['user'].full_name.lower() or q in (r['user'].email or '').lower())
+                and (not risk or r['at_risk'])]
+        pages = max(1, math.ceil(len(rows) / per))
+        page = min(max(1, request.args.get('page', type=int) or 1), pages)
+        view = dict(data, rows=rows[(page - 1) * per: page * per])
+        pager = {'page': page, 'pages': pages, 'per': per, 'total': len(rows), 'q': q, 'risk': risk,
+                 'first': (page - 1) * per + 1 if rows else 0, 'last': min(page * per, len(rows)),
+                 'choices': PER_PAGE_CHOICES}
+        return render_template('gradebook/instructor.html', section=section, gb=view, categories=CATEGORIES,
+                               show_quizzes=show_quizzes, pager=pager, full=data)
 
     @login_required
     def instructor_gradebook_student(section_id, user_id):
@@ -268,6 +468,7 @@ def register(app, db, deps):
             if ov:
                 db.session.delete(ov)
                 db.session.commit()
+            invalidate(section.id)
             d.audit('grade_override_clear', f'section={section.id} user={uid} {item_type}={item_id}')
             flash('Override removed — the recorded attempt score applies again.', 'info')
         else:
@@ -292,6 +493,7 @@ def register(app, db, deps):
             ov.score, ov.excused, ov.note = score, excused, note
             ov.updated_at, ov.updated_by = utcnow(), current_user.id
             db.session.commit()
+            invalidate(section.id)
             d.audit('grade_override', f'section={section.id} user={uid} {item_type}={item_id} score={score} excused={excused}')
             flash('Grade override saved.', 'success')
         return redirect(url_for('instructor_gradebook_student', section_id=section.id, user_id=uid))
@@ -314,12 +516,105 @@ def register(app, db, deps):
             return redirect(url_for('instructor_gradebook', section_id=section.id))
         s.policy = 'latest' if request.form.get('policy') == 'latest' else 'best'
         s.pass_mark = w('pass_mark', 80) or 80
+
+        def f(name, lo, hi):
+            try:
+                return max(lo, min(hi, float(request.form.get(name) or 0)))
+            except (TypeError, ValueError):
+                return 0.0
+        s.late_per_day = f('late_per_day', 0, 100)
+        s.late_max = f('late_max', 0, 100)
+        s.late_grace_hours = int(f('late_grace_hours', 0, 24 * 14))
         s.updated_at, s.updated_by = utcnow(), current_user.id
         db.session.add(s)
         db.session.commit()
-        d.audit('gradebook_settings', f'section={section.id} w={s.weight_tests}/{s.weight_skills}/{s.weight_quizzes} policy={s.policy}')
+        invalidate(section.id)
+        d.audit('gradebook_settings', f'section={section.id} w={s.weight_tests}/{s.weight_skills}/{s.weight_quizzes} policy={s.policy} '
+                                      f'late={s.late_per_day}/day max={s.late_max} grace={s.late_grace_hours}h')
         flash('Gradebook settings saved.', 'success')
         return redirect(url_for('instructor_gradebook', section_id=section.id))
+
+    @login_required
+    def gradebook_scale(section_id):
+        """Letter-scale editor: rows of (minimum %, label), saved high to low."""
+        section = staff_section(section_id)
+        s = Setting.query.filter_by(section_id=section.id).first() or Setting(section_id=section.id)
+        if request.form.get('action') == 'reset':
+            s.letter_scale = None
+            msg = 'Letter scale reset to the default.'
+        else:
+            mins, labels = request.form.getlist('scale_min'), request.form.getlist('scale_label')
+            rows, errors = [], []
+            for lo, lab in zip(mins, labels):
+                lo, lab = (lo or '').strip(), (lab or '').strip()
+                if not lo and not lab:
+                    continue
+                try:
+                    v = float(lo)
+                except ValueError:
+                    errors.append(f'"{lo}" is not a number'); continue
+                if not 0 <= v <= 100:
+                    errors.append(f'{v:g} is outside 0-100'); continue
+                if not lab or len(lab) > 4:
+                    errors.append(f'label for {v:g}% must be 1-4 characters'); continue
+                rows.append((v, lab))
+            if len({v for v, _ in rows}) != len(rows):
+                errors.append('each minimum can be used once')
+            if not rows:
+                errors.append('add at least one letter')
+            if errors:
+                flash('Letter scale not saved: ' + '; '.join(errors[:4]) + '.', 'warning')
+                return redirect(url_for('instructor_gradebook', section_id=section.id) + '#gbScale')
+            scale = parse_scale([[v, lab] for v, lab in rows])
+            s.letter_scale = json.dumps([[lo, lab] for lo, lab in scale])
+            msg = 'Letter scale saved: ' + ', '.join(f'{lab} ≥{lo:g}' for lo, lab in scale) + '.'
+        s.updated_at, s.updated_by = utcnow(), current_user.id
+        db.session.add(s)
+        db.session.commit()
+        invalidate(section.id)
+        d.audit('gradebook_scale', f'section={section.id} scale={s.letter_scale or "default"}')
+        flash(msg, 'success')
+        return redirect(url_for('instructor_gradebook', section_id=section.id) + '#gbScale')
+
+    @login_required
+    def gradebook_due(section_id):
+        """Set/clear due dates (datetime-local, class time) for graded items."""
+        section = staff_section(section_id)
+        valid = {(i['type'], i['id']) for i in items_for(section)}
+        existing = {(x.item_type, x.item_id): x for x in Due.query.filter_by(section_id=section.id).all()}
+        changed = 0
+        for key, val in request.form.items():
+            if not key.startswith('due_'):
+                continue
+            try:
+                _, typ, iid = key.split('_', 2)
+                iid = int(iid)
+            except ValueError:
+                continue
+            if (typ, iid) not in valid:
+                continue
+            val = (val or '').strip()
+            row = existing.get((typ, iid))
+            if not val:
+                if row:
+                    db.session.delete(row); changed += 1
+                continue
+            try:
+                when = datetime.strptime(val[:16], '%Y-%m-%dT%H:%M')
+            except ValueError:
+                flash(f'Could not read the date "{val}".', 'warning'); continue
+            if not row:
+                row = Due(section_id=section.id, item_type=typ, item_id=iid, due_at=when)
+                db.session.add(row)
+            elif row.due_at == when:
+                continue
+            row.due_at, row.updated_at, row.updated_by = when, utcnow(), current_user.id
+            changed += 1
+        db.session.commit()
+        invalidate(section.id)
+        d.audit('gradebook_due', f'section={section.id} changed={changed}')
+        flash(f'Due dates saved ({changed} changed).', 'success')
+        return redirect(url_for('instructor_gradebook', section_id=section.id) + '#gbDue')
 
     @login_required
     def gradebook_csv(section_id):
@@ -337,7 +632,8 @@ def register(app, db, deps):
                     r['completion'], r['progress']]
             line += [r['cat_avgs'][k] if r['cat_avgs'][k] is not None else '' for k, _ in CATEGORIES]
             for c in r['cells']:
-                line.append('EX' if c['status'] == 'excused' else ('' if c['score'] is None else c['score']))
+                line.append('EX' if c['status'] == 'excused' else ('' if c['score'] is None else
+                            (f"{c['score']} (late -{c['late_off']:g})" if c['late_off'] else c['score'])))
             wtr.writerow(line)
         wtr.writerow([])
         wtr.writerow(['Class mean', '', '', data['summary']['mean'] or '', '', data['summary']['completion'], ''] +
@@ -382,10 +678,12 @@ def register(app, db, deps):
         ('/instructor/section/<int:section_id>/gradebook/student/<int:user_id>', 'instructor_gradebook_student', instructor_gradebook_student, ['GET']),
         ('/instructor/section/<int:section_id>/gradebook/override', 'gradebook_override', gradebook_override, ['POST']),
         ('/instructor/section/<int:section_id>/gradebook/settings', 'gradebook_settings', gradebook_settings, ['POST']),
+        ('/instructor/section/<int:section_id>/gradebook/scale', 'gradebook_scale', gradebook_scale, ['POST']),
+        ('/instructor/section/<int:section_id>/gradebook/due', 'gradebook_due', gradebook_due, ['POST']),
         ('/instructor/section/<int:section_id>/gradebook.csv', 'gradebook_csv', gradebook_csv, ['GET']),
         ('/student/grades', 'student_grades', student_grades, ['GET']),
         ('/student/section/<int:section_id>/grades', 'student_section_grades', student_section_grades, ['GET']),
     ]:
         app.add_url_rule(rule, ep, fn, methods=methods)
-    app.extensions['ciwt_gradebook'] = SimpleNamespace(compute=compute, models=m)
+    app.extensions['ciwt_gradebook'] = SimpleNamespace(compute=compute, models=m, invalidate=invalidate)
     return m

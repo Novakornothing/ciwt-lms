@@ -93,3 +93,113 @@ def test_lesson_ids_stable_across_sync(app, mod):
         mod.sync_curriculum()
         after = sorted(l.id for l in mod.Lesson.query.all())
     assert before == after
+
+
+# ---------------------------------------------------------------- pass 3
+def test_scale_late_and_window_helpers():
+    from datetime import datetime, date
+    sc = G.parse_scale('[[90, "A"], [75, "B"], [50, "C"]]')
+    assert sc[-1] == (0, 'F') and G.letter(76, scale=sc) == 'B' and G.letter(10, scale=sc) == 'F'
+    assert G.parse_scale('garbage') == G.DEFAULT_SCALE and G.parse_scale('[]') == G.DEFAULT_SCALE
+    assert G.parse_scale([[100, 'TOOLONG'], [0, 'P']]) == [(100, 'TOOL'), (0, 'P')]
+    due = datetime(2026, 10, 1, 17, 0)
+    assert G.late_penalty(datetime(2026, 10, 1, 16, 0), due, 10, 30) == (0, 0.0)
+    assert G.late_penalty(datetime(2026, 10, 1, 18, 0), due, 10, 30) == (1, 10.0)       # started day counts
+    assert G.late_penalty(datetime(2026, 10, 6, 18, 0), due, 10, 30) == (6, 30.0)       # capped
+    assert G.late_penalty(datetime(2026, 10, 1, 18, 0), due, 10, 0, grace_hours=2) == (0, 0.0)
+    assert G.late_penalty(datetime(2026, 10, 9), due, 0, 0) == (0, 0.0)                 # rule off
+    assert G.in_window(datetime(2026, 9, 2), datetime(2026, 9, 1), date(2026, 12, 1))
+    assert not G.in_window(datetime(2026, 8, 1), datetime(2026, 9, 1), None)            # before enrolling
+    assert not G.in_window(datetime(2027, 1, 5), datetime(2026, 9, 1), date(2026, 12, 1))  # after class ended
+
+
+def test_quiz_attempts_scoped_to_section(app, mod, ids):
+    """A quiz attempt recorded for another class (or before enrolling) must not count here."""
+    from datetime import timedelta
+    uid, qid = ids['student1'], ids['quiz']
+    with app.app_context():
+        enr = mod.Enrollment.query.filter_by(user_id=uid, section_id=1).first()
+        other = mod.ClassSection.query.filter(mod.ClassSection.id != 1).first()
+        mod.QuizAttempt.query.filter_by(user_id=uid, quiz_id=qid).delete()
+        mod.db.session.add_all([
+            mod.QuizAttempt(user_id=uid, quiz_id=qid, score=40, section_id=1, completed_at=enr.enrolled_at + timedelta(days=1)),
+            mod.QuizAttempt(user_id=uid, quiz_id=qid, score=100, section_id=other.id if other else 999, completed_at=enr.enrolled_at + timedelta(days=2)),
+            mod.QuizAttempt(user_id=uid, quiz_id=qid, score=95, section_id=None, completed_at=enr.enrolled_at - timedelta(days=30)),
+        ])
+        mod.db.session.commit()
+    data = _compute(app, mod)
+    row = next(r for r in data['rows'] if r['user'].id == uid)
+    cell = next(c for c in row['cells'] if c['item']['type'] == 'quiz' and c['item']['id'] == qid)
+    assert cell['score'] == 40 and cell['attempts'] == 1
+    assert data['summary']['quiz_attempts_excluded'] >= 2
+
+
+def test_take_quiz_records_section(student, app, mod, ids):
+    with app.app_context():
+        q = mod.db.session.get(mod.Quiz, ids['quiz'])
+        n_q = len(q.questions) if hasattr(q, 'questions') else 0
+    r = student.post(f"/student/quiz/{ids['section']}/{ids['quiz']}", data={}, follow_redirects=False)
+    assert r.status_code in (200, 302)
+    with app.app_context():
+        a = mod.QuizAttempt.query.filter_by(user_id=ids['student1'], quiz_id=ids['quiz']).order_by(mod.QuizAttempt.id.desc()).first()
+        assert a is not None and a.section_id == ids['section']
+
+
+def test_letter_scale_editor_and_late_rules(instructor, app, mod, ids):
+    sid = ids['section']
+    r = instructor.post(f'/instructor/section/{sid}/gradebook/scale', data={
+        'scale_min': ['90', '70', 'x', ''], 'scale_label': ['H', 'P', 'Q', '']})
+    assert r.status_code == 302
+    with app.app_context():
+        assert mod.db.session.query(mod.app.extensions['ciwt_gradebook'].models.GradebookSetting).filter_by(section_id=sid).first().letter_scale is None, 'invalid rows reject the save'
+    r = instructor.post(f'/instructor/section/{sid}/gradebook/scale', data={'scale_min': ['90', '70'], 'scale_label': ['H', 'P']})
+    data = _compute(app, mod)
+    assert data['settings'].scale == [(90, 'H'), (70, 'P'), (0, 'F')]
+    assert {r['letter'] for r in data['rows'] if r['grade'] is not None} <= {'H', 'P', 'F'}
+    page = instructor.get(f'/instructor/section/{sid}/gradebook').get_data(as_text=True)
+    assert 'Letter scale' in page and 'custom' in page
+    # late rule: due date in the distant past -> scored test cells get the capped deduction
+    instructor.post(f'/instructor/section/{sid}/gradebook/settings', data={
+        'weight_tests': 70, 'weight_skills': 30, 'weight_quizzes': 0, 'policy': 'best', 'pass_mark': 80,
+        'late_per_day': 5, 'late_max': 20, 'late_grace_hours': 0})
+    before = _compute(app, mod)
+    col = next(i for i, c in enumerate(before['columns']) if c['type'] == 'test' and c['id'] == ids['test'])
+    raw = {r['user'].id: r['cells'][col]['score'] for r in before['rows']}
+    instructor.post(f'/instructor/section/{sid}/gradebook/due', data={f"due_test_{ids['test']}": '2000-01-01T09:00'})
+    after = _compute(app, mod)
+    assert not after['cached'], 'due-date change invalidates the cache'
+    hit = 0
+    for r in after['rows']:
+        c = r['cells'][col]
+        if c['status'] == 'scored' and raw[r['user'].id] is not None:
+            assert c['late_off'] == 20 and abs(c['score'] - max(0, raw[r['user'].id] - 20)) < 0.11
+            hit += 1
+    assert hit, 'some seeded attempts were penalised'
+    assert after['summary']['late_cells'] == hit
+    # clearing the due date removes the penalty; reset scale
+    instructor.post(f'/instructor/section/{sid}/gradebook/due', data={f"due_test_{ids['test']}": ''})
+    instructor.post(f'/instructor/section/{sid}/gradebook/scale', data={'action': 'reset'})
+    instructor.post(f'/instructor/section/{sid}/gradebook/settings', data={
+        'weight_tests': 70, 'weight_skills': 30, 'weight_quizzes': 0, 'policy': 'best', 'pass_mark': 80, 'late_per_day': 0})
+    final = _compute(app, mod)
+    assert final['summary']['late_cells'] == 0 and final['settings'].scale == G.DEFAULT_SCALE
+
+
+def test_cache_hits_and_invalidates_on_new_attempt(app, mod, ids):
+    first = _compute(app, mod)
+    second = _compute(app, mod)
+    assert second['cached'] and second['rows'] is first['rows'] or second['cached']
+    with app.app_context():
+        mod.db.session.add(mod.QuizAttempt(user_id=ids['student1'], quiz_id=ids['quiz'], score=77, section_id=1))
+        mod.db.session.commit()
+    assert not _compute(app, mod)['cached']
+
+
+def test_gradebook_pagination_and_server_filter(instructor, ids):
+    sid = ids['section']
+    page = instructor.get(f'/instructor/section/{sid}/gradebook?per=25').get_data(as_text=True)
+    assert 'Students per page' in page
+    p2 = instructor.get(f'/instructor/section/{sid}/gradebook?per=25&page=999')
+    assert p2.status_code == 200           # clamps to the last page
+    one = instructor.get(f'/instructor/section/{sid}/gradebook?q=student1%40').get_data(as_text=True)
+    assert 'filtered from' in one and one.count('data-risk=') == 1

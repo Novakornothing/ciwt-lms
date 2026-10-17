@@ -3,8 +3,9 @@
 {%- if c.status == 'excused' -%}<span class="gb-chip gb-ex" title="Excused{% if c.override and c.override.note %}: {{ c.override.note }}{% endif %}">EX</span>
 {%- elif c.score is none -%}<span class="gb-chip gb-missing" title="No attempt yet">—</span>
 {%- else -%}
-  {%- if staff and c.latest_id -%}<a class="gb-chip {{ 'gb-pass' if c.passed else 'gb-fail' }}{{ ' gb-ov' if c.status == 'override' }}" href="{{ url_for('instructor_attempt_detail', attempt_id=c.latest_id) }}" title="{{ it.title }}: {{ c.score }}%{% if c.attempts > 1 %} · {{ c.attempts }} attempts{% endif %}{% if c.status == 'override' %} · override{% endif %}">{{ c.score|round|int }}</a>
-  {%- else -%}<span class="gb-chip {{ 'gb-pass' if c.passed else 'gb-fail' }}{{ ' gb-ov' if c.status == 'override' }}" title="{{ it.title }}: {{ c.score }}%{% if c.status == 'override' %} · override{% endif %}">{{ c.score|round|int }}</span>{%- endif -%}
+  {%- set late = ' · late ' ~ c.late_days ~ 'd, −' ~ c.late_off ~ ' pts (raw ' ~ ((c.raw or 0) + c.late_off)|round(1) ~ ')' if c.late_off else '' -%}
+  {%- if staff and c.latest_id -%}<a class="gb-chip {{ 'gb-pass' if c.passed else 'gb-fail' }}{{ ' gb-ov' if c.status == 'override' }}" href="{{ url_for('instructor_attempt_detail', attempt_id=c.latest_id) }}" title="{{ it.title }}: {{ c.score }}%{% if c.attempts > 1 %} · {{ c.attempts }} attempts{% endif %}{% if c.status == 'override' %} · override{% endif %}{{ late }}">{{ c.score|round|int }}{% if c.late_off %}<span class="gb-late" aria-hidden="true">L</span><span class="visually-hidden"> (late penalty)</span>{% endif %}</a>
+  {%- else -%}<span class="gb-chip {{ 'gb-pass' if c.passed else 'gb-fail' }}{{ ' gb-ov' if c.status == 'override' }}" title="{{ it.title }}: {{ c.score }}%{% if c.status == 'override' %} · override{% endif %}{{ late }}">{{ c.score|round|int }}{% if c.late_off %}<span class="gb-late" aria-hidden="true">L</span><span class="visually-hidden"> (late penalty)</span>{% endif %}</span>{%- endif -%}
 {%- endif -%}
 {%- endmacro %}
 
