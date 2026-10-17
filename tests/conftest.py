@@ -73,7 +73,7 @@ def admin(app):
 @pytest.fixture(scope='session')
 def ids(app, mod):
     with app.app_context():
-        sec = mod.ClassSection.query.get(1)
+        sec = mod.db.session.get(mod.ClassSection, 1)
         lesson = (mod.Lesson.query.join(mod.Module).filter(mod.Module.course_id == sec.course_id)
                   .order_by(mod.Module.order, mod.Lesson.order).first())
         quiz = mod.Quiz.query.filter_by(module_id=lesson.module_id).first()

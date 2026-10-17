@@ -8,7 +8,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 import json
 import secrets
@@ -26,6 +26,11 @@ from alignment import domains_for_course
 from aschool import BLOCKS as ASCHOOL_BLOCKS, CSCHOOL_COMMS, CSCHOOL_SYS, outline_stats, all_eos
 from pilot_slice import PILOT_CHECKS, PILOT_RUN, PRINT_PATH, quiz_payload
 from skills_exams import exams_for as skills_exams_for, is_practical_payload, stations_of
+
+
+def utcnow():
+    """Naive UTC now. Replaces the deprecated datetime.utcnow(); stored columns stay naive UTC."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ciwt-lms-demo-key-change-in-production')
@@ -120,7 +125,7 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(80), nullable=False)
     last_name = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='student')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     enrollments = db.relationship('Enrollment', backref='user', lazy=True)
     quiz_attempts = db.relationship('QuizAttempt', backref='user', lazy=True)
     test_attempts = db.relationship('TestAttempt', backref='user', lazy=True)
@@ -222,7 +227,7 @@ class TqiCritique(db.Model):
     kind = db.Column(db.String(40), default='curriculum')
     rating = db.Column(db.Integer)
     body = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     user = db.relationship('User')
     section = db.relationship('ClassSection')
 
@@ -236,8 +241,8 @@ class TqiEocResponse(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     answers_json = db.Column(db.Text, default='{}')
     comment = db.Column(db.Text, default='')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow)
 
 
 class ApiToken(db.Model):
@@ -245,7 +250,7 @@ class ApiToken(db.Model):
     __tablename__ = 'api_token'
     token = db.Column(db.String(64), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     user = db.relationship('User')
 
 
@@ -271,7 +276,7 @@ class TqiAction(db.Model):
     due_on = db.Column(db.String(20), default='')
     body = db.Column(db.Text, nullable=False)
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
 
 class CourseInstructor(db.Model):
@@ -288,7 +293,7 @@ class SectionInstructorAccess(db.Model):
     section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     is_primary = db.Column(db.Boolean, default=False)
-    granted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    granted_at = db.Column(db.DateTime, default=utcnow)
     section = db.relationship('ClassSection', backref='instructor_access')
     user = db.relationship('User')
 
@@ -297,13 +302,13 @@ class EORecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     eo_id = db.Column(db.String(40), nullable=False, index=True)
-    done_at = db.Column(db.DateTime, default=datetime.utcnow)
+    done_at = db.Column(db.DateTime, default=utcnow)
     user = db.relationship('User')
 
 
 class AuditEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    created_at = db.Column(db.DateTime, default=utcnow, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     role = db.Column(db.String(20))
     action = db.Column(db.String(80), nullable=False)
@@ -322,7 +327,7 @@ class TimeLog(db.Model):
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'))
     test_id = db.Column(db.Integer, db.ForeignKey('knowledge_test.id'))
     seconds = db.Column(db.Integer, default=0)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    started_at = db.Column(db.DateTime, default=utcnow)
     ended_at = db.Column(db.DateTime)
     user = db.relationship('User')
     lesson = db.relationship('Lesson')
@@ -347,8 +352,8 @@ class CurriculumTicket(db.Model):
     resolution = db.Column(db.String(40))  # fixed_content | declined | duplicate | other
     fixed_at = db.Column(db.DateTime)
     fixed_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
     user = db.relationship('User', foreign_keys=[user_id])
     fixed_by = db.relationship('User', foreign_keys=[fixed_by_id])
     course = db.relationship('Course')
@@ -369,7 +374,7 @@ class CurriculumChangeLog(db.Model):
     summary = db.Column(db.String(300), nullable=False)
     before_excerpt = db.Column(db.Text)
     after_excerpt = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     ticket = db.relationship('CurriculumTicket', backref='change_logs')
     lesson = db.relationship('Lesson')
     admin = db.relationship('User')
@@ -385,7 +390,7 @@ class StaffMessage(db.Model):
     subject = db.Column(db.String(200), nullable=False)
     body = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     sender = db.relationship('User', foreign_keys=[sender_id])
     recipient = db.relationship('User', foreign_keys=[recipient_id])
     section = db.relationship('ClassSection')
@@ -400,7 +405,7 @@ class Enrollment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False)
-    enrolled_at = db.Column(db.DateTime, default=datetime.utcnow)
+    enrolled_at = db.Column(db.DateTime, default=utcnow)
     progress_percent = db.Column(db.Float, default=0.0)
 
 
@@ -423,7 +428,7 @@ class QuizAttempt(db.Model):
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
     answers = db.Column(db.Text)
     score = db.Column(db.Float)
-    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, default=utcnow)
     quiz = db.relationship('Quiz')
 
 
@@ -435,7 +440,7 @@ class LabCompletion(db.Model):
     section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'))
     test_id = db.Column(db.Integer, db.ForeignKey('knowledge_test.id'))
     done_json = db.Column(db.Text)
-    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, default=utcnow)
 
 
 class TestAttempt(db.Model):
@@ -446,19 +451,19 @@ class TestAttempt(db.Model):
     answers = db.Column(db.Text)
     score = db.Column(db.Float)
     passed = db.Column(db.Boolean)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    started_at = db.Column(db.DateTime, default=utcnow)
     completed_at = db.Column(db.DateTime)
     test = db.relationship('KnowledgeTest')
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 
 
 def _section_course_id(section_id):
-    sec = ClassSection.query.get(section_id) if section_id else None
+    sec = db.session.get(ClassSection, section_id) if section_id else None
     return sec.course_id if sec else None
 
 
@@ -466,7 +471,7 @@ def _student_in_course(course_id, within_seconds=180):
     """True if at least one student has study activity on this course recently."""
     if not course_id:
         return False
-    cutoff = datetime.utcnow() - timedelta(seconds=within_seconds)
+    cutoff = utcnow() - timedelta(seconds=within_seconds)
     section_ids = [s.id for s in ClassSection.query.filter_by(course_id=course_id).all()]
     if not section_ids:
         return False
@@ -490,7 +495,7 @@ def _activity_rank():
             continue
         if row.section_id:
             section_ts.setdefault(row.section_id, when)
-            sec = ClassSection.query.get(row.section_id)
+            sec = db.session.get(ClassSection, row.section_id)
             if sec:
                 course_ts.setdefault(sec.course_id, when)
     return course_ts, section_ts
@@ -918,7 +923,7 @@ def _class_test_stats(test_id, section_id):
         median = scores_sorted[mid]
     else:
         median = round((scores_sorted[mid - 1] + scores_sorted[mid]) / 2, 1)
-    test = KnowledgeTest.query.get(test_id)
+    test = db.session.get(KnowledgeTest, test_id)
     questions = json.loads(test.questions)
     # aggregate categories across attempts
     cat_totals = {}
@@ -974,7 +979,7 @@ def compute_item_analysis(test_id, section_id=None, section_ids=None,
     (adjusted from the 0.50–0.90 band used when minimum pass is ~63%).
     Low throughput: full sample is used (entire N), matching low-volume guidance.
     """
-    test = KnowledgeTest.query.get_or_404(test_id)
+    test = db.get_or_404(KnowledgeTest, test_id)
     questions = json.loads(test.questions or '[]')
     if is_practical_payload(questions):
         questions = [
@@ -1005,7 +1010,7 @@ def compute_item_analysis(test_id, section_id=None, section_ids=None,
                 if qlabel != str(quarter).upper():
                     continue
             if instructor_id:
-                sec = ClassSection.query.get(att.section_id)
+                sec = db.session.get(ClassSection, att.section_id)
                 if not sec or sec.instructor_id != int(instructor_id):
                     continue
             filtered.append(att)
@@ -1322,7 +1327,7 @@ def healthz():
     return jsonify({
         'ok': ok,
         'service': 'ciwt-lms',
-        'time': datetime.utcnow().isoformat() + 'Z',
+        'time': utcnow().isoformat() + 'Z',
         'missing_templates': missing,
     }), (200 if ok else 503)
 
@@ -1538,12 +1543,12 @@ def _ensure_skills_releases():
                     content_id=t.id,
                     user_id=None,
                     is_active=True,
-                    activated_at=datetime.utcnow(),
+                    activated_at=utcnow(),
                 ))
                 n += 1
             elif not rel.is_active:
                 rel.is_active = True
-                rel.activated_at = datetime.utcnow()
+                rel.activated_at = utcnow()
                 n += 1
     if n:
         db.session.commit()
@@ -1588,7 +1593,7 @@ def skills_board(section_id):
         sync_skills_exams()
     except Exception:
         pass
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role == 'student':
         if not Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first():
             abort(403)
@@ -1613,7 +1618,7 @@ def skills_board(section_id):
 @login_required
 def aschool_trainee_guide():
     stats = outline_stats()
-    return render_template('aschool_guide.html', blocks=ASCHOOL_BLOCKS, stats=stats, generated=datetime.utcnow())
+    return render_template('aschool_guide.html', blocks=ASCHOOL_BLOCKS, stats=stats, generated=utcnow())
 
 
 @app.route('/aschool/trainee-guide.txt')
@@ -1622,7 +1627,7 @@ def aschool_trainee_guide_txt():
     lines = [
         'CIWT IT A-SCHOOL TRAINEE GUIDE',
         'Original CIWT material — proprietary schoolhouse content, not official NAVEDTRA.',
-        f'Generated {datetime.utcnow().isoformat()}Z',
+        f'Generated {utcnow().isoformat()}Z',
         '',
     ]
     stats = outline_stats()
@@ -1838,7 +1843,7 @@ def messages_new():
     if current_user.role == 'student':
         contacts = student_staff_contacts(current_user.id)
         enrollments = Enrollment.query.filter_by(user_id=current_user.id).all()
-        sections = [ClassSection.query.get(e.section_id) for e in enrollments]
+        sections = [db.session.get(ClassSection, e.section_id) for e in enrollments]
         sections = [s for s in sections if s]
     else:
         # staff composing to a student
@@ -1865,7 +1870,7 @@ def messages_new():
             flash('You can only message authorized instructors or admins.', 'danger')
             return redirect(url_for('messages_new'))
         if current_user.role == 'student':
-            rec = User.query.get(recipient_id)
+            rec = db.session.get(User, recipient_id)
             if not rec or rec.role not in ('instructor', 'admin'):
                 flash('Students cannot message other students.', 'danger')
                 return redirect(url_for('messages_new'))
@@ -1888,7 +1893,7 @@ def messages_new():
         for s in sections:
             rows = []
             for e in Enrollment.query.filter_by(section_id=s.id).all():
-                u = User.query.get(e.user_id)
+                u = db.session.get(User, e.user_id)
                 if u and u.role == 'student':
                     rows.append({
                         'id': u.id,
@@ -1920,13 +1925,13 @@ def messages_new():
 @app.route('/messages/<int:msg_id>', methods=['GET', 'POST'])
 @login_required
 def messages_thread(msg_id):
-    root = StaffMessage.query.get_or_404(msg_id)
+    root = db.get_or_404(StaffMessage, msg_id)
     if root.thread_id:
-        root = StaffMessage.query.get_or_404(root.thread_id)
+        root = db.get_or_404(StaffMessage, root.thread_id)
     participants = {root.sender_id, root.recipient_id}
     allowed = current_user.id in participants or current_user.role == 'admin'
     if not allowed and current_user.role == 'instructor' and root.section_id:
-        sec = ClassSection.query.get(root.section_id)
+        sec = db.session.get(ClassSection, root.section_id)
         if sec and instructor_can_access_section(current_user, sec):
             allowed = True
     if not allowed:
@@ -1956,7 +1961,7 @@ def messages_thread(msg_id):
         if current_user.role == 'admin' and current_user.id not in participants:
             student = root.sender if root.sender.role == 'student' else root.recipient
             to_id = student.id
-        if current_user.role == 'student' and User.query.get(to_id).role == 'student':
+        if current_user.role == 'student' and db.session.get(User, to_id).role == 'student':
             flash('Students cannot message other students.', 'danger')
             return redirect(url_for('messages_thread', msg_id=root.id))
         if not can_message(current_user, to_id) and current_user.role not in ('admin', 'instructor'):
@@ -2028,15 +2033,15 @@ def student_staff_contacts(student_id):
         contacts[admin.id] = admin
     enrs = Enrollment.query.filter_by(user_id=student_id).all()
     for e in enrs:
-        sec = ClassSection.query.get(e.section_id)
+        sec = db.session.get(ClassSection, e.section_id)
         if not sec:
             continue
         if sec.instructor_id:
-            u = User.query.get(sec.instructor_id)
+            u = db.session.get(User, sec.instructor_id)
             if u and u.role in ('instructor', 'admin'):
                 contacts[u.id] = u
         for link in CourseInstructor.query.filter_by(course_id=sec.course_id).all():
-            u = User.query.get(link.user_id)
+            u = db.session.get(User, link.user_id)
             if u and u.role in ('instructor', 'admin'):
                 contacts[u.id] = u
     return sorted(contacts.values(), key=lambda u: (u.last_name or '', u.first_name or ''))
@@ -2044,7 +2049,7 @@ def student_staff_contacts(student_id):
 
 def can_message(sender, recipient_id):
     """Enforce: students only to staff; staff to students (or other staff). Never student-student."""
-    recipient = User.query.get(recipient_id)
+    recipient = db.session.get(User, recipient_id)
     if not recipient:
         return False
     if sender.role == 'student':
@@ -2080,11 +2085,11 @@ def tickets_new():
     pre_quiz = request.args.get('quiz_id', type=int)
     pre_test = request.args.get('test_id', type=int)
     pre_quote = (request.args.get('quote') or '').strip()
-    lesson = Lesson.query.get(pre_lesson) if pre_lesson else None
-    quiz = Quiz.query.get(pre_quiz) if pre_quiz else None
-    test = KnowledgeTest.query.get(pre_test) if pre_test else None
+    lesson = db.session.get(Lesson, pre_lesson) if pre_lesson else None
+    quiz = db.session.get(Quiz, pre_quiz) if pre_quiz else None
+    test = db.session.get(KnowledgeTest, pre_test) if pre_test else None
     if quiz and not pre_course and quiz.module_id:
-        mod = Module.query.get(quiz.module_id)
+        mod = db.session.get(Module, quiz.module_id)
         if mod:
             pre_course = mod.course_id
     if test and not pre_course:
@@ -2291,10 +2296,10 @@ def admin_tickets():
 @login_required
 @role_required('admin')
 def admin_ticket_detail(ticket_id):
-    t = CurriculumTicket.query.get_or_404(ticket_id)
+    t = db.get_or_404(CurriculumTicket, ticket_id)
     lesson = t.lesson
     if not lesson and t.lesson_id:
-        lesson = Lesson.query.get(t.lesson_id)
+        lesson = db.session.get(Lesson, t.lesson_id)
     modules = []
     if t.course_id:
         modules = Module.query.filter_by(course_id=t.course_id).order_by(Module.order).all()
@@ -2327,12 +2332,12 @@ def admin_ticket_detail(ticket_id):
 @login_required
 @role_required('admin')
 def admin_ticket_update(ticket_id):
-    t = CurriculumTicket.query.get_or_404(ticket_id)
+    t = db.get_or_404(CurriculumTicket, ticket_id)
     status = request.form.get('status') or t.status
     if status in ('open', 'in_progress', 'resolved', 'closed'):
         t.status = status
         if status in ('resolved', 'closed') and not t.fixed_at:
-            t.fixed_at = datetime.utcnow()
+            t.fixed_at = utcnow()
             t.fixed_by_id = current_user.id
             if not t.resolution:
                 t.resolution = request.form.get('resolution') or 'other'
@@ -2343,10 +2348,10 @@ def admin_ticket_update(ticket_id):
     link_lesson = request.form.get('link_lesson_id')
     if link_lesson:
         t.lesson_id = int(link_lesson)
-        les = Lesson.query.get(int(link_lesson))
+        les = db.session.get(Lesson, int(link_lesson))
         if les and les.module:
             t.course_id = les.module.course_id
-    t.updated_at = datetime.utcnow()
+    t.updated_at = utcnow()
     db.session.commit()
     flash(f'Ticket #{t.id} updated.', 'success')
     return redirect(url_for('admin_ticket_detail', ticket_id=t.id))
@@ -2357,12 +2362,12 @@ def admin_ticket_update(ticket_id):
 @role_required('admin')
 def admin_ticket_fix_content(ticket_id):
     """Edit shared lesson content once; every class on that course sees the update."""
-    t = CurriculumTicket.query.get_or_404(ticket_id)
+    t = db.get_or_404(CurriculumTicket, ticket_id)
     lesson_id = request.form.get('lesson_id') or t.lesson_id
     if not lesson_id:
         flash('Link a lesson before applying a content fix.', 'warning')
         return redirect(url_for('admin_ticket_detail', ticket_id=t.id))
-    lesson = Lesson.query.get_or_404(int(lesson_id))
+    lesson = db.get_or_404(Lesson, int(lesson_id))
     new_content = request.form.get('content')
     if new_content is None:
         flash('No content submitted.', 'warning')
@@ -2388,12 +2393,12 @@ def admin_ticket_fix_content(ticket_id):
     )
     t.status = 'resolved'
     t.resolution = 'fixed_content'
-    t.fixed_at = datetime.utcnow()
+    t.fixed_at = utcnow()
     t.fixed_by_id = current_user.id
     t.admin_notes = (request.form.get('admin_notes') or t.admin_notes or '').strip() or (
         'Curriculum updated. Change applies to every class using this course.'
     )
-    t.updated_at = datetime.utcnow()
+    t.updated_at = utcnow()
     db.session.add(log)
     db.session.commit()
     flash(
@@ -2441,8 +2446,8 @@ def time_study_heartbeat():
         section_id=int(section_id) if section_id else None,
         lesson_id=int(lesson_id),
         seconds=seconds,
-        started_at=datetime.utcnow() - timedelta(seconds=seconds),
-        ended_at=datetime.utcnow(),
+        started_at=utcnow() - timedelta(seconds=seconds),
+        ended_at=utcnow(),
     )
     db.session.add(log)
     db.session.commit()
@@ -2460,7 +2465,7 @@ def _teaching_payload(log, extra=None):
     present = _student_in_course(course_id) if course_id else False
     wall = 0
     if log and log.started_at:
-        wall = int((datetime.utcnow() - log.started_at).total_seconds())
+        wall = int((utcnow() - log.started_at).total_seconds())
         wall = max(wall, int(log.seconds or 0))
     data = {
         'ok': True,
@@ -2496,7 +2501,7 @@ def time_teaching_start():
     section_id = int(section_id) if section_id else None
     if not section_id:
         return jsonify({'ok': False, 'error': 'Pick a class first.'}), 400
-    section = ClassSection.query.get(section_id)
+    section = db.session.get(ClassSection, section_id)
     if not section or (
         current_user.role != 'admin' and not instructor_can_access_section(current_user, section)
     ):
@@ -2508,7 +2513,7 @@ def time_teaching_start():
         return jsonify(_teaching_payload(open_log))
     log = TimeLog(
         user_id=current_user.id, kind='teaching', seconds=0,
-        section_id=section_id, started_at=datetime.utcnow(),
+        section_id=section_id, started_at=utcnow(),
     )
     db.session.add(log)
     db.session.commit()
@@ -2525,9 +2530,9 @@ def time_teaching_stop():
         return jsonify({'ok': True, 'running': False, 'seconds': 0, 'label': '0m'})
     data = request.get_json(silent=True) or {}
     client_sec = max(0, min(int(data.get('seconds') or 0), 12 * 3600))
-    wall = int((datetime.utcnow() - (open_log.started_at or datetime.utcnow())).total_seconds())
+    wall = int((utcnow() - (open_log.started_at or utcnow())).total_seconds())
     open_log.seconds = max(int(open_log.seconds or 0), client_sec, max(0, wall))
-    open_log.ended_at = datetime.utcnow()
+    open_log.ended_at = utcnow()
     db.session.commit()
     return jsonify({
         'ok': True,
@@ -2548,7 +2553,7 @@ def time_teaching_ping():
     data = request.get_json(silent=True) or {}
     elapsed = max(0, min(int(data.get('elapsed') or 15), 60))
     open_log.seconds = int(open_log.seconds or 0) + elapsed
-    wall = int((datetime.utcnow() - (open_log.started_at or datetime.utcnow())).total_seconds())
+    wall = int((utcnow() - (open_log.started_at or utcnow())).total_seconds())
     if wall > open_log.seconds:
         open_log.seconds = wall
     db.session.commit()
@@ -2593,7 +2598,7 @@ def student_dashboard():
 @app.route('/student/section/<int:section_id>')
 @login_required
 def student_section(section_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first()
     if not enr and current_user.role != 'admin':
         flash('You are not enrolled in this section.', 'danger')
@@ -2669,7 +2674,7 @@ def _modules_for_section(section, heal=True):
 @login_required
 def curriculum_index(section_id):
     """Every chapter in the class course — instructor and student."""
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role == 'student':
         enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first()
         if not enr:
@@ -2706,7 +2711,7 @@ def view_module(section_id, module_id):
     if current_user.role not in ('admin', 'instructor') and not is_content_available(section_id, 'module', module_id, current_user.id):
         flash('This module is not currently available.', 'warning')
         return redirect(url_for('student_section', section_id=section_id))
-    module = Module.query.get_or_404(module_id)
+    module = db.get_or_404(Module, module_id)
     lessons = Lesson.query.filter_by(module_id=module_id).order_by(Lesson.order).all()
     quizzes = Quiz.query.filter_by(module_id=module_id).all()
     # If structured lessons exist, show chapter hub; else legacy single page
@@ -2714,7 +2719,7 @@ def view_module(section_id, module_id):
         chapter_labs = labs_for_module(module)
     except Exception:
         chapter_labs = []
-    section = ClassSection.query.get(section_id)
+    section = db.session.get(ClassSection, section_id)
     course_modules = []
     if module.course_id:
         course_modules = Module.query.filter_by(course_id=module.course_id).order_by(Module.order).all()
@@ -2750,7 +2755,7 @@ def view_lesson(section_id, module_id, lesson_id):
     if current_user.role not in ('admin', 'instructor') and not is_content_available(section_id, 'module', module_id, current_user.id):
         flash('This module is not currently available.', 'warning')
         return redirect(url_for('student_section', section_id=section_id))
-    module = Module.query.get_or_404(module_id)
+    module = db.get_or_404(Module, module_id)
     lesson = Lesson.query.filter_by(id=lesson_id, module_id=module_id).first_or_404()
     lessons = Lesson.query.filter_by(module_id=module_id).order_by(Lesson.order).all()
     # prev/next
@@ -2763,7 +2768,7 @@ def view_lesson(section_id, module_id, lesson_id):
                 next_l = lessons[i + 1]
             break
     quizzes = Quiz.query.filter_by(module_id=module_id).all()
-    section = ClassSection.query.get(section_id)
+    section = db.session.get(ClassSection, section_id)
     course_modules = Module.query.filter_by(course_id=module.course_id).order_by(Module.order).all() if module.course_id else []
     class_home = (
         url_for('instructor_section', section_id=section_id)
@@ -2802,8 +2807,8 @@ def view_lesson(section_id, module_id, lesson_id):
 @app.route('/student/quiz/<int:section_id>/<int:quiz_id>', methods=['GET', 'POST'])
 @login_required
 def take_quiz(section_id, quiz_id):
-    quiz = Quiz.query.get_or_404(quiz_id)
-    module = Module.query.get(quiz.module_id)
+    quiz = db.get_or_404(Quiz, quiz_id)
+    module = db.session.get(Module, quiz.module_id)
     if current_user.role not in ('admin', 'instructor') and not is_content_available(section_id, 'module', module.id, current_user.id):
         flash('This quiz is not currently available.', 'warning')
         return redirect(url_for('student_section', section_id=section_id))
@@ -2891,7 +2896,7 @@ def take_quiz(section_id, quiz_id):
             })
         focus_areas.sort(key=lambda x: (-x['wrong'], x['focus']))
 
-        section = ClassSection.query.get(section_id)
+        section = db.session.get(ClassSection, section_id)
         return render_template(
             'quiz_results.html',
             quiz=quiz, section_id=section_id, module_id=quiz.module_id,
@@ -2899,7 +2904,7 @@ def take_quiz(section_id, quiz_id):
             focus_areas=focus_areas, module=module,
             gold_path=student_gold_path(current_user, section) if section else None,
         )
-    mod = Module.query.get(quiz.module_id)
+    mod = db.session.get(Module, quiz.module_id)
     return render_template('quiz.html', quiz=quiz, questions=questions, section_id=section_id, course_id=mod.course_id if mod else None)
 
 
@@ -2927,7 +2932,7 @@ def _record_lab_completion(lab_id, done, section_id=None, test_id=None):
         )
         db.session.add(row)
     row.done_json = json.dumps(list(done or []))
-    row.completed_at = datetime.utcnow()
+    row.completed_at = utcnow()
     db.session.commit()
 
 
@@ -2952,12 +2957,12 @@ def _take_practical(section_id, test, payload):
     if not open_attempt:
         open_attempt = TestAttempt(
             user_id=current_user.id, test_id=test.id, section_id=section_id,
-            started_at=datetime.utcnow(),
+            started_at=utcnow(),
         )
         db.session.add(open_attempt)
         db.session.commit()
-    started = open_attempt.started_at or datetime.utcnow()
-    remaining = max(0, int(limit_min * 60 - (datetime.utcnow() - started).total_seconds()))
+    started = open_attempt.started_at or utcnow()
+    remaining = max(0, int(limit_min * 60 - (utcnow() - started).total_seconds()))
     rows = []
     for st in stations:
         lab = get_lab(st['lab_id']) or {}
@@ -2991,7 +2996,7 @@ def _take_practical(section_id, test, payload):
         open_attempt.answers = json.dumps(answers)
         open_attempt.score = score
         open_attempt.passed = passed
-        open_attempt.completed_at = datetime.utcnow()
+        open_attempt.completed_at = utcnow()
         db.session.commit()
         if timed_out:
             flash('Time expired — stations completed so far were graded.', 'info')
@@ -3015,7 +3020,7 @@ def take_test(section_id, test_id):
     if current_user.role not in ('admin', 'instructor') and not is_content_available(section_id, 'test', test_id, current_user.id):
         flash('This knowledge test is not currently available.', 'warning')
         return redirect(url_for('student_section', section_id=section_id))
-    test = KnowledgeTest.query.get_or_404(test_id)
+    test = db.get_or_404(KnowledgeTest, test_id)
     questions = json.loads(test.questions or '[]')
     if is_practical_payload(questions):
         return _take_practical(section_id, test, questions)
@@ -3030,12 +3035,12 @@ def take_test(section_id, test_id):
         if not open_attempt:
             open_attempt = TestAttempt(
                 user_id=current_user.id, test_id=test_id, section_id=section_id,
-                started_at=datetime.utcnow(),
+                started_at=utcnow(),
             )
             db.session.add(open_attempt)
             db.session.flush()
         # Enforce time limit server-side (small grace for network)
-        elapsed = (datetime.utcnow() - (open_attempt.started_at or datetime.utcnow())).total_seconds()
+        elapsed = (utcnow() - (open_attempt.started_at or utcnow())).total_seconds()
         timed_out = request.form.get('timed_out') == '1'
         if elapsed > (limit_min * 60) + 90:
             timed_out = True
@@ -3052,12 +3057,12 @@ def take_test(section_id, test_id):
         open_attempt.answers = json.dumps(answers)
         open_attempt.score = score
         open_attempt.passed = passed
-        open_attempt.completed_at = datetime.utcnow()
+        open_attempt.completed_at = utcnow()
         db.session.commit()
         audit('test_submit', f'test={test_id} section={section_id} score={score:.0f}')
         if timed_out:
             flash('Time expired — your answers were submitted and graded automatically.', 'info')
-        section = ClassSection.query.get(section_id)
+        section = db.session.get(ClassSection, section_id)
         return render_template(
             'test_results.html',
             test=test, section_id=section_id, score=score, passed=passed,
@@ -3070,18 +3075,18 @@ def take_test(section_id, test_id):
     if not open_attempt:
         open_attempt = TestAttempt(
             user_id=current_user.id, test_id=test_id, section_id=section_id,
-            started_at=datetime.utcnow(),
+            started_at=utcnow(),
         )
         db.session.add(open_attempt)
         db.session.commit()
-    started = open_attempt.started_at or datetime.utcnow()
-    remaining = max(0, int(limit_min * 60 - (datetime.utcnow() - started).total_seconds()))
+    started = open_attempt.started_at or utcnow()
+    remaining = max(0, int(limit_min * 60 - (utcnow() - started).total_seconds()))
     if remaining <= 0:
         # Time already over (e.g. left page open) — force grade empty/partial if they re-enter
         open_attempt.answers = open_attempt.answers or json.dumps({})
         open_attempt.score = open_attempt.score if open_attempt.score is not None else 0
         open_attempt.passed = False
-        open_attempt.completed_at = datetime.utcnow()
+        open_attempt.completed_at = utcnow()
         db.session.commit()
         flash('Time expired — this attempt was closed.', 'info')
         return redirect(url_for('student_section', section_id=section_id))
@@ -3133,7 +3138,7 @@ def _tqi_rows(section_id, role=None):
     rows = q.order_by(TqiCritique.created_at.desc()).all()
     out = []
     for c in rows:
-        u = c.user or User.query.get(c.user_id)
+        u = c.user or db.session.get(User, c.user_id)
         out.append(type('C', (), {
             'id': c.id,
             'role': c.role,
@@ -3192,10 +3197,10 @@ def _tqi_status(section):
             except Exception:
                 pass
     need_eoc = max(1, int(round(n_enrolled * 0.6))) if n_enrolled else 1
-    today = datetime.utcnow().date()
+    today = utcnow().date()
     ended = bool(section.end_date and section.end_date <= today)
     started = bool(section.start_date and section.start_date <= today)
-    instructor = User.query.get(section.instructor_id) if section.instructor_id else None
+    instructor = db.session.get(User, section.instructor_id) if section.instructor_id else None
     owners = []
     seen = set()
     if instructor:
@@ -3203,7 +3208,7 @@ def _tqi_status(section):
         seen.add(instructor.id)
     try:
         for link in CourseInstructor.query.filter_by(course_id=section.course_id).all():
-            u = User.query.get(link.user_id)
+            u = db.session.get(User, link.user_id)
             if u and u.id not in seen:
                 owners.append(u)
                 seen.add(u.id)
@@ -3244,11 +3249,11 @@ def _tqi_status(section):
     all_ok = not missing
     if all_ok and pkt.status == 'open':
         pkt.status = 'ready'
-        pkt.auto_ready_at = pkt.auto_ready_at or datetime.utcnow()
+        pkt.auto_ready_at = pkt.auto_ready_at or utcnow()
         db.session.commit()
     if all_ok and ended and pkt.status == 'ready':
         pkt.status = 'complete'
-        pkt.completed_at = datetime.utcnow()
+        pkt.completed_at = utcnow()
         db.session.commit()
     return {
         'packet': pkt,
@@ -3308,7 +3313,7 @@ def _tqi_actions(section_id):
 @app.route('/class/<int:section_id>/tqi')
 @login_required
 def tqi_class(section_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if not _tqi_can_use_section(section):
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
@@ -3363,7 +3368,7 @@ def tqi_class(section_id):
 @app.route('/class/<int:section_id>/tqi/critique', methods=['POST'])
 @login_required
 def tqi_add_critique(section_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if not _tqi_can_use_section(section):
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
@@ -3391,7 +3396,7 @@ def tqi_add_critique(section_id):
             db.session.add(row)
         row.answers_json = json.dumps(answers)
         row.comment = body[:4000]
-        row.updated_at = datetime.utcnow()
+        row.updated_at = utcnow()
         kind = 'eoc'
         if rating is None:
             rating = int(round(sum(answers.values()) / len(answers)))
@@ -3428,7 +3433,7 @@ def tqi_add_critique(section_id):
 @app.route('/class/<int:section_id>/tqi/complete', methods=['POST'])
 @login_required
 def tqi_mark_complete(section_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
         abort(403)
     status = _tqi_status(section)
@@ -3437,7 +3442,7 @@ def tqi_mark_complete(section_id):
         flash('Finish the missing TQI items first, or ask an admin to close the packet.', 'warning')
         return redirect(url_for('tqi_class', section_id=section.id))
     pkt.status = 'complete'
-    pkt.completed_at = datetime.utcnow()
+    pkt.completed_at = utcnow()
     pkt.completed_by_id = current_user.id
     db.session.commit()
     audit('tqi_complete', f'section={section.id}')
@@ -3448,7 +3453,7 @@ def tqi_mark_complete(section_id):
 @app.route('/class/<int:section_id>/tqi/action', methods=['POST'])
 @login_required
 def tqi_add_action(section_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
         abort(403)
     body = (request.form.get('body') or '').strip()
@@ -3475,7 +3480,7 @@ def tqi_add_action(section_id):
 @app.route('/class/<int:section_id>/tqi/official.txt')
 @login_required
 def tqi_official_txt(section_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
         abort(403)
     status = _tqi_status(section)
@@ -3489,7 +3494,7 @@ def tqi_official_txt(section_id):
         f"Instructor: {status['instructor'].full_name if status['instructor'] else 'Unassigned'}",
         f"Roster: {status['n_enrolled']}",
         f"Packet: {status['packet'].status}",
-        f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC",
+        f"Generated: {utcnow().strftime('%Y-%m-%d %H:%M')} UTC",
         '',
         'COMPLETENESS',
     ]
@@ -3518,7 +3523,7 @@ def tqi_official_txt(section_id):
 @app.route('/class/<int:section_id>/tqi/report')
 @login_required
 def tqi_report(section_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
         flash('The TQI report is for instructors and admins of this class.', 'warning')
         return redirect(url_for('tqi_class', section_id=section.id))
@@ -3560,7 +3565,7 @@ def tqi_report(section_id):
         eoc_n=eoc_n,
         test_packs=test_packs,
         recommendations=recs,
-        generated=datetime.utcnow(),
+        generated=utcnow(),
         official=False,
         actions=_tqi_actions(section.id),
     )
@@ -3569,7 +3574,7 @@ def tqi_report(section_id):
 @app.route('/class/<int:section_id>/tqi/official')
 @login_required
 def tqi_official(section_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role not in ('admin', 'instructor') or not _tqi_can_use_section(section):
         flash('Official TQI reports are for the class instructor and admin.', 'warning')
         return redirect(url_for('tqi_class', section_id=section.id))
@@ -3611,7 +3616,7 @@ def tqi_official(section_id):
         eoc_n=eoc_n,
         test_packs=test_packs,
         recommendations=recs,
-        generated=datetime.utcnow(),
+        generated=utcnow(),
         actions=_tqi_actions(section.id),
     )
 
@@ -3677,7 +3682,7 @@ def _tqi_payload(section, viewer):
     instr_notes = []
     if viewer and viewer.role in ('admin', 'instructor'):
         for c in TqiCritique.query.filter(TqiCritique.section_id==section.id, TqiCritique.role.in_(['instructor','admin'])).order_by(TqiCritique.created_at.desc()).all():
-            u = c.user or User.query.get(c.user_id)
+            u = c.user or db.session.get(User, c.user_id)
             instr_notes.append({
                 'author': u.full_name if u else 'Instructor',
                 'kind': c.kind, 'rating': c.rating, 'body': c.body,
@@ -3711,7 +3716,7 @@ def _tqi_payload(section, viewer):
         'closeout': st['packet'].closeout_note or '',
         'tests': test_packs,
         'recommendations': recs,
-        'generated': datetime.utcnow().isoformat() + 'Z',
+        'generated': utcnow().isoformat() + 'Z',
     }
 
 
@@ -3756,7 +3761,7 @@ def api_tqi_board():
                 'code': sec.course.code if sec.course else None,
                 'start': sec.start_date.isoformat() if sec.start_date else None,
                 'end': sec.end_date.isoformat() if sec.end_date else None,
-                'instructor': (User.query.get(sec.instructor_id).full_name if sec.instructor_id and User.query.get(sec.instructor_id) else None),
+                'instructor': (db.session.get(User, sec.instructor_id).full_name if sec.instructor_id and db.session.get(User, sec.instructor_id) else None),
                 'status': 'open',
                 'missing': ['Could not finish packet status'],
                 'comment_needed_from': [],
@@ -3775,7 +3780,7 @@ def api_tqi_board():
             TqiCritique.role.in_(['instructor', 'admin']),
         ).order_by(TqiCritique.created_at.desc()).first()
         if last:
-            who = last.user or User.query.get(last.user_id)
+            who = last.user or db.session.get(User, last.user_id)
             latest = {
                 'author': who.full_name if who else 'Instructor',
                 'kind': last.kind,
@@ -3811,7 +3816,7 @@ def api_tqi_class(section_id):
         return jsonify({'ok': False, 'error': 'Sign in'}), 401
     if user.role != 'admin':
         return jsonify({'ok': False, 'error': 'TQI is admin only'}), 403
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     payload = _tqi_payload(section, user)
     if user.role == 'student':
         payload['instructor_notes'] = []
@@ -3831,7 +3836,7 @@ def api_tqi_eoc(section_id):
     user = _api_user_from_token()
     if not user or user.role != 'student':
         return jsonify({'ok': False, 'error': 'Student sign-in required'}), 401
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if not Enrollment.query.filter_by(section_id=section.id, user_id=user.id).first():
         return jsonify({'ok': False, 'error': 'Not in this class'}), 403
     data = request.get_json(silent=True) or {}
@@ -3848,7 +3853,7 @@ def api_tqi_eoc(section_id):
         db.session.add(row)
     row.answers_json = json.dumps(answers)
     row.comment = (data.get('comment') or '')[:4000]
-    row.updated_at = datetime.utcnow()
+    row.updated_at = utcnow()
     db.session.add(TqiCritique(
         section_id=section.id, user_id=user.id, role='student', kind='eoc',
         rating=int(round(sum(answers.values())/len(answers))),
@@ -3867,7 +3872,7 @@ def api_tqi_closeout(section_id):
     user = _api_user_from_token()
     if not user or user.role != 'admin':
         return jsonify({'ok': False, 'error': 'TQI is admin only'}), 403
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     data = request.get_json(silent=True) or {}
     body = (data.get('body') or '').strip()
     if len(body) < 8:
@@ -3879,7 +3884,7 @@ def api_tqi_closeout(section_id):
     db.session.add(TqiCritique(section_id=section.id, user_id=user.id, role=user.role, kind='closeout', rating=rating, body=body[:4000]))
     if data.get('complete'):
         pkt.status = 'complete'
-        pkt.completed_at = datetime.utcnow()
+        pkt.completed_at = utcnow()
         pkt.completed_by_id = user.id
     db.session.commit()
     _tqi_status(section)
@@ -3895,7 +3900,7 @@ def api_tqi_comment(section_id):
     user = _api_user_from_token()
     if not user or user.role != 'admin':
         return jsonify({'ok': False, 'error': 'TQI is admin only'}), 403
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     data = request.get_json(silent=True) or {}
     body = (data.get('body') or '').strip()
     if len(body) < 4:
@@ -3954,7 +3959,7 @@ def instructor_dashboard():
 @app.route('/instructor/section/<int:section_id>')
 @login_required
 def instructor_section(section_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role != 'admin' and not instructor_can_access_section(current_user, section):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
@@ -4000,7 +4005,7 @@ def instructor_section(section_id):
     ).all():
         teach_totals[row.user_id] += row.seconds or 0
         if row.ended_at is None and row.started_at:
-            teach_totals[row.user_id] += int((datetime.utcnow() - row.started_at).total_seconds())
+            teach_totals[row.user_id] += int((utcnow() - row.started_at).total_seconds())
     test_stats = {}
     roster_scores = {}
     for t in tests:
@@ -4025,7 +4030,7 @@ def instructor_section(section_id):
         TqiCritique.section_id == section.id,
         TqiCritique.role.in_(['instructor', 'admin']),
     ).order_by(TqiCritique.created_at.desc()).limit(20).all():
-        who = c.user or User.query.get(c.user_id)
+        who = c.user or db.session.get(User, c.user_id)
         tqi_notes.append({
             'author': who.full_name if who else 'Instructor',
             'role': c.role,
@@ -4062,7 +4067,7 @@ def instructor_section(section_id):
 @login_required
 def course_labs(section_id):
     """All live labs that belong to this class's curriculum."""
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role == 'student':
         enr = Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first()
         if not enr:
@@ -4098,7 +4103,7 @@ def course_labs(section_id):
 @login_required
 def section_pilot_pack(section_id):
     """Convening data pack: scores, pass/fail, category percents."""
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role == 'student':
         flash('Pilot packs are for instructors and admins.', 'warning')
         return redirect(url_for('student_section', section_id=section_id))
@@ -4145,7 +4150,7 @@ def section_set_instructor(section_id):
     if current_user.role != 'admin':
         flash('Only an administrator can change the class instructor.', 'warning')
         return redirect(url_for('instructor_section', section_id=section_id))
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     instructor = User.query.filter_by(id=int(request.form.get('instructor_id') or 0), role='instructor').first()
     if not instructor:
         flash('Select a valid instructor.', 'warning')
@@ -4162,7 +4167,7 @@ def section_add_course_instructor(section_id):
     if current_user.role != 'admin':
         flash('Only an administrator can assign curriculum instructors.', 'warning')
         return redirect(url_for('instructor_section', section_id=section_id))
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     user = User.query.filter_by(id=int(request.form.get('user_id') or 0), role='instructor').first()
     if not user:
         flash('Select a valid instructor.', 'warning')
@@ -4181,15 +4186,15 @@ def section_add_course_instructor(section_id):
 @app.route('/instructor/section/<int:section_id>/quiz/<int:quiz_id>/preview')
 @login_required
 def instructor_quiz_preview(section_id, quiz_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role not in ('admin', 'instructor') or (
         current_user.role != 'admin' and not instructor_can_access_section(current_user, section)
     ):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
-    quiz = Quiz.query.get_or_404(quiz_id)
+    quiz = db.get_or_404(Quiz, quiz_id)
     questions = json.loads(quiz.questions or '[]')
-    module = Module.query.get(quiz.module_id)
+    module = db.session.get(Module, quiz.module_id)
     return render_template(
         'instructor_quiz_preview.html',
         section=section, quiz=quiz, questions=questions, module=module,
@@ -4200,13 +4205,13 @@ def instructor_quiz_preview(section_id, quiz_id):
 @app.route('/instructor/section/<int:section_id>/test/<int:test_id>/preview')
 @login_required
 def instructor_test_preview(section_id, test_id):
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role not in ('admin', 'instructor') or (
         current_user.role != 'admin' and not instructor_can_access_section(current_user, section)
     ):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
-    test = KnowledgeTest.query.get_or_404(test_id)
+    test = db.get_or_404(KnowledgeTest, test_id)
     questions = json.loads(test.questions or '[]')
     if is_practical_payload(questions):
         questions = [
@@ -4234,7 +4239,7 @@ def toggle_release():
     content_type = request.form['content_type']
     content_id = int(request.form['content_id'])
     action = request.form.get('action', 'activate')
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role != 'admin' and not instructor_can_access_section(current_user, section):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
@@ -4339,7 +4344,7 @@ def instructor_enroll():
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
     section_id = int(request.form['section_id'])
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role != 'admin' and not instructor_can_access_section(current_user, section):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
@@ -4392,11 +4397,11 @@ def instructor_unenroll():
         return redirect(url_for('index'))
     section_id = int(request.form['section_id'])
     enrollment_id = int(request.form['enrollment_id'])
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role != 'admin' and not instructor_can_access_section(current_user, section):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
-    enr = Enrollment.query.get_or_404(enrollment_id)
+    enr = db.get_or_404(Enrollment, enrollment_id)
     if enr.section_id != section_id:
         abort(400)
     name = enr.user.full_name
@@ -4415,11 +4420,11 @@ def instructor_test_performance(section_id, test_id):
     if current_user.role not in ('instructor', 'admin'):
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role == 'instructor' and not instructor_can_access_section(current_user, section):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
-    test = KnowledgeTest.query.get_or_404(test_id)
+    test = db.get_or_404(KnowledgeTest, test_id)
     stats = _class_test_stats(test_id, section_id)
     hist_avg, hist_n = _instructor_historical_average(
         section.instructor_id if section.instructor_id else current_user.id
@@ -4452,7 +4457,7 @@ def instructor_test_performance(section_id, test_id):
     result_filter = (request.args.get('result') or '').strip().lower()  # pass | fail | ''
     all_rows = []
     for att in stats['attempts']:
-        user = User.query.get(att.user_id)
+        user = db.session.get(User, att.user_id)
         all_rows.append({
             'attempt': att,
             'user': user,
@@ -4491,12 +4496,12 @@ def instructor_attempt_detail(attempt_id):
     if current_user.role not in ('instructor', 'admin'):
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
-    attempt = TestAttempt.query.get_or_404(attempt_id)
-    section = ClassSection.query.get_or_404(attempt.section_id)
+    attempt = db.get_or_404(TestAttempt, attempt_id)
+    section = db.get_or_404(ClassSection, attempt.section_id)
     if current_user.role == 'instructor' and not instructor_can_access_section(current_user, section):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
-    test = KnowledgeTest.query.get_or_404(attempt.test_id)
+    test = db.get_or_404(KnowledgeTest, attempt.test_id)
     questions = json.loads(test.questions)
     answers = json.loads(attempt.answers or '{}')
     items = []
@@ -4515,7 +4520,7 @@ def instructor_attempt_detail(attempt_id):
             'lo_text': q.get('lo_text', ''),
         })
     categories = _category_breakdown(questions, answers)
-    student = User.query.get(attempt.user_id)
+    student = db.session.get(User, attempt.user_id)
     return render_template(
         'instructor_attempt_detail.html',
         section=section, test=test, attempt=attempt, student=student,
@@ -4532,7 +4537,7 @@ def course_performance(course_id):
     if current_user.role not in ('instructor', 'admin'):
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
-    course = Course.query.get_or_404(course_id)
+    course = db.get_or_404(Course, course_id)
     tests = KnowledgeTest.query.filter_by(course_id=course_id).order_by(KnowledgeTest.order).all()
     if current_user.role == 'admin':
         sections = ClassSection.query.filter_by(course_id=course_id, is_active=True).order_by(ClassSection.name).all()
@@ -4606,7 +4611,7 @@ def course_performance(course_id):
                 rows.append({'subcategory': sub, 'pct': pct, 'correct': v['correct'], 'total': v['total']})
             nested[cat] = rows
 
-        instructor = User.query.get(sec.instructor_id) if sec.instructor_id else None
+        instructor = db.session.get(User, sec.instructor_id) if sec.instructor_id else None
         section_rows.append({
             'section': sec,
             'instructor': instructor,
@@ -4651,7 +4656,7 @@ def course_category_performance(course_id, category):
     if current_user.role not in ('instructor', 'admin'):
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
-    course = Course.query.get_or_404(course_id)
+    course = db.get_or_404(Course, course_id)
     category = category.replace('+', ' ')
     tests = KnowledgeTest.query.filter_by(course_id=course_id).order_by(KnowledgeTest.order).all()
     if current_user.role == 'admin':
@@ -4714,11 +4719,11 @@ def section_test_category(section_id, test_id, category):
     if current_user.role not in ('instructor', 'admin'):
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
-    section = ClassSection.query.get_or_404(section_id)
+    section = db.get_or_404(ClassSection, section_id)
     if current_user.role == 'instructor' and not instructor_can_access_section(current_user, section):
         flash('Access denied.', 'danger')
         return redirect(url_for('instructor_dashboard'))
-    test = KnowledgeTest.query.get_or_404(test_id)
+    test = db.get_or_404(KnowledgeTest, test_id)
     category = category.replace('+', ' ')
     qs = json.loads(test.questions or '[]')
     atts = TestAttempt.query.filter_by(test_id=test_id, section_id=section_id).filter(
@@ -4789,7 +4794,7 @@ def instructor_analytics_hub():
 def test_item_analysis(test_id):
     section_id = request.args.get('section_id', type=int)
     test, analysis, summary = compute_item_analysis(test_id, section_id)
-    section = ClassSection.query.get(section_id) if section_id else None
+    section = db.session.get(ClassSection, section_id) if section_id else None
     # Access: admin always; instructor if owns section or any section of course; student if enrolled in section
     allowed = False
     if current_user.role == 'admin':
@@ -5008,7 +5013,7 @@ def admin_dashboard():
     for row in TimeLog.query.filter_by(kind='teaching').all():
         teach_totals[row.user_id] += row.seconds or 0
         if row.ended_at is None and row.started_at:
-            teach_totals[row.user_id] += max(0, int((datetime.utcnow() - row.started_at).total_seconds()))
+            teach_totals[row.user_id] += max(0, int((utcnow() - row.started_at).total_seconds()))
     study_all = defaultdict(int)
     for row in TimeLog.query.filter_by(kind='study').all():
         study_all[row.user_id] += row.seconds or 0
@@ -5016,10 +5021,10 @@ def admin_dashboard():
     for row in TimeLog.query.filter_by(kind='teaching').all():
         sec = row.seconds or 0
         if row.ended_at is None and row.started_at:
-            sec += max(0, int((datetime.utcnow() - row.started_at).total_seconds()))
+            sec += max(0, int((utcnow() - row.started_at).total_seconds()))
         teach_by_class.append({
             'user': row.user,
-            'section': ClassSection.query.get(row.section_id) if row.section_id else None,
+            'section': db.session.get(ClassSection, row.section_id) if row.section_id else None,
             'seconds': sec,
             'open': row.ended_at is None,
         })
@@ -5061,7 +5066,7 @@ def admin_dashboard():
 def _teaching_seconds(row):
     sec = row.seconds or 0
     if row.ended_at is None and row.started_at:
-        sec += max(0, int((datetime.utcnow() - row.started_at).total_seconds()))
+        sec += max(0, int((utcnow() - row.started_at).total_seconds()))
     return sec
 
 
@@ -5073,9 +5078,9 @@ def _teaching_time_report():
     course_instr_totals = defaultdict(list)  # course_id -> [seconds per instructor]
     for row in rows:
         user = row.user
-        section = ClassSection.query.get(row.section_id) if row.section_id else None
+        section = db.session.get(ClassSection, row.section_id) if row.section_id else None
         course = section.course if section and section.course else None
-        when = row.started_at or datetime.utcnow()
+        when = row.started_at or utcnow()
         year = when.year
         quarter = f'Q{((when.month - 1) // 3) + 1}'
         sec = _teaching_seconds(row)
@@ -5353,7 +5358,7 @@ def admin_create_section():
 @login_required
 @role_required('admin')
 def admin_toggle_section():
-    section = ClassSection.query.get_or_404(int(request.form['section_id']))
+    section = db.get_or_404(ClassSection, int(request.form['section_id']))
     section.is_active = not section.is_active
     db.session.commit()
     flash(f'Section “{section.name}” is now {"active" if section.is_active else "inactive"}.', 'info')
@@ -5424,7 +5429,7 @@ def admin_create_instructor():
 @login_required
 @role_required('admin')
 def admin_make_admin():
-    user = User.query.get_or_404(int(request.form.get('user_id') or 0))
+    user = db.get_or_404(User, int(request.form.get('user_id') or 0))
     if user.id == current_user.id:
         flash('You are already an administrator.', 'info')
         return redirect(url_for('admin_dashboard'))
@@ -5441,7 +5446,7 @@ def admin_make_admin():
 @login_required
 @role_required('admin')
 def admin_demote_admin():
-    user = User.query.get_or_404(int(request.form.get('user_id') or 0))
+    user = db.get_or_404(User, int(request.form.get('user_id') or 0))
     if user.id == current_user.id:
         flash('You cannot remove your own admin access from this screen.', 'warning')
         return redirect(url_for('admin_dashboard') + '#admin-staff')
@@ -5464,7 +5469,7 @@ def admin_demote_admin():
 def admin_remove_instructor():
     user_id = int(request.form.get('user_id') or 0)
     reassign_to = request.form.get('reassign_to') or ''
-    instructor = User.query.get_or_404(user_id)
+    instructor = db.get_or_404(User, user_id)
     if instructor.role != 'instructor':
         flash('That user is not an instructor.', 'warning')
         return redirect(url_for('admin_dashboard'))
@@ -5502,7 +5507,7 @@ def admin_remove_instructor():
 @login_required
 @role_required('admin')
 def admin_assign_instructor():
-    section = ClassSection.query.get_or_404(int(request.form['section_id']))
+    section = db.get_or_404(ClassSection, int(request.form['section_id']))
     instructor = User.query.filter_by(id=int(request.form['instructor_id']), role='instructor').first()
     if not instructor:
         flash('Select a valid instructor.', 'warning')
@@ -5514,7 +5519,7 @@ def admin_assign_instructor():
     grant_section_instructor_access(section.id, instructor.id, primary=True)
     db.session.commit()
     if prev_id and prev_id != instructor.id:
-        prev = User.query.get(prev_id)
+        prev = db.session.get(User, prev_id)
         prev_name = prev.full_name if prev else 'previous instructor'
         flash(
             f'{section.name} is now led by {instructor.full_name}. '
@@ -5531,8 +5536,8 @@ def admin_assign_instructor():
 @login_required
 @role_required('admin')
 def admin_add_course_instructor():
-    course = Course.query.get_or_404(int(request.form.get('course_id') or 0))
-    user = User.query.get_or_404(int(request.form.get('user_id') or 0))
+    course = db.get_or_404(Course, int(request.form.get('course_id') or 0))
+    user = db.get_or_404(User, int(request.form.get('user_id') or 0))
     if user.role != 'instructor':
         flash('Select an instructor account.', 'warning')
         return redirect(url_for('admin_dashboard'))
@@ -5550,7 +5555,7 @@ def admin_add_course_instructor():
 @login_required
 @role_required('admin')
 def admin_remove_course_instructor():
-    link = CourseInstructor.query.get_or_404(int(request.form.get('link_id') or 0))
+    link = db.get_or_404(CourseInstructor, int(request.form.get('link_id') or 0))
     name = link.user.full_name if link.user else 'Instructor'
     title = link.course.title if link.course else 'course'
     db.session.delete(link)
@@ -5596,7 +5601,7 @@ def admin_backup_db():
         flash('Could not find SQLite file to back up.', 'danger')
         return redirect(url_for('admin_dashboard'))
     audit('backup_db')
-    return send_file(p, as_attachment=True, download_name=f'ciwt-backup-{datetime.utcnow().strftime("%Y%m%d-%H%M")}.db')
+    return send_file(p, as_attachment=True, download_name=f'ciwt-backup-{utcnow().strftime("%Y%m%d-%H%M")}.db')
 
 
 @app.route('/admin/audit')
@@ -5654,8 +5659,8 @@ def export_analytics_csv():
     w = csv.writer(buf)
     w.writerow(['class', 'course', 'instructor', 'test', 'attempts', 'average', 'median', 'high', 'low', 'pass_rate', 'category', 'category_pct'])
     for sec in sections:
-        course = Course.query.get(sec.course_id)
-        instr = User.query.get(sec.instructor_id) if sec.instructor_id else None
+        course = db.session.get(Course, sec.course_id)
+        instr = db.session.get(User, sec.instructor_id) if sec.instructor_id else None
         instr_name = instr.full_name if instr else ''
         tests = KnowledgeTest.query.filter_by(course_id=sec.course_id).order_by(KnowledgeTest.order).all()
         for test in tests:
@@ -5693,7 +5698,7 @@ def export_item_flags_csv():
     w = csv.writer(buf)
     w.writerow(['course', 'test', 'item_index', 'P', 'pct_correct', 'p_status', 'difficulty', 'd', 'disc_label', 'flags', 'stem'])
     for test in KnowledgeTest.query.order_by(KnowledgeTest.course_id, KnowledgeTest.order).all():
-        course = Course.query.get(test.course_id)
+        course = db.session.get(Course, test.course_id)
         _t, analysis, _s = compute_item_analysis(test.id)
         for it in analysis:
             if not it.get('flags'):
@@ -6253,10 +6258,10 @@ def seed_database():
                 content_type='module',
                 content_id=mod.id,
                 is_active=True,
-                available_from=datetime.utcnow() - timedelta(days=1),
-                available_until=datetime.utcnow() + timedelta(days=90),
+                available_from=utcnow() - timedelta(days=1),
+                available_until=utcnow() + timedelta(days=90),
                 activated_by=sec.instructor_id,
-                activated_at=datetime.utcnow(),
+                activated_at=utcnow(),
             ))
     db.session.commit()
 
@@ -6277,9 +6282,9 @@ def seed_database():
         db.session.add(ContentRelease(
             section_id=section_d.id, content_type='module', content_id=mod.id,
             is_active=True,
-            available_from=datetime.utcnow() - timedelta(days=1),
-            available_until=datetime.utcnow() + timedelta(days=90),
-            activated_by=instr2.id, activated_at=datetime.utcnow(),
+            available_from=utcnow() - timedelta(days=1),
+            available_until=utcnow() + timedelta(days=90),
+            activated_by=instr2.id, activated_at=utcnow(),
         ))
     db.session.commit()
 
@@ -6336,8 +6341,8 @@ def seed_database():
                     answers=json.dumps(answers),
                     score=score,
                     passed=score >= 80,
-                    started_at=datetime.utcnow() - timedelta(days=day_ago, hours=2),
-                    completed_at=datetime.utcnow() - timedelta(days=day_ago),
+                    started_at=utcnow() - timedelta(days=day_ago, hours=2),
+                    completed_at=utcnow() - timedelta(days=day_ago),
                 ))
         # light progress marks
         for enr in enrolled:

@@ -15,7 +15,7 @@ def test_pure_helpers():
 
 def _compute(app, mod, section_id=1, uid=None):
     with app.app_context():
-        sec = mod.ClassSection.query.get(section_id)
+        sec = mod.db.session.get(mod.ClassSection, section_id)
         return app.extensions['ciwt_gradebook'].compute(sec, user_ids={uid} if uid else None)
 
 

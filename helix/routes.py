@@ -1,7 +1,7 @@
 """Helix blueprint: consent, session lifecycle API, dashboards, exports."""
 import csv
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 
 from flask import (Blueprint, Response, abort, current_app, flash, jsonify, redirect,
@@ -10,6 +10,11 @@ from flask_login import current_user, login_required
 
 from . import analytics as A
 from .models import ENGINE, NON_READING_KEYS, POLICY_VERSION, STATE_KEYS
+
+
+def utcnow():
+    """Naive UTC now. Replaces the deprecated datetime.utcnow(); stored columns stay naive UTC."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 STALE_AFTER = timedelta(minutes=10)
 
@@ -69,13 +74,13 @@ def create_blueprint(d, m):
         return d.Enrollment.query.filter_by(user_id=current_user.id, section_id=section_id).first() is not None
 
     def owned_session(session_id):
-        sess = Session.query.get_or_404(session_id)
+        sess = db.get_or_404(Session, session_id)
         if sess.user_id != current_user.id:
             abort(403)
         return sess
 
     def staff_section_or_403(section_id):
-        section = d.ClassSection.query.get_or_404(section_id)
+        section = db.get_or_404(d.ClassSection, section_id)
         if current_user.role == 'admin':
             return section
         if current_user.role != 'instructor' or not d.can_access_section(current_user, section):
@@ -87,7 +92,7 @@ def create_blueprint(d, m):
         return request.get_json(force=True, silent=True) or {}
 
     def mark_stale(sessions):
-        cutoff = datetime.utcnow() - STALE_AFTER
+        cutoff = utcnow() - STALE_AFTER
         changed = False
         for s in sessions:
             if s.status == 'running':
@@ -138,7 +143,7 @@ def create_blueprint(d, m):
 
     def grant(camera_ok, passive_ok):
         for old in Consent.query.filter_by(user_id=current_user.id, revoked_at=None).all():
-            old.revoked_at = datetime.utcnow()
+            old.revoked_at = utcnow()
         c = Consent(user_id=current_user.id, policy_version=POLICY_VERSION,
                     camera_ok=bool(camera_ok), passive_ok=bool(passive_ok))
         db.session.add(c)
@@ -149,11 +154,11 @@ def create_blueprint(d, m):
     def revoke():
         n = 0
         for old in Consent.query.filter_by(user_id=current_user.id, revoked_at=None).all():
-            old.revoked_at = datetime.utcnow()
+            old.revoked_at = utcnow()
             n += 1
         for s in Session.query.filter_by(user_id=current_user.id, status='running').all():
             s.status = 'ended'
-            s.ended_at = datetime.utcnow()
+            s.ended_at = utcnow()
         db.session.commit()
         d.audit('helix_consent_revoke', f'rows={n}')
         return n
@@ -180,11 +185,11 @@ def create_blueprint(d, m):
         lesson_id = data.get('lesson_id')
         if not lesson_id:
             return jsonify({'ok': False, 'error': 'lesson required'}), 400
-        lesson = d.Lesson.query.get(A._int(lesson_id))
+        lesson = db.session.get(d.Lesson, A._int(lesson_id))
         if not lesson:
             return jsonify({'ok': False, 'error': 'lesson not found'}), 404
         section_id = A._int(data.get('section_id')) or None
-        if section_id and not d.ClassSection.query.get(section_id):
+        if section_id and not db.session.get(d.ClassSection, section_id):
             section_id = None
         if not can_record(section_id):
             return jsonify({'ok': False, 'error': 'not_enrolled'}), 403
@@ -211,7 +216,7 @@ def create_blueprint(d, m):
             engine=ENGINE if mode == 'gaze' else 'passive', consent_version=POLICY_VERSION,
             viewport_w=A._int(data.get('viewport_w'), hi=10000), viewport_h=A._int(data.get('viewport_h'), hi=10000),
             timeline_json='[]', heat_json='{}', layout_json='[]', status='running',
-            client_uuid=uuid, mode=mode, device=device, last_seq=-1, last_seen_at=datetime.utcnow(),
+            client_uuid=uuid, mode=mode, device=device, last_seq=-1, last_seen_at=utcnow(),
         )
         db.session.add(sess)
         db.session.commit()
@@ -231,7 +236,7 @@ def create_blueprint(d, m):
         if data.get('recalibration'):
             sess.recalibrations = (sess.recalibrations or 0) + 1
         apply_engine_meta(sess, data)
-        sess.last_seen_at = datetime.utcnow()
+        sess.last_seen_at = utcnow()
         db.session.commit()
         band = A.accuracy_band(sess.calibration_score)
         return jsonify({'ok': True, 'band': band['label']})
@@ -328,11 +333,11 @@ def create_blueprint(d, m):
             row.visits = max(row.visits or 0, A._int(b.get('visits'), lo=0, hi=10_000))
             row.first_ms = A._int(b.get('first_ms'), lo=0)
             row.last_ms = A._int(b.get('last_ms'), lo=0)
-            row.updated_at = datetime.utcnow()
-        sess.last_seen_at = datetime.utcnow()
+            row.updated_at = utcnow()
+        sess.last_seen_at = utcnow()
         if data.get('end'):
             sess.status = 'ended'
-            sess.ended_at = datetime.utcnow()
+            sess.ended_at = utcnow()
         elif sess.status == 'abandoned':
             sess.status = 'running'  # client came back (e.g. laptop woke up)
         db.session.commit()
@@ -561,7 +566,7 @@ def create_blueprint(d, m):
         s.enabled = bool(request.form.get('enabled'))
         s.passive_enabled = bool(request.form.get('passive_enabled'))
         s.min_accuracy = A._int(request.form.get('min_accuracy'), 45, lo=20, hi=90)
-        s.updated_at = datetime.utcnow()
+        s.updated_at = utcnow()
         s.updated_by = current_user.id
         db.session.add(s)
         db.session.commit()
@@ -573,7 +578,7 @@ def create_blueprint(d, m):
     @login_required
     def instructor_attention_student(section_id, user_id):
         section = staff_section_or_403(section_id)
-        student = d.User.query.get_or_404(user_id)
+        student = db.get_or_404(d.User, user_id)
         sessions = (Session.query.filter_by(section_id=section.id, user_id=user_id)
                     .order_by(Session.started_at.desc()).all())
         mark_stale(sessions)
@@ -604,7 +609,7 @@ def create_blueprint(d, m):
     @login_required
     def instructor_attention_lesson(section_id, lesson_id):
         section = staff_section_or_403(section_id)
-        lesson = d.Lesson.query.get_or_404(lesson_id)
+        lesson = db.get_or_404(d.Lesson, lesson_id)
         sessions = (Session.query.filter_by(section_id=section.id, lesson_id=lesson_id)
                     .order_by(Session.started_at.desc()).all())
         users = users_by_id({s.user_id for s in sessions})

@@ -9,12 +9,17 @@ Helix attention data is deliberately NOT an input to any grade.
 """
 import csv
 import statistics
-from datetime import datetime
+from datetime import datetime, timezone
 from io import StringIO
 from types import SimpleNamespace
 
 from flask import Response, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+
+
+def utcnow():
+    """Naive UTC now. Replaces the deprecated datetime.utcnow(); stored columns stay naive UTC."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 CATEGORIES = [
     ('tests', 'Knowledge tests'),
@@ -38,7 +43,7 @@ def define_models(db):
         weight_quizzes = db.Column(db.Integer, default=DEFAULT_WEIGHTS['quizzes'])
         policy = db.Column(db.String(10), default='best')  # best | latest
         pass_mark = db.Column(db.Integer, default=80)
-        updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+        updated_at = db.Column(db.DateTime, default=utcnow)
         updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     class GradeOverride(db.Model):
@@ -51,7 +56,7 @@ def define_models(db):
         score = db.Column(db.Float)
         excused = db.Column(db.Boolean, default=False)
         note = db.Column(db.String(300), default='')
-        updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+        updated_at = db.Column(db.DateTime, default=utcnow)
         updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     _cache['m'] = SimpleNamespace(GradebookSetting=GradebookSetting, GradeOverride=GradeOverride)
@@ -126,7 +131,7 @@ def register(app, db, deps):
         return s
 
     def staff_section(section_id):
-        section = d.ClassSection.query.get_or_404(section_id)
+        section = db.get_or_404(d.ClassSection, section_id)
         if current_user.role == 'admin':
             return section
         if current_user.role != 'instructor' or not d.can_access_section(current_user, section):
@@ -285,7 +290,7 @@ def register(app, db, deps):
                 ov = Override(section_id=section.id, user_id=uid, item_type=item_type, item_id=item_id)
                 db.session.add(ov)
             ov.score, ov.excused, ov.note = score, excused, note
-            ov.updated_at, ov.updated_by = datetime.utcnow(), current_user.id
+            ov.updated_at, ov.updated_by = utcnow(), current_user.id
             db.session.commit()
             d.audit('grade_override', f'section={section.id} user={uid} {item_type}={item_id} score={score} excused={excused}')
             flash('Grade override saved.', 'success')
@@ -309,7 +314,7 @@ def register(app, db, deps):
             return redirect(url_for('instructor_gradebook', section_id=section.id))
         s.policy = 'latest' if request.form.get('policy') == 'latest' else 'best'
         s.pass_mark = w('pass_mark', 80) or 80
-        s.updated_at, s.updated_by = datetime.utcnow(), current_user.id
+        s.updated_at, s.updated_by = utcnow(), current_user.id
         db.session.add(s)
         db.session.commit()
         d.audit('gradebook_settings', f'section={section.id} w={s.weight_tests}/{s.weight_skills}/{s.weight_quizzes} policy={s.policy}')
@@ -338,7 +343,7 @@ def register(app, db, deps):
         wtr.writerow(['Class mean', '', '', data['summary']['mean'] or '', '', data['summary']['completion'], ''] +
                      ['' for _ in CATEGORIES] + [cs['mean'] if cs['mean'] is not None else '' for cs in data['col_stats']])
         d.audit('gradebook_export', f'section={section.id}')
-        fname = f"gradebook-section-{section.id}-{datetime.utcnow().strftime('%Y%m%d')}.csv"
+        fname = f"gradebook-section-{section.id}-{utcnow().strftime('%Y%m%d')}.csv"
         return Response(buf.getvalue(), mimetype='text/csv', headers={'Content-Disposition': f'attachment; filename={fname}'})
 
     # ---------------------------------------------------------------- student
@@ -347,7 +352,7 @@ def register(app, db, deps):
         enrolls = d.Enrollment.query.filter_by(user_id=current_user.id).all()
         cards = []
         for e in enrolls:
-            section = d.ClassSection.query.get(e.section_id)
+            section = db.session.get(d.ClassSection, e.section_id)
             if not section:
                 continue
             data = compute(section, user_ids={current_user.id})
@@ -357,7 +362,7 @@ def register(app, db, deps):
 
     @login_required
     def student_section_grades(section_id):
-        section = d.ClassSection.query.get_or_404(section_id)
+        section = db.get_or_404(d.ClassSection, section_id)
         if not d.Enrollment.query.filter_by(section_id=section.id, user_id=current_user.id).first():
             if current_user.role in ('admin', 'instructor'):
                 return redirect(url_for('instructor_gradebook', section_id=section.id))

@@ -62,7 +62,7 @@ def test_full_lifecycle(student, instructor, mod, app, ids):
                        content_type='text/plain')
     assert end.get_json()['status'] == 'ended'
     with app.app_context():
-        s = mod.HelixGazeSession.query.get(sid)
+        s = mod.db.session.get(mod.HelixGazeSession, sid)
         assert s.status == 'ended' and s.last_seq == 2 and s.calibration_score == 78
         tl = json.loads(s.timeline_json)
         assert len(tl) == 3, tl
@@ -122,7 +122,7 @@ def test_student_can_delete_own_data(student, app, mod, ids):
     sid = _start(student, ids).get_json()['session_id']
     student.post('/student/attention/delete', data={'session_id': sid})
     with app.app_context():
-        assert mod.HelixGazeSession.query.get(sid) is None
+        assert mod.db.session.get(mod.HelixGazeSession, sid) is None
 
 
 def test_dashboard_marks_demo_data(instructor, ids):

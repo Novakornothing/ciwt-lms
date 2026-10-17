@@ -2,10 +2,15 @@
 import json
 import random
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from .analytics import HEAT_COLS, HEAT_ROWS
 from .models import ENGINE, POLICY_VERSION, STATE_KEYS
+
+
+def utcnow():
+    """Naive UTC now. Replaces the deprecated datetime.utcnow(); stored columns stay naive UTC."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def _headings(html):
@@ -33,7 +38,7 @@ def seed_demo(db, m, section, students, lessons):
             passive = si % 5 == 4
             mode = 'passive' if passive else 'gaze'
             acc = 0 if passive else max(30, min(92, int(rnd.gauss(70, 14))))
-            started = datetime.utcnow() - timedelta(days=6 - li, hours=si, minutes=rnd.randint(0, 50))
+            started = utcnow() - timedelta(days=6 - li, hours=si, minutes=rnd.randint(0, 50))
             t = 0
             timeline, buckets = [], {}
             heat = {}

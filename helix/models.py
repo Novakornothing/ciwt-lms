@@ -4,8 +4,13 @@ Defined through a factory so the flat ``app.py`` can keep owning the single
 ``SQLAlchemy`` instance (``python app.py`` runs it as ``__main__``, so a plain
 ``from app import db`` here would import the app twice).
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from types import SimpleNamespace
+
+
+def utcnow():
+    """Naive UTC now. Replaces the deprecated datetime.utcnow(); stored columns stay naive UTC."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 POLICY_VERSION = '2026-10-17.2'  # .2: camera on phones, paragraph/line dwell when accuracy allows
 ENGINE = 'webgazer'
@@ -42,7 +47,7 @@ def define_models(db):
         heading = db.Column(db.String(240), default='')
         seconds = db.Column(db.Float, default=0)
         focused = db.Column(db.Float, default=0)
-        created_at = db.Column(db.DateTime, default=datetime.utcnow)
+        created_at = db.Column(db.DateTime, default=utcnow)
 
     class HelixGazeSession(db.Model):
         """One opt-in Helix run on a lesson page (camera gaze or passive signal)."""
@@ -53,7 +58,7 @@ def define_models(db):
         lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
         engine = db.Column(db.String(40), default=ENGINE)
         consent_version = db.Column(db.String(20), default=POLICY_VERSION)
-        started_at = db.Column(db.DateTime, default=datetime.utcnow)
+        started_at = db.Column(db.DateTime, default=utcnow)
         ended_at = db.Column(db.DateTime)
         calibration_points = db.Column(db.Integer, default=0)
         calibration_score = db.Column(db.Integer, default=0)
@@ -107,7 +112,7 @@ def define_models(db):
         visits = db.Column(db.Integer, default=0)
         first_ms = db.Column(db.Integer, default=0)
         last_ms = db.Column(db.Integer, default=0)
-        updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+        updated_at = db.Column(db.DateTime, default=utcnow)
 
     class HelixConsent(db.Model):
         """Explicit per-student consent record (versioned, revocable)."""
@@ -117,7 +122,7 @@ def define_models(db):
         policy_version = db.Column(db.String(20), nullable=False)
         camera_ok = db.Column(db.Boolean, default=True)
         passive_ok = db.Column(db.Boolean, default=True)
-        granted_at = db.Column(db.DateTime, default=datetime.utcnow)
+        granted_at = db.Column(db.DateTime, default=utcnow)
         revoked_at = db.Column(db.DateTime)
 
     class HelixSectionSetting(db.Model):
@@ -128,7 +133,7 @@ def define_models(db):
         enabled = db.Column(db.Boolean, default=True)
         passive_enabled = db.Column(db.Boolean, default=True)
         min_accuracy = db.Column(db.Integer, default=45)
-        updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+        updated_at = db.Column(db.DateTime, default=utcnow)
         updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     models = SimpleNamespace(
