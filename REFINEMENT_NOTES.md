@@ -380,13 +380,14 @@ Scope: every route for every role. Each page was screenshotted at 390/820/1280 i
 - **Forms:** removed a global `.form-label { white-space: nowrap }` that clipped long labels; 50 labels associated with their fields; check labels fill a 44 px row on touch.
 - **Design system:** the `<style>` blocks from the lab and sidebar pages moved into ciwt-ui.css; 41 static inline styles replaced by `u-*` utilities. Touch overrides sit after the component blocks so they win the cascade.
 - **Performance:** fonts and bootstrap-icons load non-blocking (preload + noscript); Mono weights trimmed to 400/600; preconnect to jsDelivr; 2 KB favicon (was the full logo) and `/favicon.ico` → 301. Versioned static files are served `immutable`, others max-age 86400 (tested).
+- **Touch:** quiz Flag/Report, the narration menu, the demo-accounts disclosure, icon-only delete buttons, TQI status links and stacked grade chips are all 44 px on touch.
 - **Accessibility:** axe gives 0 violations on 63 page/width combinations (the lab row "Launch" text was darkened in light mode).
 
 ### Tests
 pytest 73 passed (new: error pages, account flows, caching headers, favicon, no inline confirm); node 31 passed; phone e2e 39/39 in light and dark; axe 0.
 
 ### Screenshots
-`/workspace/ciwt/screenshots/pass6/`: `before/`, `after/` (light 390/1280), `after-dark/` (390), `phone-e2e-light|dark/`, `pairs/` (side-by-side before/after).
+`/workspace/ciwt/screenshots/pass6/`: `before/`, `after/` (light 390/1280), `after-dark/` (390), `phone-e2e-light|dark/`, `pairs/` (side-by-side before | after at 390 px: anon-404, student-quiz, student-class-labs, student-lab, instructor-item-analysis, instructor-test-perf).
 
 ### Remaining issues
 - Bootstrap CSS from the CDN is still render-blocking. Self-hosting it, or using a critical-CSS split, would help first paint.
@@ -396,4 +397,5 @@ pytest 73 passed (new: error pages, account flows, caching headers, favicon, no 
 - A test POST renders results directly, so reloading the results page offers to resubmit (should be POST-redirect-GET).
 - Data-driven inline widths (progress bars, histograms, distractor bars) are intentionally kept inline.
 - The admin dashboard is still long; jump chips help, but it should be split into tabs or pages.
+- At 390 px the only targets under 44 px are inline text links inside sentences (lesson, module and attention pages), which WCAG 2.5.8 exempts.
 - Small-target counts at 1280 are mouse context (no touch rules) and are acceptable.
