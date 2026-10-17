@@ -541,3 +541,42 @@ bank and pilot text is unchanged in place and in git.
 - Screenshots are in `/workspace/ciwt/screenshots/pass8/`.
 
 **Still open (SME or institution):** see the "Still needs" section of CURRICULUM_AUDIT.md.
+
+## Pass 9 (Oct 17 2026): ITSUP chapters 7–13 expanded (pending SME review)
+
+The full detail is in the “Pass 9” section of **CURRICULUM_AUDIT.md**. The new content is a layer in
+`curriculum_v2/itsup_core/`, with one module per chapter (`ch07.py` … `ch13.py`). `apply.py` adds it to each
+lesson as a “Lesson objectives” panel and a `Core content` section. The original `lessons.py` text is unchanged.
+
+**What was added**
+- **Lessons:** chapters 7–13 now have 3,355–4,643 words each (ch1 has 6,524 and ch2 has 3,493). Every lesson has measurable objectives, at least 300 words of core content and check-for-understanding questions. Every chapter has a worked example, a troubleshooting scenario and a diagram.
+- **Diagrams:** 8 inline SVGs, each with role="img", a title/desc, a caption and a text description. Phones get a separate two-column version.
+- **Objectives:** 5 new chapter objectives: IT-7.4, 9.4, 11.4, 12.4 and 13.4.
+- **Items:** 85 (`X-IT-*`) with rationales.
+  - At least 3 per objective.
+  - Key positions are 22/21/21/21.
+  - The key is the longest option in 22/85 items, counting ties.
+  - These items are in the answer key and blueprints only, not in the live Test A/B/C.
+- **Glossary:** 64 new terms, marked †.
+- **Lesson plans:** for every expanded chapter: warm-up, guided practice, worked examples, CFU, exit ticket, misconceptions, lab.
+- **Classroom labs:** 5 new in the standard format with the lab rubric: CL-7, CL-8, CL-10, CL-11 and CL-13.
+  - CL-9 and CL-12 are reused for chapters 9 and 12.
+  - The pacing guides reference all of them.
+- **SME tag:** "Pending SME review" appears as an instructor-only note on every expanded lesson and is stripped for students (checked: students see 0 tags, instructors see the tag). It is also on the lesson plans, lab manual, answer-key bank and glossary (†).
+- **Contrast fix:** inline `code` inside core content is darkened in the light theme. axe found Bootstrap's pink at 4.2:1 on the worked-example panels.
+- **Tests:** `tests/test_itsup_expansion.py` enforces depth, structure, figure accessibility, objective verbs, item quality and balance, and the SME tags. `test_curriculum_integrity.py` counts the expansion items toward objective coverage.
+
+**Tests (end of pass)**
+- pytest: 214 passed, including the content-integrity and expansion tests.
+- node: 31 passed.
+- Phone e2e: 43/43 in light and 43/43 in dark.
+- axe-core, full sweep of 123 page/width checks per theme:
+  - Dark: 0 violation nodes.
+  - Light: 29 colour-contrast nodes on lessons 13.1 and 13.4, all inline code in worked examples.
+  - After the fix, all lesson pages were re-run (15 checks per theme): 0 violations.
+  - The sweep now includes lessons 7.1, 10.1 and 13.4, the instructor view of 13.1, and the lab manual.
+  - Reports are in `/workspace/artifacts/pass9-reports/`.
+- Screenshots are in `/workspace/ciwt/screenshots/pass9/`.
+- The course package was rebuilt: 44 DOCX/PDF files in `/workspace/artifacts/course-package/` and `course-package.zip`.
+
+**Still open:** SME review of everything tagged. Chapters 3–6 are the next thinnest. A separate worker is overhauling the interactive labs on the `labs` branch. `course_package.py` (CLASSROOM_LABS, pacing rows) changed here too, so expect a merge point there.
