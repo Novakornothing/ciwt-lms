@@ -93,7 +93,7 @@ def lesson_plans_doc(code, section=None, gb=None):
             continue
         b += [('pagebreak',), ('h2', p['title'])]
         if p.get('review'):
-            b.append(('note', f"{p['review']}: chapter content, objectives, checks and items were expanded in pass 9. "
+            b.append(('note', f"{p['review']}: chapter content, objectives, checks and items were expanded in {'pass 10' if code == 'ITSUP' and ch['order'] < 7 else 'pass 9'}. "
                               'Confirm timing and technical detail before teaching.'))
         b += [('p', f"About {p['minutes']} minutes of LMS content; plan {p['sessions']} block(s)."),
               ('h3', 'Objectives'), ('ul', [f"{o['code']}: {o['text']}" for o in p['objectives']]),
@@ -117,7 +117,7 @@ def lesson_plans_doc(code, section=None, gb=None):
 def _lab_blocks(f, classroom=False):
     b = [('h2', f['title'])]
     if f.get('review'):
-        b.append(('note', f"{f['review']} (written in pass 9). Trial on your lab equipment before grading."))
+        b.append(('note', f"{f['review']} (written in pass 9 or 10). Trial on your lab equipment before grading."))
     b.append(('p', f"Objective: {f['objective']}"))
     if f.get('scenario'):
         b.append(('p', f"Scenario: {f['scenario']}"))
@@ -200,7 +200,7 @@ def answer_key_doc(code, section=None, gb=None):
     for key in CP.answer_keys(code):
         b += [('pagebreak',), ('h2', f"{key['title']} ({key['kind']})")]
         if key.get('review'):
-            b.append(('note', 'These items were written in pass 9 for IT Support chapters 7–13 and are pending SME review. '
+            b.append(('note', 'These items were written in passes 9 and 10 for IT Support chapters 3–13 and are pending SME review. '
                               'They are not in the LMS Test A/B/C forms; deliver on paper or add them to a section test.'))
         b += [
               ('table', ['#', 'Item', 'Key', 'Objective', 'Rationale'],
@@ -212,7 +212,7 @@ def glossary_doc(code=None, section=None, gb=None):
     from curriculum_v2.itsup_core import PENDING
     rows = [[t + (' †' if t in CP.GLOSSARY_NEW else ''), d] for t, d in CP.GLOSSARY]
     return {'title': 'Glossary', 'blocks': [('h1', 'Glossary'),
-                                            ('note', f'† Added for IT Support chapters 7–13 in pass 9 — {PENDING.lower()}.'),
+                                            ('note', f'† Added for IT Support chapters 3–13 in passes 9–10 — {PENDING.lower()}.'),
                                             ('table', ['Term', 'Definition'], rows)]}
 
 

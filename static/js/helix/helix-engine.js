@@ -18,8 +18,9 @@
   /* Pass 5 (opt-in): 1080p on desktops with enough cores (the eye-crop stage then gets ~1 camera px per
      crop px; at 720p it upsamples). Falls back to 720p at runtime if the frame budget is missed (_resCheck). */
   function hiResCapable(mobile) {
-    // opt-in (window.HELIX_ENGINE.hiRes or ?hires=1): 1080p helped follow-the-dot calibration on the one
-    // subject with a 1080p source (9/10 pairs) but 9-point results were mixed, so it is not the default
+    // opt-in (window.HELIX_ENGINE.hiRes, ?hires=1, or an admin-set desktop default): on the two proxy
+    // subjects with a 1080p source it helped follow-the-dot (2/2 people, 16/20 sequences) but not 9-point
+    // (13/22); proxies are not real webcams, so 720p stays the default until study data says otherwise
     var cfg = typeof window !== 'undefined' && window.HELIX_ENGINE || {};
     var asked = cfg.hiRes || (typeof location !== 'undefined' && /[?&]hires=1\b/.test(location.search));
     if (!asked || mobile || typeof navigator === 'undefined') return false;
@@ -77,6 +78,7 @@
     if (p) p.then(function (st) { st.getTracks().forEach(function (t) { t.stop(); }); }, function () {});
   }
   function takeStream(mobile) { var p = pendingStream || prefetchCamera(mobile); pendingStream = null; return p; }
+  function hiResWanted(mobile) { return hiResCapable(mobile == null ? isMobile() : mobile); }
 
   function clampPred(p) {
     if (!p || typeof window === 'undefined') return p;
@@ -146,6 +148,7 @@
     var holder = document.getElementById('hxVideoHolder');
     if (!holder) { holder = document.createElement('div'); holder.id = 'hxVideoHolder'; holder.className = 'hx-video-holder'; holder.setAttribute('aria-hidden', 'true'); document.body.appendChild(holder); }
     holder.appendChild(v); this.holder = holder;
+    this.hiRes = hiResWanted(this.mobile);
     return takeStream(this.mobile).then(function (stream) {
       self.stream = stream; v.srcObject = stream;
       return v.play().catch(function (e) {
@@ -155,8 +158,75 @@
     }).then(function () {
       return new Promise(function (res) { if (v.videoWidth) res(); else v.addEventListener('loadedmetadata', function () { res(); }, { once: true }); });
     }).then(function () {
-      self.running = true; self._loop(); self._watchBattery(); return self;
+      self.running = true; self._loop(); self._watchBattery(); self._watchCamera(); return self;
     }).catch(function (e) { if (e && e.code === 'play_blocked') throw e; throw cameraError(e); });
+  };
+
+  /* Pass 10 session hardening: notice when the camera goes away mid-session instead of silently
+     reporting "face not found" forever. Sources, each reported once as {notice: 'camera_lost', reason}:
+       'ended'      the track ended (camera unplugged, driver reset, OS took it, laptop lid closed)
+       'permission' camera permission changed to denied (Permissions API, where supported)
+       'unplugged'  devicechange and our camera is no longer listed
+       'muted'      the track stayed muted for 4 s (privacy shutter, another app; unmute clears it)
+     A video track's readyState is also checked by the frame watchdog, which catches sleep/resume
+     cases where no event fires. Nothing here touches pixels. */
+  MediaPipeEngine.prototype._watchCamera = function () {
+    var self = this, tr = this.stream && this.stream.getVideoTracks ? this.stream.getVideoTracks()[0] : null;
+    this.lost = null; this._muteT = 0;
+    if (!tr) return;
+    this.track = tr;
+    try { this.deviceId = (tr.getSettings && tr.getSettings().deviceId) || null; } catch (e) { this.deviceId = null; }
+    var onEnded = function () { self._cameraLost('ended'); };
+    var onMute = function () { clearTimeout(self._muteT); self._muteT = setTimeout(function () { if (tr.muted) self._cameraLost('muted'); }, 4000); };
+    var onUnmute = function () { clearTimeout(self._muteT); if (self.lost === 'muted') { self.lost = null; self._emit({ t: Date.now(), notice: 'camera_back', face: false, feat: null, pred: null }); } };
+    tr.addEventListener('ended', onEnded); tr.addEventListener('mute', onMute); tr.addEventListener('unmute', onUnmute);
+    this._unwatch = function () { tr.removeEventListener('ended', onEnded); tr.removeEventListener('mute', onMute); tr.removeEventListener('unmute', onUnmute); clearTimeout(self._muteT); };
+    if (navigator.permissions && navigator.permissions.query && !this._permWatched) {
+      this._permWatched = true;
+      navigator.permissions.query({ name: 'camera' }).then(function (st) {
+        self._perm = st;
+        var upd = function () { if (st.state === 'denied') self._cameraLost('permission'); };
+        if (st.addEventListener) st.addEventListener('change', upd); else st.onchange = upd;
+      }).catch(function () {});
+    }
+    if (navigator.mediaDevices && navigator.mediaDevices.addEventListener && !this._devWatched) {
+      this._devWatched = true;
+      navigator.mediaDevices.addEventListener('devicechange', function () {
+        if (!self.running || !self.deviceId || !navigator.mediaDevices.enumerateDevices) return;
+        navigator.mediaDevices.enumerateDevices().then(function (list) {
+          var still = list.some(function (d) { return d.kind === 'videoinput' && d.deviceId === self.deviceId; });
+          if (!still) self._cameraLost('unplugged');
+        }).catch(function () {});
+      });
+    }
+  };
+  MediaPipeEngine.prototype._cameraLost = function (reason) {
+    if (this.lost && this.lost !== 'muted') return;     // first hard reason wins
+    this.lost = reason;
+    if (reason !== 'muted') {
+      // release whatever is left of the stream so the camera light goes off
+      try { if (this.stream) this.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    }
+    this.lastFeat = null;
+    this._emit({ t: Date.now(), notice: 'camera_lost', reason: reason, face: false, feat: null, pred: null });
+  };
+  /* Re-open the camera after a loss. Prefers the same device; reports whether it got it, because a
+     different camera (or the same one moved) invalidates the calibration. */
+  MediaPipeEngine.prototype.reconnect = function () {
+    var self = this, want = this.deviceId;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return Promise.reject(new Error('camera not available'));
+    var c = cameraConstraints(this.mobile, hiResCapable(this.mobile));
+    if (want) c.video.deviceId = { ideal: want };
+    if (this._unwatch) this._unwatch();
+    return navigator.mediaDevices.getUserMedia(c).then(function (stream) {
+      self.stream = stream; self.video.srcObject = stream;
+      return self.video.play().catch(function () {});
+    }).then(function () {
+      var prev = self.deviceId;
+      self._watchCamera();
+      if (!self.running) { self.running = true; self._loop(); }
+      return { sameDevice: !!(prev && self.deviceId === prev) || !prev };
+    }).catch(function (e) { throw cameraError(e); });
   };
   /* retry playback from a user gesture after 'play_blocked' */
   MediaPipeEngine.prototype.resumePlayback = function () {
@@ -183,12 +253,16 @@
     };
     // watchdog: if frame callbacks stall (element moved, tab throttled), keep the loop alive
     clearInterval(this._wd);
-    this._wd = setInterval(function () { if (self.running && Date.now() - self._lastStep > 600) { pending = false; step(); } }, 300);
+    this._wd = setInterval(function () {
+      // sleep/resume can end the track without an 'ended' event in some browsers
+      if (self.track && self.track.readyState === 'ended' && !self.lost) { self._cameraLost('ended'); return; }
+      if (self.running && Date.now() - self._lastStep > 600) { pending = false; step(); }
+    }, 300);
     var step = function () {
       pending = false; self._lastStep = Date.now();
       if (!self.running) return;
       var t = nowMs();
-      if (self.paused || document.hidden || t - last < 1000 / self.fps - 2) { schedule(); return; }
+      if (self.paused || self.lost || document.hidden || t - last < 1000 / self.fps - 2) { schedule(); return; }
       last = t;
       self._process(t);
       schedule();
@@ -451,7 +525,7 @@
   MediaPipeEngine.prototype.pause = function () { this.paused = true; };
   MediaPipeEngine.prototype.resume = function () { this.paused = false; };
   MediaPipeEngine.prototype.stop = function () {
-    this.running = false; clearInterval(this._wd);
+    this.running = false; clearInterval(this._wd); if (this._unwatch) this._unwatch();
     if (this.stream) this.stream.getTracks().forEach(function (t) { t.stop(); });
     if (this.video && this.video.parentNode) this.video.parentNode.removeChild(this.video);
     try { this.landmarker && this.landmarker.close(); } catch (e) {}
@@ -469,6 +543,8 @@
       faces: this.quality.faces, brightness: this.quality.brightness, contrast: this.quality.contrast, glare: this.quality.glare,
       occluded: this.occluded, thermal: this.thermal.hot, lowBattery: !!this.lowBattery, simd: this.simd, rejected: this.rejected,
       resolution: this.video ? this.video.videoWidth + 'x' + this.video.videoHeight + (this._resDown ? ' (lowered: too slow)' : '') : null,
+      videoW: this.video ? this.video.videoWidth : null, videoH: this.video ? this.video.videoHeight : null,
+      hiRes: !!this.hiRes, resDown: !!this._resDown, cameraLost: this.lost || null,
       crop: this._cropOn() ? (this.opts.crop === true ? 'features' : 'view only') + (this.cropMsEma ? ', ' + Math.round(this.cropMsEma * 10) / 10 + ' ms/frame' : '') : (this.cropDisabled ? 'off (too slow)' : 'off'),
       distanceCm: this.lastFeat && this.lastFeat.distanceCm ? Math.round(this.lastFeat.distanceCm) : null,
       yawDeg: this.lastFeat ? Math.round(this.lastFeat.pose.yaw * 57.3) : null, pitchDeg: this.lastFeat ? Math.round(this.lastFeat.pose.pitch * 57.3) : null };
@@ -555,5 +631,5 @@
   }
 
   window.HelixEngine = { create: create, MediaPipeEngine: MediaPipeEngine, WebGazerEngine: WebGazerEngine,
-    isMobile: isMobile, orientationKey: orientationKey, prefetchCamera: prefetchCamera, releasePrefetch: releasePrefetch, isIOS: isIOS, simdSupported: simdSupported };
+    isMobile: isMobile, orientationKey: orientationKey, prefetchCamera: prefetchCamera, hiResCapable: hiResCapable, releasePrefetch: releasePrefetch, isIOS: isIOS, simdSupported: simdSupported };
 })();

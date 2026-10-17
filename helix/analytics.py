@@ -3,6 +3,7 @@
 Everything here takes plain model rows or dicts so it is easy to unit test.
 """
 import json
+import re
 from collections import OrderedDict
 
 from .models import NON_READING_KEYS, NON_READING_LABELS, STATE_KEYS
@@ -139,9 +140,9 @@ def session_breakdown(sess):
             key = seg.get('aoi') or ''
             if key in ('off_page', 'chrome'):
                 parts['off_page'] += d
-            elif key == '_face_lost':
+            elif key in ('_face_lost', '_camera_off'):
                 parts['face_lost'] += d
-            elif key == '_hidden':
+            elif key in ('_hidden', '_other_tab', '_asleep'):
                 parts['hidden'] += d
             elif key == '_low_conf':
                 parts['low_conf'] += d
@@ -428,3 +429,204 @@ def reading_recap(aois, total_ms, n_sections=None, sessions=()):
     if out['second_look']:
         out['notes'].append('Short sections are fine if you already know the material; a quick skim is all it takes.')
     return out
+
+
+# ---------------------------------------------------------------- pass 10: accuracy study
+def _float(v, default=None, lo=None, hi=None):
+    try:
+        out = float(v)
+    except (TypeError, ValueError):
+        return default
+    if out != out:   # NaN
+        return default
+    if lo is not None:
+        out = max(lo, out)
+    if hi is not None:
+        out = min(hi, out)
+    return round(out, 2)
+
+
+_BROWSER_RE = re.compile(r'^(Chrome|Chrome iOS|Edge|Firefox|Safari|Samsung|Opera|Other)( \d{1,3})?$')
+
+
+def browser_tag(v):
+    """Browser family + major version only (e.g. 'Chrome 141'); anything else becomes 'Other'."""
+    v = str(v or '').strip()[:30]
+    return v if _BROWSER_RE.match(v) else 'Other'
+
+
+def res_bucket(res):
+    """Camera resolution bucket by the long side of the delivered video (what the model saw)."""
+    try:
+        w, h = (int(x) for x in str(res).split('x'))
+    except (TypeError, ValueError):
+        return 'unknown'
+    long_side = max(w, h)
+    if long_side >= 1700:
+        return '1080p'
+    if long_side >= 1100:
+        return '720p'
+    if long_side >= 600:
+        return '480p'
+    return '<480p'
+
+
+def _quantile(vals, q):
+    vals = sorted(vals)
+    if not vals:
+        return None
+    pos = (len(vals) - 1) * q
+    lo = int(pos)
+    hi = min(lo + 1, len(vals) - 1)
+    return round(vals[lo] + (vals[hi] - vals[lo]) * (pos - lo), 2)
+
+
+def sign_test_p(wins, losses):
+    """Exact two-sided sign test (ties dropped by the caller)."""
+    from math import comb
+    n = wins + losses
+    if n == 0:
+        return 1.0
+    k = min(wins, losses)
+    p = sum(comb(n, i) for i in range(0, k + 1)) / 2 ** n
+    return round(min(1.0, 2 * p), 4)
+
+
+STUDY_MIN_USERS = 5          # below this, a group's numbers are shown greyed and flagged
+STUDY_MIN_PAIRS = 10         # paired users needed before any default change is suggested
+STUDY_MIN_GAIN_DEG = 0.5     # and the median paired gain must be at least this
+
+
+def _metric(r):
+    """Degrees when the distance estimate exists, else None (px are shown separately)."""
+    return r.error_deg if r.error_deg is not None else None
+
+
+def study_groups(records, key=('device', 'browser_family', 'res')):
+    """Real accuracy per group. Each user counts once per group: per-user median first, then the
+    median (and IQR) across users, so one enthusiastic participant cannot dominate a group."""
+    groups = {}
+    for r in records:
+        k = {'device': r.device or 'desktop', 'browser': r.browser or 'Other',
+             'browser_family': re.sub(r' \d+$', '', r.browser or 'Other'), 'res': res_bucket(r.camera_res),
+             'engine': r.engine or '', 'method': r.arm_method or ''}
+        gk = tuple(k[x] for x in key)
+        groups.setdefault(gk, []).append(r)
+    out = []
+    for gk, rs in groups.items():
+        per_user_deg, per_user_px, valid, ms = {}, {}, 0, []
+        for r in rs:
+            if not r.valid:
+                continue
+            valid += 1
+            if _metric(r) is not None:
+                per_user_deg.setdefault(r.user_id, []).append(_metric(r))
+            if r.error_px is not None:
+                per_user_px.setdefault(r.user_id, []).append(r.error_px)
+            if r.calib_ms and r.kind != 'recheck':
+                ms.append(r.calib_ms)
+        ud = [median_or_none(v) for v in per_user_deg.values()]
+        up = [median_or_none(v) for v in per_user_px.values()]
+        users = {r.user_id for r in rs}
+        out.append({
+            'key': dict(zip(key, gk)), 'records': len(rs), 'users': len(users), 'valid_pct': pct(valid, len(rs)),
+            'median_deg': median_or_none(ud), 'q1_deg': _quantile(ud, 0.25), 'q3_deg': _quantile(ud, 0.75),
+            'users_deg': len(ud), 'median_px': median_or_none(up),
+            'median_calib_s': round(median_or_none(ms) / 1000.0, 1) if ms else None,
+            'enough': len(per_user_deg) >= STUDY_MIN_USERS,
+        })
+    out.sort(key=lambda g: (-g['users'], -g['records']))
+    return out
+
+
+def arm_comparison(records, device, factor):
+    """Within-user comparison on one device class. factor 'method': dots vs follow (follow+dots
+    counts as follow, it started that way); factor 'hires': 1080p requested vs not.
+    Only full calibrations (not re-checks). Returns paired stats and an honest verdict."""
+    def arm(r):
+        if factor == 'method':
+            return 'follow' if (r.arm_method or '').startswith('follow') else ('dots' if r.arm_method == 'dots' else None)
+        return 'on' if r.arm_hires else 'off'
+    a_name, b_name = ('dots', 'follow') if factor == 'method' else ('off', 'on')
+    per = {}
+    for r in records:
+        if (r.device or 'desktop') != device or not r.valid or r.kind == 'recheck' or _metric(r) is None:
+            continue
+        a = arm(r)
+        if a is None:
+            continue
+        per.setdefault(r.user_id, {}).setdefault(a, []).append(_metric(r))
+    diffs = []
+    arm_vals = {a_name: [], b_name: []}
+    for uid, d in per.items():
+        for a in (a_name, b_name):
+            if d.get(a):
+                arm_vals[a].append(median_or_none(d[a]))
+        if d.get(a_name) and d.get(b_name):
+            diffs.append(median_or_none(d[a_name]) - median_or_none(d[b_name]))   # >0: b better
+    wins = len([x for x in diffs if x > 0])
+    losses = len([x for x in diffs if x < 0])
+    p = sign_test_p(wins, losses)
+    med_gain = median_or_none(diffs)
+    if len(diffs) < STUDY_MIN_PAIRS:
+        verdict = f'Not enough paired data ({len(diffs)} of {STUDY_MIN_PAIRS} users tried both). Keep the current default.'
+        suggest = None
+    elif p < 0.05 and med_gain is not None and med_gain >= STUDY_MIN_GAIN_DEG:
+        verdict = f'"{b_name}" was better for {wins} of {wins + losses} users (median {med_gain}\u00b0, sign test p={p}).'
+        suggest = b_name
+    elif p < 0.05 and med_gain is not None and med_gain <= -STUDY_MIN_GAIN_DEG:
+        verdict = f'"{a_name}" was better for {losses} of {wins + losses} users (median {-med_gain}\u00b0, sign test p={p}).'
+        suggest = a_name
+    else:
+        verdict = f'No clear difference ({wins} better / {losses} worse, median {med_gain}\u00b0, p={p}). Keep the current default.'
+        suggest = None
+    return {'device': device, 'factor': factor, 'a': a_name, 'b': b_name, 'pairs': len(diffs), 'wins_b': wins,
+            'wins_a': losses, 'median_gain_deg': med_gain, 'p': p, 'verdict': verdict, 'suggest': suggest,
+            'median_a': median_or_none(arm_vals[a_name]), 'n_a': len(arm_vals[a_name]),
+            'median_b': median_or_none(arm_vals[b_name]), 'n_b': len(arm_vals[b_name])}
+
+
+def calibration_class_rows(sessions, users):
+    """Instructor view: per-student calibration quality and time (camera sessions only)."""
+    per = {}
+    for s in sessions:
+        if (s.mode or 'gaze') != 'gaze':
+            continue
+        r = per.setdefault(s.user_id, {'sessions': 0, 'scores': [], 'deg': [], 'ms': [], 'recals': 0, 'rechecks': 0,
+                                       'recheck_deg': None, 'recheck_px': None, 'losses': 0, 'sleeps': 0, 'tabs': 0,
+                                       'modes': {}, 'devices': set(), 'last': None, 'demo': False, 'res': set()})
+        r['sessions'] += 1
+        if s.calibration_score:
+            r['scores'].append(s.calibration_score)
+        if s.validation_error_deg:
+            r['deg'].append(s.validation_error_deg)
+        if s.calib_ms:
+            r['ms'].append(s.calib_ms)
+        r['recals'] += s.recalibrations or 0
+        r['rechecks'] += s.rechecks or 0
+        if s.rechecks and (r.get('recheck_at') is None or (s.started_at and s.started_at >= r['recheck_at'])):
+            r['recheck_deg'], r['recheck_px'], r['recheck_at'] = s.recheck_error_deg, s.recheck_error_px, s.started_at
+        r['losses'] += s.camera_losses or 0
+        r['sleeps'] += s.sleeps or 0
+        r['tabs'] += s.tab_yields or 0
+        if s.calib_mode:
+            r['modes'][s.calib_mode] = r['modes'].get(s.calib_mode, 0) + 1
+        r['devices'].add(s.device or 'desktop')
+        if s.camera_res:
+            r['res'].add(s.camera_res)
+        if s.started_at and (r['last'] is None or s.started_at > r['last']):
+            r['last'] = s.started_at
+        r['demo'] = r['demo'] or bool(getattr(s, 'is_demo', False))
+    rows = []
+    for uid, r in per.items():
+        u = users.get(uid)
+        med = median_or_none(r['scores'])
+        rows.append({'user_id': uid, 'name': u.full_name if u else f'User {uid}', 'sessions': r['sessions'],
+                     'median_score': med, 'band': accuracy_band(med or 0), 'median_deg': median_or_none(r['deg']),
+                     'median_calib_s': round(median_or_none(r['ms']) / 1000.0, 1) if r['ms'] else None,
+                     'recals': r['recals'], 'rechecks': r['rechecks'], 'recheck_deg': r['recheck_deg'],
+                     'recheck_px': r['recheck_px'], 'camera_losses': r['losses'], 'sleeps': r['sleeps'],
+                     'tab_yields': r['tabs'], 'modes': r['modes'], 'devices': sorted(r['devices']),
+                     'res': sorted(r['res']), 'last': r['last'], 'demo': r['demo']})
+    rows.sort(key=lambda x: (x['median_score'] is None, x['median_score'] or 0))
+    return rows

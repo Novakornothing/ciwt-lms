@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Helix accuracy study — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{{ url_for('helix.policy') }}">Helix</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Accuracy study</li></ol></nav>
+
+<div class="page-hero">
+  <div class="eyebrow">Helix · accuracy study (optional)</div>
+  <h1 class="h3 mb-1">Help measure how accurate webcam eye tracking really is</h1>
+  <p class="mb-0">Two short accuracy checks on your own device, about 1&ndash;2 minutes in total. Not part of any grade.</p>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header navy">What is recorded, and what is not</div>
+      <div class="card-body">
+        <p>Each check shows dots at known places on the screen while you look at them. Helix compares where it <em>estimated</em> you were looking with where the dot really was. Only these numbers are saved:</p>
+        <ul class="mb-2">
+          <li>the error in pixels and in degrees, precision, a validity flag and the accuracy score;</li>
+          <li>for each of the 5 check dots: its position on the screen (as a fraction), the median error and the number of estimates;</li>
+          <li>how long calibration took and which method was used (dots or follow-the-dot, standard or 1080p camera);</li>
+          <li>device class (desktop / tablet / phone), browser name and major version, camera video size, window size, pixel ratio, estimated distance from the screen, and the gaze engine.</li>
+        </ul>
+        <p class="mb-2"><strong>Never recorded:</strong> camera images or video, face landmarks, raw gaze samples, or anything about lesson content. The server refuses uploads that look like images or landmarks.</p>
+        <p class="mb-2">Your account id is kept with each record only so you can delete your records. Admins see results grouped by device, browser and camera resolution, never per person. Instructors do not see study records.</p>
+        <p class="mb-0 small text-muted">Consent version {{ study_version }}. Separate from lesson consent: joining or leaving the study does not change whether Helix runs on lesson pages.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% if not joined %}
+    <div class="card">
+      <div class="card-header navy">Join the study</div>
+      <form class="card-body" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="join">
+        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="agree" id="hxStudyAgree" value="1">
+          <label class="form-check-label" for="hxStudyAgree">I agree to share the accuracy numbers described here from my checks on this page and, while I stay in the study, from calibrations and re-checks on lesson pages.</label></div>
+        <button class="btn btn-brand">Join the study</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="card mb-3" id="hxStudyRun">
+      <div class="card-header navy d-flex justify-content-between"><span>Run the checks</span><span class="small opacity-75" id="hxStudyState" role="status" aria-live="polite">Ready</span></div>
+      <div class="card-body">
+        <p class="small">Sit as you normally do. Each round calibrates (dots to click or a dot to follow) and then shows 5 dots to <em>look</em> at. The second round uses a different method so the two can be compared fairly on your device.</p>
+        <button type="button" class="btn btn-brand" id="hxStudyStart"><i class="bi bi-camera-video" aria-hidden="true"></i> Start round 1</button>
+        <div id="hxStudyOut" class="mt-3"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header navy">Your records ({{ n_mine }})</div>
+      <div class="card-body">
+        {% if mine %}
+        <ul class="list-unstyled small mb-3">{% for r in mine[:10] %}
+          <li>{{ r.created_at.strftime('%b %d %H:%M') }} · {{ r.context }} {{ r.kind }} · {{ r.arm_method or '—' }}{% if r.arm_hires %} · 1080p{% endif %} ·
+            {% if r.valid %}{{ r.error_px }} px{% if r.error_deg is not none %} / {{ r.error_deg }}°{% endif %}{% else %}no estimates{% endif %}</li>{% endfor %}
+        </ul>{% else %}<p class="small text-muted">None yet.</p>{% endif %}
+        <div class="d-flex flex-wrap gap-2">
+          <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="leave"><button class="btn btn-sm btn-outline-navy">Leave the study</button></form>
+          <form method="post" data-confirm="Delete all of your accuracy-study records and leave the study?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="delete"><button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash" aria-hidden="true"></i> Leave and delete my records</button></form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if not joined and n_mine %}
+    <form method="post" class="mt-3" data-confirm="Delete all of your accuracy-study records?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="delete"><button class="btn btn-sm btn-outline-danger">Delete my {{ n_mine }} earlier record{{ 's' if n_mine != 1 }}</button></form>
+    {% endif %}
+  </div>
+</div>
+{% if joined %}
+<div id="helixGazeDot" class="helix-gaze-dot hx-dot-try" aria-hidden="true"></div>
+<script>window.HELIX_STUDY = { armUrl: "{{ url_for('helix.study_arm') }}", recordUrl: "{{ url_for('helix.study_record') }}" };</script>
+{% include "helix/_engine_assets.html" %}
+<script src="{{ url_for('static', filename='js/helix/helix-study.js') }}"></script>
+{% endif %}
+{% endblock %}

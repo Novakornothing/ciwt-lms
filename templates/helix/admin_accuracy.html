@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Eye-tracking accuracy — {{ site_name }}{% endblock %}
+{% block content %}
+{% set admin_tab = 'helix.admin_accuracy' %}
+{% with title='Eye-tracking accuracy (real data)', lede='Measured on participants’ own devices: known validation dots vs Helix estimates. Nothing on this page is simulated or seeded.' %}{% include '_admin_nav.html' %}{% endwith %}
+
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+  <span class="small">Data:</span>
+  {% for c, lab in [('all', 'All records'), ('study', 'Study page only'), ('lesson', 'Lesson calibrations of study participants')] %}
+  <a class="chip-link" href="{{ url_for('helix.admin_accuracy', context=c) }}"{% if ctx == c %} aria-current="page"{% endif %}>{{ lab }}</a>{% endfor %}
+  <a class="btn btn-sm btn-outline-navy ms-auto" href="{{ url_for('helix.admin_accuracy_csv') }}"><i class="bi bi-download" aria-hidden="true"></i> Aggregates CSV</a>
+</div>
+
+<div class="hx-kpis mb-3">
+  <div class="kpi-card"><div class="kpi-label">Participants (consented now)</div><div class="kpi-value">{{ n_participants }}</div><div class="kpi-sub">consent {{ study_version }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">People with records</div><div class="kpi-value">{{ n_users }}</div><div class="kpi-sub">{{ n_records }} checks · {{ n_checks }} re-checks</div></div>
+</div>
+
+{% if not n_records %}
+<div class="ui-callout ui-callout-accent mb-3" role="status"><i class="bi bi-hourglass-split" aria-hidden="true"></i>
+  <div><strong>No real accuracy data yet.</strong> Numbers appear here automatically once people join the study at <a href="{{ url_for('helix.study_page') }}">{{ url_for('helix.study_page') }}</a> and run the checks, or calibrate on lesson pages while in the study. Until then, the only accuracy evidence is the offline proxy evaluation (tools/helix_eval/RESULTS.md), which is not a measurement on real users.</div></div>
+{% endif %}
+
+<div class="card mb-3">
+  <div class="card-header navy">Accuracy by device, browser and camera resolution</div>
+  <div class="card-body small pb-0"><p>Each person counts once per row: the median of their own checks, then the median and interquartile range across people. Rows with fewer than {{ min_users }} people are greyed and flagged; do not draw conclusions from them. Degrees use Helix's own distance estimate (face size), so they carry that estimate's error too.</p></div>
+  <div class="table-responsive"><table class="table table-sm align-middle mb-0 table-stack">
+    <thead><tr><th>Device</th><th>Browser</th><th>Camera</th><th>People</th><th>Checks</th><th>Valid</th><th>Median error</th><th>IQR (°)</th><th>Median px</th><th>Calibration time</th></tr></thead>
+    <tbody>
+    {% for g in groups %}
+      <tr class="{{ '' if g.enough else 'text-muted' }}">
+        <td data-label="Device">{{ g.key.device }}</td><td data-label="Browser">{{ g.key.browser_family }}</td><td data-label="Camera">{{ g.key.res }}</td>
+        <td data-label="People">{{ g.users }}{% if not g.enough %} <span class="badge text-bg-secondary" title="Fewer than {{ min_users }} people">too few</span>{% endif %}</td>
+        <td data-label="Checks">{{ g.records }}</td><td data-label="Valid">{{ g.valid_pct }}%</td>
+        <td data-label="Median error">{{ (g.median_deg ~ '°') if g.median_deg is not none else '—' }}</td>
+        <td data-label="IQR">{{ (g.q1_deg ~ '–' ~ g.q3_deg) if g.q1_deg is not none else '—' }}</td>
+        <td data-label="Median px">{{ g.median_px if g.median_px is not none else '—' }}</td>
+        <td data-label="Calibration time">{{ (g.median_calib_s ~ ' s') if g.median_calib_s is not none else '—' }}</td>
+      </tr>
+    {% else %}<tr><td colspan="10" class="text-muted">No records.</td></tr>{% endfor %}
+    </tbody></table></div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">Method and camera comparisons (within-person)</div>
+  <div class="card-body small">
+    <p>The study page gives each person two rounds that differ in one factor, assigned to keep the arms balanced. Only people who did both arms count as a pair. A default change is suggested only with at least {{ min_pairs }} pairs, a sign test p &lt; 0.05 and a median gain of at least {{ min_gain }}°. Otherwise the current default stays.</p>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0 table-stack">
+      <thead><tr><th>Device</th><th>Comparison</th><th>Median per arm (people)</th><th>Pairs</th><th>Verdict</th></tr></thead>
+      <tbody>{% for c in comparisons %}
+        <tr><td data-label="Device">{{ c.device }}</td>
+          <td data-label="Comparison">{{ 'dots vs follow the dot' if c.factor == 'method' else 'standard vs 1080p camera' }}</td>
+          <td data-label="Median per arm">{{ c.a }}: {{ (c.median_a ~ '°') if c.median_a is not none else '—' }} ({{ c.n_a }}) · {{ c.b }}: {{ (c.median_b ~ '°') if c.median_b is not none else '—' }} ({{ c.n_b }})</td>
+          <td data-label="Pairs">{{ c.pairs }}</td>
+          <td data-label="Verdict">{% if c.suggest %}<strong>{{ c.verdict }}</strong>{% else %}{{ c.verdict }}{% endif %}</td></tr>
+      {% endfor %}</tbody></table></div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header navy">Calibration defaults per device class</div>
+  <div class="card-body small">
+    <p>Lesson pages use these. They change only when an admin changes them here; the comparison above can suggest but never switches anything by itself.</p>
+    <div class="row g-3">{% for dv in ['desktop', 'tablet', 'mobile'] %}{% set df = defaults[dv] %}
+      <form class="col-md-4" method="post" action="{{ url_for('helix.admin_defaults') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="device" value="{{ dv }}">
+        <fieldset class="border rounded p-2"><legend class="h6 text-capitalize float-none w-auto px-1 mb-1">{{ dv }}</legend>
+          <label class="form-label mb-1" for="m-{{ dv }}">Method</label>
+          <select class="form-select form-select-sm mb-2" id="m-{{ dv }}" name="method">
+            <option value="dots" {{ 'selected' if df.method == 'dots' }}>Dots (9 clicks)</option>
+            <option value="follow" {{ 'selected' if df.method == 'follow' }}>Follow the dot + 3 dots</option></select>
+          {% if dv == 'desktop' %}<div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="hires" value="1" id="h-{{ dv }}" {{ 'checked' if df.hires }}>
+            <label class="form-check-label" for="h-{{ dv }}">Ask for 1080p (8+ CPU cores only)</label></div>{% endif %}
+          <label class="form-label mb-1" for="b-{{ dv }}">Reason / evidence</label>
+          <input class="form-control form-control-sm mb-2" id="b-{{ dv }}" name="basis" value="{{ df.basis }}" maxlength="500">
+          <button class="btn btn-sm btn-brand">Save {{ dv }} default</button>
+        </fieldset>
+      </form>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

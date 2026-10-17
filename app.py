@@ -127,6 +127,24 @@ login_manager = LoginManager(app)
 from flask_wtf.csrf import CSRFProtect, CSRFError
 app.config.setdefault('WTF_CSRF_TIME_LIMIT', None)  # token lives as long as the login session
 app.config['WTF_CSRF_ENABLED'] = os.environ.get('CSRF_DISABLED') != '1'
+
+
+def _env_flag(name, default):
+    v = os.environ.get(name)
+    if v is None or v.strip() == '':
+        return default
+    return v.strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+# Privacy switches (pass 10). The "Listen" neural voice sends lesson text to Microsoft's online
+# Read Aloud speech service through edge-tts; CIWT_NEURAL_TTS=0 turns that off (browser voice only).
+app.config['NEURAL_TTS_ENABLED'] = _env_flag('CIWT_NEURAL_TTS', True)
+# Helix attention data older than this many days is removed by `flask --app app helix-cleanup`
+# (or the button on Admin → Data & privacy). 0 keeps it until someone deletes it.
+try:
+    app.config['HELIX_RETENTION_DAYS'] = int(os.environ.get('CIWT_HELIX_RETENTION_DAYS', '365'))
+except ValueError:
+    app.config['HELIX_RETENTION_DAYS'] = 365
 csrf = CSRFProtect(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
@@ -5176,6 +5194,7 @@ ADMIN_TABS = [
     ('admin_people', 'People', 'bi-people'),
     ('admin_curriculum', 'Curriculum', 'bi-journal-bookmark'),
     ('admin_tqi', 'Quality / TQI', 'bi-clipboard2-pulse'),
+    ('admin_privacy', 'Privacy', 'bi-shield-lock'),
 ]
 
 
@@ -7071,6 +7090,8 @@ def api_narrate():
         text = text[:cut + 1].strip()
         truncated = True
 
+    if not app.config.get('NEURAL_TTS_ENABLED', True):
+        return jsonify({'error': 'Neural voice is turned off on this server', 'fallback': True, 'disabled': True}), 403
     voice = (data.get('voice') or 'en-US-JennyNeural').strip()
     if voice not in ('en-US-JennyNeural', 'en-US-GuyNeural'):
         voice = 'en-US-JennyNeural'
@@ -7172,6 +7193,124 @@ def api_narrate_voices():
     })
 
 
+# ---------- Data & privacy (pass 10): privacy notice, student-record export/delete, Helix retention
+import privacy_tools as _privacy
+
+
+@app.route('/privacy')
+def privacy_page():
+    return render_template('privacy.html', neural_tts=app.config.get('NEURAL_TTS_ENABLED', True),
+                           helix_days=_privacy.helix_retention_days(app))
+
+
+def _student_or_404(user_id):
+    u = db.get_or_404(User, user_id)
+    if u.role != 'student':
+        abort(404)   # the tool is for student records only; staff accounts are managed on People
+    return u
+
+
+@app.route('/admin/privacy')
+@login_required
+@role_required('admin')
+def admin_privacy():
+    q = (request.args.get('q') or '').strip()
+    students = []
+    if q:
+        like = f'%{q}%'
+        students = (User.query.filter_by(role='student')
+                    .filter(db.or_(User.email.ilike(like), User.first_name.ilike(like), User.last_name.ilike(like)))
+                    .order_by(User.last_name, User.first_name).limit(25).all())
+    preview = None
+    sid = request.args.get('user_id', type=int)
+    if sid:
+        u = _student_or_404(sid)
+        doomed, nullify, _t = _privacy.plan(db, u.id)
+        preview = {'user': u, 'tables': sorted((k, len(v)) for k, v in doomed.items()),
+                   'anonymised': sorted((f'{k[0]}.{k[1]}', len(v)) for k, v in nullify.items())}
+    days = _privacy.helix_retention_days(app)
+    due = _privacy.helix_cleanup(db, _helix_models, days, dry_run=True)
+    log = (AuditEvent.query.filter(AuditEvent.action.in_(['student_record_export', 'student_record_delete', 'helix_retention_cleanup']))
+           .order_by(AuditEvent.created_at.desc()).limit(20).all())
+    return render_template('admin_privacy.html', admin_tab='admin_privacy', q=q, students=students, preview=preview,
+                           days=days, due=due, log=log, neural_tts=app.config.get('NEURAL_TTS_ENABLED', True))
+
+
+@app.route('/admin/privacy/student/<int:user_id>/export.json')
+@login_required
+@role_required('admin')
+def admin_student_export(user_id):
+    u = _student_or_404(user_id)
+    data = _privacy.export(db, u.id)
+    audit('student_record_export', f'user={u.id} rows={sum(data["counts"].values())}')
+    return Response(_privacy.to_json(data), mimetype='application/json',
+                    headers={'Content-Disposition': f'attachment; filename=student-record-{u.id}.json'})
+
+
+@app.route('/admin/privacy/student/<int:user_id>/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_student_delete(user_id):
+    u = _student_or_404(user_id)
+    if (request.form.get('confirm_email') or '').strip().lower() != (u.email or '').lower():
+        flash('Type the student’s email address exactly to confirm the deletion.', 'warning')
+        return redirect(url_for('admin_privacy', user_id=u.id))
+    uid = u.id
+    res = _privacy.delete_record(db, uid)
+    # the audit row names the id and counts only (not the email), so the log itself holds no PII
+    audit('student_record_delete', f'user={uid} deleted={sum(res["deleted"].values())} '
+          f'tables={",".join(sorted(res["deleted"]))[:250]} anonymised={sum(res["anonymised"].values())}')
+    flash(f'Deleted the full record of student #{uid} ({sum(res["deleted"].values())} rows). Shared records were kept without their name.', 'success')
+    app.logger.info('student record %s deleted by admin %s', uid, current_user.id)
+    return redirect(url_for('admin_privacy'))
+
+
+@app.route('/admin/privacy/helix-cleanup', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_helix_cleanup():
+    days = _privacy.helix_retention_days(app)
+    res = _privacy.helix_cleanup(db, _helix_models, days)
+    audit('helix_retention_cleanup', f'days={days} sessions={res["sessions"]} buckets={res["buckets"]} '
+          f'events={res["events"]} accuracy={res["accuracy_records"]}')
+    flash(f'Helix retention cleanup: removed {res["sessions"]} sessions, {res["buckets"]} AOI rows, {res["events"]} events '
+          f'and {res["accuracy_records"]} accuracy records older than {days} days.' if days > 0 else
+          'Helix retention is set to keep data (0 days); nothing was removed.', 'info')
+    return redirect(url_for('admin_privacy'))
+
+
+import click as _click
+
+
+@app.cli.command('helix-cleanup')
+@_click.option('--dry-run', is_flag=True, help='Only count what would be removed.')
+def helix_cleanup_command(dry_run):
+    """Delete Helix data older than CIWT_HELIX_RETENTION_DAYS (default 365)."""
+    dry = dry_run
+    days = _privacy.helix_retention_days(app)
+    res = _privacy.helix_cleanup(db, _helix_models, days, dry_run=dry)
+    if not dry:
+        db.session.add(AuditEvent(action='helix_retention_cleanup', role='system',
+                                  detail=f'cli days={days} sessions={res["sessions"]} events={res["events"]} accuracy={res["accuracy_records"]}'))
+        db.session.commit()
+    print(_privacy.to_json(res))
+
+
+def run_settings(env=None):
+    """Host/port/debug for `python app.py`. Debug is OFF unless FLASK_DEBUG=1 is set explicitly; with
+    debug on, the server binds to 127.0.0.1 (the Werkzeug debugger runs code for whoever can reach it)
+    unless CIWT_ALLOW_DEBUG_ON_NETWORK=1 is also set."""
+    env = os.environ if env is None else env
+    debug = (env.get('FLASK_DEBUG') or '').strip().lower() in ('1', 'true', 'yes', 'on')
+    port = int(env.get('PORT') or 5050)
+    host = (env.get('HOST') or '').strip() or ('127.0.0.1' if debug else '0.0.0.0')
+    note = ''
+    if debug and host not in ('127.0.0.1', 'localhost', '::1') and env.get('CIWT_ALLOW_DEBUG_ON_NETWORK') != '1':
+        note = f'FLASK_DEBUG=1: binding to 127.0.0.1 instead of {host} (set CIWT_ALLOW_DEBUG_ON_NETWORK=1 to override).'
+        host = '127.0.0.1'
+    return host, port, debug, note
+
+
 def _ensure_section_access_table():
     """Create access table if missing and backfill primary instructors."""
     with app.app_context():
@@ -7194,8 +7333,8 @@ _ensure_section_access_table()
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5050))
-    # FLASK_DEBUG=0 turns the Werkzeug debugger off; do that whenever the app is exposed
-    # (e.g. through a cloudflared tunnel for phone testing). Default stays on for local dev.
-    debug = os.environ.get('FLASK_DEBUG', '1').lower() not in ('0', 'false', 'no', 'off')
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    _host, _port, _debug, _note = run_settings()
+    if _note:
+        print(_note)
+    print(f'CIWT LMS on http://{_host}:{_port}  debug={"on" if _debug else "off"}')
+    app.run(host=_host, port=_port, debug=_debug)

@@ -3,7 +3,8 @@
 (function () {
   'use strict';
   var STATE_COLORS = { off_page: '#9aa9bc', chrome: '#c3ccd8', _face_lost: '#e5484d', _hidden: '#6e56cf',
-                       _low_conf: '#f0b429', _idle: '#b7c2cf', _paused: '#d5dbe3' };
+                       _low_conf: '#f0b429', _idle: '#b7c2cf', _paused: '#d5dbe3',
+                       _camera_off: '#b42318', _other_tab: '#8e7cc3', _asleep: '#4b3f72' };
   function aoiColor(i, n) {
     var h = (195 + i * (300 / Math.max(1, n))) % 360;
     return 'hsl(' + Math.round(h) + ',62%,' + (i % 2 ? 46 : 38) + '%)';

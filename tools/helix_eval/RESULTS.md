@@ -282,3 +282,59 @@ measurement.
   are inside the run-to-run spread seen in pass 4.
 * Pose normalisation of the crop (roll + scale) is built in and was not ablated separately,
   because the features it serves were not adopted.
+
+## Pass 10: second 1080p subject, follow-the-dot, per-device defaults
+
+### New data (outside the repo, /workspace/ciwt/testdata)
+**blk1080 / blk720:** U.S. Department of State video "Secretary Blinken on Mahsa Amini's death a year
+ago in Iran" (Wikimedia Commons, `File:Secretary Blinken on Mahsa Amini's death a year ago in Iran.webm`,
+public domain as a work of the U.S. federal government), 1920x1080. 150 frames at 15 fps from 0:12;
+blk720 is the same frames area-scaled to 1280x720. Face found in 150/150. Warped with `gen.py` into the
+same 7 conditions plus seeds 1 and 2 for clean and webcam (11 sequences per resolution), features
+`run.py features _v5`, scored with `CROPVEC=0 warp_eval.js` (pass-4 model, the shipped default). The
+cbp pair was re-scored in the same run. Rejected candidates: ISS videos (faces too small) and further
+CBP vlog days (same presenter as cbp, or two people in frame).
+
+### 1080p vs 720p (same person, same frames; median of 16 unseen points per sequence, °)
+| subject | 9-point | follow + 3 dots | follow only |
+|---|---|---|---|
+| blk (11 / 10 / 10 pairs) | 2.82 → 2.82, better 6/11, p=1.0 | 2.67 → 2.40, better 7/10, p=0.34 | 2.93 → 2.75, better 9/10, p=0.02 |
+| cbp (re-run, same as pass 5) | 6.91 → 6.54, better 7/11, p=0.55 | 6.22 → 5.28, better 9/10, p=0.02 | 5.71 → 5.39, better 7/10, p=0.34 |
+| both, sequence-level | mean −0.27°, 13/22, p=0.52 | mean −0.46°, 16/20, p=0.012 | mean −0.37°, 16/20, p=0.012 |
+
+Read carefully: the sign test across sequences treats the 10–11 sequences of one person as
+independent, which they are not (same frames, different synthetic conditions and seeds). At the
+level that matters, people, the evidence is **2 of 2 subjects** improving with 1080p for
+follow-the-dot calibration, by 0.27° (blk) and 0.94° (cbp) in the median. Neither subject is a real
+webcam: both are studio/press video with good lighting, so the 1080p advantage on a real laptop
+camera (more noise, compression, worse optics) is unknown. Cost on this box: MediaPipe inference
+48 ms vs 33 ms per frame (median; the box was heavily loaded by other jobs during this run, so the
+absolute numbers are high, the ratio matches pass 5).
+
+### Follow-the-dot + 3 dots vs 9 dots (same sequences)
+| subject | 9-point | follow + 3 | follow better |
+|---|---|---|---|
+| blk720 | 2.75 | 2.67 | 7/10, p=0.34 |
+| blk1080 | 2.76 | 2.40 | 5/10, p=1.0 |
+| cbp720 | 7.00 | 6.22 | 7/10, p=0.34 |
+| cbp1080 | 6.22 | 5.28 | 8/10, p=0.11 |
+Follow+3 is never worse in the median, but no subject shows a significant difference, and the
+proxy has no click-timing or attention lapses, which is exactly where the two methods differ for
+real people (following a dot needs sustained attention; clicking gives a guaranteed fixation).
+
+### Decision: defaults per device class (unchanged, and why)
+| device class | method | camera | basis |
+|---|---|---|---|
+| desktop | dots (follow offered in positioning) | 1280x720; 1080p opt-in (`hiRes`, ≥8 cores) | 2 proxy subjects, not real webcams; +45% CPU per frame |
+| tablet | dots | 1280x720 | no tablet data at all |
+| phone | dots | 480x640 portrait | no phone data; 1080p never offered |
+Rule adopted for changing a default: real paired data from the accuracy study (`/helix/study`,
+admin view `/admin/helix/accuracy`) with at least 10 people who did both arms on that device class,
+sign test p < 0.05 and a median gain of at least 0.5°. The admin view applies this rule and shows a
+suggestion; an admin changes the default by hand (`HelixCalibDefault`, served in `/api/helix/config`).
+Until then the proxy result above is a reason to run the study arms, not to switch.
+
+### Real-device accuracy: still none
+The accuracy-study mode is built and tested end to end with a fake camera (the e2e deletes its own
+records because a looping video has no gaze ground truth). No real-user numbers exist yet; the
+admin view says so instead of showing proxy or seeded numbers.

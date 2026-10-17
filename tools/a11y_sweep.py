@@ -25,7 +25,7 @@ os.makedirs(a.out, exist_ok=True)
 AXE = open(a.axe).read()
 HEIGHT = {390: 844, 820: 1180, 1280: 800}
 PAGES = {
-    'anon': [('landing', '/'), ('login', '/login'), ('login-teach', '/login?as=teach'), ('policy', '/policy/attention'), ('helix-try', '/helix/try')],
+    'anon': [('landing', '/'), ('login', '/login'), ('login-teach', '/login?as=teach'), ('policy', '/policy/attention'), ('helix-try', '/helix/try'), ('privacy', '/privacy')],
     'student1@lms.local:student123': [
         ('student-home', '/student'), ('student-class-goldpath', '/student/section/1'),
         ('lesson', '/student/module/1/1/lesson/1'), ('quiz', '/student/quiz/1/1'),
@@ -37,7 +37,8 @@ PAGES = {
         ('lab-build', '/labs/hw-pc-build'), ('lab-linux', '/labs/linux-shell'), ('lab-ios', '/labs/rtr-vlan-acl'),
         ('lab-vm', '/labs/linux-vm-perms'), ('lab-ticket', '/labs/ticket-intake'), ('lab-classroom', '/labs/classroom/CL-7'),
         ('lab-ports', '/labs/win-laptop-ports'), ('lab-order', '/labs/ticket-method'),
-        ('lesson-7.1', '/student/module/1/7/lesson/30'), ('lesson-10.1', '/student/module/1/10/lesson/42'), ('lesson-13.4', '/student/module/1/13/lesson/57'),
+        ('lesson-3.2', '/student/module/1/3/lesson/13'), ('lesson-4.3', '/student/module/1/4/lesson/19'), ('lesson-5.1', '/student/module/1/5/lesson/21'), ('lesson-6.3', '/student/module/1/6/lesson/28'),
+        ('helix-study', '/helix/study'), ('lesson-7.1', '/student/module/1/7/lesson/30'), ('lesson-10.1', '/student/module/1/10/lesson/42'), ('lesson-13.4', '/student/module/1/13/lesson/57'),
     ],
     'instructor@lms.local:teach123': [
         ('instr-home', '/instructor'), ('instr-section', '/instructor/section/1'),
@@ -45,13 +46,14 @@ PAGES = {
         ('gradebook', '/instructor/section/1/gradebook'),
         ('materials', '/instructor/materials'), ('materials-plans', '/instructor/materials/ITSUP/lesson-plans'),
         ('materials-key', '/instructor/materials/ITSUP/answer-key'), ('syllabus-settings', '/instructor/section/1/syllabus'),
-        ('instr-lesson-13.1', '/student/module/1/13/lesson/54'),
+        ('instr-lesson-13.1', '/student/module/1/13/lesson/54'), ('calibration', '/instructor/section/1/attention/calibration'), ('materials-labs', '/instructor/materials/ITSUP/lab-manual'),
         ('lab-results', '/instructor/section/1/labs/results'), ('lab-student', '/instructor/section/1/labs/student/4/win-ipconfig'),
-        ('class-labs-instr', '/class/1/labs'), ('materials-labs', '/instructor/materials/ITSUP/lab-manual'),
+        ('class-labs-instr', '/class/1/labs'),
     ],
     'admin@lms.local:admin123': [('admin', '/admin'), ('admin-classes', '/admin/classes'), ('admin-people', '/admin/people'),
                                  ('admin-curriculum', '/admin/curriculum'), ('admin-tqi', '/admin/tqi'),
-                                 ('admin-analytics', '/admin/test-analytics'), ('admin-tickets', '/admin/tickets')],
+                                 ('admin-analytics', '/admin/test-analytics'), ('admin-tickets', '/admin/tickets'),
+                                 ('admin-privacy', '/admin/privacy?q=student1&user_id=4'), ('admin-accuracy', '/admin/helix/accuracy')],
 }
 OVERFLOW_JS = """()=>{const W=innerWidth;let mx=0,who='';document.querySelectorAll('main, main *').forEach(e=>{const r=e.getBoundingClientRect(); if(r.right<=W+2||!r.width) return; let p=e.parentElement; while(p&&p.tagName!=='BODY'){const o=getComputedStyle(p).overflowX; if(o!=='visible'&&o!=='clip'&&p.tagName!=='HTML') return; p=p.parentElement} if(r.right>mx){mx=r.right;who=e.tagName+'.'+(e.className||'').toString().slice(0,40)}}); return mx?Math.round(mx)+' '+who:''}"""
 report = []

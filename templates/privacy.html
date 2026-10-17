@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Privacy — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="eyebrow">Privacy</div>
+  <h1 class="h3 mb-1">What this training site stores and sends</h1>
+  <p class="mb-0">A plain summary for students and staff. Your organisation’s own records policy still applies.</p>
+</div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-body">
+      <h2 class="h5">Stored on this server</h2>
+      <ul class="mb-0">
+        <li>Your account (name, email, role) and the classes you are enrolled in.</li>
+        <li>Training records: quiz and test attempts, lab completions, time on lessons, grades and instructor overrides, end-of-course feedback, messages and content tickets.</li>
+        <li>An audit log of sign-ins and administrative actions.</li>
+        <li><strong>Helix attention data</strong>, only if you opt in: see the <a href="{{ url_for('helix.policy') }}">Helix attention policy</a>. Camera video never leaves your browser.
+          {% if helix_days > 0 %}Helix sessions, attention events and accuracy-study records are deleted after <strong>{{ helix_days }} days</strong>.{% else %}This server keeps Helix data until you or an administrator delete it.{% endif %}</li>
+      </ul>
+    </div></div>
+    <div class="card mb-3"><div class="card-body">
+      <h2 class="h5">Sent to a third party</h2>
+      {% if neural_tts %}
+      <p>The lesson <strong>Listen</strong> button’s neural voice is produced by Microsoft’s online text-to-speech service (the Read Aloud service used by Microsoft Edge), through the open-source <code>edge-tts</code> library. When you press Play, <strong>the server sends the lesson text</strong> (up to about 3,500 characters at a time) to that service and caches the audio. Your name and account are not sent; the service sees the server’s network address.</p>
+      <p class="mb-0">An administrator can turn this off with <code>CIWT_NEURAL_TTS=0</code>; Listen then uses your browser’s own voice.</p>
+      {% else %}
+      <p class="mb-0">The online neural voice is <strong>turned off</strong> on this server (<code>CIWT_NEURAL_TTS=0</code>). Listen uses your browser’s speech engine, preferring voices the browser reports as on-device. Some browsers’ built-in voices are themselves online services; check your browser’s settings if that matters to you.</p>
+      {% endif %}
+      <p class="mt-2 mb-0">Nothing else is sent off the server: fonts, icons and the eye-tracking model are served from this site.</p>
+    </div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body">
+      <h2 class="h5">Your choices</h2>
+      <ul class="mb-0">
+        <li>Helix: stop, withdraw consent and delete your sessions from <a href="{{ url_for('helix.my_data') }}">My attention data</a>; the optional <a href="{{ url_for('helix.study_page') }}">accuracy study</a> has its own leave-and-delete button.</li>
+        <li>A copy of everything stored about you, or deletion of your whole record, can be requested from an administrator, who has an export and delete tool (every use is logged).</li>
+      </ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
