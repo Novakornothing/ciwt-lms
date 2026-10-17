@@ -59,10 +59,13 @@
               <tr>
                 <td data-label="Started" class="small">{{ r.s.started_at.strftime('%b %d %H:%M') if r.s.started_at }}</td>
                 <td data-label="Mode"><i class="bi {{ 'bi-phone' if r.s.mode == 'passive' else 'bi-camera-video' }}" aria-hidden="true"></i> {{ 'Reading signal' if r.s.mode == 'passive' else 'Camera' }}<span class="small text-muted"> · {{ r.s.device or 'desktop' }}</span></td>
-                <td data-label="Accuracy">{% if r.s.mode != 'passive' %}{{ r.s.calibration_score }}%{% if r.s.validation_error_px %} <span class="small text-muted">(±{{ r.s.validation_error_px }}px)</span>{% endif %}{% endif %} {{ band_badge(r.band) }}</td>
+                <td data-label="Accuracy">{% if r.s.mode != 'passive' %}{{ r.s.calibration_score }}%{% if r.s.validation_error_px %} <span class="small text-muted">(±{{ r.s.validation_error_px }}px{% if r.s.validation_error_deg %} ≈ {{ r.s.validation_error_deg }}°{% endif %})</span>{% endif %}{% endif %} {{ band_badge(r.band) }}
+                  {% if r.s.mode != 'passive' %}<div class="small text-muted">{{ {'mediapipe': 'MediaPipe', 'webgazer': 'WebGazer'}.get(r.s.engine, r.s.engine) }}{% if r.s.delegate %} · {{ r.s.delegate }}{% endif %}{% if r.s.distance_cm %} · ~{{ r.s.distance_cm }} cm{% endif %} · {{ r.s.aoi_resolution or 'heading' }}-level{% if r.s.implicit_samples %} · {{ r.s.implicit_samples }} implicit{% endif %}</div>{% endif %}</td>
                 <td data-label="Reading">{{ r.attentive_pct }}% <span class="small text-muted">of {{ (r.b.total/60000)|round(1) }} min</span></td>
                 <td data-label="Status"><span class="badge text-bg-{{ 'success' if r.s.status == 'running' else ('warning' if r.s.status == 'abandoned' else 'secondary') }}">{{ r.s.status }}</span>{% if r.s.is_demo %} <span class="badge text-bg-warning">demo</span>{% endif %}</td>
               </tr>
+              {% set dsvg = hx_drift_svg(r.s.drift_json) if r.s.mode != 'passive' else '' %}
+              {% if dsvg %}<tr class="hx-drift-row"><td colspan="5"><div class="small text-muted mb-1">Accuracy drift (click/tap error during the session; dashed = recalibration)</div>{{ dsvg }}</td></tr>{% endif %}
             {% endfor %}
             </tbody>
           </table>

@@ -1,0 +1,14 @@
+{# Helix gaze engine configuration + scripts, shared by lesson pages and the Try page. #}
+<script>
+window.HELIX_ENGINE = {
+  bundleUrl: "{{ url_for('static', filename='vendor/mediapipe/vision_bundle.mjs') }}",
+  wasmBase: "{{ url_for('static', filename='vendor/mediapipe/wasm') }}",
+  modelUrl: "{{ url_for('static', filename='vendor/mediapipe/models/face_landmarker.task') }}",
+  webgazerUrl: "{{ url_for('static', filename='vendor/webgazer.js') }}",
+  webgazerCdn: "https://cdn.jsdelivr.net/npm/webgazer@3.3.0/dist/webgazer.min.js"
+};
+</script>
+<script src="{{ url_for('static', filename='js/helix/helix-core.js') }}"></script>
+<script src="{{ url_for('static', filename='js/helix/helix-model.js') }}"></script>
+<script src="{{ url_for('static', filename='js/helix/helix-engine.js') }}"></script>
+<script src="{{ url_for('static', filename='js/helix/helix-calib.js') }}"></script>

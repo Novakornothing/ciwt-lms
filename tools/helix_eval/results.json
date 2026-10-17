@@ -1,0 +1,126 @@
+{
+  "generated": "2026-10-17T14:50:12.839Z",
+  "frames_per_point": 22,
+  "results": [
+    {
+      "condition": "baseline (noise 0.8 px, head still)",
+      "users": 20,
+      "point_error_px_median": 75,
+      "point_error_px_p90": 110,
+      "point_error_deg_median": 1.63,
+      "frame_error_px_median": 185,
+      "frame_error_deg_median": 4.04,
+      "smoothed_error_px_median": 91,
+      "smoothed_error_deg_median": 1.98,
+      "distance_estimate_bias_cm": -0.5
+    },
+    {
+      "condition": "ablation: single ridge on all features",
+      "users": 20,
+      "point_error_px_median": 76,
+      "point_error_px_p90": 100,
+      "point_error_deg_median": 1.64,
+      "frame_error_px_median": 180,
+      "frame_error_deg_median": 3.95,
+      "smoothed_error_px_median": 91,
+      "smoothed_error_deg_median": 1.93,
+      "distance_estimate_bias_cm": -0.5
+    },
+    {
+      "condition": "ablation: iris offsets only (no geometry / head pose)",
+      "users": 20,
+      "point_error_px_median": 77,
+      "point_error_px_p90": 100,
+      "point_error_deg_median": 1.68,
+      "frame_error_px_median": 171,
+      "frame_error_deg_median": 3.73,
+      "smoothed_error_px_median": 87,
+      "smoothed_error_deg_median": 1.87,
+      "distance_estimate_bias_cm": -0.5
+    },
+    {
+      "condition": "low landmark noise (0.4 px)",
+      "users": 20,
+      "point_error_px_median": 32,
+      "point_error_px_p90": 43,
+      "point_error_deg_median": 0.69,
+      "frame_error_px_median": 104,
+      "frame_error_deg_median": 2.32,
+      "smoothed_error_px_median": 35,
+      "smoothed_error_deg_median": 0.76,
+      "distance_estimate_bias_cm": -0.5
+    },
+    {
+      "condition": "high landmark noise (1.6 px)",
+      "users": 20,
+      "point_error_px_median": 185,
+      "point_error_px_p90": 218,
+      "point_error_deg_median": 4.03,
+      "frame_error_px_median": 282,
+      "frame_error_deg_median": 6.2,
+      "smoothed_error_px_median": 196,
+      "smoothed_error_deg_median": 4.35,
+      "distance_estimate_bias_cm": -0.5
+    },
+    {
+      "condition": "phone-like: 30 cm, small screen 390x844",
+      "users": 20,
+      "point_error_px_median": 27,
+      "point_error_px_p90": 34,
+      "point_error_deg_median": 0.88,
+      "frame_error_px_median": 73,
+      "frame_error_deg_median": 2.45,
+      "smoothed_error_px_median": 28,
+      "smoothed_error_deg_median": 0.97,
+      "distance_estimate_bias_cm": -0.3
+    },
+    {
+      "condition": "head moved 4 cm sideways + 5° yaw after calibration",
+      "users": 20,
+      "point_error_px_median": 188,
+      "point_error_px_p90": 310,
+      "point_error_deg_median": 4.09,
+      "frame_error_px_median": 241,
+      "frame_error_deg_median": 4.98,
+      "smoothed_error_px_median": 199,
+      "smoothed_error_deg_median": 4.05,
+      "distance_estimate_bias_cm": -0.7
+    },
+    {
+      "condition": "... same, after 20 implicit click samples",
+      "users": 20,
+      "point_error_px_median": 89,
+      "point_error_px_p90": 123,
+      "point_error_deg_median": 1.88,
+      "frame_error_px_median": 189,
+      "frame_error_deg_median": 4.11,
+      "smoothed_error_px_median": 111,
+      "smoothed_error_deg_median": 2.36,
+      "distance_estimate_bias_cm": -0.7
+    },
+    {
+      "condition": "ablation (single ridge): head moved 4 cm + 5° yaw",
+      "users": 20,
+      "point_error_px_median": 442,
+      "point_error_px_p90": 821,
+      "point_error_deg_median": 9.2,
+      "frame_error_px_median": 468,
+      "frame_error_deg_median": 9.73,
+      "smoothed_error_px_median": 466,
+      "smoothed_error_deg_median": 9.6,
+      "distance_estimate_bias_cm": -0.7
+    },
+    {
+      "condition": "head leaned 8 cm closer after calibration",
+      "users": 20,
+      "point_error_px_median": 134,
+      "point_error_px_p90": 227,
+      "point_error_deg_median": 3.46,
+      "frame_error_px_median": 180,
+      "frame_error_deg_median": 4.55,
+      "smoothed_error_px_median": 133,
+      "smoothed_error_deg_median": 3.29,
+      "distance_estimate_bias_cm": -0.6
+    }
+  ]
+}

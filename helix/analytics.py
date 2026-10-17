@@ -343,3 +343,52 @@ def timeline_lanes(sessions, users, max_lanes=40):
                          for seg in segs],
         })
     return lanes
+
+
+def drift_svg(drift_json, width=280, height=64):
+    """Server-rendered sparkline of implicit-sample error (px) over a session.
+
+    Grey = each click/tap/caret sample, blue = rolling median, dashed line = recalibration.
+    Returns '' when there is nothing to draw.
+    """
+    from markupsafe import Markup, escape
+    pts = loads(drift_json or '[]', [])
+    if not isinstance(pts, list):
+        return ''
+    data = [p for p in pts if isinstance(p, dict)]
+    errs = [p.get('err') for p in data if p.get('src') != 'recal' and isinstance(p.get('err'), (int, float))]
+    if not errs:
+        return ''
+    top = max(200, max(errs))
+    n = len(data)
+
+    def x(i):
+        return 6 + (i * (width - 12) / (n - 1) if n > 1 else (width - 12) / 2)
+
+    def y(v):
+        return round(height - 6 - (v / top) * (height - 16), 1)
+
+    raw, med, marks, dots = [], [], [], []
+    for i, p in enumerate(data):
+        if p.get('src') == 'recal':
+            marks.append(f'<line x1="{x(i):.1f}" x2="{x(i):.1f}" y1="4" y2="{height - 4}" stroke="#f59e0b" stroke-dasharray="3 3"><title>recalibrated</title></line>')
+            continue
+        raw.append(f'{x(i):.1f},{y(p.get("err") or 0)}')
+        med.append(f'{x(i):.1f},{y(p.get("med") or 0)}')
+        dots.append(f'<circle cx="{x(i):.1f}" cy="{y(p.get("err") or 0)}" r="2.2" fill="#0f172a"><title>{escape(str(p.get("src") or ""))}: {int(p.get("err") or 0)} px</title></circle>')
+    label = f'Implicit-sample error over the session: median {sorted(errs)[len(errs) // 2]} px across {len(errs)} samples'
+    svg = (f'<svg class="hx-drift" viewBox="0 0 {width} {height}" width="{width}" height="{height}" role="img" aria-label="{escape(label)}">'
+           f'<text x="4" y="10" font-size="9" fill="#64748b">{int(top)} px</text>'
+           + ''.join(marks)
+           + f'<polyline fill="none" stroke="#94a3b8" stroke-width="1" points="{" ".join(raw)}"/>'
+           + f'<polyline fill="none" stroke="#0ea5e9" stroke-width="2.5" points="{" ".join(med)}"/>'
+           + ''.join(dots) + '</svg>')
+    return Markup(svg)
+
+
+def median_or_none(values):
+    vals = sorted(v for v in values if v is not None)
+    if not vals:
+        return None
+    h = len(vals) // 2
+    return round(vals[h] if len(vals) % 2 else (vals[h - 1] + vals[h]) / 2, 1)

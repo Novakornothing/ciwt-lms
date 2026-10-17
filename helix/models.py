@@ -7,7 +7,7 @@ Defined through a factory so the flat ``app.py`` can keep owning the single
 from datetime import datetime
 from types import SimpleNamespace
 
-POLICY_VERSION = '2026-10-17'
+POLICY_VERSION = '2026-10-17.2'  # .2: camera on phones, paragraph/line dwell when accuracy allows
 ENGINE = 'webgazer'
 
 # Special AOI keys produced by the client state machine. They are stored in the
@@ -78,6 +78,15 @@ def define_models(db):
         rejected_samples = db.Column(db.Integer, default=0)
         last_seq = db.Column(db.Integer, default=-1)
         last_seen_at = db.Column(db.DateTime)
+        # --- pass 3: camera pipeline metadata (auto-migrated) ---
+        delegate = db.Column(db.String(40), default='')            # GPU | CPU | WebGazer (TF.js)
+        validation_error_deg = db.Column(db.Float)                 # median validation error, visual degrees
+        distance_cm = db.Column(db.Integer)                        # estimated eye-to-screen distance
+        aoi_resolution = db.Column(db.String(12), default='heading')  # heading | paragraph | line
+        orientation = db.Column(db.String(12), default='')
+        drift_json = db.Column(db.Text, default='[]')              # implicit-sample error over time
+        implicit_samples = db.Column(db.Integer, default=0)
+        fine_json = db.Column(db.Text, default='[]')               # paragraph/line dwell (only if accuracy allowed)
         heat_json = db.Column(db.Text, default='{}')     # {"cols":20,"rows":60,"cells":{"x,y":ms}}
         layout_json = db.Column(db.Text, default='[]')   # [{key,label,order,y0,y1}] fractions of lesson body
         is_demo = db.Column(db.Boolean, default=False)
@@ -154,6 +163,14 @@ MIGRATIONS = [
     ('helix_gaze_session', 'layout_json', "TEXT DEFAULT '[]'"),
     ('helix_gaze_session', 'is_demo', 'BOOLEAN DEFAULT 0'),
     ('helix_aoi_bucket', 'aoi_kind', "VARCHAR(20) DEFAULT 'heading'"),
+    ('helix_gaze_session', 'delegate', "VARCHAR(40) DEFAULT ''"),
+    ('helix_gaze_session', 'validation_error_deg', 'FLOAT'),
+    ('helix_gaze_session', 'distance_cm', 'INTEGER'),
+    ('helix_gaze_session', 'aoi_resolution', "VARCHAR(12) DEFAULT 'heading'"),
+    ('helix_gaze_session', 'orientation', "VARCHAR(12) DEFAULT ''"),
+    ('helix_gaze_session', 'drift_json', "TEXT DEFAULT '[]'"),
+    ('helix_gaze_session', 'implicit_samples', 'INTEGER DEFAULT 0'),
+    ('helix_gaze_session', 'fine_json', "TEXT DEFAULT '[]'"),
 ]
 
 

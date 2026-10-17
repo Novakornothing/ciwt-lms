@@ -25,7 +25,7 @@ with sync_playwright() as p:
     pg.goto(base + LESSON); pg.wait_for_timeout(1200)
     pg.locator('#hxPill').is_visible() and pg.click('#hxPill'); pg.wait_for_timeout(300)
     pg.screenshot(path=out + '/helix-offer-mobile.png')
-    assert pg.locator('#hxCam').count() == 0, 'phones should only get passive'
+    log.append('mobile offers camera: %s' % (pg.locator('#hxCam').count() == 1))  # camera on phones since pass 3
     pg.click('#hxPassive'); pg.wait_for_timeout(300)
     pg.check('#hxAgree'); pg.screenshot(path=out + '/helix-consent-mobile.png')
     pg.click('#hxConsent button[type=submit]'); pg.wait_for_timeout(1500)

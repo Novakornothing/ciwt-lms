@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Try Helix eye tracking · CIWT LMS{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{{ url_for('helix.policy') }}">Helix</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Try it</li></ol></nav>
+
+<section class="hx-try-hero mb-3">
+  <p class="eyebrow mb-1">Helix · eye-tracking playground</p>
+  <h1 class="h3 mb-1">See camera gaze tracking working on this device</h1>
+  <p class="mb-0">Everything runs in this browser. <strong>Nothing is uploaded or saved</strong>: no video, no gaze data. Close the tab to stop.</p>
+</section>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header navy d-flex flex-wrap gap-2 justify-content-between align-items-center">
+        <span>Gaze targets</span>
+        <span class="small opacity-75" id="hxTryState" role="status" aria-live="polite">Not started</span>
+      </div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+          <button type="button" class="btn btn-brand" id="hxTryStart"><i class="bi bi-camera-video" aria-hidden="true"></i> Start camera &amp; calibrate</button>
+          <button type="button" class="btn btn-outline-navy" id="hxTryRecal" disabled><i class="bi bi-bullseye" aria-hidden="true"></i> Recalibrate</button>
+          <button type="button" class="btn btn-outline-navy" id="hxTryDot" aria-pressed="true" disabled>Hide gaze dot</button>
+          <button type="button" class="btn btn-outline-secondary" id="hxTryStop" disabled>Stop camera</button>
+          <label class="small ms-auto d-flex align-items-center gap-1" for="hxTryEngine">Engine
+            <select id="hxTryEngine" class="form-select form-select-sm w-auto">
+              <option value="auto" {{ 'selected' if engine == 'auto' }}>Auto (MediaPipe, WebGazer fallback)</option>
+              <option value="mediapipe" {{ 'selected' if engine == 'mediapipe' }}>MediaPipe only</option>
+              <option value="webgazer" {{ 'selected' if engine == 'webgazer' }}>WebGazer only</option>
+            </select></label>
+        </div>
+        <p class="small text-muted mb-2">Look at a tile: it lights up where Helix thinks you are looking. <strong>Clicking or tapping a tile while looking at it teaches Helix</strong> (implicit calibration); the chart below shows how far off the estimate was at each click.</p>
+        <div class="hx-try-grid" id="hxTryGrid" aria-label="Gaze target tiles">
+          {% for i in range(9) %}<button type="button" class="hx-try-tile" data-tile="{{ i }}"><span>{{ i + 1 }}</span></button>{% endfor %}
+        </div>
+        <h2 class="h6 mt-3 mb-1">Implicit-sample error over time</h2>
+        <svg id="hxTryDrift" class="hx-try-drift" viewBox="0 0 300 70" preserveAspectRatio="none" role="img" aria-label="Error at each click, in pixels"></svg>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header navy">Measured accuracy</div>
+      <div class="card-body" id="hxTryResult"><p class="text-muted mb-0">Calibrate to measure the error on this device.</p></div>
+    </div>
+    <div class="card">
+      <div class="card-header navy">Live diagnostics</div>
+      <div class="card-body p-0"><dl class="hx-hud" id="hxTryHud"><dt>Engine</dt><dd>—</dd></dl></div>
+      <div class="card-footer small text-muted">Camera needs HTTPS (or localhost). On phones: allow camera, hold the phone upright at eye level.</div>
+    </div>
+  </div>
+</div>
+<div id="helixGazeDot" class="helix-gaze-dot hx-dot-try" aria-hidden="true"></div>
+<canvas id="hxTryTrail" class="hx-try-trail" aria-hidden="true"></canvas>
+{% include "helix/_engine_assets.html" %}
+<script src="{{ url_for('static', filename='js/helix/helix-try.js') }}"></script>
+{% endblock %}

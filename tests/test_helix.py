@@ -185,3 +185,55 @@ def test_accuracy_bands():
     assert A.accuracy_band(50)['label'] == 'Fair'
     assert A.accuracy_band(20)['label'] == 'Poor'
     assert A.accuracy_band(0, 'passive')['label'] == 'Passive'
+
+
+def test_try_page_is_public_and_self_hosted(app):
+    r = app.test_client().get('/helix/try')
+    assert r.status_code == 200
+    html = r.get_data(as_text=True)
+    assert 'vendor/mediapipe/vision_bundle.mjs' in html and 'face_landmarker.task' in html
+    assert 'helix-engine.js' in html and 'helix-calib.js' in html
+    assert 'Nothing is uploaded' in html
+
+
+def test_mediapipe_assets_are_vendored(app):
+    import os
+    root = os.path.join(app.root_path, 'static', 'vendor', 'mediapipe')
+    for rel in ('vision_bundle.mjs', 'wasm/vision_wasm_internal.wasm', 'wasm/vision_wasm_internal.js',
+                'wasm/vision_wasm_nosimd_internal.wasm', 'models/face_landmarker.task'):
+        assert os.path.getsize(os.path.join(root, rel)) > 1000, rel
+
+
+def test_engine_metadata_stored_and_clamped(student, instructor, app, ids):
+    student.post('/api/helix/consent', json={'agree': True, 'camera_ok': True, 'passive_ok': True})
+    sid = _start(student, ids, client_uuid='uuid-mp-1').get_json()['session_id']
+    r = student.post(f'/api/helix/session/{sid}/calibrated', json={
+        'calibration_points': 9, 'calibration_score': 71, 'validation_error_px': 64, 'validation_precision_px': 30,
+        'engine': 'mediapipe', 'delegate': 'GPU', 'validation_error_deg': 1.7, 'distance_cm': 52,
+        'aoi_resolution': 'paragraph', 'orientation': 'landscape'})
+    assert r.get_json()['ok']
+    drift = [{'t': 1000 * i, 'err': 40 + i, 'med': 45, 'src': 'click'} for i in range(5)] + [{'t': 9000, 'src': 'recal'}]
+    r = student.post(f'/api/helix/session/{sid}/batch', json={
+        'seq': 0, 'segments': [], 'buckets': [], 'implicit_samples': 5, 'drift': drift,
+        'aoi_resolution': 'bogus', 'validation_error_deg': 500, 'engine': 'evil<script>',
+        'fine': [{'key': 'h0-intro~p1', 'label': 'Intro > first para', 'kind': 'paragraph', 'dwell_ms': 3200}]})
+    assert r.get_json()['ok']
+    with app.app_context():
+        from app import db
+        from sqlalchemy import text
+        row = db.session.execute(text('select engine, delegate, validation_error_deg, distance_cm, aoi_resolution, '
+                                      'implicit_samples, drift_json, fine_json from helix_gaze_session where id=:i'), {'i': sid}).mappings().first()
+    assert row['engine'] == 'mediapipe' and row['delegate'] == 'GPU'
+    assert row['validation_error_deg'] == 90.0          # clamped
+    assert row['distance_cm'] == 52 and row['aoi_resolution'] == 'paragraph'   # bogus value ignored
+    assert row['implicit_samples'] == 5
+    assert json.loads(row['drift_json'])[-1] == {'t': 9000, 'src': 'recal'}
+    assert json.loads(row['fine_json'])[0]['dwell_ms'] == 3200
+
+
+def test_drift_svg_renders_and_escapes():
+    pts = [{'t': i, 'err': 50 + 10 * i, 'med': 60, 'src': 'tap'} for i in range(6)] + [{'t': 7, 'src': 'recal'}, {'t': 8, 'err': 30, 'med': 30, 'src': '<b>'}]
+    svg = str(A.drift_svg(json.dumps(pts)))
+    assert svg.startswith('<svg') and 'stroke-dasharray' in svg and '<b>' not in svg
+    assert A.drift_svg('[]') == '' and A.drift_svg('not json') == ''
+    assert A.median_or_none([3, None, 1, 2]) == 2 and A.median_or_none([]) is None

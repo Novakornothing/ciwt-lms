@@ -1,0 +1,92 @@
+# Helix gaze pipeline: what was measured, and how
+
+Generated 2026-10-17 on this build box (8 vCPU, no GPU, headless Chromium). Every number below was
+produced by a script in this folder or `tools/`, and you can re-run it. **No real person looked at
+known targets for any of these numbers.** Real-device accuracy is still **unmeasured** (see the end).
+
+## 1. Synthetic accuracy harness (`node tools/helix_eval/eval.js --users 20 --json results.json`)
+
+The simulator (`synth.js`) is a deterministic geometric eye/head model. Each user gets their own
+kappa angle, IPD and eyeball size. The lids follow vertical gaze. Fixations jitter, and landmarks
+get pixel noise. It is projected through a 640×480 pinhole camera with a 60° FOV, onto a 1440×900
+screen at 0.0213 cm/px, from 55 cm. It produces MediaPipe-shaped landmarks plus a head-pose
+matrix. Those go through the **same** `helix-model.js` code the browser runs:
+- 9-point calibration, 22 frames per point
+- validation on a 4×4 grid of **unseen** targets
+
+| condition | point error, median px (°) | p90 px | smoothed per-frame error px (°) |
+|---|---|---|---|
+| baseline (0.8 px landmark noise, head still) | 75 (1.63°) | 110 | 91 (1.98°) |
+| low noise 0.4 px | 32 (0.69°) | 43 | 35 (0.76°) |
+| high noise 1.6 px | 185 (4.03°) | 218 | 196 (4.35°) |
+| phone-like: 30 cm, 390×844 | 27 (0.88°) | 34 | 28 (0.97°) |
+| head moved 4 cm + 5° yaw after calibration | 188 (4.09°) | 310 | 199 (4.05°) |
+| … same, after 20 implicit clicks | 89 (1.88°) | 123 | 111 (2.36°) |
+| ablation: single ridge, head moved | 442 (9.2°) | 821 | 466 (9.6°) |
+| head leaned 8 cm closer | 134 (3.46°) | 227 | 133 (3.29°) |
+
+What this shows:
+- The hybrid geometric + residual model keeps working when the head moves; a plain ridge model
+  does not (4.1° vs 9.2°).
+- Implicit click samples recover most of the loss (1.9°).
+- Landmark noise is the dominant factor.
+
+What it does **not** show: real-world accuracy. Real eyes, glasses, lighting, webcam optics and
+MediaPipe's own landmark bias are not in the model.
+
+## 2. Real face video through real MediaPipe (`tools/helix_mp_e2e.py`, `tools/helix_lesson_e2e.py`)
+
+**Camera:** Chromium's fake capture device playing a CC0 interview clip
+(Wikimedia Commons "Interview with Zara Kay about Faithless Hijabi.webm", 2:00–2:24, cropped to
+640×480 at 15 fps).
+
+**Delegate:** CPU. SwiftShader "GPU" was 330–1100 ms/frame on this box. Real GPUs are expected to
+be fast, but that is **untested** here.
+
+| measured | desktop 1280×800 | phone emulation 390×844 (touch, portrait) |
+|---|---|---|
+| engine load (bundle + 3.7 MB model + WASM) | 0.4 s (localhost) | 0.4 s |
+| face found | 100% of frames | 100% |
+| inference | 20–23 ms/frame | 23–25 ms/frame |
+| achieved fps (cap) | 13.5–14.5 (18–19 adaptive target; source video is 15 fps) | 10.5–12 (15 cap on mobile) |
+| positioning guidance | satisfied (distance ~39 cm, centred, facing, level, eyes, light) | satisfied (~27–30 cm) |
+| calibration | 9/9 dots, 87–108 training frames | 9/9 dots (tap), 87–102 frames |
+| live estimates | 138–195 in 9 s, moving: x SD 347–417 px, y SD 194–304 px | 188, x SD 64, y SD 247 |
+| validation "error" | 454–827 px | 254–329 px |
+
+The validation error in this row is **meaningless as accuracy**. The person in the video is talking
+to an interviewer, not looking at our dots. The row only proves that every stage runs and that the
+estimates respond to her eye and head movement.
+
+On the real lesson page (`helix_lesson_e2e.py`), the server stored:
+- `engine=mediapipe`, `delegate=CPU`, `validation_error_deg`, `distance_cm`, `aoi_resolution=heading`
+- `orientation`: landscape on desktop, portrait on mobile
+- AOI buckets and a `drift_json` marker
+
+Implicit samples were 0 because the gate correctly rejected clicks that were 450+ px from the
+estimate. The video person was not looking at what the script clicked.
+
+## 3. Landmark replay (`node tools/helix_eval/replay.js` → `replay_results.json`)
+
+**Input:** 401 recorded MediaPipe frames (`tests/fixtures/mp_landmarks_face_clip.json`).
+
+**Results:**
+- Face detected: 100%
+- Median eye width in the image: 38.9 px
+- Iris-centre jitter (robust σ after a 5-frame median): **0.03 px**. This is a *lower bound*.
+  MediaPipe smooths landmarks over time in VIDEO mode, and this compressed clip has no sensor
+  noise. The "predicted at measured noise" number (10 px) is therefore a noise floor, **not an
+  accuracy claim**. Expect real webcams to sit nearer the 0.4–1.6 px rows of table 1.
+- **Bug found and fixed:** the old fixed rule (`open < 0.13` → blink) threw away **28%** of frames.
+  These were runs of up to 2.5 s with `eyeLookDown ≈ 0.8`, meaning she was looking down, not
+  blinking. That would have discarded students reading the bottom of the page. The new rule (narrow
+  lids count as a blink only if not explained by downward gaze, using blendshapes) rejects **1%**.
+
+## 4. Not verified (needs a real person and real devices)
+
+- True accuracy, measured by a person following the validation dots. The live validation step does
+  exactly this and reports px and degrees, so the first real session gives the real number.
+- iOS Safari and Android Chrome: getUserMedia/playsinline behaviour, GPU delegate speed,
+  thermal/battery throttling, rotation on real hardware.
+- WebGL GPU delegate on a real GPU.
+- Glasses, low light, darker or lighter skin tones, and multiple faces.

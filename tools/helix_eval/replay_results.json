@@ -1,0 +1,30 @@
+{
+  "source": {
+    "source": "Wikimedia Commons \"Interview with Zara Kay about Faithless Hijabi.webm\" (CC0), 2:00-2:24, right half cropped to 640x480 @15 fps",
+    "captured_with": "MediaPipe Face Landmarker (tasks-vision 1.1.1) in Chromium fake camera, delegate CPU",
+    "frames": 401
+  },
+  "frames": 401,
+  "face_detected_pct": 100,
+  "inference_ms_median": 20.1,
+  "distance_cm_median": 38,
+  "yaw_deg_range": [
+    -13,
+    8
+  ],
+  "eye_width_px_median": 38.9,
+  "iris_jitter_sigma_px": 0.03,
+  "iris_offset_jitter_u": 0.0007,
+  "iris_offset_jitter_v": 0.0006,
+  "duplicate_frames_dropped": 0,
+  "unique_face_frames": 401,
+  "note": "MediaPipe applies its own temporal smoothing in VIDEO mode, so this jitter is a lower bound on per-frame noise; real webcams add sensor noise and motion blur that this compressed video may not have.",
+  "blink_frames_pct_naive_threshold": 28,
+  "blink_frames_pct": 1,
+  "predicted_at_measured_noise": {
+    "point_error_px": 10,
+    "point_error_deg": 0.21,
+    "smoothed_frame_error_px": 10,
+    "smoothed_frame_error_deg": 0.22
+  }
+}

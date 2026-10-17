@@ -35,6 +35,10 @@ def beacon_csrf_ok(data):
 def create_blueprint(d, m):
     """d: app dependencies namespace; m: Helix models namespace."""
     bp = Blueprint('helix', __name__)
+
+    @bp.app_template_global('hx_drift_svg')
+    def hx_drift_svg(drift_json):
+        return A.drift_svg(drift_json)
     db = d.db
     Session, Bucket, Consent, Setting, Event = (
         m.HelixGazeSession, m.HelixAoiBucket, m.HelixConsent, m.HelixSectionSetting, m.HelixAttentionEvent)
@@ -226,10 +230,56 @@ def create_blueprint(d, m):
         sess.validation_precision_px = A._int(data.get('validation_precision_px'), lo=0, hi=10000)
         if data.get('recalibration'):
             sess.recalibrations = (sess.recalibrations or 0) + 1
+        apply_engine_meta(sess, data)
         sess.last_seen_at = datetime.utcnow()
         db.session.commit()
         band = A.accuracy_band(sess.calibration_score)
         return jsonify({'ok': True, 'band': band['label']})
+
+    ENGINES = ('mediapipe', 'webgazer', 'passive')
+    RESOLUTIONS = ('heading', 'paragraph', 'line')
+
+    def apply_engine_meta(sess, data):
+        """Camera-pipeline metadata sent with calibration results and batches (all optional, clamped)."""
+        eng = str(data.get('engine') or '')
+        if eng in ENGINES:
+            sess.engine = eng
+        if data.get('delegate'):
+            sess.delegate = str(data.get('delegate'))[:40]
+        if data.get('validation_error_deg') is not None:
+            try:
+                sess.validation_error_deg = round(max(0.0, min(90.0, float(data.get('validation_error_deg')))), 2)
+            except (TypeError, ValueError):
+                pass
+        if data.get('distance_cm') is not None:
+            sess.distance_cm = A._int(data.get('distance_cm'), lo=0, hi=300)
+        if data.get('aoi_resolution') in RESOLUTIONS:
+            sess.aoi_resolution = data.get('aoi_resolution')
+        if data.get('orientation') in ('portrait', 'landscape'):
+            sess.orientation = data.get('orientation')
+        if data.get('implicit_samples') is not None:
+            sess.implicit_samples = A._int(data.get('implicit_samples'), lo=0, hi=100000)
+        drift = data.get('drift')
+        if isinstance(drift, list):
+            pts = []
+            for d in drift[-120:]:
+                if isinstance(d, dict) and d.get('src') == 'recal':
+                    pts.append({'t': A._int(d.get('t'), lo=0, hi=24 * 3_600_000), 'src': 'recal'})
+                elif isinstance(d, dict):
+                    pts.append({'t': A._int(d.get('t'), lo=0, hi=24 * 3_600_000),
+                                'err': A._int(d.get('err'), lo=0, hi=10000),
+                                'med': A._int(d.get('med'), lo=0, hi=10000),
+                                'src': str(d.get('src') or '')[:12]})
+            sess.drift_json = json.dumps(pts)
+        fine = data.get('fine')
+        if isinstance(fine, list):
+            rows = []
+            for f in fine[:150]:
+                if isinstance(f, dict) and f.get('key'):
+                    rows.append({'key': str(f.get('key'))[:100], 'label': str(f.get('label') or '')[:160],
+                                 'kind': 'line' if f.get('kind') == 'line' else 'paragraph',
+                                 'dwell_ms': A._int(f.get('dwell_ms'), lo=0, hi=3_600_000)})
+            sess.fine_json = json.dumps(rows)
 
     def apply_batch(sess, data, legacy=False):
         seq = data.get('seq')
@@ -253,6 +303,7 @@ def create_blueprint(d, m):
                                ('off_page_ms', 'off_page'), ('face_lost_ms', 'face_lost'),
                                ('hidden_ms', 'hidden'), ('low_conf_ms', 'low_conf')):
                 setattr(sess, field, A._int(totals.get(key), lo=0, hi=24 * 3_600_000))
+        apply_engine_meta(sess, data)
         heat = A.clean_heat(data.get('heat'))
         if heat is not None:
             sess.heat_json = json.dumps(heat)
@@ -362,6 +413,12 @@ def create_blueprint(d, m):
                         'not_opted_in': len(missing), 'aois': aois[:50], 'total_ms': total})
 
     # ------------------------------------------------------------ pages: policy, consent, my data
+    @bp.route('/helix/try')
+    def try_page():
+        """Local-only playground: calibrate, see the live gaze dot and diagnostics, measure accuracy.
+        Nothing is uploaded or stored, so it needs no consent record and works signed out."""
+        return render_template('helix/try.html', engine=request.args.get('engine', 'auto'))
+
     @bp.route('/policy/attention')
     def policy():
         return render_template('helix/policy.html', policy_version=POLICY_VERSION)
@@ -481,6 +538,10 @@ def create_blueprint(d, m):
             'attentive_pct': A.pct(tot['attentive'], tot['total']),
             'mix': {k: A.pct(v, tot['total']) for k, v in tot.items() if k != 'total'},
             'minutes': round(tot['total'] / 60000.0, 1),
+            'mediapipe_sessions': len([s for s in gaze if s.engine == 'mediapipe']),
+            'webgazer_sessions': len([s for s in gaze if s.engine != 'mediapipe']),
+            'median_error_deg': A.median_or_none([s.validation_error_deg for s in gaze if s.validation_error_deg]),
+            'fine_sessions': len([s for s in gaze if (s.aoi_resolution or 'heading') != 'heading']),
         }
         setting = section_setting(section.id)
         demo = any(getattr(s, 'is_demo', False) for s in sessions)

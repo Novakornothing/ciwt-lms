@@ -206,17 +206,17 @@
   function renderOffer() {
     setPhase('idle');
     var dev = device(), srv = S.server;
-    var camOk = cameraPossible() && dev !== 'mobile';
+    var camOk = cameraPossible();
     var passiveOk = srv.passive_enabled;
     var html = '<p class="hx-copy">Optional signal of which parts of this lesson you spend time on. Your instructor uses it to decide what to reteach — never as a score, attendance mark, or test condition.</p>';
     html += '<div class="hx-actions">';
     if (camOk) html += '<button type="button" class="btn btn-brand btn-sm" id="hxCam"><i class="bi bi-camera-video" aria-hidden="true"></i> Camera gaze</button>';
-    if (passiveOk) html += '<button type="button" class="btn ' + (camOk ? 'btn-outline-navy' : 'btn-brand') + ' btn-sm" id="hxPassive"><i class="bi bi-phone" aria-hidden="true"></i> Reading signal (no camera)</button>';
+    if (passiveOk) html += '<button type="button" class="btn ' + (camOk ? 'btn-outline-navy' : 'btn-brand') + ' btn-sm" id="hxPassive"><i class="bi bi-phone" aria-hidden="true"></i> ' + (camOk ? 'No camera' : 'Reading signal (no camera)') + '</button>';
     html += '<button type="button" class="btn btn-outline-secondary btn-sm" id="hxSkip">Not now</button></div>';
-    if (!camOk && dev === 'mobile') html += '<p class="hx-note">On phones Helix uses scroll position and screen visibility instead of the camera — gaze estimation is not reliable on small screens.</p>';
+    if (camOk && dev === 'mobile') html += '<p class="hx-note">Phone: hold it about 30 cm away (a forearm), front camera at the top, and tap each dot to calibrate. Rotating the phone needs a quick 5-dot refresh.</p>';
     else if (!cameraPossible()) html += '<p class="hx-note">Camera gaze needs HTTPS and camera access, so only the reading signal is available here.</p>';
-    if (dev === 'tablet' && camOk) html += '<p class="hx-note">Tablet: prop it up at eye level for camera gaze, or use the reading signal.</p>';
-    html += '<p class="hx-links"><a href="' + esc(CFG.policyUrl) + '">How Helix works</a> · <a href="' + esc(CFG.myDataUrl) + '">My data</a></p>';
+    if (dev === 'tablet' && camOk) html += '<p class="hx-note">Tablet: prop it up at eye level for camera gaze.</p>';
+    html += '<p class="hx-links"><a href="' + esc(CFG.tryUrl || '/helix/try') + '">Try the live gaze dot first</a> · <a href="' + esc(CFG.policyUrl) + '">How Helix works</a> · <a href="' + esc(CFG.myDataUrl) + '">My data</a></p>';
     body(html);
     on('hxCam', function () { ensureConsent('gaze'); });
     on('hxPassive', function () { ensureConsent('passive'); });
@@ -335,6 +335,7 @@
       viewport_w: window.innerWidth, viewport_h: window.innerHeight, end: !!end
     };
     if (S.layoutDirty) { batch.layout = computeLayout(); S.layoutDirty = false; }
+    if (S.mode === 'gaze' && S.engine) { Object.assign(batch, engineMeta()); batch.fine = fineList(); }
     S.queue.push(batch);
   }
 
@@ -400,26 +401,45 @@
     var passive = S.mode === 'passive';
     setPhase(passive ? 'passive' : 'live', passive ? 'Helix · reading' : 'Helix · live');
     var cal = S.calibration;
-    var band = cal ? ('<span class="hx-acc hx-acc-' + cal.band + '">Accuracy ' + cal.score + '% · ' + cal.band + '</span>') : '<span class="hx-acc hx-acc-info">Reading signal · no camera</span>';
+    var band = cal ? ('<span class="hx-acc hx-acc-' + cal.band + '">Accuracy ' + cal.score + '% · ' + cal.band + '</span>' +
+      '<span class="hx-note d-block">' + (cal.errorPx != null ? '~' + cal.errorPx + ' px' + (cal.errorDeg != null ? ' (' + cal.errorDeg + '°)' : '') + ' · ' : '') +
+      (S.resolution || 'heading') + '-level tracking · ' + (S.engine && S.engine.kind === 'mediapipe' ? 'MediaPipe' : 'WebGazer fallback') + '</span>')
+      : '<span class="hx-acc hx-acc-info">Reading signal · no camera</span>';
     body('<div class="hx-live">' + band + '<p class="hx-now" id="hxNow">Starting…</p></div>' +
       '<div class="hx-actions">' +
       '<button type="button" class="btn btn-outline-navy btn-sm" id="hxPause" aria-pressed="false"><i class="bi bi-pause-fill" aria-hidden="true"></i> Pause</button>' +
       (passive ? '' : '<button type="button" class="btn btn-outline-navy btn-sm" id="hxRecal"><i class="bi bi-bullseye" aria-hidden="true"></i> Recalibrate</button>') +
       (passive ? '' : '<button type="button" class="btn btn-outline-secondary btn-sm" id="hxDotBtn" aria-pressed="' + S.showDot + '">' + (S.showDot ? 'Hide' : 'Show') + ' gaze dot</button>') +
+      (passive ? '' : '<button type="button" class="btn btn-outline-secondary btn-sm" id="hxDbgBtn" aria-pressed="' + !!S.debug + '">Debug</button>') +
       '<button type="button" class="btn btn-danger btn-sm" id="hxStop"><i class="bi bi-stop-fill" aria-hidden="true"></i> Stop</button></div>' +
-      '<p class="hx-note">' + (passive ? 'Uses which block sits on your reading line, screen visibility and recent scrolling/touch.' : 'Video stays in this browser. Look naturally; move your eyes more than your head.') + '</p>');
+      (passive ? '' : '<dl class="hx-debug-hud" id="hxDbg"' + (S.debug ? '' : ' hidden') + '></dl>') +
+      '<p class="hx-note">' + (passive ? 'Uses which block sits on your reading line, screen visibility and recent scrolling/touch.' : 'Video stays in this browser. Clicks, taps and typing quietly refine the calibration.') + '</p>');
     on('hxPause', togglePause); on('hxRecal', recalibrate); on('hxStop', function () { stopSession(); });
     on('hxDotBtn', function () {
       S.showDot = !S.showDot; var st = store(); if (st) st.setItem(DOT_KEY, S.showDot ? '1' : '0');
       if (!S.showDot) $('helixGazeDot').style.display = 'none';
       renderLive();
     });
+    on('hxDbgBtn', function () { S.debug = !S.debug; renderLive(); });
+    clearInterval(S.dbgTimer);
+    if (S.debug) S.dbgTimer = setInterval(renderDebug, 700);
     status('');
+  }
+  function renderDebug() {
+    var n = $('hxDbg');
+    if (!n || !S.engine || !S.debug) { clearInterval(S.dbgTimer); return; }
+    var st = S.engine.stats(), dm = S.drift && S.drift.median();
+    var rows = [['Engine', st.engine], ['Delegate', st.delegate || '—'], ['FPS', (st.fps || 0).toFixed(1) + (st.targetFps ? ' / ' + st.targetFps : '')],
+      ['Inference', st.inferMs != null ? st.inferMs + ' ms' : '—'], ['Face', Math.round((st.faceRate || 0) * 100) + '%'],
+      ['Distance', st.distanceCm ? st.distanceCm + ' cm' : '—'], ['Yaw/pitch', st.yawDeg != null ? st.yawDeg + '°/' + st.pitchDeg + '°' : '—'],
+      ['Samples', (st.samples || 0) + ' + ' + (S.implicitN || 0) + ' implicit'], ['Click error', dm != null ? Math.round(dm) + ' px' : '—'],
+      ['AOI', S.lastHit ? S.lastHit.label : '—']];
+    n.innerHTML = rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('');
   }
 
   function togglePause() {
     S.paused = !S.paused;
-    try { if (S.mode === 'gaze' && window.webgazer) { if (S.paused) webgazer.pause(); else webgazer.resume(); } } catch (e) {}
+    try { if (S.mode === 'gaze' && S.engine) { if (S.paused) S.engine.pause(); else S.engine.resume(); } } catch (e) {}
     var b = $('hxPause');
     if (b) { b.setAttribute('aria-pressed', S.paused ? 'true' : 'false'); b.innerHTML = S.paused ? '<i class="bi bi-play-fill" aria-hidden="true"></i> Resume' : '<i class="bi bi-pause-fill" aria-hidden="true"></i> Pause'; }
     setPhase(S.paused ? 'paused' : (S.mode === 'passive' ? 'passive' : 'live'), S.paused ? 'Helix · paused' : null);
@@ -437,7 +457,9 @@
   function teardown() {
     clearInterval(S.tick); clearInterval(S.batchTimer); S.tick = S.batchTimer = null;
     var dot = $('helixGazeDot'); if (dot) dot.style.display = 'none';
-    try { if (window.webgazer && S.mode === 'gaze') { webgazer.clearGazeListener && webgazer.clearGazeListener(); webgazer.end(); } } catch (e) {}
+    clearInterval(S.dbgTimer);
+    try { if (S.engine) S.engine.stop(); } catch (e) {}
+    S.engine = null; detachImplicit();
     detachPassive();
     var cal = $('helixCalib'); if (cal) cal.remove();
   }
@@ -496,67 +518,45 @@
     }).catch(function () {});
   }
 
-  /* ------------------------------------------------------------ camera mode */
-  function loadScript(src) {
-    return new Promise(function (resolve, reject) {
-      if (window.webgazer) return resolve();
-      var s = document.createElement('script');
-      s.src = src; s.async = true;
-      s.onload = function () { resolve(); };
-      s.onerror = function () { reject(new Error('could not load the gaze engine')); };
-      document.head.appendChild(s);
-    });
-  }
+  /* ------------------------------------------------------------ camera mode
+     Engine: HelixEngine (MediaPipe Face Landmarker + per-user hybrid regression; WebGazer fallback).
+     Calibration UI: HelixCalib (positioning guidance → tap/click dots → validation in px and °). */
+  var Engine = window.HelixEngine, Calib = window.HelixCalib, Model = window.HelixModel;
+  var IMPLICIT_GATE = 0.25, DRIFT_FACTOR = 1.8;
 
   function startCamera() {
+    if (!Engine || !Calib) return Promise.reject(new Error('gaze engine missing'));
     status('Loading gaze engine…');
-    return loadScript(CFG.engineUrl).catch(function () { return loadScript(CFG.cdnUrl); }).then(function () {
-      if (!window.webgazer) throw new Error('gaze engine missing');
+    var qs = new URLSearchParams(location.search);
+    var opts = Object.assign({ prefer: qs.get('engine') || CFG.enginePrefer || 'auto', delegate: qs.get('delegate') === 'CPU' ? 'CPU' : null }, window.HELIX_ENGINE || {});
+    return Engine.create(opts).then(function (engine) {
+      S.engine = engine;
       status('Waiting for camera permission…');
-      webgazer.params.showVideo = true;
-      webgazer.params.showFaceOverlay = true;
-      webgazer.params.showFaceFeedbackBox = true;
-      webgazer.params.showGazeDot = false;
-      // small preview, parked between calibration rows (see helix.css) so it never covers a target
-      webgazer.params.videoViewerWidth = 200;
-      webgazer.params.videoViewerHeight = 150;
-      if (webgazer.saveDataAcrossSessions) webgazer.saveDataAcrossSessions(false);
-      if (webgazer.applyKalmanFilter) webgazer.applyKalmanFilter(false); // we run our own median gate + Kalman
-      if (webgazer.setRegression) { try { webgazer.setRegression('ridge'); } catch (e) {} }
-      webgazer.setGazeListener(onGaze);
-      return webgazer.begin(function onFail() { /* handled by rejection below */ });
-    }).then(function () {
-      if (webgazer.showPredictionPoints) webgazer.showPredictionPoints(false);
-      pollFace();
+      return engine.start();
+    }).then(function (engine) {
+      engine.on(onFrame);
+      S.drift = new Model.DriftTracker({ window: 7 });
+      S.implicitN = 0; S.orientation = Engine.orientationKey();
+      attachImplicit();
       S.calAttempts = 0;
       return calibrate(false);
     }).catch(function (err) {
       var msg = String(err && (err.name || err.message) || err);
-      if (/NotAllowed|Permission|denied/i.test(msg)) throw new Error('camera permission was denied');
-      if (/NotFound|Overconstrained|DevicesNotFound/i.test(msg)) throw new Error('no camera was found');
+      if (S.engine) { try { S.engine.stop(); } catch (e) {} S.engine = null; }
+      if (/NotAllowed|Permission|denied|SecurityError/i.test(msg)) throw new Error('camera permission was denied');
+      if (/NotFound|Overconstrained|DevicesNotFound|NotReadable/i.test(msg)) throw new Error('no usable camera was found');
       throw err;
     });
   }
 
-  function pollFace() {
-    clearInterval(S.facePoll);
-    S.facePoll = setInterval(function () {
-      if (!window.webgazer || !S.sessionId) { clearInterval(S.facePoll); return; }
-      var ok = null;
-      try {
-        var tr = webgazer.getTracker && webgazer.getTracker();
-        if (tr && tr.getPositions) { var pos = tr.getPositions(); ok = !!(pos && pos.length); }
-      } catch (e) { ok = null; }
-      if (ok === true || (ok === null && now() - S.lastSample < 600)) S.lastFaceOk = now();
-    }, 400);
+  var calSink = null;
+  function onFrame(ev) {
+    if (ev.face) S.lastFaceOk = now();
+    if (ev.pred) onGaze(ev.pred);
   }
-
-  var calSink = null; // during validation, raw predictions are collected here
-  function onGaze(data) {
+  function onGaze(raw) {
     var t = now();
-    if (!data) return; // no prediction: face lost handled by the ticker timeout
-    var raw = { x: data.x, y: data.y };
-    if (calSink) { var f0 = S.filter.push(raw.x, raw.y); if (f0.ok) calSink.push({ x: f0.x, y: f0.y }); return; }
+    if (calSink) return;
     if (!S.timeline || S.paused || document.hidden) return;
     var dt = Math.min(200, t - S.lastSample);
     S.lastSample = t;
@@ -564,6 +564,7 @@
     var f = S.filter.push(raw.x, raw.y);
     if (!f.ok) return;
     S.lastHit = S.debounce.feed(hitAoi(f.x, f.y), t);
+    trackFine(f.x, f.y, dt);
     if (S.body) {
       var br = S.body.getBoundingClientRect();
       if (br.width && br.height) S.heat.add((f.x - br.left) / br.width, (f.y - br.top) / br.height, dt);
@@ -571,122 +572,155 @@
     if (S.showDot) { var dot = $('helixGazeDot'); dot.style.transform = 'translate(' + (f.x - 7) + 'px,' + (f.y - 7) + 'px)'; dot.style.display = 'block'; }
   }
 
-  function calibrate(isRecal) {
-    return new Promise(function (resolve) {
-      setPhase('calibrating', 'Helix · calibrating');
-      body('<p class="hx-copy">Calibrating — follow the dots on screen. Press Esc to cancel.</p>');
-      try { webgazer.showVideoPreview(true); webgazer.showFaceFeedbackBox && webgazer.showFaceFeedbackBox(true); } catch (e) {}
-      try { webgazer.clearData && isRecal && S.calAttempts > 1 && webgazer.clearData(); } catch (e) {}
-      var ov = el('div', { id: 'helixCalib', 'class': 'helix-calib', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'hxCalTitle' });
-      ov.innerHTML = '<div class="hx-cal-help"><h2 id="hxCalTitle" class="h5">Calibrate Helix <span class="hx-cal-step">step 1 of 2</span></h2>' +
-        '<p>Keep your head still and about an arm\u2019s length from the screen. <strong>Look at each dot and click it ' + CAL_CLICKS + ' times</strong> until it turns gold. ' +
-        'Keyboard: Tab to a dot, press Space.</p><p class="small mb-0"><span id="hxCalCount">0</span> / ' + CAL_POINTS.length + ' dots · <button type="button" class="btn btn-link btn-sm p-0 text-reset" id="hxCalCancel">Cancel (Esc)</button></p></div>';
-      CAL_POINTS.forEach(function (p, i) {
-        var b = el('button', { type: 'button', 'class': 'hx-cal-pt', style: 'left:' + p[0] + '%;top:' + p[1] + '%', 'aria-label': 'Calibration dot ' + (i + 1) + ' of ' + CAL_POINTS.length, 'data-left': String(CAL_CLICKS) });
-        b.innerHTML = '<span class="hx-ring" style="--p:0"></span>';
-        ov.appendChild(b);
-      });
-      document.body.appendChild(ov);
-      var done = 0;
-      ov.querySelectorAll('.hx-cal-pt').forEach(function (b) {
-        b.addEventListener('click', function (e) {
-          var left = parseInt(b.getAttribute('data-left'), 10);
-          if (left <= 0) return;
-          var r = b.getBoundingClientRect();
-          // pointer clicks are learned by WebGazer's own listener; keyboard "clicks" have no coordinates
-          if (e.detail === 0 && webgazer.recordScreenPosition) { try { webgazer.recordScreenPosition(r.left + r.width / 2, r.top + r.height / 2, 'click'); } catch (x) {} }
-          left -= 1;
-          b.setAttribute('data-left', String(left));
-          b.querySelector('.hx-ring').style.setProperty('--p', String((CAL_CLICKS - left) / CAL_CLICKS));
-          if (left === 0) {
-            b.classList.add('done'); b.setAttribute('aria-label', b.getAttribute('aria-label') + ' — done');
-            done += 1; $('hxCalCount').textContent = String(done);
-            if (done === CAL_POINTS.length) validate(ov, isRecal).then(resolve);
-          }
-        });
-      });
-      function cancel() { document.removeEventListener('keydown', esck); ov.remove(); endSession(true).then(renderOffer); resolve(); }
-      function esck(e) { if (e.key === 'Escape') cancel(); }
-      document.addEventListener('keydown', esck);
-      ov._cleanup = function () { document.removeEventListener('keydown', esck); };
-      $('hxCalCancel').addEventListener('click', cancel);
-      ov.querySelector('.hx-cal-pt').focus();
+  /* Paragraph / line dwell: only when validation showed the error is small enough (Model.aoiResolution).
+     Kept separate from the heading AOIs so class rollups stay comparable across devices. */
+  var FINE_SEL = 'p,li,pre,table,figure,blockquote,h2,h3,h4';
+  function trackFine(x, y, dt) {
+    var res = S.resolution;
+    if (res !== 'paragraph' && res !== 'line') return;
+    var node = document.elementFromPoint(x, y);
+    while (node && node !== S.body && !(node.matches && node.matches(FINE_SEL))) node = node.parentElement;
+    if (!node || node === S.body || !S.body || !S.body.contains(node)) return;
+    var aoi = node.closest('[data-aoi]'); if (!aoi) return;
+    if (!node._hxIdx) { S.fineSeq = (S.fineSeq || 0) + 1; node._hxIdx = S.fineSeq; }
+    var key = aoi.getAttribute('data-aoi') + '~p' + node._hxIdx, kind = 'paragraph';
+    var label = (aoi.getAttribute('data-aoi-label') || '') + ' \u203a ' + ((node.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60) || node.tagName.toLowerCase());
+    if (res === 'line') {
+      var lh = parseFloat(getComputedStyle(node).lineHeight) || 26, r = node.getBoundingClientRect();
+      var ln = Math.max(0, Math.floor((y - r.top) / lh));
+      key += '.l' + ln; label += ' (line ' + (ln + 1) + ')'; kind = 'line';
+    }
+    var m = S.fine || (S.fine = {});
+    var e = m[key] || (m[key] = { key: key, label: label, kind: kind, dwell_ms: 0 });
+    e.dwell_ms += dt;
+  }
+  function fineList() {
+    var m = S.fine || {};
+    return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return b.dwell_ms - a.dwell_ms; }).slice(0, 150)
+      .map(function (e) { return { key: e.key, label: e.label, kind: e.kind, dwell_ms: Math.round(e.dwell_ms) }; });
+  }
+
+  /* Implicit calibration: where you click/tap/type is (almost always) where you are looking. */
+  var implicitHandlers = null;
+  function caretPoint(elm) {
+    // mirror-div technique: position of the caret inside a textarea/input in viewport px
+    try {
+      var r = elm.getBoundingClientRect(), cs = getComputedStyle(elm), pos = elm.selectionStart;
+      if (pos == null) return null;
+      var d = document.createElement('div'), st = d.style;
+      ['font', 'letterSpacing', 'padding', 'border', 'boxSizing', 'lineHeight', 'whiteSpace', 'wordWrap', 'textTransform'].forEach(function (k) { st[k] = cs[k]; });
+      st.position = 'absolute'; st.visibility = 'hidden'; st.top = '0'; st.left = '-9999px'; st.width = r.width + 'px';
+      if (elm.tagName === 'TEXTAREA') { st.whiteSpace = 'pre-wrap'; st.wordWrap = 'break-word'; } else st.whiteSpace = 'pre';
+      d.textContent = elm.value.slice(0, pos);
+      var sp = document.createElement('span'); sp.textContent = '\u200b'; d.appendChild(sp);
+      document.body.appendChild(d);
+      var x = r.left + sp.offsetLeft - elm.scrollLeft, y = r.top + sp.offsetTop - elm.scrollTop + sp.offsetHeight / 2;
+      d.remove();
+      return { x: Math.min(r.right, Math.max(r.left, x)), y: Math.min(r.bottom, Math.max(r.top, y)) };
+    } catch (e) { return null; }
+  }
+  function implicitAt(x, y, src) {
+    if (!S.engine || !S.engine.ready() || S.paused || $('helixCalib') || S.mode !== 'gaze') return;
+    var res = S.engine.implicit(x, y, src, { gate: IMPLICIT_GATE });
+    if (!res || !res.accepted) return;
+    S.implicitN++;
+    S.drift.add(res.err, now() - (S.t0 || now()), src);
+    checkDrift();
+  }
+  function attachImplicit() {
+    detachImplicit();
+    var lastKey = 0;
+    implicitHandlers = {
+      pointerdown: function (e) {
+        if (e.isPrimary === false) return;
+        var dock = $('helixDock'); if (dock && dock.contains(e.target)) return;
+        // targets you have to look at to hit: buttons, links, inputs, labels, list items with handlers
+        if (!(e.target.closest && e.target.closest('a,button,input,select,textarea,label,summary,[role=button],[onclick],.choice,.quiz-option'))) return;
+        implicitAt(e.clientX, e.clientY, e.pointerType === 'touch' ? 'tap' : 'click');
+      },
+      keyup: function (e) {
+        var t = e.target;
+        if (!t || !(t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && /^(text|search|email|url|number|)$/i.test(t.type)))) return;
+        if (now() - lastKey < 1500) return;   // one sample per typing burst
+        lastKey = now();
+        var p = caretPoint(t); if (p) implicitAt(p.x, p.y, 'caret');
+      }
+    };
+    document.addEventListener('pointerdown', implicitHandlers.pointerdown, true);
+    document.addEventListener('keyup', implicitHandlers.keyup, true);
+    window.addEventListener('resize', onResize);
+  }
+  function detachImplicit() {
+    if (!implicitHandlers) return;
+    document.removeEventListener('pointerdown', implicitHandlers.pointerdown, true);
+    document.removeEventListener('keyup', implicitHandlers.keyup, true);
+    window.removeEventListener('resize', onResize);
+    implicitHandlers = null;
+  }
+  function checkDrift() {
+    if (!S.calibration || !S.calibration.errorPx || S.recalPrompted) return;
+    if (S.drift.drifting(S.calibration.errorPx, DRIFT_FACTOR)) {
+      S.recalPrompted = true;
+      toast('<strong>Tracking has drifted</strong> (clicks land ~' + Math.round(S.drift.median()) + ' px from where Helix thinks you look). A 15-second refresh fixes it.',
+        [{ label: 'Quick recalibrate', fn: function () { recalibrate(true); } }], 20000);
+    }
+  }
+  function onResize() {
+    if (!S.engine || S.mode !== 'gaze') return;
+    S.filter = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
+    S.layoutDirty = true;
+    var k = Engine.orientationKey();
+    if (k === S.orientation) return;
+    S.orientation = k;
+    if (S.engine.setOrientation(k)) toast('Rotated — using your ' + k + ' calibration.', null, 4000);
+    else toast('Rotated to ' + k + '. Helix needs a quick 5-dot calibration for this orientation.', [{ label: 'Calibrate now', fn: function () { recalibrate(true); } }], 20000);
+  }
+
+  function engineMeta() {
+    var st = S.engine ? S.engine.stats() : {};
+    var sc = S.calibration || {};
+    return {
+      engine: S.engine ? S.engine.kind : S.mode, delegate: st.delegate || '', validation_error_deg: sc.errorDeg,
+      distance_cm: st.distanceCm || sc.distanceCm, aoi_resolution: S.resolution || 'heading', orientation: st.orientation || S.orientation,
+      implicit_samples: S.implicitN || 0,
+      drift: S.drift ? S.drift.points.map(function (p) { return p.src === 'recal' ? { t: Math.round(p.t), src: 'recal' } : { t: Math.round(p.t), err: Math.round(p.err), med: Math.round(p.med), src: p.src }; }) : []
+    };
+  }
+
+  function calibrate(isRecal, quick) {
+    setPhase('calibrating', 'Helix · calibrating');
+    body('<p class="hx-copy">Calibrating — ' + (Engine.isMobile() ? 'tap' : 'click') + ' the dots on screen. Press Esc to cancel.</p>');
+    calSink = true;
+    return Calib.run(S.engine, {
+      quick: !!quick, skipPositioning: !!quick, minAccuracy: S.server.min_accuracy || 45, goLabel: 'Start reading',
+      allowPassive: !!S.server.passive_enabled
+    }).then(function (r) {
+      calSink = null;
+      S.calAttempts += r.attempt || 1;
+      if (r.score) {
+        var sc = S.calibration = r.score;
+        S.resolution = sc.resolution || 'heading';
+        postJSON(url(CFG.calibratedUrl, S.sessionId), Object.assign({
+          calibration_points: quick ? 5 : 9, calibration_score: sc.score,
+          validation_error_px: sc.errorPx, validation_precision_px: sc.precisionPx, recalibration: !!isRecal
+        }, engineMeta())).catch(function () {});
+      }
+      if (r.action === 'cancel') {
+        if (isRecal && S.engine && S.engine.ready()) { S.paused = false; renderLive(); return; }
+        return endSession(true).then(renderOffer);
+      }
+      if (r.action === 'passive') return switchToPassive();
+      S.lastCalibratedAt = now(); S.driftPrompted = false; S.lowPrompted = false; S.recalPrompted = false;
+      if (S.drift && isRecal) S.drift.reset(now() - (S.t0 || now()));
+      S.filter = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
+      if (isRecal) { S.paused = false; renderLive(); } else beginLive();
     });
   }
 
-  function validate(ov, isRecal) {
-    ov.querySelectorAll('.hx-cal-pt').forEach(function (b) { b.remove(); });
-    ov.querySelector('.hx-cal-help').innerHTML = '<h2 class="h5">Check accuracy <span class="hx-cal-step">step 2 of 2</span></h2><p>Now just <strong>look</strong> at each dot as it appears — no clicking. About 8 seconds.</p>';
-    try { webgazer.showVideoPreview(false); } catch (e) {}
-    var target = el('div', { 'class': 'hx-val-pt', 'aria-hidden': 'true' });
-    ov.appendChild(target);
-    var results = [];
-    var w = window.innerWidth, h = window.innerHeight;
-    S.filter = new Core.GazeFilter({ bounds: { w: w, h: h } });
-    return VAL_POINTS.reduce(function (p, pt) {
-      return p.then(function () {
-        return new Promise(function (res) {
-          var x = pt[0] / 100 * w, y = pt[1] / 100 * h;
-          target.style.left = x + 'px'; target.style.top = y + 'px';
-          target.classList.remove('pulse'); void target.offsetWidth; target.classList.add('pulse');
-          var samples = [];
-          setTimeout(function () { calSink = samples; }, 550);
-          setTimeout(function () { calSink = null; results.push({ x: x, y: y, samples: samples }); res(); }, 1650);
-        });
-      });
-    }, Promise.resolve()).then(function () {
-      var score = Core.scoreValidation(results, { w: w, h: h });
-      S.calAttempts += 1;
-      S.calibration = score;
-      postJSON(url(CFG.calibratedUrl, S.sessionId), {
-        calibration_points: CAL_POINTS.length, calibration_score: score.score,
-        validation_error_px: score.errorPx, validation_precision_px: score.precisionPx, recalibration: !!isRecal
-      }).catch(function () {});
-      return showValidation(ov, score, results, isRecal);
-    });
-  }
-
-  function showValidation(ov, score, results, isRecal) {
-    return new Promise(function (resolve) {
-      var min = S.server.min_accuracy || 45;
-      var ok = score.score >= min;
-      var tips = '<ul class="small text-start mb-2"><li>Face a light source; avoid a bright window behind you.</li><li>Keep your face centred in the camera box.</li><li>Look at the dot centre and keep your head still while clicking.</li></ul>';
-      var marks = results.map(function (r) {
-        var s = r.samples, n = s.length;
-        if (!n) return '';
-        var cx = s.reduce(function (a, q) { return a + q.x; }, 0) / n, cy = s.reduce(function (a, q) { return a + q.y; }, 0) / n;
-        return '<span class="hx-val-target" style="left:' + r.x + 'px;top:' + r.y + 'px"></span><span class="hx-val-est" style="left:' + cx + 'px;top:' + cy + 'px"></span>';
-      }).join('');
-      ov.querySelectorAll('.hx-val-pt').forEach(function (n) { n.remove(); });
-      ov.insertAdjacentHTML('beforeend', marks);
-      var help = ov.querySelector('.hx-cal-help');
-      help.classList.add('is-result');
-      help.innerHTML =
-        (score.valid
-          ? '<h2 class="h5">Accuracy: ' + score.score + '% <span class="hx-acc hx-acc-' + score.band + '">' + score.band + '</span></h2>' +
-            '<p class="mb-2">Average error \u2248 ' + score.errorPx + ' px (rings = targets, dots = Helix estimate).</p>'
-          : '<h2 class="h5">No gaze estimates received <span class="hx-acc hx-acc-poor">poor</span></h2>' +
-            '<p class="mb-2">Helix could not find your face during the check. Make sure your face is inside the camera box and outlined in green.</p>') +
-        (ok ? '<p class="mb-2">Good enough for heading-level areas of interest.</p>' : '<p class="mb-2"><strong>Below the class threshold (' + min + '%).</strong> Recalibrating usually helps:</p>' + tips) +
-        '<div class="d-flex flex-wrap gap-2 justify-content-center">' +
-        (ok ? '<button type="button" class="btn btn-brand" id="hxGo">Start reading</button>' : '') +
-        '<button type="button" class="btn ' + (ok ? 'btn-outline-light' : 'btn-brand') + '" id="hxRetry">Recalibrate</button>' +
-        (!ok && S.calAttempts >= 2 && S.server.passive_enabled ? '<button type="button" class="btn btn-outline-light" id="hxToPassive">Use reading signal instead</button>' : '') +
-        (!ok ? '<button type="button" class="btn btn-outline-light" id="hxGoAnyway">Continue anyway</button>' : '') +
-        '</div>';
-      function finish() { if (ov._cleanup) ov._cleanup(); ov.remove(); S.lastCalibratedAt = now(); S.driftPrompted = false; S.lowPrompted = false; S.filter = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } }); }
-      on('hxGo', function () { finish(); if (isRecal) { S.paused = false; renderLive(); } else beginLive(); resolve(); });
-      on('hxGoAnyway', function () { finish(); if (isRecal) { S.paused = false; renderLive(); } else beginLive(); resolve(); });
-      on('hxRetry', function () { if (ov._cleanup) ov._cleanup(); ov.remove(); calibrate(isRecal).then(resolve); });
-      on('hxToPassive', function () { if (ov._cleanup) ov._cleanup(); ov.remove(); switchToPassive(); resolve(); });
-      var first = ov.querySelector('.btn'); if (first) first.focus();
-    });
-  }
-
-  function recalibrate() {
-    if (S.mode !== 'gaze' || !window.webgazer) return;
+  function recalibrate(quick) {
+    if (S.mode !== 'gaze' || !S.engine) return;
     S.paused = true; // calibration time is recorded as paused, not reading
-    calibrate(true);
+    calibrate(true, quick === true);
   }
 
   function switchToPassive() {

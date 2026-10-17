@@ -34,7 +34,7 @@
 <div class="hx-kpis mb-4">
   <div class="kpi-card"><div class="kpi-label">Students opted in</div><div class="kpi-value">{{ kpi.students }}<small>/{{ kpi.enrolled }}</small></div><div class="kpi-sub">{{ kpi.not_opted_in }} without data</div></div>
   <div class="kpi-card"><div class="kpi-label">Sessions</div><div class="kpi-value">{{ kpi.sessions }}</div><div class="kpi-sub">{{ kpi.gaze_sessions }} camera · {{ kpi.passive_sessions }} reading signal</div></div>
-  <div class="kpi-card"><div class="kpi-label">Avg calibration accuracy</div><div class="kpi-value">{{ kpi.avg_accuracy }}<small>%</small></div><div class="kpi-sub">{{ band_badge(band) }} camera sessions</div></div>
+  <div class="kpi-card"><div class="kpi-label">Avg calibration accuracy</div><div class="kpi-value">{{ kpi.avg_accuracy }}<small>%</small></div><div class="kpi-sub">{{ band_badge(band) }} camera sessions{% if kpi.median_error_deg %} · median error {{ kpi.median_error_deg }}°{% endif %}</div>{% if kpi.gaze_sessions %}<div class="kpi-sub small">{{ kpi.mediapipe_sessions }} MediaPipe · {{ kpi.webgazer_sessions }} WebGazer{% if kpi.fine_sessions %} · {{ kpi.fine_sessions }} paragraph/line-level{% endif %}</div>{% endif %}</div>
   <div class="kpi-card"><div class="kpi-label">Time on lesson content</div><div class="kpi-value">{{ kpi.attentive_pct }}<small>%</small></div><div class="kpi-sub">of {{ kpi.minutes }} recorded min</div></div>
 </div>
 

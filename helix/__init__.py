@@ -15,6 +15,13 @@ Usage from app.py::
     import helix
     hx = helix.init_app(app, db, deps)   # before db.create_all()
 """
+import mimetypes
+
+# MediaPipe assets: make sure every host serves these with types browsers accept for
+# WebAssembly streaming compile and ES-module import (some minimal images lack them).
+mimetypes.add_type('application/wasm', '.wasm')
+mimetypes.add_type('text/javascript', '.mjs')
+
 from types import SimpleNamespace
 
 from .models import ENGINE, POLICY_VERSION, define_models, ensure_schema  # noqa: F401

@@ -624,10 +624,11 @@ window.HELIX = {
   calibratedUrl: "{{ url_for('helix.session_calibrated', session_id=0) }}",
   summaryUrl: "{{ url_for('helix.lesson_summary', lesson_id=lesson.id) }}",
   engineUrl: "{{ url_for('static', filename='vendor/webgazer.js') }}",
-  cdnUrl: "https://cdn.jsdelivr.net/npm/webgazer@3.3.0/dist/webgazer.min.js"
+  cdnUrl: "https://cdn.jsdelivr.net/npm/webgazer@3.3.0/dist/webgazer.min.js",
+  tryUrl: "{{ url_for('helix.try_page') }}"
 };
 </script>
-<script src="{{ url_for('static', filename='js/helix/helix-core.js') }}" defer></script>
+{% include 'helix/_engine_assets.html' %}
 <script src="{{ url_for('static', filename='js/helix/helix-gaze.js') }}" defer></script>
 {% endif %}
 {% endblock %}
