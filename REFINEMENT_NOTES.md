@@ -891,3 +891,94 @@ from `dbsnap/ciwt_lms.pass6-before.db`, which has the baseline sha. The changed 
   | assess_phone_e2e | 43/43 |
   | practice_phone_e2e | 29/29 |
   | lti_e2e | 9/9 |
+
+## Pass 13 (Oct 18 2026): DB guard, cert-item switch, curriculum readiness, semester simulation, misconceptions, first-run
+
+**DB safety (1ca65e1).** Importing `app` without `DATABASE_URL` now fails unless `CIWT_ALLOW_REAL_DB=1` is set,
+so tests, tools and stray scripts can no longer write to `ciwt_lms.db` by accident. `start_lms.sh`, `Procfile`
+and `render.yaml` set the flag, so production start is unchanged. The change is covered by
+`tests/test_db_guard.py` and documented in the README.
+
+**Cert-item switch (177183f).** Mastery settings has a per-class switch, "Include certification practice items
+(pending SME review)". It is on by default. The `mastery_setting.cert_items` column is added by a migration.
+When the switch is off, reviews, daily review, test-outs and in-lesson checks use only the class's chapter-check
+items. Tests are in `tests/test_mastery_cert_round2.py`.
+
+**Curriculum readiness (f0379f6, 73ff97b, 51e9922).** The audit is `tools/curriculum_readiness.py`, and the
+course package now has a `MANIFEST.json` with per-document hashes. The audit passes 25/25 on ITSUP and NETOPS;
+see `CURRICULUM_READINESS.md` and `docs/readiness/readiness-pass13.json`. Real fixes:
+
+- first boot now runs the content syncs;
+- lesson-plan minutes are now the sum of the LMS lessons;
+- duplicate stem X-IT-9.2.2 removed;
+- from the 40-item spot-check against primary sources: N2.8 stem fixed and X-IT-9.4.1 rationale fixed, with 0
+  wrong keys.
+
+The SME review list is in CURRICULUM_READINESS.md:
+
+- 62 terse rationales;
+- 415 cert items still pending review;
+- NETOPS ch9 lessons are short;
+- objectives without check or cert items;
+- credit-hour assumptions.
+
+**Adaptive semester simulation (ce3cdab).** This is a synthetic check, not evidence of learning gains.
+`tools/semester_sim.py` runs 20 synthetic accounts (`@synthetic.invalid`, in a clearly labelled class) through
+ITSUP chapters 1–4 for 28 simulated days using the real routes. The latest run (seed 13) passed 12/12 checks.
+`tests/test_semester_sim.py` is the 22-day smoke version. It found one real bug: reading-only objectives blocked
+mastery-check offers (`policy.strong_so_far` now counts only answered objectives). See
+`docs/SEMESTER_SIMULATION.md`.
+
+**Misconceptions (3317db1).** Every chapter-check objective now has misconception tags (63/63): 109 new
+misconceptions and 314 new tags, for 248 misconceptions and 727 tags in total.
+
+**First-run experience (7f2b83f).** Instructors see a "Set up your class" checklist on the class page with five
+items:
+
+- adaptive path;
+- Helix attention policy;
+- certification items;
+- release the first chapter (marked done automatically once something is released);
+- connect your LMS (optional).
+
+Each item shows its current value, a settings link, and "Looks right" or "Skip for now" buttons. The checklist
+can be hidden and shown again per class. Students see a one-time "How your path works" card covering the next
+step, short reviews, daily review, mastery checks and "none of this changes your grade". "Got it" dismisses it
+for good. Both are stored in `onboarding_flag`; neither changes a setting or a grade. The checklist and the intro
+card are styled phone-first. axe found 0 violations on them in light and dark at 390 and 1280. Tests are in
+`tests/test_onboarding.py`.
+
+**Results.**
+
+- pytest: 566 passed.
+- node: 40 passed.
+- a11y sweep: 606 page/width/theme checks, 0 violation nodes.
+- site_audit, light and dark: no unexpected errors. The intentional 403/404 pages and `msg-thread` without
+  `--prep` return 403/404 as expected.
+- mastery_e2e: 38/38.
+- helix_e2e: 6/6.
+- practice_phone_e2e: 29/29.
+- lti_e2e: 9/9.
+- assess_phone_e2e: 43/43 on a fresh DB copy. It needs its own copy, because it fails if another suite has
+  already taken test 1/2.
+- The readiness audit and the simulation were re-run after the package rebuild: 25/25 and 12/12.
+- `ciwt_lms.db` sha256 is unchanged (47fabc92…).
+
+**Screenshots.** In `/workspace/ciwt/screenshots/pass13/`: `setup-checklist-*`, `student-intro-*` and
+`cert-switch-*` at 390 and 1280 in light and dark, `semester-sim-{390,1280}.png`, and `onboarding/` (full pages
+plus the axe report).
+
+**Known limits.**
+
+- A test-out skips the chapter check, so completion % drops if quiz weight is above 0.
+- The briefing to-do breaks ties alphabetically.
+- The LTI deep-link test fails when run alone with `-k`; the whole file passes.
+- The onboarding checklist marks review state only. It never changes settings; changes happen on the linked pages.
+- SME review is still required for the cert items and the terse rationales.
+
+**Next steps.**
+
+- SME review of the CURRICULUM_READINESS list.
+- Fill in rationales.
+- Add check items for the IT-x.4 objectives in ch7–13.
+- Pilot with real students before claiming any learning effect.
