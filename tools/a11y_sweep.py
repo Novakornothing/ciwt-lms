@@ -37,7 +37,10 @@ PAGES = {
         ('helix-study', '/helix/study'), ('lesson-7.1', '/student/module/1/7/lesson/30'), ('lesson-10.1', '/student/module/1/10/lesson/42'), ('lesson-13.4', '/student/module/1/13/lesson/57'),
         ('lesson-cert-4.2', '/student/module/1/4/lesson/18'), ('lesson-cert-2.3', '/student/module/1/2/lesson/8'), ('lesson-cert-3.1', '/student/module/1/3/lesson/12'),
         ('lesson-cert-8.1', '/student/module/1/8/lesson/34'), ('lesson-cert-9.2', '/student/module/1/9/lesson/39'), ('lesson-cert-10.3', '/student/module/1/10/lesson/44'),
-        ('lesson-cert-13.5', '/student/module/1/13/lesson/58'), ('practice', '/practice'), ('practice-take', '@practice-take'), ('practice-result', '@practice-result'),
+        ('lesson-cert-13.5', '/student/module/1/13/lesson/58'),
+        ('lesson-cert-3.4', '/student/module/1/3/lesson/15'), ('lesson-cert-10.1', '/student/module/1/10/lesson/42'),
+        ('lesson-cert-12.1', '/student/module/1/12/lesson/50'), ('lesson-cert-12.2', '/student/module/1/12/lesson/51'),
+        ('lesson-cert-1.2', '/student/module/1/1/lesson/2'), ('lesson-cert-1.4', '/student/module/1/1/lesson/4'), ('practice', '/practice'), ('practice-take', '@practice-take'), ('practice-result', '@practice-result'),
     ],
     'instructor@lms.local:teach123': [
         ('instr-home', '/instructor'), ('instr-section', '/instructor/section/1'),
@@ -46,13 +49,14 @@ PAGES = {
         ('materials', '/instructor/materials'), ('materials-plans', '/instructor/materials/ITSUP/lesson-plans'),
         ('materials-key', '/instructor/materials/ITSUP/answer-key'), ('syllabus-settings', '/instructor/section/1/syllabus'),
         ('instr-lesson-13.1', '/student/module/1/13/lesson/54'), ('calibration', '/instructor/section/1/attention/calibration'), ('materials-labs', '/instructor/materials/ITSUP/lab-manual'),
-        ('cert-coverage', '/staff/cert-coverage'), ('cert-coverage-filtered', '/staff/cert-coverage?exam=N&status=partial'),
+        ('cert-coverage', '/staff/cert-coverage'), ('cert-coverage-filtered', '/staff/cert-coverage?exam=N&status=covered'),
     ],
     'admin@lms.local:admin123': [('admin', '/admin'), ('admin-classes', '/admin/classes'), ('admin-people', '/admin/people'),
                                  ('admin-curriculum', '/admin/curriculum'), ('admin-tqi', '/admin/tqi'),
                                  ('admin-analytics', '/admin/test-analytics'), ('admin-tickets', '/admin/tickets'),
                                  ('admin-privacy', '/admin/privacy?q=student1&user_id=4'), ('admin-accuracy', '/admin/helix/accuracy'),
-                                 ('lesson-cert-netops-5.2', '/student/module/2/18/lesson/77'), ('lesson-cert-netops-5.3', '/student/module/2/18/lesson/78')],
+                                 ('lesson-cert-netops-5.2', '/student/module/2/18/lesson/77'), ('lesson-cert-netops-5.3', '/student/module/2/18/lesson/78'),
+                                 ('lesson-cert-netops-4.3', '/student/module/2/17/lesson/74'), ('lesson-cert-netops-6.3', '/student/module/2/19/lesson/82')],
 }
 OVERFLOW_JS = """()=>{const W=innerWidth;let mx=0,who='';document.querySelectorAll('main, main *').forEach(e=>{const r=e.getBoundingClientRect(); if(r.right<=W+2||!r.width) return; let p=e.parentElement; while(p&&p.tagName!=='BODY'){const o=getComputedStyle(p).overflowX; if(o!=='visible'&&o!=='clip'&&p.tagName!=='HTML') return; p=p.parentElement} if(r.right>mx){mx=r.right;who=e.tagName+'.'+(e.className||'').toString().slice(0,40)}}); return mx?Math.round(mx)+' '+who:''}"""
 report = []

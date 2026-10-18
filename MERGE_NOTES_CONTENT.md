@@ -39,3 +39,29 @@ labs merge. A dry run (`git merge-tree --write-tree refinement content`) auto-me
    - `sync_curriculum` rewrites lesson HTML with the supplements.
    Take a backup of `ciwt_lms.db` first. Content never booted against it; every run used a copy.
 4. Rebuild the course package: `python tools/build_course_package.py /workspace/artifacts/course-package`. Content wrote its build to `/workspace/artifacts/course-package-content/` (and `.zip`) so it did not overwrite the existing package.
+
+## Round 2 (commits after the first merge)
+
+New files only, apart from the edits listed below, so the merge should be mechanical:
+
+- `curriculum_v2/cert/content/s24_cables.py`, `s25_phys_security.py`, `s26_change_safety.py`, `s27_policy_prof.py`,
+  `s28_net_appl_docs.py` — 8 new lesson sections (ITSUP 3.4, 10.1, 12.1, 1.2, 12.2, 1.4; NETOPS 4.3, 6.3), Pending SME review.
+- `curriculum_v2/cert/content/i02_depth_a1.py`, `i03_depth_a2.py`, `i04_depth_n.py` — depth items (8+ per objective).
+- `curriculum_v2/cert/misconceptions.py` — misconception tags for cert items in refinement's schema
+  (`MISCONCEPTIONS[id] = {obj, label, fix, terms}`, `TAGS[(bank_id, distractor)] = id`, same `tag_for` contract). Ids are
+  `MC-C-*`, so they cannot collide with refinement's `MC-IT*` / `MC-NO*`. Content did **not** edit refinement's
+  `curriculum_v2/misconceptions.py`. To make the engine see them after the merge, add after `TAGS = {...}` there:
+
+  ```python
+  from curriculum_v2.cert import misconceptions as _cert_mc
+  MISCONCEPTIONS.update(_cert_mc.MISCONCEPTIONS)
+  TAGS.update(_cert_mc.TAGS)
+  ```
+  (before `_NORM` is built). The tags only fire for items the engine actually serves; cert items are in the
+  practice-exam pool, so wiring them into `mastery/` pools is a refinement decision.
+- Edited: `curriculum_v2/cert/authoring.py` (new sources; optional `mc=` on `single`/`multi`), `mapping.py` (weighted
+  covered capped at 100%), `tools/cert_coverage_md.py` (round-2 section and quality log), `tools/a11y_sweep.py` (8 new
+  lesson pages; coverage filter now `status=covered`), `tests/test_cert_alignment.py` (3 new tests, filter test updated).
+  The `a11y_sweep.py` page lists conflict the same way as before: keep both sets.
+- Item dicts now carry an `mc` key. `practice.public_item` and `app._PUBLIC_ITEM_FIELDS` are allow-lists, so it never
+  reaches the browser (tested).
