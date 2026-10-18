@@ -1,0 +1,846 @@
+{
+ "drawn": "2026-10-18, tools/spot_check_sample.py --round2 14, on branch content before merging refinement pass 14",
+ "note": "Text is as checked, after the round-2 fixes. Re-drawing after pass 14 gives a different list, because pass 14 appended chapter-check items for IT-7.4 to IT-13.4 to the pools; this file is the record of what was checked.",
+ "items": [
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-1.1.1",
+   "obj": "IT-1.1",
+   "text": "Thirty users on one floor lost access to the shared drive at 09:10. How do you classify the ticket?",
+   "options": [
+    "Incident with high impact (many users)",
+    "Service request for new access",
+    "Change request for the file server",
+    "Low-impact incident for one user"
+   ],
+   "correct": "Incident with high impact (many users)",
+   "explanation": "An unplanned loss of service affecting many users is a high-impact incident."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q1.5",
+   "obj": "IT-1.2",
+   "text": "User felt a shock from a metal strip under the monitor. Correct move?",
+   "options": [
+    "Ignore it if the PC still boots",
+    "Classify incident, stop, escalate",
+    "Swap the strip as break/fix",
+    "Open the PSU to look"
+   ],
+   "correct": "Classify incident, stop, escalate",
+   "explanation": "1.2 / 1.5 — heat and shock are not solo swaps."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q1.9",
+   "obj": "IT-1.3",
+   "text": "Closed means:",
+   "options": [
+    "The monitoring icon turned green",
+    "The required workflow works and notes are complete",
+    "The user stopped responding",
+    "The SLA timer expired"
+   ],
+   "correct": "The required workflow works and notes are complete",
+   "explanation": "1.1 — closing is not the same as fixed."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-1.4.2",
+   "obj": "IT-1.4",
+   "text": "During remote support you see a user’s personal banking tab. What is appropriate?",
+   "options": [
+    "Take a screenshot for the ticket",
+    "Mention it to the user’s manager",
+    "Continue and note the balance",
+    "Ask them to close it and avoid recording it"
+   ],
+   "correct": "Ask them to close it and avoid recording it",
+   "explanation": "Technicians access only what the task needs and do not record unrelated personal information."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q2.1",
+   "obj": "IT-2.1",
+   "text": "This course bench card socket silkscreen is LGA1700. Lab command?",
+   "options": [
+    "socket lga1700",
+    "socket am5",
+    "socket 2011",
+    "form-factor lga1700"
+   ],
+   "correct": "socket lga1700",
+   "explanation": "2.3 — type the silkscreen, do not press a cocked CPU."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.5",
+   "obj": "IT-2.2",
+   "text": "UEFI setup shows Secure Boot enabled but an unsigned legacy bootloader will not start. The training image requires that bootloader for a lab. What is the correct controlled approach?",
+   "options": [
+    "Clear the TPM so the loader is trusted",
+    "Convert the disk from GPT to MBR",
+    "Use the documented exception, then re-enable it",
+    "Reset UEFI to factory defaults"
+   ],
+   "correct": "Use the documented exception, then re-enable it",
+   "explanation": "Secure Boot is doing its job. Use the documented, approved exception (or signed media) and restore the hardened setting afterwards; that is a controlled change."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.0",
+   "obj": "IT-2.3",
+   "text": "A new desktop fails POST with long continuous beep and no display. Reseating RAM and testing one stick at a time restores video. What was the most likely root cause?",
+   "options": [
+    "A failed CMOS battery",
+    "A faulty display cable",
+    "Insufficient PSU wattage",
+    "A faulty or badly seated memory module"
+   ],
+   "correct": "A faulty or badly seated memory module",
+   "explanation": "Video returned only when the RAM was reseated and tested one stick at a time, which isolates the memory module. The other options cannot change a POST memory failure."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-2.4.2",
+   "obj": "IT-2.4",
+   "text": "Before replacing a part, why record the system’s model, serial and current hardware inventory?",
+   "options": [
+    "To reset the warranty period",
+    "To speed up the next boot",
+    "To clear the TPM",
+    "To order the right part and prove what changed"
+   ],
+   "correct": "To order the right part and prove what changed",
+   "explanation": "Inventory ties the ticket to the asset and lets you compare before and after the repair."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-3.1.1",
+   "obj": "IT-3.1",
+   "text": "A desktop has SATA ports but no M.2 slot. Which upgrade gives the biggest speed gain without extra parts?",
+   "options": [
+    "A 7,200 rpm 3.5-inch hard drive",
+    "A 2.5-inch SATA solid-state drive",
+    "An M.2 2280 NVMe solid-state drive",
+    "A second identical hard drive in RAID 1"
+   ],
+   "correct": "A 2.5-inch SATA solid-state drive",
+   "explanation": "A SATA SSD uses the existing SATA data and power cables and removes the hard drive’s seek time; NVMe needs an M.2 slot or a PCIe adapter (an extra part), and RAID 1 mirrors for redundancy, with at most a modest read gain."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-3.3.1",
+   "obj": "IT-3.3",
+   "text": "Fans spin and LEDs light, but the board never posts. Which connector should you check first?",
+   "options": [
+    "The 8-pin CPU (EPS) power plug",
+    "The SATA power plug on the drive",
+    "The front-panel USB header",
+    "The PCIe 6-pin plug on the GPU"
+   ],
+   "correct": "The 8-pin CPU (EPS) power plug",
+   "explanation": "Without CPU power many boards run fans but cannot start the processor."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-3.4.1",
+   "obj": "IT-3.4",
+   "text": "A monitor stays dark on a laptop’s USB-C port while charging works. What is a likely cause?",
+   "options": [
+    "The monitor needs a new external power supply",
+    "The laptop’s memory module is loose",
+    "The port does not support DisplayPort Alt Mode",
+    "The Windows display language is wrong"
+   ],
+   "correct": "The port does not support DisplayPort Alt Mode",
+   "explanation": "Not every USB-C port carries video; it must support DisplayPort Alt Mode or USB4/Thunderbolt video."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-4.1.1",
+   "obj": "IT-4.1",
+   "text": "A laptop’s trackpad is lifted and the case bulges. What should the technician do first?",
+   "options": [
+    "Open the case to check the battery connector",
+    "Stop using and charging it and isolate it",
+    "Run a full battery report in Windows first",
+    "Press the trackpad back down firmly"
+   ],
+   "correct": "Stop using and charging it and isolate it",
+   "explanation": "Swelling is a lithium-ion safety stop: no use, charging, pressing or opening; follow the battery procedure."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-4.3.1",
+   "obj": "IT-4.3",
+   "text": "Every app on one PC fails to print while the next desk prints fine. Where do you start?",
+   "options": [
+    "The printer’s fuser and drum units",
+    "The print server queue for the floor",
+    "The network switch serving the floor",
+    "That PC’s spooler, queue and driver"
+   ],
+   "correct": "That PC’s spooler, queue and driver",
+   "explanation": "The next desk proves the printer and path work, so the fault is on the failing PC."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.12",
+   "obj": "IT-5.3",
+   "text": "A host can ping its gateway and LAN peers but cannot reach Internet hosts by name or IP. Traceroute dies at the gateway. What is the best first focus?",
+   "options": [
+    "The host’s NIC driver",
+    "The switch port’s VLAN",
+    "The host’s DNS settings",
+    "Upstream routing, NAT or firewall"
+   ],
+   "correct": "Upstream routing, NAT or firewall",
+   "explanation": "LAN reachability proves the host and local network; failure beyond the gateway for both names and IPs points upstream: routing, NAT or firewall."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-5.4.2",
+   "obj": "IT-5.4",
+   "text": "Old and new devices must share one SSID securely. Which mode fits best?",
+   "options": [
+    "WEP with a long passphrase",
+    "Open network with WPS on",
+    "WPA with TKIP encryption",
+    "WPA2/WPA3 transition mode"
+   ],
+   "correct": "WPA2/WPA3 transition mode",
+   "explanation": "Transition mode lets WPA3 clients use SAE and older clients WPA2-AES; WEP and TKIP are broken."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-6.1.3",
+   "obj": "IT-6.1",
+   "text": "What does a container share with its host that a virtual machine does not?",
+   "options": [
+    "The host’s physical network cables",
+    "The host’s user accounts and passwords",
+    "The host’s firmware boot settings",
+    "The host’s operating system kernel"
+   ],
+   "correct": "The host’s operating system kernel",
+   "explanation": "Containers share the host kernel; each VM runs its own complete operating system."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q6.2",
+   "obj": "IT-6.2",
+   "text": "SaaS means you usually touch:",
+   "options": [
+    "The vendor’s metal",
+    "The platform OS",
+    "The hypervisor cluster",
+    "Account, license, and client"
+   ],
+   "correct": "Account, license, and client",
+   "explanation": "6.2 — mail in a browser is SaaS."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-7.1.2",
+   "obj": "IT-7.1",
+   "text": "A technician updates a driver, swaps the cable and resets the adapter, and the fault clears. What is the main problem?",
+   "options": [
+    "Nobody can tell which change fixed the fault",
+    "The driver should always be updated as the last step",
+    "Cables should never be swapped by tier-1 staff",
+    "Adapter resets need a reboot to verify"
+   ],
+   "correct": "Nobody can tell which change fixed the fault",
+   "explanation": "Changing one thing at a time is what links the fix to the cause."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-7.2.1",
+   "obj": "IT-7.2",
+   "text": "A user gets a temporary profile on every PC they sign in to. Which fault domain is most likely?",
+   "options": [
+    "The network adapter on the first PC they used",
+    "The DNS server for the building subnet",
+    "The user account or its roaming profile",
+    "The power supply in the user’s desk PC"
+   ],
+   "correct": "The user account or its roaming profile",
+   "explanation": "A symptom that follows the user across devices rules out the device and points to the account or profile."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q7.8",
+   "obj": "IT-7.3",
+   "text": "Guesses in the note should be:",
+   "options": [
+    "Labeled as guesses or left out",
+    "Written as measured results",
+    "Left in, with the tests removed",
+    "Stated as the root cause"
+   ],
+   "correct": "Labeled as guesses or left out",
+   "explanation": "7.3 / 1.3."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-7.4.2",
+   "obj": "IT-7.4",
+   "text": "When should you escalate before your time box ends?",
+   "options": [
+    "When the fix needs access or approval you lack",
+    "When the user asks how long the work will take you",
+    "When the first test result surprises you",
+    "When another ticket arrives in your queue"
+   ],
+   "correct": "When the fix needs access or approval you lack",
+   "explanation": "Lack of authority or a domain owned by another team are reasons to escalate early."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q8.0",
+   "obj": "IT-8.1",
+   "text": "Before any install talk you must:",
+   "options": [
+    "Type clean",
+    "Disable the firewall",
+    "Delete snapshots on a host you do not own",
+    "Inventory name, edition, and disks"
+   ],
+   "correct": "Inventory name, edition, and disks",
+   "explanation": "8.1 / 2.6."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-8.2.3",
+   "obj": "IT-8.2",
+   "text": "Why should daily work use a standard account rather than an administrator account?",
+   "options": [
+    "Malware the user runs gets only standard rights",
+    "Standard accounts make Windows start faster",
+    "Admin accounts cannot open email or browse",
+    "Standard accounts never need a password set"
+   ],
+   "correct": "Malware the user runs gets only standard rights",
+   "explanation": "Least privilege limits what malicious code can do when the user opens it."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-8.3.4",
+   "obj": "IT-8.3",
+   "text": "sfc reports it found corrupt files but could not fix some of them. What is the best next step?",
+   "options": [
+    "Delete the C:\\Windows\\WinSxS folder so it is rebuilt",
+    "Turn off Windows Resource Protection and retry",
+    "Replace the system drive before trying anything else",
+    "Re-run DISM with a known-good source, then sfc again"
+   ],
+   "correct": "Re-run DISM with a known-good source, then sfc again",
+   "explanation": "SFC needs good copies in the component store; DISM with a good /Source repairs the store first."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.29",
+   "obj": "IT-8.4",
+   "text": "You must map a drive only for members of a specific AD group at logon. Best mechanism?",
+   "options": [
+    "A hosts-file entry on each PC",
+    "A DHCP option for the share",
+    "A Group Policy Preferences drive map",
+    "Asking users to run net use"
+   ],
+   "correct": "A Group Policy Preferences drive map",
+   "explanation": "Group Policy Preferences drive maps with item-level targeting (or a logon script) can be scoped to a security group."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q9.1",
+   "obj": "IT-9.1",
+   "text": "What does running a command with sudo mean for your ticket?",
+   "options": [
+    "A command that forces a reboot",
+    "An administrative change for the record",
+    "A sign-out of all other users",
+    "A shortcut that needs no note"
+   ],
+   "correct": "An administrative change for the record",
+   "explanation": "sudo runs a command with administrative rights, so it is a change that is recorded like any other."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q9.4",
+   "obj": "IT-9.2",
+   "text": "A MacBook’s battery is swollen. What do you do?",
+   "options": [
+    "Reinstall macOS, then recheck",
+    "Keep charging it to stabilise it",
+    "Stop; follow the battery procedure",
+    "Pry it out in class to check it"
+   ],
+   "correct": "Stop; follow the battery procedure",
+   "explanation": "9.2."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-9.3.1",
+   "obj": "IT-9.3",
+   "text": "A user cannot open a share, but a colleague opens it from the same device. What is most likely?",
+   "options": [
+    "The device’s network adapter is faulty",
+    "The file server is offline for everyone",
+    "The user lacks access to that share",
+    "DNS cannot resolve the server’s name"
+   ],
+   "correct": "The user lacks access to that share",
+   "explanation": "Success for another user on the same device rules out the device, network and server; entitlement remains."
+  },
+  {
+   "pool": "question_bank.A2",
+   "bank_id": "A2.17",
+   "obj": "IT-10.1",
+   "text": "A domain laptop is offline. The user signs in with cached credentials, but every UAC elevation fails. Back on the office network, elevation works after an authenticator-app approval. What is the best explanation?",
+   "options": [
+    "Cached logons always have admin rights",
+    "The local admin account is locked",
+    "The elevation policy needs an online MFA check",
+    "UAC is disabled when offline"
+   ],
+   "correct": "The elevation policy needs an online MFA check",
+   "explanation": "The elevation policy requires an online MFA check, which an offline device cannot complete."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q10.7",
+   "obj": "IT-10.2",
+   "text": "Phish not opened. First?",
+   "options": [
+    "Reimage the PC before anyone looks at it",
+    "Turn the firewall off so the scan can run",
+    "Record it and confirm no credentials were entered",
+    "Tell the user off so it does not happen again"
+   ],
+   "correct": "Record it and confirm no credentials were entered",
+   "explanation": "10.4."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q10.6",
+   "obj": "IT-10.3",
+   "text": "Patch state is:",
+   "options": [
+    "Optional trivia",
+    "A reason to disable Defender",
+    "Only relevant to servers",
+    "Part of hygiene — read Update"
+   ],
+   "correct": "Part of hygiene — read Update",
+   "explanation": "10.3 / 8.2."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-10.4.3",
+   "obj": "IT-10.4",
+   "text": "What does a chain-of-custody record show?",
+   "options": [
+    "The order in which malware spread across devices",
+    "Who held the evidence, when, and what they did",
+    "The list of passwords reset after an incident",
+    "The vendor and model of each affected device"
+   ],
+   "correct": "Who held the evidence, when, and what they did",
+   "explanation": "Chain of custody documents every handover so evidence remains trustworthy."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q11.1",
+   "obj": "IT-11.1",
+   "text": "Exact error text belongs:",
+   "options": [
+    "Only in your memory",
+    "Paraphrased in your own words",
+    "Left out if it is long",
+    "In the ticket"
+   ],
+   "correct": "In the ticket",
+   "explanation": "11.1."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q11.8",
+   "obj": "IT-11.3",
+   "text": "In this course, how is a reboot treated?",
+   "options": [
+    "A change",
+    "As harmless, needing no note",
+    "As a form of backup",
+    "As allowed only on servers"
+   ],
+   "correct": "A change",
+   "explanation": "11.4 / 8.3."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-11.4.3",
+   "obj": "IT-11.4",
+   "text": "A user signs in to a brand-new-looking desktop with a “can’t sign in to your account” notice. What do you do?",
+   "options": [
+    "Delete the old profile folder to force a full rebuild",
+    "Edit the ProfileList registry key yourself",
+    "Record it and escalate; do not delete the profile",
+    "Tell the user to keep working and save locally"
+   ],
+   "correct": "Record it and escalate; do not delete the profile",
+   "explanation": "A temporary profile loses changes; the original data must be recovered by the endpoint team, not deleted."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.36",
+   "obj": "IT-12.1",
+   "text": "A change to firewall rules was made during production without a ticket. Traffic drops. What process failure occurred?",
+   "options": [
+    "Lack of least privilege",
+    "Insufficient monitoring",
+    "Poor capacity planning",
+    "No change approval or documentation"
+   ],
+   "correct": "No change approval or documentation",
+   "explanation": "A production change without approval or a record is a change-management failure."
+  },
+  {
+   "pool": "question_bank.A2",
+   "bank_id": "A2.18",
+   "obj": "IT-12.3",
+   "text": "Which backup test is the strongest validation?",
+   "options": [
+    "Checking the job reports",
+    "A periodic test restore",
+    "Pinging the backup server",
+    "Counting the media labels"
+   ],
+   "correct": "A periodic test restore",
+   "explanation": "Only a test restore proves the backup can be recovered."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-12.4.3",
+   "obj": "IT-12.4",
+   "text": "What makes a runbook usable by another technician?",
+   "options": [
+    "Numbered steps with prerequisites, results and rollback",
+    "A summary paragraph written from memory later on",
+    "A link to the vendor’s marketing web page",
+    "The author’s initials and the date it was first written"
+   ],
+   "correct": "Numbered steps with prerequisites, results and rollback",
+   "explanation": "Runbooks need specific, ordered steps with prerequisites, expected results and a way back."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q13.0",
+   "obj": "IT-13.1",
+   "text": "Chapter 13 is:",
+   "options": [
+    "Optional reading",
+    "A vendor certification exam",
+    "Lab reps for skills already taught",
+    "New theory not covered elsewhere"
+   ],
+   "correct": "Lab reps for skills already taught",
+   "explanation": "13 overview."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-13.2.1",
+   "obj": "IT-13.2",
+   "text": "A PC reaches 10.0.2.50 by address but not intranet.lab.local by name. Where is the fault?",
+   "options": [
+    "In the default gateway setting",
+    "In the network adapter’s driver",
+    "In name resolution on that path",
+    "In the DHCP lease for the PC"
+   ],
+   "correct": "In name resolution on that path",
+   "explanation": "Reaching the server by address shows the adapter, the IP settings and the path to that host work; only the name lookup fails, so the fault is in name resolution (DNS server, suffix, cache or hosts file)."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-13.3.1",
+   "obj": "IT-13.3",
+   "text": "Before ending a task with taskkill, what should you record first?",
+   "options": [
+    "The process, its PID and the services it hosts",
+    "The user’s password so you can sign back in",
+    "Only the exact time at which the PC was restarted",
+    "The serial number of the PC’s memory modules"
+   ],
+   "correct": "The process, its PID and the services it hosts",
+   "explanation": "tasklist /svc records the PID and hosted services, so you know exactly what ending the process will stop."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-13.4.2",
+   "obj": "IT-13.4",
+   "text": "What must a user be warned about before a Windows network reset?",
+   "options": [
+    "All of their personal files will be deleted",
+    "Windows will be upgraded to the next feature release",
+    "Wi-Fi, static and VPN settings may need redoing",
+    "The device will leave its domain or tenant"
+   ],
+   "correct": "Wi-Fi, static and VPN settings may need redoing",
+   "explanation": "Network reset reinstalls adapters and restores networking defaults, then restarts; files and OS version are untouched."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ1.1",
+   "obj": "NO-1.1",
+   "text": "As a packet crosses routers on its way to the destination, which value stays the same end to end (without NAT)?",
+   "options": [
+    "IP TTL value",
+    "Destination IP address",
+    "Source MAC address",
+    "Destination MAC address"
+   ],
+   "correct": "Destination IP address",
+   "explanation": "Routers rewrite layer-2 addresses and decrement TTL at every hop; IP addresses are unchanged unless NAT is used."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ1.4",
+   "obj": "NO-1.2",
+   "text": "A host shows fe80::1c2b:3aff:fe4d:1 on its interface. What kind of address is it?",
+   "options": [
+    "Unique local",
+    "Multicast",
+    "Link-local",
+    "Global unicast"
+   ],
+   "correct": "Link-local",
+   "explanation": "fe80::/10 is link-local; every IPv6 interface has one, and it is never routed."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ1.5",
+   "obj": "NO-1.3",
+   "text": "Which service uses TCP 443 by default?",
+   "options": [
+    "DNS",
+    "HTTPS",
+    "SSH",
+    "RDP"
+   ],
+   "correct": "HTTPS",
+   "explanation": "HTTPS is TCP 443 (HTTP/3 uses UDP 443). SSH is 22, RDP is 3389, DNS is 53."
+  },
+  {
+   "pool": "question_bank.N3",
+   "bank_id": "N3.3",
+   "obj": "NO-2.1",
+   "text": "LACP is used to?",
+   "options": [
+    "Bundle physical links into one logical link",
+    "Block redundant links to prevent loops",
+    "Tag frames with VLAN IDs on trunks",
+    "Provide default-gateway redundancy"
+   ],
+   "correct": "Bundle physical links into one logical link",
+   "explanation": "LACP (IEEE 802.1AX) negotiates bundling several links into one logical link when both ends agree."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ2.2",
+   "obj": "NO-2.2",
+   "text": "A PC on access port VLAN 20 cannot reach its gateway; other VLAN 20 PCs can. The port shows VLAN 1. What is the fix?",
+   "options": [
+    "Enable trunking on the port",
+    "Change the PC to a static IP",
+    "Restart the DHCP server",
+    "Assign the port to VLAN 20"
+   ],
+   "correct": "Assign the port to VLAN 20",
+   "explanation": "The port is in the wrong VLAN, so the PC sits in a different broadcast domain from its gateway."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.27",
+   "obj": "NO-3.2",
+   "text": "A cloud VPC peering link does not transit to on-prem by default in many designs. Implication?",
+   "options": [
+    "Explicit routing or a transit design is needed; peering does not chain",
+    "All peered networks reach each other automatically",
+    "BGP cannot be used in the cloud",
+    "DNS cannot resolve across peers"
+   ],
+   "correct": "Explicit routing or a transit design is needed; peering does not chain",
+   "explanation": "Peering is usually non-transitive; reaching on-premises through a peer needs explicit routing or a transit design."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ3.7",
+   "obj": "NO-3.3",
+   "text": "Which wireless security option suits a staff network where each user signs in with their own account?",
+   "options": [
+    "WPA2-Personal with MAC filtering",
+    "WPA3-Enterprise with 802.1X",
+    "WPA3-Personal with one passphrase",
+    "An open SSID with a captive portal"
+   ],
+   "correct": "WPA3-Enterprise with 802.1X",
+   "explanation": "Enterprise mode authenticates each user against RADIUS, so access can be revoked per person."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.3",
+   "obj": "NO-4.1",
+   "text": "A rogue DHCP server hands out wrong gateways. Symptom pattern?",
+   "options": [
+    "Clients get addresses but sometimes the wrong gateway",
+    "Link lights go off on affected ports",
+    "All clients get 169.254 addresses",
+    "Only DNS lookups fail; routing works"
+   ],
+   "correct": "Clients get addresses but sometimes the wrong gateway",
+   "explanation": "Clients still get addresses, but those from the rogue server have the wrong gateway, so reachability fails intermittently depending on which server answered."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ4.5",
+   "obj": "NO-4.2",
+   "text": "Which DNS record type makes one name an alias for another name?",
+   "options": [
+    "AAAA",
+    "SRV",
+    "CNAME",
+    "PTR"
+   ],
+   "correct": "CNAME",
+   "explanation": "A CNAME makes a name an alias for another (canonical) name. PTR and SRV records also hold a name, but a PTR maps an address (its reverse-lookup name) to a host name and an SRV gives the host and port for a service; AAAA maps a name to an IPv6 address."
+  },
+  {
+   "pool": "question_bank.N3",
+   "bank_id": "N3.0",
+   "obj": "NO-4.3",
+   "text": "A firewall rule allows established/related states. A new outbound HTTP connection still needs?",
+   "options": [
+    "Nothing — established/related covers new connections",
+    "An inbound rule for port 80",
+    "A NAT exemption",
+    "A rule permitting the initial outbound connection"
+   ],
+   "correct": "A rule permitting the initial outbound connection",
+   "explanation": "Established/related matches only flows already allowed; a new outbound connection still needs a permitting rule."
+  },
+  {
+   "pool": "question_bank.N3",
+   "bank_id": "N3.2",
+   "obj": "NO-5.1",
+   "text": "Which metric is most useful to prove a WAN circuit is saturating?",
+   "options": [
+    "The router’s uptime counter",
+    "Utilisation and drops over time",
+    "A single ping time to the far end",
+    "The number of VLANs on the link"
+   ],
+   "correct": "Utilisation and drops over time",
+   "explanation": "Sustained utilisation near capacity with output drops over time proves saturation."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ5.5",
+   "obj": "NO-5.2",
+   "text": "Why send device logs to a central server with synchronised time (NTP)?",
+   "options": [
+    "It encrypts the routing table",
+    "Events from many devices can be correlated in order",
+    "It makes the devices boot faster",
+    "It removes the need for SNMP"
+   ],
+   "correct": "Events from many devices can be correlated in order",
+   "explanation": "Accurate timestamps let you line up events across devices during an incident."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ5.7",
+   "obj": "NO-5.3",
+   "text": "Which principle grants each user or system only the access needed for its job?",
+   "options": [
+    "Defence in depth",
+    "Separation of duties",
+    "Implicit trust",
+    "Least privilege"
+   ],
+   "correct": "Least privilege",
+   "explanation": "Least privilege limits access to what is required; zero-trust designs apply it to every request."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.20",
+   "obj": "NO-6.1",
+   "text": "A packet capture of a slow file copy shows repeated TCP retransmissions, and the sender’s bytes in flight keep dropping. What class of issue is most likely?",
+   "options": [
+    "A DNS misconfiguration",
+    "An expired DHCP lease",
+    "A wrong default gateway",
+    "Congestion or loss on the path"
+   ],
+   "correct": "Congestion or loss on the path",
+   "explanation": "Retransmissions mean segments are being lost, and TCP congestion control then cuts how much it sends (bytes in flight fall): the signature of loss or congestion on the path. A shrinking advertised receive window on its own would point to a slow receiver instead. DNS, DHCP and gateway faults stop a connection; they do not slow an established copy."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ6.2",
+   "obj": "NO-6.2",
+   "text": "During an outage you have two theories. What is the disciplined next step?",
+   "options": [
+    "Apply both fixes at once to save time",
+    "Wait for the problem to clear by itself",
+    "Reboot the core to rule everything out",
+    "Test the most likely, least disruptive theory first and record the result"
+   ],
+   "correct": "Test the most likely, least disruptive theory first and record the result",
+   "explanation": "One change at a time keeps cause and effect clear; order tests by likelihood and risk."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-NO-6.3.1",
+   "obj": "NO-6.3",
+   "text": "After fixing a VLAN fault, which item best proves the fix?",
+   "options": [
+    "The original failing test now passes",
+    "The switch has been rebooted",
+    "The ticket is assigned to you",
+    "No alerts in five minutes"
+   ],
+   "correct": "The original failing test now passes",
+   "explanation": "Verification repeats the test that failed and confirms the user outcome."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-NO-9.1.2",
+   "obj": "NO-9.1",
+   "text": "After configuring a trunk, which command shows its allowed and active VLANs?",
+   "options": [
+    "show ip route",
+    "show mac address-table count",
+    "show clock",
+    "show interfaces trunk"
+   ],
+   "correct": "show interfaces trunk",
+   "explanation": "show interfaces trunk lists trunk ports, the native VLAN and allowed/active VLANs."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ9.3",
+   "obj": "NO-9.2",
+   "text": "Hosts in VLAN 10 and VLAN 20 must talk through one router interface. What is that design called?",
+   "options": [
+    "A routed access port per VLAN",
+    "A VLAN-free flat network",
+    "Static NAT between VLANs",
+    "Router-on-a-stick with 802.1Q subinterfaces"
+   ],
+   "correct": "Router-on-a-stick with 802.1Q subinterfaces",
+   "explanation": "One trunk to the router with a tagged subinterface per VLAN, each with the VLAN’s gateway address."
+  }
+ ]
+}

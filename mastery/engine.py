@@ -27,6 +27,7 @@ TESTOUT_PER_OBJ = 2
 TESTOUT_MAX = 12
 TESTOUT_PASS = 80
 DAILY_MIN, DAILY_MAX = 5, 10
+REVIEW_MINUTES = {'review': 5, 'alt_review': 5, 'helix_offer': 5, 'misconception': 2}   # rough, not measured
 CHECK_KIND = {'review': 'review_check', 'testout': 'testout', 'daily': 'daily', 'inline': 'inline'}
 CHECK_SOURCE = {'review_check': 'Review check', 'testout': 'Mastery check', 'daily': 'Daily review', 'inline': 'In-lesson check'}
 
@@ -223,6 +224,8 @@ class Engine:
                 h = hist[c.target]
                 h['reviews_done'] = h.get('reviews_done', 0) + 1
                 h['last_review_at'] = max(h.get('last_review_at') or datetime.min, c.completed_at)
+                if (c.variant or '').startswith('mc:'):
+                    h.setdefault('mc_done', set()).add(c.variant[3:])
             elif c.kind == 'testout':
                 ch = int(c.target.split('-')[1])
                 tout[ch]['attempts'] += 1
@@ -578,7 +581,9 @@ class Engine:
                      'helix_offer': 'Optional review', 'misconception': 'Fix a mix-up'}[a['type']]
             subject = MCS.MISCONCEPTIONS[a['mc']]['label'] if a.get('mc') else o['text']
             steps.append({'kind': a['type'], 'title': f"{title}: {short_text(subject, 64)}",
-                          'detail': f"{a['obj']} · about 5 min · uses lesson {les.get('label', '')}"
+                          'optional': bool(a.get('offer')) or a['type'] == 'helix_offer',
+                          # same estimate as the review page's eyebrow (templates/mastery/review.html)
+                          'detail': f"{a['obj']} · about {REVIEW_MINUTES.get(a['type'], 5)} min · uses lesson {les.get('label', '')}"
                                     + (' · required by your instructor' if a['required'] and a['source'] == 'instructor'
                                        else (' · required' if a['required'] else '')),
                           'url': url_for('mastery_review', section_id=sec.id, obj=a['obj']),

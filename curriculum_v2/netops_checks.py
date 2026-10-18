@@ -18,7 +18,8 @@ NETOPS_CHECKS = {
         c('A user can ping 10.1.1.1 but not www.example.com. At which layer does the evidence point first?',
           ['Physical cabling', 'Data link (switching)', 'Name resolution at the application layer', 'Transport (TCP ports)'],
           'Name resolution at the application layer', 'NO-1.1', 'IP reachability works, so layers 1–3 are fine; failing by name points to DNS, an application-layer service.'),
-        c('As a frame crosses a router, which value stays the same end to end (without NAT)?',
+        # spot-check round 2 (Oct 18): "frame" -> "packet"; a router ends each frame and builds a new one. Pending SME review
+        c('As a packet crosses routers on its way to the destination, which value stays the same end to end (without NAT)?',
           ['Source MAC address', 'Destination MAC address', 'Destination IP address', 'IP TTL value'],
           'Destination IP address', 'NO-1.1', 'Routers rewrite layer-2 addresses and decrement TTL at every hop; IP addresses are unchanged unless NAT is used.'),
         c('How many usable host addresses does 10.0.0.0/26 provide?', ['64', '62', '30', '126'], '62', 'NO-1.2',
@@ -96,8 +97,10 @@ NETOPS_CHECKS = {
         c('A web server’s address changed, but some users still reach the old IP. What explains it?',
           ['Cached records that have not reached their TTL', 'A missing MX record', 'An expired DHCP lease', 'A wrong subnet mask on the server'],
           'Cached records that have not reached their TTL', 'NO-4.2', 'Resolvers and clients cache answers for the record’s TTL; lower the TTL before planned changes.'),
-        c('Which DNS record type points one name to another name?', ['CNAME', 'PTR', 'AAAA', 'SRV'], 'CNAME', 'NO-4.2',
-          'A CNAME is an alias to a canonical name. PTR maps an address to a name; AAAA maps a name to IPv6.'),
+        # spot-check round 2 (Oct 18): PTR and SRV records also carry a name in their data, so "points one name to
+        # another name" did not single out CNAME; the stem now asks for an alias (RFC 1035 3.3.1, RFC 2782). Pending SME review
+        c('Which DNS record type makes one name an alias for another name?', ['CNAME', 'PTR', 'AAAA', 'SRV'], 'CNAME', 'NO-4.2',
+          'A CNAME makes a name an alias for another (canonical) name. PTR and SRV records also hold a name, but a PTR maps an address (its reverse-lookup name) to a host name and an SRV gives the host and port for a service; AAAA maps a name to an IPv6 address.'),
         c('Many inside hosts share one public IPv4 address using different source ports. What is this called?',
           ['Port address translation (PAT)', 'Static one-to-one NAT', 'Inbound port forwarding', 'Split-horizon DNS'],
           'Port address translation (PAT)', 'NO-4.3', 'PAT tracks each inside flow by source port so many hosts share one address.'),

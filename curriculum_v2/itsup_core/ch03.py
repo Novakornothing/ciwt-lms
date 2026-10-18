@@ -267,7 +267,7 @@ PLAN = {
 ITEMS = [
     item('IT-3.1', 1, 'A desktop has SATA ports but no M.2 slot. Which upgrade gives the biggest speed gain without extra parts?',
          'A 2.5-inch SATA solid-state drive', ['A 7,200 rpm 3.5-inch hard drive', 'An M.2 2280 NVMe solid-state drive', 'A second identical hard drive in RAID 1'],
-         'A SATA SSD uses the existing SATA data and power cables; NVMe needs an M.2 slot or adapter, and RAID 1 adds redundancy, not speed.'),
+         'A SATA SSD uses the existing SATA data and power cables and removes the hard drive’s seek time; NVMe needs an M.2 slot or a PCIe adapter (an extra part), and RAID 1 mirrors for redundancy, with at most a modest read gain.'),
     item('IT-3.1', 2, 'A parts list shows “M.2 2280 NVMe”. What does 2280 tell you?',
          'The card is 22 mm wide and 80 mm long', ['The drive’s capacity is 2,280 gigabytes', 'The drive uses PCIe generation 2.2', 'The drive reads at 2,280 megabytes per second'],
          'M.2 size codes give width and length in millimetres; 2280 is 22 × 80 mm.'),

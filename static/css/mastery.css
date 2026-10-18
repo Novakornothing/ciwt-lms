@@ -89,6 +89,11 @@
 .mx-cell:hover { filter: brightness(.96); }
 .mx-flag { display: inline-block; font-size: .62rem; font-weight: 800; line-height: 1; padding: .1rem .2rem; margin-left: .15rem; border-radius: 3px; background: var(--ink); color: var(--surface); vertical-align: super; }
 .mx-legend .mx-flag { vertical-align: baseline; }
+/* Pass 14: stuck cells (two reviews done, nothing more inserted). Letter flag plus a dashed outline, so it is not colour alone. */
+.mx-flag-stuck { background: #9b1f1f; color: #fff; }
+.mx-cell-stuck { outline: 2px dashed #9b1f1f; outline-offset: -4px; }
+[data-theme="dark"] .mx-flag-stuck { background: #ffbcb1; color: #2a0d0d; }
+[data-theme="dark"] .mx-cell-stuck { outline-color: #ffbcb1; }
 .mx-evid td { vertical-align: top; }
 @media (max-width: 575.98px) {
   .mx-heat-wrap { max-height: none; }

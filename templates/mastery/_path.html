@@ -13,7 +13,7 @@
     <li class="mx-step mx-step-{{ s.kind }}{% if loop.first %} current{% endif %}{% if s.required %} mx-step-req{% endif %}">
       <span class="mx-step-icon" aria-hidden="true"><i class="bi {{ icon_for(s.kind) }}"></i></span>
       <div class="mx-step-body">
-        <div class="mx-step-title">{{ s.title }}{% if s.required %} <span class="mx-badge mx-badge-req">Required</span>{% elif s.kind in ('review', 'alt_review') %} <span class="mx-badge">Inserted before your next lesson</span>{% elif s.kind == 'helix_offer' %} <span class="mx-badge">Optional</span>{% endif %}</div>
+        <div class="mx-step-title">{{ s.title }}{% if s.required %} <span class="mx-badge mx-badge-req">Required</span>{% elif s.optional %} <span class="mx-badge">Optional</span>{% elif s.kind in ('review', 'alt_review', 'misconception') %} <span class="mx-badge">Inserted before your next lesson</span>{% endif %}</div>
         <div class="mx-step-detail">{{ s.detail }}</div>
         {% if s.why %}{{ why(s.why, section_id=mp_sid) }}{% endif %}
       </div>

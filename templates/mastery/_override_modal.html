@@ -10,10 +10,11 @@
       <div class="modal-body">
         <input type="hidden" name="user_id" value="{{ default_user_id or '' }}" data-mx="user">
         <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
-        <p class="small mb-2" data-mx="state">{{ default_state or '' }}</p>
+        <p class="small mb-2" data-mx="state" id="mxOverrideState" aria-live="polite">{{ default_state or '' }}</p>
+        {% if mx_states %}<script type="application/json" id="mxStates">{{ mx_states|tojson }}</script>{% endif %}
         <div class="mb-3">
           <label class="form-label" for="mxTarget">Applies to</label>
-          <select class="form-select" name="target" id="mxTarget" data-mx="target">
+          <select class="form-select" name="target" id="mxTarget" data-mx="target" aria-describedby="mxOverrideState">
             {% for ch in chapters %}
             <optgroup label="Chapter {{ ch }}">
               <option value="CH-{{ ch }}">Whole chapter {{ ch }}</option>

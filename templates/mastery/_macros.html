@@ -4,7 +4,9 @@
   <summary><i class="bi bi-info-circle" aria-hidden="true"></i> {{ label }}</summary>
   <div class="mx-why-body">
     <ul class="mb-2">{% for r in reasons %}<li>{{ r }}</li>{% endfor %}</ul>
-    {% if evidence %}<p class="mb-2"><strong>Evidence:</strong> {{ evidence }}</p>{% endif %}
+    {#- Pass 14: the engine's reasons usually end with the evidence sentence already; show it once. -#}
+    {%- set ns = namespace(dup=false) %}{% for r in reasons if evidence and (evidence in r or 'no answer evidence' in r) %}{% set ns.dup = true %}{% endfor %}
+    {% if evidence and not ns.dup %}<p class="mb-2"><strong>Evidence:</strong> {{ evidence }}</p>{% endif %}
     <p class="mb-0 small">This is a learning aid, not a grade. Nothing here changes your gradebook.{% if section_id %} <a href="{{ url_for('mastery_student', section_id=section_id) }}">See all my objectives</a>{% endif %}</p>
   </div>
 </details>
@@ -19,5 +21,5 @@
 {%- endmacro %}
 
 {% macro icon_for(kind) -%}
-{{ {'review': 'bi-journal-bookmark', 'alt_review': 'bi-arrow-repeat', 'helix_offer': 'bi-eye', 'lesson': 'bi-book', 'testout': 'bi-patch-check'}.get(kind, 'bi-signpost-split') }}
+{{ {'review': 'bi-journal-bookmark', 'alt_review': 'bi-arrow-repeat', 'helix_offer': 'bi-eye', 'lesson': 'bi-book', 'testout': 'bi-patch-check', 'misconception': 'bi-lightbulb'}.get(kind, 'bi-signpost-split') }}
 {%- endmacro %}

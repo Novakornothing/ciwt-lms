@@ -65,3 +65,26 @@ New files only, apart from the edits listed below, so the merge should be mechan
   The `a11y_sweep.py` page lists conflict the same way as before: keep both sets.
 - Item dicts now carry an `mc` key. `practice.public_item` and `app._PUBLIC_ITEM_FIELDS` are allow-lists, so it never
   reaches the browser (tested).
+
+## Round 3: `content` at `b6a32e3` into `refinement` (pass 15)
+
+`content` had last taken `refinement` at `37d20d1` (labs round 2/3), in `1c1518a`. Since the previous content merge,
+`content` added the following, all of it merged locally and nothing pushed:
+
+- the adaptive UI round 2: stuck marker on heatmap cells, override dialog status line, evidence shown once;
+- the adaptive e2e tool and `ADAPTIVE_E2E.md`;
+- accuracy spot-check round 2: 60 items, 0 wrong keys, 4 stems fixed (A2.17, N1.20, NQ1.1, NQ4.5) and 4 rationales
+  made precise;
+- a fresh-DB fallback in `tests/test_assess_phone_e2e.py`.
+
+`refinement` had moved on to `c124f12` (sim reproducibility, pass 14 notes).
+
+- **Conflicts:** none. `git merge-tree` and the real merge both auto-merged.
+- **Shared files checked by hand:**
+  - `curriculum_v2/item_review.py`: content's precise rationales and stem guards sit next to refinement's pass-14
+    `RATIONALE` merge, which applies only where a `why` is empty, so content's text wins where both exist.
+  - `tests/test_assess_phone_e2e.py`: content's seed-a-new-DB fallback works with refinement's `own_server()`.
+- **Regenerated:** `curriculum_v2/cert/alignment.json` and `CERT_COVERAGE.md` were already current after the merge.
+- **Targeted tests:** 55 passed (rationales, pass-14 checks, spot-check round 2, cert alignment, adaptive UI and
+  e2e fixes). The full suites ran at the end of pass 15; see REFINEMENT_NOTES.
+- **Worktree:** `content-wt` was not touched.
