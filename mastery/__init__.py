@@ -524,6 +524,9 @@ def register(app, db, deps):
         eng=eng, m=m, d=d, enrolled_section=enrolled_section, staff_section=staff_section, grade=_grade,
         open_check=_open_check, class_rows=class_rows, diagnose=lab_diagnosis.diagnose, lab_diagnoses=lab_diagnoses))
     plan_pref_ref['fn'] = feats['plan_pref']
+    from .briefing import register_briefing
+    brief = register_briefing(app, db, SimpleNamespace(eng=eng, m=m, d=d, staff_section=staff_section,
+                                                       needs_me=feats['needs_me']))
 
     for rule, ep, fn, methods in [
         ('/student/section/<int:section_id>/mastery', 'mastery_student', mastery_student, ['GET']),
@@ -541,6 +544,7 @@ def register(app, db, deps):
         app.add_url_rule(rule, ep, fn, methods=methods)
     api = SimpleNamespace(engine=eng, models=m, student_path=student_path, lesson_gate=lesson_gate,
                           daily_summary=feats['daily_summary'], lesson_quickcheck=feats['lesson_quickcheck'],
-                          features=feats, diagnose=lab_diagnosis.diagnose, lab_diagnoses=lab_diagnoses)
+                          features=feats, diagnose=lab_diagnosis.diagnose, lab_diagnoses=lab_diagnoses,
+                          briefing=brief)
     app.extensions['ciwt_mastery'] = api
     return api

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% from "mastery/_macros.html" import demo_ribbon with context %}
+{% block title %}Briefing — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="mx-brief">
+<nav aria-label="breadcrumb" class="mx-noprint">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Today’s briefing</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">Briefing · {{ b.today.strftime('%a %d %b %Y') }}</div>
+  <h1 class="h3 mb-1">{{ section.name }}</h1>
+  <p class="mb-2">{{ b.n_students }} students. Built from class data with fixed rules (no AI writing): what to do today, and why.</p>
+  <div class="d-flex flex-wrap gap-2 mx-noprint">
+    <button type="button" class="btn btn-brand" data-mx-print><i class="bi bi-printer" aria-hidden="true"></i> Print</button>
+    <a class="btn btn-outline-gold" href="{{ url_for('mastery_briefing_txt', section_id=section.id) }}"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Text (.txt)</a>
+    <a class="btn btn-outline-gold" href="{{ url_for('mastery_briefing_csv', section_id=section.id) }}"><i class="bi bi-filetype-csv" aria-hidden="true"></i> CSV</a>
+    <a class="btn btn-outline-gold" href="{{ url_for('mastery_today', section_id=section.id) }}"><i class="bi bi-people" aria-hidden="true"></i> Who needs me</a>
+  </div>
+</div>
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-center">{{ demo_ribbon(b.demo) }}
+  <span class="small mx-muted">Nothing on this page is a grade, and nothing is sent to anyone.</span></div>
+
+<section class="card mb-4" aria-labelledby="bfTodoH">
+  <div class="card-header"><h2 class="h6 mb-0" id="bfTodoH">Top {{ b.todo|length or 3 }} to do today</h2></div>
+  {% if b.todo %}
+  <ol class="list-group list-group-flush list-group-numbered mx-todo">
+    {% for t in b.todo %}
+    <li class="list-group-item mx-todo-item">
+      <div class="mx-todo-body">
+        <div class="d-flex flex-wrap gap-2 align-items-baseline"><span class="mx-badge">{{ kind_label[t.kind] }}</span><h3 class="h6 mb-0">{{ t.title }}</h3></div>
+        <ul class="small mb-1 mt-1">{% for w in t.why %}<li>{{ w }}</li>{% endfor %}</ul>
+        <p class="small mx-muted mb-2">Priority {{ t.score }} = {{ t.formula }}.</p>
+        <div class="d-flex flex-wrap gap-2 align-items-end mx-noprint">
+        {% if t.kind == 'misconception' %}
+          <a class="btn btn-sm btn-brand" href="#rt-{{ t.mc }}">Open the 5-minute re-teach</a>
+          {% set uids = t.users|map(attribute='id')|join(',') %}
+          <form method="post" action="{{ url_for('mastery_briefing_assign', section_id=section.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="obj" value="{{ t.obj }}"><input type="hidden" name="user_ids" value="{{ uids }}">
+            <input type="hidden" name="note" value="Assigned from the briefing: fix the mix-up “{{ t.title[10:]|truncate(160) }}”">
+            <button class="btn btn-sm btn-outline-navy" type="submit">Assign the correction to {{ t.users|length }} student{{ 's' if t.users|length != 1 }}</button>
+          </form>
+        {% elif t.kind == 'student' %}
+          <a class="btn btn-sm btn-brand" href="{{ url_for('messages_new', to=t.user.id) }}"><i class="bi bi-envelope" aria-hidden="true"></i> Message<span class="visually-hidden"> {{ t.user.full_name }}</span></a>
+          {% if t.obj %}
+          <form method="post" action="{{ url_for('mastery_override', section_id=section.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" value="{{ t.user.id }}"><input type="hidden" name="target" value="{{ t.obj }}">
+            <input type="hidden" name="kind" value="force_review"><input type="hidden" name="note" value="Assigned from the briefing: {{ t.why[0]|truncate(200) }}">
+            <input type="hidden" name="next" value="{{ url_for('mastery_briefing', section_id=section.id) }}">
+            <button class="btn btn-sm btn-outline-navy" type="submit">Assign review on {{ t.obj }}<span class="visually-hidden"> to {{ t.user.full_name }}</span></button>
+          </form>
+          {% endif %}
+          <form method="post" action="{{ url_for('mastery_checkin', section_id=section.id) }}" class="d-flex flex-wrap gap-2 align-items-end">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" value="{{ t.user.id }}"><input type="hidden" name="next" value="{{ url_for('mastery_briefing', section_id=section.id) }}">
+            <div><label class="form-label small mb-0" for="bfCi{{ loop.index }}">Check-in date</label>
+              <input class="form-control form-control-sm" type="date" id="bfCi{{ loop.index }}" name="on_date" value="{{ tomorrow }}" min="{{ b.today.isoformat() }}" required></div>
+            <button class="btn btn-sm btn-outline-navy" type="submit">Schedule check-in<span class="visually-hidden"> with {{ t.user.full_name }}</span></button>
+          </form>
+        {% elif t.kind == 'objective' %}
+          <form method="post" action="{{ url_for('mastery_briefing_assign', section_id=section.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="obj" value="{{ t.obj }}"><input type="hidden" name="user_ids" value="{{ t.users|map(attribute='id')|join(',') }}">
+            <input type="hidden" name="note" value="Assigned from the briefing: most of the class is not yet at mastered on {{ t.obj }}">
+            <button class="btn btn-sm btn-brand" type="submit">Assign a review on {{ t.obj }} to {{ t.users|length }} student{{ 's' if t.users|length != 1 }}</button>
+          </form>
+          <a class="btn btn-sm btn-outline-navy" href="{{ url_for('mastery_class', section_id=section.id, ch=b.cmap.objs[t.obj].chapter) }}">Open the heatmap</a>
+        {% elif t.kind == 'lab' %}
+          <a class="btn btn-sm btn-brand" href="{{ url_for('instructor_lab_results', section_id=section.id) }}">Open lab results</a>
+        {% elif t.kind == 'section' %}
+          <a class="btn btn-sm btn-brand" href="{{ url_for('view_lesson', section_id=section.id, module_id=t.section.module_id, lesson_id=t.section.lesson_id) }}">Open lesson {{ t.section.lesson }}</a>
+        {% elif t.kind == 'assessment' %}
+          <a class="btn btn-sm btn-brand" href="{{ t.result.url }}">Open {{ t.result.title }}</a>
+        {% endif %}
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}<div class="card-body">Nothing stands out today: no active class-wide mix-ups, nobody stuck or waiting, no low results.</div>{% endif %}
+</section>
+
+<div class="row g-4">
+<div class="col-lg-7">
+<section class="card mb-4" aria-labelledby="bfMcH">
+  <div class="card-header"><h2 class="h6 mb-0" id="bfMcH">Mix-ups to re-teach (5 minutes each)</h2></div>
+  {% if b.reteach %}
+  <div class="list-group list-group-flush">
+    {% for rt in b.reteach %}
+    <div class="list-group-item mx-rt" id="rt-{{ rt.mc }}">
+      <h3 class="h6 mb-1">{{ rt.label }} <span class="mx-code">{{ rt.obj }}</span></h3>
+      <p class="small mx-muted mb-2">{{ rt.agg.active }} student{{ 's' if rt.agg.active != 1 }} with it active · {{ rt.agg.hits }} pick{{ 's' if rt.agg.hits != 1 }} in total</p>
+      <ol class="small mb-2">{% for st in rt.steps %}<li><strong>{{ st.min }} min.</strong> {{ st.text }}</li>{% endfor %}</ol>
+      {% if rt.question %}
+      <div class="mx-rt-q small mb-2"><strong>Ask the room:</strong> {{ rt.question.text }}
+        <ul class="mb-1">{% for o in rt.question.options %}<li>{{ o }}{% if o == rt.question.correct %} <span class="mx-badge">Answer</span>{% elif o == rt.question.distractor %} <span class="mx-badge mx-badge-req">The mix-up</span>{% endif %}</li>{% endfor %}</ul></div>
+      {% endif %}
+      {% for blk in rt.blocks %}
+      <details class="mx-why mb-2"><summary>From lesson {{ blk.lesson }}: {{ blk.label }}</summary><div class="mx-why-body module-content mx-excerpt">{{ blk.html|safe }}</div></details>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}<div class="card-body small">No mix-ups recorded in this class yet. They come from tagged wrong answers on chapter checks, tests and reviews.</div>{% endif %}
+</section>
+
+<section class="card mb-4" aria-labelledby="bfObjH">
+  <div class="card-header"><h2 class="h6 mb-0" id="bfObjH">Objectives most of the class has not mastered</h2></div>
+  {% if b.objectives %}
+  <table class="table table-sm mb-0 table-stack">
+    <caption class="visually-hidden">Objectives where at least half of the students with answers are below mastered</caption>
+    <thead><tr><th scope="col">Objective</th><th scope="col">Not yet mastered</th><th scope="col">Needs review</th></tr></thead>
+    <tbody>{% for o in b.objectives[:10] %}<tr><th scope="row" data-label="Objective"><span class="mx-code">{{ o.obj }}</span> <span class="fw-normal">{{ o.text }}</span></th>
+      <td data-label="Not yet mastered">{{ o.below }} of {{ o.with_evidence }}</td><td data-label="Needs review">{{ o.needs_review }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <div class="card-body small mx-muted border-top">Counted among students with at least one answer on the objective (at least {{ 3 }}).</div>
+  {% else %}<div class="card-body small">No objective has most of the class below mastered (among students with answers).</div>{% endif %}
+</section>
+
+<section class="card mb-4" aria-labelledby="bfSkH">
+  <div class="card-header"><h2 class="h6 mb-0" id="bfSkH">Sections the class skimmed or skipped</h2></div>
+  {% if b.skims %}
+  <ul class="list-group list-group-flush">{% for x in b.skims[:8] %}<li class="list-group-item small"><strong>{{ x.lesson }}</strong> “{{ x.heading }}”: {{ x.skimmed }} skimmed, {{ x.skipped }} skipped, of {{ x.measured }} measured students</li>{% endfor %}</ul>
+  {% endif %}
+  <div class="card-body small {{ 'border-top' if b.skims }}">{% if not b.skims %}No section stands out. {% endif %}From Helix reading data: only the {{ b.helix_n }} student{{ 's' if b.helix_n != 1 }} with current consent, sessions of at least a minute, demo sessions excluded. Skimmed = under 3 s on the section. Reading data is a hint, not an assessment.</div>
+</section>
+</div>
+
+<div class="col-lg-5">
+<section class="card mb-4" aria-labelledby="bfWhoH">
+  <div class="card-header"><h2 class="h6 mb-0" id="bfWhoH">Who to check in with</h2></div>
+  {% if b.focus %}
+  <ul class="list-group list-group-flush">{% for p in b.focus[:8] %}<li class="list-group-item small"><a href="{{ url_for('mastery_class_student', section_id=section.id, user_id=p.user.id) }}">{{ p.user.full_name }}</a>: {{ p.reasons[:2]|map(attribute='text')|join('; ') }}</li>{% endfor %}</ul>
+  <div class="card-body small border-top"><a href="{{ url_for('mastery_today', section_id=section.id) }}">All {{ b.focus|length }} with actions</a></div>
+  {% else %}<div class="card-body small">Nobody today.</div>{% endif %}
+</section>
+
+<section class="card mb-4" aria-labelledby="bfLabH">
+  <div class="card-header"><h2 class="h6 mb-0" id="bfLabH">Lab struggles</h2></div>
+  {% if b.labs %}
+  <ul class="list-group list-group-flush">{% for x in b.labs[:8] %}<li class="list-group-item small"><strong>{{ x.title }}</strong>{% if x.concerns %} <span class="mx-muted">({{ x.concerns|join('; ') }})</span>{% endif %}:
+    {% for u in x.students %}<a href="{{ url_for('instructor_lab_student', section_id=section.id, user_id=u.id, lab_id=x.lab_id) }}">{{ u.full_name }}<span class="visually-hidden"> lab event log</span></a>{{ ', ' if not loop.last }}{% endfor %}</li>{% endfor %}</ul>
+  <div class="card-body small border-top mx-muted">From lab event logs (latest attempt, this class). Patterns never change a lab score.</div>
+  {% else %}<div class="card-body small">{% if b.labs_wired %}No lab struggle patterns in this class right now.{% else %}Lab event logs are not connected.{% endif %}</div>{% endif %}
+</section>
+
+<section class="card mb-4" aria-labelledby="bfResH">
+  <div class="card-header"><h2 class="h6 mb-0" id="bfResH">Recent results (last {{ recent_days }} days)</h2></div>
+  {% if b.results %}
+  <ul class="list-group list-group-flush">{% for r in b.results[:8] %}<li class="list-group-item small"><a href="{{ r.url }}">{{ r.title }}</a>: average {{ r.mean }}% · {{ r.attempts }} attempt{{ 's' if r.attempts != 1 }} by {{ r.students }} student{{ 's' if r.students != 1 }}{% if r.low %} · {{ r.low }} below {{ low_score }}%{% endif %}</li>{% endfor %}</ul>
+  {% else %}<div class="card-body small">No chapter checks or tests submitted in the last {{ recent_days }} days.</div>{% endif %}
+</section>
+
+<section class="card mb-4" aria-labelledby="bfUpH">
+  <div class="card-header"><h2 class="h6 mb-0" id="bfUpH">Coming up (next 7 days)</h2></div>
+  {% if b.upcoming %}
+  <ul class="list-group list-group-flush">{% for u in b.upcoming %}<li class="list-group-item small"><strong>{{ u.when.strftime('%a %d %b') }}</strong>{% if u.overdue %} (overdue){% endif %}: {{ u.text }}</li>{% endfor %}</ul>
+  {% else %}<div class="card-body small">Nothing scheduled: no releases, closings or check-ins.</div>{% endif %}
+</section>
+
+<section class="card mb-4" aria-labelledby="bfLogH">
+  <div class="card-header"><h2 class="h6 mb-0" id="bfLogH">What the engine did (last {{ recent_days }} days)</h2></div>
+  {% if b.log_n %}
+  <ul class="list-group list-group-flush">{% for k, n in b.log_counts|dictsort(by='value', reverse=true) %}<li class="list-group-item small d-flex justify-content-between"><span>{{ mastery_action_label.get(k, k) }}</span><span>{{ n }}</span></li>{% endfor %}</ul>
+  {% else %}<div class="card-body small">No decisions logged.</div>{% endif %}
+  <div class="card-body small border-top"><a href="{{ url_for('mastery_class', section_id=section.id) }}">Mastery page and full log</a>{% if not b.labs_wired %} · lab event log not connected{% endif %}</div>
+</section>
+</div>
+</div>
+
+<details class="mx-why mb-4 mx-noprint">
+  <summary>Email-ready text (copy it into your own email; nothing is sent from here)</summary>
+  <div class="mx-why-body"><label class="form-label small" for="bfText">Briefing as plain text</label>
+    <textarea class="form-control mx-brief-text" id="bfText" rows="14" readonly>{{ email_text }}</textarea></div>
+</details>
+<details class="mx-why mb-4">
+  <summary>How this briefing is made</summary>
+  <div class="mx-why-body small"><p>Everything comes from data already in Novak Learning: mastery estimates and the decision log, “Who needs me”, mix-ups from tagged wrong answers, lab event logs, consented Helix reading data, recent chapter checks and tests, releases and check-ins. Fixed rules rank the to-do list; each item shows its priority and how it was counted. The same data always gives the same briefing. No AI model writes any of it.</p></div>
+</details>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/mastery.js') }}" defer></script>{% endblock %}

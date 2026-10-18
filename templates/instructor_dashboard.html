@@ -6,6 +6,26 @@
   <p class="mb-0">Open a class to enroll students, open a test, and read scores.</p>
 </div>
 
+{% if briefs %}
+<section class="card mb-4 mx-home-brief" aria-labelledby="hbH">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2 class="h6 mb-0" id="hbH"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Today’s briefing</h2>
+    {% if briefs|selectattr('demo')|list %}<span class="small">Includes demo seed data</span>{% endif %}
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for b in briefs %}
+    <li class="list-group-item">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div><strong>{{ b.section.name }}</strong>
+          <div class="small">{% if b.todo %}First: {{ b.todo[0].title }} <span class="text-muted">— {{ b.todo[0].why[0]|truncate(110) }}</span>{% else %}Nothing stands out today.{% endif %}</div></div>
+        <a class="btn btn-sm btn-brand" href="{{ url_for('mastery_briefing', section_id=b.section.id) }}">Open briefing{% if b.n_todo %} ({{ b.n_todo }} to do){% endif %}<span class="visually-hidden"> for {{ b.section.name }}</span></a>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
 {% if sections %}
   {% for s in sections %}
     {% if loop.first or (sections[loop.index0-1].course_id if loop.index0 else none) != s.course_id %}

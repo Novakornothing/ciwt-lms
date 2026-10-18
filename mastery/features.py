@@ -418,6 +418,9 @@ def register_features(app, db, ctx):
         uid = request.form.get('user_id', type=int)
         u = db.session.get(d.User, uid or 0)
         back = url_for('mastery_today', section_id=section.id)
+        nxt = request.form.get('next') or ''
+        if nxt.startswith(f'/instructor/section/{section.id}/') and '//' not in nxt:
+            back = nxt
         if not u or u.role != 'student' or not d.Enrollment.query.filter_by(section_id=section.id, user_id=u.id).first():
             flash('That check-in could not be saved.', 'danger')
             return redirect(back, code=303)

@@ -4180,7 +4180,15 @@ def instructor_dashboard():
             tqi_by_id[s.id] = _tqi_status(s)
         except Exception as exc:
             print('tqi_status', s.id, exc)
-    return render_template('instructor_dashboard.html', sections=sections, courses=courses, tqi_by_id=tqi_by_id)
+    # pass 12: today's briefing card (top item for the first few classes; cached a few minutes, never breaks the page)
+    briefs = []
+    for s in sections[:4]:
+        try:
+            briefs.append({'section': s, **mastery_api.briefing['home_summary'](s)})
+        except Exception as exc:
+            db.session.rollback()
+            print('briefing card', s.id, exc)
+    return render_template('instructor_dashboard.html', sections=sections, courses=courses, tqi_by_id=tqi_by_id, briefs=briefs)
 
 
 @app.route('/instructor/section/<int:section_id>')
@@ -7055,6 +7063,7 @@ mastery_api = mastery_mod.register(app, db, dict(
     audit=lambda action, detail='': audit(action, detail),
     # pass 12: live lab event log (latest attempt per lab, this class only) + lab definitions for process diagnosis
     # pass 12: practice exams (content merge) as evidence, weight 0.8, graded with the practice module's own rules
+    ContentRelease=ContentRelease,
     PracticeAttempt=PracticeAttempt, practice_bank=cert_practice.bank, practice_grade=cert_practice.grade,
     lab_events=_mx_lab_events(lab_progress_api.LabProgress, lab_progress_api.LabEvent), lab_def=_mx_lab_def(_mx_get_lab),
 ))

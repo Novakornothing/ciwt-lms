@@ -126,3 +126,20 @@ html:not([data-theme="dark"]) .mx-why-body a { color: #0a58ca; }
 /* lab process diagnosis (instructor student page) */
 .mx-labdx-list { list-style: none; padding-left: 0; display: grid; gap: .6rem; }
 .mx-labdx-list > li { border-left: 3px solid var(--surface-3); padding-left: .7rem; }
+
+/* Briefing (pass 12) */
+.mx-todo-item { display: list-item; }
+.mx-todo-item::marker { font-weight: 700; }
+.mx-todo-body { display: inline-block; width: calc(100% - 2rem); vertical-align: top; }
+.mx-rt-q { border-left: 3px solid var(--accent); padding-left: .7rem; }
+.mx-brief-text { font-family: var(--bs-font-monospace, monospace); font-size: .85rem; }
+.mx-brief .btn-sm { min-height: 44px; display: inline-flex; align-items: center; gap: .35rem; }
+@media print {
+  .mx-noprint, .mobile-tabbar, .ui-sidebar, nav.navbar, footer, .staff-rail, .teach-timer { display: none !important; }
+  .mx-brief .card { break-inside: avoid; box-shadow: none; border: 1px solid #999; }
+  .mx-brief details { display: block; }
+  .mx-brief details > summary { list-style: none; font-weight: 700; }
+  .mx-brief details:not([open]) > .mx-why-body { display: block; }
+  .mx-brief .page-hero { background: none !important; color: #000 !important; border: 0; padding: 0; }
+  .mx-brief .page-hero * { color: #000 !important; }
+}

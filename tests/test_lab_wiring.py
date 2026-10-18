@@ -116,3 +116,11 @@ def test_lab_diagnosis_never_changes_a_lab_score(app, mod, instructor, lab_rows)
     with app.app_context():
         after = [(r.lab_id, r.score, r.best_score) for r in mod.lab_progress_api.LabProgress.query.filter_by(user_id=lab_rows)]
     assert before == after
+
+
+def test_briefing_is_fed_by_lab_struggles(app, mod, instructor, lab_rows):
+    with app.test_request_context():
+        b = app.extensions['ciwt_mastery'].briefing['build'](mod.db.session.get(mod.ClassSection, 1))
+    assert b['labs'] and all(x['students'] for x in b['labs'])
+    h = instructor.get('/instructor/section/1/briefing.txt').data.decode()
+    assert 'LAB' in h.upper()

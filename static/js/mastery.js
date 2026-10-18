@@ -19,3 +19,10 @@
     if (sel && t && sel.querySelector('option[value="' + t + '"]')) sel.value = t;
   });
 })();
+
+/* Briefing (pass 12): print button (no inline handlers, CSP-friendly). */
+(function () {
+  document.querySelectorAll('[data-mx-print]').forEach(function (b) {
+    b.addEventListener('click', function () { window.print(); });
+  });
+})();
