@@ -675,6 +675,7 @@ Out of scope as agreed: confidence-weighted answers and pass forecasts.
 - `tools/mastery_e2e.py` (Playwright, throwaway server + DB copy): review inserted → why panel → lesson banner → mix-up correction → inline offer + dismiss → daily review → plan →
   heatmap + override dialog (force review → required and redirected before the lesson → waive) → Who needs me → chapter unlock → test-out passed. 38/38 at 1280 and 390 (light), 390 dark.
 - axe WCAG 2.1 AA sweep (`tools/a11y_sweep.py --themes light,dark`, mastery pages added): 360 page/width checks, 0 violations, no overflow. Mastery pages also in `tools/site_audit.py` and `tools/shots.py`.
+- Other runs (throwaway server on :5078, DB copy): `site_audit.py --themes light,dark` no overflow anywhere (instructor mastery page: 1 small target left at 390 px, the adaptivity switch); `assess_phone_e2e.py` 43/43; `helix_lesson_e2e.py` and `helix_hardening_e2e.py` pass with the face y4m; node 31/31. `helix_e2e.py` times out waiting for calibration dots because it predates the "Get into position" step (added in commit 2bda572, before pass 11; Helix JS is unchanged in this pass), so that script needs updating, not the runtime.
 - Fixes found by the sweep: heatmap cells use hidden text for their name (label-in-name), darker link in the why panel (contrast), long Next buttons wrap, scrollable lesson tables get focus after web fonts load (`base.html`).
 
 ### Known limits
