@@ -223,3 +223,19 @@ def test_ssh_lab_probe_watchdogs_outlast_a_slow_phone_and_the_client_timeout():
     m = re.search(r'ConnectTimeout=(\d+)', by['keylogin']['sh'])
     assert m and by['keylogin']['secs'] > int(m.group(1))   # ssh's own timeout fires (and reports) before the watchdog kills it
     assert by['refused']['secs'] > 2 * int(m.group(1)) - 1   # two connections in that check
+
+
+# ---- simulators opened from a scenario's real-VM stage link back to that stage (vm_fallback_e2e nowasm failure, r5)
+def test_fallback_links_carry_their_source_and_scenario_stage_is_linked_back(student):
+    page = student.get('/labs/scn-dns-fix').get_data(as_text=True)
+    assert '/labs/win-dns-break?from=scn-dns-fix' in page
+    back = student.get('/labs/win-dns-break?from=scn-dns-fix').get_data(as_text=True)
+    real = re.search(r'class="small mb-0 mt-2 lab-real-link".*?</p>', back, re.S).group(0)
+    assert '/labs/scn-dns-fix' in real and '/labs/linux-vm-dns' in real   # the stage and the catalogue twins
+
+
+def test_scenario_stage_not_offered_without_from_or_from_unrelated_lab(student):
+    for url in ('/labs/win-dns-break', '/labs/win-dns-break?from=scn-lan2-fix', '/labs/win-dns-break?from=win-ipconfig',
+                '/labs/win-dns-break?from=' + 'x' * 500):
+        page = student.get(url).get_data(as_text=True)
+        assert '/labs/scn-dns-fix' not in page and '/labs/scn-lan2-fix' not in page, url   # no skipping a stage lock

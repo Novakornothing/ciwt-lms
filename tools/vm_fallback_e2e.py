@@ -59,13 +59,13 @@ def main():
                 pg.goto(f"{a.base}/labs/{lab['id']}")
                 t = weak_text(pg)
                 assert 'WebAssembly' in t, t
-                links = pg.eval_on_selector_all('.vm-fallback a', 'ns=>ns.map(n=>n.getAttribute("href"))')
+                links = pg.eval_on_selector_all('.vm-fallback a', 'ns=>ns.map(n=>n.getAttribute("href").split("?")[0])')
                 want = ['/labs/' + f for f in lab['fallback']]
                 assert sorted(links) == sorted(want), (links, want)
                 for f in lab['fallback']:
                     pg.goto(f"{a.base}/labs/{lab['id']}")
-                    pg.locator(f'.vm-fallback a[href="/labs/{f}"]').tap()
-                    pg.wait_for_url(f'**/labs/{f}')
+                    pg.locator(f'.vm-fallback a[href^="/labs/{f}?"], .vm-fallback a[href="/labs/{f}"]').first.tap()
+                    pg.wait_for_url(f'**/labs/{f}*')
                     pg.wait_for_selector('#labObjectives')
                     back = pg.eval_on_selector_all('.lab-real-link a', 'ns=>ns.map(n=>n.getAttribute("href"))')
                     if f"/labs/{lab['id']}" not in back:

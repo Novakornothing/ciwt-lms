@@ -32,7 +32,7 @@
         {% endif %}
         {% if fallback_labs %}
         <p class="small mb-0 mt-2 vm-fallback">Older phone or slow connection? The same skills are in the simulated version{{ 's' if fallback_labs|length > 1 else '' }}:
-          {% for f in fallback_labs %}<a href="{{ url_for('interactive_lab', lab_id=f.id) }}">{{ f.title }}</a>{{ ', ' if not loop.last else '' }}{% endfor %}.</p>
+          {% for f in fallback_labs %}<a href="{{ url_for('interactive_lab', lab_id=f.id, from=lab.id) }}">{{ f.title }}</a>{{ ', ' if not loop.last else '' }}{% endfor %}.</p>
         <div class="alert alert-info mt-2 mb-0 small" id="vmWeak" role="status" hidden><span class="why"></span>If it stays slow, use the simulated version above — it runs on any device and counts as practice for the same objectives.</div>
         {% endif %}
       </div>
