@@ -39,6 +39,8 @@ Status 18 Oct 2026 (round 2), `labs` branch. Image, licences and measurements ar
 
 ## Labs: real vs simulated
 
+† = tagged *Pending SME review* (instructor-only note; added on the labs branch).
+
 | # | Lab | Kind | Environment |
 |---|---|---|---|
 | 1 | `win-ipconfig` — 1. Windows 11 VM — Read Network Identity | windows | Simulated |
@@ -87,43 +89,43 @@ Status 18 Oct 2026 (round 2), `labs` branch. Image, licences and measurements ar
 | 44 | `sw-describe` — Switch — Access port description | switch | Simulated |
 | 45 | `ticket-intake` — Block 1 — Ticket intake desk | ticket | Simulated |
 | 46 | `hw-board` — Block 2 — Identify the board on the bench | ticket | Simulated |
-| 47 | `net-subnet` — Subnetting workbench — calculate, size and validate | activity | Simulated |
-| 48 | `hw-cables` — Connector and cable identification bench | activity | Simulated |
-| 49 | `hw-pc-build` — Workstation build — pick compatible parts | activity | Simulated |
-| 50 | `ticket-method` — Troubleshooting methodology — work a ticket end to end | activity | Simulated |
-| 51 | `win-net-cli` — Windows CLI — isolate a name-resolution fault | windows | Simulated |
-| 52 | `linux-shell` — Linux shell — files, permissions and logs | linux | Simulated — real twin: `linux-vm-perms`, `linux-vm-shell`, `linux-vm-services`, `linux-vm-logs`, `linux-vm-cron`, `linux-vm-users`, `linux-vm-packages`, `linux-vm-ssh`, `linux-vm-script` |
-| 53 | `print-trouble` — PowerShell — clear a stuck print queue | windows | Simulated |
-| 54 | `rtr-vlan-acl` — Router — inter-VLAN routing and a guest ACL | router | Simulated — real twin: `linux-vm-firewall` |
-| 55 | `sw-vlan-multi` — Switch — two VLANs, access ports and a pruned trunk | switch | Simulated |
-| 56 | `wifi-secure` — SOHO router — secure the admin page, Wi-Fi and guest network | activity | Simulated |
-| 57 | `sec-malware` — Malware response — the seven-step removal process | activity | Simulated |
-| 58 | `ops-backup` — Backup and recovery — types, restore sets, 3-2-1, RPO/RTO | activity | Simulated |
-| 59 | `virt-vm` — Virtualization — build a Windows 11 lab VM | activity | Simulated |
-| 60 | `mob-mdm` — Mobile devices — connectivity and MDM tickets inside policy | activity | Simulated |
-| 61 | `win-ad-users` — Active Directory Users and Computers — onboard, unlock, offboard | win11gui | Simulated — real twin: `linux-vm-users` |
-| 62 | `win-laptop-ports` — Windows CLI — battery health, VM check, MX records and port tests | windows | Simulated |
-| 63 | `win-wifi-survey` — Windows CLI — Wi-Fi survey on a laptop (signal, band, channel) | windows | Simulated |
-| 64 | `hv-vswitch` — Hyper-V host — isolated virtual switch and checkpoints (PowerShell) | windows | Simulated |
-| 65 | `linux-vm-perms` — Real Linux VM — files, ownership, permissions and a support script | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
-| 66 | `linux-vm-shell` — Real Linux VM — shell basics: files, permissions, scripts and logs | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
-| 67 | `linux-vm-services` — Real Linux VM — services, processes, a filling disk, cron and syslog | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
-| 68 | `linux-vm-netclient` — Real Linux VM — lease, gateway and name resolution on a live network | vm | **Real** — 1 Linux VM in the browser + virtual network (DHCP/DNS host); fallback: `win-dhcp-renew`, `win-dns-break` |
-| 69 | `linux-vm-routing` — Real Linux VMs — route between two networks (two machines, one router) | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `rtr-two-interfaces`, `rtr-default-route` |
-| 70 | `linux-vm-logs` — Real Linux VM — log investigation: brute force, a breach and a failed backup | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
-| 71 | `linux-vm-cron` — Real Linux VM — scheduled tasks that never ran (cron) | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
-| 72 | `linux-vm-users` — Real Linux VM — accounts, groups and least-privilege sudo for a help-desk team | vm | **Real** — 1 Linux VM in the browser; fallback: `win-ad-users`, `linux-shell` |
-| 73 | `linux-vm-packages` — Real Linux VM — package and service troubleshooting (apk, init scripts, ports) | vm | **Real** — 1 Linux VM in the browser; fallback: `w11-services`, `linux-shell` |
-| 74 | `linux-vm-firewall` — Real Linux VMs — host firewall with iptables (default deny, stateful, admin-only SSH) | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `w11-firewall`, `rtr-vlan-acl` |
-| 75 | `linux-vm-disk` — Real Linux VM — add a data disk: partitions, ext4, mount by UUID, swap and fstab | vm | **Real** — 1 Linux VM in the browser; fallback: `w11-disk` |
-| 76 | `linux-vm-ssh` — Real Linux VMs — SSH between two machines with keys, then turn passwords off | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `linux-shell` |
-| 77 | `linux-vm-script` — Real Linux VM — automate it: a backup script with rotation, exit codes and logging | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
-| 78 | `linux-vm-dns` — Real Linux VMs — DNS troubleshooting chain: client, internal resolver, records and forwarding | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dns-break`, `win-nslookup-ok` |
-| 79 | `linux-vm-nettrouble` — Real Linux VMs — multi-VM network troubleshooting: no lease, wrong gateway, broken route | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dhcp-renew`, `rtr-default-route`, `rtr-trace` |
-| 80 | `scn-dns-evidence` — SCN-DNS · Stage 1 · User's PC (Windows 11 simulation) | windows | Simulated |
-| 81 | `scn-dns-fix` — SCN-DNS · Stage 2 · DNS server and test client (2 real Linux VMs) | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dns-break`, `win-nslookup-ok` |
-| 82 | `scn-lan2-fix` — SCN-LAN2 · Stage 1 · LAN 2 router and PC (2 real Linux VMs) | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dhcp-renew`, `rtr-default-route`, `rtr-trace` |
-| 83 | `scn-lan2-verify` — SCN-LAN2 · Stage 2 · CFO's laptop (Windows 11 simulation) | windows | Simulated |
+| 47 | `net-subnet` — Subnetting workbench — calculate, size and validate † | activity | Simulated |
+| 48 | `hw-cables` — Connector and cable identification bench † | activity | Simulated |
+| 49 | `hw-pc-build` — Workstation build — pick compatible parts † | activity | Simulated |
+| 50 | `ticket-method` — Troubleshooting methodology — work a ticket end to end † | activity | Simulated |
+| 51 | `win-net-cli` — Windows CLI — isolate a name-resolution fault † | windows | Simulated |
+| 52 | `linux-shell` — Linux shell — files, permissions and logs † | linux | Simulated — real twin: `linux-vm-perms`, `linux-vm-shell`, `linux-vm-services`, `linux-vm-logs`, `linux-vm-cron`, `linux-vm-users`, `linux-vm-packages`, `linux-vm-ssh`, `linux-vm-script` |
+| 53 | `print-trouble` — PowerShell — clear a stuck print queue † | windows | Simulated |
+| 54 | `rtr-vlan-acl` — Router — inter-VLAN routing and a guest ACL † | router | Simulated — real twin: `linux-vm-firewall` |
+| 55 | `sw-vlan-multi` — Switch — two VLANs, access ports and a pruned trunk † | switch | Simulated |
+| 56 | `wifi-secure` — SOHO router — secure the admin page, Wi-Fi and guest network † | activity | Simulated |
+| 57 | `sec-malware` — Malware response — the seven-step removal process † | activity | Simulated |
+| 58 | `ops-backup` — Backup and recovery — types, restore sets, 3-2-1, RPO/RTO † | activity | Simulated |
+| 59 | `virt-vm` — Virtualization — build a Windows 11 lab VM † | activity | Simulated |
+| 60 | `mob-mdm` — Mobile devices — connectivity and MDM tickets inside policy † | activity | Simulated |
+| 61 | `win-ad-users` — Active Directory Users and Computers — onboard, unlock, offboard † | win11gui | Simulated — real twin: `linux-vm-users` |
+| 62 | `win-laptop-ports` — Windows CLI — battery health, VM check, MX records and port tests † | windows | Simulated |
+| 63 | `win-wifi-survey` — Windows CLI — Wi-Fi survey on a laptop (signal, band, channel) † | windows | Simulated |
+| 64 | `hv-vswitch` — Hyper-V host — isolated virtual switch and checkpoints (PowerShell) † | windows | Simulated |
+| 65 | `linux-vm-perms` — Real Linux VM — files, ownership, permissions and a support script † | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
+| 66 | `linux-vm-shell` — Real Linux VM — shell basics: files, permissions, scripts and logs † | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
+| 67 | `linux-vm-services` — Real Linux VM — services, processes, a filling disk, cron and syslog † | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
+| 68 | `linux-vm-netclient` — Real Linux VM — lease, gateway and name resolution on a live network † | vm | **Real** — 1 Linux VM in the browser + virtual network (DHCP/DNS host); fallback: `win-dhcp-renew`, `win-dns-break` |
+| 69 | `linux-vm-routing` — Real Linux VMs — route between two networks (two machines, one router) † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `rtr-two-interfaces`, `rtr-default-route` |
+| 70 | `linux-vm-logs` — Real Linux VM — log investigation: brute force, a breach and a failed backup † | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
+| 71 | `linux-vm-cron` — Real Linux VM — scheduled tasks that never ran (cron) † | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
+| 72 | `linux-vm-users` — Real Linux VM — accounts, groups and least-privilege sudo for a help-desk team † | vm | **Real** — 1 Linux VM in the browser; fallback: `win-ad-users`, `linux-shell` |
+| 73 | `linux-vm-packages` — Real Linux VM — package and service troubleshooting (apk, init scripts, ports) † | vm | **Real** — 1 Linux VM in the browser; fallback: `w11-services`, `linux-shell` |
+| 74 | `linux-vm-firewall` — Real Linux VMs — host firewall with iptables (default deny, stateful, admin-only SSH) † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `w11-firewall`, `rtr-vlan-acl` |
+| 75 | `linux-vm-disk` — Real Linux VM — add a data disk: partitions, ext4, mount by UUID, swap and fstab † | vm | **Real** — 1 Linux VM in the browser; fallback: `w11-disk` |
+| 76 | `linux-vm-ssh` — Real Linux VMs — SSH between two machines with keys, then turn passwords off † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `linux-shell` |
+| 77 | `linux-vm-script` — Real Linux VM — automate it: a backup script with rotation, exit codes and logging † | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
+| 78 | `linux-vm-dns` — Real Linux VMs — DNS troubleshooting chain: client, internal resolver, records and forwarding † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dns-break`, `win-nslookup-ok` |
+| 79 | `linux-vm-nettrouble` — Real Linux VMs — multi-VM network troubleshooting: no lease, wrong gateway, broken route † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dhcp-renew`, `rtr-default-route`, `rtr-trace` |
+| 80 | `scn-dns-evidence` — SCN-DNS · Stage 1 · User's PC (Windows 11 simulation) † | windows | Simulated |
+| 81 | `scn-dns-fix` — SCN-DNS · Stage 2 · DNS server and test client (2 real Linux VMs) † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dns-break`, `win-nslookup-ok` |
+| 82 | `scn-lan2-fix` — SCN-LAN2 · Stage 1 · LAN 2 router and PC (2 real Linux VMs) † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dhcp-renew`, `rtr-default-route`, `rtr-trace` |
+| 83 | `scn-lan2-verify` — SCN-LAN2 · Stage 2 · CFO's laptop (Windows 11 simulation) † | windows | Simulated |
 | – | `CL-4` — Print path and laptop FRU identification | classroom | **In class** — real equipment or lab VMs, instructor sign-off |
 | – | `CL-6` — Build, snapshot and network a virtual machine | classroom | **In class** — real equipment or lab VMs, instructor sign-off |
 | – | `CL-7` — Structured troubleshooting drills on staged faults | classroom | **In class** — real equipment or lab VMs, instructor sign-off |

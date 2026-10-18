@@ -441,9 +441,9 @@ Run: `tools/labs_e2e.py --views desktop,phone,tablet --json …` against `labs_d
 - **Simulated device output follows the real tools but is not exhaustive.** Unknown commands get "Did you mean"
   suggestions and a pointer to `help`.
 - **Round 2 limits.**
-  - PBQ masking is a UI and response layer. A student who reads the page source or the network responses still
-    cannot see the check text, but the stage's base lab (its sim fallback) is a normal lab with visible
-    objectives. That makes it a formative scenario, not a secure exam.
+  - PBQ masking is a UI and response layer. The check text is never sent to the student. But a VM stage's probe
+    runs inside the student's VM, where a determined student can read its shell tests, and each stage's base lab is
+    an ordinary lab with visible objectives. Treat the scenarios as formative, not as a secure exam.
   - Windows PowerShell cmdlets still run at a `C:\>` prompt in the CLI simulator.
   - `tracert` stops honestly where the model ends.
   - The cron lab's solution waits up to 75 s for the next minute.
