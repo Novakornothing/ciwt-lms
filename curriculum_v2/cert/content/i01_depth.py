@@ -1,0 +1,122 @@
+"""Pass 11 depth items for exam objectives that had fewer than four mapped bank items (no lesson section;
+the objectives are already taught in the lessons named in the coverage report)."""
+from ..authoring import match, multi, order, single
+
+SUPPLEMENTS = []
+GLOSSARY = []
+
+ITEMS = [
+    # Core 1 2.1 ports and protocols
+    match('A1:2.1', 'IT-5.2', 1, 'Match each service to its default port.',
+          [('IMAP', '143'), ('POP3', '110'), ('SMB / CIFS', '445'), ('LDAP', '389'), ('RDP', '3389')],
+          'Default ports from Core 1 2.1 (IANA registry).', decoys=['8080']),
+    multi('A1:2.1', 'IT-5.2', 2, 'Which TWO services normally use UDP rather than TCP for their main traffic? (Choose two.)',
+          ['DHCP (67/68)', 'DNS queries (53)'],
+          ['SSH (22)', 'HTTPS (443)', 'SMTP (25)'],
+          'DHCP uses UDP 67/68 and ordinary DNS queries use UDP 53; SSH, HTTPS and SMTP are TCP services.'),
+    # Core 1 2.2 wireless technologies
+    match('A1:2.2', 'IT-5.4', 1, 'Match each wireless technology to its typical use.',
+          [('RFID', 'Tracking tagged stock in a warehouse'), ('NFC', 'Tap-to-pay at a till'),
+           ('Bluetooth', 'Wireless headset paired to a laptop'), ('6 GHz Wi-Fi', 'High-capacity WLAN with clean spectrum')],
+          'RFID tags identify items, NFC works at centimetres, Bluetooth links personal devices, 6 GHz serves Wi-Fi 6E/7.',
+          decoys=['DSL']),
+    # Core 1 2.3 networked hosts
+    match('A1:2.3', 'IT-5.2', 1, 'Match each server or appliance to the service it provides.',
+          [('Syslog server', 'Collects log messages from devices'), ('AAA server', 'Authentication, authorization and accounting'),
+           ('Load balancer', 'Spreads requests across several web servers'), ('Spam gateway', 'Filters unwanted email before delivery')],
+          'Networked host services named in Core 1 2.3.', decoys=['Print spooler on a PC']),
+    single('A1:2.3', 'IT-5.2', 2, 'A small business wants one appliance that combines firewall, intrusion prevention, web filtering and antivirus at the internet edge. What is it called?',
+           'A unified threat management (UTM) appliance',
+           ['A SCADA controller', 'A network-attached storage device', 'An NTP server'],
+           'UTM appliances bundle several security functions at the perimeter.'),
+    # Core 1 2.7 connection and network types
+    match('A1:2.7', 'NO-3.2', 1, 'Match each network type to its description.',
+          [('PAN', 'A phone, smartwatch and earbuds around one person'), ('MAN', 'Linked sites across one city'),
+           ('SAN', 'Dedicated network giving servers block-level storage'), ('WAN', 'Offices in different countries joined together')],
+          'Network types by scale and purpose (Core 1 2.7).', decoys=['VLAN']),
+    match('A1:2.7', 'NO-3.2', 2, 'Match each internet connection type to the medium it uses.',
+          [('Cable', 'Coaxial cable from the cable provider'), ('DSL', 'Existing telephone wiring'),
+           ('Fiber', 'Glass strands to an ONT'), ('WISP', 'Fixed wireless link to a provider’s tower')],
+          'Connection types from Core 1 2.7.', decoys=['Thunderbolt']),
+    single('A1:2.7', 'NO-3.2', 3, 'A remote farm has no cable, DSL or fibre and poor cellular coverage. Which connection type is most likely available?',
+           'Satellite internet',
+           ['A metropolitan area network', 'A storage area network', 'A personal area network'],
+           'Satellite reaches locations with no terrestrial service; MAN, SAN and PAN are network types, not internet connections.'),
+    single('A1:2.7', 'NO-3.2', 4, 'Which network type is created by a laptop’s Wi-Fi connection to an office access point?',
+           'WLAN',
+           ['SAN', 'MAN', 'PAN'],
+           'A wireless LAN; a PAN is a person’s own short-range devices.'),
+    # Core 1 3.3 RAM
+    single('A1:3.3', 'IT-2.3', 1, 'A user wants to add memory to a thin laptop. Which module form factor will it most likely need?',
+           'SODIMM',
+           ['DIMM', 'Registered ECC DIMM', 'SIMM'],
+           'Laptops use the smaller SODIMM form factor (unless memory is soldered).'),
+    # Core 1 3.6 power supplies
+    single('A1:3.6', 'IT-3.3', 1, 'A server must keep running if one power supply fails, and the failed unit must be replaceable without shutting down. What is needed?',
+           'Redundant hot-swappable power supplies',
+           ['A modular power supply', 'A higher-wattage single power supply', 'An 80 PLUS Gold power supply'],
+           'Redundant PSUs share the load and can be swapped while the server runs.'),
+    match('A1:3.6', 'IT-3.3', 2, 'Match each power-supply term to its meaning.',
+          [('Modular PSU', 'Only the cables needed are attached'), ('20+4 pin', 'The main motherboard power connector'),
+           ('12 V rail', 'Feeds CPU, GPU and drive motors'), ('80 PLUS rating', 'Certified energy efficiency')],
+          'Power-supply characteristics from Core 1 3.6.', decoys=['DDR5']),
+    # Core 2 1.1 OS types and file systems
+    match('A2:1.1', 'IT-9.4', 1, 'Match each file system to the platform where it is the usual default.',
+          [('APFS', 'macOS'), ('ext4', 'Many Linux distributions'), ('NTFS', 'Windows system drive'), ('exFAT', 'Large removable flash drives shared across OSs')],
+          'Know the default file systems in Core 2 1.1.', decoys=['FAT12']),
+    # Core 2 1.3 Windows editions
+    multi('A2:1.3', 'IT-8.1', 1, 'A user’s PC runs Windows 11 Home. Which TWO features require an upgrade to Pro? (Choose two.)',
+          ['Joining an Active Directory domain', 'Hosting incoming Remote Desktop sessions'],
+          ['Using Windows Update', 'Connecting to Wi-Fi', 'Creating a local user account'],
+          'Home cannot join a domain or act as a Remote Desktop host (it can still be an RDP client); BitLocker management and gpedit.msc are also Pro features.'),
+    # Core 2 1.11 cloud productivity
+    single('A2:1.11', 'IT-6.2', 4, 'A user’s Desktop and Documents folders are not appearing on a new PC after sign-in. What should be checked?',
+           'The sync client’s known-folder backup and sync status',
+           ['The PC’s BIOS boot order', 'The printer driver version', 'The DHCP lease time'],
+           'Known-folder redirection to cloud storage restores those folders only if sync is set up and healthy.'),
+    # Core 2 2.3 wireless security and authentication
+    match('A2:2.3', 'IT-5.4', 1, 'Match each protocol or method to its description.',
+          [('WPA3', 'Uses SAE instead of a pre-shared key handshake'), ('TKIP', 'Deprecated encryption from original WPA'),
+           ('Kerberos', 'Ticket-based authentication in Windows domains'), ('RADIUS', 'Central authentication for 802.1X Wi-Fi')],
+          'Wireless security protocols and authentication methods (Core 2 2.3).', decoys=['FTP']),
+    single('A2:2.3', 'IT-5.4', 2, 'Which encryption should a WPA2 network use?',
+           'AES (CCMP)',
+           ['TKIP', 'WEP', 'No encryption with MAC filtering'],
+           'WPA2 uses AES-CCMP; TKIP and WEP are deprecated.'),
+    single('A2:2.3', 'IT-5.4', 3, 'A domain user’s logons fail with time-related errors after a laptop’s clock drifted by 20 minutes. Which authentication protocol is sensitive to this?',
+           'Kerberos',
+           ['TKIP', 'RADIUS accounting', 'WPA2-Personal'],
+           'Kerberos tickets are time-stamped; by default Windows allows only 5 minutes of clock difference.'),
+    # Core 2 2.9 data destruction
+    single('A2:2.9', 'IT-10.3', 1, 'Old SSDs must be sanitised before resale. Why is degaussing the wrong method?',
+           'SSDs store data in flash, not magnetically',
+           ['Degaussing is too slow for SSDs', 'Degaussing needs the drive powered on', 'Degaussing works only on optical discs'],
+           'Degaussing affects magnetic media only; SSDs need cryptographic or vendor secure erase, or physical destruction.'),
+    # Core 2 4.4 safety
+    order('A2:4.4', 'IT-1.2', 1, 'Put these steps in a safe order before replacing a desktop’s RAM.',
+          ['Shut down and disconnect power', 'Put on an ESD strap clipped to the chassis', 'Open the case on an ESD mat', 'Remove the new module from its antistatic bag'],
+          'Disconnect power first, then ground yourself, then handle components from their antistatic packaging.'),
+    # Core 2 4.5 environmental
+    match('A2:4.5', 'IT-1.2', 1, 'Match each power problem to the device that best protects against it.',
+          [('Short spike in voltage', 'Surge suppressor'), ('Complete loss of mains power', 'UPS'),
+           ('Sustained low voltage (brownout)', 'Line-interactive UPS')],
+          'Surge suppressors clamp spikes; a UPS supplies battery power; line-interactive UPS units also correct brownouts.',
+          decoys=['Power strip without protection']),
+    single('A2:4.5', 'IT-1.2', 2, 'A technician needs to know how to safely handle and dispose of a leaking toner cartridge. Where is this information found?',
+           'The product’s safety data sheet (SDS)',
+           ['The printer’s driver release notes', 'The device’s end-user licence', 'The help desk’s SLA'],
+           'SDS/MSDS documents give handling, first-aid and disposal guidance.'),
+    multi('A2:4.5', 'IT-1.2', 3, 'Which TWO are correct ways to deal with used IT consumables and batteries? (Choose two.)',
+          ['Return toner cartridges to a recycling programme', 'Take lithium-ion batteries to a battery collection point'],
+          ['Put batteries in household recycling bins', 'Empty toner into general waste', 'Store swollen batteries in a drawer'],
+          'Recycle toner through the vendor or a programme; batteries go to dedicated collection (EPA guidance).'),
+    single('A2:4.5', 'IT-1.2', 4, 'A server room’s humidity has dropped very low in winter. What risk increases most?',
+           'Electrostatic discharge damage',
+           ['Condensation on circuit boards', 'Faster toner fusing', 'Higher Wi-Fi interference'],
+           'Dry air promotes static build-up; very high humidity causes condensation instead.'),
+    # Network+ 1.2 appliances
+    match('N:1.2', 'NO-4.3', 1, 'Match each appliance or function to its purpose.',
+          [('IPS', 'Inline device that blocks detected attacks'), ('IDS', 'Detects and alerts but does not block'),
+           ('CDN', 'Caches content close to users worldwide'), ('NAS', 'File-level storage on the network')],
+          'Appliances, applications and functions from Network+ 1.2.', decoys=['TTL']),
+]
