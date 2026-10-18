@@ -234,6 +234,11 @@ _T = [
 ]
 TAGS = {(b, d): mc for b, d, mc in _T if mc}
 
+# pass 13: every remaining chapter-check objective (ITSUP 2.1–13.3, NETOPS 1.1–9.2), same rules
+from curriculum_v2 import misconceptions_pass13 as _p13  # noqa: E402
+MISCONCEPTIONS.update(_p13.MISCONCEPTIONS)
+TAGS.update(_p13.TAGS)
+
 # pass 12 (content round 2): certification-item tags (MC-C-* ids, same schema) so the engine sees them
 from curriculum_v2.cert import misconceptions as _cert_mc  # noqa: E402
 MISCONCEPTIONS.update(_cert_mc.MISCONCEPTIONS)

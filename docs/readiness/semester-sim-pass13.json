@@ -17,7 +17,8 @@
      4
     ],
     "30": [
-     2
+     2,
+     4
     ],
     "31": [
      4
@@ -52,27 +53,7 @@
    "ok": true,
    "detail": [
     {
-     "user": 43,
-     "profile": "weak",
-     "kinds": [
-      "stuck",
-      "misconception",
-      "missed_review",
-      "drop"
-     ]
-    },
-    {
      "user": 44,
-     "profile": "weak",
-     "kinds": [
-      "stuck",
-      "misconception",
-      "missed_review",
-      "drop"
-     ]
-    },
-    {
-     "user": 45,
      "profile": "weak",
      "kinds": [
       "stuck",
@@ -92,8 +73,38 @@
      ]
     },
     {
+     "user": 38,
+     "profile": "mixed",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review",
+      "drop"
+     ]
+    },
+    {
+     "user": 39,
+     "profile": "mixed",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review",
+      "drop"
+     ]
+    },
+    {
      "user": 42,
      "profile": "mixed",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review",
+      "drop"
+     ]
+    },
+    {
+     "user": 43,
+     "profile": "weak",
      "kinds": [
       "stuck",
       "misconception",
@@ -112,17 +123,18 @@
      ]
     },
     {
-     "user": 38,
-     "profile": "mixed",
+     "user": 48,
+     "profile": "disengaged",
      "kinds": [
       "stuck",
       "misconception",
-      "missed_review"
+      "missed_review",
+      "inactive"
      ]
     },
     {
-     "user": 39,
-     "profile": "mixed",
+     "user": 45,
+     "profile": "weak",
      "kinds": [
       "stuck",
       "misconception",
@@ -148,19 +160,17 @@
      ]
     },
     {
-     "user": 33,
+     "user": 35,
      "profile": "good",
      "kinds": [
-      "stuck",
-      "misconception"
+      "stuck"
      ]
     },
     {
-     "user": 37,
+     "user": 33,
      "profile": "good",
      "kinds": [
-      "misconception",
-      "missed_review"
+      "misconception"
      ]
     },
     {
@@ -171,17 +181,17 @@
      ]
     },
     {
-     "user": 35,
+     "user": 36,
      "profile": "good",
      "kinds": [
       "misconception"
      ]
     },
     {
-     "user": 48,
-     "profile": "disengaged",
+     "user": 37,
+     "profile": "good",
      "kinds": [
-      "inactive"
+      "misconception"
      ]
     }
    ]
@@ -191,15 +201,7 @@
    "ok": true,
    "detail": [
     [
-     43,
-     "weak"
-    ],
-    [
      44,
-     "weak"
-    ],
-    [
-     45,
      "weak"
     ],
     [
@@ -207,12 +209,20 @@
      "weak"
     ],
     [
+     38,
+     "mixed"
+    ],
+    [
+     39,
+     "mixed"
+    ],
+    [
      42,
      "mixed"
     ],
     [
-     47,
-     "disengaged"
+     43,
+     "weak"
     ]
    ]
   },
@@ -227,17 +237,17 @@
    "detail": [
     {
      "kind": "misconception",
-     "title": "Re-teach: Closing a ticket on a signal (green icon, silence, timer) instead of a verified fix",
+     "title": "Re-teach: Chasing network or disk settings when gpresult says a GPO was denied",
      "score": 24
     },
     {
      "kind": "objective",
      "title": "Review IT-8.4 with the class",
-     "score": 20
+     "score": 18
     },
     {
      "kind": "student",
-     "title": "Check in with Synthetic student 14 (mixed)",
+     "title": "Check in with Synthetic student 10 (mixed)",
      "score": 10
     }
    ]
@@ -247,28 +257,12 @@
    "ok": true,
    "detail": [
     [
-     43,
-     "weak"
-    ],
-    [
      44,
-     "weak"
-    ],
-    [
-     45,
      "weak"
     ],
     [
      46,
      "weak"
-    ],
-    [
-     42,
-     "mixed"
-    ],
-    [
-     47,
-     "disengaged"
     ],
     [
      38,
@@ -279,6 +273,26 @@
      "mixed"
     ],
     [
+     42,
+     "mixed"
+    ],
+    [
+     43,
+     "weak"
+    ],
+    [
+     47,
+     "disengaged"
+    ],
+    [
+     48,
+     "disengaged"
+    ],
+    [
+     45,
+     "weak"
+    ],
+    [
      40,
      "mixed"
     ],
@@ -287,11 +301,11 @@
      "mixed"
     ],
     [
-     33,
+     35,
      "good"
     ],
     [
-     37,
+     33,
      "good"
     ],
     [
@@ -299,7 +313,11 @@
      "good"
     ],
     [
-     35,
+     36,
+     "good"
+    ],
+    [
+     37,
      "good"
     ]
    ]
@@ -311,18 +329,18 @@
   }
  ],
  "events": {
-  "lesson_reads": 364,
-  "chapter_checks": 72,
+  "lesson_reads": 360,
+  "chapter_checks": 71,
   "daily_reviews": 354,
-  "reviews": 194,
-  "labs": 63,
+  "reviews": 200,
+  "labs": 61,
   "testouts": 5,
   "graded_tests": 18,
-  "mastery_check_rows": 826
+  "mastery_check_rows": 829
  },
  "daily_why": {
-  "soon": 390,
-  "due": 1859
+  "soon": 388,
+  "due": 1852
  },
  "cohort": {
   "strong": 4,
@@ -480,10 +498,9 @@
    ],
    "offers": [],
    "states": {
-    "mastered": 21,
+    "mastered": 20,
     "not_started": 22,
-    "review": 1,
-    "developing": 6
+    "developing": 8
    }
   },
   {
@@ -497,8 +514,7 @@
    "states": {
     "mastered": 21,
     "not_started": 23,
-    "developing": 5,
-    "review": 1
+    "developing": 6
    }
   },
   {
@@ -524,9 +540,9 @@
    ],
    "offers": [],
    "states": {
-    "mastered": 20,
+    "mastered": 21,
     "not_started": 22,
-    "developing": 8
+    "developing": 7
    }
   },
   {
@@ -539,8 +555,8 @@
     4
    ],
    "states": {
-    "mastered": 27,
-    "developing": 4,
+    "mastered": 28,
+    "developing": 3,
     "not_started": 19
    }
   },
@@ -569,8 +585,8 @@
     4
    ],
    "states": {
-    "mastered": 28,
-    "developing": 3,
+    "mastered": 27,
+    "developing": 4,
     "not_started": 19
    }
   },
@@ -584,35 +600,15 @@
     4
    ],
    "states": {
-    "mastered": 27,
-    "developing": 4,
+    "mastered": 28,
+    "developing": 3,
     "not_started": 19
    }
   }
  ],
  "needs_me": [
   {
-   "user": 43,
-   "profile": "weak",
-   "kinds": [
-    "stuck",
-    "misconception",
-    "missed_review",
-    "drop"
-   ]
-  },
-  {
    "user": 44,
-   "profile": "weak",
-   "kinds": [
-    "stuck",
-    "misconception",
-    "missed_review",
-    "drop"
-   ]
-  },
-  {
-   "user": 45,
    "profile": "weak",
    "kinds": [
     "stuck",
@@ -632,8 +628,38 @@
    ]
   },
   {
+   "user": 38,
+   "profile": "mixed",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review",
+    "drop"
+   ]
+  },
+  {
+   "user": 39,
+   "profile": "mixed",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review",
+    "drop"
+   ]
+  },
+  {
    "user": 42,
    "profile": "mixed",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review",
+    "drop"
+   ]
+  },
+  {
+   "user": 43,
+   "profile": "weak",
    "kinds": [
     "stuck",
     "misconception",
@@ -652,17 +678,18 @@
    ]
   },
   {
-   "user": 38,
-   "profile": "mixed",
+   "user": 48,
+   "profile": "disengaged",
    "kinds": [
     "stuck",
     "misconception",
-    "missed_review"
+    "missed_review",
+    "inactive"
    ]
   },
   {
-   "user": 39,
-   "profile": "mixed",
+   "user": 45,
+   "profile": "weak",
    "kinds": [
     "stuck",
     "misconception",
@@ -688,19 +715,17 @@
    ]
   },
   {
-   "user": 33,
+   "user": 35,
    "profile": "good",
    "kinds": [
-    "stuck",
-    "misconception"
+    "stuck"
    ]
   },
   {
-   "user": 37,
+   "user": 33,
    "profile": "good",
    "kinds": [
-    "misconception",
-    "missed_review"
+    "misconception"
    ]
   },
   {
@@ -711,34 +736,34 @@
    ]
   },
   {
-   "user": 35,
+   "user": 36,
    "profile": "good",
    "kinds": [
     "misconception"
    ]
   },
   {
-   "user": 48,
-   "profile": "disengaged",
+   "user": 37,
+   "profile": "good",
    "kinds": [
-    "inactive"
+    "misconception"
    ]
   }
  ],
  "briefing_todo": [
   {
    "kind": "misconception",
-   "title": "Re-teach: Closing a ticket on a signal (green icon, silence, timer) instead of a verified fix",
+   "title": "Re-teach: Chasing network or disk settings when gpresult says a GPO was denied",
    "score": 24
   },
   {
    "kind": "objective",
    "title": "Review IT-8.4 with the class",
-   "score": 20
+   "score": 18
   },
   {
    "kind": "student",
-   "title": "Check in with Synthetic student 14 (mixed)",
+   "title": "Check in with Synthetic student 10 (mixed)",
    "score": 10
   }
  ],
@@ -752,22 +777,22 @@
   "good": [
    13,
    14,
-   15,
+   14,
    15,
    15
   ],
   "mixed": [
    11,
-   11,
    12,
-   13,
+   12,
+   12,
    13
   ],
   "weak": [
    0,
    1,
-   1,
-   2
+   2,
+   3
   ],
   "disengaged": [
    1,
@@ -775,6 +800,49 @@
   ]
  },
  "section_id": 5,
+ "testouts_passed": {
+  "29": [
+   4
+  ],
+  "30": [
+   2,
+   4
+  ],
+  "31": [
+   4
+  ],
+  "32": [
+   4
+  ]
+ },
+ "testout_offered": {
+  "30": [
+   2,
+   3,
+   4
+  ],
+  "29": [
+   4
+  ],
+  "31": [
+   4
+  ],
+  "32": [
+   4
+  ],
+  "33": [
+   4
+  ],
+  "36": [
+   4
+  ],
+  "34": [
+   4
+  ],
+  "37": [
+   4
+  ]
+ },
  "summary": {
   "passed": 12,
   "total": 12
