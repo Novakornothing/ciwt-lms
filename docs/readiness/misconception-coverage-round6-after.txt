@@ -1,0 +1,88 @@
+Seeding database...
+Database seeded successfully (with demo test analytics).
+Synced pilot checks for 26 chapters.
+Synced skills midterm/final for 14 exams.
+objectives covered: 70/70  (ITSUP 50/50, NETOPS 20/20)
+tagged distractors: 1726/2349 scorable single-answer distractors
+items with >=1 tagged distractor: 698/783  by source (tagged/total): bank 113/131, cert 228/293, check 200/200, supplement 28/30, test 129/129
+objectives with only one correctable misconception: none
+uncovered: none
+  IT-10.2  items= 27 distractors= 81 tagged= 56 mcs=12 corr=12 items_tagged= 23 OK bank:2/3 cert:13/16 check:6/6 test:2/2
+  IT-4.2   items= 25 distractors= 75 tagged= 48 mcs=13 corr=13 items_tagged= 21 OK bank:2/3 cert:15/18 check:3/3 test:1/1
+  IT-5.3   items= 23 distractors= 69 tagged= 50 mcs=15 corr=15 items_tagged= 20 OK bank:3/3 cert:5/8 check:3/3 test:9/9
+  IT-5.4   items= 19 distractors= 57 tagged= 48 mcs=10 corr=10 items_tagged= 18 OK bank:3/3 cert:12/13 check:2/2 test:1/1
+  IT-3.4   items= 18 distractors= 54 tagged= 38 mcs=11 corr=11 items_tagged= 15 OK bank:2/3 cert:9/11 check:1/1 test:3/3
+  IT-4.3   items= 17 distractors= 51 tagged= 34 mcs= 7 corr= 7 items_tagged= 15 OK bank:4/4 cert:7/9 check:3/3 test:1/1
+  NO-5.3   items= 17 distractors= 51 tagged= 41 mcs=10 corr=10 items_tagged= 16 OK cert:11/12 check:2/2 test:3/3
+  NO-6.3   items= 17 distractors= 51 tagged= 31 mcs=11 corr=11 items_tagged= 15 OK cert:12/13 check:2/2 supplement:1/2
+  IT-4.1   items= 16 distractors= 48 tagged= 34 mcs= 9 corr= 9 items_tagged= 12 OK bank:3/3 cert:3/7 check:4/4 test:2/2
+  IT-10.1  items= 16 distractors= 48 tagged= 40 mcs=14 corr=14 items_tagged= 16 OK bank:3/3 cert:4/4 check:2/2 test:7/7
+  IT-12.2  items= 16 distractors= 48 tagged= 37 mcs=10 corr=10 items_tagged= 14 OK bank:3/3 cert:7/9 check:2/2 supplement:2/2
+  IT-6.2   items= 15 distractors= 45 tagged= 32 mcs= 5 corr= 5 items_tagged= 13 OK bank:3/3 cert:5/7 check:3/3 supplement:2/2
+  NO-2.3   items= 15 distractors= 45 tagged= 30 mcs= 8 corr= 8 items_tagged= 13 OK cert:5/7 check:3/3 test:5/5
+  IT-3.3   items= 14 distractors= 42 tagged= 27 mcs= 9 corr= 9 items_tagged= 12 OK bank:3/4 cert:2/3 check:4/4 test:3/3
+  IT-5.1   items= 14 distractors= 42 tagged= 34 mcs=12 corr=12 items_tagged= 14 OK bank:4/4 cert:3/3 check:3/3 test:4/4
+  IT-5.2   items= 13 distractors= 39 tagged= 29 mcs= 9 corr= 9 items_tagged= 11 OK bank:3/3 cert:4/6 check:2/2 test:2/2
+  IT-7.2   items= 13 distractors= 39 tagged= 34 mcs= 3 corr= 3 items_tagged= 13 OK bank:3/3 cert:2/2 check:6/6 supplement:2/2
+  IT-8.4   items= 13 distractors= 39 tagged= 29 mcs=10 corr=10 items_tagged= 13 OK bank:3/3 cert:3/3 check:2/2 test:5/5
+  IT-9.3   items= 13 distractors= 39 tagged= 26 mcs= 3 corr= 3 items_tagged= 10 OK bank:3/3 cert:1/4 check:4/4 supplement:2/2
+  IT-10.3  items= 13 distractors= 39 tagged= 27 mcs= 7 corr= 7 items_tagged= 11 OK bank:3/3 cert:2/4 check:2/2 test:4/4
+  NO-3.1   items= 13 distractors= 39 tagged= 33 mcs=10 corr=10 items_tagged= 13 OK cert:3/3 check:3/3 test:7/7
+  NO-3.2   items= 13 distractors= 39 tagged= 30 mcs= 9 corr= 9 items_tagged= 12 OK cert:6/7 check:2/2 test:4/4
+  IT-8.3   items= 12 distractors= 36 tagged= 29 mcs= 4 corr= 4 items_tagged= 12 OK bank:4/4 cert:3/3 check:3/3 test:2/2
+  IT-11.1  items= 12 distractors= 36 tagged= 24 mcs= 8 corr= 8 items_tagged= 10 OK bank:3/3 cert:0/2 check:5/5 supplement:2/2
+  NO-2.1   items= 12 distractors= 36 tagged= 24 mcs= 7 corr= 7 items_tagged= 10 OK cert:3/5 check:2/2 test:5/5
+  NO-5.1   items= 12 distractors= 36 tagged= 25 mcs=11 corr=11 items_tagged= 11 OK cert:2/3 check:3/3 test:6/6
+  IT-1.2   items= 11 distractors= 33 tagged= 22 mcs= 9 corr= 9 items_tagged=  9 OK cert:6/8 check:2/2 test:1/1
+  IT-3.1   items= 11 distractors= 33 tagged= 21 mcs= 9 corr= 9 items_tagged=  9 OK bank:2/3 cert:4/5 check:2/2 test:1/1
+  IT-7.3   items= 11 distractors= 33 tagged= 26 mcs= 6 corr= 6 items_tagged= 11 OK bank:3/3 cert:2/2 check:4/4 test:2/2
+  IT-8.1   items= 11 distractors= 33 tagged= 22 mcs= 6 corr= 6 items_tagged=  8 OK bank:3/3 cert:1/4 check:3/3 test:1/1
+  IT-8.2   items= 11 distractors= 33 tagged= 24 mcs= 8 corr= 8 items_tagged= 10 OK bank:2/3 cert:4/4 check:4/4
+  IT-10.4  items= 11 distractors= 33 tagged= 21 mcs= 6 corr= 6 items_tagged=  8 OK bank:3/3 cert:0/3 check:2/2 test:3/3
+  NO-1.2   items= 11 distractors= 33 tagged= 23 mcs= 9 corr= 9 items_tagged= 11 OK cert:3/3 check:3/3 test:5/5
+  NO-3.3   items= 11 distractors= 33 tagged= 26 mcs= 7 corr= 7 items_tagged= 11 OK cert:4/4 check:3/3 test:4/4
+  IT-2.1   items= 10 distractors= 30 tagged= 19 mcs= 7 corr= 7 items_tagged=  9 OK cert:2/3 check:5/5 test:2/2
+  IT-6.3   items= 10 distractors= 30 tagged= 22 mcs= 7 corr= 7 items_tagged=  9 OK bank:3/3 cert:1/2 check:4/4 test:1/1
+  IT-9.1   items= 10 distractors= 30 tagged= 20 mcs= 6 corr= 6 items_tagged=  8 OK bank:3/3 cert:0/2 check:3/3 test:2/2
+  IT-9.2   items= 10 distractors= 30 tagged= 27 mcs= 9 corr= 9 items_tagged= 10 OK bank:3/3 cert:2/2 check:3/3 supplement:2/2
+  IT-11.2  items= 10 distractors= 30 tagged= 19 mcs= 5 corr= 5 items_tagged=  8 OK bank:1/3 cert:2/2 check:3/3 supplement:2/2
+  IT-11.3  items= 10 distractors= 30 tagged= 19 mcs= 7 corr= 7 items_tagged=  8 OK bank:2/3 cert:1/2 check:2/2 test:3/3
+  IT-12.1  items= 10 distractors= 30 tagged= 21 mcs= 7 corr= 7 items_tagged=  9 OK bank:3/3 cert:3/4 check:2/2 test:1/1
+  IT-12.3  items= 10 distractors= 30 tagged= 26 mcs= 8 corr= 8 items_tagged=  9 OK bank:2/3 cert:2/2 check:3/3 test:2/2
+  NO-4.3   items= 10 distractors= 30 tagged= 21 mcs=10 corr=10 items_tagged= 10 OK cert:4/4 check:2/2 test:4/4
+  NO-5.2   items= 10 distractors= 30 tagged= 19 mcs= 5 corr= 5 items_tagged=  7 OK cert:0/3 check:3/3 test:4/4
+  IT-1.1   items=  9 distractors= 27 tagged= 21 mcs= 7 corr= 7 items_tagged=  9 OK cert:3/3 check:4/4 supplement:2/2
+  IT-3.2   items=  9 distractors= 27 tagged= 21 mcs= 5 corr= 5 items_tagged=  8 OK bank:4/4 cert:1/2 check:2/2 test:1/1
+  IT-6.1   items=  9 distractors= 27 tagged= 18 mcs= 7 corr= 7 items_tagged=  8 OK bank:2/3 cert:1/1 check:3/3 supplement:2/2
+  IT-7.1   items=  9 distractors= 27 tagged= 20 mcs= 5 corr= 5 items_tagged=  8 OK bank:2/3 cert:1/1 check:3/3 supplement:2/2
+  IT-13.3  items=  9 distractors= 27 tagged= 19 mcs= 3 corr= 3 items_tagged=  8 OK bank:2/3 cert:2/2 check:4/4
+  NO-9.2   items=  9 distractors= 27 tagged= 20 mcs= 8 corr= 8 items_tagged=  8 OK cert:1/2 check:5/5 supplement:2/2
+  IT-13.1  items=  8 distractors= 24 tagged= 17 mcs= 6 corr= 6 items_tagged=  6 OK bank:2/3 cert:1/2 check:3/3
+  IT-13.2  items=  8 distractors= 24 tagged= 19 mcs= 7 corr= 7 items_tagged=  8 OK bank:3/3 cert:2/2 check:3/3
+  NO-6.1   items=  8 distractors= 24 tagged= 19 mcs= 5 corr= 5 items_tagged=  7 OK cert:2/3 check:2/2 test:3/3
+  NO-6.2   items=  8 distractors= 24 tagged= 22 mcs= 7 corr= 7 items_tagged=  8 OK cert:3/3 check:4/4 test:1/1
+  IT-2.3   items=  7 distractors= 21 tagged= 16 mcs= 4 corr= 4 items_tagged=  7 OK cert:2/2 check:2/2 test:3/3
+  IT-7.4   items=  7 distractors= 21 tagged= 16 mcs= 4 corr= 4 items_tagged=  6 OK bank:2/3 cert:2/2 check:2/2
+  IT-11.4  items=  7 distractors= 21 tagged= 14 mcs= 5 corr= 5 items_tagged=  5 OK bank:1/3 cert:2/2 check:2/2
+  IT-12.4  items=  7 distractors= 21 tagged= 19 mcs= 7 corr= 7 items_tagged=  7 OK bank:3/3 cert:2/2 check:2/2
+  IT-13.4  items=  7 distractors= 21 tagged= 15 mcs= 4 corr= 4 items_tagged=  5 OK bank:3/3 cert:0/2 check:2/2
+  NO-1.3   items=  7 distractors= 21 tagged= 18 mcs= 5 corr= 5 items_tagged=  7 OK cert:2/2 check:3/3 test:2/2
+  NO-2.2   items=  7 distractors= 21 tagged= 20 mcs= 6 corr= 6 items_tagged=  7 OK cert:3/3 check:3/3 test:1/1
+  NO-4.2   items=  7 distractors= 21 tagged= 19 mcs= 6 corr= 6 items_tagged=  7 OK cert:3/3 check:3/3 test:1/1
+  IT-1.4   items=  6 distractors= 18 tagged= 15 mcs= 5 corr= 5 items_tagged=  6 OK cert:2/2 check:2/2 supplement:2/2
+  IT-2.4   items=  6 distractors= 18 tagged= 11 mcs= 4 corr= 4 items_tagged=  5 OK cert:2/2 check:2/2 supplement:1/2
+  IT-9.4   items=  6 distractors= 18 tagged= 10 mcs= 5 corr= 5 items_tagged=  5 OK bank:2/3 cert:1/1 check:2/2
+  NO-1.1   items=  6 distractors= 18 tagged= 16 mcs= 4 corr= 4 items_tagged=  6 OK cert:2/2 check:2/2 test:2/2
+  NO-4.1   items=  6 distractors= 18 tagged= 18 mcs= 6 corr= 6 items_tagged=  6 OK cert:2/2 check:3/3 test:1/1
+  NO-9.1   items=  6 distractors= 18 tagged= 12 mcs= 3 corr= 3 items_tagged=  6 OK cert:1/1 check:3/3 supplement:2/2
+  IT-2.2   items=  5 distractors= 15 tagged= 11 mcs= 4 corr= 4 items_tagged=  4 OK cert:1/2 check:2/2 test:1/1
+  IT-1.3   items=  4 distractors= 12 tagged= 12 mcs= 4 corr= 4 items_tagged=  4 OK cert:1/1 check:2/2 test:1/1
+pass-15 cert gap items: 55/55 single-answer items served; tagged distractors 160/165; items with >=1 tag 55/55; misconceptions with status 47/47, with source 47/47; not scored per distractor: C-A2-4.1-104 (multi), C-N-5.1-101 (order), C-N-1.4-102 (multi), C-N-3.4-101 (order)
+  p15 untagged: C-N-5.1-103: Fix the printer first, because it is quickest
+  p15 untagged: C-A2-2.2-101: sfc /scannow
+  p15 untagged: C-A2-2.2-101: ipconfig /renew
+  p15 untagged: C-A2-2.2-102: A local account on each PC
+  p15 untagged: C-A2-2.2-102: BitLocker on the file server
+X-IT bank items with >=1 tag: 113/131; supplement: 28/30; round-5 tags 348, MC-R5 misconceptions 66 (Pending status 66, source 66, correction found 66)
+  bank/supplement untagged (throw-away distractors only): S-IT-2.4.2, S-NO-6.3.2, X-IT-10.2.3, X-IT-11.2.1, X-IT-11.2.3, X-IT-11.3.3, X-IT-11.4.1, X-IT-11.4.2, X-IT-12.3.1, X-IT-13.1.3, X-IT-13.3.1, X-IT-3.1.3, X-IT-3.3.4, X-IT-3.4.1, X-IT-4.2.3, X-IT-6.1.3, X-IT-7.1.2, X-IT-7.4.2, X-IT-8.2.3, X-IT-9.4.2
+round-6 tags 183, MC-R6 misconceptions 39 (Pending status 39, source 39, correction found 39)
