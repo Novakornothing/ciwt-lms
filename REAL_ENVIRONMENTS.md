@@ -1,13 +1,15 @@
 # Real environments vs simulated labs
 
-Status 18 Oct 2026 (round 2), `labs` branch. Image, licences and measurements are in `docs/VM_IMAGE.md`.
+Status 18 Oct 2026 (round 4), `labs` branch. Image, licences and measurements are in `docs/VM_IMAGE.md`.
 
 ## Summary
 
 - **Real by default for Linux.**
-  - **15 labs run on genuine Linux machines** that boot in the student's browser (v86 → WebAssembly). Five of
+  - **20 labs run on genuine Linux machines** that boot in the student's browser (v86 → WebAssembly). Seven of
     them run two machines on a virtual network. Two more real-VM labs are stages inside lab scenarios (see
-    below), so **17 graded pages are real**.
+    below), so **22 graded pages are real**. Round 4 added five: a slow server (CPU/memory/priority), a restore
+    from verified backups, a web service bound to localhost, edge NAT with a packet capture, and a compromised-host
+    triage.
   - The image is our own build (`ciwt-linux.bin`, 10.8 MB, 13.3 MB total first download). It has real OpenSSH,
     sudo, shadow, iptables, dnsmasq, apk, e2fsprogs and util-linux, and a blank disk for the storage lab.
   - They are graded by reading the VM's real state:
@@ -51,7 +53,7 @@ Status 18 Oct 2026 (round 2), `labs` branch. Image, licences and measurements ar
 | 6 | `w11-powershell-net` — 6. Windows 11 VM — PowerShell Network View | windows | Simulated |
 | 7 | `w11-services` — 7. Windows 11 VM — Service Health | windows | Simulated — real twin: `linux-vm-packages` |
 | 8 | `w11-netsh` — 7b. Windows 11 VM — netsh interface view | windows | Simulated |
-| 9 | `w11-processes` — 7c. Windows 11 VM — What's running | windows | Simulated |
+| 9 | `w11-processes` — 7c. Windows 11 VM — What's running | windows | Simulated — real twin: `linux-vm-perf` |
 | 10 | `gui-about` — 8. Windows 11 GUI — Settings About | win11gui | Simulated |
 | 11 | `gui-ethernet` — 9. Windows 11 GUI — Ethernet properties | win11gui | Simulated |
 | 12 | `gui-renew` — 10. Windows 11 GUI — Renew the Ethernet lease | win11gui | Simulated |
@@ -66,7 +68,7 @@ Status 18 Oct 2026 (round 2), `labs` branch. Image, licences and measurements ar
 | 21 | `rtr-edge-complete` — 10. Router — Edge Complete (capstone) | router | Simulated |
 | 22 | `sw-hostname-write` — 11. Switch — Hostname and save | switch | Simulated |
 | 23 | `rtr-hostname-write` — 12. Router — Hostname and save | router | Simulated |
-| 24 | `w11-firewall` — Windows 11 VM — Firewall profiles | windows | Simulated — real twin: `linux-vm-firewall` |
+| 24 | `w11-firewall` — Windows 11 VM — Firewall profiles | windows | Simulated — real twin: `linux-vm-firewall`, `linux-vm-nat` |
 | 25 | `w11-disk` — Windows 11 VM — List disks | windows | Simulated — real twin: `linux-vm-disk` |
 | 26 | `gui-devices` — Windows 11 GUI — Device Manager | win11gui | Simulated |
 | 27 | `sw-port-security` — Switch — Port security on an access port | switch | Simulated |
@@ -94,17 +96,17 @@ Status 18 Oct 2026 (round 2), `labs` branch. Image, licences and measurements ar
 | 49 | `hw-pc-build` — Workstation build — pick compatible parts † | activity | Simulated |
 | 50 | `ticket-method` — Troubleshooting methodology — work a ticket end to end † | activity | Simulated |
 | 51 | `win-net-cli` — Windows CLI — isolate a name-resolution fault † | windows | Simulated |
-| 52 | `linux-shell` — Linux shell — files, permissions and logs † | linux | Simulated — real twin: `linux-vm-perms`, `linux-vm-shell`, `linux-vm-services`, `linux-vm-logs`, `linux-vm-cron`, `linux-vm-users`, `linux-vm-packages`, `linux-vm-ssh`, `linux-vm-script` |
+| 52 | `linux-shell` — Linux shell — files, permissions and logs † | linux | Simulated — real twin: `linux-vm-perms`, `linux-vm-shell`, `linux-vm-services`, `linux-vm-logs`, `linux-vm-cron`, `linux-vm-users`, `linux-vm-packages`, `linux-vm-ssh`, `linux-vm-script`, `linux-vm-perf`, `linux-vm-restore`, `linux-vm-web`, `linux-vm-incident` |
 | 53 | `print-trouble` — PowerShell — clear a stuck print queue † | windows | Simulated |
-| 54 | `rtr-vlan-acl` — Router — inter-VLAN routing and a guest ACL † | router | Simulated — real twin: `linux-vm-firewall` |
+| 54 | `rtr-vlan-acl` — Router — inter-VLAN routing and a guest ACL † | router | Simulated — real twin: `linux-vm-firewall`, `linux-vm-nat` |
 | 55 | `sw-vlan-multi` — Switch — two VLANs, access ports and a pruned trunk † | switch | Simulated |
 | 56 | `wifi-secure` — SOHO router — secure the admin page, Wi-Fi and guest network † | activity | Simulated |
-| 57 | `sec-malware` — Malware response — the seven-step removal process † | activity | Simulated |
-| 58 | `ops-backup` — Backup and recovery — types, restore sets, 3-2-1, RPO/RTO † | activity | Simulated |
+| 57 | `sec-malware` — Malware response — the seven-step removal process † | activity | Simulated — real twin: `linux-vm-incident` |
+| 58 | `ops-backup` — Backup and recovery — types, restore sets, 3-2-1, RPO/RTO † | activity | Simulated — real twin: `linux-vm-restore` |
 | 59 | `virt-vm` — Virtualization — build a Windows 11 lab VM † | activity | Simulated |
 | 60 | `mob-mdm` — Mobile devices — connectivity and MDM tickets inside policy † | activity | Simulated |
 | 61 | `win-ad-users` — Active Directory Users and Computers — onboard, unlock, offboard † | win11gui | Simulated — real twin: `linux-vm-users` |
-| 62 | `win-laptop-ports` — Windows CLI — battery health, VM check, MX records and port tests † | windows | Simulated |
+| 62 | `win-laptop-ports` — Windows CLI — battery health, VM check, MX records and port tests † | windows | Simulated — real twin: `linux-vm-web` |
 | 63 | `win-wifi-survey` — Windows CLI — Wi-Fi survey on a laptop (signal, band, channel) † | windows | Simulated |
 | 64 | `hv-vswitch` — Hyper-V host — isolated virtual switch and checkpoints (PowerShell) † | windows | Simulated |
 | 65 | `linux-vm-perms` — Real Linux VM — files, ownership, permissions and a support script † | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
@@ -122,10 +124,15 @@ Status 18 Oct 2026 (round 2), `labs` branch. Image, licences and measurements ar
 | 77 | `linux-vm-script` — Real Linux VM — automate it: a backup script with rotation, exit codes and logging † | vm | **Real** — 1 Linux VM in the browser; fallback: `linux-shell` |
 | 78 | `linux-vm-dns` — Real Linux VMs — DNS troubleshooting chain: client, internal resolver, records and forwarding † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dns-break`, `win-nslookup-ok` |
 | 79 | `linux-vm-nettrouble` — Real Linux VMs — multi-VM network troubleshooting: no lease, wrong gateway, broken route † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dhcp-renew`, `rtr-default-route`, `rtr-trace` |
-| 80 | `scn-dns-evidence` — SCN-DNS · Stage 1 · User's PC (Windows 11 simulation) † | windows | Simulated |
-| 81 | `scn-dns-fix` — SCN-DNS · Stage 2 · DNS server and test client (2 real Linux VMs) † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dns-break`, `win-nslookup-ok` |
-| 82 | `scn-lan2-fix` — SCN-LAN2 · Stage 1 · LAN 2 router and PC (2 real Linux VMs) † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dhcp-renew`, `rtr-default-route`, `rtr-trace` |
-| 83 | `scn-lan2-verify` — SCN-LAN2 · Stage 2 · CFO's laptop (Windows 11 simulation) † | windows | Simulated |
+| 80 | `linux-vm-perf` — Real Linux VM — slow server: find the CPU and memory hogs, keep the payroll job, fix it for good † | vm | **Real** — 1 Linux VM in the browser; fallback: `w11-processes`, `linux-shell` |
+| 81 | `linux-vm-restore` — Real Linux VM — restore a deleted folder from verified backups (checksums, the right version, permissions) † | vm | **Real** — 1 Linux VM in the browser; fallback: `ops-backup`, `linux-shell` |
+| 82 | `linux-vm-web` — Real Linux VMs — "the intranet is down": a web service on localhost only, an HTTP 403 and a safe config change † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `linux-shell`, `win-laptop-ports` |
+| 83 | `linux-vm-nat` — Real Linux VMs — edge router: the NAT rule that never matched, a stateful forward policy and a packet capture † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `rtr-vlan-acl`, `w11-firewall` |
+| 84 | `linux-vm-incident` — Real Linux VM — suspected compromise: preserve evidence, then remove the attacker's persistence † | vm | **Real** — 1 Linux VM in the browser; fallback: `sec-malware`, `linux-shell` |
+| 85 | `scn-dns-evidence` — SCN-DNS · Stage 1 · User's PC (Windows 11 simulation) † | windows | Simulated |
+| 86 | `scn-dns-fix` — SCN-DNS · Stage 2 · DNS server and test client (2 real Linux VMs) † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dns-break`, `win-nslookup-ok` |
+| 87 | `scn-lan2-fix` — SCN-LAN2 · Stage 1 · LAN 2 router and PC (2 real Linux VMs) † | vm | **Real** — 2 Linux VMs in the browser + virtual network; fallback: `win-dhcp-renew`, `rtr-default-route`, `rtr-trace` |
+| 88 | `scn-lan2-verify` — SCN-LAN2 · Stage 2 · CFO's laptop (Windows 11 simulation) † | windows | Simulated |
 | – | `CL-4` — Print path and laptop FRU identification | classroom | **In class** — real equipment or lab VMs, instructor sign-off |
 | – | `CL-6` — Build, snapshot and network a virtual machine | classroom | **In class** — real equipment or lab VMs, instructor sign-off |
 | – | `CL-7` — Structured troubleshooting drills on staged faults | classroom | **In class** — real equipment or lab VMs, instructor sign-off |
@@ -136,13 +143,14 @@ Status 18 Oct 2026 (round 2), `labs` branch. Image, licences and measurements ar
 | – | `CL-12` — Change request and recovery drill | classroom | **In class** — real equipment or lab VMs, instructor sign-off |
 | – | `CL-13` — PowerShell evidence and name-resolution repair | classroom | **In class** — real equipment or lab VMs, instructor sign-off |
 
-**Real environment: 15 labs, plus 2 real-VM scenario stages.**
+**Real environment: 20 labs, plus 2 real-VM scenario stages.**
 - Round 1: `linux-vm-perms`, `linux-vm-shell`, `linux-vm-services`, `linux-vm-netclient`, `linux-vm-routing`
 - Round 2: `linux-vm-logs`, `linux-vm-cron`, `linux-vm-users`, `linux-vm-packages`, `linux-vm-firewall`,
   `linux-vm-disk`, `linux-vm-ssh`, `linux-vm-script`, `linux-vm-dns`, `linux-vm-nettrouble`
+- Round 4: `linux-vm-perf`, `linux-vm-restore`, `linux-vm-web`, `linux-vm-nat`, `linux-vm-incident`
 - Scenario stages: `scn-dns-fix`, `scn-lan2-fix`
 
-**Simulated: 64 labs, plus 2 Windows scenario stages.** Of the 64, 12 now have a real twin. **9 classroom labs**
+**Simulated: 64 labs, plus 2 Windows scenario stages.** Of the 64, 16 now have a real twin. **9 classroom labs**
 (CL-*) use real equipment with an instructor's sign-off.
 
 ## What each real lab checks inside the machine
@@ -164,6 +172,11 @@ Status 18 Oct 2026 (round 2), `labs` branch. Image, licences and measurements ar
 | linux-vm-script | black-box tests of the student's `app-backup.sh`: no argument exits 2 with usage; a missing source exits 1; a run makes `app-YYYYMMDD-HHMM.tar.gz` holding the right files; rotation keeps the newest 3 (fixture with back-dated archives); it logs `backup ok` to syslog; cron has `15 1 * * *` and the script has really run | behaviour only: the probe never reads the script's text, apart from rejecting the starter's "not implemented yet" |
 | linux-vm-dns | ws-22's resolv.conf points at dns-01; dnsmasq listens on 10.30.0.53; `intranet.ciwt.lab` resolves to 10.30.0.80 from `/etc/hosts.ciwt`; MX and a CNAME `wiki` exist; forwarding is to 10.30.0.1, and **the upstream resolver saw a forwarded query** (`dns_fwd` fabric); the probe's `drill` from ws-22 gets the right answers | diagnosed from the client first (`cat /etc/resolv.conf`, `drill`); verified with both `drill` and `nslookup` |
 | linux-vm-nettrouble | rtr-2's dnsmasq is running with a valid DHCP range (the `dhcp-rnage` typo is fixed) and hands out router 10.2.0.1; rtr-2's default route goes via 10.1.0.1 with forwarding on; pc-7 holds a real lease from rtr-2; its live ping to 198.51.100.10 shows **TTL 62** (two real hops) | the symptom was recorded (`udhcpc`, `dnsmasq --test`); the fault was isolated (ping from pc-7, `ip route` on rtr-2) before the route was changed; the core router saw a traceroute probe from pc-7 (`trace_core`) |
+| linux-vm-perf | `thumbgen` (the CPU spinner) is gone (zombies ignored); the payroll `reportgen` is **still running** with nice ≥ 10 (field 19 of `/proc/PID/stat`); `cachefill` (the 10 MB hog) is gone; `S60cachefill` is kept but not executable; the answers file names the CPU and memory culprits (compared by hash) | a baseline (`uptime`, then `free`) before any `kill`/`renice`; `top` or `ps -o`; `free` again after the memory hog is stopped |
+| linux-vm-restore | the three restored files match the **16 Oct** contents by sha256 (so the corrupt 17 Oct archive and the older 15 Oct one both fail); folder `drwxr-x--- fin finance`, files `-rw-r----- fin finance`; today's edits to `2026-q4.csv` and `hr/rota.txt` are still there; the answers file names the backup used and the bad one (by hash) | `sha256sum -c` and a `tar -t` listing before any `tar -x`; `ls -l` of the restored folder after extracting |
+| linux-vm-web | on app-05, darkhttpd listens on the network (`ss -tln`), started by the init script from `/etc/default/intranet` whose `ADDR` is no longer 127.0.0.1; `intranet.bak` holds the original settings; `q3.html` is 644/444, owned by root, content intact; **from ws-31, the probe's curl gets HTTP 200** for both pages over real TCP | scoped first (client request, then `curl 127.0.0.1` on the server) before the config edit; the client saw the 403 before any `chmod`; `ss -tlnp` used |
+| linux-vm-nat | edge-1's nat POSTROUTING masquerades (or SNATs to 203.0.113.2) `10.5.0.0/24` and the wrong-subnet `10.50.0.0/24` rule is gone; FORWARD policy DROP with ESTABLISHED,RELATED and `-s 10.5.0.0/24` accepts; lan-pc's live ping to 203.0.113.10 returns with **TTL 63**; `nslookup www.example.com` through the NAT; the rules (nat table included) saved | the fault isolated (ping from lan-pc, then from edge-1) before the nat table was changed; `tcpdump` run on edge-1; **the internet host saw the PC's private source address before the fix** (`nat_leak`) **and the router's public 203.0.113.2 after it** (`nat_ok`) — the in-page internet never answers private addresses |
+| linux-vm-incident | `/root/evidence` holds copies that still contain the rogue key, the cron downloader, the `sysbak` passwd line and the `:31337` listener, and its `SHA256SUMS` verifies; nothing listens on 31337 and the disguised `kworkerd` (a renamed socat) is gone; the cron downloader is gone but the 02:30 backup job stays; only the deploy key is left, mode 600; root is the only UID 0; the SUID copy of busybox lost its SUID bit; the report names IP, port and account (by hash) | `ss -tlnp` (or `lsof`) and `find … -perm -4000` in the history |
 
 **How the grading works and what it trusts.**
 
@@ -259,6 +272,7 @@ stages are separate graded labs and unlock in order.
 ```
 venv/bin/python tools/vm_headless.py linux-vm-routing            # boots the real VMs in Node and grades the solution (exit 0)
 venv/bin/python tools/vm_headless.py linux-vm-routing --commands none   # nothing done → only "boot" (exit 0)
+venv/bin/python -m pytest tests/test_vm_real.py tests/test_labs_round4.py -q   # every VM lab, solution and empty run
 venv/bin/python tools/labs_e2e.py --only '^linux-vm-' --views desktop,phone,tablet
 venv/bin/python tools/labs_e2e.py --only '^scn-' --views desktop,phone,tablet           # scenario stages
 venv/bin/python -m pytest tests/test_win_fidelity.py tests/test_scenario.py -q

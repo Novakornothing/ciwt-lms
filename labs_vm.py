@@ -470,6 +470,8 @@ ROUTING = {
 VM_LABS = [PERMS, SHELL, SERVICES, NETCLIENT, ROUTING]
 from labs_vm_more import MORE_LABS, MORE_FABRIC, MORE_FABRIC_WHY  # noqa: E402  (round 2: ten more real labs)
 VM_LABS += MORE_LABS
+from labs_vm_r4 import R4_LABS, R4_FABRIC, R4_FABRIC_WHY  # noqa: E402  (round 4: perf, restore, web, NAT, incident)
+VM_LABS += R4_LABS
 VM_BY_ID = {l["id"]: l for l in VM_LABS}
 VM_LINUX = PERMS  # backwards name
 
@@ -594,6 +596,8 @@ FABRIC_WHY = {"dhcp_ack": "the DHCP server has not acknowledged a lease yet",
 
 FABRIC_RULES.update(MORE_FABRIC)
 FABRIC_WHY.update(MORE_FABRIC_WHY)
+FABRIC_RULES.update(R4_FABRIC)
+FABRIC_WHY.update(R4_FABRIC_WHY)
 
 
 def _fabric_ok(rule, ev, state):
