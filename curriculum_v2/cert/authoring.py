@@ -77,6 +77,16 @@ SOURCES = {
     'ms-lockout': 'Microsoft Learn — Account lockout threshold and Account lockout duration (security policy settings)',
     'ms-autoplay': 'Microsoft Support — turn AutoPlay on or off in Windows',
     'ms-netuser': 'Microsoft Learn — net user command reference (/active, /expires, /times)',
+    'tcg-tpm': 'Trusted Computing Group — TPM 2.0 Library specification',
+    'nist-fips1403': 'NIST FIPS 140-3, Security Requirements for Cryptographic Modules (2019)',
+    'ms-hyperv-req': 'Microsoft Learn — Hyper-V system requirements (hardware virtualization extensions, SLAT)',
+    'snia-ddf': 'SNIA — Common RAID Disk Data Format (DDF) specification (RAID level definitions)',
+    'intel-atx3': 'Intel — ATX Version 3 Multi Rail Desktop Platform Power Supply Design Guide',
+    'nist-80077r1': 'NIST SP 800-77 Rev. 1, Guide to IPsec VPNs (June 2020)',
+    'nist-800113': 'NIST SP 800-113, Guide to SSL VPNs (July 2008)',
+    'nist-80041r1': 'NIST SP 800-41 Rev. 1, Guidelines on Firewalls and Firewall Policy (September 2009)',
+    'ieee-8021x': 'IEEE 802.1X-2020, Port-Based Network Access Control',
+    'nist-80057p1': 'NIST SP 800-57 Part 1 Rev. 5, Recommendation for Key Management (May 2020)',
 }
 
 
