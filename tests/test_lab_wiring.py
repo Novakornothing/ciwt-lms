@@ -42,6 +42,13 @@ def test_vm_probe_not_finished_is_not_a_rejection_but_repeating_it_unchanged_is_
     assert LD.is_rejected(ev(9, 'check', 'vm probe {}', 'error'))
 
 
+def test_vm_probe_stopped_by_the_watchdog_is_not_counted_as_a_repeat():
+    """labs r5: c_<id> t = the probe watchdog stopped that check on a slow device; pressing Check again is right."""
+    evs = [ev(1, 'vm', 'boot', newly=['boot'])] + [ev(i, 'check', 'vm probe {"keylogin": "t"}', 'wrong') for i in range(2, 6)]
+    ids = {p['id'] for p in LD.diagnose(evs, lab=VM_LAB)['patterns']}
+    assert 'repeats_without_change' not in ids and 'trial_and_error' not in ids
+
+
 def test_vm_change_without_a_check_command_is_never_verifies():
     evs = [ev(1, 'vm', 'boot', newly=['boot']), ev(2, 'vm', 'mkdir -p /root/x'),
            ev(3, 'check', 'vm probe {"a": 1}', 'progress', ['mkdir'])]
