@@ -60,6 +60,23 @@ SOURCES = {
     'epa-liion': 'U.S. EPA — “Used Lithium-Ion Batteries” (do not put in household trash or recycling; take to a battery or household-hazardous-waste collection)',
     'apple-btpair': 'Apple Support — “Pair a third-party Bluetooth accessory with your iPhone or iPad”; Android Help — “Connect to Bluetooth devices”',
     'ms-display': 'Microsoft Support — “How to use multiple monitors in Windows” (Win+P projection modes, scale and resolution)',
+    # pass 11, second batch (A+ Core 2 domains 1 and 2)
+    'ms-mmc': 'Microsoft Learn — Windows Tools and Microsoft Management Console snap-ins (eventvwr.msc, diskmgmt.msc, taskschd.msc, devmgmt.msc, certmgr.msc, lusrmgr.msc, perfmon.msc, gpedit.msc)',
+    'ms-taskmgr': 'Microsoft Support — Task Manager in Windows (Processes, Performance, Startup apps, Users, Details and Services pages)',
+    'ms-power': 'Microsoft Support — power settings in Windows (power mode, sleep, hibernate, lid and power-button actions, fast startup)',
+    'ms-explorer-opts': 'Microsoft Support — “File Explorer in Windows” (show hidden files and file name extensions; Folder Options)',
+    'ms-memlimits': 'Microsoft Learn — Memory Limits for Windows and Windows Server Releases',
+    'ms-editions': 'Microsoft — Windows 11 edition comparison (Home, Pro, Pro for Workstations, Enterprise) and Windows 10 end of support, 14 October 2025',
+    'apple-macos-guide': 'Apple Support — macOS User Guide (Finder, Dock, Mission Control, Spotlight, Time Machine, Force Quit, Disk Utility; support.apple.com/guide/mac-help)',
+    'apple-platsec': 'Apple Platform Security guide — XProtect, FileVault, Keychain and Background Security Improvements (support.apple.com/guide/security)',
+    'apple-bsi': 'Apple Support — “About Background Security Improvements for iOS, iPadOS, and macOS” (support.apple.com/102657)',
+    'fhs3': 'Linux Foundation — Filesystem Hierarchy Standard 3.0 (/etc, /home, /root, /var)',
+    'linux-man': 'Linux man-pages project (man7.org): passwd(5), shadow(5), fstab(5), hosts(5), resolv.conf(5), mount(8), fsck(8); GNU Coreutils manual (ls, cp, mv, rm, chmod, chown, du, df)',
+    'nist-80083r1': 'NIST SP 800-83 Rev. 1, Guide to Malware Incident Prevention and Handling for Desktops and Laptops (July 2013)',
+    'cisa-ransom': 'CISA, FBI, NSA and MS-ISAC — #StopRansomware Guide',
+    'ms-lockout': 'Microsoft Learn — Account lockout threshold and Account lockout duration (security policy settings)',
+    'ms-autoplay': 'Microsoft Support — turn AutoPlay on or off in Windows',
+    'ms-netuser': 'Microsoft Learn — net user command reference (/active, /expires, /times)',
 }
 
 

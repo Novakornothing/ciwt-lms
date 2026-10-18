@@ -765,6 +765,15 @@
   "C-A2-1.1-1": [
    "A2:1.1"
   ],
+  "C-A2-1.1-2": [
+   "A2:1.1"
+  ],
+  "C-A2-1.1-3": [
+   "A2:1.1"
+  ],
+  "C-A2-1.1-4": [
+   "A2:1.1"
+  ],
   "C-A2-1.10-1": [
    "A2:1.10"
   ],
@@ -792,6 +801,63 @@
   "C-A2-1.3-1": [
    "A2:1.3"
   ],
+  "C-A2-1.3-2": [
+   "A2:1.3"
+  ],
+  "C-A2-1.3-3": [
+   "A2:1.3"
+  ],
+  "C-A2-1.3-4": [
+   "A2:1.3"
+  ],
+  "C-A2-1.4-1": [
+   "A2:1.4"
+  ],
+  "C-A2-1.4-2": [
+   "A2:1.4"
+  ],
+  "C-A2-1.4-3": [
+   "A2:1.4"
+  ],
+  "C-A2-1.4-4": [
+   "A2:1.4"
+  ],
+  "C-A2-1.6-1": [
+   "A2:1.6"
+  ],
+  "C-A2-1.6-2": [
+   "A2:1.6"
+  ],
+  "C-A2-1.6-3": [
+   "A2:1.6"
+  ],
+  "C-A2-1.6-4": [
+   "A2:1.6"
+  ],
+  "C-A2-1.8-1": [
+   "A2:1.8"
+  ],
+  "C-A2-1.8-2": [
+   "A2:1.8"
+  ],
+  "C-A2-1.8-3": [
+   "A2:1.8"
+  ],
+  "C-A2-1.8-4": [
+   "A2:1.8"
+  ],
+  "C-A2-1.9-1": [
+   "A2:1.9"
+  ],
+  "C-A2-1.9-2": [
+   "A2:1.9"
+  ],
+  "C-A2-1.9-3": [
+   "A2:1.9"
+  ],
+  "C-A2-1.9-4": [
+   "A2:1.9"
+  ],
   "C-A2-2.11-1": [
    "A2:2.11"
   ],
@@ -813,6 +879,18 @@
   "C-A2-2.3-3": [
    "A2:2.3"
   ],
+  "C-A2-2.4-1": [
+   "A2:2.4"
+  ],
+  "C-A2-2.4-2": [
+   "A2:2.4"
+  ],
+  "C-A2-2.4-3": [
+   "A2:2.4"
+  ],
+  "C-A2-2.4-4": [
+   "A2:2.4"
+  ],
   "C-A2-2.5-1": [
    "A2:2.5"
   ],
@@ -827,6 +905,18 @@
   ],
   "C-A2-2.5-5": [
    "A2:2.5"
+  ],
+  "C-A2-2.7-1": [
+   "A2:2.7"
+  ],
+  "C-A2-2.7-2": [
+   "A2:2.7"
+  ],
+  "C-A2-2.7-3": [
+   "A2:2.7"
+  ],
+  "C-A2-2.7-4": [
+   "A2:2.7"
   ],
   "C-A2-2.9-1": [
    "A2:2.9"
@@ -2344,7 +2434,7 @@
   "A1:1.1": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.8,
+   "content_ratio": 0.9,
    "items": [
     "A1.4",
     "Q4.7",
@@ -2355,14 +2445,14 @@
    "labs": [],
    "lessons": [
     "ITSUP 4.1",
+    "ITSUP 13.5",
     "ITSUP 1.1",
     "ITSUP 4.2"
    ],
    "status": "covered",
    "title": "Given a scenario, monitor mobile device hardware and use appropriate replacement techniques.",
    "topics_missing": [
-    "Biometrics",
-    "Microphone"
+    "Biometrics"
    ],
    "weight": 4.33
   },
@@ -3150,13 +3240,16 @@
   },
   "A2:1.1": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.647,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "X-IT-9.4.1",
     "X-IT-9.4.2",
     "X-IT-9.4.3",
-    "C-A2-1.1-1"
+    "C-A2-1.1-1",
+    "C-A2-1.1-2",
+    "C-A2-1.1-3",
+    "C-A2-1.1-4"
    ],
    "labs": [
     "w11-inventory",
@@ -3169,23 +3262,16 @@
     "gui-accounts"
    ],
    "lessons": [
-    "ITSUP 9.4",
     "ITSUP 8.1",
+    "ITSUP 9.4",
+    "ITSUP 9.2",
     "ITSUP 9.1",
     "ITSUP 9.3",
-    "ITSUP 8.2",
-    "ITSUP 9.2"
+    "ITSUP 8.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain common operating system (OS) types and their purposes.",
-   "topics_missing": [
-    "ChromeOS",
-    "iPadOS",
-    "iOS",
-    "Android",
-    "ReFS",
-    "XFS"
-   ],
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:1.10": {
@@ -3258,8 +3344,8 @@
     "ITSUP 8.1",
     "ITSUP 8.4",
     "ITSUP 11.1",
-    "ITSUP 8.3",
     "ITSUP 11.3",
+    "ITSUP 8.3",
     "ITSUP 8.2"
    ],
    "status": "covered",
@@ -3275,38 +3361,36 @@
   },
   "A2:1.3": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.6,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "Q8.1",
     "Q8.2",
     "X-IT-8.1.3",
-    "C-A2-1.3-1"
+    "C-A2-1.3-1",
+    "C-A2-1.3-2",
+    "C-A2-1.3-3",
+    "C-A2-1.3-4"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 8.1",
     "ITSUP 6.1",
+    "ITSUP 10.3",
+    "ITSUP 11.3",
     "ITSUP 8.4",
     "ITSUP 8.2",
     "ITSUP 8.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast basic features of Microsoft Windows editions.",
-   "topics_missing": [
-    "Pro for Workstations",
-    "N versions",
-    "Desktop styles/UI",
-    "RDP availability",
-    "RAM support limitations",
-    "gpedit.msc"
-   ],
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:1.4": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.6,
+   "content": "covered",
+   "content_ratio": 0.95,
    "items": [
     "A2.6",
     "Q8.6",
@@ -3314,7 +3398,11 @@
     "Q13.6",
     "Q13.7",
     "X-IT-8.3.3",
-    "X-IT-13.3.1"
+    "X-IT-13.3.1",
+    "C-A2-1.4-1",
+    "C-A2-1.4-2",
+    "C-A2-1.4-3",
+    "C-A2-1.4-4"
    ],
    "labs": [
     "gui-devices",
@@ -3323,27 +3411,22 @@
     "w11-processes"
    ],
    "lessons": [
+    "ITSUP 11.3",
+    "ITSUP 13.5",
     "ITSUP 11.1",
     "ITSUP 11.4",
     "ITSUP 8.3",
     "ITSUP 8.2",
     "ITSUP 11.2",
-    "ITSUP 13.5",
     "ITSUP 2.6",
+    "ITSUP 8.1",
     "ITSUP 8.4",
     "ITSUP 13.6"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, use Microsoft Windows operating system features and tools.",
    "topics_missing": [
-    "Users tab",
-    "Disk Management",
-    "Task Scheduler",
-    "Certificate Manager",
-    "Local Users and Groups",
-    "Group Policy Editor",
-    "Disk Defragment",
-    "Registry Editor"
+    "Users tab"
    ],
    "weight": 2.55
   },
@@ -3424,13 +3507,17 @@
   },
   "A2:1.6": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.321,
+   "content": "covered",
+   "content_ratio": 0.964,
    "items": [
     "Q8.3",
     "Q8.4",
     "Q8.5",
-    "X-IT-8.2.3"
+    "X-IT-8.2.3",
+    "C-A2-1.6-1",
+    "C-A2-1.6-2",
+    "C-A2-1.6-3",
+    "C-A2-1.6-4"
    ],
    "labs": [
     "gui-devices",
@@ -3442,41 +3529,24 @@
     "gui-renew"
    ],
    "lessons": [
+    "ITSUP 13.5",
+    "ITSUP 11.3",
     "ITSUP 8.1",
     "ITSUP 8.2",
-    "ITSUP 13.5",
     "ITSUP 8.3",
     "ITSUP 8.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, configure Microsoft Windows settings.",
    "topics_missing": [
-    "Internet Options",
-    "Devices and Printers",
-    "Network and Sharing Center",
-    "Windows Defender Firewall",
-    "Mail",
-    "Sound",
-    "User Accounts",
-    "Indexing Options",
-    "Administrative Tools",
-    "File Explorer Options",
-    "Power plans",
-    "Hibernate/sleep/standby",
-    "Lid close action",
-    "Fast startup",
-    "USB selective suspend",
-    "Ease of Access/Accessibility",
-    "Time and Language",
-    "Personalization",
-    "Gaming"
+    "Mail"
    ],
    "weight": 2.55
   },
   "A2:1.7": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.833,
+   "content_ratio": 0.889,
    "items": [
     "A1.24",
     "A1.28",
@@ -3505,6 +3575,7 @@
     "gui-renew"
    ],
    "lessons": [
+    "ITSUP 13.5",
     "NETOPS 5.3",
     "ITSUP 13.2",
     "ITSUP 5.3",
@@ -3512,6 +3583,7 @@
     "ITSUP 4.2",
     "ITSUP 5.2",
     "ITSUP 7.2",
+    "ITSUP 10.2",
     "ITSUP 13.3",
     "NETOPS 2.3",
     "NETOPS 3.2",
@@ -3521,7 +3593,6 @@
     "ITSUP 5.5",
     "ITSUP 8.2",
     "ITSUP 9.3",
-    "ITSUP 13.5",
     "NETOPS 2.1",
     "NETOPS 3.1",
     "NETOPS 4.1",
@@ -3530,25 +3601,24 @@
     "ITSUP 13.4",
     "ITSUP 13.6",
     "ITSUP 5.4",
+    "ITSUP 9.2",
     "ITSUP 8.3",
     "ITSUP 8.4",
     "ITSUP 9.1",
-    "ITSUP 9.2",
     "ITSUP 9.4"
    ],
    "status": "covered",
    "title": "Given a scenario, configure Microsoft Windows networking features on a client/desktop.",
    "topics_missing": [
     "Shared printers",
-    "Public vs. private network",
     "Metered connections"
    ],
    "weight": 2.55
   },
   "A2:1.8": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.364,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "Q9.3",
     "Q9.4",
@@ -3557,37 +3627,27 @@
     "S-IT-9.2.2",
     "X-IT-9.2.1",
     "X-IT-9.2.2",
-    "X-IT-9.2.3"
+    "X-IT-9.2.3",
+    "C-A2-1.8-1",
+    "C-A2-1.8-2",
+    "C-A2-1.8-3",
+    "C-A2-1.8-4"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 9.2",
+    "ITSUP 9.1",
     "ITSUP 9.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain common features and tools of the macOS/desktop operating system.",
-   "topics_missing": [
-    ".dmg/.pkg/.app",
-    "App Store",
-    "Uninstallation",
-    "System folders",
-    "Antivirus",
-    "Updates/RSR",
-    "Multiple desktops/Mission Control",
-    "Keychain",
-    "Spotlight",
-    "iCloud",
-    "Gestures",
-    "Dock",
-    "Continuity",
-    "Force Quit"
-   ],
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:1.9": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.583,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.25",
     "A1.47",
@@ -3598,7 +3658,11 @@
     "Q9.2",
     "X-IT-9.1.1",
     "X-IT-9.1.2",
-    "X-IT-9.1.3"
+    "X-IT-9.1.3",
+    "C-A2-1.9-1",
+    "C-A2-1.9-2",
+    "C-A2-1.9-3",
+    "C-A2-1.9-4"
    ],
    "labs": [
     "rtr-trace"
@@ -3607,25 +3671,9 @@
     "ITSUP 9.1",
     "ITSUP 9.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Identify common features and tools of the Linux client/desktop operating system.",
-   "topics_missing": [
-    "mv",
-    "cp",
-    "rm",
-    "fsck",
-    "mount",
-    "su",
-    "curl",
-    "ps",
-    "nano",
-    "/etc/passwd",
-    "/etc/shadow",
-    "/etc/hosts",
-    "/etc/fstab",
-    "kernel",
-    "bootloader"
-   ],
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:2.1": {
@@ -3647,6 +3695,7 @@
    "lessons": [
     "ITSUP 10.1",
     "NETOPS 5.3",
+    "ITSUP 10.3",
     "ITSUP 10.4",
     "ITSUP 10.2"
    ],
@@ -3720,8 +3769,8 @@
   },
   "A2:2.2": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.652,
+   "content": "covered",
+   "content_ratio": 0.826,
    "items": [
     "A1.33",
     "A1.41",
@@ -3753,23 +3802,21 @@
    "lessons": [
     "ITSUP 8.2",
     "ITSUP 10.1",
+    "ITSUP 8.1",
     "ITSUP 9.1",
     "ITSUP 10.3",
+    "ITSUP 9.2",
+    "ITSUP 10.2",
     "ITSUP 10.4",
     "ITSUP 8.3",
-    "ITSUP 9.2",
     "ITSUP 9.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, configure and apply basic Microsoft Windows OS security settings.",
    "topics_missing": [
-    "Update definitions",
     "SSO",
     "NTFS vs. share permissions",
-    "EFS",
-    "Joining domain",
     "Log-in script",
-    "Home folders",
     "Security groups"
    ],
    "weight": 2.55
@@ -3799,8 +3846,8 @@
   },
   "A2:2.4": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.444,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.32",
     "Q10.2",
@@ -3809,7 +3856,11 @@
     "Q10.9",
     "X-IT-10.2.1",
     "X-IT-10.2.2",
-    "X-IT-10.2.3"
+    "X-IT-10.2.3",
+    "C-A2-2.4-1",
+    "C-A2-2.4-2",
+    "C-A2-2.4-3",
+    "C-A2-2.4-4"
    ],
    "labs": [
     "gui-services",
@@ -3817,22 +3868,12 @@
    ],
    "lessons": [
     "ITSUP 10.2",
+    "ITSUP 10.3",
     "ITSUP 10.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Summarize types of malware and tools/methods for detection, removal, and prevention.",
-   "topics_missing": [
-    "Trojan",
-    "Rootkit",
-    "Spyware",
-    "Keylogger",
-    "Boot sector virus",
-    "Cryptominer",
-    "Stalkerware",
-    "Fileless",
-    "EDR/MDR/XDR",
-    "Email security gateway"
-   ],
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:2.5": {
@@ -3878,6 +3919,7 @@
     "ITSUP 8.1",
     "ITSUP 8.3",
     "ITSUP 11.2",
+    "ITSUP 11.3",
     "ITSUP 12.2",
     "ITSUP 10.3"
    ],
@@ -3888,39 +3930,34 @@
   },
   "A2:2.7": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.4,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.35",
     "A2.12",
     "A3.5",
     "Q10.6",
-    "X-IT-10.3.3"
+    "X-IT-10.3.3",
+    "C-A2-2.7-1",
+    "C-A2-2.7-2",
+    "C-A2-2.7-3",
+    "C-A2-2.7-4"
    ],
    "labs": [],
    "lessons": [
+    "ITSUP 10.3",
     "ITSUP 10.1",
     "ITSUP 10.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, apply workstation security options and hardening techniques.",
-   "topics_missing": [
-    "BIOS/UEFI passwords",
-    "Log off",
-    "Restrict log-in times",
-    "Disable guest account",
-    "Failed attempts lockout",
-    "Account expiration",
-    "Change default admin",
-    "Disable AutoRun",
-    "Disable unused services"
-   ],
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:2.8": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.833,
+   "content_ratio": 0.917,
    "items": [
     "A2.19",
     "Q4.3",
@@ -3931,16 +3968,17 @@
    "labs": [],
    "lessons": [
     "ITSUP 4.2",
+    "ITSUP 9.2",
     "ITSUP 4.1",
     "ITSUP 10.2",
+    "ITSUP 10.3",
     "ITSUP 12.2",
     "ITSUP 4.4"
    ],
    "status": "covered",
    "title": "Given a scenario, apply common methods for securing mobile devices.",
    "topics_missing": [
-    "Remote backup",
-    "Failed log-in restrictions"
+    "Remote backup"
    ],
    "weight": 2.55
   },
@@ -3961,8 +3999,10 @@
     "ITSUP 10.3",
     "ITSUP 4.1",
     "ITSUP 8.3",
+    "ITSUP 9.2",
     "ITSUP 9.4",
     "ITSUP 11.1",
+    "ITSUP 11.3",
     "ITSUP 12.2",
     "NETOPS 3.3"
    ],
@@ -4019,7 +4059,8 @@
     "ITSUP 11.1",
     "ITSUP 8.3",
     "ITSUP 11.4",
-    "ITSUP 8.2"
+    "ITSUP 8.2",
+    "ITSUP 11.3"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot common Windows OS issues.",
@@ -4029,7 +4070,7 @@
   "A2:3.2": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.917,
+   "content_ratio": 1.0,
    "items": [
     "C-A2-3.2-1",
     "C-A2-3.2-2",
@@ -4040,13 +4081,12 @@
    "lessons": [
     "ITSUP 4.2",
     "ITSUP 4.1",
+    "ITSUP 9.2",
     "ITSUP 4.3"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot common mobile OS and application issues.",
-   "topics_missing": [
-    "OS fails to update"
-   ],
+   "topics_missing": [],
    "weight": 5.75
   },
   "A2:3.3": {
@@ -4084,7 +4124,8 @@
    "labs": [],
    "lessons": [
     "ITSUP 10.2",
-    "ITSUP 4.2"
+    "ITSUP 4.2",
+    "ITSUP 10.3"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot common personal computer (PC) security issues.",
@@ -4124,8 +4165,8 @@
    "lessons": [
     "ITSUP 12.4",
     "ITSUP 1.1",
-    "ITSUP 7.3",
     "ITSUP 8.1",
+    "ITSUP 7.3",
     "ITSUP 10.4",
     "ITSUP 1.2",
     "ITSUP 1.3",
@@ -4199,10 +4240,10 @@
     "ITSUP 1.1",
     "ITSUP 7.1",
     "ITSUP 11.1",
+    "ITSUP 11.3",
     "ITSUP 12.3",
     "ITSUP 1.3",
     "ITSUP 1.4",
-    "ITSUP 11.3",
     "ITSUP 12.2"
    ],
    "status": "partial",
@@ -4260,6 +4301,7 @@
    "lessons": [
     "ITSUP 1.2",
     "ITSUP 4.1",
+    "ITSUP 10.2",
     "ITSUP 1.3",
     "ITSUP 1.4"
    ],
@@ -4797,6 +4839,7 @@
     "NETOPS 6.3",
     "ITSUP 8.1",
     "ITSUP 10.4",
+    "ITSUP 11.3",
     "NETOPS 6.1",
     "NETOPS 9.1"
    ],
@@ -5217,20 +5260,20 @@
    "gap": 0,
    "items": 196,
    "partial": 5,
-   "topic_ratio": 0.873,
+   "topic_ratio": 0.876,
    "total": 27,
    "weighted_covered": 84.7,
    "weighted_partial": 15.4
   },
   "A2": {
-   "covered": 22,
+   "covered": 31,
    "gap": 0,
-   "items": 299,
-   "partial": 14,
-   "topic_ratio": 0.703,
+   "items": 329,
+   "partial": 5,
+   "topic_ratio": 0.863,
    "total": 36,
-   "weighted_covered": 66.2,
-   "weighted_partial": 33.9
+   "weighted_covered": 89.1,
+   "weighted_partial": 10.9
   },
   "N": {
    "covered": 21,
