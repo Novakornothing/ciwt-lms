@@ -71,3 +71,7 @@
 [data-theme="dark"] .ladder-helix { border-color: #2d5f80; }
 [data-theme="dark"] .ladder-bar > span { background: #5cc3ee; }
 [data-theme="dark"] .ladder-label:focus { outline-color: #5cc3ee; }
+
+.ladder-intro a, .ladder-tools .btn-link, .ladder-seen .btn-link { color: #0a4c6b; text-decoration: underline; }
+[data-theme="dark"] .ladder-intro a, [data-theme="dark"] .ladder-tools .btn-link, [data-theme="dark"] .ladder-seen .btn-link { color: #9fdcff; }
+.ladder-badge.ladder-badge-orig { background: var(--surface-2); color: var(--ink-secondary); border-color: var(--surface-4); }

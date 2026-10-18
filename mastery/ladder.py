@@ -29,6 +29,7 @@ from . import ladder_policy as LP
 _cache = {}
 DEMO_DOMAIN = '@lms.local'
 SOURCES = ('button', 'dontget', 'helix')
+HOW = {'R1': 'said more simply', 'R2': 'as an analogy', 'R3': 'as a picture or step by step', 'R4': 'as something to try'}
 
 
 def utcnow():
@@ -366,8 +367,8 @@ def register_ladder(app, db, ctx):
             mct = LD.misconceptions().get(mc) or _global_mc(mc)
             hint = f' That answer usually means this mix-up: {mct["label"]}.' if mct else ''
             if nxt:
-                fb = {'ok': False, 'text': f'Not quite.{hint} Here is the same idea explained another way: '
-                                           f'{LS.LABEL[nxt].replace("Explained another way: ", "").lower()}.'}
+                fb = {'ok': False, 'text': f'Not quite.{hint} Here is the same idea {HOW[nxt]}, with a fresh question '
+                                           'at the end.'}
             else:
                 fb = {'ok': False, 'text': f'Not quite.{hint} You have now seen every explanation of this section. '
                                            'Your instructor can see that this one needs a conversation; that is useful '

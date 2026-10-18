@@ -6,8 +6,9 @@
      data-event-url="{{ L.url_event }}" data-next="{{ 1 if L.next_available else 0 }}">
   {% if v %}
   <section class="sublesson ladder-rung" aria-labelledby="lh-{{ L.sid }}">
-    <p class="ladder-label" tabindex="-1"><span class="ladder-badge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ v.label }}</span>
+    <p class="ladder-label" tabindex="-1"{% if L.feedback and not L.feedback.ok %} aria-describedby="lf-{{ L.sid }}"{% endif %}><span class="ladder-badge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ v.label }}</span>
       <span class="ladder-review">{{ L.review }}</span></p>
+    {% if L.feedback and not L.feedback.ok %}<p class="ladder-feedback is-miss" id="lf-{{ L.sid }}">{{ L.feedback.text }}</p>{% endif %}
     <h3 id="lh-{{ L.sid }}">{{ L.heading }}</h3>
     {% if v.title %}<p class="ladder-title">{{ v.title }}</p>{% endif %}
     <div class="ladder-content">{{ v.html|safe }}</div>
@@ -19,7 +20,8 @@
   {{ L.orig_html|safe }}
   {% endif %}
   <div class="ladder-panel">
-    <div class="ladder-feedback{% if L.feedback %} {{ 'is-ok' if L.feedback.ok else 'is-miss' }}{% endif %}" role="status" aria-live="polite">{% if L.feedback %}{{ L.feedback.text }}{% endif %}</div>
+    {%- set fb_here = L.feedback and (L.feedback.ok or not v) %}
+    <div class="ladder-feedback{% if fb_here %} {{ 'is-ok' if L.feedback.ok else 'is-miss' }}{% endif %}" role="status" aria-live="polite">{% if fb_here %}{{ L.feedback.text }}{% endif %}</div>
     {% if st.exhausted %}
     <p class="ladder-note small mb-2"><i class="bi bi-person-raised-hand" aria-hidden="true"></i> You have seen every explanation of this section. Your instructor can see it needs a conversation. You can look back at any of them:</p>
     {% endif %}
@@ -50,7 +52,7 @@
       </form>
       {% endif %}
       {% if v %}
-      <a class="btn btn-sm btn-link ladder-orig-toggle" href="?ladder_original={{ L.sid }}#ladder-{{ L.sid }}" aria-pressed="false"
+      <a class="btn btn-sm btn-link ladder-orig-toggle" role="button" href="?ladder_original={{ L.sid }}#ladder-{{ L.sid }}" aria-pressed="false"
          data-back="Back to: {{ v.label }}">See the original explanation<span class="visually-hidden"> of {{ L.heading }}</span></a>
       {% elif L.shown == 'R0' and st.tried|length > 1 %}
       <a class="btn btn-sm btn-link" href="{{ L.lesson_url }}">Back to the explanation you were on</a>

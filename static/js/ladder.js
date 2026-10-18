@@ -67,6 +67,7 @@
       if (!holder) {
         holder = document.createElement('div');
         holder.className = 'ladder-orig-holder';
+        holder.innerHTML = '<p class="ladder-label"><span class="ladder-badge ladder-badge-orig">Original explanation</span></p>';
         holder.appendChild(tpl.content.cloneNode(true));
         rung.parentNode.insertBefore(holder, rung);
       }
@@ -170,7 +171,10 @@
       f.addEventListener('submit', function (e) { e.preventDefault(); submitForm(box, f); });
     });
     var tog = box.querySelector('.ladder-orig-toggle');
-    if (tog) tog.addEventListener('click', function (e) { if (toggleOriginal(box, tog)) e.preventDefault(); });
+    if (tog) {
+      tog.addEventListener('click', function (e) { if (toggleOriginal(box, tog)) e.preventDefault(); });
+      tog.addEventListener('keydown', function (e) { if (e.key === ' ') { e.preventDefault(); toggleOriginal(box, tog); } });
+    }
     initWidgets(box);
   }
 
