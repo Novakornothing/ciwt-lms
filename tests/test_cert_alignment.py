@@ -313,3 +313,10 @@ def test_student_syllabus_has_no_answer_keys():
     syl = str(D.build('syllabus', 'ITSUP')['blocks'])
     for q in CERT_ITEMS[:40]:
         assert q['explanation'] not in syl
+
+
+def test_cert_coverage_md_is_current():
+    import subprocess, sys
+    r = subprocess.run([sys.executable, 'tools/cert_coverage_md.py', '--check'], cwd=str(__import__('pathlib').Path(__file__).resolve().parents[1]),
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr + ' — run: python tools/cert_coverage_md.py'
