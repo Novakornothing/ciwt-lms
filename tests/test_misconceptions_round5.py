@@ -4,6 +4,7 @@ Every round-5 tag must point at a distractor the engine really serves for that o
 include_bank: exact option text, not the key, same objective, ``tag_for`` returns it); the new MC-R5-* entries carry a
 primary source and 'Pending SME review' and find a lesson section for their correction; the measured coverage matches
 what the round reports (bank 0/131 -> 110/131, supplement 0/30 -> 27/30)."""
+import json
 import pytest
 
 from curriculum_v2 import misconceptions as MCS
@@ -130,3 +131,64 @@ def test_correction_page_shows_label_and_pending_status_for_a_round5_misconcepti
     page = s13.get(f'/student/section/1/review/IT-5.2?mc={mc}').data.decode()
     assert 'Mixing up the order of the DHCP exchange' in page
     assert 'Status of this mix-up description: Pending SME review.' in page
+
+
+def _bank_setting(app, mod, on):
+    """Set "Also use the chapter item bank" for section 1; returns the previous row state to restore."""
+    MS = app.extensions['ciwt_mastery'].models.MasterySetting
+    with app.app_context():
+        row = MS.query.filter_by(section_id=1).first()
+        prev = None if row is None else (row.enabled, row.testout, row.testout_bank, row.cert_items)
+        if row is None:
+            row = MS(section_id=1, enabled=True, testout=True, cert_items=True)
+            mod.db.session.add(row)
+        row.testout_bank = on
+        mod.db.session.commit()
+    return prev
+
+
+def _restore_setting(app, mod, prev):
+    MS = app.extensions['ciwt_mastery'].models.MasterySetting
+    with app.app_context():
+        row = MS.query.filter_by(section_id=1).first()
+        if prev is None:
+            mod.db.session.delete(row)
+        else:
+            row.enabled, row.testout, row.testout_bank, row.cert_items = prev
+        mod.db.session.commit()
+
+
+def _open_review(app, client, uid, obj, mc):
+    api = app.extensions['ciwt_mastery']
+    assert client.get(f'/student/section/1/review/{obj}?mc={mc}').status_code == 200
+    with app.app_context():
+        c = (api.models.MasteryCheck.query.filter_by(section_id=1, user_id=uid, kind='review', target=obj, completed_at=None)
+             .order_by(api.models.MasteryCheck.id.desc()).first())
+        return c.id, json.loads(c.items_json)
+
+
+def test_with_the_bank_on_a_round5_correction_serves_its_bank_item_and_records_the_mixup(app, mod, s13):
+    """Round 5 e2e finding made permanent: the round-5 tags only reach students when the class turns the bank on;
+    then the correction check for a round-5 mix-up leads with the X-IT item carrying it, and the tagged wrong
+    answer is recorded as that mix-up. With the bank off, no X-IT/S- item is served."""
+    api = app.extensions['ciwt_mastery']
+    mc, obj, item, wrong = 'MC-R5-IT5-DORA', 'IT-5.2', 'X-IT-5.2.2', 'Discover'
+    assert MCS.TAGS[(item, wrong)] == mc
+    with app.app_context():
+        uid = mod.User.query.filter_by(email=EMAIL).first().id
+    prev = _bank_setting(app, mod, True)
+    try:
+        cid, items = _open_review(app, s13, uid, obj, mc)
+        assert items[0]['bank_id'] == item and wrong in items[0]['options']
+        data = {'check_id': cid}
+        data.update({f'q{i}': (wrong if it['bank_id'] == item else it['correct']) for i, it in enumerate(items)})
+        assert s13.post(f'/student/section/1/review/{obj}', data=data).status_code == 303
+        with app.app_context():
+            st = api.engine.student_state(mod.db.session.get(mod.ClassSection, 1), mod.db.session.get(mod.User, uid), log=False)
+        assert mc in st['misconceptions'] and st['misconceptions'][mc]['active']
+        assert st['misconceptions'][mc]['label'] == 'Mixing up the order of the DHCP exchange'
+        _bank_setting(app, mod, False)
+        _cid, items = _open_review(app, s13, uid, obj, mc)
+        assert items and not [it['bank_id'] for it in items if str(it.get('bank_id') or '').startswith(('X-', 'S-'))]
+    finally:
+        _restore_setting(app, mod, prev)

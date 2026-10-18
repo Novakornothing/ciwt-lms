@@ -23,6 +23,23 @@ def test_semester_simulation_smoke(tmp_path):
     assert not failed, failed
     assert R['events']['reviews'] > 0 and R['events']['daily_reviews'] > 0 and R['events']['testouts'] > 0
     assert R['daily_why'].get('due', 0) > 0
+    assert R['bank'] is False and R['bank_items_served']['times'] == 0   # content round 5: the default leaves the bank off
+
+
+def test_semester_simulation_with_the_bank_on(tmp_path):
+    """Content round 5: with "Also use the chapter item bank" on, review/mastery checks draw X-IT bank and S-
+    supplement items, and every tagged wrong answer on them is recorded as that mix-up. 14 days is enough for the
+    bank checks; the other checks are written for the documented 28-day window and are covered above."""
+    out = tmp_path / 'sim.json'
+    env = dict(os.environ, DATABASE_URL='sqlite:///' + str(tmp_path / 'sim.db'))
+    p = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'semester_sim.py'), str(out), '--days', '14', '--bank'],
+                       cwd=ROOT, env=env, capture_output=True, text=True, timeout=600)
+    assert out.exists(), p.stdout[-3000:] + p.stderr[-3000:]
+    R = json.loads(out.read_text())
+    assert R['bank'] is True
+    bank_checks = [c for c in R['checks'] if 'bank' in c['check']]
+    assert len(bank_checks) == 3 and all(c['ok'] for c in bank_checks), bank_checks
+    assert R['bank_items_served']['times'] > 0 and R['bank_items_served']['tagged_wrong_answers'] > 0
 
 
 def test_sim_refuses_the_real_database():
