@@ -13,6 +13,7 @@ import labs_activity as LA
 import labs_gui as LG
 import labs_linux as LX
 import labs_vm as VM
+import labs_scenario as SC
 
 KIND_GROUPS = [
     ("ticket", "Help desk & bench", "Ticket intake and the hardware bench card."),
@@ -36,11 +37,21 @@ def get_lab(lab_id):
 def list_labs():
     out = []
     for lab in IL.LABS:
+        if lab.get("scenario"):
+            continue          # PBQ stages are reached through their scenario (scenarios())
         out.append({"id": lab["id"], "title": lab["title"], "kind": lab["kind"], "kind_label": KIND_LABEL.get(lab["kind"], lab["kind"]),
                     "blurb": lab.get("blurb") or "", "builds_on": lab.get("builds_on") or [],
                     "objectives": len(lab["objectives"]), "minutes": lab.get("minutes") or 10 + 3 * len(lab["objectives"]),
                     "course_objectives": lab.get("course_objectives") or []})
     return out
+
+
+def scenarios():
+    return SC.SCENARIOS
+
+
+def scenario(sid):
+    return SC.SCN_BY_ID.get(sid)
 
 
 def _seed(lab_id, uid, reseed):
@@ -101,7 +112,8 @@ def view(lab, state, done):
     done = done or []
     out = {
         "prompt": prompt(lab, state), "kind": lab["kind"],
-        "objectives": [{"id": o["id"], "text": o["text"], "done": o["id"] in done} for o in lab["objectives"]],
+        "objectives": SC.masked_objectives(lab, [{"id": o["id"], "text": o["text"], "done": o["id"] in done} for o in lab["objectives"]],
+                                           is_complete(lab, done)),
         "score": score(lab, done),
         "next": next((o["id"] for o in lab["objectives"] if o["id"] not in done), None),
     }
@@ -379,7 +391,7 @@ def next_hint(lab, state, done, hints_used):
             hs = lab.get("hints") or []
             text = (f"Next: {o['text']}." if tier == 1 else
                     (hs[idx] if idx < len(hs) else o["text"]))
-    return {"objective": o["id"], "objective_text": o["text"], "tier": tier, "counted": counted, "text": text,
+    return {"objective": o["id"], "objective_text": ("one of the hidden checks" if lab.get("pbq") else o["text"]), "tier": tier, "counted": counted, "text": text,
             "max": tier >= 2}
 
 

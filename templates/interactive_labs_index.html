@@ -16,6 +16,7 @@
 {% from '_lab_row.html' import lab_row with context %}
 <nav class="chip-scroll mb-3" aria-label="Jump to lab type">
   {% for kind, heading, _ in groups %}{% set n = labs|selectattr('kind', 'equalto', kind)|list|length %}{% if n %}<a class="chip-link" href="#k-{{ kind }}">{{ heading }} <span class="chip-count">{{ n }}</span></a>{% endif %}{% endfor %}
+  {% if scenarios %}<a class="chip-link" href="#k-scenario">Lab scenarios (PBQ) <span class="chip-count">{{ scenarios|length }}</span></a>{% endif %}
   <a class="chip-link" href="#k-classroom">Classroom labs <span class="chip-count">{{ classroom|length }}</span></a>
   {% if current_user.role in ('admin', 'instructor') %}<a class="chip-link" href="{{ url_for('interactive_labs_verify') }}"><i class="bi bi-check2-circle" aria-hidden="true"></i> Self-test</a>{% endif %}
 </nav>
@@ -28,6 +29,20 @@
 </section>
 {% endif %}
 {% endfor %}
+{% if scenarios %}
+<section class="mb-4" aria-labelledby="k-scenario">
+  <h2 class="h6 section-label" id="k-scenario">Lab scenarios <span class="fw-normal text-muted">· performance-based tickets that chain a real VM lab and a simulation; no step list up front</span></h2>
+  <div class="list-group">{% for s in scenarios %}
+    <a class="list-group-item list-group-item-action lab-row no-kind" href="{{ url_for('scenario_lab', sid=s.id) }}">
+      <span class="lab-row-main"><span class="lab-row-title">{{ s.title }}</span><span class="lab-row-sub">{{ s.blurb }}</span></span>
+      {% set ns = namespace(n=0) %}{% for x in s.stages %}{% if progress.get(x.id) and progress.get(x.id).completed_at %}{% set ns.n = ns.n + 1 %}{% endif %}{% endfor %}
+      {% set nres = ns.n %}
+      {% if nres %}<span class="lab-row-prog{{ ' done' if nres == s.stages|length }}">{{ nres }}/{{ s.stages|length }} stages</span>{% endif %}
+      <span class="lab-row-go" aria-hidden="true">Open ticket <i class="bi bi-chevron-right"></i></span>
+    </a>{% endfor %}
+  </div>
+</section>
+{% endif %}
 <section class="mb-4" aria-labelledby="k-classroom">
   <h2 class="h6 section-label" id="k-classroom">Classroom labs <span class="fw-normal text-muted">· real or low-cost equipment, signed off by your instructor with the lab rubric</span></h2>
   <div class="list-group">{% for cl in classroom %}{{ lab_row(cl, cl.objective, false, progress.get(cl.id), url_for('classroom_lab', cl_id=cl.id)) }}{% endfor %}</div>

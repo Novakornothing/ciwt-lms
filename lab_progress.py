@@ -242,7 +242,8 @@ def register(app, db, deps):
         labs = RT.list_labs()
         prog = {r.lab_id: r for r in LP.query.filter_by(user_id=current_user.id).all()}
         classroom = [RT.classroom_lab(c) for c in RT.classroom_ids()]
-        return render_template('interactive_labs_index.html', labs=labs, progress=prog, groups=RT.KIND_GROUPS, classroom=classroom)
+        return render_template('interactive_labs_index.html', labs=labs, progress=prog, groups=RT.KIND_GROUPS, classroom=classroom,
+                               scenarios=RT.scenarios())
 
     @login_required
     def interactive_labs_verify():
@@ -472,6 +473,8 @@ def register(app, db, deps):
                    + (' · network: ' + ', '.join(sorted({f"{e.get('type')} {e.get('msg') or e.get('q') or e.get('to') or ''}".strip() for e in (fabric or {}).get('events', [])}))[:300] if fabric and fabric.get('events') else ''),
                  'error' if res.get('error') else ('ok' if RT.is_complete(lab, done) else ('progress' if newly else 'wrong')),
                  newly, res.get('error') or '; '.join(res.get('messages') or [])))
+        if lab.get('pbq') and res.get('messages') and not RT.is_complete(lab, done):
+            res = dict(res, messages=[RT.SC.pbq_message(lab, done)])
         return jsonify(payload_for(row, lab, state, done, {'result': res, 'newly': newly}))
 
     @login_required
@@ -496,6 +499,17 @@ def register(app, db, deps):
         state, done = load(row)
         complete = save(row, lab, state, done, count=False)
         return jsonify({'ok': True, 'complete': complete, 'done': done})
+
+    # ------------------------------------------------------------------ lab scenarios (PBQ tickets)
+    @login_required
+    def scenario_lab(sid):
+        s = RT.scenario(sid)
+        if not s:
+            abort(404)
+        ids = [st['id'] for st in s['stages']]
+        rows = {r.lab_id: r for r in LP.query.filter(LP.user_id == current_user.id, LP.lab_id.in_(ids)).all()}
+        d.audit('lab_open', sid)
+        return render_template('scenario_lab.html', s=s, st=RT.SC.status(s, rows))
 
     # ------------------------------------------------------------------ classroom labs (student view)
     @login_required
@@ -683,6 +697,7 @@ def register(app, db, deps):
         ('/labs', 'interactive_labs_index', interactive_labs_index, ['GET']),
         ('/labs/verify', 'interactive_labs_verify', interactive_labs_verify, ['GET']),
         ('/labs/classroom/<cl_id>', 'classroom_lab', classroom_lab, ['GET']),
+        ('/labs/scenario/<sid>', 'scenario_lab', scenario_lab, ['GET']),
         ('/labs/<lab_id>', 'interactive_lab', interactive_lab, ['GET']),
         ('/labs/<lab_id>/state', 'interactive_lab_state', interactive_lab_state, ['GET']),
         ('/labs/<lab_id>/cmd', 'interactive_lab_cmd', interactive_lab_cmd, ['POST']),

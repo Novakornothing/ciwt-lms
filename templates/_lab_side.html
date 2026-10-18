@@ -1,11 +1,13 @@
 {# Objectives, hint / undo / reset and assessment — shared by every live lab page. #}
 <aside class="lab-side" aria-label="Objectives and help">
   <div class="card">
-    <div class="card-header navy"><h2 class="h6 mb-0">Objectives</h2></div>
+    {% set pbq_hidden = lab.pbq and not (boot and boot.complete) %}
+    <div class="card-header navy"><h2 class="h6 mb-0">{{ 'Checks' if lab.pbq else 'Objectives' }}</h2></div>
     <div class="card-body">
+      {% if lab.pbq %}<p class="small mb-2 pbq-note"><i class="bi bi-eye-slash" aria-hidden="true"></i> Performance-based ticket: the {{ lab.objectives|length }} checks are hidden until you resolve it. Work from the symptoms; Check my work tells you how many pass.</p>{% endif %}
       <ol class="lab-objectives" id="labObjectives">
         {% for o in lab.objectives %}
-        <li class="obj-item" data-oid="{{ o.id }}"><span class="ck" aria-hidden="true"></span><span>{{ o.text }} <span class="visually-hidden">(<span class="sr-state">not done</span>)</span></span></li>
+        <li class="obj-item" data-oid="{{ o.id }}"{% if lab.pbq %} data-pbq="1"{% endif %}><span class="ck" aria-hidden="true"></span><span><span class="obj-text">{{ ('Hidden check ' ~ loop.index) if pbq_hidden else o.text }}</span> <span class="visually-hidden">(<span class="sr-state">not done</span>)</span></span></li>
         {% endfor %}
       </ol>
       <div class="lab-success" id="labSuccess" hidden role="status"><strong>Lab complete.</strong> {{ lab.success_msg }}</div>

@@ -3531,6 +3531,17 @@ def _install_new_labs():
         cur += [i for i in ids if i not in cur]
     for k, v in _N.NEW_LAB_ALIGN.items():
         LAB_ALIGN.setdefault(k, v)
+    # lab scenario mode: PBQ stage labs derived from existing labs (labs_scenario.py)
+    import labs_scenario as _S
+    import labs_vm as _V
+    for lab in _S.build(LABS_BY_ID.get):
+        if not lab.get("solution") and lab["base_lab"] in VERIFY_SEQUENCES:
+            lab["solution"] = {"commands": list(VERIFY_SEQUENCES[lab["base_lab"]][0])}
+        if lab["id"] not in LABS_BY_ID:
+            LABS.append(lab)
+            LABS_BY_ID[lab["id"]] = lab
+            if lab["kind"] == "vm":
+                _V.VM_BY_ID[lab["id"]] = lab
 
 
 _install_new_labs()
