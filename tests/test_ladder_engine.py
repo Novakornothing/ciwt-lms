@@ -382,3 +382,26 @@ def test_who_needs_me_links_and_message_draft_is_not_sent(student2, instructor, 
     assert 'Let us go through' in draft
     with app.app_context():
         assert mod.StaffMessage.query.count() == n_msgs                   # a draft only: nothing is sent
+
+
+def test_lessons_without_ladder_content_are_unchanged(student, instructor, mod, app, lesson11):
+    """No ladder entries for the lesson (or staff viewing, or the ladder off): the lesson body is exactly the classic
+    render_lesson output, no ladder markup or script."""
+    from curriculum_v2.ladder import sections as LSEC
+    s, m11, l11 = lesson11
+    with app.app_context():
+        c = mod.Course.query.filter_by(code='ITSUP').first()
+        plain = None
+        for m in mod.Module.query.filter_by(course_id=c.id).order_by(mod.Module.order).all():
+            for les in mod.Lesson.query.filter_by(module_id=m.id).order_by(mod.Lesson.order).all():
+                label = LSEC.lesson_label(les.title)
+                if not any(k[0] == 'ITSUP' and k[1] == label for k in LD.ladder()):
+                    plain = (m.id, les.id, les.content)
+                    break
+            if plain:
+                break
+        expected = mod._INSTRUCTOR_NOTE_RE.sub('', mod.render_lesson_html(plain[2]))
+    html = student.get(f'/student/module/{s}/{plain[0]}/lesson/{plain[1]}').get_data(as_text=True)
+    assert 'class="ladder' not in html and 'js/ladder.js' not in html and expected in html
+    staff = instructor.get(f'/student/module/{s}/{m11}/lesson/{l11}').get_data(as_text=True)
+    assert 'data-ladder-sid' not in staff and 'js/ladder.js' not in staff
