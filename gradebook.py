@@ -261,11 +261,31 @@ def register(app, db, deps):
             q(func.count(d.KnowledgeTest.id), func.max(d.KnowledgeTest.id)).filter(d.KnowledgeTest.course_id == section.course_id).first(),
             (section.end_date, section.course_id),
             lab_sig(section),
+            testout_sig(section),
         ]
         return repr([tuple(x) if x is not None and not isinstance(x, tuple) else x for x in sig])
 
     def labs_api():
         return app.extensions.get('ciwt_lab_progress')
+
+    def testout_model():
+        mx = app.extensions.get('ciwt_mastery')
+        return getattr(getattr(mx, 'models', None), 'MasteryCheck', None) if mx else None
+
+    def testout_passes(section_id, uids):
+        """pass 14: {(user_id, chapter): completed_at} for passed chapter mastery checks (test-outs) in this class.
+        A passed test-out marks that chapter's check quiz 'Exempt (test-out)' when the student has no quiz attempt:
+        it is left out of completion and averages like an excused item, and no score is invented."""
+        MC = testout_model()
+        if MC is None:
+            return {}
+        out = {}
+        for c in MC.query.filter(MC.section_id == section_id, MC.kind == 'testout', MC.passed.is_(True),
+                                 MC.user_id.in_(list(uids) or [0])).all():
+            t = c.target or ''
+            if t.startswith('CH-') and t[3:].isdigit():
+                out[(c.user_id, int(t[3:]))] = c.completed_at
+        return out
 
     def section_uids(section):
         return [e.user_id for e in d.Enrollment.query.filter_by(section_id=section.id).all()]
@@ -278,6 +298,14 @@ def register(app, db, deps):
             return api.lab_signature(section_uids(section))
         except Exception:
             return None
+
+    def testout_sig(section):
+        MC = testout_model()
+        if MC is None:
+            return None
+        from sqlalchemy import func
+        return tuple(db.session.query(func.count(MC.id), func.max(MC.completed_at))
+                     .filter(MC.section_id == section.id, MC.kind == 'testout', MC.passed.is_(True)).first())
 
     def invalidate(section_id):
         with _gb_lock:
@@ -383,6 +411,7 @@ def register(app, db, deps):
         overrides = {(o.user_id, o.item_type, o.item_id): SimpleNamespace(score=o.score, excused=o.excused, note=o.note,
                                                                          updated_at=o.updated_at)
                      for o in Override.query.filter_by(section_id=section.id).all()}
+        exempt = testout_passes(section.id, [e.user_id for e in enrolls]) if any(i['type'] == 'quiz' for i in items) else {}
         rows = []
         late_cells = 0
         for e in enrolls:
@@ -412,6 +441,8 @@ def register(app, db, deps):
                     score, status = None, 'excused'
                 elif ov and ov.score is not None:
                     score, status = ov.score, 'override'
+                elif raw is None and it['type'] == 'quiz' and (u.id, it.get('module_order')) in exempt:
+                    score, status = None, 'exempt'
                 late_days, late_off = (chosen[2], chosen[3]) if chosen and status == 'scored' else (0, 0.0)
                 if late_off:
                     late_cells += 1
@@ -426,7 +457,7 @@ def register(app, db, deps):
                               'passed': score is not None and score >= it['passing']})
             cat_avgs = {k: (round(sum(v) / len(v), 1) if v else None) for k, v in cat_scores.items()}
             grade = weighted_grade(cat_avgs, weights)
-            gradable = len([c for c in cells if c['status'] != 'excused' and (weights.get(c['item']['category'], 0) > 0)])
+            gradable = len([c for c in cells if c['status'] not in ('excused', 'exempt') and (weights.get(c['item']['category'], 0) > 0)])
             done_gradable = len([c for c in cells if c['score'] is not None and weights.get(c['item']['category'], 0) > 0])
             rows.append({'user': u, 'enrollment': SimpleNamespace(id=e.id, enrolled_at=e.enrolled_at, progress_percent=e.progress_percent),
                          'cells': cells, 'cat_avgs': cat_avgs, 'grade': grade,
@@ -670,7 +701,7 @@ def register(app, db, deps):
                     r['completion'], r['progress']]
             line += [r['cat_avgs'][k] if r['cat_avgs'][k] is not None else '' for k, _ in CATEGORIES]
             for c in r['cells']:
-                line.append('EX' if c['status'] == 'excused' else ('' if c['score'] is None else
+                line.append('EX' if c['status'] == 'excused' else 'Exempt (test-out)' if c['status'] == 'exempt' else ('' if c['score'] is None else
                             (f"{c['score']} (late -{c['late_off']:g})" if c['late_off'] else c['score'])))
             wtr.writerow(line)
         wtr.writerow([])
