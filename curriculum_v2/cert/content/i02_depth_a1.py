@@ -72,7 +72,7 @@ ITEMS = [
            'A working external display proves the GPU and OS work, which points to the panel, backlight or display cable.',
            mc=['MC-C-IT4-SKIP-ISOLATE', 'MC-C-IT4-SKIP-ISOLATE', 'MC-C-IT4-SKIP-ISOLATE']),
     match('A1:1.1', 'IT-4.1', 25, 'Match each laptop symptom to the part most likely to need attention.',
-          [('Wi-Fi works only with the lid open', 'Wireless antenna leads in the display'), ('Battery holds 20 minutes after 4 years', 'Battery'),
+          [('Wi-Fi signal has been weak since the screen was replaced', 'Wireless antenna leads in the display'), ('Battery holds 20 minutes after 4 years', 'Battery'),
            ('Fingerprint sign-in fails, password works', 'Biometric reader'), ('Several keys type nothing', 'Keyboard')],
           'Mobile hardware replacement (A+ Core 1 1.1).', decoys=['CMOS battery']),
     # ---- 1.2 accessories and connectivity (IT-4.2/4.1), to 10
@@ -96,7 +96,7 @@ ITEMS = [
           [('Stylus / touch pen', 'Drawing and handwriting on a touch screen'), ('Webcam', 'Video calls'),
            ('Trackpad / drawing pad', 'Pointer or pen input on a separate surface'), ('Headset', 'Private audio with a microphone')],
           'Mobile accessories (A+ Core 1 1.2).', decoys=['Port replicator']),
-    multi('A1:1.2', 'IT-4.1', 26, 'Which TWO connectors are used to charge current mobile devices? (Choose two.)',
+    multi('A1:1.2', 'IT-4.1', 26, 'Which TWO connectors are used to charge phones still in everyday use? (Choose two.)',
           ['USB-C', 'Lightning'], ['DB9 serial', 'RJ11', 'VGA'],
           'USB-C is the current standard; Lightning is on older iPhones and accessories.'),
     # ---- 2.1 TCP and UDP ports (IT-5.2), to 8

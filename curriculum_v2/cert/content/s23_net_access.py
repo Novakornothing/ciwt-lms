@@ -122,7 +122,7 @@ ITEMS = [
           'Out-of-band uses a path separate from the production network.'),
     single('N:4.3', 'NO-5.3', 1, 'A company relies on MAC filtering to keep unknown devices off Wi-Fi. Why is that weak?',
            'MAC addresses can be copied and spoofed easily',
-           ['MAC filtering only works on 2.4 GHz networks', 'MAC addresses change every time a device reboots', 'MAC filtering blocks every WPA3 client'],
+           ['MAC filtering only works on 2.4 GHz networks', 'MAC filtering needs a RADIUS server before it can work', 'MAC filtering blocks every WPA3 client'],
            'MAC addresses are sent in the clear and can be changed in software.'),
     match('N:4.3', 'NO-5.3', 2, 'Match each control to what it does.',
           [('802.1X', 'Authenticates a device before the port opens'), ('ACL', 'Permits or denies traffic by address and port'),

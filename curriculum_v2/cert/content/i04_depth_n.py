@@ -111,7 +111,7 @@ ITEMS = [
            'Geofencing restricts access by location.', mc=['MC-C-NO5-SEC-CONCEPT', 'MC-C-NO5-SEC-CONCEPT', None]),
     multi('N:4.1', 'NO-5.3', 25, 'Which TWO devices belong on their own segment rather than the staff LAN? (Choose two.)',
           ['IoT sensors and cameras', 'Industrial control (OT/SCADA) systems'],
-          ['The domain controllers’ backup console only', 'Every staff laptop on a separate VLAN each', 'The core switch management interface on the guest Wi-Fi'],
+          ['Staff laptops', 'Staff desktop PCs', 'Headsets plugged into staff PCs'],
           'Network+ 4.1 lists IoT, OT/ICS/SCADA, guest and BYOD for segmentation.'),
     # ---- 4.2 attacks (NO-5.3/5.2), to 10
     single('N:4.2', 'NO-5.3', 21, 'Clients get correct addresses but a wrong default gateway from an unknown device. Which attack is this, and which feature stops it?',
