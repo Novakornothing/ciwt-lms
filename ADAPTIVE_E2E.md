@@ -216,7 +216,7 @@ A previous round-3 worker stalled at 04:58 with two untracked files. Their mtime
   - `status: 'Pending SME review'`, which the mix-up correction page now shows ("Status of this mix-up description:
     Pending SME review.")
   - a lesson section for its correction (tested)
-- **Reuse.** 13 existing ids were reused where the wrong idea is the same. Two drafted ids were dropped in favour of
+- **Reuse.** 18 existing ids were reused, on 42 tags, where the wrong idea is the same. Two drafted ids were dropped in favour of
   existing ones:
   - A1.23 → `MC-C-IT8-REPAIR-TOOL`
   - NQ6.4 → `MC-C-NO6-NO-ROLLBACK`
