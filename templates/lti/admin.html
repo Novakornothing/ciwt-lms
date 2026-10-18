@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}LMS (LTI) — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero"><div class="eyebrow">Admin · LTI 1.3 + LTI Advantage</div><h1 class="h3 mb-1">LMS connections</h1>
+  <p class="mb-2">Register Canvas, Blackboard Learn or Moodle so courses there can open lessons, labs and tests here, send scores back and sync rosters.</p>
+  <a class="btn btn-brand" href="{{ url_for('admin_lti_new') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add an LMS</a></div>
+<div class="alert alert-warning small" role="note">Not yet 1EdTech-certified, and not yet tested against a live Canvas, Blackboard or Moodle: tested against the in-repo mock platform only. See docs/LTI_SETUP.md.</div>
+<div class="row g-4">
+<div class="col-lg-7">
+<section class="card mb-4" aria-labelledby="regH"><div class="card-header"><h2 class="h6 mb-0" id="regH">Registrations</h2></div>
+  {% if regs %}
+  <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
+    <caption class="visually-hidden">LMS registrations</caption>
+    <thead><tr><th scope="col">Name</th><th scope="col">Issuer / client ID</th><th scope="col">Deployments</th><th scope="col">Use</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+    <tbody>{% for p in regs %}<tr>
+      <td data-label="Name">{{ p.name }} <span class="small mx-muted">({{ kinds[p.kind].label if p.kind in kinds else p.kind }})</span>{% if not p.active %} <span class="mx-badge">off</span>{% endif %}</td>
+      <td data-label="Issuer / client ID"><code class="small">{{ p.issuer }}</code><br><code class="small">{{ p.client_id }}</code></td>
+      <td data-label="Deployments">{{ p.deployment_ids|length }}</td>
+      <td data-label="Use">{{ counts[p.id].users }} people · {{ counts[p.id].contexts }} courses</td>
+      <td data-label="Actions"><a class="btn btn-sm btn-outline-navy" href="{{ url_for('admin_lti_edit', pid=p.id) }}">Edit<span class="visually-hidden"> {{ p.name }}</span></a></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="card-body small">No LMS registered yet.</div>{% endif %}
+</section>
+</div>
+<div class="col-lg-5">
+<section class="card mb-4" aria-labelledby="toolH"><div class="card-header"><h2 class="h6 mb-0" id="toolH">Give these to the LMS</h2></div>
+  <dl class="card-body small mb-0 mx-dl-urls">
+    <dt>OIDC login initiation URL</dt><dd><code>{{ urls.login }}</code><br><span class="mx-muted">With two registrations for the same LMS, add <code>?reg=&lt;id&gt;</code>.</span></dd>
+    <dt>Redirect / launch URL (also the deep-linking URL)</dt><dd><code>{{ urls.launch }}</code></dd>
+    <dt>Public JWKS URL</dt><dd><code>{{ urls.jwks }}</code></dd>
+    <dt>Canvas JSON configuration</dt><dd><a href="{{ url_for('lti_canvas_config') }}"><code>{{ url_for('lti_canvas_config', _external=True) }}</code></a></dd>
+    <dt>Signing key</dt><dd>RS256, kid <code>{{ kid[:16] }}…</code>, from {{ key_source }} (never stored in git).</dd>
+  </dl></section>
+</div></div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}LMS launch refused — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero"><div class="eyebrow">LMS (LTI 1.3)</div><h1 class="h3 mb-1">This LMS launch was refused</h1>
+  <p class="mb-0">{{ message }}</p></div>
+<div class="card"><div class="card-body small">
+  <p class="mb-1">Reason code: <code>{{ code }}</code>. Nothing was changed. Go back to your LMS and open the link again; if it keeps failing, give this code to the person who set up the LMS connection.</p>
+</div></div>
+{% endblock %}

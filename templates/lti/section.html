@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}LMS connection — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">LMS connection</li></ol></nav>
+<div class="page-hero"><div class="eyebrow">LMS (LTI 1.3 + Advantage)</div><h1 class="h3 mb-1">LMS connection</h1>
+  <p class="mb-0">{{ rows|length }} LMS course{{ 's' if rows|length != 1 }} connected · {{ n_linked }} of {{ n_enrolled }} enrolled students linked to an LMS account.</p></div>
+{% if not rows %}
+<div class="card mb-4"><div class="card-body">
+  <p class="mb-1">No LMS course is connected to this class yet.</p>
+  <p class="small mb-0">Add this tool to your LMS course (an administrator registers the LMS under Admin → LMS (LTI)), then open any link to it from the LMS once as the instructor and pick this class.</p>
+</div></div>
+{% endif %}
+{% for r in rows %}
+<section class="card mb-4" aria-labelledby="ctx{{ r.ctx.id }}">
+  <div class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
+    <h2 class="h6 mb-0" id="ctx{{ r.ctx.id }}">{{ r.ctx.title or r.ctx.context_id }} <span class="small mx-muted">· {{ r.platform.name }}</span></h2>
+    <span class="small">Grades: {{ 'yes' if scope.score in r.scopes else 'not granted' }} · Roster: {{ 'yes' if r.ctx.memberships_url else 'not offered' }}</span>
+  </div>
+  {% if r.links %}
+  <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
+    <caption class="visually-hidden">Placed links in {{ r.ctx.title or r.ctx.context_id }}</caption>
+    <thead><tr><th scope="col">LMS link</th><th scope="col">Opens</th><th scope="col">Grade column</th><th scope="col">Last opened</th></tr></thead>
+    <tbody>{% for l in r.links %}{% set k = parse_target(l.target)[0] %}
+      <tr><td data-label="LMS link">{{ l.title or l.resource_link_id }}</td><td data-label="Opens"><code>{{ l.target or 'class home' }}</code></td>
+        <td data-label="Grade column">{% if k in graded %}{{ 'linked' if l.lineitem_url else 'found or made on first send' }}{% else %}not graded{% endif %}</td>
+        <td data-label="Last opened">{{ l.last_seen.strftime('%d %b %Y %H:%M') if l.last_seen else '—' }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="card-body small">No links opened from this LMS course yet.</div>{% endif %}
+</section>
+{% endfor %}
+{% if rows %}
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <form method="post" action="{{ url_for('instructor_lti_scores', section_id=section.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-brand" type="submit"><i class="bi bi-upload" aria-hidden="true"></i> Send scores to the LMS</button></form>
+  <form method="post" action="{{ url_for('instructor_lti_roster', section_id=section.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline-navy" type="submit"><i class="bi bi-people" aria-hidden="true"></i> Sync roster from the LMS</button></form>
+</div>
+<p class="small mx-muted">Scores come from this class’s gradebook (late penalties, overrides and excused cells included; excused and missing cells are not sent) and from best live-lab scores. Nothing is sent until you press the button. Roster sync adds and links students; it never removes anyone here.</p>
+{% endif %}
+<section class="card mb-4" aria-labelledby="logH"><div class="card-header"><h2 class="h6 mb-0" id="logH">Recent syncs</h2></div>
+  {% if logs %}<ul class="list-group list-group-flush">{% for g in logs %}<li class="list-group-item small"><strong>{{ 'Scores' if g.kind == 'scores' else 'Roster' }}</strong> · {{ g.at.strftime('%d %b %Y %H:%M') }} · {{ g.ok }} {{ 'sent' if g.kind == 'scores' else 'enrolled' }}, {{ g.failed }} failed, {{ g.skipped }} {{ 'with no score yet' if g.kind == 'scores' else 'inactive' }}
+    {% if g.detail %}<pre class="small mb-0 mt-1 mx-pre">{{ g.detail }}</pre>{% endif %}</li>{% endfor %}</ul>
+  {% else %}<div class="card-body small">None yet.</div>{% endif %}</section>
+{% endblock %}

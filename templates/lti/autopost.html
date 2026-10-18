@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Returning to the LMS — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero"><div class="eyebrow">LMS (LTI 1.3)</div><h1 class="h3 mb-1">Sending {{ n }} item{{ 's' if n != 1 }} back to the LMS</h1>
+  <p class="mb-0">Your browser returns to the LMS with your selection signed by this tool.</p></div>
+<form id="ltiAutopost" data-external-post method="post" action="{{ action }}">
+  {% for k, v in fields.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  {% if items %}<ul class="small">{% for it in items %}<li>{{ it.title }}{% if it.lineItem %} (with a gradebook column){% endif %}</li>{% endfor %}</ul>{% endif %}
+  <button type="submit" class="btn btn-brand">Continue to the LMS</button>
+</form>
+<script>document.getElementById('ltiAutopost').submit();</script>
+{% endblock %}

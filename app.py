@@ -7068,6 +7068,17 @@ mastery_api = mastery_mod.register(app, db, dict(
     lab_events=_mx_lab_events(lab_progress_api.LabProgress, lab_progress_api.LabEvent), lab_def=_mx_lab_def(_mx_get_lab),
 ))
 
+# pass 12: LTI 1.3 + LTI Advantage, tool side (lti/): OIDC login, launch, deep linking, AGS scores, NRPS roster
+import lti as lti_mod  # noqa: E402
+from interactive_labs import labs_for_course as _lti_labs_for_course  # noqa: E402
+lti_api = lti_mod.register(app, db, dict(
+    User=User, ClassSection=ClassSection, Enrollment=Enrollment, Course=Course, Module=Module, Lesson=Lesson,
+    Quiz=Quiz, KnowledgeTest=KnowledgeTest, LabProgress=lab_progress_api.LabProgress,
+    labs_for_course=_lti_labs_for_course, get_lab=get_lab,
+    can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    audit=lambda action, detail='': audit(action, detail),
+), csrf)
+
 
 def _safe_mastery_path(user, section):
     """Recommended next steps for an enrolled student; never breaks the page it sits on."""

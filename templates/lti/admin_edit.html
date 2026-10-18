@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if p else 'Add' }} LMS — {{ site_name }}{% endblock %}
+{% block content %}
+{% set v = form or {} %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{{ url_for('admin_lti') }}">LMS connections</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ p.name if p else 'Add an LMS' }}</li></ol></nav>
+<div class="page-hero"><div class="eyebrow">Admin · LTI 1.3</div><h1 class="h3 mb-1">{{ 'Edit ' ~ p.name if p else 'Add an LMS' }}</h1>
+  <p class="mb-0">Copy these values from the LMS after you register this tool there (docs/LTI_SETUP.md has the steps for each LMS).</p></div>
+{% if errs %}<div class="alert alert-danger" role="alert"><ul class="mb-0">{% for e in errs %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+{% if not p %}
+<nav class="mb-3" aria-label="LMS type"><span class="small me-2">Start from:</span>{% for k, kv in kinds.items() %}
+  <a class="btn btn-sm {{ 'btn-brand' if k == kind else 'btn-outline-navy' }}" href="{{ url_for('admin_lti_new', kind=k) }}" {% if k == kind %}aria-current="true"{% endif %}>{{ kv.label }}</a>{% endfor %}</nav>
+{% endif %}
+<form method="post" class="card"><div class="card-body">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="kind" value="{{ kind }}">
+  {% macro field(name, label, value, help='', req=True, type='text') %}
+  <div class="mb-3"><label class="form-label" for="f-{{ name }}">{{ label }}{% if req %} <span aria-hidden="true">*</span>{% endif %}</label>
+    <input class="form-control" type="{{ type }}" id="f-{{ name }}" name="{{ name }}" value="{{ value or '' }}" {% if req %}required{% endif %} {% if help %}aria-describedby="h-{{ name }}"{% endif %} autocomplete="off" spellcheck="false">
+    {% if help %}<div class="form-text" id="h-{{ name }}">{{ help }}</div>{% endif %}</div>{% endmacro %}
+  {{ field('name', 'Name', v.name or (p.name if p else preset.label)) }}
+  {{ field('issuer', 'Issuer (iss)', v.issuer or (p.issuer if p else preset.issuer), 'Exactly as the LMS sends it, e.g. https://canvas.instructure.com.') }}
+  {{ field('client_id', 'Client ID', v.client_id or (p.client_id if p else ''), 'Canvas: developer key ID. Blackboard: application ID. Moodle: client ID on the tool’s details.') }}
+  {{ field('auth_login_url', 'OIDC authorization URL', v.auth_login_url or (p.auth_login_url if p else preset.auth_login_url)) }}
+  {{ field('auth_token_url', 'Token URL (for grades and rosters)', v.auth_token_url or (p.auth_token_url if p else preset.auth_token_url)) }}
+  {{ field('token_audience', 'Token audience (optional)', v.token_audience or (p.token_audience if p else ''), 'Only if the LMS wants a different aud than the token URL in client assertions.', req=False) }}
+  {{ field('jwks_url', 'Platform public keyset (JWKS) URL', v.jwks_url or (p.jwks_url if p else preset.jwks_url)) }}
+  <div class="mb-3"><label class="form-label" for="f-deps">Deployment IDs <span aria-hidden="true">*</span></label>
+    <textarea class="form-control" id="f-deps" name="deployment_ids" rows="3" required aria-describedby="h-deps" spellcheck="false">{{ v.deployment_ids or (p.deployment_ids|join('\n') if p else '') }}</textarea>
+    <div class="form-text" id="h-deps">One per line. Launches from other deployments are refused.</div></div>
+  {% set le = (v.link_by_email == '1') if form else (p.link_by_email if p else False) %}
+  {% set ca = (v.create_accounts == '1') if form else (p.create_accounts if p else True) %}
+  {% set ac = (v.active == '1') if form else (p.active if p else True) %}
+  <fieldset class="mb-3"><legend class="h6">Accounts</legend>
+    <div class="form-check"><input class="form-check-input" type="checkbox" name="create_accounts" value="1" id="f-ca" {% if ca %}checked{% endif %}>
+      <label class="form-check-label" for="f-ca">Create an account here on a person’s first launch</label></div>
+    <div class="form-check"><input class="form-check-input" type="checkbox" name="link_by_email" value="1" id="f-le" {% if le %}checked{% endif %} aria-describedby="h-le">
+      <label class="form-check-label" for="f-le">Link to an existing account with the same email</label>
+      <div class="form-text" id="h-le">Only turn on if this LMS verifies emails. Admin accounts are never linked this way, and LMS roles never make anyone an admin here.</div></div>
+    <div class="form-check"><input class="form-check-input" type="checkbox" name="active" value="1" id="f-ac" {% if ac %}checked{% endif %}>
+      <label class="form-check-label" for="f-ac">Active (accept launches)</label></div>
+  </fieldset>
+  <button class="btn btn-brand" type="submit">Save</button> <a class="btn btn-outline-navy" href="{{ url_for('admin_lti') }}">Cancel</a>
+</div></form>
+{% endblock %}

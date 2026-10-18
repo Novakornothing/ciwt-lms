@@ -30,7 +30,8 @@ def test_every_post_form_has_token():
     missing = []
     for f in glob.glob('templates/**/*.html', recursive=True):
         for m in re.finditer(r'<form\b[^>]*method=["\']post["\'][^>]*>(.{0,120})', open(f).read(), re.I | re.S):
-            if 'csrf_token' not in m.group(1):
+            # forms that post to another site (the LMS deep-link return) must NOT carry our token
+            if 'csrf_token' not in m.group(1) and 'data-external-post' not in m.group(0):
                 missing.append(f)
     assert not missing, missing
 

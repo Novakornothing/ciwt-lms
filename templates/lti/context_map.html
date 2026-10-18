@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Connect an LMS course — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero"><div class="eyebrow">LMS (LTI 1.3) · {{ platform.name }}</div>
+  <h1 class="h3 mb-1">Connect “{{ ctx.title or ctx.context_id }}”</h1>
+  <p class="mb-0">Pick the class here that this LMS course belongs to. Students who open links from it are enrolled in that class; scores and roster sync use it.</p></div>
+<form method="post" class="card"><div class="card-body">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <fieldset><legend class="h6">Your classes</legend>
+  {% for s in sections %}
+  <div class="form-check"><input class="form-check-input" type="radio" name="section_id" id="cm{{ s.id }}" value="{{ s.id }}" {% if ctx.section_id == s.id or (not ctx.section_id and loop.first) %}checked{% endif %}>
+    <label class="form-check-label" for="cm{{ s.id }}">{{ s.name }} <span class="small mx-muted">({{ s.course.code }})</span></label></div>
+  {% else %}<p>You do not teach any classes here yet.</p>{% endfor %}
+  </fieldset>
+  {% if sections %}<button class="btn btn-brand mt-3" type="submit">Connect</button>{% endif %}
+</div></form>
+{% endblock %}

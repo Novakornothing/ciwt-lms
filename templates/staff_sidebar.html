@@ -120,6 +120,9 @@
           <a class="rail-link {% if ep == 'admin_readiness' %}active{% endif %}" href="{{ url_for('admin_readiness') }}">
             <i class="bi bi-clipboard-check"></i><span>Product readiness</span>
           </a>
+          <a class="rail-link {% if ep in ('admin_lti','admin_lti_new','admin_lti_edit') %}active{% endif %}" href="{{ url_for('admin_lti') }}">
+            <i class="bi bi-plug"></i><span>LMS (LTI)</span>
+          </a>
           <a class="rail-link {% if ep == 'admin_audit' %}active{% endif %}" href="{{ url_for('admin_audit') }}">
             <i class="bi bi-shield-check"></i><span>Audit log</span>
           </a>
