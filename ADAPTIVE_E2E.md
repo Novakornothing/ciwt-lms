@@ -179,3 +179,11 @@ These are unchanged from round 1:
 - the unmeasured time estimates
 
 Pass 14 added a related gradebook change: a passed test-out now marks the chapter check "Exempt (test-out)".
+
+Refinement later merged labs round 2/3 (`37d20d1`), and that was merged into `content` as well (`1c1518a`). It had no
+conflicts and the item counts are unchanged. Results on `1c1518a`:
+- pytest: 637 passed, 30 skipped. All 30 skips are `test_vm_real.py`, because the v86 assets are not in this
+  worktree.
+- node: 41/41.
+- `adaptive_e2e`: desktop 92/92, phone 128/128.
+- Readiness with `--package`: 28/28.
