@@ -120,5 +120,5 @@
 html:not([data-theme="dark"]) .mx-why-body a { color: #0a58ca; }
 
 /* instructor mastery pages: every control is a 44 px target (WCAG 2.5.8 / site_audit) */
-.mx-page .btn-sm { min-height: 44px; display: inline-flex; align-items: center; }
+.mx-page .btn-sm { min-height: 44px; display: inline-flex; align-items: center; gap: .35rem; }
 .mx-page .mx-heat-name a { display: inline-flex; align-items: center; min-height: 44px; }

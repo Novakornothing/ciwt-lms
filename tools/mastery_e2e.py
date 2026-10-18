@@ -188,7 +188,7 @@ with sync_playwright() as p:
     check('heatmap rendered', pg.locator('.mx-heat .mx-cell').count() > 10)
     check('inserted reviews counted', pg.locator('.kpi-card').nth(1).locator('.kpi-value').inner_text().strip() != '0')
     no_overflow(pg, 'instructor mastery')
-    pg.evaluate("document.getElementById('mxHeatH').closest('section,.card').scrollIntoView({block: 'start'})")
+    pg.evaluate("document.getElementById('mxHeatH').closest('section,.card').scrollIntoView({block: 'start', behavior: 'instant'})")
     shot(pg, 'instructor-mastery-heatmap-1280')
     cell = pg.locator(f'.mx-cell[data-mx-user="{UID}"][data-mx-target="IT-1.4"]')
     cell.scroll_into_view_if_needed(); cell.click()
