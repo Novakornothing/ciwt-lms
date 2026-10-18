@@ -42,6 +42,9 @@ red laser that shows breaks and bad joints in fibre).</li>
 <li>The switch port is hard-set to 100 Mb/s full duplex. The PC auto-negotiates, gets no negotiation from a hard-set port, detects the speed and falls back to half duplex: a duplex mismatch.</li>
 <li>Set the port to auto speed/duplex, re-patch with a tested cable; link comes up at 1000/full and counters stop increasing.</li>
 <li>Clear counters, monitor for a day, document the change.</li></ol>''')}
+{scenario('the errors that followed the cable', '''<p>A user reports a slow, unreliable connection. The switch port shows CRC errors climbing. Moving the PC to a
+different switch port does not help — the errors move with it. Replacing the user’s patch cable stops the errors; the
+technician clears the counters and checks again the next day to confirm they stay at zero.</p>''')}
 {cfu(('A port shows “err-disabled”. What does that mean?', 'The switch shut the port itself after a violation such as port security or BPDU guard.'),
      ('Rising CRC errors on one port usually point at…?', 'The physical layer — cable, termination or interference.'),
      ('Which tool shows the neighbouring switch’s name and port?', 'LLDP or CDP (show lldp/cdp neighbors).'))}
@@ -73,7 +76,7 @@ ITEMS = [
            'Transmit must meet receive; swapping strands fixes reversed polarity.'),
     single('N:5.2', 'NO-6.1', 3, 'An access port shows err-disabled after a user connected a small switch under their desk. What is the most likely reason?',
            'A port-security or BPDU-guard violation',
-           ['Attenuation on the copper run', 'A giant-frame error', 'An incorrect DNS suffix'],
+           ['Attenuation on the long copper cable run', 'A giant-frame error', 'An incorrect DNS suffix'],
            'Err-disabled means the switch shut the port after a security or loop-protection violation.'),
     order('N:5.2', 'NO-6.1', 4, 'Put these physical-layer checks in an efficient order for a port that is “down”.',
           ['Read the interface status line', 'Check speed and duplex on both ends', 'Read CRC, runt and giant counters', 'Test or replace the cable'],

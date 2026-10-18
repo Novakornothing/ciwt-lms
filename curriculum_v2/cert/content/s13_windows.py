@@ -29,6 +29,10 @@ time drift). Core 2 3.1 adds several symptoms that each have a quick first check
 <li>Hardware monitor: CPU reaches 100 °C under load; the heatsink fins are packed with dust.</li>
 <li>Clean the cooler and case filters (power off, unplugged, ESD precautions); temperatures under load drop to 70 °C.</li>
 <li>Monitor for a week; no further shutdowns. Document the cause and add the site to the cleaning schedule.</li></ol>''')}
+{scenario('the service that would not stay started', '''<p>A backup service on a file server stops every night. The System log in Event Viewer shows Service Control
+Manager errors saying the service could not log on. The account the service runs as had its password changed under the
+password policy, but the service still holds the old one. The fix is to update the credentials on the service’s
+<strong>Log On</strong> tab in Services (or move it to a managed service account) and then start it and watch the next run.</p>''')}
 {cfu(('A PC says “No operating system found” the morning after a USB installer was used. What do you check first?', 'Remove the USB stick or fix the boot order — the PC may be trying to boot from it.'),
      ('What does Event ID 41 (Kernel-Power) tell you?', 'Windows restarted without a clean shutdown — often power or overheating.'),
      ('A service will not start after a password change policy. What is a likely cause?', 'The service’s log-on account password expired or changed.'))}
@@ -53,11 +57,22 @@ it as a drive), a <strong>downloadable package</strong> (<code>.exe</code>, <cod
 <p><strong>Impact considerations:</strong> the <strong>device</strong> (performance, conflicts, security software), the
 <strong>network</strong> (bandwidth for installs and updates, firewall rules the app needs), <strong>operation</strong> (support
 load, training, licensing) and the <strong>business</strong> (cost, compliance, downtime during rollout).</p>
+{figure('fig-c-appreq', 'Checking an application before installing it',
+    ['Vendor\nrequirements', 'Compare with\nthe device', 'Choose the\ndistribution', 'Impact review', 'Install and\nrecord'],
+    'Five boxes in a chain. First, read the vendor requirements: 32- or 64-bit, CPU, RAM, storage, graphics and VRAM, hardware '
+    'tokens and supported OS versions. Second, compare them with the device. Third, pick the distribution method: physical '
+    'media, a mountable ISO, a downloadable package or image deployment. Fourth, review the impact on the device, the network, '
+    'operations and the business. Fifth, install and record what was checked on the ticket.',
+    'Requirements are checked before installation, not after it fails.', cols=5)}
 {worked('the CAD install that will not start', '''<ol>
 <li>Engineering wants a CAD package on a new hire’s laptop. Vendor requirements: 64-bit Windows 11, 16 GB RAM, dedicated GPU with 4 GB VRAM.</li>
 <li>Laptop: 64-bit Windows 11, 16 GB RAM, but integrated graphics only (System Information / Task Manager → GPU).</li>
 <li>The install would succeed but performance would fail the requirement. Raise it with the manager: approve a laptop with a dedicated GPU, or a VDI/workstation option.</li>
 <li>Record the decision on the ticket — requirements were checked <em>before</em> installation.</li></ol>''')}
+{scenario('the licence that stayed behind', '''<p>A surveyor’s new laptop installs a licensed measurement package without errors, but the program opens
+with “No licence found”. The vendor’s requirements list a USB hardware licence key, which is still plugged into the old PC.
+Moving the key fixes it. The lesson for the next install: external hardware tokens are part of the requirements check, and
+the ticket should record where the token is.</p>''')}
 {cfu(('Can a 64-bit application run on 32-bit Windows?', 'No — 64-bit Windows can run most 32-bit apps, not the reverse.'),
      ('How do you use an application delivered as an ISO file without burning a disc?', 'Mount the ISO (double-click in Windows) and run the installer from the virtual drive.'),
      ('Name the four impact areas Core 2 1.10 lists for a new application.', 'Device, network, operation and business.'))}
@@ -88,7 +103,7 @@ ITEMS = [
            'Event 41 without a bug check means power was lost — commonly heat or the PSU, not a software crash.'),
     single('A2:3.1', 'IT-11.1', 3, 'A user plugs a fourth webcam into a USB hub and Windows reports “Not enough USB controller resources”. What should the technician try first?',
            'Move some devices to ports on a different controller',
-           ['Reinstall Windows', 'Update the monitor driver', 'Disable USB selective suspend in the BIOS'],
+           ['Reinstall Windows', 'Update the monitor driver', 'Disable USB selective suspend in the BIOS/UEFI settings'],
            'The controller has run out of endpoints; spreading devices across controllers fixes it.'),
     multi('A2:3.1', 'IT-11.1', 4, 'A line-of-business service will not start after the domain’s password policy changed. Which TWO checks are most relevant? (Choose two.)',
           ['The service’s log-on account and its password', 'Service Control Manager errors in the System log'],
@@ -105,7 +120,7 @@ ITEMS = [
           decoys=['Browser extension']),
     single('A2:1.10', 'IT-8.2', 3, 'Software is supplied as a single .iso file. How can a technician install it on Windows 11 without burning a disc?',
            'Mount the ISO and run the installer from it',
-           ['Rename the file to .exe and run it', 'Copy the file into System32', 'Open the ISO in Notepad'],
+           ['Rename the file extension to .exe and then run it', 'Copy the file into System32', 'Open the ISO in Notepad'],
            'Windows can mount an ISO as a virtual drive.'),
     multi('A2:1.10', 'IT-8.2', 4, 'Before a company-wide rollout of a new app, which TWO are network impact considerations? (Choose two.)',
           ['Bandwidth used when 500 PCs download it', 'Firewall rules the app needs to reach its server'],

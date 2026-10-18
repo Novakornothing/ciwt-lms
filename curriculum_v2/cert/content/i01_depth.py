@@ -27,7 +27,7 @@ ITEMS = [
           'Networked host services named in Core 1 2.3.', decoys=['Print spooler on a PC']),
     single('A1:2.3', 'IT-5.2', 2, 'A small business wants one appliance that combines firewall, intrusion prevention, web filtering and antivirus at the internet edge. What is it called?',
            'A unified threat management (UTM) appliance',
-           ['A SCADA controller', 'A network-attached storage device', 'An NTP server'],
+           ['A SCADA controller', 'A network-attached storage (NAS) device with RAID', 'An NTP server'],
            'UTM appliances bundle several security functions at the perimeter.'),
     # Core 1 2.7 connection and network types
     match('A1:2.7', 'NO-3.2', 1, 'Match each network type to its description.',
@@ -72,7 +72,7 @@ ITEMS = [
     # Core 2 1.11 cloud productivity
     single('A2:1.11', 'IT-6.2', 4, 'A user’s Desktop and Documents folders are not appearing on a new PC after sign-in. What should be checked?',
            'The sync client’s known-folder backup and sync status',
-           ['The PC’s BIOS boot order', 'The printer driver version', 'The DHCP lease time'],
+           ['The firmware boot order and the Secure Boot setting in UEFI', 'The printer driver version', 'The DHCP lease time'],
            'Known-folder redirection to cloud storage restores those folders only if sync is set up and healthy.'),
     # Core 2 2.3 wireless security and authentication
     match('A2:2.3', 'IT-5.4', 1, 'Match each protocol or method to its description.',
@@ -90,7 +90,7 @@ ITEMS = [
     # Core 2 2.9 data destruction
     single('A2:2.9', 'IT-10.3', 1, 'Old SSDs must be sanitised before resale. Why is degaussing the wrong method?',
            'SSDs store data in flash, not magnetically',
-           ['Degaussing is too slow for SSDs', 'Degaussing needs the drive powered on', 'Degaussing works only on optical discs'],
+           ['Degaussing is too slow for SSDs', 'Degaussing needs the drive powered on', 'Degaussing works only on optical discs such as DVDs'],
            'Degaussing affects magnetic media only; SSDs need cryptographic or vendor secure erase, or physical destruction.'),
     # Core 2 4.4 safety
     order('A2:4.4', 'IT-1.2', 1, 'Put these steps in a safe order before replacing a desktop’s RAM.',

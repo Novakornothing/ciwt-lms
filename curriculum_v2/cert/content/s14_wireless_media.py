@@ -41,6 +41,10 @@ are isolated and often use a <strong>captive portal</strong> for terms or sign-i
 <li>Wi-Fi analyzer in the room: three APs audible on 2.4 GHz, two on channel 6; the 5 GHz radios use 80 MHz channels and two overlap.</li>
 <li>Re-plan: 2.4 GHz neighbours on 1/6/11; 5 GHz to 40 MHz width so neighbouring APs get separate channels; enable band steering.</li>
 <li>Retest during a meeting: retries drop and calls hold. Record the channel plan in the network documentation.</li></ol>''')}
+{scenario('the warehouse aisles', '''<p>A warehouse has long aisles between tall metal racks. Ceiling-mounted access points with omnidirectional
+antennas give strong signal in the open areas but weak signal halfway down each aisle, where the racks absorb and reflect it.
+The wireless survey recommends directional antennas aimed along the aisles, a 2.4 GHz plan that uses only channels 1, 6 and
+11, and a re-survey after the change instead of simply raising transmit power.</p>''')}
 {cfu(('Which 2.4 GHz channels do not overlap in North America?', '1, 6 and 11.'),
      ('What does a BSSID identify?', 'One AP radio (its MAC address); the ESSID is the network name across many APs.'),
      ('Lightweight or autonomous: which AP is managed by a controller?', 'Lightweight.'))}
@@ -62,6 +66,20 @@ broadband. <strong>Plenum</strong>-rated jacket is required in air-handling spac
 <strong>ST</strong> (round bayonet fibre), <strong>MPO</strong> (multi-fibre for 40/100G), <strong>RJ45</strong> (Ethernet),
 <strong>RJ11</strong> (telephone/DSL), <strong>F-type</strong> (coax broadband) and <strong>BNC</strong> (coax, older or video).</li>
 </ul>
+{figure('fig-c-fibrelink', 'A 10 Gb/s fibre link between two switches',
+    ['Switch A\nSFP+ port', 'Transceiver\n10GBASE-LR', 'Single-mode fibre\nLC to LC duplex', 'Transceiver\n10GBASE-LR', 'Switch B\nSFP+ port'],
+    'Five boxes in a chain. Switch A has an SFP+ port holding a 10GBASE-LR transceiver, which is designed for single-mode fibre. '
+    'A duplex single-mode patch lead with LC connectors runs to an identical 10GBASE-LR transceiver in an SFP+ port on switch B. '
+    'Each part must match the others: the same speed, the same fibre type and wavelength, and connectors that fit the transceiver.',
+    'A fibre link only comes up when transceivers, fibre type and connectors match at both ends.', cols=5)}
+{worked('picking media for three links', '''<ol>
+<li>Server to top-of-rack switch, 2 m: a direct attach copper (DAC) cable — cheap, no separate optics.</li>
+<li>Office floor to wiring closet, 60 m: twisted-pair copper, which Ethernet supports up to 100 m per channel.</li>
+<li>Between two buildings, several hundred metres: beyond copper’s 100 m, so fibre. Check the transceiver datasheet for the rated distance on the chosen fibre type; for long runs that means single-mode.</li>
+<li>Outdoors or between buildings, fibre also avoids the ground-potential and lightning problems of copper.</li></ol>''')}
+{scenario('the link that would not come up', '''<p>A new fibre run between two closets shows no link. Both ends have LC connectors, but one switch holds a
+short-range multimode transceiver and the other a long-range single-mode one. Swapping in a matching pair brings the link up.
+The change record now lists the transceiver part numbers at both ends.</p>''')}
 {cfu(('Why is single-mode fibre used between buildings 5 km apart?', 'Its narrow core and laser optics support long distances; multimode is for shorter runs.'),
      ('Which connector do most SFP fibre transceivers use?', 'LC (duplex).'),
      ('Why must cable in a ceiling air-return space be plenum-rated?', 'Plenum jackets produce less toxic smoke in a fire, and building codes require them there.'))}
@@ -99,7 +117,7 @@ ITEMS = [
           'Enterprise mode uses 802.1X with RADIUS so each user has individual credentials.'),
     single('N:2.3', 'NO-3.3', 4, 'A 5 GHz AP keeps changing channel near an airport. Logs show radar detection events. Which standard explains this?',
            '802.11h (DFS and TPC)',
-           ['802.1Q tagging', '802.3bt PoE', '802.11e QoS'],
+           ['802.1Q tagging', '802.3bt PoE', '802.11e (WMM quality of service)'],
            'DFS, defined in 802.11h, requires APs to vacate channels where radar is detected.'),
     single('N:2.3', 'NO-3.3', 5, 'Two buildings 300 m apart need a wireless link between them. Which antenna type is most appropriate?',
            'A pair of directional antennas',
@@ -116,7 +134,7 @@ ITEMS = [
            'DAC cables suit short in-rack runs at 10G and above.'),
     single('N:1.5', 'NO-2.3', 3, 'A fibre link will not come up. One end has a single-mode transceiver; the other has a multimode transceiver. What is the problem?',
            'Transceiver and fibre type mismatch',
-           ['The cable is not plenum-rated', 'The link needs PoE', 'Both ends need RJ45 connectors'],
+           ['The cable is not plenum-rated', 'The link needs PoE', 'Both ends need RJ45 copper connectors instead'],
            'Both ends must match fibre type, wavelength and speed.'),
     multi('N:1.5', 'NO-2.3', 4, 'Which TWO statements about fibre are correct? (Choose two.)',
           ['Single-mode supports longer distances than multimode', 'Multimode has a wider core than single-mode'],

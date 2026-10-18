@@ -56,6 +56,9 @@ the vendor-approved swab); remove debris.</li>
 <li>A new MFD prints pages of symbols for one user; others print normally.</li>
 <li>The user’s PC has a PostScript driver installed by hand; the shared queue uses PCL. The data and the printer’s language do not match.</li>
 <li>Remove the manual driver, connect to the shared queue from the print server, delete the stuck jobs and print a test page.</li></ol>''')}
+{scenario('the payslips in the tray', '''<p>HR prints payslips to the shared multifunction printer, and on two occasions someone else picked them up
+from the output tray. The fix is secured print release: jobs are held on the device until the owner authenticates with a PIN
+or badge. HR is also given its own print queue so the setting can be enforced for that department.</p>''')}
 {cfu(('Why can the wrong driver produce garbled print?', 'The driver speaks a different page-description language (PCL vs PostScript) from the one the printer expects.'),
      ('What does a secured print (PIN release) prevent?', 'Confidential pages being left in the output tray — the job prints only when the user is there.'),
      ('Which consumable does an impact printer use instead of toner or ink?', 'A ribbon.'))}
@@ -75,6 +78,23 @@ and whether a drive failed; do <em>not</em> initialise or recreate the array, wh
 storage-controller mode (AHCI vs RAID/VMD) before replacing.</li>
 <li><strong>Status LEDs</strong> on drive bays — an amber or flashing LED usually marks the failed member; check the vendor’s legend.</li>
 </ul>
+{figure('fig-c-storagetriage', 'Triage for a storage symptom',
+    ['Symptom:\nnoise, S.M.A.R.T., slow', 'Protect the data:\nback up first', 'Check cables and\nfirmware detection', 'Check controller\nmode and array', 'Replace, then\nrestore or rebuild'],
+    'Five boxes in a chain. A storage symptom — grinding or clicking, a S.M.A.R.T. warning, slow reads and writes or a missing '
+    'array — comes first. Second, protect the data by backing it up before anything else. Third, check power and data cables '
+    'and whether the firmware detects the drive. Fourth, check the storage-controller mode and the RAID array status without '
+    'initialising anything. Fifth, replace the failed part, then restore from backup or let the array rebuild.',
+    'Back up before you troubleshoot a failing drive; never initialise an array you are diagnosing.', cols=5)}
+{worked('a degraded mirror', '''<ol>
+<li>A small server with RAID 1 shows an amber LED on one bay, and the controller reports the array as degraded.</li>
+<li>The data is still readable from the other member, so confirm a current backup first.</li>
+<li>Identify the failed drive from the controller and the bay LED; check the vendor’s LED legend.</li>
+<li>Replace it with a drive of the same or larger capacity and the same interface.</li>
+<li>Start or confirm the rebuild, watch it complete, and record the drive serial numbers on the ticket.</li></ol>''')}
+{scenario('no boot device after a firmware update', '''<p>After a firmware (BIOS/UEFI) update, a desktop reports that no boot device was found, although the SSD
+appears in the firmware’s storage list. The update had reset the storage-controller mode to a different setting from the one
+Windows was installed with. Putting the setting back lets Windows boot. Replacing the drive would have wasted a part and the
+user’s time.</p>''')}
 {cfu(('A hard drive starts clicking. What is the first priority?', 'Back up the data immediately, then replace the drive.'),
      ('The RAID controller reports “array missing”. What must you avoid?', 'Initialising or recreating the array before investigating — it can destroy the data.'))}
 '''
@@ -97,7 +117,7 @@ GLOSSARY = [
 ITEMS = [
     single('A1:5.6', 'IT-4.3', 1, 'A laser printer prints a faint copy of the previous page’s image lower down each new page. What is this defect called?',
            'Ghosting (double / echo image)',
-           ['Speckling', 'Garbled print', 'Multipage misfeed'],
+           ['Speckling', 'Garbled print', 'Multipage misfeed (several sheets pulled)'],
            'A faint repeat of an earlier image is ghosting, typically from the drum or fuser.'),
     order('A1:5.6', 'IT-4.3', 2, 'Jobs are stuck in a Windows print queue and nothing prints. Put the fix in order.',
           ['Confirm the printer is online and has paper', 'Cancel the stuck jobs in the queue', 'Restart the Print Spooler service', 'Print a test page'],
@@ -108,7 +128,7 @@ ITEMS = [
           'Multipage misfeeds come from the feed mechanism or the paper itself.'),
     single('A1:3.7', 'IT-4.3', 1, 'HR wants confidential payslips never to sit in the output tray. Which MFD feature should be enabled?',
            'Secured print release with a PIN or badge',
-           ['Duplex printing by default', 'Scan to network folder', 'Draft quality mode'],
+           ['Duplex printing by default', 'Scan to a network folder with user authentication', 'Draft quality mode'],
            'Secured prints hold the job until the user authenticates at the device.'),
     match('A1:3.7', 'IT-4.3', 2, 'Match each setting or feature to its purpose.',
           [('Duplex', 'Print on both sides of the sheet'), ('ADF', 'Scan a stack of multi-page originals'),
@@ -117,11 +137,11 @@ ITEMS = [
           decoys=['Fuser']),
     single('A1:3.7', 'IT-4.3', 3, 'A user’s documents print as pages of random symbols on a new printer; everyone else prints correctly. What is the most likely cause?',
            'The user has the wrong driver for the printer',
-           ['The fuser is overheating', 'The pickup rollers are worn', 'The toner is low'],
+           ['The fuser is overheating', 'The pickup rollers are worn and feeding pages twice', 'The toner is low'],
            'Garbled output is a driver/page-description-language mismatch.'),
     single('A1:3.8', 'IT-4.3', 1, 'A laser printer shows “Perform printer maintenance” at 200,000 pages. What should the technician do?',
            'Install the maintenance kit and reset the counter',
-           ['Replace only the toner cartridge', 'Reinstall the printer driver', 'Clean the heating element with alcohol'],
+           ['Replace only the toner cartridge', 'Reinstall the printer driver', 'Clean the fuser’s heating element with isopropyl alcohol'],
            'The page-count message calls for the vendor maintenance kit (fuser and rollers) and a counter reset.'),
     match('A1:3.8', 'IT-4.3', 2, 'Match each printer type to its main maintenance task.',
           [('Thermal', 'Clean the heating element and replace the paper roll'), ('Impact', 'Replace the ribbon'),
@@ -130,7 +150,7 @@ ITEMS = [
           decoys=['Replace the PCL driver']),
     single('A1:3.8', 'IT-4.3', 3, 'Receipts from a thermal printer are coming out faint and patchy. What should the technician try first?',
            'Clean the heating element as the vendor directs',
-           ['Replace the ribbon', 'Install a laser maintenance kit', 'Switch the driver to PostScript'],
+           ['Replace the ribbon', 'Install a laser maintenance kit', 'Switch the printer driver to PostScript emulation'],
            'Thermal printers have no toner or ribbon; residue on the heating element causes faint output.'),
     single('A1:5.2', 'IT-3.1', 1, 'A user’s laptop hard drive has started making a clicking noise. What should the technician do first?',
            'Back up the user’s data immediately',

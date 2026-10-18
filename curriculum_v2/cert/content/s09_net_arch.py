@@ -37,6 +37,16 @@ spine, giving equal-cost paths and predictable latency.</li>
 servers to the internet); <strong>east-west</strong> traffic moves between servers inside it — the flow that spine and leaf is
 designed for.</p>
 {_FIG_TOPO}
+{worked('choosing a design for a small data centre', '''<ol>
+<li>Requirement: twelve racks of virtualised servers. Most traffic is virtual machine to virtual machine and application to database — east-west.</li>
+<li>Three-tier: traffic between servers in different racks may climb to the distribution or core layer and back, so path length depends on where the two servers sit.</li>
+<li>Spine and leaf: each rack’s top-of-rack leaf switch connects to every spine. Any two servers in different racks are leaf, spine, leaf — the same number of hops whichever pair you pick.</li>
+<li>Growth: add spine switches for more bandwidth between racks; add leaf switches for more server ports.</li>
+<li>Decision: spine and leaf for the data centre; the office floors keep a collapsed core because their traffic is mostly north-south.</li></ol>''')}
+{scenario('the hub that took every branch down', '''<p>Six branch offices connect hub and spoke to head office. When the head-office WAN router failed, the branches lost
+head-office applications <em>and</em> each other, because all branch-to-branch traffic passed through the hub. The options on the
+review were a redundant hub (a second router and circuit at head office) or a partial mesh between the busiest branches. Both cost
+more links; the question is which failures the business can tolerate.</p>''')}
 {cfu(('Which topology connects every leaf switch to every spine switch?', 'Spine and leaf.'),
      ('What does a collapsed core combine?', 'The core and distribution layers of the three-tier model.'),
      ('Server-to-server traffic inside a data centre is called…?', 'East-west traffic.'))}
@@ -146,7 +156,7 @@ ITEMS = [
           decoys=['Zero-touch provisioning']),
     single('N:1.3', 'NO-3.2', 3, 'A firewall that used to be a hardware appliance now runs as a virtual machine on standard servers. What is this an example of?',
            'Network functions virtualization (NFV)',
-           ['Multitenancy', 'Infrastructure as code', 'A community cloud'],
+           ['Multitenancy', 'Infrastructure as code (IaC) deployment', 'A community cloud'],
            'NFV runs network functions as software on commodity hardware.'),
     multi('N:1.8', 'NO-3.2', 1, 'Which THREE are characteristics of SD-WAN listed in Network+ 1.8? (Choose three.)',
           ['Application aware', 'Zero-touch provisioning', 'Transport agnostic'],
@@ -158,7 +168,7 @@ ITEMS = [
            'VXLAN’s 24-bit segment ID supports about 16 million segments (RFC 7348).'),
     single('N:1.8', 'NO-5.3', 3, 'A security design grants access per request based on identity, device health and policy, regardless of whether the user is on the office LAN. What is this?',
            'Zero trust architecture',
-           ['A screened subnet', 'Port security', 'A collapsed core'],
+           ['A screened subnet (DMZ) design', 'Port security', 'A collapsed core'],
            'Zero trust removes implicit trust based on network location (NIST SP 800-207).'),
     order('N:1.8', 'NO-3.2', 4, 'Put an infrastructure-as-code change in the right order.',
           ['Create a branch in the repository', 'Edit the configuration template', 'Review and resolve any merge conflicts', 'Merge to the main branch', 'Run the playbook against the inventory'],

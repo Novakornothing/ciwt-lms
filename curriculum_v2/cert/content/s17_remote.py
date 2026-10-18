@@ -57,7 +57,7 @@ ITEMS = [
           decoys=['SPICE for printers']),
     single('A2:4.9', 'IT-9.3', 2, 'A small firm wants staff to use Remote Desktop to office PCs from home. What is the most secure approach?',
            'Require the VPN (or an RD Gateway) with MFA',
-           ['Forward TCP 3389 to each PC', 'Use VNC without a password', 'Allow RDP only during business hours'],
+           ['Forward TCP 3389 to each PC', 'Use VNC without a password', 'Allow RDP from the internet only during business hours'],
            'Do not expose RDP directly; tunnel it through an authenticated gateway.'),
     single('A2:4.9', 'IT-9.3', 3, 'Which protocol is a remote display protocol designed for virtual machines?',
            'SPICE',

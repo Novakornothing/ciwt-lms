@@ -101,7 +101,7 @@ ITEMS = [
           ['Auto-brightness is turned off', 'The phone is set to a 30-second auto-lock', 'Wi-Fi calling is turned on', 'The battery health reads 85 percent'],
           'Sideloaded or overlay-capable apps are the classic cause of ads outside apps and unexplained data use. The other settings do not cause either symptom.'),
     single('A2:3.3', 'IT-4.2', 2, 'An MDM compliance report flags a corporate phone as jailbroken. What is the best next step?',
-           'Block corporate access and restore the phone to vendor firmware',
+           'Block corporate access and reset to stock firmware',
            ['Allow access because the phone still passes PIN checks', 'Install a third-party antivirus app and keep using it', 'Turn off developer mode and leave the jailbreak'],
            'A jailbreak removes the OS sandbox and update protections, so the device cannot be trusted until it is restored.'),
     single('A2:3.3', 'IT-4.2', 3, 'After removing a malicious app from a user’s phone, from where should the user change their account passwords?',

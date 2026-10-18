@@ -25,7 +25,8 @@
    "A2:2.4",
    "A2:2.5",
    "A2:2.6",
-   "A2:3.4"
+   "A2:3.4",
+   "A2:2.11"
   ],
   "IT-10.3": [
    "A2:2.7",
@@ -33,7 +34,8 @@
    "A2:2.2"
   ],
   "IT-10.4": [
-   "A2:4.6"
+   "A2:4.6",
+   "A2:2.5"
   ],
   "IT-11.1": [
    "A2:3.1"
@@ -56,7 +58,8 @@
   ],
   "IT-12.2": [
    "A2:4.6",
-   "A2:4.7"
+   "A2:4.7",
+   "A2:4.10"
   ],
   "IT-12.3": [
    "A2:4.3"
@@ -71,7 +74,8 @@
   "IT-13.2": [
    "A2:1.5",
    "A1:5.5",
-   "A2:1.7"
+   "A2:1.7",
+   "A2:4.8"
   ],
   "IT-13.3": [
    "A2:1.5",
@@ -128,7 +132,8 @@
    "A1:1.3",
    "A1:1.2",
    "A2:2.8",
-   "A2:3.2"
+   "A2:3.2",
+   "A2:3.3"
   ],
   "IT-4.3": [
    "A1:3.7",
@@ -149,7 +154,8 @@
    "A1:5.5",
    "A2:1.5",
    "N:5.5",
-   "A1:2.4"
+   "A1:2.4",
+   "A1:2.8"
   ],
   "IT-5.4": [
    "A1:2.2",
@@ -192,7 +198,8 @@
    "A2:1.6",
    "A2:1.4",
    "A2:2.2",
-   "A2:1.7"
+   "A2:1.7",
+   "A2:1.10"
   ],
   "IT-8.3": [
    "A2:3.1",
@@ -212,7 +219,8 @@
   ],
   "IT-9.3": [
    "A2:2.2",
-   "A2:1.7"
+   "A2:1.7",
+   "A2:4.9"
   ],
   "IT-9.4": [
    "A2:1.1",
@@ -233,7 +241,8 @@
   ],
   "NO-2.1": [
    "N:2.2",
-   "N:5.3"
+   "N:5.3",
+   "N:1.6"
   ],
   "NO-2.2": [
    "N:2.2",
@@ -284,7 +293,8 @@
   "NO-5.2": [
    "N:4.3",
    "N:3.5",
-   "N:4.1"
+   "N:4.1",
+   "N:4.2"
   ],
   "NO-5.3": [
    "N:4.1",
@@ -303,7 +313,9 @@
   ],
   "NO-6.3": [
    "N:3.1",
-   "N:5.1"
+   "N:5.1",
+   "N:3.3",
+   "N:2.4"
   ],
   "NO-9.1": [
    "N:2.2",
@@ -584,6 +596,477 @@
   ],
   "A3.9": [
    "A2:4.6"
+  ],
+  "C-A1-1.2-1": [
+   "A1:1.2"
+  ],
+  "C-A1-1.2-2": [
+   "A1:1.2"
+  ],
+  "C-A1-1.2-3": [
+   "A1:1.2"
+  ],
+  "C-A1-1.2-4": [
+   "A1:1.2"
+  ],
+  "C-A1-1.3-1": [
+   "A1:1.3"
+  ],
+  "C-A1-1.3-2": [
+   "A1:1.3"
+  ],
+  "C-A1-1.3-3": [
+   "A1:1.3"
+  ],
+  "C-A1-1.3-4": [
+   "A1:1.3"
+  ],
+  "C-A1-2.1-1": [
+   "A1:2.1"
+  ],
+  "C-A1-2.1-2": [
+   "A1:2.1"
+  ],
+  "C-A1-2.2-1": [
+   "A1:2.2"
+  ],
+  "C-A1-2.3-1": [
+   "A1:2.3"
+  ],
+  "C-A1-2.3-2": [
+   "A1:2.3"
+  ],
+  "C-A1-2.5-1": [
+   "A1:2.5"
+  ],
+  "C-A1-2.5-2": [
+   "A1:2.5"
+  ],
+  "C-A1-2.5-3": [
+   "A1:2.5"
+  ],
+  "C-A1-2.5-4": [
+   "A1:2.5"
+  ],
+  "C-A1-2.7-1": [
+   "A1:2.7"
+  ],
+  "C-A1-2.7-2": [
+   "A1:2.7"
+  ],
+  "C-A1-2.7-3": [
+   "A1:2.7"
+  ],
+  "C-A1-2.7-4": [
+   "A1:2.7"
+  ],
+  "C-A1-2.8-1": [
+   "A1:2.8"
+  ],
+  "C-A1-2.8-2": [
+   "A1:2.8"
+  ],
+  "C-A1-2.8-3": [
+   "A1:2.8"
+  ],
+  "C-A1-2.8-4": [
+   "A1:2.8"
+  ],
+  "C-A1-3.1-1": [
+   "A1:3.1"
+  ],
+  "C-A1-3.1-2": [
+   "A1:3.1"
+  ],
+  "C-A1-3.1-3": [
+   "A1:3.1"
+  ],
+  "C-A1-3.3-1": [
+   "A1:3.3"
+  ],
+  "C-A1-3.6-1": [
+   "A1:3.6"
+  ],
+  "C-A1-3.6-2": [
+   "A1:3.6"
+  ],
+  "C-A1-3.7-1": [
+   "A1:3.7"
+  ],
+  "C-A1-3.7-2": [
+   "A1:3.7"
+  ],
+  "C-A1-3.7-3": [
+   "A1:3.7"
+  ],
+  "C-A1-3.8-1": [
+   "A1:3.8"
+  ],
+  "C-A1-3.8-2": [
+   "A1:3.8"
+  ],
+  "C-A1-3.8-3": [
+   "A1:3.8"
+  ],
+  "C-A1-4.1-1": [
+   "A1:4.1"
+  ],
+  "C-A1-4.1-2": [
+   "A1:4.1"
+  ],
+  "C-A1-4.1-3": [
+   "A1:4.1"
+  ],
+  "C-A1-4.2-1": [
+   "A1:4.2"
+  ],
+  "C-A1-4.2-2": [
+   "A1:4.2"
+  ],
+  "C-A1-5.2-1": [
+   "A1:5.2"
+  ],
+  "C-A1-5.2-2": [
+   "A1:5.2"
+  ],
+  "C-A1-5.2-3": [
+   "A1:5.2"
+  ],
+  "C-A1-5.3-1": [
+   "A1:5.3"
+  ],
+  "C-A1-5.3-2": [
+   "A1:5.3"
+  ],
+  "C-A1-5.3-3": [
+   "A1:5.3"
+  ],
+  "C-A1-5.3-4": [
+   "A1:5.3"
+  ],
+  "C-A1-5.4-1": [
+   "A1:5.4"
+  ],
+  "C-A1-5.4-2": [
+   "A1:5.4"
+  ],
+  "C-A1-5.4-3": [
+   "A1:5.4"
+  ],
+  "C-A1-5.6-1": [
+   "A1:5.6"
+  ],
+  "C-A1-5.6-2": [
+   "A1:5.6"
+  ],
+  "C-A1-5.6-3": [
+   "A1:5.6"
+  ],
+  "C-A2-1.1-1": [
+   "A2:1.1"
+  ],
+  "C-A2-1.10-1": [
+   "A2:1.10"
+  ],
+  "C-A2-1.10-2": [
+   "A2:1.10"
+  ],
+  "C-A2-1.10-3": [
+   "A2:1.10"
+  ],
+  "C-A2-1.10-4": [
+   "A2:1.10"
+  ],
+  "C-A2-1.11-1": [
+   "A2:1.11"
+  ],
+  "C-A2-1.11-2": [
+   "A2:1.11"
+  ],
+  "C-A2-1.11-3": [
+   "A2:1.11"
+  ],
+  "C-A2-1.11-4": [
+   "A2:1.11"
+  ],
+  "C-A2-1.3-1": [
+   "A2:1.3"
+  ],
+  "C-A2-2.11-1": [
+   "A2:2.11"
+  ],
+  "C-A2-2.11-2": [
+   "A2:2.11"
+  ],
+  "C-A2-2.11-3": [
+   "A2:2.11"
+  ],
+  "C-A2-2.11-4": [
+   "A2:2.11"
+  ],
+  "C-A2-2.3-1": [
+   "A2:2.3"
+  ],
+  "C-A2-2.3-2": [
+   "A2:2.3"
+  ],
+  "C-A2-2.3-3": [
+   "A2:2.3"
+  ],
+  "C-A2-2.5-1": [
+   "A2:2.5"
+  ],
+  "C-A2-2.5-2": [
+   "A2:2.5"
+  ],
+  "C-A2-2.5-3": [
+   "A2:2.5"
+  ],
+  "C-A2-2.5-4": [
+   "A2:2.5"
+  ],
+  "C-A2-2.5-5": [
+   "A2:2.5"
+  ],
+  "C-A2-2.9-1": [
+   "A2:2.9"
+  ],
+  "C-A2-3.1-1": [
+   "A2:3.1"
+  ],
+  "C-A2-3.1-2": [
+   "A2:3.1"
+  ],
+  "C-A2-3.1-3": [
+   "A2:3.1"
+  ],
+  "C-A2-3.1-4": [
+   "A2:3.1"
+  ],
+  "C-A2-3.2-1": [
+   "A2:3.2"
+  ],
+  "C-A2-3.2-2": [
+   "A2:3.2"
+  ],
+  "C-A2-3.2-3": [
+   "A2:3.2"
+  ],
+  "C-A2-3.2-4": [
+   "A2:3.2"
+  ],
+  "C-A2-3.3-1": [
+   "A2:3.3"
+  ],
+  "C-A2-3.3-2": [
+   "A2:3.3"
+  ],
+  "C-A2-3.3-3": [
+   "A2:3.3"
+  ],
+  "C-A2-3.3-4": [
+   "A2:3.3"
+  ],
+  "C-A2-3.4-1": [
+   "A2:3.4"
+  ],
+  "C-A2-3.4-2": [
+   "A2:3.4"
+  ],
+  "C-A2-3.4-3": [
+   "A2:3.4"
+  ],
+  "C-A2-3.4-4": [
+   "A2:3.4"
+  ],
+  "C-A2-4.10-1": [
+   "A2:4.10"
+  ],
+  "C-A2-4.10-2": [
+   "A2:4.10"
+  ],
+  "C-A2-4.10-3": [
+   "A2:4.10"
+  ],
+  "C-A2-4.10-4": [
+   "A2:4.10"
+  ],
+  "C-A2-4.4-1": [
+   "A2:4.4"
+  ],
+  "C-A2-4.5-1": [
+   "A2:4.5"
+  ],
+  "C-A2-4.5-2": [
+   "A2:4.5"
+  ],
+  "C-A2-4.5-3": [
+   "A2:4.5"
+  ],
+  "C-A2-4.5-4": [
+   "A2:4.5"
+  ],
+  "C-A2-4.8-1": [
+   "A2:4.8"
+  ],
+  "C-A2-4.8-2": [
+   "A2:4.8"
+  ],
+  "C-A2-4.8-3": [
+   "A2:4.8"
+  ],
+  "C-A2-4.8-4": [
+   "A2:4.8"
+  ],
+  "C-A2-4.8-5": [
+   "A2:4.8"
+  ],
+  "C-A2-4.9-1": [
+   "A2:4.9"
+  ],
+  "C-A2-4.9-2": [
+   "A2:4.9"
+  ],
+  "C-A2-4.9-3": [
+   "A2:4.9"
+  ],
+  "C-A2-4.9-4": [
+   "A2:4.9"
+  ],
+  "C-N-1.2-1": [
+   "N:1.2"
+  ],
+  "C-N-1.3-1": [
+   "N:1.3"
+  ],
+  "C-N-1.3-2": [
+   "N:1.3"
+  ],
+  "C-N-1.3-3": [
+   "N:1.3"
+  ],
+  "C-N-1.5-1": [
+   "N:1.5"
+  ],
+  "C-N-1.5-2": [
+   "N:1.5"
+  ],
+  "C-N-1.5-3": [
+   "N:1.5"
+  ],
+  "C-N-1.5-4": [
+   "N:1.5"
+  ],
+  "C-N-1.6-1": [
+   "N:1.6"
+  ],
+  "C-N-1.6-2": [
+   "N:1.6"
+  ],
+  "C-N-1.6-3": [
+   "N:1.6"
+  ],
+  "C-N-1.6-4": [
+   "N:1.6"
+  ],
+  "C-N-1.8-1": [
+   "N:1.8"
+  ],
+  "C-N-1.8-2": [
+   "N:1.8"
+  ],
+  "C-N-1.8-3": [
+   "N:1.8"
+  ],
+  "C-N-1.8-4": [
+   "N:1.8"
+  ],
+  "C-N-2.3-1": [
+   "N:2.3"
+  ],
+  "C-N-2.3-2": [
+   "N:2.3"
+  ],
+  "C-N-2.3-3": [
+   "N:2.3"
+  ],
+  "C-N-2.3-4": [
+   "N:2.3"
+  ],
+  "C-N-2.3-5": [
+   "N:2.3"
+  ],
+  "C-N-2.4-1": [
+   "N:2.4"
+  ],
+  "C-N-2.4-2": [
+   "N:2.4"
+  ],
+  "C-N-2.4-3": [
+   "N:2.4"
+  ],
+  "C-N-2.4-4": [
+   "N:2.4"
+  ],
+  "C-N-3.3-1": [
+   "N:3.3"
+  ],
+  "C-N-3.3-2": [
+   "N:3.3"
+  ],
+  "C-N-3.3-3": [
+   "N:3.3"
+  ],
+  "C-N-3.3-4": [
+   "N:3.3"
+  ],
+  "C-N-4.1-1": [
+   "N:4.1"
+  ],
+  "C-N-4.1-2": [
+   "N:4.1"
+  ],
+  "C-N-4.1-3": [
+   "N:4.1"
+  ],
+  "C-N-4.2-1": [
+   "N:4.2"
+  ],
+  "C-N-4.2-2": [
+   "N:4.2"
+  ],
+  "C-N-4.2-3": [
+   "N:4.2"
+  ],
+  "C-N-4.2-4": [
+   "N:4.2"
+  ],
+  "C-N-4.2-5": [
+   "N:4.2"
+  ],
+  "C-N-5.2-1": [
+   "N:5.2"
+  ],
+  "C-N-5.2-2": [
+   "N:5.2"
+  ],
+  "C-N-5.2-3": [
+   "N:5.2"
+  ],
+  "C-N-5.2-4": [
+   "N:5.2"
+  ],
+  "C-N-5.5-1": [
+   "N:5.5"
+  ],
+  "C-N-5.5-2": [
+   "N:5.5"
+  ],
+  "C-N-5.5-3": [
+   "N:5.5"
+  ],
+  "C-N-5.5-4": [
+   "N:5.5"
   ],
   "N1.0": [
    "N:1.1"
@@ -1479,7 +1962,7 @@
    "A2:2.7"
   ],
   "X-IT-10.4.1": [
-   "A2:4.6"
+   "A2:2.5"
   ],
   "X-IT-10.4.2": [
    "A2:4.6"
@@ -1860,8 +2343,8 @@
  "objectives": {
   "A1:1.1": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.6,
+   "content": "covered",
+   "content_ratio": 0.8,
    "items": [
     "A1.4",
     "Q4.7",
@@ -1872,106 +2355,104 @@
    "labs": [],
    "lessons": [
     "ITSUP 4.1",
-    "ITSUP 1.1"
+    "ITSUP 1.1",
+    "ITSUP 4.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, monitor mobile device hardware and use appropriate replacement techniques.",
    "topics_missing": [
     "Biometrics",
-    "Near-field scanner",
-    "Camera/webcam",
     "Microphone"
    ],
    "weight": 4.33
   },
   "A1:1.2": {
-   "assessment": "gap",
-   "content": "partial",
-   "content_ratio": 0.25,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
+   "items": [
+    "C-A1-1.2-1",
+    "C-A1-1.2-2",
+    "C-A1-1.2-3",
+    "C-A1-1.2-4"
+   ],
    "labs": [],
    "lessons": [
-    "ITSUP 4.1"
+    "ITSUP 4.1",
+    "ITSUP 4.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast accessories and connectivity options for mobile devices.",
-   "topics_missing": [
-    "Lightning",
-    "NFC",
-    "Bluetooth",
-    "Tethering/hotspot",
-    "Stylus",
-    "Headsets",
-    "Speakers",
-    "Webcam",
-    "Port replicator"
-   ],
+   "topics_missing": [],
    "weight": 4.33
   },
   "A1:1.3": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.583,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "Q4.2",
     "Q4.3",
     "Q4.8",
-    "X-IT-4.2.3"
+    "X-IT-4.2.3",
+    "C-A1-1.3-1",
+    "C-A1-1.3-2",
+    "C-A1-1.3-3",
+    "C-A1-1.3-4"
    ],
    "labs": [],
    "lessons": [
+    "ITSUP 4.1",
     "ITSUP 4.2",
-    "ITSUP 4.4",
-    "ITSUP 4.1"
+    "ITSUP 4.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, configure basic mobile device network connectivity and provide application support.",
-   "topics_missing": [
-    "Hotspot",
-    "Bluetooth pairing",
-    "Location services/GPS",
-    "Data caps",
-    "Mail/calendar/contacts"
-   ],
+   "topics_missing": [],
    "weight": 4.33
   },
   "A1:2.1": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "covered",
    "content_ratio": 1.0,
    "items": [
     "Q5.5",
-    "X-IT-5.2.2"
+    "X-IT-5.2.2",
+    "C-A1-2.1-1",
+    "C-A1-2.1-2"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 5.2",
     "NETOPS 1.3",
+    "ITSUP 9.3",
     "NETOPS 1.1",
     "NETOPS 4.2",
     "NETOPS 5.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast Transmission Control Protocol (TCP) and User Datagram Protocol (UDP) ports, protocols, and their purposes.",
    "topics_missing": [],
    "weight": 2.88
   },
   "A1:2.2": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "covered",
    "content_ratio": 0.7,
    "items": [
     "N1.22",
     "N2.11",
-    "NQ3.5"
+    "NQ3.5",
+    "C-A1-2.2-1"
    ],
    "labs": [],
    "lessons": [
     "NETOPS 3.3",
     "ITSUP 5.4",
+    "NETOPS 2.3",
     "NETOPS 3.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain wireless networking technologies.",
    "topics_missing": [
     "Bluetooth",
@@ -1981,16 +2462,19 @@
    "weight": 2.88
   },
   "A1:2.3": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.5,
+   "content_ratio": 0.688,
    "items": [
     "Q5.6",
-    "X-IT-5.2.3"
+    "X-IT-5.2.3",
+    "C-A1-2.3-1",
+    "C-A1-2.3-2"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 5.2",
+    "NETOPS 5.3",
     "ITSUP 5.1",
     "ITSUP 5.3",
     "ITSUP 5.5"
@@ -2001,11 +2485,8 @@
     "Print server",
     "Syslog",
     "Web server",
-    "Database server",
     "UTM",
-    "Load balancer",
-    "SCADA",
-    "IoT"
+    "Load balancer"
    ],
    "weight": 2.88
   },
@@ -2032,6 +2513,7 @@
     "ITSUP 1.1",
     "ITSUP 7.3",
     "NETOPS 4.1",
+    "ITSUP 4.2",
     "NETOPS 5.2",
     "NETOPS 6.1",
     "ITSUP 5.1",
@@ -2045,33 +2527,31 @@
    "weight": 2.88
   },
   "A1:2.5": {
-   "assessment": "gap",
-   "content": "partial",
-   "content_ratio": 0.385,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
+   "items": [
+    "C-A1-2.5-1",
+    "C-A1-2.5-2",
+    "C-A1-2.5-3",
+    "C-A1-2.5-4"
+   ],
    "labs": [
     "win-ping-loop",
     "win-getmac"
    ],
    "lessons": [
-    "ITSUP 5.1",
     "ITSUP 5.3",
+    "NETOPS 2.3",
+    "NETOPS 5.3",
+    "ITSUP 5.1",
     "ITSUP 5.4",
     "ITSUP 5.2",
     "ITSUP 5.5"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast common networking hardware devices.",
-   "topics_missing": [
-    "Managed/unmanaged switch",
-    "Patch panel",
-    "PoE",
-    "PoE injector",
-    "PoE standards",
-    "Cable modem",
-    "DSL",
-    "ONT"
-   ],
+   "topics_missing": [],
    "weight": 2.88
   },
   "A1:2.6": {
@@ -2108,15 +2588,17 @@
     "ITSUP 13.2",
     "ITSUP 13.3",
     "NETOPS 1.1",
+    "NETOPS 3.2",
     "ITSUP 1.3",
     "ITSUP 5.2",
     "ITSUP 7.2",
     "NETOPS 1.4",
     "NETOPS 3.1",
-    "NETOPS 3.2",
     "NETOPS 4.3",
     "NETOPS 4.4",
-    "NETOPS 6.1"
+    "NETOPS 5.3",
+    "NETOPS 6.1",
+    "NETOPS 6.3"
    ],
    "status": "covered",
    "title": "Given a scenario, configure basic wired/wireless small office/home office (SOHO) networks.",
@@ -2124,10 +2606,15 @@
    "weight": 2.88
   },
   "A1:2.7": {
-   "assessment": "gap",
+   "assessment": "covered",
    "content": "covered",
    "content_ratio": 0.75,
-   "items": [],
+   "items": [
+    "C-A1-2.7-1",
+    "C-A1-2.7-2",
+    "C-A1-2.7-3",
+    "C-A1-2.7-4"
+   ],
    "labs": [
     "rtr-two-interfaces",
     "rtr-default-route",
@@ -2136,9 +2623,11 @@
    ],
    "lessons": [
     "NETOPS 3.2",
+    "NETOPS 2.3",
+    "ITSUP 5.3",
     "NETOPS 3.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast internet connection types, network types, and their characteristics.",
    "topics_missing": [
     "PAN",
@@ -2148,59 +2637,51 @@
    "weight": 2.88
   },
   "A1:2.8": {
-   "assessment": "partial",
-   "content": "partial",
-   "content_ratio": 0.25,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "N1.12",
-    "NQ2.7"
+    "NQ2.7",
+    "C-A1-2.8-1",
+    "C-A1-2.8-2",
+    "C-A1-2.8-3",
+    "C-A1-2.8-4"
    ],
    "labs": [],
    "lessons": [
+    "ITSUP 5.3",
     "NETOPS 2.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain networking tools and their purposes.",
-   "topics_missing": [
-    "Crimper",
-    "Cable stripper",
-    "Wi-Fi analyzer",
-    "Punchdown tool",
-    "Loopback plug",
-    "Network tap"
-   ],
+   "topics_missing": [],
    "weight": 2.88
   },
   "A1:3.1": {
-   "assessment": "partial",
-   "content": "partial",
-   "content_ratio": 0.333,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
-    "X-IT-3.4.2"
+    "X-IT-3.4.2",
+    "C-A1-3.1-1",
+    "C-A1-3.1-2",
+    "C-A1-3.1-3"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 3.4",
     "ITSUP 3.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast display components and attributes.",
-   "topics_missing": [
-    "LCD",
-    "IPS",
-    "TN",
-    "VA",
-    "OLED",
-    "Mini-LED",
-    "Touch screen/digitizer",
-    "Pixel density"
-   ],
+   "topics_missing": [],
    "weight": 3.12
   },
   "A1:3.2": {
    "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.448,
+   "content_ratio": 0.655,
    "items": [
     "A1.43",
     "A3.7",
@@ -2213,40 +2694,35 @@
     "gui-devices"
    ],
    "lessons": [
-    "ITSUP 3.4",
     "NETOPS 2.3",
+    "ITSUP 3.4",
     "ITSUP 3.1"
    ],
    "status": "partial",
    "title": "Summarize basic cable types and their connectors, features, and purposes.",
    "topics_missing": [
-    "Coaxial",
     "Shielded twisted pair",
     "Unshielded twisted pair",
     "Direct burial",
-    "Plenum-rated",
     "DVI",
     "VGA",
     "eSATA",
-    "RJ11",
-    "RJ45",
-    "F-type",
     "Punchdown block",
     "MicroUSB/MiniUSB",
     "Molex",
-    "Lightning",
     "DB9"
    ],
    "weight": 3.12
   },
   "A1:3.3": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "covered",
    "content_ratio": 1.0,
    "items": [
     "A1.2",
     "A1.7",
-    "Q2.2"
+    "Q2.2",
+    "C-A1-3.3-1"
    ],
    "labs": [
     "hw-board"
@@ -2257,7 +2733,7 @@
     "ITSUP 2.1",
     "ITSUP 2.6"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast RAM characteristics.",
    "topics_missing": [],
    "weight": 3.12
@@ -2353,12 +2829,14 @@
    "weight": 3.12
   },
   "A1:3.6": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "partial",
    "content_ratio": 0.571,
    "items": [
     "Q3.9",
-    "X-IT-3.3.2"
+    "X-IT-3.3.2",
+    "C-A1-3.6-1",
+    "C-A1-3.6-2"
    ],
    "labs": [],
    "lessons": [
@@ -2374,59 +2852,54 @@
    "weight": 3.12
   },
   "A1:3.7": {
-   "assessment": "partial",
-   "content": "partial",
-   "content_ratio": 0.467,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "Q4.4",
     "X-IT-4.3.3",
-    "X-IT-4.3.4"
+    "X-IT-4.3.4",
+    "C-A1-3.7-1",
+    "C-A1-3.7-2",
+    "C-A1-3.7-3"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 4.3",
+    "ITSUP 3.2",
     "ITSUP 4.4",
-    "ITSUP 4.1"
+    "ITSUP 4.1",
+    "ITSUP 4.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, deploy and configure multifunction devices/printers and settings.",
-   "topics_missing": [
-    "PCL vs. PostScript",
-    "Duplex",
-    "Orientation",
-    "Quality",
-    "Audit logs",
-    "Secured prints",
-    "Scan services",
-    "ADF/flatbed"
-   ],
+   "topics_missing": [],
    "weight": 3.12
   },
   "A1:3.8": {
-   "assessment": "partial",
-   "content": "partial",
-   "content_ratio": 0.429,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
-    "X-IT-4.3.3"
+    "X-IT-4.3.3",
+    "C-A1-3.8-1",
+    "C-A1-3.8-2",
+    "C-A1-3.8-3"
    ],
    "labs": [],
    "lessons": [
-    "ITSUP 4.3"
+    "ITSUP 4.3",
+    "ITSUP 4.1"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, perform appropriate printer maintenance.",
-   "topics_missing": [
-    "Laser maintenance kit",
-    "Calibrate",
-    "Thermal",
-    "Impact"
-   ],
+   "topics_missing": [],
    "weight": 3.12
   },
   "A1:4.1": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.5,
+   "content": "covered",
+   "content_ratio": 0.9,
    "items": [
     "A1.48",
     "A2.7",
@@ -2444,27 +2917,28 @@
     "X-IT-6.1.3",
     "X-IT-6.3.1",
     "X-IT-6.3.2",
-    "X-IT-6.3.3"
+    "X-IT-6.3.3",
+    "C-A1-4.1-1",
+    "C-A1-4.1-2",
+    "C-A1-4.1-3"
    ],
    "labs": [],
    "lessons": [
-    "ITSUP 6.1"
+    "ITSUP 6.2",
+    "ITSUP 6.1",
+    "ITSUP 5.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain virtualization concepts.",
    "topics_missing": [
-    "Test development",
-    "Application virtualization",
-    "Legacy software/OS",
-    "Cross-platform virtualization",
-    "VDI"
+    "Test development"
    ],
    "weight": 5.5
   },
   "A1:4.2": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.462,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "Q6.2",
     "Q6.3",
@@ -2473,29 +2947,24 @@
     "S-IT-6.2.2",
     "X-IT-6.2.1",
     "X-IT-6.2.2",
-    "X-IT-6.2.3"
+    "X-IT-6.2.3",
+    "C-A1-4.2-1",
+    "C-A1-4.2-2"
    ],
    "labs": [],
    "lessons": [
-    "ITSUP 6.2"
+    "ITSUP 6.2",
+    "NETOPS 3.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Summarize cloud computing concepts.",
-   "topics_missing": [
-    "Private cloud",
-    "Public cloud",
-    "Community cloud",
-    "Shared vs. dedicated",
-    "Availability",
-    "File synchronization",
-    "Multitenancy"
-   ],
+   "topics_missing": [],
    "weight": 5.5
   },
   "A1:5.1": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.75,
+   "content_ratio": 1.0,
    "items": [
     "A1.0",
     "A1.3",
@@ -2510,110 +2979,100 @@
    "labs": [],
    "lessons": [
     "ITSUP 3.3",
+    "ITSUP 11.1",
+    "ITSUP 3.2",
+    "ITSUP 3.4",
+    "ITSUP 4.1",
     "ITSUP 7.2",
     "ITSUP 2.4",
-    "ITSUP 3.4",
     "ITSUP 3.5",
     "ITSUP 2.3",
-    "ITSUP 2.5",
-    "ITSUP 3.2"
+    "ITSUP 2.5"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot motherboards, RAM, CPUs, and power.",
-   "topics_missing": [
-    "Crash screens",
-    "Application crashes",
-    "Unusual noise"
-   ],
+   "topics_missing": [],
    "weight": 4.67
   },
   "A1:5.2": {
-   "assessment": "partial",
-   "content": "partial",
-   "content_ratio": 0.667,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "Q3.2",
-    "X-IT-3.2.4"
+    "X-IT-3.2.4",
+    "C-A1-5.2-1",
+    "C-A1-5.2-2",
+    "C-A1-5.2-3"
    ],
    "labs": [
     "w11-disk"
    ],
    "lessons": [
-    "ITSUP 3.1",
     "ITSUP 3.2",
+    "ITSUP 3.1",
+    "ITSUP 11.1",
     "ITSUP 3.3",
     "ITSUP 3.4",
     "ITSUP 3.5"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, troubleshoot drive and RAID issues.",
-   "topics_missing": [
-    "Grinding noises",
-    "Extended read/write times",
-    "Low IOPS",
-    "Array missing"
-   ],
+   "topics_missing": [],
    "weight": 4.67
   },
   "A1:5.3": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.385,
+   "content": "covered",
+   "content_ratio": 0.923,
    "items": [
     "A1.43",
     "A2.15",
     "Q3.6",
-    "X-IT-3.4.3"
+    "X-IT-3.4.3",
+    "C-A1-5.3-1",
+    "C-A1-5.3-2",
+    "C-A1-5.3-3",
+    "C-A1-5.3-4"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 3.4",
     "ITSUP 3.1",
+    "ITSUP 3.2",
     "ITSUP 3.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, troubleshoot video, projector, and display issues.",
    "topics_missing": [
-    "Burnt-out bulb",
-    "Fuzzy image",
-    "Display burn-in",
-    "Dead pixels",
-    "Flashing screen",
-    "Incorrect color display",
-    "Dim image",
-    "Distorted image"
+    "Incorrect color display"
    ],
    "weight": 4.67
   },
   "A1:5.4": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.286,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A2.2",
     "Q4.0",
     "Q4.1",
     "X-IT-4.1.1",
-    "X-IT-4.1.2"
+    "X-IT-4.1.2",
+    "C-A1-5.4-1",
+    "C-A1-5.4-2",
+    "C-A1-5.4-3"
    ],
    "labs": [],
    "lessons": [
-    "ITSUP 4.1"
+    "ITSUP 4.1",
+    "ITSUP 4.2",
+    "ITSUP 3.4",
+    "ITSUP 4.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, troubleshoot common mobile device issues.",
-   "topics_missing": [
-    "Broken screen",
-    "Poor/no connectivity",
-    "Liquid damage",
-    "Overheating",
-    "Digitizer issues",
-    "Physically damaged ports",
-    "Malware",
-    "Cursor drift/touch calibration",
-    "Unable to install apps",
-    "Stylus does not work"
-   ],
+   "topics_missing": [],
    "weight": 4.67
   },
   "A1:5.5": {
@@ -2636,9 +3095,11 @@
     "gui-renew"
    ],
    "lessons": [
+    "NETOPS 2.1",
     "NETOPS 6.1",
     "ITSUP 7.2",
     "ITSUP 5.1",
+    "ITSUP 5.3",
     "ITSUP 5.4",
     "ITSUP 6.3",
     "ITSUP 7.4",
@@ -2646,12 +3107,12 @@
     "NETOPS 1.1",
     "NETOPS 1.2",
     "NETOPS 1.3",
-    "NETOPS 2.1",
+    "NETOPS 2.3",
     "NETOPS 3.2",
     "NETOPS 3.3",
     "NETOPS 5.1",
     "NETOPS 5.3",
-    "ITSUP 5.3",
+    "NETOPS 6.3",
     "ITSUP 5.5",
     "ITSUP 7.1",
     "ITSUP 7.3"
@@ -2663,41 +3124,39 @@
   },
   "A1:5.6": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.533,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.8",
     "Q4.5",
     "Q4.6",
     "X-IT-4.3.1",
-    "X-IT-4.3.2"
+    "X-IT-4.3.2",
+    "C-A1-5.6-1",
+    "C-A1-5.6-2",
+    "C-A1-5.6-3"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 4.3",
-    "ITSUP 4.4"
+    "ITSUP 4.4",
+    "ITSUP 4.1",
+    "ITSUP 4.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, troubleshoot printer issues.",
-   "topics_missing": [
-    "Garbled print",
-    "Paper not feeding",
-    "Multipage misfeed",
-    "Speckling",
-    "Grinding noise",
-    "Finishing issues",
-    "Incorrect page orientation"
-   ],
+   "topics_missing": [],
    "weight": 4.67
   },
   "A2:1.1": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "partial",
    "content_ratio": 0.647,
    "items": [
     "X-IT-9.4.1",
     "X-IT-9.4.2",
-    "X-IT-9.4.3"
+    "X-IT-9.4.3",
+    "C-A2-1.1-1"
    ],
    "labs": [
     "w11-inventory",
@@ -2714,6 +3173,7 @@
     "ITSUP 8.1",
     "ITSUP 9.1",
     "ITSUP 9.3",
+    "ITSUP 8.2",
     "ITSUP 9.2"
    ],
    "status": "partial",
@@ -2729,49 +3189,56 @@
    "weight": 2.55
   },
   "A2:1.10": {
-   "assessment": "gap",
-   "content": "partial",
-   "content_ratio": 0.5,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 0.833,
+   "items": [
+    "C-A2-1.10-1",
+    "C-A2-1.10-2",
+    "C-A2-1.10-3",
+    "C-A2-1.10-4"
+   ],
    "labs": [],
    "lessons": [
+    "ITSUP 8.2",
     "ITSUP 8.1",
-    "ITSUP 6.1"
+    "ITSUP 11.1",
+    "ITSUP 6.1",
+    "ITSUP 8.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, install applications according to requirements.",
    "topics_missing": [
-    "Dedicated vs. integrated graphics",
-    "VRAM",
     "CPU requirements",
-    "External hardware tokens",
-    "Storage requirements",
-    "Impact considerations"
+    "Storage requirements"
    ],
    "weight": 2.55
   },
   "A2:1.11": {
-   "assessment": "gap",
-   "content": "gap",
-   "content_ratio": 0.0,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 0.8,
+   "items": [
+    "C-A2-1.11-4",
+    "C-A2-1.11-1",
+    "C-A2-1.11-2",
+    "C-A2-1.11-3"
+   ],
    "labs": [],
-   "lessons": [],
-   "status": "gap",
+   "lessons": [
+    "ITSUP 6.2"
+   ],
+   "status": "covered",
    "title": "Given a scenario, install and configure cloud-based productivity tools.",
    "topics_missing": [
-    "Email systems",
-    "Storage/sync settings",
-    "Collaboration tools",
-    "Identity synchronization",
     "Licensing assignment"
    ],
    "weight": 2.55
   },
   "A2:1.2": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.636,
+   "content": "covered",
+   "content_ratio": 0.773,
    "items": [
     "A1.27",
     "Q8.0",
@@ -2790,33 +3257,31 @@
    "lessons": [
     "ITSUP 8.1",
     "ITSUP 8.4",
+    "ITSUP 11.1",
     "ITSUP 8.3",
     "ITSUP 11.3",
-    "ITSUP 8.2",
-    "ITSUP 11.1"
+    "ITSUP 8.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, perform OS installations and upgrades in a diverse environment.",
    "topics_missing": [
-    "USB boot",
     "Network boot",
     "External/hot-swappable drive",
     "Multiboot",
     "Remote network installation",
-    "GPT",
-    "MBR",
     "App/driver compatibility"
    ],
    "weight": 2.55
   },
   "A2:1.3": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "partial",
    "content_ratio": 0.6,
    "items": [
     "Q8.1",
     "Q8.2",
-    "X-IT-8.1.3"
+    "X-IT-8.1.3",
+    "C-A2-1.3-1"
    ],
    "labs": [],
    "lessons": [
@@ -2841,7 +3306,7 @@
   "A2:1.4": {
    "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.55,
+   "content_ratio": 0.6,
    "items": [
     "A2.6",
     "Q8.6",
@@ -2858,10 +3323,11 @@
     "w11-processes"
    ],
    "lessons": [
+    "ITSUP 11.1",
     "ITSUP 11.4",
     "ITSUP 8.3",
+    "ITSUP 8.2",
     "ITSUP 11.2",
-    "ITSUP 11.1",
     "ITSUP 13.5",
     "ITSUP 2.6",
     "ITSUP 8.4",
@@ -2876,7 +3342,6 @@
     "Certificate Manager",
     "Local Users and Groups",
     "Group Policy Editor",
-    "System Information",
     "Disk Defragment",
     "Registry Editor"
    ],
@@ -2884,8 +3349,8 @@
   },
   "A2:1.5": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.652,
+   "content": "covered",
+   "content_ratio": 0.739,
    "items": [
     "A1.22",
     "A1.23",
@@ -2933,27 +3398,25 @@
     "ITSUP 9.1",
     "ITSUP 8.2",
     "ITSUP 13.1",
+    "ITSUP 13.2",
     "ITSUP 5.3",
     "ITSUP 13.5",
     "ITSUP 5.1",
     "ITSUP 5.2",
     "ITSUP 5.5",
-    "ITSUP 13.2",
     "ITSUP 13.4",
     "ITSUP 8.1",
     "ITSUP 8.3",
     "ITSUP 8.4",
     "ITSUP 13.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, use the appropriate Microsoft command-line tools.",
    "topics_missing": [
-    "net use",
     "pathping",
     "chkdsk",
     "md",
     "rmdir",
-    "robocopy",
     "net user",
     "[command] /?"
    ],
@@ -2980,8 +3443,8 @@
    ],
    "lessons": [
     "ITSUP 8.1",
-    "ITSUP 13.5",
     "ITSUP 8.2",
+    "ITSUP 13.5",
     "ITSUP 8.3",
     "ITSUP 8.4"
    ],
@@ -3042,30 +3505,31 @@
     "gui-renew"
    ],
    "lessons": [
+    "NETOPS 5.3",
+    "ITSUP 13.2",
     "ITSUP 5.3",
     "ITSUP 1.1",
     "ITSUP 4.2",
     "ITSUP 5.2",
     "ITSUP 7.2",
-    "ITSUP 13.2",
     "ITSUP 13.3",
+    "NETOPS 2.3",
+    "NETOPS 3.2",
+    "NETOPS 6.1",
     "ITSUP 1.3",
     "ITSUP 5.1",
     "ITSUP 5.5",
     "ITSUP 8.2",
+    "ITSUP 9.3",
     "ITSUP 13.5",
-    "NETOPS 2.3",
+    "NETOPS 2.1",
     "NETOPS 3.1",
-    "NETOPS 3.2",
     "NETOPS 4.1",
     "NETOPS 4.4",
-    "NETOPS 5.3",
-    "NETOPS 6.1",
     "ITSUP 13.1",
     "ITSUP 13.4",
     "ITSUP 13.6",
     "ITSUP 5.4",
-    "ITSUP 9.3",
     "ITSUP 8.3",
     "ITSUP 8.4",
     "ITSUP 9.1",
@@ -3167,7 +3631,7 @@
   "A2:2.1": {
    "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.379,
+   "content_ratio": 0.655,
    "items": [
     "A1.31",
     "A1.40",
@@ -3181,29 +3645,24 @@
    ],
    "labs": [],
    "lessons": [
-    "ITSUP 10.1"
+    "ITSUP 10.1",
+    "NETOPS 5.3",
+    "ITSUP 10.4",
+    "ITSUP 10.2"
    ],
    "status": "partial",
    "title": "Summarize various security measures and their purposes.",
    "topics_missing": [
     "Bollards",
     "Access control vestibule",
-    "Video surveillance",
     "Alarm systems/motion sensors",
     "Security guards",
-    "Fences",
     "Key fobs",
     "Mobile digital key",
     "Lighting",
     "Magnetometers",
-    "Zero Trust",
-    "ACLs",
-    "SAML",
-    "SSO",
     "MDM",
-    "DLP",
-    "IAM",
-    "Directory services"
+    "DLP"
    ],
    "weight": 2.55
   },
@@ -3223,7 +3682,8 @@
    "lessons": [
     "ITSUP 5.4",
     "NETOPS 3.3",
-    "NETOPS 5.2"
+    "NETOPS 5.2",
+    "ITSUP 5.3"
    ],
    "status": "covered",
    "title": "Given a scenario, apply security settings on SOHO wireless and wired networks.",
@@ -3236,28 +3696,24 @@
    "weight": 2.55
   },
   "A2:2.11": {
-   "assessment": "gap",
-   "content": "gap",
-   "content_ratio": 0.0,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 0.929,
+   "items": [
+    "C-A2-2.11-1",
+    "C-A2-2.11-2",
+    "C-A2-2.11-3",
+    "C-A2-2.11-4"
+   ],
    "labs": [],
-   "lessons": [],
-   "status": "gap",
+   "lessons": [
+    "ITSUP 10.2",
+    "ITSUP 4.2",
+    "NETOPS 5.3"
+   ],
+   "status": "covered",
    "title": "Given a scenario, configure relevant security settings in a browser.",
    "topics_missing": [
-    "Trusted sources/hashing",
-    "Untrusted sources",
-    "Browser patching",
-    "Extensions/plug-ins",
-    "Password managers",
-    "Valid certificates",
-    "Pop-up blocker",
-    "Clearing data/cache",
-    "Private browsing",
-    "Sign-in/data sync",
-    "Ad blockers",
-    "Proxy",
-    "Secure DNS",
     "Feature management"
    ],
    "weight": 2.55
@@ -3299,6 +3755,7 @@
     "ITSUP 10.1",
     "ITSUP 9.1",
     "ITSUP 10.3",
+    "ITSUP 10.4",
     "ITSUP 8.3",
     "ITSUP 9.2",
     "ITSUP 9.3"
@@ -3318,30 +3775,32 @@
    "weight": 2.55
   },
   "A2:2.3": {
-   "assessment": "partial",
-   "content": "partial",
-   "content_ratio": 0.625,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 0.875,
    "items": [
-    "X-IT-5.4.2"
+    "X-IT-5.4.2",
+    "C-A2-2.3-1",
+    "C-A2-2.3-2",
+    "C-A2-2.3-3"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 5.4",
-    "NETOPS 3.3"
+    "NETOPS 3.3",
+    "NETOPS 5.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast wireless security protocols and authentication methods.",
    "topics_missing": [
-    "TACACS+",
-    "Kerberos",
-    "Multifactor"
+    "Kerberos"
    ],
    "weight": 2.55
   },
   "A2:2.4": {
    "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.333,
+   "content_ratio": 0.444,
    "items": [
     "A1.32",
     "Q10.2",
@@ -3357,7 +3816,8 @@
     "w11-firewall"
    ],
    "lessons": [
-    "ITSUP 10.2"
+    "ITSUP 10.2",
+    "ITSUP 10.4"
    ],
    "status": "partial",
    "title": "Summarize types of malware and tools/methods for detection, removal, and prevention.",
@@ -3370,58 +3830,39 @@
     "Cryptominer",
     "Stalkerware",
     "Fileless",
-    "Adware/PUP",
     "EDR/MDR/XDR",
-    "Email security gateway",
-    "User education/antiphishing"
+    "Email security gateway"
    ],
    "weight": 2.55
   },
   "A2:2.5": {
-   "assessment": "partial",
-   "content": "gap",
-   "content_ratio": 0.0,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.32",
-    "Q10.8"
+    "Q10.8",
+    "X-IT-10.4.1",
+    "C-A2-2.5-1",
+    "C-A2-2.5-2",
+    "C-A2-2.5-3",
+    "C-A2-2.5-4",
+    "C-A2-2.5-5"
    ],
    "labs": [],
-   "lessons": [],
-   "status": "gap",
-   "title": "Compare and contrast common social engineering attacks, threats, and vulnerabilities.",
-   "topics_missing": [
-    "Phishing",
-    "Vishing",
-    "Smishing",
-    "QR code phishing",
-    "Spear phishing/whaling",
-    "Shoulder surfing",
-    "Tailgating",
-    "Impersonation",
-    "Dumpster diving",
-    "DoS/DDoS",
-    "Evil twin",
-    "Zero-day",
-    "Spoofing",
-    "On-path",
-    "Brute-force",
-    "Dictionary attack",
-    "Insider threat",
-    "SQL injection",
-    "XSS",
-    "BEC",
-    "Supply chain",
-    "Unpatched/non-compliant systems",
-    "Unprotected systems",
-    "EOL",
-    "BYOD"
+   "lessons": [
+    "ITSUP 10.4",
+    "NETOPS 5.3"
    ],
+   "status": "covered",
+   "title": "Compare and contrast common social engineering attacks, threats, and vulnerabilities.",
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:2.6": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.8,
+   "content_ratio": 1.0,
    "items": [
     "A1.34",
     "A1.44",
@@ -3432,6 +3873,7 @@
    "lessons": [
     "ITSUP 10.2",
     "ITSUP 3.5",
+    "ITSUP 6.2",
     "ITSUP 7.2",
     "ITSUP 8.1",
     "ITSUP 8.3",
@@ -3441,16 +3883,13 @@
    ],
    "status": "covered",
    "title": "Given a scenario, implement procedures for basic small office/home office (SOHO) malware removal.",
-   "topics_missing": [
-    "Disable System Restore",
-    "Update anti-malware"
-   ],
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:2.7": {
    "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.333,
+   "content_ratio": 0.4,
    "items": [
     "A1.35",
     "A2.12",
@@ -3460,12 +3899,12 @@
    ],
    "labs": [],
    "lessons": [
-    "ITSUP 10.1"
+    "ITSUP 10.1",
+    "ITSUP 10.2"
    ],
    "status": "partial",
    "title": "Given a scenario, apply workstation security options and hardening techniques.",
    "topics_missing": [
-    "Data-at-rest encryption",
     "BIOS/UEFI passwords",
     "Log off",
     "Restrict log-in times",
@@ -3480,8 +3919,8 @@
   },
   "A2:2.8": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.667,
+   "content": "covered",
+   "content_ratio": 0.833,
    "items": [
     "A2.19",
     "Q4.3",
@@ -3492,38 +3931,42 @@
    "labs": [],
    "lessons": [
     "ITSUP 4.2",
-    "ITSUP 4.4",
-    "ITSUP 4.1"
+    "ITSUP 4.1",
+    "ITSUP 10.2",
+    "ITSUP 12.2",
+    "ITSUP 4.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, apply common methods for securing mobile devices.",
    "topics_missing": [
-    "OS/app updates",
-    "Endpoint security software",
     "Remote backup",
     "Failed log-in restrictions"
    ],
    "weight": 2.55
   },
   "A2:2.9": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "covered",
    "content_ratio": 0.8,
    "items": [
     "A1.33",
     "A1.39",
-    "X-IT-10.3.2"
+    "X-IT-10.3.2",
+    "C-A2-2.9-1"
    ],
    "labs": [],
    "lessons": [
+    "ITSUP 6.2",
+    "ITSUP 10.2",
     "ITSUP 10.3",
     "ITSUP 4.1",
     "ITSUP 8.3",
     "ITSUP 9.4",
-    "NETOPS 3.3",
-    "ITSUP 10.2"
+    "ITSUP 11.1",
+    "ITSUP 12.2",
+    "NETOPS 3.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast common data destruction and disposal methods.",
    "topics_missing": [
     "Low-level formatting",
@@ -3533,8 +3976,8 @@
   },
   "A2:3.1": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.583,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.30",
     "A2.8",
@@ -3563,98 +4006,90 @@
     "X-IT-11.3.3",
     "X-IT-11.4.1",
     "X-IT-11.4.2",
-    "X-IT-11.4.3"
+    "X-IT-11.4.3",
+    "C-A2-3.1-1",
+    "C-A2-3.1-2",
+    "C-A2-3.1-3",
+    "C-A2-3.1-4"
    ],
    "labs": [
     "w11-processes"
    ],
    "lessons": [
+    "ITSUP 11.1",
     "ITSUP 8.3",
     "ITSUP 11.4",
-    "ITSUP 8.2",
-    "ITSUP 11.1"
+    "ITSUP 8.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, troubleshoot common Windows OS issues.",
-   "topics_missing": [
-    "Frequent shutdowns",
-    "Services not starting",
-    "USB controller resource warnings",
-    "System instability",
-    "No OS found"
-   ],
+   "topics_missing": [],
    "weight": 5.75
   },
   "A2:3.2": {
-   "assessment": "gap",
-   "content": "partial",
-   "content_ratio": 0.25,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 0.917,
+   "items": [
+    "C-A2-3.2-1",
+    "C-A2-3.2-2",
+    "C-A2-3.2-3",
+    "C-A2-3.2-4"
+   ],
    "labs": [],
    "lessons": [
-    "ITSUP 4.1"
+    "ITSUP 4.2",
+    "ITSUP 4.1",
+    "ITSUP 4.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, troubleshoot common mobile OS and application issues.",
    "topics_missing": [
-    "App fails to launch",
-    "App fails to close/crashes",
-    "App fails to update",
-    "App fails to install",
-    "OS fails to update",
-    "Random reboots",
-    "Bluetooth",
-    "NFC",
-    "Screen does not autorotate"
+    "OS fails to update"
    ],
    "weight": 5.75
   },
   "A2:3.3": {
-   "assessment": "gap",
-   "content": "gap",
-   "content_ratio": 0.0,
-   "items": [],
-   "labs": [],
-   "lessons": [],
-   "status": "gap",
-   "title": "Given a scenario, troubleshoot common mobile OS and application security issues.",
-   "topics_missing": [
-    "Unofficial app stores",
-    "Developer mode",
-    "Root access/jailbreak",
-    "Malicious apps/spoofing",
-    "High network traffic",
-    "Degraded response time",
-    "Data-usage limit notification",
-    "Limited/no internet connectivity",
-    "High number of ads",
-    "Fake security warnings",
-    "Unexpected application behavior",
-    "Leaked personal files/data"
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
+   "items": [
+    "C-A2-3.3-1",
+    "C-A2-3.3-2",
+    "C-A2-3.3-3",
+    "C-A2-3.3-4"
    ],
+   "labs": [],
+   "lessons": [
+    "ITSUP 4.2",
+    "ITSUP 10.2",
+    "ITSUP 4.1",
+    "ITSUP 4.3"
+   ],
+   "status": "covered",
+   "title": "Given a scenario, troubleshoot common mobile OS and application security issues.",
+   "topics_missing": [],
    "weight": 5.75
   },
   "A2:3.4": {
-   "assessment": "gap",
-   "content": "gap",
-   "content_ratio": 0.182,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 0.909,
+   "items": [
+    "C-A2-3.4-1",
+    "C-A2-3.4-2",
+    "C-A2-3.4-3",
+    "C-A2-3.4-4"
+   ],
    "labs": [],
    "lessons": [
-    "ITSUP 10.2"
+    "ITSUP 10.2",
+    "ITSUP 4.2"
    ],
-   "status": "gap",
+   "status": "covered",
    "title": "Given a scenario, troubleshoot common personal computer (PC) security issues.",
    "topics_missing": [
-    "Unable to access the network",
-    "Desktop alerts",
-    "False antivirus alerts",
-    "Inability to access files",
-    "Unwanted OS notifications",
-    "OS update failures",
-    "Certificate warnings",
-    "Redirection",
-    "Degraded browser performance"
+    "Inability to access files"
    ],
    "weight": 5.75
   },
@@ -3691,6 +4126,7 @@
     "ITSUP 1.1",
     "ITSUP 7.3",
     "ITSUP 8.1",
+    "ITSUP 10.4",
     "ITSUP 1.2",
     "ITSUP 1.3",
     "ITSUP 2.6",
@@ -3717,24 +4153,22 @@
    "weight": 2.1
   },
   "A2:4.10": {
-   "assessment": "gap",
-   "content": "gap",
-   "content_ratio": 0.0,
-   "items": [],
-   "labs": [],
-   "lessons": [],
-   "status": "gap",
-   "title": "Explain basic concepts related to artificial intelligence (AI).",
-   "topics_missing": [
-    "Application integration",
-    "Appropriate use policy",
-    "Plagiarism",
-    "Bias",
-    "Hallucinations",
-    "Accuracy",
-    "Private vs. public",
-    "Data security/source/privacy"
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
+   "items": [
+    "C-A2-4.10-1",
+    "C-A2-4.10-2",
+    "C-A2-4.10-3",
+    "C-A2-4.10-4"
    ],
+   "labs": [],
+   "lessons": [
+    "ITSUP 12.2"
+   ],
+   "status": "covered",
+   "title": "Explain basic concepts related to artificial intelligence (AI).",
+   "topics_missing": [],
    "weight": 2.1
   },
   "A2:4.2": {
@@ -3764,10 +4198,10 @@
     "ITSUP 7.4",
     "ITSUP 1.1",
     "ITSUP 7.1",
+    "ITSUP 11.1",
     "ITSUP 12.3",
     "ITSUP 1.3",
     "ITSUP 1.4",
-    "ITSUP 11.1",
     "ITSUP 11.3",
     "ITSUP 12.2"
    ],
@@ -3813,17 +4247,19 @@
    "weight": 2.1
   },
   "A2:4.4": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.583,
+   "content_ratio": 0.667,
    "items": [
     "A1.37",
     "Q1.4",
-    "Q1.5"
+    "Q1.5",
+    "C-A2-4.4-1"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 1.2",
+    "ITSUP 4.1",
     "ITSUP 1.3",
     "ITSUP 1.4"
    ],
@@ -3831,7 +4267,6 @@
    "title": "Given a scenario, use common safety procedures.",
    "topics_missing": [
     "ESD mats",
-    "Component handling/storage",
     "Cable management",
     "Government regulations",
     "Air filter mask"
@@ -3839,23 +4274,28 @@
    "weight": 2.1
   },
   "A2:4.5": {
-   "assessment": "gap",
-   "content": "partial",
-   "content_ratio": 0.636,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 0.727,
+   "items": [
+    "C-A2-4.5-1",
+    "C-A2-4.5-2",
+    "C-A2-4.5-3",
+    "C-A2-4.5-4"
+   ],
    "labs": [],
    "lessons": [
     "ITSUP 3.3",
+    "NETOPS 6.3",
     "ITSUP 1.2",
     "ITSUP 4.1",
     "ITSUP 4.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Summarize environmental impacts and local environment controls.",
    "topics_missing": [
     "MSDS/SDS",
     "Toner disposal",
-    "Ventilation/placement",
     "Compressed air/vacuums"
    ],
    "weight": 2.1
@@ -3876,7 +4316,6 @@
     "S-IT-1.4.2",
     "S-IT-12.2.1",
     "S-IT-12.2.2",
-    "X-IT-10.4.1",
     "X-IT-10.4.2",
     "X-IT-10.4.3",
     "X-IT-12.2.1",
@@ -3906,7 +4345,7 @@
   "A2:4.7": {
    "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.438,
+   "content_ratio": 0.562,
    "items": [
     "A3.4",
     "Q7.8",
@@ -3920,80 +4359,73 @@
     "win-full-triage"
    ],
    "lessons": [
+    "NETOPS 5.3",
     "NETOPS 1.3",
     "NETOPS 4.2",
+    "NETOPS 6.1",
     "ITSUP 1.4",
     "ITSUP 1.1",
     "ITSUP 7.4",
+    "ITSUP 12.2",
     "ITSUP 12.4"
    ],
    "status": "partial",
    "title": "Given a scenario, use proper communication techniques and professionalism.",
    "topics_missing": [
     "Professional appearance/attire",
-    "Positive attitude",
     "Cultural sensitivity",
     "Be on time",
     "Avoid distractions",
     "Clarify/open-ended questions",
     "Discretion",
-    "Offer repair/replacement options",
-    "Confidential materials"
+    "Offer repair/replacement options"
    ],
    "weight": 2.1
   },
   "A2:4.8": {
-   "assessment": "partial",
-   "content": "gap",
-   "content_ratio": 0.143,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "X-IT-13.1.1",
-    "X-IT-13.4.3"
+    "X-IT-13.4.3",
+    "C-A2-4.8-1",
+    "C-A2-4.8-2",
+    "C-A2-4.8-3",
+    "C-A2-4.8-4",
+    "C-A2-4.8-5"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 13.2"
    ],
-   "status": "gap",
+   "status": "covered",
    "title": "Explain the basics of scripting.",
-   "topics_missing": [
-    ".bat",
-    ".ps1",
-    ".vbs",
-    ".sh",
-    ".js",
-    ".py",
-    "Restarting machines",
-    "Remapping network drives",
-    "Installing applications",
-    "Automated backups",
-    "Initiating updates",
-    "Script risks"
-   ],
+   "topics_missing": [],
    "weight": 2.1
   },
   "A2:4.9": {
-   "assessment": "gap",
-   "content": "partial",
-   "content_ratio": 0.364,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 0.909,
+   "items": [
+    "C-A2-4.9-1",
+    "C-A2-4.9-2",
+    "C-A2-4.9-3",
+    "C-A2-4.9-4"
+   ],
    "labs": [],
    "lessons": [
+    "ITSUP 9.3",
     "ITSUP 5.2",
     "NETOPS 1.3",
     "NETOPS 5.2",
     "ITSUP 9.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, use remote access technologies.",
    "topics_missing": [
-    "VNC",
-    "RMM",
-    "SPICE",
-    "WinRM",
-    "Screen-sharing/videoconferencing",
-    "Desktop management software",
-    "Security considerations"
+    "Desktop management software"
    ],
    "weight": 2.1
   },
@@ -4021,17 +4453,21 @@
    "weight": 2.88
   },
   "N:1.2": {
-   "assessment": "partial",
+   "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.615,
+   "content_ratio": 0.692,
    "items": [
     "N1.4",
     "N3.0",
-    "NQ4.7"
+    "NQ4.7",
+    "C-N-1.2-1"
    ],
    "labs": [],
    "lessons": [
+    "NETOPS 5.3",
+    "NETOPS 3.2",
     "ITSUP 4.2",
+    "ITSUP 5.3",
     "NETOPS 6.1",
     "NETOPS 4.2",
     "NETOPS 4.4"
@@ -4039,7 +4475,6 @@
    "status": "partial",
    "title": "Compare and contrast networking appliances, applications, and functions.",
    "topics_missing": [
-    "Load balancer",
     "NAS",
     "SAN",
     "CDN",
@@ -4049,33 +4484,26 @@
   },
   "N:1.3": {
    "assessment": "covered",
-   "content": "gap",
-   "content_ratio": 0.0,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "N1.16",
     "N1.27",
     "N2.4",
     "NQ3.3",
-    "NQ3.4"
+    "NQ3.4",
+    "C-N-1.3-1",
+    "C-N-1.3-2",
+    "C-N-1.3-3"
    ],
    "labs": [],
-   "lessons": [],
-   "status": "gap",
-   "title": "Summarize cloud concepts and connectivity options.",
-   "topics_missing": [
-    "NFV",
-    "VPC",
-    "Security groups/lists",
-    "Internet gateway",
-    "NAT gateway",
-    "Cloud VPN",
-    "Direct Connect",
-    "Public/private/hybrid",
-    "SaaS/IaaS/PaaS",
-    "Scalability",
-    "Elasticity",
-    "Multitenancy"
+   "lessons": [
+    "NETOPS 3.2",
+    "ITSUP 6.2"
    ],
+   "status": "covered",
+   "title": "Summarize cloud concepts and connectivity options.",
+   "topics_missing": [],
    "weight": 2.88
   },
   "N:1.4": {
@@ -4115,57 +4543,46 @@
    "weight": 2.88
   },
   "N:1.5": {
-   "assessment": "partial",
-   "content": "partial",
-   "content_ratio": 0.35,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "N2.16",
     "NQ2.5",
-    "NQ2.6"
+    "NQ2.6",
+    "C-N-1.5-1",
+    "C-N-1.5-2",
+    "C-N-1.5-3",
+    "C-N-1.5-4"
    ],
    "labs": [],
    "lessons": [
     "NETOPS 2.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast transmission media and transceivers.",
-   "topics_missing": [
-    "802.11 standards",
-    "Cellular",
-    "Satellite",
-    "DAC/twinax",
-    "Coaxial",
-    "Plenum",
-    "Transceivers (Ethernet/FC)",
-    "ST",
-    "MPO",
-    "RJ11",
-    "RJ45",
-    "F-type",
-    "BNC"
-   ],
+   "topics_missing": [],
    "weight": 2.88
   },
   "N:1.6": {
-   "assessment": "gap",
-   "content": "gap",
-   "content_ratio": 0.0,
-   "items": [],
-   "labs": [],
-   "lessons": [],
-   "status": "gap",
-   "title": "Compare and contrast network topologies, architectures, and types.",
-   "topics_missing": [
-    "Mesh",
-    "Hybrid",
-    "Star/hub and spoke",
-    "Spine and leaf",
-    "Point to point",
-    "Three-tier hierarchical",
-    "Collapsed core",
-    "North-south",
-    "East-west"
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
+   "items": [
+    "C-N-1.6-1",
+    "C-N-1.6-2",
+    "C-N-1.6-3",
+    "C-N-1.6-4"
    ],
+   "labs": [],
+   "lessons": [
+    "NETOPS 2.1",
+    "NETOPS 3.2",
+    "NETOPS 3.3"
+   ],
+   "status": "covered",
+   "title": "Compare and contrast network topologies, architectures, and types.",
+   "topics_missing": [],
    "weight": 2.88
   },
   "N:1.7": {
@@ -4189,9 +4606,9 @@
    "lessons": [
     "ITSUP 5.1",
     "NETOPS 1.2",
+    "ITSUP 5.3",
     "ITSUP 5.5",
-    "ITSUP 5.2",
-    "ITSUP 5.3"
+    "ITSUP 5.2"
    ],
    "status": "covered",
    "title": "Given a scenario, use appropriate IPv4 network addressing.",
@@ -4203,40 +4620,26 @@
   },
   "N:1.8": {
    "assessment": "covered",
-   "content": "gap",
-   "content_ratio": 0.19,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "N1.19",
     "N2.13",
     "N3.4",
-    "NQ5.7"
+    "NQ5.7",
+    "C-N-1.8-1",
+    "C-N-1.8-2",
+    "C-N-1.8-3",
+    "C-N-1.8-4"
    ],
    "labs": [],
    "lessons": [
     "NETOPS 3.2",
     "NETOPS 5.3"
    ],
-   "status": "gap",
+   "status": "covered",
    "title": "Summarize evolving use cases for modern network environments.",
-   "topics_missing": [
-    "Application aware",
-    "Zero-touch provisioning",
-    "Transport agnostic",
-    "Central policy management",
-    "VXLAN",
-    "DCI",
-    "Layer 2 encapsulation",
-    "Policy-based authentication",
-    "SASE/SSE",
-    "IaC",
-    "Playbooks/templates",
-    "Configuration drift",
-    "Dynamic inventories",
-    "Source/version control",
-    "IPv6 exhaustion mitigation",
-    "Dual stack",
-    "NAT64"
-   ],
+   "topics_missing": [],
    "weight": 2.88
   },
   "N:2.1": {
@@ -4267,8 +4670,9 @@
    ],
    "lessons": [
     "NETOPS 3.1",
-    "NETOPS 2.2",
     "NETOPS 3.2",
+    "NETOPS 2.1",
+    "NETOPS 2.2",
     "NETOPS 4.3",
     "NETOPS 9.3",
     "NETOPS 9.4"
@@ -4285,7 +4689,7 @@
   "N:2.2": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.833,
+   "content_ratio": 1.0,
    "items": [
     "N1.5",
     "N1.3",
@@ -4307,8 +4711,8 @@
     "sw-port-security"
    ],
    "lessons": [
-    "NETOPS 2.2",
     "NETOPS 6.1",
+    "NETOPS 2.2",
     "NETOPS 2.1",
     "NETOPS 2.3",
     "NETOPS 9.2",
@@ -4317,63 +4721,60 @@
    ],
    "status": "covered",
    "title": "Given a scenario, configure switching technologies and features.",
-   "topics_missing": [
-    "Link aggregation",
-    "Jumbo frames"
-   ],
+   "topics_missing": [],
    "weight": 5.0
   },
   "N:2.3": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.533,
+   "content": "covered",
+   "content_ratio": 0.933,
    "items": [
     "N1.9",
     "N2.14",
     "NQ3.5",
-    "NQ3.7"
+    "NQ3.7",
+    "C-N-2.3-1",
+    "C-N-2.3-2",
+    "C-N-2.3-3",
+    "C-N-2.3-4",
+    "C-N-2.3-5"
    ],
    "labs": [],
    "lessons": [
     "NETOPS 3.3",
     "ITSUP 5.4",
+    "NETOPS 2.3",
     "NETOPS 3.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, select and configure wireless devices and technologies.",
    "topics_missing": [
-    "Band steering",
-    "Mesh networks",
-    "Ad hoc",
-    "Point to point",
-    "Infrastructure mode",
-    "Antennas",
-    "Autonomous vs. lightweight AP"
+    "Point to point"
    ],
    "weight": 5.0
   },
   "N:2.4": {
-   "assessment": "gap",
-   "content": "partial",
-   "content_ratio": 0.417,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
+   "items": [
+    "C-N-2.4-1",
+    "C-N-2.4-2",
+    "C-N-2.4-3",
+    "C-N-2.4-4"
+   ],
    "labs": [],
    "lessons": [
+    "NETOPS 6.3",
     "ITSUP 1.2",
     "ITSUP 3.3",
-    "NETOPS 2.3"
+    "NETOPS 2.3",
+    "NETOPS 6.1",
+    "NETOPS 2.1"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain important factors of physical installations.",
-   "topics_missing": [
-    "IDF/MDF",
-    "Patch panel",
-    "Fiber distribution panel",
-    "Lockable",
-    "PDU",
-    "Humidity",
-    "Fire suppression"
-   ],
+   "topics_missing": [],
    "weight": 5.0
   },
   "N:3.1": {
@@ -4395,6 +4796,8 @@
    "lessons": [
     "NETOPS 6.3",
     "ITSUP 8.1",
+    "ITSUP 10.4",
+    "NETOPS 6.1",
     "NETOPS 9.1"
    ],
    "status": "partial",
@@ -4437,24 +4840,23 @@
    "weight": 3.8
   },
   "N:3.3": {
-   "assessment": "gap",
-   "content": "partial",
-   "content_ratio": 0.333,
-   "items": [],
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
+   "items": [
+    "C-N-3.3-1",
+    "C-N-3.3-2",
+    "C-N-3.3-3",
+    "C-N-3.3-4"
+   ],
    "labs": [],
    "lessons": [
+    "NETOPS 6.3",
     "ITSUP 12.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain disaster recovery (DR) concepts.",
-   "topics_missing": [
-    "MTTR",
-    "MTBF",
-    "Cold/warm/hot sites",
-    "Active-active",
-    "Active-passive",
-    "Tabletop exercises"
-   ],
+   "topics_missing": [],
    "weight": 3.8
   },
   "N:3.4": {
@@ -4492,7 +4894,7 @@
   "N:3.5": {
    "assessment": "covered",
    "content": "partial",
-   "content_ratio": 0.4,
+   "content_ratio": 0.5,
    "items": [
     "N1.16",
     "N2.4",
@@ -4504,7 +4906,9 @@
    ],
    "labs": [],
    "lessons": [
-    "NETOPS 5.2"
+    "NETOPS 5.2",
+    "ITSUP 9.3",
+    "NETOPS 5.3"
    ],
    "status": "partial",
    "title": "Compare and contrast network access and management methods.",
@@ -4513,68 +4917,51 @@
     "Client-to-site VPN",
     "Clientless VPN",
     "Split vs. full tunnel",
-    "API",
-    "Jump box/host"
+    "API"
    ],
    "weight": 3.8
   },
   "N:4.1": {
-   "assessment": "partial",
-   "content": "partial",
-   "content_ratio": 0.286,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "NQ5.6",
-    "NQ5.7"
+    "NQ5.7",
+    "C-N-4.1-1",
+    "C-N-4.1-2",
+    "C-N-4.1-3"
    ],
    "labs": [],
    "lessons": [
-    "NETOPS 5.2",
     "NETOPS 5.3",
+    "NETOPS 5.2",
     "NETOPS 5.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain the importance of basic network security concepts.",
-   "topics_missing": [
-    "Encryption in transit/at rest",
-    "IAM",
-    "MFA",
-    "SSO",
-    "LDAP",
-    "SAML",
-    "Time-based authentication",
-    "Role-based access control",
-    "Geofencing",
-    "Honeypot/honeynet",
-    "Risk/vulnerability/exploit/threat",
-    "CIA triad",
-    "Data locality",
-    "PCI DSS",
-    "GDPR"
-   ],
+   "topics_missing": [],
    "weight": 4.67
   },
   "N:4.2": {
-   "assessment": "gap",
-   "content": "gap",
-   "content_ratio": 0.0,
-   "items": [],
-   "labs": [],
-   "lessons": [],
-   "status": "gap",
-   "title": "Summarize various types of attacks and their impact to the network.",
-   "topics_missing": [
-    "DoS/DDoS",
-    "VLAN hopping",
-    "MAC flooding",
-    "ARP poisoning/spoofing",
-    "DNS poisoning/spoofing",
-    "Rogue DHCP",
-    "Rogue AP",
-    "Evil twin",
-    "On-path attack",
-    "Social engineering",
-    "Malware"
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
+   "items": [
+    "C-N-4.2-1",
+    "C-N-4.2-2",
+    "C-N-4.2-3",
+    "C-N-4.2-4",
+    "C-N-4.2-5"
    ],
+   "labs": [],
+   "lessons": [
+    "NETOPS 5.3",
+    "ITSUP 10.4"
+   ],
+   "status": "covered",
+   "title": "Summarize various types of attacks and their impact to the network.",
+   "topics_missing": [],
    "weight": 4.67
   },
   "N:4.3": {
@@ -4595,8 +4982,8 @@
     "sw-port-security"
    ],
    "lessons": [
-    "NETOPS 5.2",
     "NETOPS 5.3",
+    "NETOPS 5.2",
     "NETOPS 4.3"
    ],
    "status": "partial",
@@ -4664,39 +5051,36 @@
    "weight": 4.8
   },
   "N:5.2": {
-   "assessment": "partial",
-   "content": "partial",
-   "content_ratio": 0.647,
+   "assessment": "covered",
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "N1.17",
     "N2.5",
-    "N3.7"
+    "N3.7",
+    "C-N-5.2-1",
+    "C-N-5.2-2",
+    "C-N-5.2-3",
+    "C-N-5.2-4"
    ],
    "labs": [
     "sw-describe"
    ],
    "lessons": [
+    "NETOPS 6.1",
     "NETOPS 2.3",
     "NETOPS 2.1",
-    "NETOPS 6.1",
     "NETOPS 2.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, troubleshoot common cabling and physical interface issues.",
-   "topics_missing": [
-    "Attenuation",
-    "TX/RX transposed",
-    "Runts",
-    "Giants",
-    "Administratively down",
-    "Suspended"
-   ],
+   "topics_missing": [],
    "weight": 4.8
   },
   "N:5.3": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.889,
+   "content_ratio": 1.0,
    "items": [
     "N1.10",
     "N1.20",
@@ -4719,15 +5103,15 @@
    ],
    "lessons": [
     "NETOPS 6.1",
+    "NETOPS 3.2",
+    "NETOPS 5.3",
     "NETOPS 9.4",
     "NETOPS 3.1",
     "NETOPS 4.1"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot common issues with network services.",
-   "topics_missing": [
-    "ACLs"
-   ],
+   "topics_missing": [],
    "weight": 4.8
   },
   "N:5.4": {
@@ -4743,10 +5127,13 @@
    "labs": [],
    "lessons": [
     "NETOPS 3.3",
+    "NETOPS 2.1",
+    "NETOPS 6.1",
+    "ITSUP 5.3",
     "NETOPS 1.3",
+    "NETOPS 2.3",
     "NETOPS 3.2",
     "NETOPS 5.1",
-    "NETOPS 6.1",
     "NETOPS 3.1",
     "NETOPS 3.4"
    ],
@@ -4761,8 +5148,8 @@
   },
   "N:5.5": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.542,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.12",
     "N1.12",
@@ -4776,7 +5163,11 @@
     "S-NO-9.1.2",
     "S-NO-9.2.2",
     "X-IT-5.3.1",
-    "X-IT-5.3.2"
+    "X-IT-5.3.2",
+    "C-N-5.5-1",
+    "C-N-5.5-2",
+    "C-N-5.5-3",
+    "C-N-5.5-4"
    ],
    "labs": [
     "win-ipconfig",
@@ -4801,6 +5192,7 @@
     "rtr-edge-complete"
    ],
    "lessons": [
+    "NETOPS 6.1",
     "ITSUP 5.3",
     "NETOPS 2.2",
     "NETOPS 9.3",
@@ -4813,54 +5205,42 @@
     "NETOPS 9.2",
     "NETOPS 9.5"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, use the appropriate tool or protocol to solve networking issues.",
-   "topics_missing": [
-    "Protocol analyzer",
-    "tcpdump",
-    "dig",
-    "Nmap",
-    "LLDP/CDP",
-    "Speed tester",
-    "Taps",
-    "Wi-Fi analyzer",
-    "Visual fault locator",
-    "show arp",
-    "show power"
-   ],
+   "topics_missing": [],
    "weight": 4.8
   }
  },
  "summary": {
   "A1": {
-   "covered": 4,
+   "covered": 22,
    "gap": 0,
-   "items": 141,
-   "partial": 23,
-   "topic_ratio": 0.575,
+   "items": 196,
+   "partial": 5,
+   "topic_ratio": 0.873,
    "total": 27,
-   "weighted_covered": 15.1,
-   "weighted_partial": 84.9
+   "weighted_covered": 84.7,
+   "weighted_partial": 15.4
   },
   "A2": {
-   "covered": 5,
-   "gap": 7,
-   "items": 242,
-   "partial": 24,
-   "topic_ratio": 0.473,
+   "covered": 22,
+   "gap": 0,
+   "items": 299,
+   "partial": 14,
+   "topic_ratio": 0.703,
    "total": 36,
-   "weighted_covered": 11.8,
-   "weighted_partial": 64.9
+   "weighted_covered": 66.2,
+   "weighted_partial": 33.9
   },
   "N": {
-   "covered": 10,
-   "gap": 4,
-   "items": 161,
-   "partial": 11,
-   "topic_ratio": 0.539,
+   "covered": 21,
+   "gap": 0,
+   "items": 206,
+   "partial": 4,
+   "topic_ratio": 0.877,
    "total": 25,
-   "weighted_covered": 40.6,
-   "weighted_partial": 46.1
+   "weighted_covered": 84.9,
+   "weighted_partial": 15.1
   }
  }
 }

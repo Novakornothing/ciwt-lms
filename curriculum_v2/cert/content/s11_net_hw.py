@@ -93,7 +93,7 @@ ITEMS = [
            'A tap copies traffic inline to a monitoring port.'),
     single('A1:2.5', 'IT-5.4', 1, 'A camera needs 25 W of PoE. The switch supports only 802.3af. What is the most appropriate fix?',
            'Use an 802.3at (PoE+) injector or switch',
-           ['Use a longer Cat 6 cable', 'Enable jumbo frames on the port', 'Replace the camera’s NIC'],
+           ['Use a longer Cat 6 cable', 'Enable jumbo frames on the camera’s switch port', 'Replace the camera’s NIC'],
            '802.3af supplies up to 15.4 W at the source; 802.3at supplies up to 30 W.'),
     match('A1:2.5', 'IT-5.4', 2, 'Match each device to its role.',
           [('Terminates fibre at the customer premises', 'ONT'), ('Terminates a coax internet line', 'Cable modem'),
@@ -106,6 +106,6 @@ ITEMS = [
           'A MAC is a 48-bit address whose first 24 bits are the manufacturer’s OUI; routing uses IP addresses. (Randomised Wi-Fi MACs are a privacy feature, not a restart behaviour.)'),
     single('A1:2.5', 'IT-5.4', 4, 'A small office has fibre internet. Which device must be between the provider’s line and the office router?',
            'An optical network terminal (ONT)',
-           ['A DSL modem', 'A PoE injector', 'A patch panel'],
+           ['A DSL modem (digital subscriber line)', 'A PoE injector', 'A patch panel'],
            'The ONT terminates fibre; DSL modems terminate telephone pairs.'),
 ]

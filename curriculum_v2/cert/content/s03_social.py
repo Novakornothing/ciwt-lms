@@ -95,6 +95,6 @@ ITEMS = [
           'EOL and unprotected systems are weaknesses that attacks exploit; the others are attacks or threats.'),
     single('A2:2.5', 'IT-10.4', 5, 'Hundreds of compromised home routers flood a company’s web server with requests until it stops responding. What is this?',
            'A distributed denial-of-service attack',
-           ['An on-path attack', 'A zero-day exploit', 'A supply chain attack'],
+           ['An on-path attack intercepting the server’s traffic', 'A zero-day exploit', 'A supply chain attack'],
            'Many sources exhausting one service is DDoS.'),
 ]
