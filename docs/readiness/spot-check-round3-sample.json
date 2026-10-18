@@ -1,0 +1,846 @@
+{
+ "drawn": "2026-10-18, tools/spot_check_sample.py --round3 15, on branch content after merging refinement f9ffdc4 (pass 15)",
+ "note": "Text is as checked, after the round-3 fix (X-IT-9.2.3 stem). Excludes the 40 round-1 ids (ROUND1_IDS) and the 60 round-2 ids in spot-check-round2-sample.json. This file is the record of what was checked.",
+ "items": [
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q1.0",
+   "obj": "IT-1.1",
+   "text": "A user never had the budget share and wants it today. What kind of work is this?",
+   "options": [
+    "Incident",
+    "A firmware change",
+    "Service request",
+    "Break/fix"
+   ],
+   "correct": "Service request",
+   "explanation": "1.1 — new access is a request, not a repair."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q1.4",
+   "obj": "IT-1.2",
+   "text": "Correct order before a side panel comes off?",
+   "options": [
+    "Strap over a sleeve, then pull the RAM",
+    "Defeat the ground pin so the plug fits",
+    "Power off, unplug, wait, strap on skin, open",
+    "Open the case first, then unplug it at the wall"
+   ],
+   "correct": "Power off, unplug, wait, strap on skin, open",
+   "explanation": "Power off, unplug at the wall, wait for stored charge to drain, then put the strap on bare skin before opening: power is removed first and the strap only works against skin. Strapping over a sleeve does not ground you, and opening the case before unplugging leaves mains power and standby voltage inside. See 1.2."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.38",
+   "obj": "IT-1.3",
+   "text": "A ticket says “Internet is slow.” What is the best intake improvement?",
+   "options": [
+    "Escalate to the network team at once",
+    "Ask scope, start time, wired/wireless and changes",
+    "Run a speed test and close the ticket",
+    "Restart the PC first and see if it helps"
+   ],
+   "correct": "Ask scope, start time, wired/wireless and changes",
+   "explanation": "Good intake narrows scope before any test: who, since when, wired or wireless, which apps, what changed."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q1.7",
+   "obj": "IT-1.4",
+   "text": "What belongs in the ticket?",
+   "options": [
+    "The user’s password, so the next technician can test",
+    "Your opinion of the user",
+    "Only the final fix",
+    "Facts, times, tests, next step"
+   ],
+   "correct": "Facts, times, tests, next step",
+   "explanation": "A ticket is a shared record that many people read and keep, so it holds facts, times, tests and the next step. Writing the user’s password “so the next technician can test” exposes the credential to everyone with ticket access and breaks policy; the user resets or tests it themselves. See 1.4."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q2.5",
+   "obj": "IT-2.2",
+   "text": "Firmware (UEFI) runs:",
+   "options": [
+    "Before Windows, to check hardware and start boot",
+    "After Windows signs in, to load the device drivers",
+    "Only when the PC starts in Safe Mode",
+    "Inside Windows as a background service"
+   ],
+   "correct": "Before Windows, to check hardware and start boot",
+   "explanation": "2.2 — a wrong boot order looks like a dead OS."
+  },
+  {
+   "pool": "question_bank.A3",
+   "bank_id": "A3.0",
+   "obj": "IT-2.3",
+   "text": "POST code indicates graphics initialization failure; onboard video works after removing the discrete GPU. Conclusion?",
+   "options": [
+    "The monitor is faulty",
+    "Onboard graphics is disabled in UEFI",
+    "The CMOS battery is flat",
+    "The discrete GPU or its power/slot path is faulty"
+   ],
+   "correct": "The discrete GPU or its power/slot path is faulty",
+   "explanation": "Onboard video works once the discrete GPU is removed, isolating the fault to that card or its power/slot path."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q2.9",
+   "obj": "IT-2.4",
+   "text": "About RAM does not match the DIMM count on the board. Next?",
+   "options": [
+    "Treat it as seating or firmware first",
+    "Image the disk and check again",
+    "Run Windows Update, then recheck About",
+    "Disable Secure Boot and reboot"
+   ],
+   "correct": "Treat it as seating or firmware first",
+   "explanation": "If About reports less memory than the modules you can see on the board, the usual causes are a stick that is not seated or that firmware does not detect, so check seating and firmware first. Imaging the disk or running Windows Update changes nothing about how memory is detected and only wastes the visit. See 2.6."
+  },
+  {
+   "pool": "question_bank.A2",
+   "bank_id": "A2.0",
+   "obj": "IT-3.1",
+   "text": "SMART reports rising reallocated sectors on an OS SSD; backups are current. What is the prudent plan?",
+   "options": [
+    "Run a full format to remap sectors",
+    "Defragment the drive",
+    "Disable SMART monitoring",
+    "Migrate the data and replace the drive before it fails"
+   ],
+   "correct": "Migrate the data and replace the drive before it fails",
+   "explanation": "Rising reallocations predict failure. Migrate the data and replace the drive while it still works."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-3.2.4",
+   "obj": "IT-3.2",
+   "text": "A NAS reports “RAID 5 degraded”. What should happen before the failed disk is replaced?",
+   "options": [
+    "Pull a second disk to test the array",
+    "Reinitialise the array to clear the error",
+    "Confirm a recent backup can be restored",
+    "Update the NAS firmware to the latest"
+   ],
+   "correct": "Confirm a recent backup can be restored",
+   "explanation": "A degraded RAID 5 has no redundancy left; a verified backup must exist before any hands-on work."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.9",
+   "obj": "IT-3.3",
+   "text": "Thermal paste was applied in a thick blob covering the entire IHS. Idle temps are high. What is the correct remediation?",
+   "options": [
+    "Add more paste around the edges",
+    "Set the fans to maximum in UEFI",
+    "Clean both surfaces, apply thin paste, reseat",
+    "Replace the CPU with a cooler model"
+   ],
+   "correct": "Clean both surfaces, apply thin paste, reseat",
+   "explanation": "Too much paste insulates. Clean both surfaces, apply a thin appropriate amount and reseat the cooler with even pressure."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-3.4.3",
+   "obj": "IT-3.4",
+   "text": "POST completed and the display is dark. After checking power and input, what is the next step?",
+   "options": [
+    "Swap the cable and adapter for known-good ones",
+    "Replace the graphics card with a brand-new one",
+    "Reinstall the graphics driver at once",
+    "Reset the firmware to factory defaults"
+   ],
+   "correct": "Swap the cable and adapter for known-good ones",
+   "explanation": "The isolation order moves from the cheapest likely layer (cable, adapter) towards the graphics hardware."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q4.9",
+   "obj": "IT-4.1",
+   "text": "Portable intake pass bar?",
+   "options": [
+    "You closed the ticket quickly, without writing a note",
+    "You factory-reset the managed phone",
+    "A peer can tell from your note what to do next",
+    "You replaced the battery to be safe"
+   ],
+   "correct": "A peer can tell from your note what to do next",
+   "explanation": "The Block 1 bar is a note a peer can act on: what you found, what you tested and what happens next. Replacing the battery “to be safe” is an unjustified change that leaves no evidence, and it is the same mistake as changing parts without testing. See 4.4."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q4.8",
+   "obj": "IT-4.2",
+   "text": "gui-accounts on the bench is teaching you to:",
+   "options": [
+    "Reset every phone the user owns",
+    "Turn off MDM so the change is allowed",
+    "Remove the work profile and then re-add it",
+    "Check who is signed in before changing it"
+   ],
+   "correct": "Check who is signed in before changing it",
+   "explanation": "The accounts lab teaches you to check which account is signed in, and whose it is, before you change anything. Turning off MDM “so the change is allowed” removes company management to get around a control, and still does not tell you whose account you are touching. See 4.2 / 1.1."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.13",
+   "obj": "IT-5.1",
+   "text": "A subnet must hold 25 hosts. Which mask is the smallest that fits?",
+   "options": [
+    "255.255.255.192",
+    "255.255.255.248",
+    "255.255.255.224",
+    "255.255.255.240"
+   ],
+   "correct": "255.255.255.224",
+   "explanation": "A /27 (255.255.255.224) gives 32 addresses and 30 usable hosts — the smallest subnet that fits 25. A /26 fits but wastes more; /28 holds only 14."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q5.5",
+   "obj": "IT-5.2",
+   "text": "Port 53 in ticket language?",
+   "options": [
+    "Mail submit",
+    "DNS",
+    "Web",
+    "RDP"
+   ],
+   "correct": "DNS",
+   "explanation": "TCP and UDP port 53 are DNS (RFC 1035), so a ticket mentioning port 53 is about name resolution. Mail submission uses 587, web uses 80/443 and RDP uses 3389, so naming port 53 changes your first test to a name lookup. See 5.2."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-5.4.3",
+   "obj": "IT-5.4",
+   "text": "Which command shows a Windows client’s SSID, signal and authentication type?",
+   "options": [
+    "ipconfig /displaydns",
+    "netsh wlan show interfaces",
+    "Get-NetIPConfiguration",
+    "netsh interface show interface"
+   ],
+   "correct": "netsh wlan show interfaces",
+   "explanation": "netsh wlan show interfaces reports the association, signal, channel and authentication."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-6.1.2",
+   "obj": "IT-6.1",
+   "text": "Task Manager shows “Virtualization: Disabled” on a host PC. Where is it turned on?",
+   "options": [
+    "In the UEFI firmware settings",
+    "In Windows Update settings",
+    "In Device Manager’s CPU entry",
+    "In the Hyper-V Manager console"
+   ],
+   "correct": "In the UEFI firmware settings",
+   "explanation": "Hardware virtualization (VT-x/AMD-V) is enabled in firmware, as a controlled change."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q6.4",
+   "obj": "IT-6.2",
+   "text": "IaaS means you still own:",
+   "options": [
+    "Nothing",
+    "The guest OS, like Chapters 2–5",
+    "Only the browser tab",
+    "The vendor’s datacenter hardware"
+   ],
+   "correct": "The guest OS, like Chapters 2–5",
+   "explanation": "In IaaS the provider runs the physical hosts and the hypervisor, but the customer still owns the guest operating system: patching, accounts and troubleshooting work as in chapters 2–5. “Nothing” is the wrong idea that the cloud takes over all of it. See 6.2."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-6.3.3",
+   "obj": "IT-6.3",
+   "text": "A VM shows Paused-Critical in Hyper-V Manager. What is the most likely cause?",
+   "options": [
+    "The guest’s Windows licence has expired",
+    "The user locked the guest’s screen",
+    "The guest’s DNS settings are wrong",
+    "The host volume is almost out of space"
+   ],
+   "correct": "The host volume is almost out of space",
+   "explanation": "Hyper-V pauses a VM when the volume holding its disks is critically low on space; the host owner must free space."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-7.1.1",
+   "obj": "IT-7.1",
+   "text": "You have three theories for a fault. Which test should you normally run first?",
+   "options": [
+    "The test that changes the most settings at once",
+    "The quick, safe test that could rule out the top theory",
+    "The slowest test, since it is the most thorough of them",
+    "A full reinstall, because it removes every theory in one go"
+   ],
+   "correct": "The quick, safe test that could rule out the top theory",
+   "explanation": "Cheap, safe, decisive tests come first; a reinstall changes the system and does not reveal the cause."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-7.2.2",
+   "obj": "IT-7.2",
+   "text": "An app fails for many users at one site but works for staff at home. What should you suspect first?",
+   "options": [
+    "Each user’s local application cache files",
+    "A fault in every user’s home router",
+    "The site’s Internet path, proxy or DNS",
+    "The users’ keyboard and mouse drivers"
+   ],
+   "correct": "The site’s Internet path, proxy or DNS",
+   "explanation": "Working from another network shows the service is up; the shared site path is the common factor."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q12.9",
+   "obj": "IT-7.3",
+   "text": "Chapter 12 pass bar?",
+   "options": [
+    "Password listed",
+    "Firewall off",
+    "Peer can tell the domain; safety stops held",
+    "Domains mixed together in one note with no label"
+   ],
+   "correct": "Peer can tell the domain; safety stops held",
+   "explanation": "The chapter 12 bar is a note from which a peer can tell the domain, with every safety stop held. A listed password, a firewall left off or unlabelled mixed domains are the failures the chapter rules out. See 12.4."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q7.11",
+   "obj": "IT-7.4",
+   "text": "You hand a ticket to the network team. What should the user hear from you before you hang up?",
+   "options": [
+    "To restart the PC every hour and call back if it still fails after that",
+    "Who has it now, what is needed from them, and when the next update is",
+    "Nothing until the network team has fixed it and closed the ticket",
+    "Your best guess at the root cause, so that they feel reassured for now"
+   ],
+   "correct": "Who has it now, what is needed from them, and when the next update is",
+   "explanation": "When you escalate, tell the user who has the ticket now, what (if anything) is needed from them, and when they will next hear. Silence and guessed causes both damage trust; restarts are not a plan."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-8.1.1",
+   "obj": "IT-8.1",
+   "text": "A Windows 11 PC still boots but update files are damaged. Which option repairs it and keeps apps, files and settings?",
+   "options": [
+    "Reset this PC with the Keep my files choice selected",
+    "Reinstall the current version through Windows Update",
+    "A clean install from USB media after a full backup",
+    "Remove everything, then restore the files from OneDrive"
+   ],
+   "correct": "Reinstall the current version through Windows Update",
+   "explanation": "“Fix problems using Windows Update” reinstalls the current version and keeps apps, files and settings; Reset this PC removes apps and settings."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.20",
+   "obj": "IT-8.2",
+   "text": "After enabling a host firewall, RDP to a lab VM fails though ping works. What was likely overlooked?",
+   "options": [
+    "An outbound ICMP rule",
+    "Network discovery on the private profile",
+    "File and printer sharing (TCP 445)",
+    "An inbound rule for TCP 3389 (or the configured RDP port)"
+   ],
+   "correct": "An inbound rule for TCP 3389 (or the configured RDP port)",
+   "explanation": "ICMP is allowed but the RDP port is not; the firewall needs an inbound rule for TCP 3389 (or the configured port)."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q8.6",
+   "obj": "IT-8.3",
+   "text": "Before you reboot “to clear it”:",
+   "options": [
+    "Turn the firewall off to test",
+    "List processes to see what was running",
+    "Nothing, the restart clears it",
+    "Run diskpart clean on the drive to reset it"
+   ],
+   "correct": "List processes to see what was running",
+   "explanation": "A reboot is a change that also wipes the evidence of what was running, so list processes first (Task Manager or tasklist) and record what you see. “Nothing, the restart clears it” loses that evidence; if the problem comes back, you have nothing to compare. See 8.3."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q8.11",
+   "obj": "IT-8.4",
+   "text": "Which command lists the GPOs that applied to the computer and the signed-in user, and the ones that were filtered out?",
+   "options": [
+    "gpresult /r",
+    "gpupdate /force",
+    "dsregcmd /status",
+    "w32tm /query /status"
+   ],
+   "correct": "gpresult /r",
+   "explanation": "gpresult /r shows the Resultant Set of Policy summary for the computer and user, including the GPOs that applied and those filtered out. gpupdate /force reapplies policy; dsregcmd /status shows join state; w32tm shows time sync."
+  },
+  {
+   "pool": "question_bank.A3",
+   "bank_id": "A3.6",
+   "obj": "IT-9.1",
+   "text": "A Linux admin uses sudo -i for every task including reading logs. Better practice?",
+   "options": [
+    "Share the root password with the team",
+    "Use sudo only for the commands that need it",
+    "Log in as root over SSH instead",
+    "Disable command auditing"
+   ],
+   "correct": "Use sudo only for the commands that need it",
+   "explanation": "Use sudo only for commands that need it, ideally through specific sudo rules; a root shell for everything breaks least privilege and auditing."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-9.2.3",
+   "obj": "IT-9.2",
+   "text": "A user asks you to remove the management profile from the college-owned Mac they use, because it blocks an app. What do you do?",
+   "options": [
+    "Decline and send the request to the device owner",
+    "Remove it, then reinstall it after the app is set up",
+    "Wipe the Mac so that the profile is cleared away",
+    "Turn off FileVault so the app can be installed"
+   ],
+   "correct": "Decline and send the request to the device owner",
+   "explanation": "MDM profiles enforce organisation policy; changing them is the device owner’s decision, and here the owner is the college."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-9.3.3",
+   "obj": "IT-9.3",
+   "text": "What should you do with a user’s password during an access ticket?",
+   "options": [
+    "Record it so tier 2 can sign in as them",
+    "Ask for it so you can test the share for them",
+    "Store it in the ticket’s private notes field",
+    "Never ask for it, type it or record it"
+   ],
+   "correct": "Never ask for it, type it or record it",
+   "explanation": "Credentials are never shared with or stored by support; test with your own permitted accounts."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q9.10",
+   "obj": "IT-9.4",
+   "text": "A Mac user can open files on an NTFS-formatted external drive but cannot save changes to it. What explains this?",
+   "options": [
+    "macOS reads NTFS but cannot write to it without extra software",
+    "The drive is failing and the disk has switched itself to read-only",
+    "FileVault blocks writes to every external drive connected to a Mac",
+    "NTFS drives must be repaired with First Aid in Disk Utility first"
+   ],
+   "correct": "macOS reads NTFS but cannot write to it without extra software",
+   "explanation": "macOS can read NTFS volumes but does not write to them natively; writing needs a third-party driver, or use exFAT for a drive shared between systems. Nothing in the symptom suggests failure or FileVault."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q10.9",
+   "obj": "IT-10.2",
+   "text": "Chapter 10 pass bar?",
+   "options": [
+    "Factual note, no password, Defender on",
+    "Password noted so the next tech can test",
+    "Cleaner ran with Defender paused",
+    "Firewall off until the user confirms"
+   ],
+   "correct": "Factual note, no password, Defender on",
+   "explanation": "The chapter 10 bar is a factual note with no password in it, and Defender left on. Recording a password, pausing Defender for a cleaner or leaving the firewall off are the failures the chapter rules out. See 10.4."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.35",
+   "obj": "IT-10.3",
+   "text": "USB ports on kiosks should be restricted. Which control best matches the requirement?",
+   "options": [
+    "Endpoint policy blocking removable media",
+    "A UEFI password on the kiosk only",
+    "Disabling the kiosk’s Wi-Fi adapter",
+    "BitLocker on the kiosk’s system drive"
+   ],
+   "correct": "Endpoint policy blocking removable media",
+   "explanation": "Endpoint policy blocks unauthorised removable media; physical port locks add protection where required."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-11.1.1",
+   "obj": "IT-11.1",
+   "text": "An app crashes for every user after last night’s update; other apps work. What is the likely scope?",
+   "options": [
+    "One user’s profile",
+    "One PC’s hardware",
+    "The building network",
+    "The app or its update, across many users"
+   ],
+   "correct": "The app or its update, across many users",
+   "explanation": "Same app failing for everyone after a change points to the app/update, not individual PCs."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q11.5",
+   "obj": "IT-11.2",
+   "text": "What must be in place before a rebuild?",
+   "options": [
+    "Only the user’s verbal OK on the phone",
+    "The firewall turned off",
+    "Nothing beyond a reboot",
+    "A backup, a change ticket and list disk"
+   ],
+   "correct": "A backup, a change ticket and list disk",
+   "explanation": "A rebuild destroys the OS volume, so it needs a tested backup, an approved change ticket and list disk to confirm the right disk. A verbal OK, turning the firewall off or a reboot do not protect the user’s data. See 11.3."
+  },
+  {
+   "pool": "question_bank.A2",
+   "bank_id": "A2.8",
+   "obj": "IT-11.3",
+   "text": "Which metric best indicates a storage subsystem is the bottleneck under database load?",
+   "options": [
+    "High CPU with low disk latency",
+    "High network use with a short disk queue",
+    "Low memory use with a large page file",
+    "High disk latency and queue length with modest CPU"
+   ],
+   "correct": "High disk latency and queue length with modest CPU",
+   "explanation": "High disk latency and queue length while CPU is modest show the workload is waiting on storage."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q11.10",
+   "obj": "IT-11.4",
+   "text": "A fault disappears when the PC is started in Safe Mode. What does that point to?",
+   "options": [
+    "Damage to the documents and files saved in the user’s profile",
+    "A fault in the core Windows kernel, which loads in every boot mode",
+    "A driver, service or startup program that Safe Mode does not load",
+    "Failing hardware, such as the RAM or the system disk, in the PC"
+   ],
+   "correct": "A driver, service or startup program that Safe Mode does not load",
+   "explanation": "Safe Mode starts Windows with a minimal set of drivers and services. If the fault disappears there, something Safe Mode does not load — a driver, service or startup program — is involved; a fault that remains points at the core OS, hardware or user data."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-12.1.3",
+   "obj": "IT-12.1",
+   "text": "A phishing outbreak needs a sender domain blocked within minutes. How is the change handled?",
+   "options": [
+    "As a standard change with no record kept at all",
+    "As a normal change at next month’s CAB meeting",
+    "As an emergency change, reviewed after the event",
+    "As a service request from the first victim"
+   ],
+   "correct": "As an emergency change, reviewed after the event",
+   "explanation": "Emergency changes get expedited approval by a named authority and a full review afterwards."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-12.2.1",
+   "obj": "IT-12.2",
+   "text": "While fixing a PC you find files that may break the acceptable-use policy. What do you do?",
+   "options": [
+    "Delete the files",
+    "Confront the user",
+    "Copy them as evidence to a USB drive",
+    "Stop and report through the policy channel"
+   ],
+   "correct": "Stop and report through the policy channel",
+   "explanation": "Technicians follow the reporting procedure and preserve evidence as the policy directs; they do not investigate alone."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-12.3.1",
+   "obj": "IT-12.3",
+   "text": "Why is a RAID 1 mirror not a backup?",
+   "options": [
+    "Deletions and corruption are written to both disks",
+    "It needs twice as much power as a single disk does",
+    "It only works with hard drives, not with SSDs",
+    "It cannot be used on a computer with a TPM"
+   ],
+   "correct": "Deletions and corruption are written to both disks",
+   "explanation": "RAID protects against a disk failure, not against deletion, corruption or ransomware."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q12.10",
+   "obj": "IT-12.4",
+   "text": "How should the title of a knowledge-base article for a known fault be written?",
+   "options": [
+    "As the name of the fix",
+    "In the user’s words, describing the symptom",
+    "As the internal problem-record number, with nothing else",
+    "In the technician’s own shorthand"
+   ],
+   "correct": "In the user’s words, describing the symptom",
+   "explanation": "A KB title in the user’s words matches what the next technician will search for when the same symptom is reported. Problem numbers, shorthand and fix names do not match how the fault is reported."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-13.1.1",
+   "obj": "IT-13.1",
+   "text": "Which PowerShell command reads the BIOS serial number now that WMIC has been removed?",
+   "options": [
+    "Get-NetAdapter -Serial",
+    "Get-HotFix -Hardware -All",
+    "Get-CimInstance Win32_BIOS",
+    "Get-Process -Firmware"
+   ],
+   "correct": "Get-CimInstance Win32_BIOS",
+   "explanation": "CIM classes still hold the hardware facts WMIC used to read; Get-CimInstance Win32_BIOS returns SerialNumber."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-13.3.3",
+   "obj": "IT-13.3",
+   "text": "Which situation best justifies restarting the PC now?",
+   "options": [
+    "The fault is intermittent and not seen",
+    "The user has unsaved documents open",
+    "A pending update requires a restart",
+    "No evidence has been recorded yet"
+   ],
+   "correct": "A pending update requires a restart",
+   "explanation": "A pending restart is a documented reason; the others are reasons to wait and collect evidence first."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-13.4.3",
+   "obj": "IT-13.4",
+   "text": "Which PowerShell command tests whether TCP port 443 is open on a server?",
+   "options": [
+    "Resolve-DnsName server -Type 443 -DnsOnly",
+    "Get-NetAdapter server -Port 443",
+    "Get-CimInstance server -Port 443",
+    "Test-NetConnection server -Port 443"
+   ],
+   "correct": "Test-NetConnection server -Port 443",
+   "explanation": "Test-NetConnection with -Port performs a TCP test and reports TcpTestSucceeded."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ1.0",
+   "obj": "NO-1.1",
+   "text": "A user can ping 10.1.1.1 but not www.example.com. At which layer does the evidence point first?",
+   "options": [
+    "Data link (switching)",
+    "Transport layer (TCP and UDP port numbers)",
+    "Name resolution at the application layer",
+    "Physical cabling"
+   ],
+   "correct": "Name resolution at the application layer",
+   "explanation": "IP reachability works, so layers 1–3 are fine; failing by name points to DNS, an application-layer service."
+  },
+  {
+   "pool": "question_bank.N3",
+   "bank_id": "N3.5",
+   "obj": "NO-1.2",
+   "text": "Which IPv6 feature reduces the need for NAT as commonly used in IPv4 SOHO?",
+   "options": [
+    "No need for routers",
+    "Mandatory private addressing",
+    "Enough global addresses for every device (still firewalled)",
+    "Built-in encryption that hides addresses"
+   ],
+   "correct": "Enough global addresses for every device (still firewalled)",
+   "explanation": "IPv6 has enough global addresses for every device; firewalls, not NAT, provide protection."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ1.6",
+   "obj": "NO-1.3",
+   "text": "Why does DNS normally use UDP for queries?",
+   "options": [
+    "Queries are small and a lost one is simply retried",
+    "UDP encrypts the query",
+    "TCP cannot carry names",
+    "UDP guarantees ordered delivery of every reply packet"
+   ],
+   "correct": "Queries are small and a lost one is simply retried",
+   "explanation": "One request and one reply fit in single datagrams; the client retries on loss. Large responses and zone transfers use TCP."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ2.0",
+   "obj": "NO-2.1",
+   "text": "A switch receives a frame for a MAC address not in its table. What does it do?",
+   "options": [
+    "Asks the router with ARP",
+    "Floods it out all ports in that VLAN except the source",
+    "Drops the frame",
+    "Sends it to the default gateway, which knows every MAC"
+   ],
+   "correct": "Floods it out all ports in that VLAN except the source",
+   "explanation": "Unknown unicast is flooded within the VLAN; the switch learns the destination when it replies."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ2.4",
+   "obj": "NO-2.2",
+   "text": "What happens to frames in the native VLAN on an 802.1Q trunk?",
+   "options": [
+    "They get a double tag",
+    "They are sent untagged",
+    "They are encrypted",
+    "They are dropped"
+   ],
+   "correct": "They are sent untagged",
+   "explanation": "The native VLAN is the one VLAN carried without a tag; mismatched native VLANs leak traffic between VLANs."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.5",
+   "obj": "NO-2.3",
+   "text": "Single-mode fiber is preferred over multimode when?",
+   "options": [
+    "Runs with low electrical interference",
+    "Connections to desktop PCs",
+    "Long runs between buildings or campuses",
+    "Short patch cords inside a rack"
+   ],
+   "correct": "Long runs between buildings or campuses",
+   "explanation": "Single-mode carries over kilometres; multimode suits shorter in-building runs."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.11",
+   "obj": "NO-3.3",
+   "text": "Wi-Fi 6 (802.11ax) OFDMA primarily improves?",
+   "options": [
+    "Efficiency serving many clients at once in dense areas",
+    "Maximum range for one client",
+    "Compatibility with 802.11b clients",
+    "Encryption strength"
+   ],
+   "correct": "Efficiency serving many clients at once in dense areas",
+   "explanation": "OFDMA divides a channel into resource units so the AP serves several clients in one transmission — efficiency in dense areas."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ4.2",
+   "obj": "NO-4.1",
+   "text": "Which DHCP option gives clients their default gateway?",
+   "options": [
+    "Option 51 (lease time)",
+    "Option 3 (router)",
+    "Option 6 (DNS servers)",
+    "Option 15 (domain name)"
+   ],
+   "correct": "Option 3 (router)",
+   "explanation": "Option 3 lists routers (default gateway); option 6 lists DNS servers."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ4.6",
+   "obj": "NO-4.3",
+   "text": "Many inside hosts share one public IPv4 address using different source ports. What is this called?",
+   "options": [
+    "Split-horizon DNS",
+    "Port address translation (PAT)",
+    "Static one-to-one NAT",
+    "Inbound port forwarding (DNAT)"
+   ],
+   "correct": "Port address translation (PAT)",
+   "explanation": "PAT tracks each inside flow by source port so many hosts share one address."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ5.0",
+   "obj": "NO-5.1",
+   "text": "Which syslog severity level is more severe: 2 or 5?",
+   "options": [
+    "They are equal",
+    "It depends on the vendor",
+    "2 (critical)",
+    "5 (notice)"
+   ],
+   "correct": "2 (critical)",
+   "explanation": "Syslog severities run 0 (emergency) to 7 (debug); lower numbers are more severe."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.25",
+   "obj": "NO-5.3",
+   "text": "Which control best reduces risk of unauthorized devices on access ports?",
+   "options": [
+    "A larger DHCP scope",
+    "Static IPs for known devices",
+    "802.1X port authentication",
+    "Disabling Spanning Tree"
+   ],
+   "correct": "802.1X port authentication",
+   "explanation": "802.1X authenticates devices or users before the port grants access."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.26",
+   "obj": "NO-6.1",
+   "text": "MTU mismatch causing PMTUD black hole typically shows up as?",
+   "options": [
+    "Transfers are slow but always complete",
+    "Large transfers stall while small packets succeed",
+    "All traffic fails immediately",
+    "Only DNS fails"
+   ],
+   "correct": "Large transfers stall while small packets succeed",
+   "explanation": "Small packets fit and succeed; large ones are dropped silently when ICMP “fragmentation needed” is blocked, so big transfers stall."
+  },
+  {
+   "pool": "question_bank.N3",
+   "bank_id": "N3.8",
+   "obj": "NO-6.2",
+   "text": "In troubleshooting methodology, changing three variables at once primarily hurts?",
+   "options": [
+    "It takes longer than one change",
+    "It needs a reboot",
+    "It always causes a new outage",
+    "You cannot tell which change fixed or broke it"
+   ],
+   "correct": "You cannot tell which change fixed or broke it",
+   "explanation": "Changing several variables at once makes it impossible to attribute the result to any one change."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ6.6",
+   "obj": "NO-6.3",
+   "text": "A fix appears to work. How do you verify it?",
+   "options": [
+    "Close the ticket when the alert clears",
+    "Ask one technician if it looks fine",
+    "Wait a week and see whether any of the affected users complain",
+    "Re-run the original failing test and confirm with affected users"
+   ],
+   "correct": "Re-run the original failing test and confirm with affected users",
+   "explanation": "Verification repeats the test that failed and confirms the user outcome; an alert clearing is not proof."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ9.2",
+   "obj": "NO-9.1",
+   "text": "Which command verifies which VLANs are allowed and active on a trunk?",
+   "options": [
+    "show interfaces trunk",
+    "show interfaces status",
+    "show arp",
+    "show version"
+   ],
+   "correct": "show interfaces trunk",
+   "explanation": "show interfaces trunk lists trunk ports, native VLAN, and allowed/active VLANs."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ9.4",
+   "obj": "NO-9.2",
+   "text": "Which command adds a default route to next hop 203.0.113.1?",
+   "options": [
+    "route add default 203.0.113.1",
+    "ip route 203.0.113.1 255.255.255.255 0.0.0.0",
+    "ip route 0.0.0.0 0.0.0.0 203.0.113.1",
+    "ip default-network 203.0.113.0"
+   ],
+   "correct": "ip route 0.0.0.0 0.0.0.0 203.0.113.1",
+   "explanation": "A static route to 0.0.0.0/0 via the next hop is the IOS default route. route add is a host OS command."
+  }
+ ]
+}
