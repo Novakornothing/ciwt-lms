@@ -53,6 +53,15 @@ licence. A new rule is added to the AUP: only software from the approved catalog
      ('What is the difference between a perpetual and a subscription licence?', 'Perpetual: pay once for a version; subscription: pay each period while you use it.'))}
 '''
 
+_FIG_PRO = figure(
+    'fig-c-professional', 'A professional support contact from start to finish',
+    ['Arrive:\non time, dressed\nfor the site', 'Listen:\nno interruptions,\ntake notes', 'Clarify:\nopen-ended questions,\nrestate', 'Agree:\ntimeline and\noptions', 'Work:\nno distractions,\nrespect privacy', 'Close:\ndocument and\nfollow up'],
+    'Six boxes left to right. Arrive on time and dressed for the site, or call ahead if you will be late. Listen actively without '
+    'interrupting and take notes. Clarify with open-ended questions and restate the problem in plain language. Agree a timeline and '
+    'offer repair or replacement options. While working, avoid personal calls and distractions and leave confidential material alone. '
+    'Close by documenting the work and following up to confirm the user is satisfied.',
+    'The user should always know what you are doing and when you will be back.', cols=3)
+
 HTML_PRO = f'''
 <p>A+ Core 2 4.7 lists the communication and professional behaviours expected of a technician.</p>
 <ul>
@@ -68,6 +77,7 @@ HTML_PRO = f'''
 provide proper documentation of the services; follow up afterwards to confirm satisfaction.</li>
 <li><strong>Deal appropriately with confidential and private materials</strong> on computers, desks, printers and phones — do not look, copy or share.</li>
 </ul>
+{_FIG_PRO}
 {worked('a call with an angry user', '''<ol>
 <li>Let them finish; take notes (active listening). Do not interrupt or argue.</li>
 <li>Restate: “So since this morning your laptop will not connect to the VPN and you have a client call at 2?” (clarify).</li>
@@ -131,7 +141,7 @@ ITEMS = [
           'Stop, report, preserve with custody, document (A+ Core 2 4.6).'),
     single('A2:4.6', 'IT-12.2', 12, 'Why is a forensic copy of a drive made through a write blocker and hashed?',
            'To prove the copy matches the original and nothing was changed',
-           ['To compress the drive so it fits on a smaller disk', 'To remove the prohibited files from the copy', 'To make the drive bootable in another PC'],
+           ['To compress the drive so it fits on a smaller disk', 'To remove the prohibited files so the copy can be shared safely', 'To make the drive bootable in another PC'],
            'Write blocking and hashing preserve and prove data integrity (NIST SP 800-86).',
            mc=[None, 'MC-C-IT12-INVESTIGATE-SELF', None]),
     single('A2:4.6', 'IT-12.2', 13, 'Following the order of volatility, which should be collected first from a running, compromised server?',
@@ -144,12 +154,12 @@ ITEMS = [
           'A+ Core 2 4.6 regulated data and policy.', decoys=['EULA']),
     single('A2:4.6', 'IT-12.2', 15, 'An application licence says “free for personal, non-commercial use”. Staff want it on 30 work PCs. What applies?',
            'A commercial (corporate) licence must be bought first', ['It may be installed because it is free',
-            'It may be installed if it is open source', 'It may be installed if each user accepts the EULA'],
+            'It may be installed if it is open source', 'It may be installed if each user personally accepts the EULA during setup'],
            'Personal-use licences do not cover business use; check the EULA and buy the right licence.',
            mc=['MC-C-IT12-LICENCE-SCOPE', 'MC-C-IT12-LICENCE-SCOPE', 'MC-C-IT12-LICENCE-SCOPE']),
     single('A2:4.7', 'IT-1.4', 11, 'A user says “It just doesn’t work!” Which response best clarifies the problem?',
            '“What happens on the screen when you try to sign in?”', ['“Is it plugged in?”', '“Have you tried turning it off and on?”',
-            '“That usually works fine for everyone else.”'],
+            '“That usually works fine for everyone else, so it must be your PC.”'],
            'An open-ended question gets a description; the last option minimises the problem.',
            mc=['MC-C-IT1-CLOSED-Q', 'MC-C-IT1-CLOSED-Q', 'MC-C-IT1-ARGUE']),
     multi('A2:4.7', 'IT-1.4', 12, 'An angry customer blames IT for a lost file. Which TWO actions are professional? (Choose two.)',
@@ -166,4 +176,12 @@ ITEMS = [
           [('You will arrive 20 minutes late', 'Call the customer before the agreed time'), ('The user is not technical', 'Avoid jargon and acronyms'),
            ('The repair is finished', 'Document the work and follow up'), ('The laptop is not worth repairing', 'Offer repair or replacement options')],
           'A+ Core 2 4.7 communication and professionalism.', decoys=['Post about the visit on social media']),
+    single('A2:4.6', 'IT-12.2', 16, 'A seized drive passed from technician to manager to police with no record of the hand-overs. What is the problem?',
+           'The chain of custody has gaps, so the evidence can be challenged', ['Nothing; the police have it now',
+            'The drive must be reformatted before it is used', 'Only a hash of the drive is needed; a record of who held it is optional'],
+           'Every transfer must be logged; a hash proves integrity but not who held the drive.',
+           mc=['MC-C-IT12-CUSTODY-GAP', None, 'MC-C-IT12-CUSTODY-GAP']),
+    single('A2:4.6', 'IT-12.2', 17, 'A shop wants to store customers’ card numbers for repeat orders. Which standard sets the rules?',
+           'PCI DSS', ['HIPAA', 'The software EULA', 'An NDA'],
+           'Cardholder data is governed by PCI DSS.', mc=['MC-C-IT12-DATA-REG', 'MC-C-IT12-DATA-REG', 'MC-C-IT12-DATA-REG']),
 ]
