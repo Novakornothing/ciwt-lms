@@ -424,8 +424,9 @@ def register(app, db, deps):
                .order_by(m.MasteryDecision.created_at.desc(), m.MasteryDecision.id.desc()).limit(60).all())
         ovs = (m.MasteryOverride.query.filter_by(section_id=section.id, user_id=u.id)
                .order_by(m.MasteryOverride.created_at.desc()).limit(40).all())
+        labs = lab_diagnoses(u, section)
         return render_template('mastery/instructor_student.html', section=section, u=u, st=st, rows=rows, log=log,
-                               overrides=ovs, reasons_of=reasons_of, evidence_of=evidence_of, chapters=cmap['chapters'])
+                               overrides=ovs, labs=labs, labs_wired=bool(getattr(d, 'lab_events', None)), reasons_of=reasons_of, evidence_of=evidence_of, chapters=cmap['chapters'])
 
     @login_required
     def mastery_override(section_id):
@@ -499,10 +500,29 @@ def register(app, db, deps):
                         headers={'Content-Disposition': f'attachment; filename=mastery-section-{section.id}.csv'})
 
     from . import lab_diagnosis
+
+    def lab_diagnoses(user, section):
+        """Process diagnosis of each lab the student worked in this class (latest attempt). [] when labs are not wired."""
+        src = getattr(d, 'lab_events', None)
+        if not src:
+            return []
+        ldef = getattr(d, 'lab_def', None) or (lambda _id: None)
+        out = []
+        for lab_id, evs in (src(user.id, section.id) or {}).items():
+            lab = ldef(lab_id)
+            res = lab_diagnosis.diagnose(evs, lab=lab)
+            out.append({'lab_id': lab_id, 'title': (lab or {}).get('title') or lab_id, 'attempt': res['attempt'],
+                        'patterns': res['patterns'], 'summary': res['summary'],
+                        'concerns': [p for p in res['patterns'] if p['id'] != 'efficient'],
+                        'struggling': lab_diagnosis.struggling(res),
+                        'last_at': max((getattr(e, 'at', None) for e in evs if getattr(e, 'at', None)), default=None)})
+        out.sort(key=lambda r: (not r['struggling'], -(r['last_at'].timestamp() if r['last_at'] else 0)))
+        return out
+
     from .features import register_features
     feats = register_features(app, db, SimpleNamespace(
         eng=eng, m=m, d=d, enrolled_section=enrolled_section, staff_section=staff_section, grade=_grade,
-        open_check=_open_check, class_rows=class_rows, diagnose=lab_diagnosis.diagnose))
+        open_check=_open_check, class_rows=class_rows, diagnose=lab_diagnosis.diagnose, lab_diagnoses=lab_diagnoses))
     plan_pref_ref['fn'] = feats['plan_pref']
 
     for rule, ep, fn, methods in [
@@ -521,6 +541,6 @@ def register(app, db, deps):
         app.add_url_rule(rule, ep, fn, methods=methods)
     api = SimpleNamespace(engine=eng, models=m, student_path=student_path, lesson_gate=lesson_gate,
                           daily_summary=feats['daily_summary'], lesson_quickcheck=feats['lesson_quickcheck'],
-                          features=feats, diagnose=lab_diagnosis.diagnose)
+                          features=feats, diagnose=lab_diagnosis.diagnose, lab_diagnoses=lab_diagnoses)
     app.extensions['ciwt_mastery'] = api
     return api

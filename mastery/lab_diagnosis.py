@@ -19,6 +19,16 @@ Each Pattern is {'id', 'label', 'evidence': [plain sentences citing seq numbers]
     skipped_step      a later objective was earned while an earlier one never was
     hint_reliance     hints used for most objectives
     efficient         completed with few wasted actions, no hints and a verification at the end
+How the live kinds map (pass 12, after the labs merge):
+    cmd     simulated CLI command; ``unknown`` = not recognised (counts as rejected)
+    event   GUI action (Windows 11 / activity labs); ``wrong``/``error`` count as rejected
+    check   an answer check (guided labs: ``wrong`` = rejected answer) or, in real-VM labs, a ``vm probe``
+            grading request: there ``wrong`` only means "not finished yet", so only ``error`` counts as rejected.
+            A probe repeated with identical results and no progress is caught by repeats_without_change.
+    vm      a command line the student typed into the real Linux VM. Its result is not graded per line,
+            so it is never "rejected"; Linux read-only commands (ls, cat, stat, id, systemctl status, ...)
+            count as verification. ``vm boot`` is not an action.
+    hint (``ok`` = a counted hint, ``repeat`` = re-opened), undo, reset, complete and signoff are context, not actions.
 Thresholds are constants below so they can be reviewed. Coaching tips are about process habits taught in
 the course (verify after a change, change one thing at a time); they state no new technical facts.
 """
@@ -36,7 +46,8 @@ VERIFY_RE = re.compile(
     r'^\s*(show|ping|tracert|traceroute|ipconfig|ifconfig|ip\s+(a|addr|route|r)\b|nslookup|dig|get-|test-|'
     r'gpresult|whoami|systeminfo|netstat|arp|route\s+print|display|cat|ls|dir|type|status|verify|'
     r'pathping|curl|wget|hostname|getmac|net\s+(user|share|use|localgroup)|sc\s+query|tasklist|'
-    r'manage-bde\s+-status|bcdedit|chkdsk\s*$)', re.I)
+    r'manage-bde\s+-status|bcdedit|chkdsk\s*$|'
+    r'stat\b|id\b|getfacl|grep|head|tail|less|find|ps\b|df\b|du\b|uname|ss\b|systemctl\s+(status|is-)|journalctl|resolvectl)', re.I)
 ACTION_KINDS = ('cmd', 'event', 'check', 'vm')
 
 
@@ -56,6 +67,22 @@ def _newly(e):
     return list(v or [])
 
 
+def is_action(e):
+    k = _get(e, 'kind')
+    if k not in ACTION_KINDS:
+        return False
+    return not (k == 'vm' and (_get(e, 'action') or '').strip() == 'boot')
+
+
+def is_rejected(e):
+    o = _get(e, 'outcome')
+    if _get(e, 'kind') == 'vm':
+        return False
+    if _get(e, 'kind') == 'check' and (_get(e, 'action') or '').startswith('vm probe'):
+        return o == 'error'
+    return o in ('unknown', 'wrong', 'error')
+
+
 def is_verification(e):
     if _get(e, 'kind') == 'check':
         return False
@@ -65,8 +92,8 @@ def is_verification(e):
 
 def diagnose(events, lab=None):
     evs = sorted(list(events or []), key=lambda e: (_get(e, 'attempt', 1) or 1, _get(e, 'seq', 0) or 0))
-    acts = [e for e in evs if _get(e, 'kind') in ACTION_KINDS]
-    bad = [e for e in acts if _get(e, 'outcome') in ('unknown', 'wrong', 'error')]
+    acts = [e for e in evs if is_action(e)]
+    bad = [e for e in acts if is_rejected(e)]
     hints = [e for e in evs if _get(e, 'kind') == 'hint' and _get(e, 'outcome') == 'ok']
     complete = next((e for e in evs if _get(e, 'kind') == 'complete'), None)
     earned, earned_at = [], {}
@@ -81,7 +108,7 @@ def diagnose(events, lab=None):
     # trial and error
     run, best_run, run_start, best_start = 0, 0, None, None
     for e in acts:
-        if _get(e, 'outcome') in ('unknown', 'wrong', 'error'):
+        if is_rejected(e):
             run += 1
             run_start = run_start if run > 1 else _get(e, 'seq')
             if run > best_run:
@@ -117,8 +144,13 @@ def diagnose(events, lab=None):
 
     # never verifies after the last change
     progress = [e for e in evs if _newly(e) or _get(e, 'outcome') == 'progress']
-    if progress and any(_get(e, 'kind') == 'cmd' for e in acts):
-        last_change = progress[-1]
+    if progress and any(_get(e, 'kind') in ('cmd', 'vm') for e in acts):
+        # the change is the last command typed at or before the last credited progress (in VM labs credit
+        # arrives with the grader's probe, after the command that made the change)
+        pseq = _get(progress[-1], 'seq') or 0
+        changes = [e for e in acts if _get(e, 'kind') in ('cmd', 'vm') and (_get(e, 'seq') or 0) <= pseq
+                   and not is_verification(e)]
+        last_change = changes[-1] if changes else progress[-1]
         after = [e for e in acts if (_get(e, 'seq') or 0) > (_get(last_change, 'seq') or 0)]
         verified_ever = any(is_verification(e) for e in acts)
         if not any(is_verification(e) for e in after) and not is_verification(last_change):

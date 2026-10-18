@@ -362,12 +362,11 @@ def register_features(app, db, ctx):
         lab_events = getattr(d, 'lab_events', None)
         diagnose = getattr(ctx, 'diagnose', None)
         if lab_events and diagnose:
-            for lab_id, evs in (lab_events(user.id, st['section'].id) or {}).items():
-                res = diagnose(evs)
-                bad = [p for p in res['patterns'] if p['id'] != 'efficient']
-                if bad:
-                    out.append({'kind': 'lab', 'obj': None, 'when': None,
-                                'text': f'Lab {lab_id}: ' + ', '.join(p['label'].lower() for p in bad)})
+            for r in ctx.lab_diagnoses(user, st['section']):
+                if r['struggling']:
+                    out.append({'kind': 'lab', 'obj': None, 'when': r['last_at'], 'lab': r,
+                                'text': f"Lab “{r['title']}” (attempt {r['attempt']}): "
+                                        + ', '.join(p['label'].lower() for p in r['concerns'])})
         last = last_activity(st, user)
         if not last:
             out.append({'kind': 'inactive', 'obj': None, 'when': None, 'text': 'No recorded activity in this class yet'})

@@ -7033,7 +7033,8 @@ SyllabusSettings = materials_mod.register(app, db, dict(
 
 # pass 11: adaptive mastery engine (per-objective BKT estimates, inserted reviews, test-out, overrides)
 import mastery as mastery_mod  # noqa: E402
-from interactive_labs import LESSON_LABS as _MX_LESSON_LABS  # noqa: E402
+from interactive_labs import LESSON_LABS as _MX_LESSON_LABS, get_lab as _mx_get_lab  # noqa: E402
+from mastery.lab_source import make_lab_events as _mx_lab_events, lab_def as _mx_lab_def  # noqa: E402
 from curriculum_v2.course_package import GLOSSARY as _MX_GLOSSARY, GLOSSARY_NEW as _MX_GLOSSARY_NEW  # noqa: E402
 mastery_api = mastery_mod.register(app, db, dict(
     User=User, ClassSection=ClassSection, Enrollment=Enrollment, Course=Course, Module=Module, Lesson=Lesson,
@@ -7046,6 +7047,8 @@ mastery_api = mastery_mod.register(app, db, dict(
     glossary=_MX_GLOSSARY, glossary_marked=_MX_GLOSSARY_NEW,
     can_access_section=lambda user, section: instructor_can_access_section(user, section),
     audit=lambda action, detail='': audit(action, detail),
+    # pass 12: live lab event log (latest attempt per lab, this class only) + lab definitions for process diagnosis
+    lab_events=_mx_lab_events(lab_progress_api.LabProgress, lab_progress_api.LabEvent), lab_def=_mx_lab_def(_mx_get_lab),
 ))
 
 

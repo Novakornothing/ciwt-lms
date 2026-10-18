@@ -73,6 +73,32 @@
     </section>
   </div>
 </div>
+<section class="card mt-4" aria-labelledby="mxLabH">
+  <div class="card-header"><h2 class="h6 mb-0" id="mxLabH">How {{ u.full_name }} works the labs</h2></div>
+  {% if labs %}
+  <ul class="list-group list-group-flush">
+    {% for r in labs %}
+    <li class="list-group-item mx-labdx">
+      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start">
+        <div><strong>{{ r.title }}</strong> <span class="mx-muted small">· attempt {{ r.attempt }} · {{ r.summary.actions }} actions, {{ r.summary.rejected }} rejected, {{ r.summary.hints }} hints{{ ' · completed' if r.summary.completed }}</span></div>
+        <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_lab_student', section_id=section.id, user_id=u.id, lab_id=r.lab_id) }}">Event log<span class="visually-hidden"> for {{ r.title }}</span></a>
+      </div>
+      {% if r.patterns %}
+      <ul class="mx-labdx-list mb-0 mt-2">
+        {% for p in r.patterns %}
+        <li><span class="mx-badge{{ ' mx-badge-req' if p.id != 'efficient' }}">{{ p.label }}</span>
+          <div class="small">{{ p.evidence|join(' ') }}</div>
+          <div class="small mx-muted"><strong>Coaching tip:</strong> {{ p.tip }}</div></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="small mb-0 mt-1 mx-muted">No pattern stands out in this attempt.</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="card-body small mx-muted border-top">Patterns come from the lab's own event log (latest attempt, this class) using fixed rules shown in the notes. They describe process habits, not ability, and never change a lab score.</div>
+  {% elif labs_wired %}<div class="card-body small">No lab attempts in this class yet.</div>
+  {% else %}<div class="card-body small">Lab event log not connected.</div>{% endif %}
+</section>
 {% set cmap = st.cmap %}{% set default_user_id = u.id %}{% set default_name = u.full_name %}
 {% include "mastery/_override_modal.html" %}
 </div>
