@@ -88,3 +88,23 @@ New files only, apart from the edits listed below, so the merge should be mechan
 - **Targeted tests:** 55 passed (rationales, pass-14 checks, spot-check round 2, cert alignment, adaptive UI and
   e2e fixes). The full suites ran at the end of pass 15; see REFINEMENT_NOTES.
 - **Worktree:** `content-wt` was not touched.
+
+## Round 4 (pass 16, Oct 18 2026): misconception tags round 3 (6cabe39)
+
+`content` had last taken `refinement` at `f9ffdc4` (pass 15 rationales and option parity), in `115b85b`. Since then,
+`content` added the following, merged locally with nothing pushed:
+
+- misconception tags round 3 (`curriculum_v2/misconceptions_round3.py`): Tests A/B/C items tagged went from 30 to 129
+  of 129, and chapter-check items from 183 to 198 of 200. That is 91 `MC-R3` entries, each with a primary source and
+  *Pending SME review*;
+- `tools/misconception_coverage.py`, with before/after reports in `docs/readiness/`;
+- a status line on the mix-up review page.
+
+`refinement` had moved on to `afc0ca4` (pass 15 cert gap items, readiness, notes).
+
+- **Conflicts:** none.
+- **Shared file checked by hand:** in `curriculum_v2/misconceptions.py`, the round-3 merge sits after the cert merge
+  and before the pass-15 parity tag move. Content wrote its tags against `f9ffdc4`, which already showed the
+  rewritten distractors, so they point at the text students see.
+- **Targeted tests:** 99 passed (round-3, pass-13/14/15 misconception and check tests, cert alignment, mastery).
+- **Worktree:** `content-wt` was not touched.
