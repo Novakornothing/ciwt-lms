@@ -34,6 +34,9 @@ ACTION_LABEL = {
     'review_skipped': 'Review skipped', 'testout_passed': 'Mastery check passed', 'testout_failed': 'Mastery check not passed',
     'override_lock': 'Instructor: lock', 'override_unlock': 'Instructor: unlock', 'override_force_review': 'Instructor: force review',
     'override_waive': 'Instructor: waive', 'override_clear': 'Instructor: override cleared',
+    'misconception': 'Mix-up correction inserted', 'struggle_offer': 'Inline help offered',
+    'struggle_dismissed': 'Inline help dismissed', 'daily_done': 'Daily review done', 'plan_updated': 'Learning plan updated',
+    'checkin_scheduled': 'Check-in scheduled', 'checkin_done': 'Check-in done',
 }
 
 
@@ -383,7 +386,7 @@ def register(app, db, deps):
                     stuck.append({'user': r['user'], 'obj': obj, 'row': row, 'est': r['st']['states'][obj],
                                   'why': M.describe_counts(r['st']['states'][obj]), 'kind': 'stuck'})
             for a in dec['actions']:
-                if a['type'] in ('review', 'alt_review'):
+                if a['type'] in ('review', 'alt_review', 'misconception'):
                     active_reviews += 1
                     need.append({'user': r['user'], 'obj': a['obj'], 'action': a, 'est': r['st']['states'][a['obj']],
                                  'why': M.describe_counts(r['st']['states'][a['obj']])})

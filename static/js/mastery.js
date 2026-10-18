@@ -12,7 +12,8 @@
     };
     set('user', b.getAttribute('data-mx-user'));
     set('name', b.getAttribute('data-mx-name'));
-    set('state', b.getAttribute('data-mx-state') || (b.getAttribute('aria-label') || '').replace(/\. Open override$/, ''));
+    var sr = b.querySelector('.mx-cell-sr');
+    set('state', b.getAttribute('data-mx-state') || (sr ? sr.textContent : '').replace(/\. Open override$/, ''));
     var t = b.getAttribute('data-mx-target');
     var sel = modal.querySelector('[data-mx="target"]');
     if (sel && t && sel.querySelector('option[value="' + t + '"]')) sel.value = t;

@@ -297,3 +297,16 @@ def test_learning_plan_backward_plan(app, mod, student, ids):
         assert plan['total'] == len(st['cmap']['objs'])
         assert len(plan['weeks']) == 4
         assert sum(len(w['targets']) for w in plan['weeks']) == len(plan['remaining'])
+
+
+def test_every_logged_action_has_a_plain_label():
+    """The instructor log shows a readable label for every decision kind the engine or features write."""
+    import re, pathlib
+    import mastery
+    root = pathlib.Path(mastery.__file__).parent
+    src = ''.join((root / f).read_text() for f in ('features.py', '__init__.py'))
+    kinds = set(re.findall(r"eng\.log\([^\n]*?, '([a-z_]+)', '(?:student|instructor|engine)'", src))
+    kinds |= {'misconception', 'review', 'alt_review', 'helix_offer', 'testout_offer', 'stuck_flag',
+              'checkin_scheduled', 'struggle_offer'}
+    missing = sorted(k for k in kinds if k not in mastery.ACTION_LABEL)
+    assert not missing, missing

@@ -61,7 +61,7 @@
 .mx-block { margin-bottom: 1.25rem; }
 .mx-excerpt { border: 1px solid var(--surface-3); border-radius: var(--radius-sm); padding: .9rem 1rem; background: var(--surface); overflow-wrap: anywhere; }
 .mx-excerpt img, .mx-excerpt table { max-width: 100%; }
-.mx-excerpt table { display: block; overflow-x: auto; }
+/* tables scroll inside the .ui-table-wrap that base.html adds (focusable when it scrolls) */
 .mx-gloss dt { font-weight: 700; color: var(--ink); }
 .mx-gloss dd { margin: 0 0 .5rem; color: var(--ink); }
 .mx-q { border: 1px solid var(--surface-3); border-radius: var(--radius-sm); padding: .75rem 1rem; margin-bottom: .9rem; }
@@ -113,3 +113,8 @@
 .mx-reasons { padding-left: 0; list-style: none; }
 .mx-reasons li { padding: .2rem 0; }
 .mx-obj-row .btn { min-height: 44px; display: inline-flex; align-items: center; }
+
+/* long action titles wrap instead of overflowing on phones */
+.mx-btn-wrap { white-space: normal; max-width: 100%; text-align: start; }
+/* links inside the "why" panel: Bootstrap's default blue is 4.2:1 on the panel tint */
+html:not([data-theme="dark"]) .mx-why-body a { color: #0a58ca; }

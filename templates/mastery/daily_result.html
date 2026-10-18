@@ -20,7 +20,7 @@
 </section>
 <p class="small mx-muted">Answer keys are not shown here, the same as for chapter checks. The lessons and reviews cover every question.</p>
 <div class="d-flex flex-wrap gap-2 mb-4">
-  {% if path and path.next %}<a class="btn btn-brand" href="{{ path.next.url }}">Next: {{ path.next.title }}</a>{% endif %}
+  {% if path and path.next %}<a class="btn btn-brand mx-btn-wrap" href="{{ path.next.url }}">Next: {{ path.next.title }}</a>{% endif %}
   <a class="btn btn-outline-navy" href="{{ url_for('mastery_plan', section_id=section.id) }}">My plan</a>
 </div>
 {% endblock %}
