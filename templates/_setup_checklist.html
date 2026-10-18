@@ -1,0 +1,40 @@
+{# pass 13: first-run "Set up your class" checklist (instructor class page). Nothing here changes a setting. #}
+{% set setup = onboarding_setup_checklist(section, current_user) %}
+{% if setup %}
+<section class="card mb-3 setup-card" id="setup" aria-labelledby="setupH">
+  <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2 class="h6 mb-0" id="setupH">Set up your class</h2>
+    <span class="small" id="setupProgress">{{ setup.done }} of {{ setup.total }} reviewed</span>
+  </div>
+  <div class="card-body">
+    <p class="small mb-2">{% if setup.complete %}Everything has been reviewed. You can hide this list; the settings stay as they are.{% else %}Review each setting once before students start. The defaults are already sensible, so “Looks right” is a fine answer.{% endif %}</p>
+    <ol class="list-unstyled mb-3 setup-list">
+      {% for it in setup['items'] %}
+      <li class="setup-item{% if it.done %} is-done{% endif %}">
+        <div class="setup-item-head">
+          <i class="bi {{ 'bi-check-circle-fill text-success' if it.done else 'bi-circle' }}" aria-hidden="true"></i>
+          <div class="setup-item-text">
+            <h3 class="h6 mb-0">{{ it.title }}<span class="visually-hidden">{{ ' — reviewed' if it.done else ' — not reviewed yet' }}</span></h3>
+            <p class="small mb-1"><strong>Now:</strong> {{ it.state }}</p>
+            <p class="small mx-muted mb-2">{{ it.help }}</p>
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-sm btn-outline-navy" href="{{ it.url }}">{{ it.link }}<span class="visually-hidden"> for {{ it.title|lower }}</span></a>
+              {% if not it.done %}
+              <form method="post" action="{{ url_for('onboarding_setup', section_id=section.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="item" value="{{ it.key }}">
+                <button class="btn btn-sm btn-brand" type="submit">{{ 'Skip for now' if it.optional else 'Looks right' }}<span class="visually-hidden"> — {{ it.title|lower }}</span></button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+    <form method="post" action="{{ url_for('onboarding_setup', section_id=section.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="item" value="hide">
+      <button class="btn btn-sm btn-link px-0" type="submit">Hide this checklist for this class</button>
+    </form>
+  </div>
+</section>
+{% endif %}

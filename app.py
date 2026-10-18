@@ -7104,6 +7104,14 @@ lti_api = lti_mod.register(app, db, dict(
     audit=lambda action, detail='': audit(action, detail),
 ), csrf)
 
+# pass 13: first-run experience (instructor "Set up your class" checklist, one-time student introduction)
+import onboarding as onboarding_mod  # noqa: E402
+onboarding_api = onboarding_mod.register(app, db, dict(
+    ClassSection=ClassSection, Module=Module, ContentRelease=ContentRelease, HelixSectionSetting=HelixSectionSetting,
+    mastery_settings=lambda section_id: mastery_api.engine.settings(section_id),
+    can_access_section=lambda user, section: instructor_can_access_section(user, section),
+))
+
 
 def _safe_mastery_path(user, section):
     """Recommended next steps for an enrolled student; never breaks the page it sits on."""

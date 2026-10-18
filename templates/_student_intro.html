@@ -1,0 +1,24 @@
+{# pass 13: one-time introduction to the adaptive path and daily review (student class page) #}
+{% set intro = onboarding_student_intro(section, current_user) %}
+{% if intro %}
+<section class="card mb-4 intro-card" aria-labelledby="introH">
+  <div class="card-body">
+    <h2 class="h5 mb-2" id="introH"><i class="bi bi-signpost-split" aria-hidden="true"></i> How your path works</h2>
+    <ul class="intro-list mb-3">
+      <li><strong>One next step.</strong> “Recommended next for you” on this page always shows what to do now: a lesson, a short review or a check.</li>
+      {% if intro.adaptive %}<li><strong>Short reviews when you need them.</strong> If your answers show an objective is shaky, a five-minute review is added. You can skip it unless your instructor made it required.</li>{% endif %}
+      <li><strong>Daily review, about five minutes.</strong> A few questions on things you learned earlier, timed so they come back just before you would forget them (<a href="{{ intro.daily_url }}">today’s review</a>).</li>
+      {% if intro.adaptive and intro.testout %}<li><strong>Already know a chapter?</strong> When your answers are strong you may be offered a mastery check. Pass it and you can skip ahead; the lessons stay open.</li>{% endif %}
+      <li><strong>None of this changes your grade.</strong> Reviews, daily review and mastery checks are practice. Grades come only from your graded tests and skills exams.</li>
+    </ul>
+    <div class="d-flex flex-wrap gap-2">
+      <form method="post" action="{{ url_for('onboarding_student_intro') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ request.path }}">
+        <button class="btn btn-brand" type="submit">Got it</button>
+      </form>
+      <a class="btn btn-outline-navy" href="{{ intro.mastery_url }}">See my mastery</a>
+      <a class="btn btn-outline-navy" href="{{ intro.plan_url }}">Set my plan</a>
+    </div>
+  </div>
+</section>
+{% endif %}
