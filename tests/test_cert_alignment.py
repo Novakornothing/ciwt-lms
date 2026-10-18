@@ -168,6 +168,20 @@ def test_full_practice_draw_is_domain_weighted_and_unique():
         assert len(drill) == PR.DRILL_LENGTH and all(OBJECTIVES[o]['domain'] == d0 for _i, o in drill)
 
 
+def test_full_practice_draw_has_every_item_type_in_the_pool():
+    """pass 16b: an unseeded A2 draw missed the ordering type about 1 time in 11 (practice_phone_e2e failed on it)."""
+    import random
+    for ex in EXAMS:
+        types = {PR.bank()[i]['type'] for ids in PR.pool(ex).values() for i in ids}
+        want = PR._allocate(PR.FULL_LENGTH, {d: w for d, _n, w in DOMAINS[ex]})
+        for seed in range(300):
+            chosen = PR.draw(ex, rng=random.Random(seed))
+            assert {PR.bank()[i]['type'] for i, _o in chosen} == types, (ex, seed)
+            assert len({i for i, _o in chosen}) == len(chosen) == PR.FULL_LENGTH
+            assert collections.Counter(OBJECTIVES[o]['domain'] for _i, o in chosen) == want, (ex, seed)
+            assert all(o in PR.pool(ex) and i in PR.pool(ex)[o] for i, o in chosen)
+
+
 # ------------------------------------------------------------------------------------------- pages
 def _questions_json(html):
     m = re.search(r'<script type="application/json" id="assessQuestions">(.*?)</script>', html, re.S)

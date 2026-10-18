@@ -101,8 +101,35 @@ def draw(exam, domain=None, n=None, rng=None):
                     used.add(iid)
                     chosen.append((iid, oid))
                     picked += 1
+    if not domain:
+        _ensure_item_types(exam, chosen, used, rng)
     rng.shuffle(chosen)
     return chosen
+
+
+def _ensure_item_types(exam, chosen, used, rng):
+    """A full practice exam carries at least one item of every type its pool has (single, multi, order, match),
+    the way the real exams always include performance-based items. Without this, about 1 full A+ Core 2 draw in 11
+    had no ordering item (16 of 447 pool items; pass 16b). A missing type is swapped in for a single-answer item of the
+    same domain, so the domain weighting and uniqueness are unchanged."""
+    b = bank()
+    have = {b[i]['type'] for i, _o in chosen}
+    objs = pool(exam)
+    for t in ('multi', 'order', 'match'):
+        if t in have:
+            continue
+        cands = [(i, o) for o, ids in sorted(objs.items()) for i in ids if b[i]['type'] == t and i not in used]
+        rng.shuffle(cands)
+        for iid, oid in cands:
+            dom = OBJECTIVES[oid]['domain']
+            slots = [k for k, (j, o2) in enumerate(chosen) if b[j]['type'] == 'single' and OBJECTIVES[o2]['domain'] == dom]
+            if slots:
+                k = rng.choice(slots)
+                used.discard(chosen[k][0])
+                chosen[k] = (iid, oid)
+                used.add(iid)
+                have.add(t)
+                break
 
 
 def public_item(it, oid):
