@@ -38,3 +38,14 @@ A dry run (`git merge-tree --write-tree refinement labs`) showed one conflict; e
 
 Nothing new beyond the earlier labs merge. The scenarios store their state in the existing lab progress tables, and the
 VM image is a static file. Take a backup of `ciwt_lms.db` first anyway; this merge never booted against it.
+
+## Round (pass 19, Oct 18 2026): explanation ladder, ITSUP ch7–10 and CLIENT ch1–3 (895b179)
+
+`labs` started from the ladder schema commit `b8098c2`. It adds `curriculum_v2/ladder/itsup/ch07.py` to `ch10.py`
+and `curriculum_v2/ladder/client/ch01.py` to `ch03.py`. The CLIENT chapters reuse the identical ITSUP 8–10 lessons'
+rungs with their own MC-L-CL* ids. All of it is *Pending SME review*. Merged locally in `706d60c`; nothing pushed.
+
+- **Conflicts:** none. Labs added new files only.
+- **Validator:** 0 errors. ITSUP ch7–10 are fully covered except 11 skips. CLIENT ch1–3 are covered except 8 skips.
+  CLIENT ch4–6 and ITSUP ch11–13 are still to come.
+- **Worktree:** `labs-wt` was not touched.

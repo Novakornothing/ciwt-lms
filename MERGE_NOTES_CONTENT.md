@@ -108,3 +108,16 @@ New files only, apart from the edits listed below, so the merge should be mechan
   rewritten distractors, so they point at the text students see.
 - **Targeted tests:** 99 passed (round-3, pass-13/14/15 misconception and check tests, cert alignment, mastery).
 - **Worktree:** `content-wt` was not touched.
+
+## Round 5 (pass 19, Oct 18 2026): explanation ladder, NETOPS (9ca2506)
+
+`content` started from the ladder schema commit (`b8098c2`, sha in `/workspace/ciwt/LADDER_SCHEMA_READY`) and took
+`refinement` once (`c2ccd37`). It adds one ladder file per NETOPS chapter: `curriculum_v2/ladder/netops/ch01.py` to
+`ch06.py` and `ch09.py`. All rungs and checks are *Pending SME review*. Merged locally in `01805b8`; nothing pushed.
+
+- **Conflicts:** none. Content added new files only; it changed no shared file.
+- **Validator** (`tools/ladder_check.py`): 0 errors after the merge. NETOPS has 156 sections: 41 laddered,
+  17 same_as and 98 skip, so 37.2% are covered. Skips are now reported with a target of 0, and Author A's round 2
+  converts them.
+- **Tests:** test_ladder_content and test_ladder_engine pass, including every merged lesson rendering for a student.
+- **Worktree:** `content-wt` was not touched.
