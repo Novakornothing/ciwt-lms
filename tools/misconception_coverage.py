@@ -1,5 +1,5 @@
 """Measure misconception-tag coverage in the adaptive engine (content round 3; pass-15 subset round 4; X-IT bank and
-supplement subset round 5).
+supplement subset round 5; round-6 entries round 6).
 
 An objective is *covered* when, among the single-answer items the engine can score for it (chapter checks and
 Tests A/B/C in the seeded course DB, certification items aligned to it, the X-IT expansion bank and the exam
@@ -177,6 +177,18 @@ def bank_report(cov):
     return r
 
 
+def r6_report(cov):
+    """Content round 6: the MC-R6-* entries and round-6 tags, with status, source and whether the mix-up correction
+    finds a lesson section."""
+    from curriculum_v2 import misconceptions as MCS
+    from curriculum_v2 import misconceptions_round6 as R6
+    corr = {m for o in cov.values() for m in o['with_correction']}
+    return {'r6_tags': len(R6.TAGS), 'r6_mcs': len(R6.MISCONCEPTIONS),
+            'r6_with_status': sum(MCS.MISCONCEPTIONS[k].get('status') == 'Pending SME review' for k in R6.MISCONCEPTIONS),
+            'r6_with_source': sum(bool(MCS.MISCONCEPTIONS[k].get('source')) for k in R6.MISCONCEPTIONS),
+            'r6_with_correction': sum(k in corr for k in R6.MISCONCEPTIONS)}
+
+
 def main(argv):
     import app as lms
     cov = measure(lms.app, lms)
@@ -205,8 +217,11 @@ def main(argv):
           f"round-5 tags {bk['r5_tags']}, MC-R5 misconceptions {bk['r5_mcs']} (Pending status {bk['r5_with_status']}, "
           f"source {bk['r5_with_source']}, correction found {bk['r5_with_correction']})")
     print('  bank/supplement untagged (throw-away distractors only):', ', '.join(bk['untagged']) or 'none')
+    r6 = r6_report(cov)
+    print(f"round-6 tags {r6['r6_tags']}, MC-R6 misconceptions {r6['r6_mcs']} (Pending status {r6['r6_with_status']}, "
+          f"source {r6['r6_with_source']}, correction found {r6['r6_with_correction']})")
     if '--json' in argv:
-        Path(argv[argv.index('--json') + 1]).write_text(json.dumps({'summary': s, 'objectives': cov, 'p15': p15, 'bank': bk}, indent=1))
+        Path(argv[argv.index('--json') + 1]).write_text(json.dumps({'summary': s, 'objectives': cov, 'p15': p15, 'bank': bk, 'r6': r6}, indent=1))
 
 
 if __name__ == '__main__':

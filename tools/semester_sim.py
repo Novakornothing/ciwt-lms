@@ -53,6 +53,17 @@ DISENGAGE_DAY = 9
 GRADED_TEST_DAY = 10                           # week 2, Thursday-ish
 
 
+
+def strong_rank_ok(order, prof_of, strong):
+    """Check 9/11 (content round 6 form): ``order`` is [(user_id, kinds)] as ranked. A strong student may be listed only
+    for a repeated mix-up (kinds == ['misconception']) and only below every weak, mixed and disengaged student in the
+    ranked list, which leaves out inactive-only students (the page lists those separately)."""
+    ranked = [(u, k) for u, k in order if k != ['inactive']]
+    needy = [i for i, (u, _k) in enumerate(ranked) if prof_of[u] in ('weak', 'mixed', 'disengaged')]
+    last_needy = max(needy) if needy else -1
+    pos = {u: i for i, (u, _k) in enumerate(ranked)}
+    return not [u for u, k in order if u in strong and (k != ['misconception'] or pos[u] < last_needy)]
+
 def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print, bank=False):
     import app as A
     from curriculum_v2 import misconceptions as MCS
@@ -379,14 +390,17 @@ def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print, bank=False):
         # Pass 16 (refinement, d0d764c) found the same thing independently: which items a strong student misses also
         # depends on the wall-clock time of the run, so some runs list a strong student for a repeated mix-up and some
         # do not. Merge (pass 16b): content's stricter form is kept (below every weak, mixed and disengaged student).
+        # Content round 6: the position is checked in the list the instructor sees ranked. The "Who needs me" page
+        # (mastery_today) shows students whose only reason is inactivity in a separate list, and need_rank sorts them
+        # last, so a strong student with a repeated mix-up can sit above an inactive-only disengaged student in the raw
+        # order without being above them on the page (seen once in the round-6 suite, wall-clock dependent; failing run
+        # saved in /workspace/scratch/semester-sim-smoke-fail-content-round6.json). A strong student is still never
+        # listed for any reason other than a repeated mix-up, and inactive-only students are checked below.
         def _strong_ok(order):
-            needy = [i for i, p in enumerate(order) if prof_of[p['user'].id] in ('weak', 'mixed', 'disengaged')]
-            last_needy = max(needy) if needy else -1
-            return not [(i, p['user'].id) for i, p in enumerate(order) if p['user'].id in strong
-                        and (p['kinds'] != ['misconception'] or i < last_needy)]
+            return strong_rank_ok([(p['user'].id, p['kinds']) for p in order], prof_of, strong)
         R['strong_in_needs_me'] = [(p['user'].id, p['kinds']) for p in people if p['user'].id in strong]
         check('no strong student is in "Who needs me" except for a repeated mix-up, listed below every weak, mixed and '
-              'disengaged student', _strong_ok(people), R['strong_in_needs_me'])
+              'disengaged student in the ranked list', _strong_ok(people), R['strong_in_needs_me'])
         b = api.briefing['build'](s)
         studs = [t for t in b['todo'] if t['kind'] == 'student']
         R['briefing_todo'] = [{'kind': t['kind'], 'title': t['title'], 'score': t['score']} for t in b['todo']]

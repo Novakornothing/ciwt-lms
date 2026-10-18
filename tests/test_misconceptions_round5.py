@@ -81,10 +81,12 @@ def test_bank_and_supplement_coverage_matches_the_round(served):
         tagged[b] = any(MCS.tag_for(it, d) for d in it['options'] if d != it['correct'])
     bank = [b for b in tagged if b.startswith('X-')]
     sup = [b for b in tagged if b.startswith('S-')]
-    # measured with tools/misconception_coverage.py: bank 0/131 and supplement 0/30 before round 5
-    assert (sum(tagged[b] for b in bank), len(bank)) == (110, 131)
-    assert (sum(tagged[b] for b in sup), len(sup)) == (27, 30)
-    assert sorted(b for b, t in tagged.items() if not t) == sorted(R5.UNTAGGED)
+    # measured with tools/misconception_coverage.py: bank 0/131 and supplement 0/30 before round 5, 110/131 and 27/30
+    # after it; content round 6 tagged four of the round-5 leftovers (misconceptions_round6.NEWLY_TAGGED_BANK)
+    from curriculum_v2 import misconceptions_round6 as R6
+    assert (sum(tagged[b] for b in bank), len(bank)) == (113, 131)
+    assert (sum(tagged[b] for b in sup), len(sup)) == (28, 30)
+    assert sorted(b for b, t in tagged.items() if not t) == sorted(set(R5.UNTAGGED) - set(R6.NEWLY_TAGGED_BANK))
 
 
 def test_bank_items_are_unchanged_by_round5():

@@ -47,7 +47,9 @@ age as it would over a real term. No clock is patched.
 7. "Who needs me" flags both disengaged students as inactive.
 8. The top of "Who needs me" is never a strong student.
 9. No strong student appears in "Who needs me", except for a repeated mix-up, and then below every weak, mixed and
-   disengaged student (changed in content round 3 and pass 16, see below).
+   disengaged student in the ranked list (changed in content round 3 and pass 16, see below; content round 6: the
+   position is taken in the ranked list the page shows, which leaves out students whose only reason is inactivity —
+   the page lists those separately).
 10. The briefing to-do names only students who need help.
 11. The briefing focus list includes every weak student. A strong student appears only for a repeated mix-up, and
     then after every weak, mixed and disengaged one (content round 3, pass 16).
@@ -105,3 +107,15 @@ daily review and a review check on the same simulated day; round 3 added this id
 and disengaged student (`strong_in_needs_me` in the JSON lists who). Whether a student whose objective is otherwise
 mastered should be listed for a 2-hit mix-up is an open policy question (ADAPTIVE_E2E.md, round 3). Result on
 `content` after round 3: 15/15 checks.
+
+### Content round 6 (Oct 18 2026): check 9 measured in the ranked list
+Round 6 tagged 183 more distractors, mostly on certification items (cert items with a tag 168/293 → 228/293), so a
+strong student's two slips land on the same tagged mix-up more often. In one full-suite run (`test_semester_simulation_smoke`,
+default seed, wall-clock dependent like the pass-16 finding) strong student 32 was listed for a repeated mix-up below
+every weak, mixed and disengaged student in the ranked list, but above disengaged student 47, whose only reason was
+inactivity. `need_rank` sorts inactive-only students last and the "Who needs me" page (`mastery_today`) shows them in a
+separate list, so the instructor did not see 32 above 47. Check 9 now takes the position in the ranked list
+(inactive-only students left out); a strong student listed for anything other than a repeated mix-up still fails it,
+and check 7 still requires both disengaged students to be flagged inactive. The failing run is saved in
+`/workspace/scratch/semester-sim-smoke-fail-content-round6.json`; replaying it, the old check fails and the new one
+passes, and moving 32 above a mixed student makes the new one fail.

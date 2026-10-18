@@ -270,6 +270,14 @@ from curriculum_v2 import misconceptions_round5 as _r5  # noqa: E402
 MISCONCEPTIONS.update(_r5.MISCONCEPTIONS)
 TAGS.update(_r5.TAGS)
 
+# content round 6: the objectives with the lowest tagged share of scorable distractors (mostly certification items) and
+# four of the round-5 bank/supplement leftovers; 39 new MC-R6-* entries, each with a primary `source` and status
+# 'Pending SME review' (curriculum_v2/misconceptions_round6.py)
+from curriculum_v2 import misconceptions_round6 as _r6  # noqa: E402
+assert not (set(_r6.TAGS) & set(TAGS)) and not (set(_r6.MISCONCEPTIONS) & set(MISCONCEPTIONS))
+MISCONCEPTIONS.update(_r6.MISCONCEPTIONS)
+TAGS.update(_r6.TAGS)
+
 # pass 15: option-length parity rewrote some distractors (curriculum_v2/parity_pass15.py). The rewritten text keeps
 # the same wrong idea, so its tag moves to the new text (tags must point at distractors that are actually shown).
 from curriculum_v2 import parity_pass15 as _par15  # noqa: E402
