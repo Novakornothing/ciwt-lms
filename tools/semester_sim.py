@@ -150,10 +150,19 @@ def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print):
             s = db.session.get(A.ClassSection, sid)
             return eng.student_state(s, db.session.get(A.User, uid), log=True)
 
-    def grades_csv():
+    def raw_csv():
         r = staff.get(f'/instructor/section/{sid}/gradebook.csv')
         assert r.status_code == 200
         return r.get_data(as_text=True)
+
+    def grades_csv():
+        """Grade-bearing view of the gradebook CSV. Pass 14: a passed test-out marks the chapter check
+        'Exempt (test-out)' (no score) and so may change completion %; grades, letters, averages and scores must not change."""
+        rows = list(csv.reader(io.StringIO(raw_csv())))
+        if not rows:
+            return rows
+        drop = {i for i, h in enumerate(rows[0]) if h == 'completion_pct'}
+        return [[('' if v == 'Exempt (test-out)' else v) for i, v in enumerate(r) if i not in drop] for r in rows]
 
     def graded_rows():
         with app.app_context():
@@ -327,7 +336,12 @@ def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print):
         need_ids = [p['user'].id for p in people]
         focus_ids = [p['user'].id for p in people if p['kinds'] != ['inactive']]
         disengaged = [u for u in sim_ids if prof_of[u] == 'disengaged']
-        R['needs_me'] = [{'user': p['user'].id, 'profile': prof_of[p['user'].id], 'kinds': p['kinds']} for p in people]
+        R['needs_me'] = [{'user': p['user'].id, 'profile': prof_of[p['user'].id], 'kinds': p['kinds'],
+                          'severity': p.get('severity')} for p in people]
+        # pass 14: on a tie (same reason kinds), a weak student is ranked before a mixed one
+        tie_bad = [(a['user'], b['user']) for i, a in enumerate(R['needs_me']) for b in R['needs_me'][i + 1:]
+                   if a['kinds'] == b['kinds'] and a['profile'] == 'mixed' and b['profile'] == 'weak']
+        check('on a tie in "Who needs me", weak students are ranked before mixed ones (severity tie-break)', not tie_bad, tie_bad)
         check('"Who needs me" lists every weak student with a non-inactivity reason', all(u in focus_ids for u in weak),
               [u for u in weak if u not in focus_ids])
         check('"Who needs me" flags both disengaged students as inactive',
@@ -343,11 +357,29 @@ def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print):
         check('the briefing to-do names only students who need help (weak, mixed or disengaged)',
               all(prof_of[t['user'].id] in ('weak', 'mixed', 'disengaged') for t in studs) and bool(b['todo']),
               R['briefing_todo'])
+        first_student = next((t for t in b['todo'] if t['kind'] == 'student'), None)
+        check('the briefing\'s student check-in goes to a weak student when one ties with a mixed one',
+              first_student is None or prof_of[first_student['user'].id] == 'weak'
+              or not any(prof_of[p['user'].id] == 'weak' and p['kinds'] == next(q for q in people if q['user'].id == first_student['user'].id)['kinds']
+                         for p in people),
+              first_student and (first_student['user'].id, prof_of[first_student['user'].id]))
         bfocus = [p['user'].id for p in b['focus']]
         check('the briefing\'s focus list includes every weak student and no strong one',
               all(u in bfocus for u in weak) and not [u for u in strong if u in bfocus], [(u, prof_of[u]) for u in bfocus])
         check('no adaptive action changed a grade (gradebook CSV and graded rows identical before/after on every day)',
               not grade_changes, grade_changes)
+        # pass 14: a passed test-out shows the chapter check as 'Exempt (test-out)', never a score, and lifts completion
+        g = list(csv.reader(io.StringIO(raw_csv())))
+        head, body = g[0], {r[2]: r for r in g[1:] if len(r) > 2}
+        bad = []
+        for u, chs in tested_out.items():
+            em = db.session.get(A.User, u).email
+            for ch_ in chs:
+                col = next(i for i, h in enumerate(head) if h.endswith(f"(quiz {quiz_by_ch[ch_]['id']})"))
+                if body[em][col] != 'Exempt (test-out)':
+                    bad.append((u, ch_, body[em][col]))
+        check('a passed test-out marks that chapter check "Exempt (test-out)" in the gradebook (no score invented)',
+              bool(tested_out) and any(tested_out.values()) and not bad, bad)
         n_mastery_rows = MM.MasteryCheck.query.filter_by(section_id=sid).count()
         R['events'] = dict(R['events'])
         R['events']['mastery_check_rows'] = n_mastery_rows

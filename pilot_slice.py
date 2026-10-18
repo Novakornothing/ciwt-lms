@@ -683,6 +683,11 @@ PILOT_CHECKS = {
 }
 
 
+# pass 14: chapter-check items for IT-7.4 … IT-13.4 (appended; existing positions unchanged; Pending SME review)
+from curriculum_v2.checks_pass14 import extend as _extend_p14  # noqa: E402
+_extend_p14(PILOT_CHECKS, _q)
+
+
 def quiz_payload(order, title):
     from curriculum_v2.item_review import review_check
     items = []
@@ -699,6 +704,8 @@ def quiz_payload(order, title):
             "study_tip": item.get("study_tip") or "",
             "explanation": item.get("explanation") or "",
             **{k: item[k] for k in ("obj", "obj_text", "bank_id") if item.get(k)},
+            # pass 14: new items carry their review status so keys and staff views can show "Pending SME review"
+            **({"review": item["review"]} if "Pending SME review" in (item.get("review") or "") else {}),
         })
     return items
 

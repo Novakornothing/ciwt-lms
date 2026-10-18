@@ -175,12 +175,16 @@ def run(package=''):
                     problems['no original items'].append(o)
                 if not (row['lesson_labs'] or ch_labs):
                     problems['no lab'].append(o)
+                if not checks_n:
+                    problems['no chapter-check item'].append(o)   # pass 14
                 if not terms:
                     problems['no glossary term in its lessons'].append(o)
             R['details'][f'{code}_objectives'] = rows
-            for what in ('chapter not in the LMS', 'no lesson', 'no original items', 'no lab', 'no glossary term in its lessons'):
+            for what in ('chapter not in the LMS', 'no lesson', 'no original items', 'no chapter-check item', 'no lab',
+                         'no glossary term in its lessons'):
                 label = {'chapter not in the LMS': 'its chapter is in the LMS', 'no lesson': 'has a lesson',
-                         'no original items': 'has original (non-certification) items', 'no lab': 'has a lab',
+                         'no original items': 'has original (non-certification) items',
+                         'no chapter-check item': 'has chapter-check items', 'no lab': 'has a lab',
                          'no glossary term in its lessons': 'has glossary terms in its lessons'}[what]
                 check(f'{code}: every objective {label}',
                       not problems[what], problems[what], 'objectives')
@@ -239,6 +243,10 @@ def run(package=''):
         check('every original item has an objective', not no_obj, no_obj, 'items')
         orphan_q = [qz.id for qz in M.Quiz.query.all() if not qz.module]
         check('no chapter check without a chapter', not orphan_q, orphan_q, 'items')
+        # pass 14: a chapter-check rationale must explain the answer, not just point at a section
+        terse = [q.get('bank_id') for name, p in pools.items() if ' check ' in name for q in p
+                 if len(re.sub(r'^[\d\s./]+(overview)?\.?\s*(—|-)?\s*', '', (q.get('explanation') or q.get('study_tip') or '').strip()).split()) < 4]
+        check('every chapter-check rationale explains the answer (not only a section reference)', not terse, terse, 'items')
         # ------------------------------------------------------------ 5. plans and syllabus
         plan_bad, syl_bad = [], []
         for code in COURSES:

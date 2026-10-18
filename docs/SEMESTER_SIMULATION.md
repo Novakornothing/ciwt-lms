@@ -16,7 +16,7 @@ DATABASE_URL=sqlite:////tmp/sim.db ./venv/bin/python tools/semester_sim.py /tmp/
 ```
 
 The smoke version, `tests/test_semester_sim.py`, runs 22 simulated days on a fresh DB as part of `pytest`.
-The last full run is saved in `docs/readiness/semester-sim-pass13.json` (12 of 12 checks passed, seed 13, 28 days).
+The last full run is saved in `docs/readiness/semester-sim-pass14.json`: 15 of 15 checks passed, seed 13, 28 days. The pass 13 run is kept in `semester-sim-pass13.json`.
 
 ## The cohort
 
@@ -49,8 +49,14 @@ age as it would over a real term. No clock is patched.
 9. No strong student appears in "Who needs me".
 10. The briefing to-do names only students who need help.
 11. The briefing focus list includes every weak student and no strong one.
-12. No adaptive action changes a grade. The gradebook CSV and graded rows are identical before and after each
-    day's adaptive actions.
+12. No adaptive action changes a grade. Grades, letters, averages and scores in the gradebook CSV, and the graded
+    rows, are identical before and after each day's adaptive actions. Since pass 14 a passed test-out marks the chapter
+    check *Exempt (test-out)*. That can raise completion %, so completion and the exempt label are left out of this
+    comparison.
+13. Pass 14: every passed test-out shows its chapter check as "Exempt (test-out)" in the gradebook CSV, with no
+    score invented.
+14. Pass 14: on a tie in "Who needs me" (same reason kinds), weak students are ranked before mixed ones.
+15. Pass 14: when the briefing's student check-in ties between a weak and a mixed student, it goes to the weak one.
 
 ## Bugs it found (fixed in pass 13)
 
@@ -61,8 +67,6 @@ age as it would over a real term. No clock is patched.
 
 ## Known limits
 
-- A test-out skips the chapter check. If an instructor gives quizzes a non-zero gradebook weight, the
-  completion percentage drops for students who tested out; grades themselves don't change.
-- When students tie, the briefing to-do picks one student per kind alphabetically, so a mixed student can rank
-  above a weak one.
+- **Fixed in pass 14:** a test-out used to leave the chapter check "missing", which lowered completion %. It now counts as *Exempt (test-out)*.
+- **Fixed in pass 14:** the briefing used to break ties alphabetically. Ties now go by severity, then most recent struggle, then name.
 - Answer probabilities are fixed. Nobody in the cohort learns, so this can't test whether reviews help.

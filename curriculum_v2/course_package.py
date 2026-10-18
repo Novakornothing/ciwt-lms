@@ -974,7 +974,8 @@ def _key_rows(items):
         rows.append({'n': i, 'id': q.get('bank_id', ''), 'stem': q['text'],
                      'options': [f'{LETTERS[j]}. {o}' for j, o in enumerate(opts)],
                      'key': LETTERS[opts.index(q['correct'])], 'answer': q['correct'],
-                     'objective': q.get('obj', ''), 'rationale': q.get('explanation') or q.get('study_tip') or ''})
+                     'objective': q.get('obj', ''), 'rationale': ('[Pending SME review] ' if 'Pending SME review' in (q.get('review') or '') else '')
+                     + (q.get('explanation') or q.get('study_tip') or '')})
     return rows
 
 

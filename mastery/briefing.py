@@ -12,7 +12,9 @@ Every line says where it comes from. Rules (all constants below):
   - revisit a section many measured students skimmed or skipped: 1 × those students (needs ≥ HELIX_MIN measured);
   - look at a chapter check / test with a low class average: 1 × attempts below LOW_SCORE;
   - talk through a lab several students struggled with: 2 × students struggling (needs ≥ 2).
-  Highest score first, at most one item per kind while other kinds remain, ties by kind order then name.
+  Highest score first, at most one item per kind while other kinds remain, ties by kind order, then (students,
+  pass 14) the "Who needs me" order (severity — objectives needing review or stuck —, then most recent struggle),
+  then name.
 * **Skimmed / skipped sections** (Helix): per lesson section, students with a measured session on that lesson who
   spent < 3 s (skimmed) or no time (skipped) there. Only students with current consent and Helix on for the class;
   demo sessions excluded. Reading data is advisory: it is not an assessment of anyone.
@@ -53,7 +55,7 @@ HOME_TTL = 300   # seconds the instructor-home card may reuse a briefing (the pa
 
 def rank_todo(cands, n=TODO_N):
     """Top n candidates: score desc, one per kind while other kinds remain, deterministic ties."""
-    order = sorted(cands, key=lambda c: (-c['score'], KIND_ORDER.index(c['kind']), c['title']))
+    order = sorted(cands, key=lambda c: (-c['score'], KIND_ORDER.index(c['kind']), c.get('tie', ()), c['title']))
     out, used = [], set()
     for c in order:
         if c['kind'] not in used:
@@ -260,12 +262,12 @@ def register_briefing(app, db, ctx):
                 cands.append({'kind': 'misconception', 'score': 3 * a['active'], 'title': f'Re-teach: {a["label"]}',
                               'why': [f'{a["active"]} students have this mix-up active ({a["hits"]} picks in total) on {a["obj"]}.'],
                               'formula': f'3 × {a["active"]} students', 'mc': a['mc'], 'obj': a['obj'], 'users': a['users']})
-        for p in focus[:5]:
+        for rank, p in enumerate(focus[:5]):
             sc = 2 * len(p['kinds']) + (2 if 'stuck' in p['kinds'] else 0)
             cands.append({'kind': 'student', 'score': sc, 'title': f'Check in with {p["user"].full_name}',
                           'why': [r['text'] for r in p['reasons'][:3]],
                           'formula': f'2 × {len(p["kinds"])} reasons' + (' + 2 (stuck)' if 'stuck' in p['kinds'] else ''),
-                          'user': p['user'], 'obj': p['top_obj']})
+                          'user': p['user'], 'obj': p['top_obj'], 'tie': (rank,)})
         for o in objs[:3]:
             cands.append({'kind': 'objective', 'score': 2 * o['below'], 'title': f'Review {o["obj"]} with the class',
                           'why': [f'{o["below"]} of {o["with_evidence"]} students with answers are not yet at mastered on “{o["text"]}”'

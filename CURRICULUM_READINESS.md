@@ -1,4 +1,15 @@
-# Curriculum readiness — ITSUP and NETOPS (pass 13, 18 Oct 2026)
+# Curriculum readiness — ITSUP and NETOPS (pass 13, 18 Oct 2026; updated pass 14)
+
+> **Pass 14 update.**
+>
+> - **New chapter-check items.** IT-7.4, 8.4, 9.4, 10.4, 11.4, 12.4 and 13.4 now have chapter-check items: two each, 14 in all, in `curriculum_v2/checks_pass14.py`. They are appended to each chapter check, so existing item positions, bank ids and stored attempts are unchanged.
+>   - Each item has a full rationale and a primary source, listed per item in `SOURCE`.
+>   - Each item carries misconception tags: 14 misconceptions, 37 tags.
+>   - All 14 are labelled *Pending SME review*, and the instructor answer key shows that label.
+> - **Rationales.** The 64 ITSUP chapter-check items whose rationale was only a section reference (the earlier count of 62 used a stricter rule) now have full explanations, in `curriculum_v2/rationales_pass14.py`. Keys and options are unchanged and the section pointer is kept. These rationales are also pending SME review.
+> - **Audit.** The audit now has 28 checks, all passing. The three new checks are: ITSUP and NETOPS objectives each have chapter-check items, and every chapter-check rationale explains its answer. Output is in `docs/readiness/readiness-pass14.json`.
+> - The pass 13 text below is kept as written, except that SME items 1 and 5 are updated.
+
 
 **Bottom line.** The automated audit passes all 25 checks on a copy of the production database. The 40-item accuracy spot-check of the original course bank found no wrong answer keys. It led to one stem rewrite, one rationale correction, and one duplicate-stem fix. The audit also caught a real first-boot bug, which is now fixed. The content is ready to teach. The certification items and the passes 9–10 item bank still carry *Pending SME review* labels, and the list at the end says what an SME should look at first.
 
@@ -110,9 +121,9 @@ The tally is 40 checked, 0 wrong keys, 1 stem clarified and 1 rationale made mor
 
 ## Still needs SME review (in priority order)
 
-1. **Chapter-check rationales.** 62 of the 130 ITSUP chapter-check items have a rationale that is only a section reference, such as "12.1." or "6.4 / 1.3". The keys are fine; the student just sees a pointer instead of an explanation. The 56 NETOPS check items all have full rationales. This is the single largest content gap. It needs an author pass and then SME review.
+1. **Chapter-check rationales (updated in pass 14).** In pass 13, 62 of the 130 ITSUP chapter-check items had a rationale that was only a section reference. All 64 such items (counted with a slightly broader rule) now have a full explanation, written from the lesson content, with the pointer kept. Keys and options are unchanged. The audit now fails if a chapter-check rationale is only a pointer. **SME: read these 64 rationales**, listed in `curriculum_v2/rationales_pass14.py`. The 56 NETOPS check items already had full rationales.
 2. **Certification items (415) and the passes 9–10 item bank (EXPANSION).** Both are labelled *Pending SME review* in the LMS. Classes can now turn certification items off: Mastery settings → "Include certification practice items (pending SME review)".
 3. **Chapter minute totals in `lessons.py` (NETOPS 1–6, 9).** These differ from the lesson sums by 50 to 75 minutes (chapter 9: 480 vs 540). Lesson plans now show lesson time. An SME should confirm the intended chapter time, including the check and labs.
 4. **NETOPS chapter 9 lessons (CLI lab track)** are the shortest text in the course (978–1,473 characters). They are lab walk-throughs that send students into the simulator. This is intentional, but an SME should confirm they are enough on their own.
-5. **Objectives without chapter-check items.** IT-7.4, 8.4, 9.4, 10.4, 11.4, 12.4 and 13.4 are covered only by bank and supplement items. 15 ITSUP and 7 NETOPS objectives have no aligned certification items. With "use bank items" off, the adaptive engine's reviews for those seven ITSUP objectives draw on certification items only, and only where those exist.
+5. **Objectives without chapter-check items (closed in pass 14).** IT-7.4, 8.4, 9.4, 10.4, 11.4, 12.4 and 13.4 each have two new chapter-check items (Q7.10 to Q13.11). **SME: confirm these 14 items.** They are tagged *Pending SME review*, and the sources are listed per item. Four items rest on course content and local practice rather than a vendor document: Q7.10, Q7.11, Q12.10 and Q12.11. The other gap from pass 13 is still open: 15 ITSUP and 7 NETOPS objectives have no aligned certification items.
 6. **Credit-hour assumptions.** The documents assume 2 lab contact hours per lab credit, 15 weeks and 34 CFR 600.2. The registrar should confirm these for the institution.

@@ -1,7 +1,7 @@
 """Adaptive mastery end to end (pass 11), desktop 1280 and phone 390.
 
 Runs against a throwaway server whose DATABASE_URL points at a DB copy (never ciwt_lms.db). Usage:
-  DATABASE_URL=sqlite:////tmp/p11/e2e.db PORT=5078 python app.py &
+  HOST=127.0.0.1 DATABASE_URL=sqlite:////tmp/p11/e2e.db PORT=5078 python app.py &
   python tools/mastery_e2e.py <outdir> --base http://127.0.0.1:5078 --db /tmp/p11/e2e.db [--width 390] [--theme dark]
 The script resets student1's mastery rows, chapter-check attempts and study time in the copy before it runs.
 Flow: chapter check with tagged wrong answers -> review inserted on the path (+ "why am I seeing this") ->
