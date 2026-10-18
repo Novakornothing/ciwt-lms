@@ -41,6 +41,6 @@
 {% endif %}
 <section class="card mb-4" aria-labelledby="logH"><div class="card-header"><h2 class="h6 mb-0" id="logH">Recent syncs</h2></div>
   {% if logs %}<ul class="list-group list-group-flush">{% for g in logs %}<li class="list-group-item small"><strong>{{ 'Scores' if g.kind == 'scores' else 'Roster' }}</strong> · {{ g.at.strftime('%d %b %Y %H:%M') }} · {{ g.ok }} {{ 'sent' if g.kind == 'scores' else 'enrolled' }}, {{ g.failed }} failed, {{ g.skipped }} {{ 'with no score yet' if g.kind == 'scores' else 'inactive' }}
-    {% if g.detail %}<pre class="small mb-0 mt-1 mx-pre">{{ g.detail }}</pre>{% endif %}</li>{% endfor %}</ul>
+    {% if g.detail %}<pre class="small mb-0 mt-1" style="white-space:pre-wrap;overflow-wrap:anywhere">{{ g.detail }}</pre>{% endif %}</li>{% endfor %}</ul>
   {% else %}<div class="card-body small">None yet.</div>{% endif %}</section>
 {% endblock %}

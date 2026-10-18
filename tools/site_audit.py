@@ -33,7 +33,7 @@ PAGES = {
               ('practice', '/practice'), ('practice-take', '{ptake}'), ('practice-result', '{presult}'), ('cert-coverage-403', '/staff/cert-coverage')],
   'instructor': [('home', '/instructor'), ('section', '/instructor/section/1'), ('gradebook', '/instructor/section/1/gradebook'),
                  ('gradebook-student', '/instructor/section/1/gradebook/student/4'),
-                 ('mastery', '/instructor/section/1/mastery'), ('mastery-student', '/instructor/section/1/mastery/student/4'), ('mastery-today', '/instructor/section/1/mastery/today'), ('briefing', '/instructor/section/1/briefing'), ('test-perf', '/instructor/section/1/test/1/performance'),
+                 ('mastery', '/instructor/section/1/mastery'), ('mastery-student', '/instructor/section/1/mastery/student/4'), ('mastery-today', '/instructor/section/1/mastery/today'), ('briefing', '/instructor/section/1/briefing'), ('lti-section', '/instructor/section/1/lti'), ('test-perf', '/instructor/section/1/test/1/performance'),
                  ('quiz-preview', '/instructor/section/1/quiz/1/preview'), ('test-preview', '/instructor/section/1/test/1/preview'),
                  ('attempt', '/instructor/attempt/185'), ('analytics', '/instructor/analytics'), ('test-analytics', '/instructor/test-analytics'),
                  ('course-perf', '/instructor/course/1/performance'), ('item-analysis', '/analysis/test/1'), ('curriculum', '/class/1/curriculum'),
