@@ -506,3 +506,141 @@ The old one-liners are gone from the ITSUP key. Readiness `--package` matched ev
       `MC-C-IT1-REQ-VS-INC` also cites the change-management objective)
     - the AM5 lesson correction
 14. **X-IT bank and supplement** (161 items) still have no misconception tags. Is that the next tagging target?
+
+## Round 5 (Oct 18 2026, ~07:00–07:50 UTC): X-IT bank and supplement misconception tags, bank-on e2e, spot-check round 5
+
+Worktree `/workspace/ciwt/content-wt`, branch `content`, local commits only (nothing pushed). Every run used a copy of
+`ciwt_lms.db` under `/tmp/r5/`. Checked by Grok Bot, not an SME; all new content is tagged "Pending SME review".
+
+### Commits (branch `content`, oldest first, on top of `23b427f`)
+| Commit | What |
+|---|---|
+| `3b84c79` | Misconception tags for the X-IT bank and exam supplement: `curriculum_v2/misconceptions_round5.py` (66 new `MC-R5-*` entries, 348 tags), the coverage tool's bank/supplement report, before/after files, `tests/test_misconceptions_round5.py`, and a fix to `tests/test_mastery_features.py` (its helper did not know the bank items) |
+| `f4b426d` | Spot-check round 5: sampler `--round5`, frozen sample, `docs/readiness/SPOT_CHECK_ROUND5.md`, `tests/test_spot_check_round5.py`, a line in `CURRICULUM_READINESS.md` |
+| `3e96b8e` | Bank-on e2e flow in `tools/adaptive_e2e.py`, `--bank` mode in `tools/semester_sim.py`, and 2 tests |
+| (this commit) | This round-5 section in `ADAPTIVE_E2E.md` |
+
+### 1. Misconception tags for the X-IT bank (131 items) and exam supplement (30 items)
+Rules and sourcing are the same as in rounds 3–4:
+- A tag goes only on a served distractor that reflects a nameable mix-up for the item's own objective.
+- Existing ids are reused only when their fix text fits the item. Where the fix names a different port, number or
+  procedure, I added a new `MC-R5-*` entry instead, for example `MC-R5-IT5-SMB-PORT` rather than `MC-C-IT5-PORT-MIX`.
+- Every new entry has a primary source (vendor docs, RFCs and standards from the pass 9/10 source registry), or a course
+  chapter section cited by its heading. I removed uncertain clause and section numbers instead of guessing them.
+- The status of every new entry is "Pending SME review", and the correction page shows it.
+
+Measured with `tools/misconception_coverage.py`. The before file was made with the round-4 tool at `23b427f`.
+
+| | Before (`round5-before.txt`) | After (`round5-after.txt`) |
+|---|---|---|
+| Objectives covered | 70/70 | 70/70 |
+| Tagged distractors | 1195/2349 | **1543/2349** (+348) |
+| Items with ≥1 tagged distractor | 497/783 | **634/783** |
+| X-IT bank items | 0/131 | **110/131** |
+| Supplement items | 0/30 | **27/30** |
+| Cert / chapter checks / tests | 168/293, 200/200, 129/129 | unchanged |
+
+- New entries: 66 `MC-R5-*` (66 sourced, 66 Pending, and each finds a lesson section for its correction page). 71
+  existing ids were reused.
+- 24 items are left untagged on purpose, because their distractors are not a nameable mix-up or no fix text fits:
+  S-IT-2.4.2, S-NO-6.3.2, S-IT-9.2.1, X-IT-3.1.3, 3.3.4, 3.4.1, 4.1.2, 4.2.3, 6.1.3, 7.1.2, 7.4.2, 8.2.3, 9.2.2,
+  9.4.2, 10.2.3, 11.2.1, 11.2.3, 11.3.3, 11.4.1, 11.4.2, 12.3.1, 13.1.3, 13.2.2, 13.3.1. They are listed in
+  `misconceptions_round5.UNTAGGED`, and a test pins the list.
+- No item stem, option, key or rationale changed. Cert alignment and the course package are unaffected: all 22
+  document-model hashes are identical to round 4.
+
+**Where the new tags take effect (checked in code).** X-IT and S- items reach students only through review checks and
+mastery checks, and only when the class turns on "Also use the chapter item bank" (`testout_bank`). That setting is
+**off by default**. Graded knowledge tests use A1/A2/A3/N1/N2/N3 items, which I checked in the DB copy, and practice
+exams use cert items. So with default settings the round-5 tags change nothing a student sees.
+
+### 2. Adaptive engine re-verification after the new tags
+New e2e flow (`tools/adaptive_e2e.py`, between the instructor flow and the final error check):
+1. The instructor turns the bank on through the settings route.
+2. The tester opens the correction for `IT-5.2?mc=MC-R5-IT5-DORA`. The label "Mixing up the order of the DHCP
+   exchange" and "Status of this mix-up description: Pending SME review." are shown, with no horizontal scroll and
+   nothing clipped.
+3. The check leads with the tagged bank item X-IT-5.2.2: served `['X-IT-5.2.2', 'Q5.5', 'Q5.6']`.
+4. The tester answers "Discover" on it and submits. Who needs me (today) then shows the row "Mixing up the order of the
+   DHCP exchange · IT-5.2 · 1 student · 1 pick · 1 open". The briefing loads with the bank on.
+5. With the bank turned off again, the correction check serves no X-/S- item, for example
+   `['C-A1-2.1-21', 'C-A1-2.1-23', 'C-A1-2.3-2']`. The settings are restored.
+
+`tools/semester_sim.py --bank` turns the bank on for the synthetic class through the real settings route. In both
+modes it now records the bank items served. Bank mode adds two checks: bank items were served, and every tagged wrong
+answer on them is recorded as that mix-up in the student's state. Default mode adds one check: no bank item is served.
+
+**Bugs found: none.** Two tests now make the behaviour above permanent:
+- `test_with_the_bank_on_a_round5_correction_serves_its_bank_item_and_records_the_mixup`
+- `test_semester_simulation_with_the_bank_on` (14 days, bank checks only)
+
+The default sim test also asserts that the bank is off and nothing was served.
+
+Semester sim, 28 days, seed 13. Synthetic cohort: this tests engine behaviour, not learning gains.
+
+| Mode | Checks | Bank items served | `strong_in_needs_me` |
+|---|---|---|---|
+| default (bank off) | **16/16** | 0 | `[31, misconception]`, the same as rounds 3–4 |
+| `--bank` | **18/18** | 226 servings of 43 distinct items, 67 tagged wrong answers, all recorded | `[]` |
+
+Observation, not a round-5 regression: at `--days 14`, 4 of the sim's 28-day checks fail in **both** modes. Strong
+students have no test-out yet, the disengaged students are not yet flagged inactive, and two strong students show
+`missed_review`. These checks are written for the documented 28-day window, so the new bank test asserts only the bank
+checks.
+
+### 3. Spot-check round 5 (60 original items, rounds 1–4 excluded; checked by Grok Bot, not an SME)
+- Sample: `tools/spot_check_sample.py --round5` (seed 17), frozen in `docs/readiness/spot-check-round5-sample.json`.
+  The 220 ids from rounds 1–4 are excluded.
+- Pools: EXPANSION 18, ITSUP checks 17, NETOPS checks 10, supplement 6, N1 3, N2 3, A1 2, A2 1.
+- **All 60 items are correct as served. 0 keys, stems, options or rationales changed.** Each verdict cites a primary
+  source; see `SPOT_CHECK_ROUND5.md`.
+- SME notes, not errors:
+  - X-IT-8.3.2 assumes a restore point exists (System Protection on).
+  - NQ2.1's rationale credits BPDU Guard, but STP itself already blocks the loop.
+- Outside the sample, found while tagging: **X-IT-11.3.3** has the distractor "When the fault has a known, documented
+  vendor fix", which its own explanation says "would also favour repair". That may make it a second defensible
+  answer. Flagged, not changed, and a test records it. Suggested replacement distractor: "When the device is under
+  warranty".
+
+### Results on `3e96b8e` (final code; the docs commit on top changes only this file)
+| Run | Result |
+|---|---|
+| `env -u PYTHONHASHSEED pytest -q tests` | **686 passed, 30 skipped**. All 30 skips are `test_vm_real.py`: the v86 assets are not in content-wt. Round 4 was 671; round 5 adds 15 tests (10 tag, 4 spot-check, 1 sim). |
+| `node --test tests/js` | **41/41** |
+| `adaptive_e2e.py` desktop 1366 | **107/107** (round 4: 92; +15 bank-flow checks) |
+| `adaptive_e2e.py` phone 390 | **151/151** (round 4: 128; +23, including the layout checks) |
+| `curriculum_readiness.py --package` | **30/30**. The key is uniquely the longest option in 31/200 chapter checks (15.5%), unchanged. |
+| `semester_sim.py --days 28` | **16/16** (bank off), **18/18** (`--bank`) |
+
+Run details:
+- Server: `app.py` on :5291 against copies of `ciwt_lms.db`. The first run used `/tmp/r5/e2e.db` (PID 1124992); the
+  final run used `/tmp/r5/e2e-final.db` (PID 1136239). Both were stopped by PID, and port 5291 is free.
+- Readiness used `/tmp/r5/ready.db`. The sims used `/tmp/r5/sim.db` and `/tmp/r5/simbank.db`. All are copies.
+- Screenshots and JSON: `/workspace/scratch/adaptive-e2e-r5-final/`. The new shot is
+  `20-tester-round5-bank-mixup-{desktop-1366,phone-390}.png`.
+- Readiness JSON: `/workspace/artifacts/pass-reports/readiness-content-round5.json`.
+- Sim JSON: `semester-sim-content-round5.json` and `semester-sim-content-round5-bank.json`, in the same folder.
+
+### Course package
+Rebuilt from `3e96b8e`, with a clean tree (`dirty_files: []`):
+- `/workspace/artifacts/course-package-content/`: 45 files including the MANIFEST, the same file set as round 4
+- `/workspace/artifacts/course-package-content.zip`: 52 entries, written with Python `zipfile`
+
+All 22 document-model hashes are identical to the round-4 build. "Pending SME review" labels in the answer-key PDFs are
+unchanged: ITSUP 170, NETOPS 2, CLIENT 87. Readiness `--package` matched every MANIFEST hash. Refinement's
+`/workspace/artifacts/course-package/` was not touched.
+
+`ciwt_lms.db` sha256 is still `47fabc92dafe16cf128b34e90c8235d61d02bc735738a83b8a6172fb93597939`.
+
+### Open questions for a human (round 5 additions; questions 1–13 from rounds 3–4 still open, 14 answered by this round)
+15. **SME review of round 5 tagging:** the 66 `MC-R5-*` entries (label, fix text, source) and the 348 tags,
+    especially the 71 reused ids. One known loose fit: `MC-NO9-VLAN-CREATE-ONLY` is reused on a vlan 30 item, but its
+    fix text says "vlan 20".
+16. **The 24 untagged bank/supplement items.** Leave them untagged, or rewrite their distractors so they carry
+    nameable mix-ups?
+17. **X-IT-11.3.3, a possible second defensible answer.** Replace the distractor (suggested: "When the device is under
+    warranty"), or keep it?
+18. **Spot-check SME notes:** X-IT-8.3.2 (restore-point assumption) and NQ2.1 (BPDU Guard vs STP in the rationale).
+19. **Bank default.** The round-5 tags only reach students when a class turns on "Also use the chapter item bank",
+    which is off by default. Should the default change, or should the setting be surfaced more prominently to
+    instructors?
