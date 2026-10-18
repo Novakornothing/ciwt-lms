@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ s.id }} — Lab scenario{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('interactive_labs_index') }}">Live labs</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ s.id }}</li>
+  </ol>
+</nav>
+<header class="lab-head">
+  <div class="lab-head-main">
+    <p class="lab-kicker mb-1"><span class="lab-kind lab-kind-scenario">Lab scenario · PBQ</span>
+      {% for code in s.course_objectives %}<span class="lab-obj-code">{{ code }}</span>{% endfor %}
+      <span class="text-muted small">· about {{ s.minutes }} min</span></p>
+    <h1 class="h4 mb-1">{{ s.title }}</h1>
+    <p class="mb-0 lab-scenario">{{ s.ticket }}</p>
+    {% if s.review and current_user.role in ('admin', 'instructor') %}<p class="small mb-0 mt-2 lab-sme-note"><strong>{{ s.review }}</strong> (instructors only). Run the scenario yourself before you use it for grades.</p>{% endif %}
+  </div>
+  <div class="lab-progress-box" id="scnStatus">
+    {% if st.resolved %}
+      <p class="mb-1 fw-semibold"><i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i> Ticket resolved</p>
+    {% elif st.started %}
+      <p class="mb-1 fw-semibold">In progress · {{ st.stages|selectattr('resolved')|list|length }} of {{ st.stages|length }} stages resolved</p>
+    {% else %}
+      <p class="mb-1 fw-semibold">Not started</p>
+    {% endif %}
+    <p class="small text-muted mb-0">Hints used: {{ st.hints }} · failed checks / unrecognised commands: {{ st.failed }}{% if st.minutes %} · about {{ st.minutes }} min so far{% endif %}</p>
+  </div>
+</header>
+<div class="card mb-3"><div class="card-body">
+  <h2 class="h6">How a performance-based ticket works</h2>
+  <ul class="small mb-0">
+    <li>There is no step list. Each stage has hidden checks; <em>Check my work</em> (VM stages) or the progress bar tells you how many pass, not which.</li>
+    <li>Hints still work (two tiers, recorded for your instructor) and every command goes into the event log.</li>
+    <li>The real VM stages run genuine Linux in your browser; the Windows stages are simulations and say so. Stage 2 unlocks when stage 1 is resolved.</li>
+  </ul>
+</div></div>
+<ol class="list-unstyled scn-stages">
+  {% for x in st.stages %}
+  <li class="card mb-3 scn-stage{{ ' resolved' if x.resolved }}" data-stage="{{ x.id }}">
+    <div class="card-body">
+      <h2 class="h6 mb-1">{{ x.label }}
+        {% if x.resolved %}<span class="badge text-bg-success ms-1">Resolved</span>{% elif not x.unlocked %}<span class="badge text-bg-secondary ms-1">Locked</span>{% endif %}</h2>
+      <p class="mb-2">{{ x.brief }}</p>
+      {% if x.row %}<p class="small text-muted mb-2">Score {{ x.score }}% · hints {{ x.hints }} · failed checks / unrecognised {{ x.failed }}{% if x.minutes %} · {{ x.minutes }} min{% endif %}{% if x.turns %} · wrong turns: {{ x.turns|join(', ')|replace('_', ' ') }}{% endif %}</p>{% endif %}
+      {% if x.unlocked %}
+        <a class="btn btn-sm btn-brand" href="{{ url_for('interactive_lab', lab_id=x.id) }}">{{ 'Review stage' if x.resolved else ('Resume stage' if x.row else 'Start stage') }} {{ x.n }}</a>
+      {% else %}
+        <p class="small mb-0 text-muted"><i class="bi bi-lock" aria-hidden="true"></i> Unlocks when stage {{ x.n - 1 }} is resolved.</p>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+{% if st.resolved %}
+<div class="alert alert-success scn-resolved" role="status"><strong>Ticket resolved.</strong> Close it like a professional: in your notes, state the root cause, the fix, how you verified it and what would prevent a repeat. Your instructor sees the full event log for both stages.</div>
+{% endif %}
+{% endblock %}

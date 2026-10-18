@@ -34,9 +34,10 @@ VM_ASSETS = {
     "wasm": "vendor/v86/v86.wasm",
     "bios": "vendor/v86/seabios.bin",
     "vga_bios": "vendor/v86/vgabios.bin",
-    "bzimage": "vendor/v86/buildroot-bzImage68.bin",
+    "bzimage": "vendor/v86/ciwt-linux.bin",
 }
-IMAGE = {"image": "buildroot-bzImage68.bin", "download_mb": 12.5, "prompt_re": r"[#%$] $"}
+# One image for every lab: tools/vm_image/build.sh (kernel 6.8.12 + netfilter/loop/ATA, BusyBox + real Alpine packages).
+IMAGE = {"image": "ciwt-linux.bin", "download_mb": 13.3, "prompt_re": r"[#%$] $"}
 
 
 def _prelude(host, home="/root"):
@@ -46,8 +47,11 @@ def _prelude(host, home="/root"):
             f"cd {home}\n")
 
 
-def _m(name, label, host, segs=None, mem=64):
-    return {"name": name, "label": label, "hostname": host, "segs": segs or [], "memory_mb": mem}
+def _m(name, label, host, segs=None, mem=80, disk_mb=0):
+    d = {"name": name, "label": label, "hostname": host, "segs": segs or [], "memory_mb": mem}
+    if disk_mb:
+        d["disk_mb"] = disk_mb     # a blank ATA disk (/dev/sda), saved with the VM
+    return d
 
 
 # --------------------------------------------------------------------------------------------- lab 1: permissions
@@ -464,6 +468,8 @@ ROUTING = {
 }
 
 VM_LABS = [PERMS, SHELL, SERVICES, NETCLIENT, ROUTING]
+from labs_vm_more import MORE_LABS, MORE_FABRIC, MORE_FABRIC_WHY  # noqa: E402  (round 2: ten more real labs)
+VM_LABS += MORE_LABS
 VM_BY_ID = {l["id"]: l for l in VM_LABS}
 VM_LINUX = PERMS  # backwards name
 
@@ -584,6 +590,10 @@ FABRIC_RULES = {
 FABRIC_WHY = {"dhcp_ack": "the DHCP server has not acknowledged a lease yet",
               "ping_gw": "the gateway has not seen a ping from you yet",
               "dns_intranet": "the DNS server has not been asked for intranet.ciwt.lab yet"}
+
+
+FABRIC_RULES.update(MORE_FABRIC)
+FABRIC_WHY.update(MORE_FABRIC_WHY)
 
 
 def _fabric_ok(rule, ev, state):

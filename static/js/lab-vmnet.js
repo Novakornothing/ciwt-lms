@@ -120,16 +120,23 @@
       var dp = (f[o + 2] << 8) | f[o + 3];
       if (dp === 67 && this.cfg.dhcp && this.cfg.dhcp.seg === seg) return this.rxDhcp(f, o + 8, seg);
     }
-    if (!this.mine(seg, dst)) return;
+    // cfg.remote: addresses "behind" this host acting as a router one hop away (it decrements TTL like a real router)
+    var rem = (this.cfg.remote || []).filter(function (r) { return r.ip === dst; })[0];
+    if (!rem && !this.mine(seg, dst)) return;
     this.arp[src] = this.arp[src] || mac2s(f, 6);
+    if (rem && ttl <= 1) {                                        // TTL expires at this "router": ICMP time exceeded
+      var me = this.ifFor(seg).ip;
+      this.ev({ type: 'ttl', from: src, to: dst, at: me });
+      return this.sendIp(seg, me, src, this.ipPacket(me, src, 1, concat([11, 0, 0, 0, 0, 0, 0, 0], f.slice(14, Math.min(f.length, o + 8))), true));
+    }
     if (pr === 1 && f[o] === 8) {                                 // echo request -> reply
       var ip = f.slice(14, 14 + ((f[16] << 8) | f[17]));
       var r = new Uint8Array(ip);
-      r.set(f.slice(30, 34), 12); r.set(f.slice(26, 30), 16); r[8] = 64; r[10] = r[11] = 0;
+      r.set(f.slice(30, 34), 12); r.set(f.slice(26, 30), 16); r[8] = rem ? 63 : 64; r[10] = r[11] = 0;
       var c = csum(r, 0, ihl); r[10] = c >> 8; r[11] = c & 255;
       r[ihl] = 0; r[ihl + 2] = r[ihl + 3] = 0; c = csum(r, ihl, r.length - ihl); r[ihl + 2] = c >> 8; r[ihl + 3] = c & 255;
       this.ev({ type: 'ping', from: src, to: dst, ttl: ttl });
-      return this.sendIp(seg, dst, src, r);
+      return this.sendIp(seg, rem ? this.ifFor(seg).ip : dst, src, r);
     }
     if (pr === 17) {
       var sp = (f[o] << 8) | f[o + 1], dport = (f[o + 2] << 8) | f[o + 3];
@@ -137,7 +144,7 @@
       // closed port -> ICMP port unreachable (this is how traceroute knows it arrived)
       this.ev({ type: 'udp', from: src, to: dst, port: dport, ttl: ttl });
       var orig = f.slice(14, Math.min(f.length, o + 8));
-      return this.sendIp(seg, dst, src, this.ipPacket(dst, src, 1, concat([3, 3, 0, 0, 0, 0, 0, 0], orig), true));
+      return this.sendIp(seg, rem ? this.ifFor(seg).ip : dst, src, this.ipPacket(dst, src, 1, concat([3, 3, 0, 0, 0, 0, 0, 0], orig), true));
     }
   };
   function concat(a, b) { var r = new Uint8Array(a.length + b.length); r.set(a, 0); r.set(b, a.length); return r; }

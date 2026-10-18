@@ -28,7 +28,7 @@ cmds = lab["solution"]["vm_commands"] if a.commands == "solution" else ([] if a.
 spec = {"vm": lab["vm"], "commands": cmds, "probes": V.probe_scripts(state, lab), "verbose": a.verbose}
 with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
     json.dump(spec, f)
-r = subprocess.run(["node", str(HERE / "vm_headless.mjs"), f.name], capture_output=True, text=True, timeout=600)
+r = subprocess.run(["node", str(HERE / "vm_headless.mjs"), f.name], capture_output=True, text=True, timeout=1500)
 sys.stderr.write(r.stderr[-6000:])
 if r.returncode:
     sys.exit(f"node failed: {r.returncode}")

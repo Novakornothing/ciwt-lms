@@ -1,0 +1,3 @@
+CIWT lab Linux: Linux 6.8.12-ciwt, BusyBox 1.36.1 (Buildroot 2024.05.2) + Alpine v3.20 x86 packages
+(OpenSSH 9.7, sudo 1.9.15, iptables 1.8.10 (nft backend), dnsmasq 2.90, apk-tools 2.14, drill, e2fsprogs, lsblk, ss).
+Init: BusyBox init with SysV-style scripts in /etc/init.d (S??name runs at boot). Logs: BusyBox syslogd -> /var/log/messages.

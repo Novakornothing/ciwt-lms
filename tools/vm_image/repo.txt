@@ -1,0 +1,2 @@
+# Packages served from the offline local repository (/var/lib/ciwt-repo) for the package lab; not pre-installed.
+darkhttpd 1.16-r0 main

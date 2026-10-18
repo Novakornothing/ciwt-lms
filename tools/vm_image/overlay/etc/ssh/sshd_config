@@ -1,0 +1,8 @@
+# CIWT lab image: OpenSSH 9.7 defaults, with only an ed25519 host key (fast to generate in the browser VM).
+HostKey /etc/ssh/ssh_host_ed25519_key
+PidFile /var/run/sshd.pid
+PermitRootLogin prohibit-password
+PasswordAuthentication yes
+KbdInteractiveAuthentication no
+AuthorizedKeysFile .ssh/authorized_keys
+Subsystem sftp internal-sftp

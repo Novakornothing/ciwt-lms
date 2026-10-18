@@ -5,9 +5,19 @@
   <a class="btn btn-sm btn-brand" href="{{ practical_back }}">Back to skills exam</a>
 </div>
 {% endif %}
+{% if lab.scenario %}
+<div class="alert alert-info d-flex flex-wrap gap-2 justify-content-between align-items-center scn-banner">
+  <span><strong>Ticket {{ lab.scenario }}</strong> · stage {{ lab.stage }} of {{ lab.stages }} · performance-based: no step list, hints and the event log still apply.</span>
+  <a class="btn btn-sm btn-outline-navy" href="{{ url_for('scenario_lab', sid=lab.scenario) }}">Back to the ticket</a>
+</div>
+{% endif %}
+{% if lab.review and current_user.is_authenticated and current_user.role in ('admin', 'instructor') %}
+<div class="alert alert-secondary small py-2 lab-sme-note" role="note"><strong>{{ lab.review }}</strong> (instructors only). This lab was added in the labs overhaul. Try it on your own equipment, and check its steps, outputs and grading against local practice, before you rely on it for grades.</div>
+{% endif %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ url_for('interactive_labs_index') }}">Live labs</a></li>
+    {% if lab.scenario %}<li class="breadcrumb-item"><a href="{{ url_for('scenario_lab', sid=lab.scenario) }}">{{ lab.scenario }}</a></li>{% endif %}
     <li class="breadcrumb-item active" aria-current="page">{{ lab.title }}</li>
   </ol>
 </nav>
@@ -23,7 +33,7 @@
   </div>
   <div class="lab-progress-box">
     <div class="d-flex justify-content-between align-items-baseline gap-2">
-      <span class="small fw-semibold lab-score-text">0 of {{ lab.objectives|length }} objectives · 0%</span>
+      <span class="small fw-semibold lab-score-text">0 of {{ lab.objectives|length }} {{ 'checks' if lab.pbq else 'objectives' }} · 0%</span>
       <span class="badge text-bg-success lab-complete-flag" hidden>Complete</span>
     </div>
     <div class="progress lab-progress" role="progressbar" aria-label="Lab progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">

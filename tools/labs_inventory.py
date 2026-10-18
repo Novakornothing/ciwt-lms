@@ -29,6 +29,7 @@ for (c, ch), ids in IL.CHAPTER_LABS.items():
     for i in ids:
         chap.setdefault(i, []).append(f"{ {'ITSUP': 'IT', 'NETOPS': 'NO', 'CLIENT': 'CL'}.get(c, c)}{ch}")
 new_ids = {l['id'] for l in N.NEW_LABS}
+new_ids |= {l['id'] for l in IL.LABS if l.get('scenario')}   # PBQ stage labs (labs_scenario.py)
 
 
 def mark(lab_id, view):
@@ -66,7 +67,7 @@ if a.env:
     print('| # | Lab | Kind | Environment |')
     print('|---|---|---|---|')
     for n, lab in enumerate(IL.LABS, 1):
-        print(f"| {n} | `{lab['id']}` — {lab['title'].replace('|', '/')} | {lab['kind']} | {env(lab)} |")
+        print(f"| {n} | `{lab['id']}` — {lab['title'].replace('|', '/')}{' †' if lab.get('review') else ''} | {lab['kind']} | {env(lab)} |")
     for cl in RT.classroom_ids():
         print(f"| – | `{cl}` — {RT.classroom_lab(cl)['title']} | classroom | **In class** — real equipment or lab VMs, instructor sign-off |")
     sys.exit(0)
@@ -79,7 +80,7 @@ for n, lab in enumerate(IL.LABS, 1):
     ch = ', '.join(sorted(set(chap.get(lid, [])))) or '–'
     b = '/'.join(bmark(lid, v) for v in ('desktop', 'phone', 'tablet'))
     now = ''.join(mark(lid, v) for v in ('desktop', 'phone', 'tablet'))
-    title = lab['title'].replace('|', '/')
+    title = lab['title'].replace('|', '/') + (' †' if lab.get('review') else '')
     print(f"| {n} | `{lid}`{' 🆕' if lid in new_ids else ''} — {title} | {lab['kind']} | {len(lab['objectives'])} | {co} | {ch} | {b} | {now} |")
 for cl in RT.classroom_ids():
     c = RT.classroom_lab(cl)
