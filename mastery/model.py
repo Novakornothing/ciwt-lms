@@ -52,6 +52,8 @@ KIND_LABEL = {
     'testout': 'mastery check question',
     'quiz': 'chapter check question',
     'review_check': 'review check question',
+    'daily': 'daily review question',
+    'inline': 'lesson quick-check question',
     'lab': 'lab outcome',
     'reading': 'lesson reading time',
 }
@@ -72,7 +74,7 @@ STATUS_LABEL = {
     'waived': 'Waived',
 }
 
-_KIND_ORDER = {'reading': 0, 'lab': 1, 'quiz': 2, 'review_check': 3, 'test': 4, 'testout': 5}
+_KIND_ORDER = {'reading': 0, 'lab': 1, 'quiz': 2, 'inline': 3, 'review_check': 3, 'daily': 3, 'test': 4, 'testout': 5}
 
 
 def clamp(p, lo=0.001, hi=0.999):
@@ -191,7 +193,7 @@ def status_for(p, n_eff, any_evidence=True):
 def describe_counts(est):
     """Plain-language evidence summary, e.g. '3 of 5 questions right (chapter check 1/2, graded test 2/3)'."""
     parts = []
-    for kind in ('test', 'quiz', 'review_check', 'testout'):
+    for kind in ('test', 'quiz', 'review_check', 'daily', 'inline', 'testout'):
         c = est['counts'].get(kind)
         if c:
             parts.append(f"{KIND_LABEL[kind]}s {c['correct']}/{c['n']}")
