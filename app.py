@@ -113,6 +113,21 @@ def inject_interactive_labs():
         return {'all_interactive_labs': []}
 _base = os.path.dirname(os.path.abspath(__file__))
 _default_db = os.path.join(_base, 'ciwt_lms.db')
+
+
+def real_db_allowed(env=os.environ, as_main=False):
+    """Pass 13 DB guard. Importing this module runs init_db() (create_all, migrations, curriculum sync), which
+    rewrites the database. Without DATABASE_URL that would be the real ciwt_lms.db, so a script or test that merely
+    imports app could change it by accident. Allowed only when DATABASE_URL is set, CIWT_ALLOW_REAL_DB=1 is set
+    (start_lms.sh, Procfile, render.yaml set it), or app.py is run directly as the server (python app.py)."""
+    return bool(env.get('DATABASE_URL')) or env.get('CIWT_ALLOW_REAL_DB') == '1' or as_main
+
+
+if not real_db_allowed(as_main=(__name__ == '__main__')):
+    raise RuntimeError(
+        'Refusing to start against the real database ' + _default_db + ' from an import. '
+        'Set DATABASE_URL to a copy (e.g. DATABASE_URL=sqlite:////tmp/copy.db), or set CIWT_ALLOW_REAL_DB=1 '
+        'if you really mean the real DB (servers: start_lms.sh / Procfile / render.yaml already do).')
 db_path = os.environ.get('DATABASE_URL', 'sqlite:///' + _default_db)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

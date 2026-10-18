@@ -12,4 +12,6 @@ if [ "${FLASK_DEBUG:-0}" = "1" ]; then
 else
   echo "Starting CIWT LMS on port ${PORT:-5050} (debugger off; set FLASK_DEBUG=1 for local debugging)"
 fi
+# the real DB is intended here (pass 13 guard: imports without DATABASE_URL are refused otherwise)
+export CIWT_ALLOW_REAL_DB="${CIWT_ALLOW_REAL_DB:-1}"
 PORT="${PORT:-5050}" ./venv/bin/python app.py

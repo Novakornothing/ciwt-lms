@@ -5,3 +5,7 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      # pass 13 DB guard: the server is meant to use the bundled SQLite DB (or set DATABASE_URL instead)
+      - key: CIWT_ALLOW_REAL_DB
+        value: "1"
