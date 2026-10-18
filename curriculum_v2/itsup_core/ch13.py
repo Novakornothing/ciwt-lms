@@ -273,7 +273,7 @@ ITEMS = [
          'Evidence is trustworthy when it can be reproduced; the command makes the line repeatable.'),
     item('IT-13.2', 1, 'A PC reaches 10.0.2.50 by address but not intranet.lab.local by name. Where is the fault?',
          'In name resolution on that path', ['In the default gateway setting', 'In the network adapter’s driver', 'In the DHCP lease for the PC'],
-         'If the address is reachable, routing, the gateway and the lease work; the failing step is name resolution.'),
+         'Reaching the server by address shows the adapter, the IP settings and the path to that host work; only the name lookup fails, so the fault is in name resolution (DNS server, suffix, cache or hosts file).'),
     item('IT-13.2', 2, 'nslookup returns the right address, but the browser goes to the wrong server. What should you check next?',
          'The hosts file and the local DNS cache', ['The DHCP lease time on the router', 'The speed and duplex setting of the adapter', 'The Windows Update history page'],
          'nslookup asks the DNS server directly; the Windows resolver also uses the cache and hosts file, so a difference points there.'),

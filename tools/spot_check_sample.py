@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Draw the seeded, stratified 40-item sample of ORIGINAL course items (no certification items) for the pass-13
-accuracy spot-check. No app import, no DB. Usage: python tools/spot_check_sample.py [seed] > sample.json"""
+accuracy spot-check. No app import, no DB. Usage: python tools/spot_check_sample.py [seed] > sample.json
+
+Round 2 (pass 14): ``python tools/spot_check_sample.py --round2 [seed]`` draws 60 further items, none of them in the
+round-1 sample, spread by objective: every chapter of both courses gets at least one item, then objectives are
+covered one item each (objectives round 1 did not touch first), all from the same original pools."""
 import json
 import os
 import random
@@ -36,5 +40,47 @@ def sample(seed=13):
     return out
 
 
+def _row(name, q):
+    return {'pool': name, 'bank_id': q.get('bank_id'), 'obj': q.get('obj'), 'text': q['text'],
+            'options': q.get('options'), 'correct': q.get('correct'), 'explanation': q.get('explanation') or q.get('study_tip')}
+
+
+def _chapter(obj):
+    return (obj.split('-')[0], int(obj.split('-')[1].split('.')[0]))
+
+
+def sample_round2(seed=14, n=60):
+    rng, P = random.Random(seed), pools()
+    r1 = sample(13)
+    done_ids = {x['bank_id'] for x in r1}
+    done_objs = {x['obj'] for x in r1}
+    by_obj = {}
+    for name in sorted(P):
+        for q in P[name]:
+            if q.get('bank_id') in done_ids or not q.get('obj'):
+                continue
+            by_obj.setdefault(q['obj'], []).append((name, q))
+    objs = sorted(by_obj)
+    rng.shuffle(objs)
+    # untouched objectives first, then the rest (stable within each group after the shuffle)
+    objs.sort(key=lambda o: o in done_objs)
+    picked, used_obj, chapters = [], set(), set()
+    for o in objs:                                   # pass 1: one item for every chapter
+        if _chapter(o) not in chapters:
+            picked.append(rng.choice(by_obj[o])); used_obj.add(o); chapters.add(_chapter(o))
+    for o in objs:                                   # pass 2: one item per further objective
+        if len(picked) >= n:
+            break
+        if o not in used_obj:
+            picked.append(rng.choice(by_obj[o])); used_obj.add(o)
+    picked = picked[:n]
+    picked.sort(key=lambda t: (_chapter(t[1]['obj']), t[1]['obj'], t[1]['bank_id']))
+    return [_row(name, q) for name, q in picked]
+
+
 if __name__ == '__main__':
-    print(json.dumps(sample(int(sys.argv[1]) if len(sys.argv) > 1 else 13), indent=1, ensure_ascii=False))
+    args = sys.argv[1:]
+    if args and args[0] == '--round2':
+        print(json.dumps(sample_round2(int(args[1]) if len(args) > 1 else 14), indent=1, ensure_ascii=False))
+    else:
+        print(json.dumps(sample(int(args[0]) if args else 13), indent=1, ensure_ascii=False))
