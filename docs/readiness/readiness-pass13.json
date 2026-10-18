@@ -1,0 +1,1175 @@
+{
+ "checks": [
+  {
+   "area": "lessons",
+   "check": "ITSUP: all 59 lessons render for staff and an enrolled student (200, no template leftovers)",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "lessons",
+   "check": "ITSUP: every lesson has substantive text (\u2265900 characters of prose; lab walk-throughs are shortest)",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "lessons",
+   "check": "NETOPS: all 30 lessons render for staff and an enrolled student (200, no template leftovers)",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "lessons",
+   "check": "NETOPS: every lesson has substantive text (\u2265900 characters of prose; lab walk-throughs are shortest)",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "ITSUP: every objective its chapter is in the LMS",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "ITSUP: every objective has a lesson",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "ITSUP: every objective has original (non-certification) items",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "ITSUP: every objective has a lab",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "ITSUP: every objective has glossary terms in its lessons",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "NETOPS: every objective its chapter is in the LMS",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "NETOPS: every objective has a lesson",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "NETOPS: every objective has original (non-certification) items",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "NETOPS: every objective has a lab",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "objectives",
+   "check": "NETOPS: every objective has glossary terms in its lessons",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "keys",
+   "check": "every original item has a valid key (487 items)",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "keys",
+   "check": "every certification item has a valid key (415 items)",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "keys",
+   "check": "chapter-check answer keys match the delivered LMS items (key and option order); test items keyed",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "items",
+   "check": "no bank_id is reused for different stems across the original pools",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "items",
+   "check": "no identical stem appears under two different bank ids",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "items",
+   "check": "every original item maps to a current objective",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "items",
+   "check": "every original item has an objective",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "items",
+   "check": "no chapter check without a chapter",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "documents",
+   "check": "lesson plans match the current chapters (lessons, objectives, minutes)",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "documents",
+   "check": "syllabus lists every current chapter and states the computed contact hours",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "area": "package",
+   "check": "course package regenerated from this tree; every document hash matches its MANIFEST entry",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "details": {
+  "ITSUP_lessons": {
+   "n": 59,
+   "bad": [],
+   "short": []
+  },
+  "NETOPS_lessons": {
+   "n": 30,
+   "bad": [],
+   "short": []
+  },
+  "ITSUP_objectives": [
+   {
+    "obj": "IT-1.1",
+    "chapter": 1,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 4,
+    "original_items": 6,
+    "cert_items": 0,
+    "lesson_labs": [
+     "ticket-intake"
+    ],
+    "chapter_labs": 1,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "IT-1.2",
+    "chapter": 1,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 3,
+    "cert_items": 15,
+    "lesson_labs": [
+     "ticket-intake"
+    ],
+    "chapter_labs": 1,
+    "glossary_terms": 8
+   },
+   {
+    "obj": "IT-1.3",
+    "chapter": 1,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 3,
+    "cert_items": 0,
+    "lesson_labs": [
+     "ticket-intake"
+    ],
+    "chapter_labs": 1,
+    "glossary_terms": 7
+   },
+   {
+    "obj": "IT-1.4",
+    "chapter": 1,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 4,
+    "cert_items": 4,
+    "lesson_labs": [
+     "ticket-intake"
+    ],
+    "chapter_labs": 1,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "IT-10.1",
+    "chapter": 10,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 12,
+    "cert_items": 6,
+    "lesson_labs": [
+     "gui-accounts",
+     "w11-firewall"
+    ],
+    "chapter_labs": 5,
+    "glossary_terms": 11
+   },
+   {
+    "obj": "IT-10.2",
+    "chapter": 10,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 6,
+    "original_items": 12,
+    "cert_items": 26,
+    "lesson_labs": [
+     "ticket-intake"
+    ],
+    "chapter_labs": 5,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "IT-10.3",
+    "chapter": 10,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 9,
+    "cert_items": 9,
+    "lesson_labs": [
+     "gui-services",
+     "gui-update"
+    ],
+    "chapter_labs": 5,
+    "glossary_terms": 13
+   },
+   {
+    "obj": "IT-10.4",
+    "chapter": 10,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 0,
+    "original_items": 6,
+    "cert_items": 5,
+    "lesson_labs": [
+     "gui-accounts",
+     "ticket-intake"
+    ],
+    "chapter_labs": 5,
+    "glossary_terms": 10
+   },
+   {
+    "obj": "IT-11.1",
+    "chapter": 11,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 5,
+    "original_items": 10,
+    "cert_items": 4,
+    "lesson_labs": [],
+    "chapter_labs": 2,
+    "glossary_terms": 6
+   },
+   {
+    "obj": "IT-11.2",
+    "chapter": 11,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 8,
+    "cert_items": 0,
+    "lesson_labs": [
+     "gui-about",
+     "gui-update"
+    ],
+    "chapter_labs": 2,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "IT-11.3",
+    "chapter": 11,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 8,
+    "cert_items": 4,
+    "lesson_labs": [
+     "gui-services",
+     "w11-inventory",
+     "w11-processes"
+    ],
+    "chapter_labs": 2,
+    "glossary_terms": 8
+   },
+   {
+    "obj": "IT-11.4",
+    "chapter": 11,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 0,
+    "original_items": 3,
+    "cert_items": 0,
+    "lesson_labs": [
+     "win-full-triage"
+    ],
+    "chapter_labs": 2,
+    "glossary_terms": 5
+   },
+   {
+    "obj": "IT-12.1",
+    "chapter": 12,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 7,
+    "cert_items": 6,
+    "lesson_labs": [],
+    "chapter_labs": 1,
+    "glossary_terms": 14
+   },
+   {
+    "obj": "IT-12.2",
+    "chapter": 12,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 7,
+    "cert_items": 15,
+    "lesson_labs": [
+     "gui-accounts"
+    ],
+    "chapter_labs": 1,
+    "glossary_terms": 10
+   },
+   {
+    "obj": "IT-12.3",
+    "chapter": 12,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 8,
+    "cert_items": 0,
+    "lesson_labs": [],
+    "chapter_labs": 1,
+    "glossary_terms": 8
+   },
+   {
+    "obj": "IT-12.4",
+    "chapter": 12,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 0,
+    "original_items": 3,
+    "cert_items": 0,
+    "lesson_labs": [
+     "hw-board",
+     "ticket-intake",
+     "win-full-triage"
+    ],
+    "chapter_labs": 1,
+    "glossary_terms": 8
+   },
+   {
+    "obj": "IT-13.1",
+    "chapter": 13,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 6,
+    "cert_items": 1,
+    "lesson_labs": [
+     "gui-ethernet",
+     "w11-powershell-net",
+     "win-ipconfig"
+    ],
+    "chapter_labs": 19,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "IT-13.2",
+    "chapter": 13,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 6,
+    "cert_items": 5,
+    "lesson_labs": [
+     "win-dns-break",
+     "win-full-triage"
+    ],
+    "chapter_labs": 19,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "IT-13.3",
+    "chapter": 13,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 4,
+    "original_items": 7,
+    "cert_items": 0,
+    "lesson_labs": [
+     "w11-netsh",
+     "w11-processes"
+    ],
+    "chapter_labs": 19,
+    "glossary_terms": 8
+   },
+   {
+    "obj": "IT-13.4",
+    "chapter": 13,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 0,
+    "original_items": 3,
+    "cert_items": 4,
+    "lesson_labs": [
+     "gui-renew",
+     "win-dhcp-renew"
+    ],
+    "chapter_labs": 19,
+    "glossary_terms": 6
+   },
+   {
+    "obj": "IT-2.1",
+    "chapter": 2,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 5,
+    "original_items": 8,
+    "cert_items": 5,
+    "lesson_labs": [
+     "hw-board"
+    ],
+    "chapter_labs": 2,
+    "glossary_terms": 3
+   },
+   {
+    "obj": "IT-2.2",
+    "chapter": 2,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 4,
+    "cert_items": 1,
+    "lesson_labs": [
+     "hw-board"
+    ],
+    "chapter_labs": 2,
+    "glossary_terms": 5
+   },
+   {
+    "obj": "IT-2.3",
+    "chapter": 2,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 5,
+    "cert_items": 2,
+    "lesson_labs": [
+     "hw-board"
+    ],
+    "chapter_labs": 2,
+    "glossary_terms": 5
+   },
+   {
+    "obj": "IT-2.4",
+    "chapter": 2,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 4,
+    "cert_items": 0,
+    "lesson_labs": [
+     "gui-about",
+     "gui-devices",
+     "w11-disk",
+     "w11-inventory"
+    ],
+    "chapter_labs": 2,
+    "glossary_terms": 3
+   },
+   {
+    "obj": "IT-3.1",
+    "chapter": 3,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 6,
+    "cert_items": 8,
+    "lesson_labs": [
+     "w11-disk"
+    ],
+    "chapter_labs": 4,
+    "glossary_terms": 8
+   },
+   {
+    "obj": "IT-3.2",
+    "chapter": 3,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 8,
+    "cert_items": 4,
+    "lesson_labs": [],
+    "chapter_labs": 4,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "IT-3.3",
+    "chapter": 3,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 4,
+    "original_items": 11,
+    "cert_items": 6,
+    "lesson_labs": [
+     "ticket-intake"
+    ],
+    "chapter_labs": 4,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "IT-3.4",
+    "chapter": 3,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 1,
+    "original_items": 7,
+    "cert_items": 17,
+    "lesson_labs": [],
+    "chapter_labs": 4,
+    "glossary_terms": 4
+   },
+   {
+    "obj": "IT-4.1",
+    "chapter": 4,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 4,
+    "original_items": 9,
+    "cert_items": 13,
+    "lesson_labs": [],
+    "chapter_labs": 3,
+    "glossary_terms": 14
+   },
+   {
+    "obj": "IT-4.2",
+    "chapter": 4,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 7,
+    "cert_items": 32,
+    "lesson_labs": [
+     "gui-accounts"
+    ],
+    "chapter_labs": 3,
+    "glossary_terms": 14
+   },
+   {
+    "obj": "IT-4.3",
+    "chapter": 4,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 8,
+    "cert_items": 15,
+    "lesson_labs": [],
+    "chapter_labs": 3,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "IT-5.1",
+    "chapter": 5,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 11,
+    "cert_items": 0,
+    "lesson_labs": [
+     "win-ipconfig"
+    ],
+    "chapter_labs": 21,
+    "glossary_terms": 13
+   },
+   {
+    "obj": "IT-5.2",
+    "chapter": 5,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 7,
+    "cert_items": 12,
+    "lesson_labs": [],
+    "chapter_labs": 21,
+    "glossary_terms": 13
+   },
+   {
+    "obj": "IT-5.3",
+    "chapter": 5,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 15,
+    "cert_items": 12,
+    "lesson_labs": [
+     "gui-ethernet",
+     "win-dns-break",
+     "win-ipconfig"
+    ],
+    "chapter_labs": 21,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "IT-5.4",
+    "chapter": 5,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 6,
+    "cert_items": 24,
+    "lesson_labs": [
+     "w11-wlan"
+    ],
+    "chapter_labs": 21,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "IT-6.1",
+    "chapter": 6,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 8,
+    "cert_items": 2,
+    "lesson_labs": [
+     "win-ipconfig"
+    ],
+    "chapter_labs": 3,
+    "glossary_terms": 10
+   },
+   {
+    "obj": "IT-6.2",
+    "chapter": 6,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 8,
+    "cert_items": 10,
+    "lesson_labs": [],
+    "chapter_labs": 3,
+    "glossary_terms": 11
+   },
+   {
+    "obj": "IT-6.3",
+    "chapter": 6,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 4,
+    "original_items": 9,
+    "cert_items": 1,
+    "lesson_labs": [
+     "gui-about",
+     "w11-inventory"
+    ],
+    "chapter_labs": 3,
+    "glossary_terms": 7
+   },
+   {
+    "obj": "IT-7.1",
+    "chapter": 7,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 8,
+    "cert_items": 0,
+    "lesson_labs": [],
+    "chapter_labs": 3,
+    "glossary_terms": 7
+   },
+   {
+    "obj": "IT-7.2",
+    "chapter": 7,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 6,
+    "original_items": 11,
+    "cert_items": 0,
+    "lesson_labs": [],
+    "chapter_labs": 3,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "IT-7.3",
+    "chapter": 7,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 4,
+    "original_items": 9,
+    "cert_items": 0,
+    "lesson_labs": [
+     "ticket-intake"
+    ],
+    "chapter_labs": 3,
+    "glossary_terms": 11
+   },
+   {
+    "obj": "IT-7.4",
+    "chapter": 7,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 0,
+    "original_items": 3,
+    "cert_items": 0,
+    "lesson_labs": [
+     "ticket-intake"
+    ],
+    "chapter_labs": 3,
+    "glossary_terms": 11
+   },
+   {
+    "obj": "IT-8.1",
+    "chapter": 8,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 7,
+    "cert_items": 9,
+    "lesson_labs": [
+     "gui-about",
+     "w11-inventory"
+    ],
+    "chapter_labs": 9,
+    "glossary_terms": 16
+   },
+   {
+    "obj": "IT-8.2",
+    "chapter": 8,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 4,
+    "original_items": 8,
+    "cert_items": 8,
+    "lesson_labs": [
+     "gui-accounts",
+     "gui-ethernet",
+     "gui-update",
+     "win-dhcp-renew"
+    ],
+    "chapter_labs": 9,
+    "glossary_terms": 10
+   },
+   {
+    "obj": "IT-8.3",
+    "chapter": 8,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 9,
+    "cert_items": 0,
+    "lesson_labs": [
+     "gui-services",
+     "w11-firewall",
+     "w11-processes",
+     "w11-services"
+    ],
+    "chapter_labs": 9,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "IT-8.4",
+    "chapter": 8,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 0,
+    "original_items": 8,
+    "cert_items": 0,
+    "lesson_labs": [
+     "gui-accounts",
+     "gui-ethernet",
+     "gui-update",
+     "win-dhcp-renew"
+    ],
+    "chapter_labs": 9,
+    "glossary_terms": 10
+   },
+   {
+    "obj": "IT-9.1",
+    "chapter": 9,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 10,
+    "cert_items": 4,
+    "lesson_labs": [],
+    "chapter_labs": 4,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "IT-9.2",
+    "chapter": 9,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 8,
+    "cert_items": 4,
+    "lesson_labs": [
+     "gui-accounts"
+    ],
+    "chapter_labs": 4,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "IT-9.3",
+    "chapter": 9,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 4,
+    "original_items": 9,
+    "cert_items": 8,
+    "lesson_labs": [
+     "gui-accounts"
+    ],
+    "chapter_labs": 4,
+    "glossary_terms": 10
+   },
+   {
+    "obj": "IT-9.4",
+    "chapter": 9,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 0,
+    "original_items": 3,
+    "cert_items": 2,
+    "lesson_labs": [],
+    "chapter_labs": 4,
+    "glossary_terms": 9
+   }
+  ],
+  "NETOPS_objectives": [
+   {
+    "obj": "NO-1.1",
+    "chapter": 1,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 4,
+    "cert_items": 4,
+    "lesson_labs": [],
+    "chapter_labs": 4,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "NO-1.2",
+    "chapter": 1,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 9,
+    "cert_items": 0,
+    "lesson_labs": [
+     "win-ipconfig"
+    ],
+    "chapter_labs": 4,
+    "glossary_terms": 14
+   },
+   {
+    "obj": "NO-1.3",
+    "chapter": 1,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 5,
+    "cert_items": 0,
+    "lesson_labs": [],
+    "chapter_labs": 4,
+    "glossary_terms": 15
+   },
+   {
+    "obj": "NO-2.1",
+    "chapter": 2,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 7,
+    "cert_items": 7,
+    "lesson_labs": [
+     "sw-vlan-access"
+    ],
+    "chapter_labs": 11,
+    "glossary_terms": 14
+   },
+   {
+    "obj": "NO-2.2",
+    "chapter": 2,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 4,
+    "cert_items": 0,
+    "lesson_labs": [
+     "sw-trunk-basics",
+     "sw-vlan-access"
+    ],
+    "chapter_labs": 11,
+    "glossary_terms": 14
+   },
+   {
+    "obj": "NO-2.3",
+    "chapter": 2,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 8,
+    "cert_items": 12,
+    "lesson_labs": [],
+    "chapter_labs": 11,
+    "glossary_terms": 8
+   },
+   {
+    "obj": "NO-3.1",
+    "chapter": 3,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 10,
+    "cert_items": 0,
+    "lesson_labs": [
+     "rtr-gateway"
+    ],
+    "chapter_labs": 8,
+    "glossary_terms": 10
+   },
+   {
+    "obj": "NO-3.2",
+    "chapter": 3,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 6,
+    "cert_items": 15,
+    "lesson_labs": [],
+    "chapter_labs": 8,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "NO-3.3",
+    "chapter": 3,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 7,
+    "cert_items": 7,
+    "lesson_labs": [],
+    "chapter_labs": 8,
+    "glossary_terms": 9
+   },
+   {
+    "obj": "NO-4.1",
+    "chapter": 4,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 4,
+    "cert_items": 0,
+    "lesson_labs": [
+     "win-dhcp-renew"
+    ],
+    "chapter_labs": 5,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "NO-4.2",
+    "chapter": 4,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 5,
+    "cert_items": 0,
+    "lesson_labs": [
+     "win-dns-break"
+    ],
+    "chapter_labs": 5,
+    "glossary_terms": 12
+   },
+   {
+    "obj": "NO-4.3",
+    "chapter": 4,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 6,
+    "cert_items": 7,
+    "lesson_labs": [],
+    "chapter_labs": 5,
+    "glossary_terms": 16
+   },
+   {
+    "obj": "NO-5.1",
+    "chapter": 5,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 9,
+    "cert_items": 4,
+    "lesson_labs": [],
+    "chapter_labs": 6,
+    "glossary_terms": 8
+   },
+   {
+    "obj": "NO-5.2",
+    "chapter": 5,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 7,
+    "cert_items": 6,
+    "lesson_labs": [],
+    "chapter_labs": 6,
+    "glossary_terms": 11
+   },
+   {
+    "obj": "NO-5.3",
+    "chapter": 5,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 5,
+    "cert_items": 21,
+    "lesson_labs": [],
+    "chapter_labs": 6,
+    "glossary_terms": 26
+   },
+   {
+    "obj": "NO-6.1",
+    "chapter": 6,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 5,
+    "cert_items": 5,
+    "lesson_labs": [],
+    "chapter_labs": 4,
+    "glossary_terms": 15
+   },
+   {
+    "obj": "NO-6.2",
+    "chapter": 6,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 4,
+    "original_items": 5,
+    "cert_items": 0,
+    "lesson_labs": [],
+    "chapter_labs": 4,
+    "glossary_terms": 8
+   },
+   {
+    "obj": "NO-6.3",
+    "chapter": 6,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 2,
+    "original_items": 4,
+    "cert_items": 20,
+    "lesson_labs": [],
+    "chapter_labs": 4,
+    "glossary_terms": 15
+   },
+   {
+    "obj": "NO-9.1",
+    "chapter": 9,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 3,
+    "original_items": 5,
+    "cert_items": 3,
+    "lesson_labs": [
+     "sw-trunk-basics",
+     "sw-vlan-access",
+     "sw-vlan-and-trunk"
+    ],
+    "chapter_labs": 11,
+    "glossary_terms": 4
+   },
+   {
+    "obj": "NO-9.2",
+    "chapter": 9,
+    "in_lms": true,
+    "lessons": 1,
+    "check_items": 5,
+    "original_items": 7,
+    "cert_items": 1,
+    "lesson_labs": [
+     "rtr-gateway",
+     "rtr-two-interfaces"
+    ],
+    "chapter_labs": 11,
+    "glossary_terms": 1
+   }
+  ],
+  "ITSUP_hours": {
+   "credit_mapping": {
+    "credits": 4,
+    "lecture_credits": 3,
+    "lab_credits": 1,
+    "lecture_hours": 45,
+    "lab_hours": 30,
+    "contact_hours": 75,
+    "out_of_class_hours": 90,
+    "weeks": 15,
+    "note": "A 3-credit variant (2 lecture + 1 lab) is possible by moving Chapter 13 reps and some lesson reading out of class; see the pacing notes.",
+    "basis": "3 lecture credits \u00d7 1 contact hour/week and 1 lab credit \u00d7 2 contact hours/week over 15 weeks, plus about 2 hours of out-of-class work per lecture credit per week. Lab contact hours per credit vary by institution (commonly 2\u20133).",
+    "source": "U.S. federal definition of a credit hour, 34 CFR 600.2: one hour of classroom or direct faculty instruction plus at least two hours of out-of-class work each week for about fifteen weeks per semester hour (ten to twelve weeks per quarter hour), or an equivalent amount of work for laboratory and other academic activities as established by the institution."
+   },
+   "lms_lesson_hours": 50.8
+  },
+  "NETOPS_hours": {
+   "credit_mapping": {
+    "credits": 4,
+    "lecture_credits": 3,
+    "lab_credits": 1,
+    "lecture_hours": 45,
+    "lab_hours": 30,
+    "contact_hours": 75,
+    "out_of_class_hours": 90,
+    "weeks": 15,
+    "note": "Chapter 9 (CLI lab track) is designed to run in the weekly lab session alongside Chapters 2\u20134.",
+    "basis": "3 lecture credits \u00d7 1 contact hour/week and 1 lab credit \u00d7 2 contact hours/week over 15 weeks, plus about 2 hours of out-of-class work per lecture credit per week. Lab contact hours per credit vary by institution (commonly 2\u20133).",
+    "source": "U.S. federal definition of a credit hour, 34 CFR 600.2: one hour of classroom or direct faculty instruction plus at least two hours of out-of-class work each week for about fifteen weeks per semester hour (ten to twelve weeks per quarter hour), or an equivalent amount of work for laboratory and other academic activities as established by the institution."
+   },
+   "lms_lesson_hours": 38.2
+  },
+  "package": {
+   "ok": true,
+   "bad": [],
+   "head": "73ff97b",
+   "n": 22
+  }
+ },
+ "summary": {
+  "passed": 25,
+  "total": 25
+ }
+}

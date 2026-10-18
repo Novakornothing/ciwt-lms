@@ -179,7 +179,10 @@ def run(package=''):
                     problems['no glossary term in its lessons'].append(o)
             R['details'][f'{code}_objectives'] = rows
             for what in ('chapter not in the LMS', 'no lesson', 'no original items', 'no lab', 'no glossary term in its lessons'):
-                check(f'{code}: every objective — {what.replace("no ", "has a ").replace("chapter not in the LMS", "chapter is in the LMS")}',
+                label = {'chapter not in the LMS': 'its chapter is in the LMS', 'no lesson': 'has a lesson',
+                         'no original items': 'has original (non-certification) items', 'no lab': 'has a lab',
+                         'no glossary term in its lessons': 'has glossary terms in its lessons'}[what]
+                check(f'{code}: every objective {label}',
                       not problems[what], problems[what], 'objectives')
         # ------------------------------------------------------------ 3. answer keys
         bad_keys = [(name, q.get('bank_id'), (q.get('text') or '')[:80]) for name, p in pools.items() for q in p if not key_ok(q)]
