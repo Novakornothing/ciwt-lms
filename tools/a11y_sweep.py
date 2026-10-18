@@ -35,6 +35,7 @@ PAGES = {
         ('syllabus', '/section/1/materials/syllabus'), ('rubrics', '/section/1/materials/rubrics'), ('lab-cli', '/labs/win-ipconfig'),
         ('lesson-3.2', '/student/module/1/3/lesson/13'), ('lesson-4.3', '/student/module/1/4/lesson/19'), ('lesson-5.1', '/student/module/1/5/lesson/21'), ('lesson-6.3', '/student/module/1/6/lesson/28'),
         ('helix-study', '/helix/study'), ('lesson-7.1', '/student/module/1/7/lesson/30'), ('lesson-10.1', '/student/module/1/10/lesson/42'), ('lesson-13.4', '/student/module/1/13/lesson/57'),
+        ('lesson-cert-4.2', '/student/module/1/4/lesson/18'), ('practice', '/practice'), ('practice-take', '@practice-take'), ('practice-result', '@practice-result'),
     ],
     'instructor@lms.local:teach123': [
         ('instr-home', '/instructor'), ('instr-section', '/instructor/section/1'),
@@ -43,6 +44,7 @@ PAGES = {
         ('materials', '/instructor/materials'), ('materials-plans', '/instructor/materials/ITSUP/lesson-plans'),
         ('materials-key', '/instructor/materials/ITSUP/answer-key'), ('syllabus-settings', '/instructor/section/1/syllabus'),
         ('instr-lesson-13.1', '/student/module/1/13/lesson/54'), ('calibration', '/instructor/section/1/attention/calibration'), ('materials-labs', '/instructor/materials/ITSUP/lab-manual'),
+        ('cert-coverage', '/staff/cert-coverage'), ('cert-coverage-filtered', '/staff/cert-coverage?exam=N&status=partial'),
     ],
     'admin@lms.local:admin123': [('admin', '/admin'), ('admin-classes', '/admin/classes'), ('admin-people', '/admin/people'),
                                  ('admin-curriculum', '/admin/curriculum'), ('admin-tqi', '/admin/tqi'),
@@ -69,7 +71,15 @@ with sync_playwright() as p:
                 if a.only and not re.search(a.only, name):
                     continue
                 try:
-                    r = pg.goto(a.base + path, wait_until='networkidle', timeout=25000)
+                    if path.startswith('@practice'):
+                        # pass 11: start a practice drill through the real form (CSRF), optionally submit it
+                        pg.goto(a.base + '/practice', wait_until='networkidle')
+                        pg.locator('form:has(input[name=domain]) button').first.click(); pg.wait_for_url('**/practice/attempt/*')
+                        if path == '@practice-result':
+                            pg.evaluate("() => document.getElementById('testForm').submit()"); pg.wait_for_url('**/result')
+                        r = pg.reload(wait_until='networkidle', timeout=25000)
+                    else:
+                        r = pg.goto(a.base + path, wait_until='networkidle', timeout=25000)
                 except Exception as e:
                     report.append({'page': name, 'width': w, 'theme': theme, 'error': str(e)[:200]}); continue
                 pg.wait_for_timeout(350)

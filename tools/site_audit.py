@@ -27,7 +27,8 @@ PAGES = {
               ('skills', '/class/1/skills'), ('curriculum', '/class/1/curriculum'), ('grades', '/student/grades'),
               ('grades-class', '/student/section/1/grades'), ('inbox', '/messages'), ('msg-new', '/messages/new'), ('msg-thread', '/messages/{msg}'),
               ('tickets', '/tickets'), ('ticket-new', '/tickets/new'), ('search', '/search?q=dns'), ('attention', '/student/attention'),
-              ('consent', '/helix/consent'), ('account', '/account'), ('403', '/admin'), ('404', '/student/module/1/999')],
+              ('consent', '/helix/consent'), ('account', '/account'), ('403', '/admin'), ('404', '/student/module/1/999'),
+              ('practice', '/practice'), ('practice-take', '{ptake}'), ('practice-result', '{presult}'), ('cert-coverage-403', '/staff/cert-coverage')],
   'instructor': [('home', '/instructor'), ('section', '/instructor/section/1'), ('gradebook', '/instructor/section/1/gradebook'),
                  ('gradebook-student', '/instructor/section/1/gradebook/student/4'), ('test-perf', '/instructor/section/1/test/1/performance'),
                  ('quiz-preview', '/instructor/section/1/quiz/1/preview'), ('test-preview', '/instructor/section/1/test/1/preview'),
@@ -36,11 +37,12 @@ PAGES = {
                  ('tqi', '/class/1/tqi'), ('tqi-report', '/class/1/tqi/report'), ('tqi-official', '/class/1/tqi/official'),
                  ('live-labs', '/live-labs'), ('class-labs', '/class/1/labs'), ('skills', '/class/1/skills'), ('inbox', '/messages'),
                  ('msg-thread', '/messages/{msg}'), ('msg-new', '/messages/new'), ('attention', '/instructor/section/1/attention'),
-                 ('convening', '/convening'), ('pilot', '/pilot'), ('gaps', '/gaps'), ('aschool', '/aschool'), ('account', '/account')],
+                 ('convening', '/convening'), ('pilot', '/pilot'), ('gaps', '/gaps'), ('aschool', '/aschool'), ('account', '/account'),
+                 ('cert-coverage', '/staff/cert-coverage'), ('cert-coverage-filtered', '/staff/cert-coverage?exam=A2&status=partial'), ('practice', '/practice')],
   'admin': [('home', '/admin'), ('classes', '/admin/classes'), ('people', '/admin/people'), ('curriculum-admin', '/admin/curriculum'), ('audit', '/admin/audit'), ('curriculum-log', '/admin/curriculum-log'), ('readiness', '/admin/readiness'),
             ('teaching-time', '/admin/teaching-time'), ('test-analytics', '/admin/test-analytics'), ('tickets', '/admin/tickets'),
             ('ticket', '/admin/tickets/{ticket}'), ('tqi', '/admin/tqi'), ('curriculum', '/class/1/curriculum'), ('demo', '/demo'),
-            ('search', '/search?q=raid'), ('account', '/account')],
+            ('search', '/search?q=raid'), ('account', '/account'), ('cert-coverage', '/staff/cert-coverage')],
 }
 SMALL_JS = """() => {
   const out = []; const main = document.querySelector('main') || document.body;
@@ -66,6 +68,15 @@ def login(pg, role):
     pg.goto(B + '/login'); pg.fill('input[name=email]', em); pg.fill('input[name=password]', pw)
     pg.click('button[type=submit]'); pg.wait_for_load_state('networkidle')
 
+def practice_prep(pg):
+    """Start a full A+ Core 2 practice (left open) and a Network+ drill that is submitted, so both pages can be audited."""
+    pg.goto(B + '/practice'); pg.locator('form:has(input[name=exam][value=A2]):not(:has(input[name=domain])) button').click()
+    pg.wait_for_url('**/practice/attempt/*'); take = pg.url.replace(B, '')
+    pg.goto(B + '/practice'); pg.locator('form:has(input[name=exam][value=N]):has(input[name=domain]) button').first.click()
+    pg.wait_for_url('**/practice/attempt/*')
+    pg.evaluate("() => document.getElementById('testForm').submit()"); pg.wait_for_url('**/result')
+    return take, pg.url.replace(B, '')
+
 def prep(b):
     ids = {}
     ctx = b.new_context(); pg = ctx.new_page(); login(pg, 'student')
@@ -79,6 +90,8 @@ def prep(b):
     pg.goto(B + '/tickets/new'); pg.locator('select[name=category]').select_option(index=1)
     pg.fill('input[name=subject]', 'Typo in lesson 1.1'); pg.fill('textarea[name=body]', 'Paragraph 2 says "IPv4 has 64-bit addresses".')
     pg.locator('main form button.btn-brand').last.click(); pg.wait_for_load_state('networkidle')
+    # practice exams (pass 11): one attempt left open to take, one submitted for the score report
+    ids['ptake'], ids['presult'] = practice_prep(pg)
     ctx.close()
     ctx = b.new_context(); pg = ctx.new_page(); login(pg, 'admin'); pg.goto(B + '/admin/tickets')
     t = pg.locator('a[href*="/admin/tickets/"]').first
@@ -88,7 +101,7 @@ def prep(b):
 
 with sync_playwright() as p:
     b = p.chromium.launch()
-    ids = prep(b) if a.prep else (json.load(open(os.path.join(a.out, 'ids.json'))) if os.path.exists(os.path.join(a.out, 'ids.json')) else {'msg': '1', 'ticket': '1'})
+    ids = prep(b) if a.prep else (json.load(open(os.path.join(a.out, 'ids.json'))) if os.path.exists(os.path.join(a.out, 'ids.json')) else {'msg': '1', 'ticket': '1', 'ptake': '/practice', 'presult': '/practice'})
     report = []
     for role, pages in PAGES.items():
         for theme in a.themes.split(','):
