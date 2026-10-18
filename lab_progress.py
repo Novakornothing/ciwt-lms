@@ -280,7 +280,10 @@ def register(app, db, deps):
             import os
             vdir = os.path.join(app.static_folder, 'vendor', 'v86')
             vm_ok = all(os.path.isfile(os.path.join(vdir, f)) for f in ('libv86.js', 'v86.wasm', 'seabios.bin', 'vgabios.bin', lab['vm']['image']))
+        fallback_labs = [x for x in (RT.get_lab(f) for f in lab.get('fallback') or []) if x]
+        real_labs = [x for x in RT.VM.VM_LABS if lab['id'] in (x.get('fallback') or [])]
         return render_template(tpl, lab=lab, boot=boot, prompt=boot.get('prompt', ''), practical_back=back, vm_assets_ok=vm_ok,
+                               fallback_labs=fallback_labs, real_labs=real_labs,
                                palette=RT.palette(lab), steps=RT.public_steps(lab, state))
 
     @login_required
@@ -454,10 +457,19 @@ def register(app, db, deps):
         state, done = load(row)
         body = request.get_json(silent=True) or {}
         before = list(done)
-        res, state, done = RT.vm_check(lab_id, state, done, str(body.get('probe') or '')[:4000], booted=True)
+        probes = body.get('probes')
+        if isinstance(probes, dict):
+            probes = {str(k)[:16]: str(v)[:6000] for k, v in list(probes.items())[:4]}
+        else:
+            probes = str(body.get('probe') or '')[:6000]
+        fabric = body.get('fabric') if isinstance(body.get('fabric'), dict) else None
+        if fabric:
+            fabric = {'events': [e for e in (fabric.get('events') or [])[-200:] if isinstance(e, dict)]}
+        res, state, done = RT.vm_check(lab_id, state, done, probes, booted=True, fabric=fabric)
         newly = [o for o in done if o not in before]
         save(row, lab, state, done, wrong=bool(res.get('error')) or bool(res.get('messages')),
-             ev=('check', 'vm probe ' + json.dumps(state.get('probe_last') or {}, sort_keys=True),
+             ev=('check', 'vm probe ' + json.dumps({k[2:]: v for k, v in (state.get('probe_last') or {}).items() if k.startswith('c_')}, sort_keys=True)
+                   + (' · network: ' + ', '.join(sorted({f"{e.get('type')} {e.get('msg') or e.get('q') or e.get('to') or ''}".strip() for e in (fabric or {}).get('events', [])}))[:300] if fabric and fabric.get('events') else ''),
                  'error' if res.get('error') else ('ok' if RT.is_complete(lab, done) else ('progress' if newly else 'wrong')),
                  newly, res.get('error') or '; '.join(res.get('messages') or [])))
         return jsonify(payload_for(row, lab, state, done, {'result': res, 'newly': newly}))
@@ -469,7 +481,10 @@ def register(app, db, deps):
             return err
         row = get_row(lab_id)
         state, _ = load(row)
-        return jsonify({'script': RT.VM.probe_script(state)})
+        if lab.get('kind') != 'vm':
+            return jsonify({'error': 'not a VM lab'}), 400
+        scripts = RT.VM.probe_scripts(state, lab)
+        return jsonify({'script': scripts[RT.VM.machines(lab)[0]], 'scripts': scripts})
 
     @login_required
     def interactive_lab_mark_done(lab_id):

@@ -9,7 +9,8 @@ import lab_runtime as RT
 
 ALL = [l["id"] for l in IL.LABS]
 NEW = ["net-subnet", "hw-cables", "hw-pc-build", "ticket-method", "win-net-cli", "linux-shell", "print-trouble", "rtr-vlan-acl",
-       "sw-vlan-multi", "wifi-secure", "sec-malware", "ops-backup", "virt-vm", "mob-mdm", "win-ad-users", "win-laptop-ports", "linux-vm-perms", "win-wifi-survey", "hv-vswitch"]
+       "sw-vlan-multi", "wifi-secure", "sec-malware", "ops-backup", "virt-vm", "mob-mdm", "win-ad-users", "win-laptop-ports", "linux-vm-perms", "win-wifi-survey", "hv-vswitch",
+       "linux-vm-shell", "linux-vm-services", "linux-vm-netclient", "linux-vm-routing"]
 
 
 def _j(r):
@@ -40,7 +41,8 @@ def solve_http(client, lab_id, mod=None):
     if lab["kind"] == "vm":
         _j(client.post(f"/labs/{lab_id}/vm-log", json={"lines": [], "booted": True, "boot_ms": 1}))
         _j(client.post(f"/labs/{lab_id}/vm-log", json={"lines": sol["vm_commands"]}))
-        st = _j(client.post(f"/labs/{lab_id}/vm-check", json={"probe": RT.VM.solved_probe(_server_state(lab_id))}))
+        st = _j(client.post(f"/labs/{lab_id}/vm-check", json={"probes": RT.VM.solved_probes(_server_state(lab_id), lab),
+                                                              "fabric": sol.get("fabric")}))
     if lab.get("steps"):
         answers = sol.get("answers") or {}
         server_state = None
@@ -314,25 +316,82 @@ def test_vm_lab_grades_probe_and_history(student, instructor, mod):
     assert "vmBoot" in html or "fetch_v86.sh" in html
     st = _server_state("linux-vm-perms")
     probe = _j(student.get("/labs/linux-vm-perms/vm-probe"))["script"]
-    assert st["nonce"] in probe and "/mnt/.ciwt-result" in probe
+    assert st["nonce"] in probe and "/mnt/.ciwt-result" in probe and "_c perms" in probe
     # forged / stale nonce is refused
-    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": "nonce bad\ndir 1\nend\n"}))
+    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": "nonce bad\nc_mkdir 1\nend\n"}))
     assert r["result"]["error"] and "mkdir" not in r["done"]
     # boot + commands are logged in order; verify needs ls -l AFTER chmod
     _j(student.post("/labs/linux-vm-perms/vm-log", json={"lines": [], "booted": True, "boot_ms": 2900}))
     _j(student.post("/labs/linux-vm-perms/vm-log", json={"lines": ["ls -l /root", "chmod 640 /root/support/tickets/notes.txt"]}))
-    good = f"nonce {st['nonce']}\ndir 1\nnote 1\nmode -rw-r-----\nowner tech1\nuser 1\nexec 1\nrun disk ok \nend\n"
+    good = RT.VM.solved_probe(st, RT.VM.PERMS)
     r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": good}))
     assert not r["complete"] and "verified" not in r["done"] and any("ls -l" in m for m in r["result"]["messages"])
     _j(student.post("/labs/linux-vm-perms/vm-log", json={"lines": ["ls -l /root/support/tickets"]}))
-    bad = good.replace("-rw-r-----", "-rw-r--r--")
+    bad = good.replace("c_perms 1", "c_perms 0") + "v_perms -rw-r--r--\n"
+    student.post("/labs/linux-vm-perms/reset")
+    st = _server_state("linux-vm-perms")
+    _j(student.post("/labs/linux-vm-perms/vm-log", json={"lines": [], "booted": True, "boot_ms": 2900}))
+    _j(student.post("/labs/linux-vm-perms/vm-log", json={"lines": ["chmod 640 x", "ls -l"]}))
+    bad = RT.VM.solved_probe(st, RT.VM.PERMS).replace("c_perms 1", "c_perms 0").replace("end", "v_perms -rw-r--r--\nend")
     r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": bad}))
-    assert "perms" not in r["done"] or True
-    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": good}))
+    assert "perms" not in r["done"] and any("-rw-r--r--" in m and "640" in m for m in r["result"]["messages"])
+    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": RT.VM.solved_probe(st, RT.VM.PERMS)}))
     assert r["complete"] and r["score"] == 100
     _, uid = _row(mod, "student1@lms.local", "linux-vm-perms")
     page = instructor.get(f"/instructor/section/1/labs/student/{uid}/linux-vm-perms").data.decode()
     assert "booted in 2900 ms" in page and "chmod 640" in page
+
+
+def test_vm_multi_machine_probes_and_order(student):
+    lab = RT.get_lab("linux-vm-routing")
+    student.post("/labs/linux-vm-routing/reset")
+    j = _j(student.get("/labs/linux-vm-routing/vm-probe"))
+    assert set(j["scripts"]) == {"pc", "rtr"}
+    assert "_c pc_ip" in j["scripts"]["pc"] and "_c pc_ip" not in j["scripts"]["rtr"] and "_c forward" in j["scripts"]["rtr"]
+    st = _server_state("linux-vm-routing")
+    probes = RT.VM.solved_probes(st, lab)
+    # a probe that claims to come from the other machine is refused
+    r = _j(student.post("/labs/linux-vm-routing/vm-check", json={"probes": {"pc": probes["rtr"]}}))
+    assert r["result"]["error"]
+    # isolate must happen BEFORE forwarding is enabled
+    _j(student.post("/labs/linux-vm-routing/vm-log", json={"lines": [], "booted": True}))
+    _j(student.post("/labs/linux-vm-routing/vm-log", json={"lines": ["[rtr] sysctl -w net.ipv4.ip_forward=1", "[pc] ping -c1 10.2.0.10",
+                                                                   "[rtr] ping -c1 10.2.0.10", "[pc] traceroute -n 10.2.0.10"]}))
+    r = _j(student.post("/labs/linux-vm-routing/vm-check", json={"probes": probes}))
+    assert "isolate" not in r["done"] and "reach" in r["done"] and "trace" in r["done"] and not r["complete"]
+    student.post("/labs/linux-vm-routing/reset")
+    st = _server_state("linux-vm-routing")
+    _j(student.post("/labs/linux-vm-routing/vm-log", json={"lines": [], "booted": True}))
+    _j(student.post("/labs/linux-vm-routing/vm-log", json={"lines": lab["solution"]["vm_commands"]}))
+    r = _j(student.post("/labs/linux-vm-routing/vm-check", json={"probes": RT.VM.solved_probes(st, lab)}))
+    assert r["complete"]
+
+
+def test_vm_network_evidence_is_required(student):
+    """A static address typed by hand is not a DHCP lease: the services host must have sent an ACK."""
+    lab = RT.get_lab("linux-vm-netclient")
+    student.post("/labs/linux-vm-netclient/reset")
+    st = _server_state("linux-vm-netclient")
+    _j(student.post("/labs/linux-vm-netclient/vm-log", json={"lines": [], "booted": True}))
+    _j(student.post("/labs/linux-vm-netclient/vm-log", json={"lines": ["ip a", "ip addr add 10.10.0.120/24 dev eth0", "udhcpc -i eth0"]}))
+    probe = RT.VM.solved_probe(st, lab)
+    r = _j(student.post("/labs/linux-vm-netclient/vm-check", json={"probe": probe, "fabric": {"events": [{"type": "dhcp", "msg": "DISCOVER"}]}}))
+    assert "lease" not in r["done"] and any("acknowledged" in m for m in r["result"]["messages"])
+    r = _j(student.post("/labs/linux-vm-netclient/vm-check", json={"probe": probe, "fabric": {"events": [{"type": "dhcp", "msg": "ACK", "ip": "10.10.0.100"}]}}))
+    assert "lease" in r["done"]
+    # evidence seen once stays earned (the page's event ring may roll over)
+    r = _j(student.post("/labs/linux-vm-netclient/vm-check", json={"probe": probe, "fabric": {"events": []}}))
+    assert "lease" in r["done"]
+
+
+def test_vm_labs_have_fallbacks_and_pure_data():
+    import json as _json
+    for lab in RT.VM.VM_LABS:
+        assert lab["fallback"] and all(RT.get_lab(f) for f in lab["fallback"]), lab["id"]
+        _json.dumps(lab["vm"]), _json.dumps(lab["vm_checks"])
+        ids = [o["id"] for o in lab["objectives"]]
+        assert ids == [c["id"] for c in lab["vm_checks"]], lab["id"]
+        assert set(lab["vm"]["setup"]) <= set(RT.VM.machines(lab))
 
 
 def test_vm_routes_refuse_other_kinds(student):

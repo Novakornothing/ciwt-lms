@@ -279,9 +279,10 @@ def vm_log(lab_id, state, done, lines, booted=False):
     return state, _clean(lab, done)
 
 
-def vm_check(lab_id, state, done, probe_text, booted=True):
+def vm_check(lab_id, state, done, probes, booted=True, fabric=None):
+    """probes: {machine: probe output} (or one string for single-VM labs); fabric: the virtual network's event log."""
     lab = get_lab(lab_id)
-    res, state, done = VM.grade(lab, state, list(done), probe_text, booted)
+    res, state, done = VM.grade(lab, state, list(done), probes, booted, fabric)
     return res, state, _clean(lab, done)
 
 
@@ -451,7 +452,7 @@ def solve(lab_id, uid=0):
         log.append((ev, res))
     if lab["kind"] == "vm":
         state, done = vm_log(lab_id, state, done, sol.get("vm_commands") or [])
-        res, state, done = vm_check(lab_id, state, done, VM.solved_probe(state))
+        res, state, done = vm_check(lab_id, state, done, VM.solved_probes(state, lab), fabric=sol.get("fabric"))
         log.append(("vm-check", res))
     answers = sol.get("answers") or {}
     if callable(answers):
