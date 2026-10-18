@@ -71,8 +71,8 @@ SOURCE = {
     'Q6.1': 'Microsoft Learn, Hyper-V virtual switch types (external, internal, private); course 6.1 / 6.3',
     'Q6.6': 'Microsoft Learn, Hyper-V checkpoints (differencing .avhdx disks); Broadcom/VMware KB 1025279, "Best practices for using VMware snapshots" (not backups; do not keep one more than 72 hours)',
     'Q6.7': 'Microsoft Learn, Hyper-V virtual switch and network adapter settings; VMware vSphere networking (port groups, uplinks); course 6.3',
-    'Q7.0': 'CompTIA A+ Core 1 (220-1201) objective 5.1, troubleshooting methodology (step 1: identify the problem)',
-    'Q7.3': 'CompTIA A+ Core 1 (220-1201) objective 5.1 (verify full system functionality); ITIL 4 Incident management (closure confirmed with the user)',
+    'Q7.0': 'CompTIA A+ 220-1201 exam objectives, troubleshooting methodology section, step 1 (identify the problem) (a competency standard, not a tested objective in the 220-1200 series)',
+    'Q7.3': 'CompTIA A+ 220-1201 exam objectives, troubleshooting methodology section, step 5 (verify full system functionality) (a competency standard, not a tested objective in the 220-1200 series); ITIL 4 Incident management (closure confirmed with the user)',
     'NQ5.5': 'IETF RFC 5905 (NTPv4); RFC 5424 (syslog protocol, timestamps); RFC 3411 (SNMP architecture)',
 }
 

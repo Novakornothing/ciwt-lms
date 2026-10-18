@@ -55,7 +55,7 @@ This card is a 9.6 × 9.6 in office tower → microATX. Later lessons add socket
 </section>
 
 <section id="s2" class="sublesson"><h3>2. Chipset and sockets (names)</h3>
-<p>Intel desktop in this course: <strong>LGA</strong> (pads on the CPU, pins in the socket). AMD AM4/AM5: pins on the CPU. The chipset is the traffic cop between CPU, RAM, storage, and USB. Read the board model printed between the RAM slots — search that string, not “the black one.”</p>
+<p>Intel desktop in this course: <strong>LGA</strong> (pads on the CPU, pins in the socket). AMD AM4: pins on the CPU. AMD AM5 is an LGA socket too (LGA1718: pads on the CPU, pins in the socket). The chipset is the traffic cop between CPU, RAM, storage, and USB. Read the board model printed between the RAM slots — search that string, not “the black one.”</p>
 </section>
 
 <section id="s3" class="sublesson"><h3>3. Connectors you must point to</h3>
@@ -139,7 +139,7 @@ This card is a 9.6 × 9.6 in office tower → microATX. Later lessons add socket
 <p>Card silkscreen: LGA1700. <code>socket lga1700</code>. If you guess AM5, submit will fail in 2.5.</p></div>
 
 <section id="s1" class="sublesson"><h3>1. Socket first</h3>
-<p>Read the board silkscreen and the CPU box. LGA: no pins on the chip; do not scrape the pads. AM4/AM5: pins on the chip; do not set it on a screw. Open the load lever fully, seat, close. If it does not drop in flat, it is not aligned — do not press.</p>
+<p>Read the board silkscreen and the CPU box. LGA: no pins on the chip; do not scrape the pads. AM4: pins on the chip; do not set it on a screw. AM5 is LGA, like Intel: protect the socket pins. Open the load lever fully, seat, close. If it does not drop in flat, it is not aligned — do not press.</p>
 </section>
 
 <section id="s2" class="sublesson"><h3>2. Cooler is part of the CPU</h3>

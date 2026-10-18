@@ -8,7 +8,10 @@ covered one item each (objectives round 1 did not touch first), all from the sam
 
 Round 3 (content round 3): ``python tools/spot_check_sample.py --round3 [seed]`` draws 60 more, none from rounds 1-2
 (round 1 ids frozen in ROUND1_IDS, round 2 read from docs/readiness/spot-check-round2-sample.json), least-checked
-objectives first."""
+objectives first.
+
+Round 4 (content round 4): ``python tools/spot_check_sample.py --round4 [seed]`` draws 60 more, none from rounds 1-3
+(round 3 read from docs/readiness/spot-check-round3-sample.json), same method."""
 import json
 import os
 import random
@@ -130,9 +133,55 @@ def sample_round3(seed=15, n=60):
     return [_row(name, q) for name, q in picked]
 
 
+ROUND3_JSON = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'docs', 'readiness',
+                           'spot-check-round3-sample.json')
+
+
+def sample_round4(seed=16, n=60):
+    """Round 4 (content round 4, Oct 18 2026): n further original items, none checked in rounds 1-3 (ROUND1_IDS and
+    the frozen round-2 and round-3 JSON). Same method as round 3: objectives checked least so far go first (shuffled
+    within each level), every chapter of both courses gets at least one item, then one item per further objective."""
+    rng, P = random.Random(seed), pools()
+    prev = []
+    for path in (ROUND2_JSON, ROUND3_JSON):
+        with open(path, encoding='utf-8') as f:
+            prev += json.load(f)['items']
+    done_ids = set(ROUND1_IDS) | {x['bank_id'] for x in prev}
+    every = {q.get('bank_id'): q.get('obj') for name in P for q in P[name]}
+    checked = {}
+    for b in set(ROUND1_IDS):
+        if every.get(b):
+            checked[every[b]] = checked.get(every[b], 0) + 1
+    for x in prev:                                   # rounds 2-3 carry their objective even if a pool moved
+        checked[x['obj']] = checked.get(x['obj'], 0) + 1
+    by_obj = {}
+    for name in sorted(P):
+        for q in P[name]:
+            if q.get('bank_id') in done_ids or not q.get('obj'):
+                continue
+            by_obj.setdefault(q['obj'], []).append((name, q))
+    objs = sorted(by_obj)
+    rng.shuffle(objs)
+    objs.sort(key=lambda o: checked.get(o, 0))
+    picked, used_obj, chapters = [], set(), set()
+    for o in objs:                                   # pass 1: one item for every chapter
+        if _chapter(o) not in chapters:
+            picked.append(rng.choice(by_obj[o])); used_obj.add(o); chapters.add(_chapter(o))
+    for o in objs:                                   # pass 2: one item per further objective
+        if len(picked) >= n:
+            break
+        if o not in used_obj:
+            picked.append(rng.choice(by_obj[o])); used_obj.add(o)
+    picked = picked[:n]
+    picked.sort(key=lambda t: (_chapter(t[1]['obj']), t[1]['obj'], t[1]['bank_id']))
+    return [_row(name, q) for name, q in picked]
+
+
 if __name__ == '__main__':
     args = sys.argv[1:]
-    if args and args[0] == '--round3':
+    if args and args[0] == '--round4':
+        print(json.dumps(sample_round4(int(args[1]) if len(args) > 1 else 16), indent=1, ensure_ascii=False))
+    elif args and args[0] == '--round3':
         print(json.dumps(sample_round3(int(args[1]) if len(args) > 1 else 15), indent=1, ensure_ascii=False))
     elif args and args[0] == '--round2':
         print(json.dumps(sample_round2(int(args[1]) if len(args) > 1 else 14), indent=1, ensure_ascii=False))
