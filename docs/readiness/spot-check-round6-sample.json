@@ -1,0 +1,846 @@
+{
+ "drawn": "2026-10-18, tools/spot_check_sample.py --round6 18, on branch content during content round 6 (after the round-6 tag work and the X-IT-11.3.3 stem edit; X-IT-11.3.3 excluded)",
+ "note": "Text is as checked (pool text as served by the sampler, same method as rounds 3-5). Excludes the 40 round-1 ids (ROUND1_IDS), the 240 ids in spot-check-round2/3/4/5-sample.json and X-IT-11.3.3 (ROUND6_EXCLUDE). No item text was changed by the spot-check. This file is the record of what was checked.",
+ "items": [
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-1.1.2",
+   "obj": "IT-1.1",
+   "text": "A manager asks for a new starter to get a laptop and email account next Monday. What kind of work is this?",
+   "options": [
+    "Incident",
+    "Emergency change",
+    "Problem record",
+    "Service request"
+   ],
+   "correct": "Service request",
+   "explanation": "Providing something new that was planned is a service request, not a repair."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q2.2",
+   "obj": "IT-2.1",
+   "text": "DIMM marking on the card says DDR5. Lab command?",
+   "options": [
+    "memory ddr4",
+    "storage ddr5",
+    "post ddr5",
+    "memory ddr5"
+   ],
+   "correct": "memory ddr5",
+   "explanation": "The DIMM label says DDR5, and memory generation is typed with the memory command: memory ddr5. memory ddr4 names the other generation, whose key notch is in a different place so it would not even fit the slot; storage takes the drive interface (nvme or sata) and post takes the POST result, so neither accepts a memory type. See 2.4. Source: Course hw-board bench card (lesson 2.4 lab command list); JEDEC DDR4 and DDR5 DIMM standards (different key-notch positions)."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.2",
+   "obj": "IT-2.3",
+   "text": "A workstation with dual-channel capable board shows half the expected memory bandwidth in diagnostics after a upgrade. Two identical DDR5 modules were installed in slots 1 and 2. What is the best next action?",
+   "options": [
+    "Update the chipset driver in Windows",
+    "Move them to the dual-channel slot pair",
+    "Enable XMP/EXPO to restore bandwidth",
+    "Replace both with a matched kit"
+   ],
+   "correct": "Move them to the dual-channel slot pair",
+   "explanation": "Two modules in adjacent slots usually share one channel. The board manual names the dual-channel pair (often slots 2 and 4)."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q3.1",
+   "obj": "IT-3.1",
+   "text": "Allowed diskpart command in this block?",
+   "options": [
+    "clean",
+    "convert gpt on the OS disk without a ticket",
+    "delete partition",
+    "list disk"
+   ],
+   "correct": "list disk",
+   "explanation": "list disk only shows the disks and their numbers, so it changes nothing. clean, delete partition and an unticketed convert on the OS disk all destroy data; in this block you list, read and exit. See 3.1 / 2.6."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-3.2.3",
+   "obj": "IT-3.2",
+   "text": "Incrementals ran Monday to Wednesday after Sunday’s full backup. What does a Wednesday restore need?",
+   "options": [
+    "Only Wednesday’s incremental backup",
+    "Sunday’s full and all three incrementals",
+    "Sunday’s full and Wednesday’s backup only",
+    "Monday’s incremental and the full backup"
+   ],
+   "correct": "Sunday’s full and all three incrementals",
+   "explanation": "Each incremental holds changes since the previous backup, so all of them are applied in order after the full."
+  },
+  {
+   "pool": "question_bank.A2",
+   "bank_id": "A2.1",
+   "obj": "IT-3.3",
+   "text": "A PCIe riser was added; GPU artifacts appear. The riser is unpowered for a power-hungry card. Likely issue?",
+   "options": [
+    "The wrong refresh rate",
+    "The wrong PCIe generation set in Windows",
+    "Not enough power through the unpowered riser",
+    "Outdated monitor firmware"
+   ],
+   "correct": "Not enough power through the unpowered riser",
+   "explanation": "A power-hungry card on an unpowered riser cannot draw enough slot power, causing artefacts and instability."
+  },
+  {
+   "pool": "question_bank.A2",
+   "bank_id": "A2.15",
+   "obj": "IT-3.4",
+   "text": "Which cable fault is most likely if a cable certifier reports split pairs?",
+   "options": [
+    "Split pairs despite correct pin continuity",
+    "An open conductor on one pair",
+    "A permanent link over 100 m",
+    "A crossover instead of straight-through"
+   ],
+   "correct": "Split pairs despite correct pin continuity",
+   "explanation": "Split pairs: pins are connected correctly (continuity passes) but conductors from different twisted pairs are used together, so crosstalk fails certification."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.4",
+   "obj": "IT-4.1",
+   "text": "A laptop charges only with the lid closed and shuts down when opened past 30 degrees. Which failure mode best matches?",
+   "options": [
+    "Failing battery cells under load",
+    "A faulty AC adapter or barrel plug",
+    "The lid-close action in power settings",
+    "A damaged cable or connector in the hinge"
+   ],
+   "correct": "A damaged cable or connector in the hinge",
+   "explanation": "A fault that follows the lid angle is mechanical flex: a damaged cable or connector routed through the hinge."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q4.3",
+   "obj": "IT-4.2",
+   "text": "Work profile / MDM on a phone is:",
+   "options": [
+    "Shop-managed enrollment you do not sidestep",
+    "The user’s personal Apple ID",
+    "A personal backup app",
+    "Something you may remove to install an app"
+   ],
+   "correct": "Shop-managed enrollment you do not sidestep",
+   "explanation": "A work profile or MDM enrolment puts the phone under the organisation’s policy: only the policy owner retires, wipes or changes it, so you do not sidestep it. It is not the user’s personal Apple ID or a personal backup app; those belong to the user. Removing it to install an app breaks compliance and removes company data, which is exactly the change you do not get to make. See 4.2. Source: Microsoft Learn, Intune device enrolment and compliance policies; Apple Platform Deployment guide (device management and User Enrollment)."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-4.3.2",
+   "obj": "IT-4.3",
+   "text": "What must happen before deleting files in the spool PRINTERS folder?",
+   "options": [
+    "Uninstall every printer driver",
+    "Restart the printer at its panel",
+    "Turn off the Windows Firewall",
+    "Stop the Print Spooler service"
+   ],
+   "correct": "Stop the Print Spooler service",
+   "explanation": "The spooler holds the files open; stop it, delete the queued jobs, then start it again."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-5.1.4",
+   "obj": "IT-5.1",
+   "text": "Which IPv6 address is link-local and valid only on the local network segment?",
+   "options": [
+    "fe80::3aff:fe4d:12",
+    "2001:db8:10:4a2::25:1c",
+    "fd12:3456:789a:1::1:20",
+    "::ffff:192.168.100.25"
+   ],
+   "correct": "fe80::3aff:fe4d:12",
+   "explanation": "Link-local IPv6 addresses come from fe80::/10; fd… is unique local and 2001:db8 is the documentation prefix."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.19",
+   "obj": "IT-5.2",
+   "text": "You need to confirm a remote host accepts HTTPS only. Which test is most appropriate?",
+   "options": [
+    "Connect to TCP 443 and check the certificate",
+    "Ping the host to see if it answers",
+    "Look up the host’s A record in DNS",
+    "Run tracert to the host to see the path"
+   ],
+   "correct": "Connect to TCP 443 and check the certificate",
+   "explanation": "HTTPS is TCP 443; connecting to it and checking the certificate proves the service, while ping and DNS do not."
+  },
+  {
+   "pool": "question_bank.A2",
+   "bank_id": "A2.16",
+   "obj": "IT-5.3",
+   "text": "A server NIC team is in switch-dependent mode but the switch is not configured for that teaming. Symptom?",
+   "options": [
+    "The server gets an APIPA address",
+    "The NICs drop to 10 Mb/s",
+    "DNS registration fails",
+    "Unstable or degraded link aggregation"
+   ],
+   "correct": "Unstable or degraded link aggregation",
+   "explanation": "Switch-dependent teaming (e.g., LACP) needs matching switch configuration; without it the aggregate is unstable or degraded."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q5.8",
+   "obj": "IT-5.4",
+   "text": "Changing a shared AP admin password is:",
+   "options": [
+    "Optional",
+    "Only a repair if the password was forgotten",
+    "A change — shop process",
+    "A silent repair"
+   ],
+   "correct": "A change — shop process",
+   "explanation": "A shared access point’s admin password affects everyone who manages that device, so changing it is a change: it goes through the shop’s change process and is recorded. Treating it as optional or as a silent repair leaves the next technician locked out with no record of who changed it. See 5.4 / 1.3."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-6.1.1",
+   "obj": "IT-6.1",
+   "text": "Which hypervisor type runs directly on the hardware without a host OS?",
+   "options": [
+    "Type 1 (bare-metal)",
+    "Type 2 (hosted)",
+    "A container runtime",
+    "A browser sandbox"
+   ],
+   "correct": "Type 1 (bare-metal)",
+   "explanation": "Type 1 hypervisors (e.g., Hyper-V Server, ESXi) run on the hardware; Type 2 run as applications on a host OS."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-6.2.3",
+   "obj": "IT-6.2",
+   "text": "Which of these is one of the NIST essential characteristics of cloud computing?",
+   "options": [
+    "Measured service",
+    "Fixed capacity",
+    "Single tenancy",
+    "Manual provisioning"
+   ],
+   "correct": "Measured service",
+   "explanation": "NIST lists on-demand self-service, broad network access, resource pooling, rapid elasticity and measured service."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q6.7",
+   "obj": "IT-6.3",
+   "text": "Guest shows no adapter or APIPA; host network is up. Next person?",
+   "options": [
+    "The printer vendor’s support line",
+    "Whoever has a screwdriver nearby",
+    "The hypervisor owner (vNIC, port group, uplink)",
+    "The Windows Setup team, to reinstall the guest OS"
+   ],
+   "correct": "The hypervisor owner (vNIC, port group, uplink)",
+   "explanation": "You ran the network checks inside the guest, the guest shows no adapter or an APIPA address and the host network is up, so the fault is in the virtual layer between them: a disconnected vNIC, the wrong port group or the host uplink. That belongs to the hypervisor owner. The printer vendor and “whoever has a screwdriver” have no access to it, and reinstalling the guest OS does not reconnect a virtual adapter. See 6.3. Source: Microsoft Learn, Hyper-V virtual switch and network adapter settings; VMware vSphere networking (port groups, uplinks); course 6.3."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-7.1.1",
+   "obj": "IT-7.1",
+   "text": "You have confirmed a theory and applied a fix. What comes next in the troubleshooting method?",
+   "options": [
+    "Verify full functionality, then document",
+    "Close the ticket immediately",
+    "Establish a new theory",
+    "Escalate to tier 2"
+   ],
+   "correct": "Verify full functionality, then document",
+   "explanation": "After implementing, verify the user’s outcome (and preventive measures), then document findings and actions."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q7.6",
+   "obj": "IT-7.2",
+   "text": "Ping IP works, ping name fails. Domain?",
+   "options": [
+    "Display cable",
+    "RAID 0",
+    "Name / DNS",
+    "Power"
+   ],
+   "correct": "Name / DNS",
+   "explanation": "Reaching the address proves routing works; failing by name points to name resolution (DNS). A display cable, RAID level or power fault would not let the IP ping succeed while the name fails. See 7.2 / 5.3."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-7.3.3",
+   "obj": "IT-7.3",
+   "text": "Which closure note is most useful to the next technician?",
+   "options": [
+    "Only the time spent and the user’s full name and desk",
+    "Cause, fix, how it was verified and any prevention",
+    "A thank-you message copied from the user",
+    "The word “fixed” and the closing date"
+   ],
+   "correct": "Cause, fix, how it was verified and any prevention",
+   "explanation": "Cause, fix, verification and prevention let someone else understand and repeat the work."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q7.10",
+   "obj": "IT-7.4",
+   "text": "You escalate a VPN ticket to the identity team. Which part of the package tells them what you changed on the PC and whether it is still changed?",
+   "options": [
+    "Scope",
+    "The request",
+    "Current state",
+    "Impact and priority"
+   ],
+   "correct": "Current state",
+   "explanation": "The escalation package has six parts: impact and priority, scope, evidence, actions → results, current state and the request. Current state is the part that says what you changed and whether it is still changed, so the owning team knows the starting point."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q8.1",
+   "obj": "IT-8.1",
+   "text": "MEM beep, no video. Clean install?",
+   "options": [
+    "Yes, if Update failed",
+    "Yes, after updating UEFI",
+    "No. Memory domain first",
+    "Yes"
+   ],
+   "correct": "No. Memory domain first",
+   "explanation": "Long beeps or a MEM code with no video is a POST memory fault, which happens before Windows loads, so reinstalling Windows cannot fix it. Check and reseat memory first. See 8.1 / 2.5."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q8.5",
+   "obj": "IT-8.2",
+   "text": "The DHCP Client service is stopped. What symptom do you expect?",
+   "options": [
+    "Only Windows Update fails",
+    "The firewall turns off",
+    "No lease: an APIPA address or failed renewals",
+    "DNS answers slowly, but every name still resolves"
+   ],
+   "correct": "No lease: an APIPA address or failed renewals",
+   "explanation": "The DHCP Client service obtains and renews leases; when it is stopped the address fails to renew or falls back to APIPA."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-8.3.1",
+   "obj": "IT-8.3",
+   "text": "In which order does Microsoft recommend running the system-file repair tools?",
+   "options": [
+    "sfc /scannow first, then chkdsk /f /r on C:",
+    "chkdsk first, then DISM, then Startup Repair",
+    "DISM /RestoreHealth first, then sfc /scannow",
+    "Startup Repair first, then sfc in Safe Mode"
+   ],
+   "correct": "DISM /RestoreHealth first, then sfc /scannow",
+   "explanation": "DISM repairs the component store that SFC uses as its source of good files."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q8.10",
+   "obj": "IT-8.4",
+   "text": "A domain-level GPO and an OU-level GPO set the same option to different values. Neither is enforced and inheritance is not blocked. Which value applies?",
+   "options": [
+    "The local policy, because it lives on the PC",
+    "The OU GPO, because it is applied later",
+    "The domain GPO, because it is higher in the tree",
+    "Whichever GPO was created most recently"
+   ],
+   "correct": "The OU GPO, because it is applied later",
+   "explanation": "GPOs are processed local, site, domain, then OU (parent to child). Where two set the same option, the one applied later — the OU GPO — wins unless a GPO is enforced or inheritance is blocked. Creation date does not matter."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-9.1.3",
+   "obj": "IT-9.1",
+   "text": "Which octal mode gives the owner read/write, the group read, and others no access?",
+   "options": [
+    "755",
+    "640",
+    "600",
+    "664"
+   ],
+   "correct": "640",
+   "explanation": "Owner rw = 4+2 = 6, group r = 4, others 0: 640."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-9.2.1",
+   "obj": "IT-9.2",
+   "text": "How do you start a Mac with Apple silicon in macOS Recovery?",
+   "options": [
+    "Hold Command-R as soon as you hear the startup chime",
+    "Press F8 repeatedly while the Apple logo is showing",
+    "Hold the power button until startup options appear",
+    "Hold Shift and choose Restart from the Apple menu"
+   ],
+   "correct": "Hold the power button until startup options appear",
+   "explanation": "Apple silicon Macs use the held power button and Options; Command-R applies to Intel Macs; F8 is a Windows habit."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-9.3.2",
+   "obj": "IT-9.3",
+   "text": "A Linux user can reach a server but gets “permission denied” opening a file. What kind of problem is it?",
+   "options": [
+    "A DNS problem",
+    "A cabling problem",
+    "A DHCP problem",
+    "An access or permissions problem"
+   ],
+   "correct": "An access or permissions problem",
+   "explanation": "Reaching the server proves connectivity; permission denied comes from file ownership or mode."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-9.4.3",
+   "obj": "IT-9.4",
+   "text": "A shell script written on Windows fails on Linux with “bad interpreter”. What is the most likely cause?",
+   "options": [
+    "The Linux server’s clock is set wrongly",
+    "The script is stored on an exFAT USB drive",
+    "Windows line endings in the script file",
+    "The user’s DNS suffix is not configured"
+   ],
+   "correct": "Windows line endings in the script file",
+   "explanation": "CRLF line endings make the interpreter line invalid; save or convert the file with LF endings."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-10.1.3",
+   "obj": "IT-10.1",
+   "text": "Why should technicians use their own named admin accounts?",
+   "options": [
+    "So they never need to use MFA when signing in to servers",
+    "So their accounts never expire or lock out",
+    "So users can borrow them when they need rights",
+    "So every privileged change is traceable to a person"
+   ],
+   "correct": "So every privileged change is traceable to a person",
+   "explanation": "Named accounts give accountability; shared admin accounts hide who made a change."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-10.2.2",
+   "obj": "IT-10.2",
+   "text": "When is a Microsoft Defender Offline scan most useful?",
+   "options": [
+    "When the PC has no internet connection at all",
+    "When the user wants a faster scan than a quick one",
+    "When the antivirus licence has recently expired",
+    "When malware may be hiding from the running Windows"
+   ],
+   "correct": "When malware may be hiding from the running Windows",
+   "explanation": "The offline scan runs from the recovery environment before Windows loads, catching malware that hides while Windows runs."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.33",
+   "obj": "IT-10.3",
+   "text": "BitLocker is suspended for a firmware update then the device is lost. What residual risk remains?",
+   "options": [
+    "None — the drive stays fully protected",
+    "The recovery key is erased from AD",
+    "The key is unprotected while suspended",
+    "The TPM locks the drive permanently"
+   ],
+   "correct": "The key is unprotected while suspended",
+   "explanation": "Suspending BitLocker stores the key unprotected on the disk, so the data is readable until protection is resumed."
+  },
+  {
+   "pool": "question_bank.A3",
+   "bank_id": "A3.9",
+   "obj": "IT-10.4",
+   "text": "Which log source best helps prove who changed a privileged GPO?",
+   "options": [
+    "The firewall’s traffic log",
+    "The client’s Application log",
+    "Directory-service audit events",
+    "The DHCP server’s lease log"
+   ],
+   "correct": "Directory-service audit events",
+   "explanation": "Directory-service auditing records who changed a Group Policy object and when."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q11.0",
+   "obj": "IT-11.1",
+   "text": "Outlook fails; Word and the next desk work. What is the scope?",
+   "options": [
+    "One app on one PC",
+    "Whole PC — reimage",
+    "Floor-wide incident",
+    "Power supply fault"
+   ],
+   "correct": "One app on one PC",
+   "explanation": "If only Outlook fails while Word on the same PC and the next desk both work, the scope is one app on one PC. That rules out a floor-wide incident and a power fault, and a reimage is far too big a change. See 11.1."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-11.2.3",
+   "obj": "IT-11.2",
+   "text": "You started a PC in Safe Mode using msconfig. What must you do afterwards?",
+   "options": [
+    "Untick Safe boot so it starts normally again",
+    "Turn off System Restore to save disk space",
+    "Run sfc /scannow before the next restart",
+    "Disable the network adapter for safety"
+   ],
+   "correct": "Untick Safe boot so it starts normally again",
+   "explanation": "msconfig’s Safe boot persists until cleared; otherwise every restart returns to Safe Mode."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-11.3.2",
+   "obj": "IT-11.3",
+   "text": "Which step must come first in a rebuild plan?",
+   "options": [
+    "Download the newest drivers for the device model",
+    "Back up the user’s data and test the backup",
+    "Book a meeting room for the change review",
+    "Order a replacement drive in case it fails"
+   ],
+   "correct": "Back up the user’s data and test the backup",
+   "explanation": "Data protection comes first; a backup is only trusted once a restore has been tested."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-11.4.2",
+   "obj": "IT-11.4",
+   "text": "One process’s memory use climbs steadily for hours and never drops. What is the likely problem?",
+   "options": [
+    "A failing power supply unit",
+    "A DNS server that is too slow",
+    "A screen resolution mismatch",
+    "A memory leak in that process"
+   ],
+   "correct": "A memory leak in that process",
+   "explanation": "Steady growth without release is the signature of a leak in the growing process."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-12.1.2",
+   "obj": "IT-12.1",
+   "text": "What is the purpose of a backout plan in a change request?",
+   "options": [
+    "To list everyone who will be told about the change and when",
+    "To explain why the change is needed at all",
+    "To undo the change if it fails, at a stated trigger",
+    "To record who approved the change and when"
+   ],
+   "correct": "To undo the change if it fails, at a stated trigger",
+   "explanation": "The backout plan gives tested steps to reverse the change and the condition for using them."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q12.2",
+   "obj": "IT-12.2",
+   "text": "Password in the ticket to help the next guy?",
+   "options": [
+    "Yes, if the user agrees",
+    "No",
+    "Yes",
+    "Yes, if the ticket is private"
+   ],
+   "correct": "No",
+   "explanation": "A password never goes in the ticket, even if the user agrees or the ticket is private: tickets are widely read and kept. The next technician uses the approved reset path. See 12.2."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.46",
+   "obj": "IT-12.3",
+   "text": "Which recovery option is most appropriate when a single file was deleted from a volume with previous-day backups but the volume is healthy?",
+   "options": [
+    "Run chkdsk /r",
+    "Restore the file from backup or Previous Versions",
+    "Bare-metal recovery of the server",
+    "Rebuild the RAID array"
+   ],
+   "correct": "Restore the file from backup or Previous Versions",
+   "explanation": "Restore just the file from backup or Previous Versions; larger recoveries add risk and downtime."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-12.4.1",
+   "obj": "IT-12.4",
+   "text": "Which item belongs in a knowledge-base article for a known fault?",
+   "options": [
+    "The user’s password at the time of the fault",
+    "Screenshots that show the user’s personal files",
+    "The names of everyone who reported the fault",
+    "The steps to verify that the fix worked"
+   ],
+   "correct": "The steps to verify that the fix worked",
+   "explanation": "A KB article includes verification and escalation steps; secrets and personal data never belong in it."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q13.9",
+   "obj": "IT-13.1",
+   "text": "Chapter 13 pass bar?",
+   "options": [
+    "You noted the password for the next tech",
+    "Labs submit and notes still meet the Block 1 bar",
+    "You ran diskpart clean to practise it",
+    "You left the firewall off to save time in the lab"
+   ],
+   "correct": "Labs submit and notes still meet the Block 1 bar",
+   "explanation": "Chapter 13 is passed when the labs are submitted and the notes still meet the Block 1 standard: facts, tests and the next step. A recorded password, diskpart clean or a firewall left off fail it. See 13.6."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-13.2.3",
+   "obj": "IT-13.2",
+   "text": "After removing a stale hosts-file entry, what is the best verification step?",
+   "options": [
+    "Restart the PC and close the ticket at once",
+    "Run netsh winsock reset to make it stick",
+    "Flush the cache and resolve the name again",
+    "Ask the user to wait until tomorrow"
+   ],
+   "correct": "Flush the cache and resolve the name again",
+   "explanation": "Flushing removes any cached wrong answer; resolving again proves the fix before the page is retested."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q13.7",
+   "obj": "IT-13.3",
+   "text": "List processes:",
+   "options": [
+    "After you reboot",
+    "Never",
+    "Only on Linux",
+    "Before you reboot"
+   ],
+   "correct": "Before you reboot",
+   "explanation": "List processes before you reboot, because a reboot clears the running processes you are trying to see (8.3: a reboot is a change). After a reboot the evidence is gone, and this applies on Windows too. See 13.6 / 8.3."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q13.11",
+   "obj": "IT-13.4",
+   "text": "WMIC has been removed from current Windows 11. Which PowerShell command gives a summary of the IP address, gateway and DNS servers per adapter?",
+   "options": [
+    "Restart-NetAdapter",
+    "Clear-DnsClientCache",
+    "Get-DnsClientServerAddress",
+    "Get-NetIPConfiguration"
+   ],
+   "correct": "Get-NetIPConfiguration",
+   "explanation": "Microsoft removed the WMIC utility from Windows 11 24H2 and later (WMI itself remains). Get-NetIPConfiguration (NetTCPIP module) summarises addresses, gateway and DNS servers per adapter; the other cmdlets restart an adapter, clear the DNS cache, or list only the DNS server addresses per interface (Get-DnsClientServerAddress), not the addresses and gateway."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.9",
+   "obj": "NO-1.2",
+   "text": "A /28 provides how many usable IPv4 hosts (standard host addressing)?",
+   "options": [
+    "30",
+    "12",
+    "14",
+    "16"
+   ],
+   "correct": "14",
+   "explanation": "2^4 = 16 addresses minus network and broadcast = 14."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ1.7",
+   "obj": "NO-1.3",
+   "text": "Which port and transport does SNMP polling use by default?",
+   "options": [
+    "TCP 161",
+    "UDP 514",
+    "TCP 22",
+    "UDP 161"
+   ],
+   "correct": "UDP 161",
+   "explanation": "Agents listen on UDP 161; traps go to UDP 162. UDP 514 is syslog."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.6",
+   "obj": "NO-2.1",
+   "text": "BPDU Guard is enabled on access ports to?",
+   "options": [
+    "Block broadcasts on access ports",
+    "Shut down an edge port that receives STP BPDUs",
+    "Speed up STP convergence on trunks",
+    "Elect the root bridge"
+   ],
+   "correct": "Shut down an edge port that receives STP BPDUs",
+   "explanation": "BPDU Guard err-disables an edge port that receives STP BPDUs (someone attached a switch or made a loop)."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ2.6",
+   "obj": "NO-2.3",
+   "text": "A run of 400 m between two buildings needs 10 Gb/s. Which medium fits?",
+   "options": [
+    "Cat6A copper",
+    "Cat5e with a repeater midway",
+    "Coaxial cable",
+    "Multimode or single-mode fibre"
+   ],
+   "correct": "Multimode or single-mode fibre",
+   "explanation": "Copper Ethernet stops at 100 m; 10GBASE-SR (OM3/OM4 multimode) reaches about 300–400 m and single-mode goes further."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.7",
+   "obj": "NO-3.1",
+   "text": "A dual-homed BGP edge loses one provider. Best outcome with proper design?",
+   "options": [
+    "Traffic shifts to the remaining provider per routing policy",
+    "All sessions fail until the provider returns",
+    "OSPF takes over Internet routing",
+    "DNS redirects users automatically"
+   ],
+   "correct": "Traffic shifts to the remaining provider per routing policy",
+   "explanation": "With proper design, routes via the failed provider are withdrawn and traffic follows the remaining provider’s routes per policy."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.16",
+   "obj": "NO-3.2",
+   "text": "A site-to-site VPN comes up but traffic does not pass interesting traffic selectors. Focus area?",
+   "options": [
+    "The pre-shared key on both peers",
+    "The ISP circuit speed at each site",
+    "The DHCP scope at the remote site",
+    "The traffic selectors and routes into the tunnel"
+   ],
+   "correct": "The traffic selectors and routes into the tunnel",
+   "explanation": "The tunnel is up (authentication worked); traffic fails to match the selectors (crypto ACLs) or is not routed into the tunnel."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.2",
+   "obj": "NO-4.2",
+   "text": "Which DNS record type maps a name to an IPv6 address?",
+   "options": [
+    "MX",
+    "AAAA",
+    "A",
+    "PTR"
+   ],
+   "correct": "AAAA",
+   "explanation": "AAAA records map names to IPv6 addresses; A records are IPv4."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.14",
+   "obj": "NO-4.3",
+   "text": "A DMZ hosts public web servers. What is the design intent?",
+   "options": [
+    "Remove the need for firewalls",
+    "Separate Internet-facing services from internal networks",
+    "Speed up traffic to public servers",
+    "Host domain controllers for remote users"
+   ],
+   "correct": "Separate Internet-facing services from internal networks",
+   "explanation": "A DMZ separates Internet-facing services from internal zones so a compromise there does not reach the internal network."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.28",
+   "obj": "NO-5.1",
+   "text": "Syslog messages are critical for IR but are only stored on each device. Weakness?",
+   "options": [
+    "Too much storage used on each device",
+    "Log messages arrive too late to use",
+    "Syslog cannot record a severity level",
+    "No central, tamper-resistant log store"
+   ],
+   "correct": "No central, tamper-resistant log store",
+   "explanation": "Logs kept only on each device cannot be correlated, may be lost on reboot and can be altered by an attacker; centralise them."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.17",
+   "obj": "NO-5.2",
+   "text": "Control plane policing is intended to?",
+   "options": [
+    "Limit how much bandwidth each user gets",
+    "Prioritise voice traffic across the WAN",
+    "Protect the device CPU from control-plane floods",
+    "Encrypt management sessions to the device"
+   ],
+   "correct": "Protect the device CPU from control-plane floods",
+   "explanation": "CoPP rate-limits traffic destined to the device CPU so floods cannot starve routing and management processes."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ5.6",
+   "obj": "NO-5.3",
+   "text": "Guest Wi-Fi users should reach the Internet but nothing internal. Which design does that?",
+   "options": [
+    "A separate guest VLAN/zone with a policy allowing only Internet",
+    "Putting guests on the staff VLAN, but with a different SSID name",
+    "Giving guests static IPs",
+    "Hiding the guest SSID"
+   ],
+   "correct": "A separate guest VLAN/zone with a policy allowing only Internet",
+   "explanation": "Segmentation plus a deny-internal policy enforces least privilege; SSID names and hiding do not."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ6.0",
+   "obj": "NO-6.1",
+   "text": "Only users in one building cannot reach any server; other buildings are fine. Where do you look first?",
+   "options": [
+    "The Internet provider’s circuit",
+    "The building’s shared uplink and gateway",
+    "The application servers themselves",
+    "Each affected user’s PC in turn, one by one"
+   ],
+   "correct": "The building’s shared uplink and gateway",
+   "explanation": "Scope narrows the fault: what those users share and others do not is the likeliest place."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ6.3",
+   "obj": "NO-6.2",
+   "text": "Why time-box each troubleshooting step during a major incident?",
+   "options": [
+    "To avoid writing status updates while the team is busy fixing",
+    "To give users fewer updates",
+    "To decide when to escalate or roll back instead of drifting",
+    "To make the ticket shorter"
+   ],
+   "correct": "To decide when to escalate or roll back instead of drifting",
+   "explanation": "Time boxes force a decision point: escalate, roll back or try the next theory."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-NO-9.1.1",
+   "obj": "NO-9.1",
+   "text": "Which command assigns an access port to VLAN 30 in interface configuration mode?",
+   "options": [
+    "switchport access vlan 30",
+    "vlan 30 access",
+    "ip vlan 30",
+    "switchport trunk allowed vlan 30"
+   ],
+   "correct": "switchport access vlan 30",
+   "explanation": "switchport access vlan sets an access port’s VLAN; the trunk command applies to trunks only."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ9.7",
+   "obj": "NO-9.2",
+   "text": "Which output confirms the router has a connected route for its VLAN 10 subinterface?",
+   "options": [
+    "The VLAN listed in show vlan brief",
+    "An ARP entry for the router’s own subinterface address",
+    "The hostname in the prompt",
+    "A “C” entry for the VLAN 10 subnet in show ip route"
+   ],
+   "correct": "A “C” entry for the VLAN 10 subnet in show ip route",
+   "explanation": "Connected routes (code C) appear once the subinterface has an address and is up."
+  }
+ ]
+}
