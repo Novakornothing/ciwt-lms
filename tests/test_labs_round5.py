@@ -239,3 +239,34 @@ def test_scenario_stage_not_offered_without_from_or_from_unrelated_lab(student):
                 '/labs/win-dns-break?from=' + 'x' * 500):
         page = student.get(url).get_data(as_text=True)
         assert '/labs/scn-dns-fix' not in page and '/labs/scn-lan2-fix' not in page, url   # no skipping a stage lock
+
+
+# ---- a check stopped by the probe watchdog says so (slow phone ≠ wrong answer), r5
+def test_watchdog_timeout_is_reported_as_slow_not_just_wrong():
+    import labs_vm as V
+    assert 'echo "c_$1 t"' in V._HELPERS
+    lab = V.VM_BY_ID['linux-vm-ssh']
+    st = V.fresh(lab, 7)
+    probes = V.solved_probes(st, lab)
+    probes['ws'] = probes['ws'].replace('c_keylogin 1', 'c_keylogin t')
+    res, st, done = V.grade(lab, st, [], probes)
+    assert res['checks']['keylogin'] is False and 'keylogin' not in done
+    msg = [m for m in res['messages'] if 'Key login' in m][0]
+    assert 'stopped after 60 s on this device' in msg and 'Check my work again' in msg
+    probes['ws'] = probes['ws'].replace('c_keylogin t', 'c_keylogin 0')     # a plain failure keeps the plain message
+    assert V.fresh(lab, 7)['nonce'] == st['nonce']                            # same seed, same nonce: the probe stays valid
+    res, _, done = V.grade(lab, V.fresh(lab, 7), [], probes)
+    assert 'error' not in res and res['checks']['keylogin'] is False and 'keylogin' not in done
+    assert any('Key login' in m for m in res['messages']) and all('stopped after' not in m for m in res['messages'])
+
+
+def test_probe_watchdog_really_reports_t_in_a_posix_shell(tmp_path):
+    import shutil
+    import subprocess
+    import labs_vm as V
+    sh = shutil.which('busybox') and [shutil.which('busybox'), 'sh'] or [shutil.which('dash') or shutil.which('sh')]
+    if not V._HELPERS or not sh[0]:
+        pytest.skip('no POSIX shell')
+    script = V._HELPERS.replace('usleep 100000', 'sleep 0.1') + "_c slow 'sleep 5' 1\n_c fast 'true' 1\n_c bad 'false' 1\n"
+    out = subprocess.run(sh + ['-c', script], capture_output=True, text=True, timeout=20).stdout
+    assert 'c_slow t' in out and 'c_fast 1' in out and 'c_bad 0' in out, out

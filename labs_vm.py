@@ -497,7 +497,7 @@ def _shq(s):
 
 _HELPERS = r"""_c(){ ( eval "$2" ) </dev/null >/dev/null 2>&1 & W=$!; i=0; L=$(( ${3:-3} * 10 ))
 while kill -0 $W 2>/dev/null && [ $i -lt $L ]; do usleep 100000; i=$((i+1)); done
-if kill -0 $W 2>/dev/null; then kill $W 2>/dev/null; echo "c_$1 0"; elif wait $W; then echo "c_$1 1"; else echo "c_$1 0"; fi; }
+if kill -0 $W 2>/dev/null; then kill $W 2>/dev/null; echo "c_$1 t"; elif wait $W; then echo "c_$1 1"; else echo "c_$1 0"; fi; }
 _v(){ echo "v_$1 $( ( eval "$2" ) </dev/null 2>&1 | head -c 200 | tr '\n\t' '  ')"; }
 """
 
@@ -655,6 +655,9 @@ def grade(lab, state, done, probes, booted=True, fabric=None):
         elif not ok and oid != "boot" and oid not in done:
             v = re.sub(r"^/mnt/\.ciwt-probe: (eval: )?(line \d+: )?", "", vals.get("v_" + oid, "").strip())
             msg = (c.get("why") or "").replace("{v}", v or "?")
+            if vals.get("c_" + oid) == "t":   # r5: the watchdog stopped it — say so, slow phones are not wrong answers
+                msg += (f" (This check was stopped after {int(c.get('secs') or 3)} s on this device, so it may only be slow: "
+                        "wait until every VM shows its prompt, then press Check my work again.)")
             if fab_missing:
                 msg += f" ({FABRIC_WHY[c['fabric']]})"
             res["messages"].append(msg)
