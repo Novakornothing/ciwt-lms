@@ -617,3 +617,70 @@ objectives, explanations, worked examples and scenarios, eight described SVG fig
 updates and 46 items (IT-3.1–6.3, ≥2 per objective). Facts were checked against the named sources; details, the SME notes and the
 **lab gaps for the labs worker** are in CURRICULUM_AUDIT.md (“Pass 10”). No lab formats were changed. Documents and docstrings
 that said “chapters 7–13” now say 3–13.
+
+## Pass 11 (Oct 17–18 2026): adaptive mastery engine
+
+Package `mastery/` (pure model/policy/memory/diagnosis modules + Flask routes), templates in `templates/mastery/`,
+styles in `static/css/mastery.css`, misconception tags in `curriculum_v2/misconceptions.py`. Every estimate and decision is a
+learning aid: **nothing here reads or writes a grade** (tested), and everything is explained to the student ("Why am I seeing this?").
+
+### The model (transparent BKT with confidence) — `mastery/model.py`
+- One estimate per objective (50 in ITSUP). Bayesian Knowledge Tracing: prior 0.30, learn 0.12, slip 0.10, guess 0.25 (labs 0.10).
+- Each answer is a tempered Bayes update `p ← p + w(post − p)` then a learning step `p ← p + (1−p)·learn·w`. Weights: graded test 1.0,
+  mastery check (test-out) 1.0, chapter check 0.8, lab 0.7, review check / daily review / in-lesson quick check 0.6.
+- **Time on task:** reading a mapped lesson for ≥ half its estimated minutes gives +0.05 learning credit. Too little time never lowers p.
+- **Confidence** = effective evidence n_eff (sum of weights): low < 2, medium < 6, high ≥ 6. Mastered ≥ 85 % (medium+); needs review < 60 % with n_eff ≥ 1.5.
+- **Helix is never an input** to an estimate. With current consent and Helix on for the class it can only produce an *optional* review offer;
+  no consent or no data → the rule simply does not fire (tested: "Helix never penalizes", consent fallback).
+- Seeded test attempts whose answer texts no longer match current options are **skipped as stale** (shown as a count on the instructor student page), never guessed at.
+
+### Policy and actions — `mastery/policy.py`, `mastery/engine.py`
+- Waive > force review > engine; objective overrides beat chapter (`CH-n`) overrides. Force review works even with adaptivity off; Lock makes reviews required and blocks test-out; Unlock opens test-out.
+- Engine: needs review → short targeted review (3 items, reused lesson sections + glossary, no new facts) → alternate explanation → after 2 completed reviews "stuck" for the instructor. A skipped review is not re-inserted until new evidence.
+- Required reviews are inserted **before the next lesson** (lesson route redirects 303; the review's own lesson stays open).
+- Test-out: offered per chapter to strong students (≥ 3 objectives, 80 % strong) or by Unlock; 2 items per objective (max 12) from the item bank; pass = 80 % and ≥ 1 right per objective; max 3 attempts.
+- Student home "Your path" card (`mastery/_path.html`) and the hero Continue follow the engine; every step has "Why am I seeing this?" with the evidence.
+- Every decision is logged in `mastery_decision` with reasons and an evidence snapshot.
+
+### Instructor page — `/instructor/section/<id>/mastery`
+Student × objective heatmap (chapter filter, AA chips, 44 px cells, screen-reader names), who is stuck and why, inserted reviews, decision log,
+overrides dialog (lock / unlock / force review / waive / clear, note required, audited), adaptivity + test-out toggles, CSV export, per-student evidence page.
+
+### The six additions
+1. **Misconception detection** — 56 misconceptions, 136 (item, distractor) tags on IT-1.1–1.4, 5.1, 5.3, 8.4, 10.1, 10.3, NO-1.2, 2.1, 2.3, 3.1, 5.1.
+   Every tag was checked against the bank (a real distractor, never the key); fixes are worded from the items' own explanations. A tagged pick turns
+   the review into "Fix a mix-up" (the mix-up, then what the lessons say instead, from the two best-matching lesson sections). Counts per student
+   (`misconception_summary`: hits, last hit, resolved by a later right answer) and per class (Who needs me). Untagged objectives fall back to the normal review.
+2. **Spaced retrieval** — `mastery/memory.py`, SM-2 style per objective: ease 2.5 (+0.05 per recalled day, max 2.8; −0.2 per lapse, min 1.3); intervals 1 → 3 → prev × ease, lapse → 1;
+   a day counts as recalled at ≥ 60 % right. Predicted recall R(t) = 0.9^(t/interval): due when it reaches 90 %. **Daily review** card on the student home: 5–10 due
+   questions, "about N min" at 30 s per question, ungraded, one per day (`/student/section/<id>/daily`).
+3. **In-the-moment struggle detection** — one quick check per lesson section (`_quickcheck.html`, `mastery-lesson.js`). A miss plus (Helix re-read of that section *with consent*) or
+   (≥ 45 s on the section without Helix) or a tagged distractor → an inline alternate explanation from the lessons. It is an offer: dismissible, logged, never required, never graded; the key is never sent to the browser.
+4. **Lab process diagnosis** — `mastery/lab_diagnosis.py`: `diagnose(events, lab=None)` takes the labs branch `LabEvent` list (dicts or objects: seq, kind, action, outcome, newly, detail)
+   and returns patterns `trial_and_error`, `repeats_without_change`, `never_verifies`, `skipped_step`, `hint_reliance`, `efficient`, each with evidence and a coaching tip.
+   Tested with hand-written fixtures (`tests/fixtures/lab_events.json`, marked as not real data). **Not wired to live labs** (labs branch untouched). The merge needs:
+   (a) pass `lab_events=lambda uid, sid: {lab_id: events_for(uid, lab_id, latest_attempt)}` in the mastery deps in `app.py`, filtering `LabProgress.section_id == sid`;
+   (b) pass the lab definition (`interactive_labs.get_lab(lab_id)` objectives in order) as `lab=` so `skipped_step` can fire; (c) optionally list diagnoses on the instructor student page.
+   Until then the "lab struggle" reason in Who needs me stays off.
+5. **Instructor "Who needs me"** — `/instructor/section/<id>/mastery/today`: daily ranked list with plain reasons (stuck, repeated mix-up ≥ 2, review waiting > 3 days or ≥ 2 skips in 14 days,
+   ≥ 20-point drop in 7 days, lab struggle when wired, 7 days inactive); ranked by number of different reasons, then most serious, then most recent. No risk score.
+   One-click actions: message (preselected recipient), assign review (force review override), schedule check-in (date, logged + audited). Inactivity-only students are folded away.
+6. **Student-owned learning plan** — `/student/section/<id>/plan`: mastery map, review style choice (short review / alternate explanation / practice questions), daily size 5–10, target exam date
+   (after today, ≤ 2 years) with a backward plan: objectives to master per week and the review load per week. Status ahead / on track / behind is about the plan only; the page says it is **not a prediction** of an exam result.
+
+Out of scope as agreed: confidence-weighted answers and pass forecasts.
+
+### Tests and tools
+- pytest: `tests/test_mastery.py` (model math, overrides, consent fallback, Helix never penalizes, routes, gradebook unchanged) and `tests/test_mastery_features.py` (the six additions). Suite: 302 passed.
+- `tools/mastery_e2e.py` (Playwright, throwaway server + DB copy): review inserted → why panel → lesson banner → mix-up correction → inline offer + dismiss → daily review → plan →
+  heatmap + override dialog (force review → required and redirected before the lesson → waive) → Who needs me → chapter unlock → test-out passed. 38/38 at 1280 and 390 (light), 390 dark.
+- axe WCAG 2.1 AA sweep (`tools/a11y_sweep.py --themes light,dark`, mastery pages added): 360 page/width checks, 0 violations, no overflow. Mastery pages also in `tools/site_audit.py` and `tools/shots.py`.
+- Fixes found by the sweep: heatmap cells use hidden text for their name (label-in-name), darker link in the why panel (contrast), long Next buttons wrap, scrollable lesson tables get focus after web fonts load (`base.html`).
+
+### Known limits
+- Model parameters are literature-typical defaults, **not fitted** to this course: no real student data exists (the demo accounts are seed data and every page says so).
+- Misconception tags cover 14 of the most-used objectives; the rest get the plain review. Tags and fixes need SME review like the pass 8–10 content.
+- Struggle detection without Helix uses time on the section, which cannot tell reading from an idle open tab (only counted while the tab is visible).
+- The memory model is SM-2 style, not a fitted FSRS; due dates are per objective, not per item.
+- Lab diagnosis is heuristic (e.g. `never_verifies` keys on verify-like commands) and only tested on fixtures.
+- Next step: instructor co-pilot briefing (a daily summary built from Who needs me + the decision log) and process-graded labs once the labs branch is merged.
