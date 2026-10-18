@@ -34,9 +34,10 @@ VM_ASSETS = {
     "wasm": "vendor/v86/v86.wasm",
     "bios": "vendor/v86/seabios.bin",
     "vga_bios": "vendor/v86/vgabios.bin",
-    "bzimage": "vendor/v86/buildroot-bzImage68.bin",
+    "bzimage": "vendor/v86/ciwt-linux.bin",
 }
-IMAGE = {"image": "buildroot-bzImage68.bin", "download_mb": 12.5, "prompt_re": r"[#%$] $"}
+# One image for every lab: tools/vm_image/build.sh (kernel 6.8.12 + netfilter/loop/ATA, BusyBox + real Alpine packages).
+IMAGE = {"image": "ciwt-linux.bin", "download_mb": 13.2, "prompt_re": r"[#%$] $"}
 
 
 def _prelude(host, home="/root"):
@@ -46,8 +47,11 @@ def _prelude(host, home="/root"):
             f"cd {home}\n")
 
 
-def _m(name, label, host, segs=None, mem=64):
-    return {"name": name, "label": label, "hostname": host, "segs": segs or [], "memory_mb": mem}
+def _m(name, label, host, segs=None, mem=80, disk_mb=0):
+    d = {"name": name, "label": label, "hostname": host, "segs": segs or [], "memory_mb": mem}
+    if disk_mb:
+        d["disk_mb"] = disk_mb     # a blank ATA disk (/dev/sda), saved with the VM
+    return d
 
 
 # --------------------------------------------------------------------------------------------- lab 1: permissions

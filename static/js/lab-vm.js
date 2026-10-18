@@ -30,7 +30,8 @@
     this.screenEl = document.querySelector('.vm-screen[data-m="' + spec.name + '"]');
     this.cur = null; this.scr = ''; this.esc = ''; this.lines = 0; this.pending = ''; this.flushT = null;
     this.suppress = null; this.booted = false; this.ready = false; this.hist = []; this.hpos = -1; this.tabUsed = false;
-    this.emu = null; this.rawLine = '';
+    this.emu = null; this.rawLine = ''; this.disk = null;
+    this.dec = window.TextDecoder ? new TextDecoder('utf-8') : null; this.pb = [];   // console bytes are UTF-8 (lsblk trees, quotes)
     this.newLine();
   }
   Machine.prototype.newLine = function () {
@@ -59,13 +60,14 @@
       if (this.suppress.done && PROMPT_RE.test(this.suppress.buf.split('\n').pop())) this.endSuppress();
       return;
     }
-    this.pending += ch;
+    this.pb.push(b);
     if (!this.flushT) this.flushT = requestAnimationFrame(function () { self.flush(); });
   };
   Machine.prototype.flush = function () {
     this.flushT = null;
-    for (var i = 0; i < this.pending.length; i++) this.put(this.pending[i]);
-    this.pending = '';
+    var txt = this.dec ? this.dec.decode(new Uint8Array(this.pb), { stream: true }) : String.fromCharCode.apply(null, this.pb);
+    this.pb = [];
+    for (var i = 0; i < txt.length; i++) this.put(txt[i]);
     if (this === active) syncPrompt();
     this.screenEl.scrollTop = this.screenEl.scrollHeight;
     if (!this.booted && PROMPT_RE.test(this.scr)) this.onBooted();
@@ -106,9 +108,12 @@
   var byName = {}; machines.forEach(function (m) { byName[m.name] = m; });
   var active = machines[0];
 
+  var PW_RE = /(pass(word|phrase)[^\n]*|PIN):\s*$/i;
   function syncPrompt() {
-    var m = active.scr.match(LINE_PROMPT);
-    promptEl.textContent = m ? m[1].slice(-26) : (active.ready ? '$' : '…');
+    var m = active.scr.match(LINE_PROMPT), pw = PW_RE.test(active.scr);
+    promptEl.textContent = pw ? 'password' : (m ? m[1].slice(-26) : (active.ready ? '$' : '…'));
+    var t = pw ? 'password' : 'text';
+    if (input.type !== t) { input.type = t; input.setAttribute('autocomplete', pw ? 'off' : 'off'); }
   }
 
   /* ---------------------------------------------------------------- tabs (machines + Packets) */
@@ -148,6 +153,7 @@
   function sendLine(text) {
     var m = active, full = text;
     if (!m.emu || !m.ready) { kit.toast(m.booted ? 'Preparing the scenario — one moment.' : 'Start the VM first.', 'bad'); return; }
+    if (PW_RE.test(m.scr)) { m.send(text + '\n'); logLine(m, '(password typed — not logged)'); m.hpos = -1; return; }
     if (m.tabUsed) { var mm = m.scr.match(/^.*?[#%$] (.*)$/); full = (mm ? mm[1] : '') + text; m.tabUsed = false; }
     m.send(text + '\n');
     if (full.trim()) { m.hist.push(full); if (m.hist.length > 200) m.hist.shift(); logLine(m, full); }
@@ -273,6 +279,10 @@
         if (VMC.net) opts.net_device = { type: 'ne2k' };
         var st = saved && saved.machines && saved.machines[m.name];
         m.resumed = !!st;
+        if (m.spec.disk_mb) {
+          m.disk = (st && saved.disks && saved.disks[m.name]) || new ArrayBuffer(m.spec.disk_mb * 1024 * 1024);
+          opts.hda = { buffer: m.disk };
+        }
         if (st) opts.initial_state = { buffer: st }; else opts.bzimage = { url: cfg.assets.bzimage };
         m.emu = new window.V86(opts);
         m.emu.add_listener('download-progress', function (e) {
@@ -313,7 +323,7 @@
     var dm = navigator.deviceMemory, mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
     if (dm ? dm < 4 && MULTI : (mobile && MULTI)) return;
     Promise.all(machines.map(function (m) { return m.emu.save_state(); })).then(function (bufs) {
-      cleanSnap = {}; machines.forEach(function (m, i) { cleanSnap[m.name] = bufs[i]; });
+      cleanSnap = { disks: {} }; machines.forEach(function (m, i) { cleanSnap[m.name] = bufs[i]; if (m.disk) cleanSnap.disks[m.name] = m.disk.slice(0); });
     }).catch(function () { cleanSnap = null; });
   }
   $('vmBoot').addEventListener('click', function () { start(null); });
@@ -391,8 +401,8 @@
     if (!allReady) return;
     var t = performance.now();
     Promise.all(machines.map(function (m) { return m.emu.save_state(); })).then(function (bufs) {
-      var rec = { v: 2, machines: {}, net: services ? services.snapshot() : null, at: Date.now() }, size = 0;
-      machines.forEach(function (m, i) { rec.machines[m.name] = bufs[i]; size += bufs[i].byteLength; });
+      var rec = { v: 2, machines: {}, disks: {}, net: services ? services.snapshot() : null, at: Date.now() }, size = 0;
+      machines.forEach(function (m, i) { rec.machines[m.name] = bufs[i]; size += bufs[i].byteLength; if (m.disk) { rec.disks[m.name] = m.disk.slice(0); size += m.disk.byteLength; } });
       return idbDo('readwrite', function (s) { s.delete(DBKEY); return s.put(rec, DBKEY); }).then(function () {
         if (!quiet) kit.toast('Saved on this device (' + Math.round(size / 1048576) + ' MB, ' + Math.round(performance.now() - t) + ' ms). Resume it from this page later.', 'ok');
       });
@@ -403,6 +413,7 @@
     if (!window.confirm('Reset the VM' + (MULTI ? 's' : '') + ' to the start of the scenario? Changes inside are lost (your lab progress and objectives are kept).')) return;
     if (cleanSnap) {
       var btn = this; btn.disabled = true;
+      machines.forEach(function (m) { if (m.disk && cleanSnap.disks[m.name]) new Uint8Array(m.disk).set(new Uint8Array(cleanSnap.disks[m.name])); });
       Promise.all(machines.map(function (m) { return m.emu.restore_state(cleanSnap[m.name]); })).then(function () {
         if (services) { services.leases = {}; services.arp = {}; services.events = []; }
         machines.forEach(function (m) { m.clearScreen(); m.hist = []; m.send('\n'); });

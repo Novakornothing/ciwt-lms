@@ -1,0 +1,15 @@
+#!/bin/sh
+# CIWT lab image (based on the v86 Buildroot profile). Two shells start at boot (VGA console and ttyS0);
+# only the first one to get here mounts fstab and brings up loopback.
+if mkdir /dev/.ciwt-boot 2>/dev/null; then
+  mkdir -p /dev/pts
+  mount -a 2>/dev/null
+  echo 0 > /proc/sys/kernel/printk
+  ip link set lo up 2>/dev/null
+  : > /dev/.ciwt-boot/done
+else
+  i=0; while [ ! -e /dev/.ciwt-boot/done ] && [ $i -lt 100 ]; do usleep 50000; i=$((i+1)); done
+fi
+PS1='\W% '
+HOME='/root'
+cd ~
