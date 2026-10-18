@@ -364,6 +364,8 @@ def drive_terminal_touch(page, lab, view, notes, metrics):
 def drive_vm_touch(page, lab, view, notes, metrics):
     import re as _re
     page.evaluate("()=>new Promise(r=>{const q=indexedDB.deleteDatabase('ciwt-vm');q.onsuccess=q.onerror=q.onblocked=()=>r()})")
+    if page.is_visible('#vmCheck'):
+        notes.append('LAYOUT Check my work visible before the VM booted')
     t = time.time()
     page.tap('#vmBoot')
     page.wait_for_selector('#vmTools:not([hidden])', timeout=600000)

@@ -93,6 +93,7 @@ def test_phone_terminal_with_keyboard_open(live, lab_id):
         pg.wait_for_load_state()
         pg.goto(f'{live}/labs/{lab_id}')
         if lab_id.startswith('linux-vm'):   # layout only: show the console without booting v86
+            assert not pg.is_visible('#vmCheck'), 'Check my work is shown before the VM has booted'
             pg.evaluate("document.getElementById('termWrap').hidden=false")
         pg.tap('#termInput')
         g = pg.evaluate(GEOM)

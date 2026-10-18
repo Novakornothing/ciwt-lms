@@ -279,6 +279,7 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
 /* ---------- real VM labs: machine tabs, packets panel */
 .vm-screen .ln, .vm-packets .ln { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-height: 1.2em; }
 .vm-screen[hidden], .vm-packets[hidden] { display: none !important; }
+#vmTools[hidden] { display: none !important; }   /* r5: Bootstrap's .d-flex (!important) showed Check / Save / Reset before the VM had booted */
 .vm-tabs { display: flex; gap: .25rem; padding: .3rem .5rem 0; border-bottom: 1px solid #22344d; overflow-x: auto; scrollbar-width: thin; }
 .vm-tab { flex: 0 0 auto; min-height: 40px; min-width: 44px; padding: .3rem .8rem; border: 1px solid #3a5272; border-bottom: 0; border-radius: 8px 8px 0 0;
   background: #0d1a2c; color: #bfe6ff; font: inherit; font-size: .85rem; touch-action: manipulation; }
