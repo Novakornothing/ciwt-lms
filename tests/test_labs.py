@@ -10,7 +10,9 @@ import lab_runtime as RT
 ALL = [l["id"] for l in IL.LABS]
 NEW = ["net-subnet", "hw-cables", "hw-pc-build", "ticket-method", "win-net-cli", "linux-shell", "print-trouble", "rtr-vlan-acl",
        "sw-vlan-multi", "wifi-secure", "sec-malware", "ops-backup", "virt-vm", "mob-mdm", "win-ad-users", "win-laptop-ports", "linux-vm-perms", "win-wifi-survey", "hv-vswitch",
-       "linux-vm-shell", "linux-vm-services", "linux-vm-netclient", "linux-vm-routing"]
+       "linux-vm-shell", "linux-vm-services", "linux-vm-netclient", "linux-vm-routing",
+       "linux-vm-logs", "linux-vm-cron", "linux-vm-users", "linux-vm-packages", "linux-vm-firewall", "linux-vm-disk", "linux-vm-ssh",
+       "linux-vm-script", "linux-vm-dns", "linux-vm-nettrouble"]
 
 
 def _j(r):

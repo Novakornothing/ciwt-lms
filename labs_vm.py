@@ -468,6 +468,8 @@ ROUTING = {
 }
 
 VM_LABS = [PERMS, SHELL, SERVICES, NETCLIENT, ROUTING]
+from labs_vm_more import MORE_LABS, MORE_FABRIC, MORE_FABRIC_WHY  # noqa: E402  (round 2: ten more real labs)
+VM_LABS += MORE_LABS
 VM_BY_ID = {l["id"]: l for l in VM_LABS}
 VM_LINUX = PERMS  # backwards name
 
@@ -588,6 +590,10 @@ FABRIC_RULES = {
 FABRIC_WHY = {"dhcp_ack": "the DHCP server has not acknowledged a lease yet",
               "ping_gw": "the gateway has not seen a ping from you yet",
               "dns_intranet": "the DNS server has not been asked for intranet.ciwt.lab yet"}
+
+
+FABRIC_RULES.update(MORE_FABRIC)
+FABRIC_WHY.update(MORE_FABRIC_WHY)
 
 
 def _fabric_ok(rule, ev, state):
