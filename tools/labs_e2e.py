@@ -241,6 +241,8 @@ def drive_vm(page, lab, view, notes):
         notes.append(f'{n} packets')
         if not n:
             raise AssertionError('Packets panel is empty')
+        if a.shots:
+            page.screenshot(path=f"{a.shots}/{lab['id']}-{view}-packets.png", full_page=False)
         page.click(f'#vmTab-{first}')
     page.wait_for_timeout(400)   # let the batched command log post
     sel = '[data-key-act="check"]' if page.locator('#termWrap.term-focus').count() else '#vmCheck'

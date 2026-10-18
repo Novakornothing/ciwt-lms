@@ -237,7 +237,7 @@ Kind legend:
 | vm | real Linux VM(s) in the browser (v86) |
 
 
-## Inventory and results (e2e run of 17 Oct 2026, 234/234 checks passed)
+## Inventory and results (e2e run of 18 Oct 2026, 246/246 checks passed: 234 lab×view + 12 instructor/classroom)
 
 | # | Lab | Kind | Obj. | Course objectives | Chapters | Baseline D/P/T | Now D/P/T (e2e) |
 |---|---|---|---|---|---|---|---|
@@ -306,6 +306,10 @@ Kind legend:
 | 63 | `win-wifi-survey` 🆕 — Windows CLI — Wi-Fi survey on a laptop (signal, band, channel) | windows | 6 | IT-5.4, NO-3.3 | IT5, NO3 | new/new/new | ✅✅✅ |
 | 64 | `hv-vswitch` 🆕 — Hyper-V host — isolated virtual switch and checkpoints (PowerShell) | windows | 8 | IT-6.1, IT-6.3 | IT6 | new/new/new | ✅✅✅ |
 | 65 | `linux-vm-perms` 🆕 — Real Linux VM — files, ownership, permissions and a support script | vm | 7 | IT-9.1, IT-9.3 | CL2, IT9 | new/new/new | ✅✅✅ |
+| 66 | `linux-vm-shell` 🆕 — Real Linux VM — shell basics: files, permissions, scripts and logs | vm | 8 | IT-9.1, IT-9.3 | CL2, IT9 | new/new/new | ✅✅✅ |
+| 67 | `linux-vm-services` 🆕 — Real Linux VM — services, processes, a filling disk, cron and syslog | vm | 8 | IT-9.1, NO-5.1 | CL2, IT9, NO5 | new/new/new | ✅✅✅ |
+| 68 | `linux-vm-netclient` 🆕 — Real Linux VM — lease, gateway and name resolution on a live network | vm | 8 | IT-5.1, IT-5.3, IT-13.2, NO-4.1, NO-4.2 | CL6, IT13, IT5, NO4 | new/new/new | ✅✅✅ |
+| 69 | `linux-vm-routing` 🆕 — Real Linux VMs — route between two networks (two machines, one router) | vm | 8 | NO-9.2, IT-5.1, IT-5.3 | IT5, NO9 | new/new/new | ✅✅✅ |
 | – | `CL-4` — Print path and laptop FRU identification | classroom (sign-off) | rubric | – | – | not recorded | ✅✅✅ |
 | – | `CL-6` — Build, snapshot and network a virtual machine | classroom (sign-off) | rubric | – | – | not recorded | ✅✅✅ |
 | – | `CL-7` — Structured troubleshooting drills on staged faults | classroom (sign-off) | rubric | – | – | not recorded | ✅✅✅ |
