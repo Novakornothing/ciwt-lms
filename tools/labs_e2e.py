@@ -11,6 +11,7 @@ import argparse
 import json
 import re
 import sqlite3
+from types import SimpleNamespace
 import sys
 import time
 from pathlib import Path
@@ -398,7 +399,11 @@ def instructor_checks(page, emails, labs_done):
     out.append(('gradebook-labs-column', 'Labs' in gb, ''))
     resp = page.request.get(f'{a.base}/instructor/section/1/labs/results.csv')
     csvt = resp.text()
-    out.append(('csv', resp.status == 200 and all(l in csvt for l in labs_done[:5]), ''))
+    with db() as c:   # the CSV lists the labs of section 1's course only
+        code = c.execute('select c.code from class_section s join course c on c.id=s.course_id where s.id=1').fetchone()['code']
+    in_course = {l['id'] for l in RT.course_lab_set(SimpleNamespace(code=code))}
+    want = [l for l in labs_done if l in in_course][:5]
+    out.append(('csv', resp.status == 200 and all(l in csvt for l in want), ''))
     out.append(('results-page', 'Lab results' in html, ''))
     return out
 
