@@ -118,3 +118,7 @@
 .mx-btn-wrap { white-space: normal; max-width: 100%; text-align: start; }
 /* links inside the "why" panel: Bootstrap's default blue is 4.2:1 on the panel tint */
 html:not([data-theme="dark"]) .mx-why-body a { color: #0a58ca; }
+
+/* instructor mastery pages: every control is a 44 px target (WCAG 2.5.8 / site_audit) */
+.mx-page .btn-sm { min-height: 44px; display: inline-flex; align-items: center; }
+.mx-page .mx-heat-name a { display: inline-flex; align-items: center; min-height: 44px; }

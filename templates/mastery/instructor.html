@@ -2,6 +2,7 @@
 {% from "mastery/_macros.html" import status_chip, demo_ribbon with context %}
 {% block title %}Mastery — {{ section.name }} — {{ site_name }}{% endblock %}
 {% block content %}
+<div class="mx-page">
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My classes</a></li>
@@ -145,5 +146,6 @@
   {% else %}<div class="card-body">No decisions logged yet.</div>{% endif %}
 </section>
 {% include "mastery/_override_modal.html" %}
+</div>
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='js/mastery.js') }}" defer></script>{% endblock %}
