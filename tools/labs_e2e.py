@@ -4,7 +4,7 @@ reload resumes with every objective ticked, no horizontal overflow, and the inst
 per-student transcript, gradebook Labs column). Classroom labs (CL-*) are signed off by the instructor in the UI.
 
 usage: python tools/labs_e2e.py [--base http://127.0.0.1:5191] [--db labs_dev.db] [--only regex]
-                                [--views desktop,phone,tablet] [--shots DIR] [--json out.json]
+                                [--views desktop,phone,tablet] [--shots DIR] [--json out.json] [--cpu 4]
 The DB must be the one the server at --base uses (it is read, never written, by this script).
 """
 import argparse
@@ -29,6 +29,7 @@ ap.add_argument('--only', default='')
 ap.add_argument('--views', default='desktop,phone')
 ap.add_argument('--shots', default='')
 ap.add_argument('--json', default='')
+ap.add_argument('--cpu', type=float, default=0, help='CPU throttle for the student page (CDP; 4 = mid-range phone)')
 a = ap.parse_args()
 
 VIEWS = {  # name: (viewport, mobile/touch, student)
@@ -423,6 +424,8 @@ def main():
             vp, mobile, email = VIEWS[view]
             ctx = b.new_context(viewport=vp, is_mobile=mobile, has_touch=mobile, device_scale_factor=2 if mobile else 1)
             page = ctx.new_page()
+            if a.cpu:
+                ctx.new_cdp_session(page).send('Emulation.setCPUThrottlingRate', {'rate': a.cpu})
             errs = []
             page.on('pageerror', lambda e: errs.append(str(e)))
             login(page, email, PW)
