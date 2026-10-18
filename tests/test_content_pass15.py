@@ -64,3 +64,35 @@ def test_misconception_tags_follow_rewritten_distractors():
                 moved += 1
                 assert MCS.tag_for(by[b], new) == MCS.TAGS[(b, new)]
     assert moved >= 60
+
+
+def test_every_course_objective_now_has_certification_items():
+    from collections import Counter
+    from curriculum_v2.cert.items import CERT_ITEMS
+    from curriculum_v2.objectives import OBJECTIVES
+    n = Counter(q['obj'] for q in CERT_ITEMS)
+    missing = [o for o, v in OBJECTIVES.items() if v['course'] in ('ITSUP', 'NETOPS') and n.get(o, 0) < 2]
+    assert missing == []
+
+
+def test_gap_items_are_pending_review_sourced_aligned_and_tagged():
+    from curriculum_v2.cert import misconceptions as CM
+    from curriculum_v2.cert.content import i05_gaps_p15 as G
+    from curriculum_v2.cert.exams import OBJECTIVES as EXAM_OBJ
+    from curriculum_v2.cert.items import BY_ID
+    from curriculum_v2.cert.mapping import CURATED
+    assert len(G.ITEMS) == 59 and set(G.SOURCE) == {q['bank_id'] for q in G.ITEMS}
+    objs = {q['obj'] for q in G.ITEMS}
+    assert len(objs) == 26
+    for raw in G.ITEMS:
+        q = BY_ID[raw['bank_id']]
+        assert 'Pending SME review' in q['review']
+        assert all(c in EXAM_OBJ and c in CURATED[q['obj']] for c in q['cert']), q['bank_id']
+        assert G.SOURCE[q['bank_id']].strip()
+        for d, mc in (q.get('mc') or {}).items():
+            assert d in q['options'] and d != q['correct'] and CM.MISCONCEPTIONS[mc]['obj'] == q['obj']
+    tagged = {q['obj'] for q in G.ITEMS if q.get('mc')}
+    assert tagged == objs                                             # every gap objective gets misconception tags
+    singles = [BY_ID[q['bank_id']] for q in G.ITEMS if q['type'] == 'single']
+    uniq = [q for q in singles if len(q['correct']) > max(len(o) for o in q['options'] if o != q['correct'])]
+    assert len(uniq) / len(singles) <= 0.30

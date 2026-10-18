@@ -25,6 +25,7 @@
   <h2 class="h6 mb-1" id="mxMcH">The mix-up</h2>
   <p class="mb-1">Some of your answers{% if mcinfo.seen %} ({{ mcinfo.seen }} so far){% endif %} suggest this idea: <strong>{{ mcinfo.label }}</strong>.</p>
   <p class="mb-0">What the course teaches instead: {{ mcinfo.fix }} The lesson sections below explain it; the questions at the end check it.</p>
+  {% if mcinfo.status %}<p class="mx-muted small mb-0 mt-1">Status of this mix-up description: {{ mcinfo.status }}.</p>{% endif %}
 </section>
 {% else %}
 <p class="mx-frame">{% if variant == 'practice' %}Practice questions only, as you chose. They are not graded.{% elif variant == 'alt' %}Here is the same idea from a different angle: a plain-language summary, an analogy and a worked example, all taken from your course lessons. Read it once, then try the questions at the end.{% else %}These are the parts of the lesson that teach this objective. Read them, check yourself, then answer the questions at the end. They are not graded.{% endif %}</p>

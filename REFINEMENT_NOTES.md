@@ -1121,3 +1121,72 @@ The exempt screenshots use one synthetic passed test-out row (student1, CH-2) th
 - Fill the cert-item gaps.
 - Back up `ciwt_lms.db` before the first boot on the merged tree.
 - Pilot with real students before claiming any learning effect.
+
+## Pass 15 (Oct 18 2026): full rationales, option-length parity, cert-item gaps, consistent course packages, content round-3 merge
+
+All work was local; nothing was pushed. Tests and servers used DB copies (`/tmp/p15/work.db`, `/tmp/p15/smoke.db`).
+The one server started (port 5078) bound 127.0.0.1 and was stopped by PID. `ciwt_lms.db` is still at sha `47fabc92…`.
+`content-wt` and `labs-wt` were not touched.
+
+**0. Content merge (b6e8439).** `content` had one new commit (b6a32e3: adaptive UI round 2, `tools/adaptive_e2e.py`,
+spot-check round 2, assess-phone e2e fallback). It merged with no conflicts; see "Round 3" in `MERGE_NOTES_CONTENT.md`.
+Re-checked before wrap-up: `content` had no further commits.
+
+**1. Full rationales (01fc6ba).** The 41 short ITSUP/CLIENT rationales are 39 ITSUP bank items, two of which (Q8.6, Q8.8)
+CLIENT also serves. All now have full explanations in `curriculum_v2/rationales_pass15.py`: why the key is right and why
+the main distractor is wrong, ending with the section pointer. Keys are unchanged. No chapter-check rationale is now
+under 10 words. *Pending SME review.*
+
+**2. Longest-option giveaway (01fc6ba, f9ffdc4).**
+
+- `curriculum_v2/parity_pass15.py` rewrites option text in about 88 ITSUP/NETOPS items. Distractors were lengthened with
+  plausible detail that keeps the same wrong idea, and a few keys were tightened. It is applied in `item_review.review_check`
+  and `netops_checks.netops_quiz_payload`. Misconception tags move to the rewritten text.
+- The key was the uniquely longest option in 108 of 200 items (54%). Now it is 31 of 200 (15.5%), below the roughly 25%
+  expected by chance. The pass-14 items Q12.11 and Q13.11 are fixed.
+- The Q1.8 rewrite was dropped because it changed the meaning.
+- Only NQ1.5 (HTTPS) and NQ4.5 (CNAME) still have a key more than 15% longer than every distractor. Both are one-term keys.
+- The new cert items were balanced the same way: the key is uniquely longest in 11 of 55 singles, each by a margin of 3
+  characters or fewer.
+- Audit (`tools/curriculum_readiness.py`): new checks for rationale length (≥10 words) and for the key-longest share
+  (≤30%, clear-margin items ≤ max(2, n/50)). The share is reported in `key_longest`. Readiness: 30/30
+  (`docs/readiness/readiness-pass15.json`).
+
+**3. Cert-item gaps (a79eaa9).** `curriculum_v2/cert/content/i05_gaps_p15.py` has 59 items: 55 single, 2 multi, 2 order.
+They cover the 22 objectives that had none (ITSUP IT-1.1, 1.3, 2.4, 5.1, 7.1–7.4, 8.3, 8.4, 11.2, 11.4, 12.3, 12.4, 13.3;
+NETOPS NO-1.2, 1.3, 2.2, 3.1, 4.1, 4.2, 6.2), with 2–3 items each. They also add one more item each for IT-2.2, IT-6.3,
+IT-13.1 and NO-9.2, which had only one.
+
+- Each item is tied to a curated official objective and has a primary source in `SOURCE` (RFCs, IEEE, IANA, Microsoft
+  Learn/Support, Cisco, CompTIA objectives).
+- Items carry misconception tags (47 new `MC-C-*`) and are *Pending SME review*.
+- Every ITSUP/NETOPS objective now has ≥2 cert items. A1/A2/N+ objective coverage is 100%, and the cert bank has
+  474 items. `alignment.json` and `CERT_COVERAGE.md` were regenerated.
+- Two items gained `extra=('A1:2.1',)` so A1:2.1 depth stays ≥8. The new pass-15 rationale text had changed the
+  heuristic mapping of Q5.5.
+
+**4. Course packages.** Both `/workspace/artifacts/course-package` and `course-package-content` (and their `.zip`s) were
+rebuilt from the clean tree at the final pass-15 HEAD, afc0ca4, after the last commit of the pass. Their MANIFESTs
+record `git_head` afc0ca4 with no dirty files, and all document model hashes are identical. (A first build at 5377028
+was replaced; the two commits in between changed only these notes and the readiness JSON, not any packaged document.)
+Pass 16 rebuilt them again at its own final HEAD; see that section. `curriculum_readiness --package` passes on both. Each zip has 45 files, matching its folder.
+The old content-branch build from b6a32e3 was replaced.
+
+**Tests.** Full pytest: 674 passed (`env -u PYTHONHASHSEED`, 11 min 15 s). Node: 41/41. Cert tests 33/33. New:
+`tests/test_content_pass15.py` (7 tests). `test_misconceptions_pass13.py` and `test_checks_pass14.py` now map distractors
+through `REWRITE`.
+
+**Known limits.**
+
+- Grok Bot, not an SME, wrote and checked all pass-15 content: 39 rationales, about 88 option rewrites and 59 cert items.
+- NQ1.5 and NQ4.5 still have a clearly longer one-term key.
+- The parity rule measures characters only. A distractor can still be told apart by other cues, such as specificity
+  or hedging.
+- Some IT-7.x/IT-12.x cert items rest on course practice as much as on vendor documents.
+- No browser e2e/a11y run this pass: the changes are text-only and rendered through existing templates covered by pytest.
+
+**Next steps.**
+
+- SME review of `rationales_pass15.py`, `parity_pass15.py` (check that no distractor became arguably correct) and
+  `i05_gaps_p15.py`.
+- Then clear the *Pending SME review* labels in a later pass.

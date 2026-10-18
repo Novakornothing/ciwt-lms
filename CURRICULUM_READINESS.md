@@ -1,4 +1,18 @@
-# Curriculum readiness — ITSUP and NETOPS (pass 13, 18 Oct 2026; updated pass 14)
+# Curriculum readiness — ITSUP and NETOPS (pass 13, 18 Oct 2026; updated passes 14 and 15)
+
+> **Pass 15 update.**
+>
+> - **Short rationales.** The 41 short ITSUP/CLIENT rationales are now full explanations. They come from 39 ITSUP bank items; Q8.6 and Q8.8 are also served in CLIENT, which makes 41. Each says why the key is right and why the main distractor is wrong, and keeps the section pointer. They are in `curriculum_v2/rationales_pass15.py`. Keys are unchanged. No chapter-check rationale is now under 10 words. *Pending SME review.*
+> - **Longest-option giveaway.** Before this pass, the key was the uniquely longest option in 108 of the 200 ITSUP and NETOPS chapter-check items (54%). Options were rebalanced in about 88 items (`curriculum_v2/parity_pass15.py`). Distractors were lengthened with plausible detail that keeps the same wrong idea, and a few keys were tightened. Meaning and keys are unchanged, and misconception tags moved with the rewritten text. The pass-14 items Q12.11 and Q13.11 are no longer giveaways.
+>   - The key is now uniquely longest in 31 of 200 (about 16%), below the roughly 25% expected by chance with four options.
+>   - Only NQ1.5 (HTTPS) and NQ4.5 (CNAME) still have a key more than 15% longer than every distractor. Both are one-term answers, so shortening them further would change the wording of the concept.
+> - **Audit.** Two new checks: every chapter-check rationale has at least 10 words, and the share of items whose key is uniquely longest is reported. That check passes at 30% or less, with at most max(2, n/50) clear-margin items.
+> - **Certification gaps closed.** 59 new certification items are in `curriculum_v2/cert/content/i05_gaps_p15.py`:
+>   - two or three for each of the 22 objectives that had none (ITSUP: IT-1.1, 1.3, 2.4, 5.1, 7.1–7.4, 8.3, 8.4, 11.2, 11.4, 12.3, 12.4, 13.3; NETOPS: NO-1.2, 1.3, 2.2, 3.1, 4.1, 4.2, 6.2);
+>   - one more each for IT-2.2, IT-6.3, IT-13.1 and NO-9.2, which had only one.
+>
+>   Every ITSUP and NETOPS objective now has at least two certification items, and A1, A2 and N+ objectives are all 100% covered (see `CERT_COVERAGE.md`). Each new item is tied to a curated official exam objective, lists a primary source (RFC, IEEE, IANA, Microsoft, Cisco or CompTIA objectives) in `SOURCE`, and carries misconception tags (47 new misconceptions). All are *Pending SME review*. Grok Bot wrote and checked them; an SME has not.
+> - The pass 14 text below is kept as written; SME list items 1, 2 and 5 are updated.
 
 > **Pass 14 update.**
 >
@@ -122,9 +136,9 @@ The tally is 40 checked, 0 wrong keys, 1 stem clarified and 1 rationale made mor
 
 ## Still needs SME review (in priority order)
 
-1. **Chapter-check rationales (updated in pass 14).** In pass 13, 62 of the 130 ITSUP chapter-check items had a rationale that was only a section reference. All 64 such items (counted with a slightly broader rule) now have a full explanation, written from the lesson content, with the pointer kept. Keys and options are unchanged. The audit now fails if a chapter-check rationale is only a pointer. **SME: read these 64 rationales**, listed in `curriculum_v2/rationales_pass14.py`. The 56 NETOPS check items already had full rationales.
-2. **Certification items (415) and the passes 9–10 item bank (EXPANSION).** Both are labelled *Pending SME review* in the LMS. Classes can now turn certification items off: Mastery settings → "Include certification practice items (pending SME review)".
+1. **Chapter-check rationales (updated in pass 14).** In pass 13, 62 of the 130 ITSUP chapter-check items had a rationale that was only a section reference. All 64 such items (counted with a slightly broader rule) now have a full explanation, written from the lesson content, with the pointer kept. Keys and options are unchanged. The audit now fails if a chapter-check rationale is only a pointer. **SME: read these 64 rationales**, listed in `curriculum_v2/rationales_pass14.py`, and the 39 added in pass 15 (`rationales_pass15.py`). Pass 15 also rewrote option wording in about 88 items for length balance (`parity_pass15.py`); an SME should confirm no distractor became arguably correct. The 56 NETOPS check items already had full rationales.
+2. **Certification items (474, including 59 added in pass 15) and the passes 9–10 item bank (EXPANSION).** Both are labelled *Pending SME review* in the LMS. Classes can now turn certification items off: Mastery settings → "Include certification practice items (pending SME review)".
 3. **Chapter minute totals in `lessons.py` (NETOPS 1–6, 9).** These differ from the lesson sums by 50 to 75 minutes (chapter 9: 480 vs 540). Lesson plans now show lesson time. An SME should confirm the intended chapter time, including the check and labs.
 4. **NETOPS chapter 9 lessons (CLI lab track)** are the shortest text in the course (978–1,473 characters). They are lab walk-throughs that send students into the simulator. This is intentional, but an SME should confirm they are enough on their own.
-5. **Objectives without chapter-check items (closed in pass 14).** IT-7.4, 8.4, 9.4, 10.4, 11.4, 12.4 and 13.4 each have two new chapter-check items (Q7.10 to Q13.11). **SME: confirm these 14 items.** They are tagged *Pending SME review*, and the sources are listed per item. Four items rest on course content and local practice rather than a vendor document: Q7.10, Q7.11, Q12.10 and Q12.11. The other gap from pass 13 is still open: 15 ITSUP and 7 NETOPS objectives have no aligned certification items.
+5. **Objectives without chapter-check items (closed in pass 14).** IT-7.4, 8.4, 9.4, 10.4, 11.4, 12.4 and 13.4 each have two new chapter-check items (Q7.10 to Q13.11). **SME: confirm these 14 items.** They are tagged *Pending SME review*, and the sources are listed per item. Four items rest on course content and local practice rather than a vendor document: Q7.10, Q7.11, Q12.10 and Q12.11. The other gap from pass 13 (15 ITSUP and 7 NETOPS objectives with no certification items) was closed in pass 15: **SME: confirm the 59 items in `curriculum_v2/cert/content/i05_gaps_p15.py`**, starting with the course-practice ones (IT-7.x, IT-12.x).
 6. **Credit-hour assumptions.** The documents assume 2 lab contact hours per lab credit, 15 weeks and 34 CFR 600.2. The registrar should confirm these for the institution.
