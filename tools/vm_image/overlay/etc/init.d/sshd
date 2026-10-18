@@ -1,0 +1,12 @@
+#!/bin/sh
+# SysV-style init script (BusyBox start-stop-daemon). Enable at boot: ln -s ../init.d/sshd /etc/init.d/S50sshd
+DAEMON="sshd"; EXE="/usr/sbin/sshd"; PIDFILE="/var/run/$DAEMON.pid"
+ARGS=""
+[ -r "/etc/default/$DAEMON" ] && . "/etc/default/$DAEMON"
+start() { printf 'Starting %s: ' "$DAEMON"
+  [ -x "$EXE" ] || { echo "FAIL ($EXE not found)"; logger -t init "$DAEMON: $EXE not found"; return 1; }
+  [ -f /etc/ssh/ssh_host_ed25519_key ] || ssh-keygen -q -t ed25519 -N "" -f /etc/ssh/ssh_host_ed25519_key; /usr/sbin/sshd -t || { echo "FAIL (config error)"; return 1; }
+  start-stop-daemon -S -q  -p "$PIDFILE" -x "$EXE" -- $ARGS && { echo OK; logger -t init "$DAEMON started"; } || { echo FAIL; logger -t init "$DAEMON failed to start"; return 1; } }
+stop() { printf 'Stopping %s: ' "$DAEMON"; start-stop-daemon -K -q -p "$PIDFILE" -x "$EXE" && { rm -f "$PIDFILE"; echo OK; logger -t init "$DAEMON stopped"; } || { echo FAIL; return 1; } }
+status() { if start-stop-daemon -K -t -q -p "$PIDFILE" -x "$EXE" 2>/dev/null; then echo "$DAEMON is running (pid $(cat $PIDFILE))"; else echo "$DAEMON is stopped"; return 3; fi }
+case "$1" in start|stop|status) "$1";; restart|reload) stop; sleep 1; start;; *) echo "Usage: $0 {start|stop|restart|status}"; exit 1;; esac

@@ -78,3 +78,21 @@ test('switch isolates segments: a frame reaches only ports that share a segment'
   assert.strictEqual(r.length, 1); assert.strictEqual(b.length, 0, 'LAN 2 never sees LAN 1 broadcasts');
   assert.ok(/ARP who has 10\.1\.0\.1\? tell 10\.1\.0\.10/.test(fab.log[0].s));
 });
+
+test('remote: an address one hop behind the services host — TTL 63 replies, time exceeded at TTL 1', () => {
+  const cfg = { mac: '02:c1:77:00:00:01', ifaces: [{ seg: 'lan', ip: '10.1.0.1', bits: 24 }], remote: [{ ip: '198.51.100.10' }] };
+  const { port, svc, got } = lan(cfg);
+  port.send(arpReq(MAC, '10.1.0.2', '10.1.0.1'));
+  assert.strictEqual(got.length, 1);
+  port.send(arpReq(MAC, '10.1.0.2', '198.51.100.10'));
+  assert.strictEqual(got.length, 1, 'no ARP for the remote address — it is not on this LAN');
+  const echo = new Uint8Array([8, 0, 0, 0, 0, 1, 0, 1, 1, 2, 3, 4]); const c = csum(echo, 0, echo.length); echo[2] = c >> 8; echo[3] = c & 255;
+  port.send(eth([2, 0xc1, 0x77, 0, 0, 1], MAC, 0x0800, ipv4('10.1.0.2', '198.51.100.10', 1, echo)));
+  let r = got[got.length - 1];
+  assert.strictEqual(r[14 + 20], 0, 'echo reply'); assert.strictEqual(r[14 + 8], 63, 'one router hop away');
+  assert.strictEqual(Array.from(r.slice(26, 30)).join('.'), '198.51.100.10');
+  port.send(eth([2, 0xc1, 0x77, 0, 0, 1], MAC, 0x0800, ipv4('10.1.0.2', '198.51.100.10', 17, udp(40000, 33434, new Uint8Array(4)), 1)));
+  r = got[got.length - 1];
+  assert.strictEqual(r[14 + 20], 11, 'ICMP time exceeded'); assert.strictEqual(Array.from(r.slice(26, 30)).join('.'), '10.1.0.1', 'from the router interface');
+  assert.ok(svc.events.some((e) => e.type === 'ttl' && e.at === '10.1.0.1'));
+});

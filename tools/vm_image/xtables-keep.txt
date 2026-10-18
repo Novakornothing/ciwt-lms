@@ -1,0 +1,4 @@
+# iptables extensions kept in /usr/lib/xtables (the rest are removed to save RAM)
+libxt_standard.so libxt_tcp.so libxt_udp.so libipt_icmp.so libxt_state.so libxt_conntrack.so libxt_multiport.so
+libxt_comment.so libipt_REJECT.so libxt_LOG.so libxt_limit.so libxt_iprange.so libxt_addrtype.so libxt_mac.so
+libxt_MASQUERADE.so libxt_SNAT.so libxt_DNAT.so libxt_NAT.so libxt_mark.so libxt_MARK.so libxt_length.so libxt_owner.so

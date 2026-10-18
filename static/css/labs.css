@@ -288,3 +288,14 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
 /* The simulated Windows 11 desktop keeps Windows' own light palette in the site's dark theme: undo the theme's
    forced light ink on text elements (ciwt-theme.css) inside the desk so it inherits the window colours. */
 [data-theme="dark"] .w11-desk :is(h1, h2, h3, h4, h5, h6, p, li, td, th, dt, dd, label, .table, .form-label, .form-check-label) { color: inherit !important; }
+/* lab scenarios (PBQ tickets) */
+.lab-kind-scenario { background: color-mix(in srgb, #7048e8 16%, var(--surface)); color: color-mix(in srgb, #7048e8 50%, var(--ink)); }
+[data-theme="dark"] .lab-kind-scenario { color: var(--ink); }
+.scn-stage.resolved { border-left: 4px solid #2b8a3e; }
+.pbq-note { color: var(--ink); }
+
+/* instructor-only "Pending SME review" tag on labs added in the labs overhaul */
+.lab-sme-tag { display: inline-block; font-size: .7rem; font-weight: 600; line-height: 1.3; padding: .05rem .4rem; margin-left: .35rem;
+  border: 1px solid currentColor; border-radius: .25rem; color: var(--bs-secondary-color, #555); vertical-align: middle; white-space: nowrap; }
+/* the theme's light alert-success text (#0d9f6e on #e4f8f1) is ~3.2:1; darker text for the scenario's resolved banner (~6.6:1) */
+html:not([data-theme="dark"]) .scn-resolved { color: #08603f; }

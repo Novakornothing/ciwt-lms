@@ -1,0 +1,2 @@
+# PAM modules kept in /lib/security (used by Alpine's base-* stacks and shadow-utils)
+pam_unix.so pam_deny.so pam_permit.so pam_env.so pam_limits.so pam_nologin.so pam_rootok.so pam_warn.so pam_shells.so pam_securetty.so

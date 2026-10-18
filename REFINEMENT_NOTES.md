@@ -724,6 +724,23 @@ Windows), `docs/VM_IMAGE.md` (image, measurements, institution build recipe). Me
     - axe on every lab page at 390/820/1280 px: 0 violations in light and dark themes. Fixed two contrast bugs: the
       router tag, and the Windows 11 desk in dark theme.
 
+### Labs branch, round 2/3 (Oct 18 2026): 15 real Linux labs, Windows fidelity, lab scenarios (all *Pending SME review*)
+
+- **Counts.** 79 labs (46 original + 33 new) and 2 lab scenarios with 4 PBQ stage labs, plus 9 classroom labs.
+- **Real labs.** 15 real Linux VM labs (+10 this round: logs, cron, users/sudo, packages, iptables, disk/fstab, SSH
+  keys, scripting, DNS chain, DHCP/route fault) and 2 real-VM scenario stages. Windows and IOS remain simulations.
+- **VM image.** An own build, `ciwt-linux.bin`: 10,781,184 B, 13.3 MB first download. See `docs/VM_IMAGE.md`;
+  licences and the GPL source offer are in `static/vendor/v86/LICENSES.md`.
+- **Windows sims.** `win_fidelity.py` adds realistic output, elevation errors and wrong-turn branching. Grading is
+  unchanged.
+- **Scenarios.** `labs_scenario.py` adds SCN-DNS and SCN-LAN2 with hidden checks; hints and the event log are kept.
+- **SME tag.** Every new lab, stage and scenario carries `review: "Pending SME review"`, shown to instructors only.
+- **Final run (3e6d0ab):**
+  - pytest: 539 passed
+  - Node: 36/36
+  - e2e: 288/288 (92 lab pages × desktop/phone/tablet + 12 instructor checks)
+  - axe sweep of the lab pages: 0 violations in light and dark (one light-theme contrast fix on the scenario hub)
+
 ## Pass 12 (Oct 18 2026): briefing, LTI 1.3, labs + content merges
 
 Local work only: nothing was pushed. Every server and e2e run used a copy of the DB (`/tmp/p12/work.db`, `/tmp/p12/fresh.db`).

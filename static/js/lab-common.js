@@ -89,7 +89,12 @@
     var pct = Math.round(p.score || 0);
     var bar = document.getElementById('labScoreBar');
     if (bar) { bar.style.width = pct + '%'; bar.parentNode.setAttribute('aria-valuenow', pct); }
-    document.querySelectorAll('.lab-score-text').forEach(function (s) { s.textContent = n + ' of ' + total + ' objectives · ' + pct + '%'; });
+    var pbq = !!document.querySelector('[data-pbq]');
+    document.querySelectorAll('.lab-score-text').forEach(function (s) { s.textContent = n + ' of ' + total + (pbq ? ' checks · ' : ' objectives · ') + pct + '%'; });
+    if (pbq) (p.objectives || []).forEach(function (o) {   // PBQ: the server sends the real texts once the ticket is resolved
+      var t = document.querySelector('[data-oid="' + o.id + '"] .obj-text');
+      if (t && o.text) t.textContent = o.text;
+    });
     var succ = document.getElementById('labSuccess');
     if (succ) succ.hidden = !p.complete;
     document.querySelectorAll('.lab-complete-flag').forEach(function (f) { f.hidden = !p.complete; });

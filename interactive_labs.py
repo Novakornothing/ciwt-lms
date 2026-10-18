@@ -2353,7 +2353,7 @@ def _win_printers(c, cl, state, done):
     return None
 
 
-def run_windows(cmd, state, done):
+def _run_windows_core(cmd, state, done):
     c = re.sub(r"\s+", " ", (cmd or "").strip())
     if c.lower().endswith(".exe") and " " not in c:
         c = c[:-4]
@@ -2461,6 +2461,67 @@ def run_windows(cmd, state, done):
 
 
 # ── Switch ──────────────────────────────────────────────────────────
+
+def run_windows(cmd, state, done):
+    """The engine decides what a command does; win_fidelity re-renders what Windows would print (see win_fidelity.py)."""
+    import win_fidelity as WF
+    c = re.sub(r"\s+", " ", (cmd or "").strip())
+    cl = c.lower()
+    if cl.endswith(".exe") and " " not in cl:
+        cl = cl[:-4]
+    cl = _WIN_ALIASES.get(cl, cl)
+    state["_fid_n"] = (state.get("_fid_n") or 0) + 1
+    el = WF.elevation(c, state)
+    if el is not None:
+        return el, state, done
+    if cl == "ipconfig /release" and state.get("released"):
+        return ["", "Windows IP Configuration", "",
+                "The operation failed as no adapter is in the state permissible for this operation."], state, done
+    before = {"released": state.get("released"), "dns_cache_flushed": state.get("dns_cache_flushed")}
+    server = None
+    if cl.startswith("nslookup "):
+        r = WF.nslookup_server(c, state)
+        if r is not None:
+            if r[0] is None:
+                return r[1], state, done
+            c, server = r
+    lines, state, done = _run_windows_core(c, state, done)
+    if not isinstance(lines, list):
+        return lines, state, done
+    try:
+        new = None
+        if cl in ("ipconfig", "ipconfig /all"):
+            new = WF.ipconfig(state, cl.endswith("/all"))
+        elif cl == "ipconfig /renew" and not state.get("released"):
+            state["lease_at"] = None
+            new = WF.ipconfig(state, False)
+        elif cl == "ipconfig /release" and state.get("released"):
+            new = WF.ipconfig(state, False)
+        elif cl.startswith("ping "):
+            new = WF.ping(c, state, lines)
+        elif cl.startswith(("tracert ", "traceroute ")):
+            new = WF.tracert(c, state, lines)
+        elif cl.startswith("nslookup "):
+            new = WF.nslookup(c, state, lines, server)
+        elif cl.startswith("resolve-dnsname "):
+            new = WF.resolve_dnsname(c, state, lines)
+        elif cl.startswith("test-connection "):
+            new = WF.test_connection(c, state, lines)
+        elif cl.startswith("get-service"):
+            new = WF.get_service(c, state, lines)
+        elif cl == "getmac":
+            new = WF.getmac(state)
+        elif cl in ("arp -a", "arp"):
+            new = WF.arp(state)
+        elif cl in ("route print", "route"):
+            new = WF.route_print(state)
+        if new is not None:
+            lines = new
+        lines = WF.wrong_turns(cl, before, state, done, lines)
+    except Exception:      # a rendering problem must never break the lab; fall back to the engine's own lines
+        pass
+    return lines, state, done
+
 
 def run_switch(cmd, state, done):
     state = _norm_sw(state)
@@ -3452,9 +3513,13 @@ def verify_all_labs():
 
 
 # ── Labs added in pass L1 (labs_catalog_new.py) ─────────────────────
+SME_PENDING = "Pending SME review"   # same tag as curriculum_v2.itsup_core.PENDING; instructor-only
+
+
 def _install_new_labs():
     import labs_catalog_new as _N
     for lab in _N.NEW_LABS:
+        lab.setdefault("review", SME_PENDING)   # every lab added on the labs branch waits for SME sign-off
         st = lab["initial_state"]
         if isinstance(st, dict) and st.get("_base") == "win":
             extra = {k: v for k, v in st.items() if k != "_base"}
@@ -3470,6 +3535,18 @@ def _install_new_labs():
         cur += [i for i in ids if i not in cur]
     for k, v in _N.NEW_LAB_ALIGN.items():
         LAB_ALIGN.setdefault(k, v)
+    # lab scenario mode: PBQ stage labs derived from existing labs (labs_scenario.py)
+    import labs_scenario as _S
+    import labs_vm as _V
+    for lab in _S.build(LABS_BY_ID.get):
+        lab.setdefault("review", SME_PENDING)
+        if not lab.get("solution") and lab["base_lab"] in VERIFY_SEQUENCES:
+            lab["solution"] = {"commands": list(VERIFY_SEQUENCES[lab["base_lab"]][0])}
+        if lab["id"] not in LABS_BY_ID:
+            LABS.append(lab)
+            LABS_BY_ID[lab["id"]] = lab
+            if lab["kind"] == "vm":
+                _V.VM_BY_ID[lab["id"]] = lab
 
 
 _install_new_labs()

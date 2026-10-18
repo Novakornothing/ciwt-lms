@@ -21,5 +21,5 @@ pytestmark = pytest.mark.skipif(not ready or os.environ.get("CIWT_SKIP_REAL_VM")
 @pytest.mark.parametrize("mode", ["solution", "none"])
 def test_real_vm_grades_real_state(lab_id, mode):
     r = subprocess.run([sys.executable, str(ROOT / "tools" / "vm_headless.py"), lab_id, "--commands", mode],
-                       capture_output=True, text=True, timeout=300, cwd=ROOT)
+                       capture_output=True, text=True, timeout=1500, cwd=ROOT)
     assert r.returncode == 0, (lab_id, mode, r.stdout[-1500:], r.stderr[-1500:])

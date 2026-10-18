@@ -10,7 +10,9 @@ import lab_runtime as RT
 ALL = [l["id"] for l in IL.LABS]
 NEW = ["net-subnet", "hw-cables", "hw-pc-build", "ticket-method", "win-net-cli", "linux-shell", "print-trouble", "rtr-vlan-acl",
        "sw-vlan-multi", "wifi-secure", "sec-malware", "ops-backup", "virt-vm", "mob-mdm", "win-ad-users", "win-laptop-ports", "linux-vm-perms", "win-wifi-survey", "hv-vswitch",
-       "linux-vm-shell", "linux-vm-services", "linux-vm-netclient", "linux-vm-routing"]
+       "linux-vm-shell", "linux-vm-services", "linux-vm-netclient", "linux-vm-routing",
+       "linux-vm-logs", "linux-vm-cron", "linux-vm-users", "linux-vm-packages", "linux-vm-firewall", "linux-vm-disk", "linux-vm-ssh",
+       "linux-vm-script", "linux-vm-dns", "linux-vm-nettrouble"]
 
 
 def _j(r):
@@ -406,3 +408,18 @@ def test_privacy_delete_covers_lab_records(student, mod):
     with mod.app.app_context():
         doomed = privacy_tools.plan(mod.db, uid)[0]
         assert doomed.get("lab_progress") and doomed.get("lab_event")
+
+
+def test_new_labs_tagged_pending_sme_review_instructor_only(student, instructor):
+    """Every lab added on the labs branch (and every scenario and stage) carries the curriculum's SME tag. Instructors see it; students do not."""
+    import labs_scenario as SC
+    tag = "Pending SME review"
+    stages = [s["id"] for sc in SC.SCENARIOS for s in sc["stages"]]
+    for lid in NEW + stages:
+        assert RT.get_lab(lid).get("review") == tag, lid
+    assert all(sc.get("review") == tag for sc in SC.SCENARIOS)
+    assert not RT.get_lab("win-ipconfig").get("review")     # original labs are not tagged
+    for path in ["/labs/linux-vm-dns", "/labs/linux-vm-perms", "/labs/scenario/SCN-DNS", "/labs"]:
+        assert tag not in student.get(path).data.decode(), path
+        assert tag in instructor.get(path).data.decode(), path
+    assert tag not in instructor.get("/labs/win-ipconfig").data.decode()

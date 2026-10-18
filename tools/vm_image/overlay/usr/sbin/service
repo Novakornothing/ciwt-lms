@@ -1,0 +1,9 @@
+#!/bin/sh
+# service NAME start|stop|restart|status  -- runs /etc/init.d/NAME (or an enabled S??NAME link). `service --status-all` lists them.
+if [ "$1" = "--status-all" ]; then
+  for s in /etc/init.d/*; do n=${s##*/}; case $n in rcS|rcK) continue;; esac
+    o=$("$s" status 2>&1); case "$o" in *running*) st=" + ";; *stopped*) st=" - ";; *) st=" ? ";; esac
+    echo " [$st]  $n"; done; exit 0; fi
+[ -n "$1" ] && [ -n "$2" ] || { echo "Usage: service NAME start|stop|restart|status" >&2; exit 2; }
+for s in "/etc/init.d/$1" /etc/init.d/S??"$1"; do [ -x "$s" ] && exec "$s" "$2"; done
+echo "service: $1: unrecognized service" >&2; exit 1

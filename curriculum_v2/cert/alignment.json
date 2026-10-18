@@ -3266,7 +3266,8 @@
    ],
    "labs": [
     "win-net-cli",
-    "win-laptop-ports"
+    "win-laptop-ports",
+    "linux-vm-dns"
    ],
    "lessons": [
     "ITSUP 5.2",
@@ -3369,7 +3370,9 @@
     "win-route",
     "win-laptop-ports",
     "linux-vm-netclient",
+    "linux-vm-dns",
     "win-dhcp-renew",
+    "linux-vm-nettrouble",
     "rtr-vlan-acl"
    ],
    "lessons": [
@@ -3457,7 +3460,8 @@
     "net-subnet",
     "win-net-cli",
     "linux-vm-netclient",
-    "linux-vm-routing"
+    "linux-vm-routing",
+    "linux-vm-nettrouble"
    ],
    "lessons": [
     "ITSUP 5.1",
@@ -4007,6 +4011,7 @@
     "wifi-secure",
     "win-wifi-survey",
     "linux-vm-netclient",
+    "linux-vm-dns",
     "w11-powershell-net",
     "w11-processes",
     "gui-renew"
@@ -4088,6 +4093,7 @@
     "C-A2-1.1-4"
    ],
    "labs": [
+    "linux-vm-disk",
     "w11-inventory",
     "w11-powershell-net",
     "w11-services",
@@ -4097,10 +4103,16 @@
     "gui-update",
     "gui-accounts",
     "win-ad-users",
+    "linux-vm-users",
+    "linux-vm-logs",
+    "linux-vm-packages",
     "linux-vm-services",
+    "linux-vm-ssh",
     "linux-vm-shell",
     "linux-shell",
-    "linux-vm-perms"
+    "linux-vm-perms",
+    "linux-vm-cron",
+    "linux-vm-script"
    ],
    "lessons": [
     "ITSUP 8.1",
@@ -4336,6 +4348,7 @@
     "win-laptop-ports",
     "linux-vm-netclient",
     "linux-vm-routing",
+    "linux-vm-dns",
     "win-full-triage",
     "win-dhcp-renew",
     "linux-vm-shell",
@@ -4441,6 +4454,7 @@
     "win-wifi-survey",
     "linux-vm-netclient",
     "linux-vm-routing",
+    "linux-vm-dns",
     "win-full-triage",
     "win-dhcp-renew",
     "win-ad-users",
@@ -4511,8 +4525,11 @@
     "C-A2-1.8-4"
    ],
    "labs": [
+    "linux-vm-logs",
     "linux-vm-shell",
-    "linux-shell"
+    "linux-shell",
+    "linux-vm-cron",
+    "linux-vm-script"
    ],
    "lessons": [
     "ITSUP 9.2",
@@ -4545,13 +4562,23 @@
     "C-A2-1.9-4"
    ],
    "labs": [
+    "linux-vm-disk",
     "linux-vm-netclient",
     "linux-vm-routing",
+    "linux-vm-dns",
+    "linux-vm-users",
+    "linux-vm-firewall",
+    "linux-vm-logs",
+    "linux-vm-packages",
+    "linux-vm-nettrouble",
     "rtr-trace",
     "linux-vm-services",
+    "linux-vm-ssh",
     "linux-vm-shell",
     "linux-shell",
-    "linux-vm-perms"
+    "linux-vm-perms",
+    "linux-vm-cron",
+    "linux-vm-script"
    ],
    "lessons": [
     "ITSUP 9.1",
@@ -4584,7 +4611,9 @@
     "C-A2-2.1-16"
    ],
    "labs": [
-    "win-ad-users"
+    "win-ad-users",
+    "linux-vm-users",
+    "linux-vm-firewall"
    ],
    "lessons": [
     "ITSUP 10.1",
@@ -4645,7 +4674,8 @@
     "C-A2-2.11-4"
    ],
    "labs": [
-    "sec-malware"
+    "sec-malware",
+    "linux-vm-logs"
    ],
    "lessons": [
     "ITSUP 10.2",
@@ -4693,6 +4723,9 @@
     "gui-services",
     "win-ad-users",
     "w11-firewall",
+    "linux-vm-users",
+    "linux-vm-firewall",
+    "linux-vm-ssh",
     "linux-vm-shell"
    ],
    "lessons": [
@@ -4767,7 +4800,9 @@
    "labs": [
     "gui-services",
     "w11-firewall",
-    "sec-malware"
+    "sec-malware",
+    "linux-vm-firewall",
+    "linux-vm-packages"
    ],
    "lessons": [
     "ITSUP 10.2",
@@ -4793,7 +4828,9 @@
     "C-A2-2.5-4",
     "C-A2-2.5-5"
    ],
-   "labs": [],
+   "labs": [
+    "linux-vm-logs"
+   ],
    "lessons": [
     "ITSUP 10.4",
     "NETOPS 5.3",
@@ -4819,7 +4856,8 @@
     "C-A2-2.6-24"
    ],
    "labs": [
-    "sec-malware"
+    "sec-malware",
+    "linux-vm-packages"
    ],
    "lessons": [
     "ITSUP 10.2",
@@ -5376,7 +5414,8 @@
    "labs": [
     "win-dns-break",
     "win-full-triage",
-    "ticket-method"
+    "ticket-method",
+    "linux-vm-script"
    ],
    "lessons": [
     "ITSUP 1.4",
@@ -5434,7 +5473,10 @@
     "C-A2-4.9-3",
     "C-A2-4.9-4"
    ],
-   "labs": [],
+   "labs": [
+    "linux-vm-logs",
+    "linux-vm-ssh"
+   ],
    "lessons": [
     "ITSUP 9.3",
     "ITSUP 5.2",
@@ -5494,6 +5536,8 @@
    ],
    "labs": [
     "linux-vm-routing",
+    "linux-vm-firewall",
+    "linux-vm-nettrouble",
     "rtr-vlan-acl"
    ],
    "lessons": [
@@ -5554,7 +5598,9 @@
    "labs": [
     "net-subnet",
     "win-net-cli",
-    "win-laptop-ports"
+    "win-laptop-ports",
+    "linux-vm-dns",
+    "linux-vm-firewall"
    ],
    "lessons": [
     "NETOPS 1.3",
@@ -5885,6 +5931,8 @@
     "C-N-3.2-21"
    ],
    "labs": [
+    "linux-vm-firewall",
+    "linux-vm-logs",
     "linux-vm-services"
    ],
    "lessons": [
@@ -5941,7 +5989,9 @@
    "labs": [
     "win-net-cli",
     "linux-vm-netclient",
-    "win-dhcp-renew"
+    "linux-vm-dns",
+    "win-dhcp-renew",
+    "linux-vm-nettrouble"
    ],
    "lessons": [
     "NETOPS 4.2",
@@ -5976,7 +6026,11 @@
     "C-N-3.5-3",
     "C-N-3.5-4"
    ],
-   "labs": [],
+   "labs": [
+    "linux-vm-firewall",
+    "linux-vm-logs",
+    "linux-vm-ssh"
+   ],
    "lessons": [
     "NETOPS 5.2",
     "NETOPS 5.3",
@@ -6004,7 +6058,8 @@
     "C-N-4.1-3"
    ],
    "labs": [
-    "wifi-secure"
+    "wifi-secure",
+    "linux-vm-firewall"
    ],
    "lessons": [
     "NETOPS 5.3",
@@ -6062,6 +6117,7 @@
     "C-N-4.3-4"
    ],
    "labs": [
+    "linux-vm-dns",
     "sw-port-security",
     "rtr-vlan-acl"
    ],
@@ -6181,6 +6237,7 @@
    ],
    "labs": [
     "linux-vm-netclient",
+    "linux-vm-nettrouble",
     "sw-vlan-access",
     "sw-vlan-and-trunk",
     "sw-port-security",
@@ -6282,6 +6339,7 @@
     "win-wifi-survey",
     "linux-vm-netclient",
     "linux-vm-routing",
+    "linux-vm-dns",
     "win-full-triage",
     "sw-vlan-access",
     "sw-trunk-basics",

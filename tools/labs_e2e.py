@@ -219,7 +219,7 @@ def drive_vm(page, lab, view, notes):
     page.wait_for_selector('#vmTools:not([hidden])', timeout=300000)
     notes.append(f'VM boot {time.time() - t:.1f}s' + (f" ×{len(lab['vm']['machines'])}" if len(lab['vm']['machines']) > 1 else ''))
     last_ln = ("()=>{const s=document.querySelector('.vm-screen:not([hidden])');if(!s)return false;"
-               "const l=[...s.querySelectorAll('.ln')];return l.length>0&&/[#%$] $/.test(l[l.length-1].textContent)}")
+               "const l=[...s.querySelectorAll('.ln')];return l.length>0&&/([#%$] |assword: ?|\\(yes\\/no[^)]*\\)\\? ?)$/.test(l[l.length-1].textContent)}")
     first = lab['vm']['machines'][0]['name']
     cur = first
     for c in lab['solution']['vm_commands']:
@@ -235,7 +235,7 @@ def drive_vm(page, lab, view, notes):
         page.fill('#termInput', cmd)
         page.press('#termInput', 'Enter')
         page.wait_for_timeout(80)
-        page.wait_for_function(last_ln, timeout=60000)
+        page.wait_for_function(last_ln, timeout=180000)   # some steps really wait (cron: sleep 75)
     if lab['vm'].get('net'):
         page.click('#vmTab-_packets')
         n = page.locator('#vmPackets .pk').count()

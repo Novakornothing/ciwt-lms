@@ -11,3 +11,5 @@ static/vendor/v86/*.bin
 static/vendor/v86/*.wasm
 static/vendor/v86/libv86.js
 static/vendor/v86/LICENSE.v86
+# the CIWT lab image is built here (tools/vm_image/build.sh) and committed so the labs work after a plain checkout
+!static/vendor/v86/ciwt-linux.bin
