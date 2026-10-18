@@ -104,7 +104,7 @@
     </nav>
     <ul class="mx-legend small" aria-label="Legend">
       {% for s in ['mastered', 'developing', 'review', 'not_started', 'waived'] %}<li>{{ status_chip(s) }}</li>{% endfor %}
-      <li><span class="mx-flag" aria-hidden="true">R</span> review inserted · <span class="mx-flag" aria-hidden="true">O</span> override</li>
+      <li><span class="mx-flag" aria-hidden="true">R</span> review inserted · <span class="mx-flag" aria-hidden="true">O</span> override · <span class="mx-flag mx-flag-stuck" aria-hidden="true">S</span> stuck (two reviews done, nothing more inserted)</li>
     </ul>
   </div>
   <div class="mx-heat-wrap" tabindex="0" role="region" aria-labelledby="mxHeatH">
@@ -116,7 +116,7 @@
         <tr>
           <th scope="row" class="mx-heat-name"><a href="{{ url_for('mastery_class_student', section_id=section.id, user_id=r.user.id) }}">{{ r.user.full_name }}</a></th>
           {% for ob in cols %}{% set row = dec.rows[ob] %}{% set est = r.st.states[ob] %}
-          <td><button type="button" class="mx-cell mx-s-{{ row.state }}" data-bs-toggle="modal" data-bs-target="#mxOverride" data-mx-user="{{ r.user.id }}" data-mx-name="{{ r.user.full_name }}" data-mx-target="{{ ob }}"><span aria-hidden="true">{% if row.state in ('not_started',) %}·{% elif row.state == 'waived' %}W{% else %}{{ est.pct }}{% endif %}{% if row.action and row.action.type != 'helix_offer' %}<span class="mx-flag">R</span>{% endif %}{% if row.override %}<span class="mx-flag">O</span>{% endif %}</span><span class="visually-hidden mx-cell-sr">{{ r.user.full_name }}, {{ ob }}: {{ mastery_status_label[row.state] }}{% if row.state not in ('not_started', 'waived') %} {{ est.pct }} percent{% endif %}{% if row.action %}, {{ mastery_action_label[row.action.type] }}{% endif %}{% if row.override %}, override {{ row.override }}{% endif %}. Open override</span></button></td>
+          <td><button type="button" class="mx-cell mx-s-{{ row.state }}{{ ' mx-cell-stuck' if row.stuck }}" data-bs-toggle="modal" data-bs-target="#mxOverride" data-mx-user="{{ r.user.id }}" data-mx-name="{{ r.user.full_name }}" data-mx-target="{{ ob }}"><span aria-hidden="true">{% if row.state in ('not_started',) %}·{% elif row.state == 'waived' %}W{% else %}{{ est.pct }}{% endif %}{% if row.action and row.action.type != 'helix_offer' %}<span class="mx-flag">R</span>{% endif %}{% if row.override %}<span class="mx-flag">O</span>{% endif %}{% if row.stuck %}<span class="mx-flag mx-flag-stuck">S</span>{% endif %}</span><span class="visually-hidden mx-cell-sr">{{ r.user.full_name }}, {{ ob }}: {{ mastery_status_label[row.state] }}{% if row.state not in ('not_started', 'waived') %} {{ est.pct }} percent{% endif %}{% if row.stuck %}, stuck after two reviews{% endif %}{% if row.action %}, {{ mastery_action_label[row.action.type] }}{% endif %}{% if row.override %}, override {{ row.override }}{% endif %}. Open override</span></button></td>
           {% endfor %}
         </tr>
         {% endfor %}

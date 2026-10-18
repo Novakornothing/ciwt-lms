@@ -40,6 +40,48 @@ ACTION_LABEL = {
 }
 
 
+def status_line(obj, row, est, action_label=None):
+    """One-line status of a student's objective for the override dialog (pass 14).
+    e.g. 'IT-1.2: Needs review 42% · stuck after two reviews · Instructor override: lock (chapter)'."""
+    action_label = action_label or ACTION_LABEL
+    state = row['state']
+    out = f"{obj}: {M.STATUS_LABEL.get(state, state)}"
+    if state not in ('not_started', 'waived') and est:
+        out += f" {est['pct']}%"
+    if row.get('stuck'):
+        out += ' · stuck after two reviews'
+    if row.get('action'):
+        out += ' · ' + action_label.get(row['action']['type'], row['action']['type'])
+    if row.get('override'):
+        out += f" · override: {row['override']} ({row.get('override_scope') or 'objective'})"
+    return out
+
+
+def status_lines(cmap, st):
+    """{target: status line} for every objective and every 'CH-n' target, so the override dialog can describe
+    whatever the instructor picks under "Applies to", not only the cell that opened it."""
+    rows, states = st['decision']['rows'], st['states']
+    out = {}
+    for obj in cmap['objs']:
+        if obj in rows:
+            out[obj] = status_line(obj, rows[obj], states.get(obj))
+    for ch in cmap['chapters']:
+        objs = [o for o in cmap['chapter_objs'].get(ch, []) if o in rows]
+        counts = {}
+        for o in objs:
+            counts[rows[o]['state']] = counts.get(rows[o]['state'], 0) + 1
+        parts = [f"{counts[k]} {M.STATUS_LABEL[k].lower()}" for k in STATUS_ORDER if counts.get(k)]
+        line = f"Whole chapter {ch}: " + (', '.join(parts) if parts else 'no objectives') + f" (of {len(objs)} objective{'s' if len(objs) != 1 else ''})"
+        n_stuck = sum(1 for o in objs if rows[o].get('stuck'))
+        if n_stuck:
+            line += f" · {n_stuck} stuck"
+        ch_ov = sorted({rows[o]['override'] for o in objs if rows[o].get('override_scope') == 'chapter' and rows[o].get('override')})
+        if ch_ov:
+            line += ' · chapter override: ' + ', '.join(ch_ov)
+        out[P.chapter_key(ch)] = line
+    return out
+
+
 def register(app, db, deps):
     m = define_models(db)
     d = SimpleNamespace(**deps)
@@ -403,6 +445,7 @@ def register(app, db, deps):
                                chapters=chapters, stuck=stuck, need=need[:15], need_total=len(need), counts=counts,
                                active_reviews=active_reviews, passed_to=passed_to, log=log, settings=settings,
                                demo=demo, helix_n=helix_n, reasons_of=reasons_of, model_params=M.PARAMS,
+                               mx_states={str(r['user'].id): status_lines(cmap, r['st']) for r in rows},
                                weights=M.WEIGHTS, thresholds={'mastered': M.MASTERED, 'low': M.LOW,
                                                               'min_evidence': M.MIN_EVIDENCE})
 
@@ -427,7 +470,8 @@ def register(app, db, deps):
                .order_by(m.MasteryOverride.created_at.desc()).limit(40).all())
         labs = lab_diagnoses(u, section)
         return render_template('mastery/instructor_student.html', section=section, u=u, st=st, rows=rows, log=log,
-                               overrides=ovs, labs=labs, labs_wired=bool(getattr(d, 'lab_events', None)), reasons_of=reasons_of, evidence_of=evidence_of, chapters=cmap['chapters'])
+                               overrides=ovs, labs=labs, labs_wired=bool(getattr(d, 'lab_events', None)), reasons_of=reasons_of, evidence_of=evidence_of, chapters=cmap['chapters'],
+                               mx_states={str(u.id): status_lines(cmap, st)})
 
     @login_required
     def mastery_override(section_id):
