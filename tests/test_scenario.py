@@ -15,7 +15,9 @@ def test_scenarios_chain_a_real_vm_and_a_sim():
     assert not any(l["id"].startswith("scn-") for l in RT.list_labs())   # reached through the ticket, not the index list
 
 
-def test_hub_locks_stage_two_and_index_lists_tickets(student):
+def test_hub_locks_stage_two_and_index_lists_tickets(student2):
+    # student2: student1 may already have solved the stages in test_labs' every-lab run (order-independent)
+    student = student2
     html = student.get("/labs").data.decode()
     assert "Lab scenarios" in html and "/labs/scenario/SCN-DNS" in html
     hub = student.get("/labs/scenario/SCN-DNS").data.decode()
