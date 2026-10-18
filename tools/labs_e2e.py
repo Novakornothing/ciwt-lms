@@ -32,7 +32,7 @@ ap.add_argument('--json', default='')
 a = ap.parse_args()
 
 VIEWS = {  # name: (viewport, mobile/touch, student)
-    'desktop': ({'width': 1440, 'height': 900}, False, 'student1@lms.local'),
+    'desktop': ({'width': 1280, 'height': 800}, False, 'student1@lms.local'),   # round 4: 1280x800 (was 1440x900)
     'phone': ({'width': 390, 'height': 844}, True, 'student2@lms.local'),
     'tablet': ({'width': 820, 'height': 1180}, True, 'student3@lms.local'),
 }
