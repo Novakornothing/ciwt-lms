@@ -8,8 +8,13 @@
 
 Coverage reads the lessons from a throwaway COPY of ciwt_lms.db (or --db PATH, which must not be ciwt_lms.db), after
 the app's start-up content sync, i.e. exactly the lesson HTML students get. Exit 1 on any error (or warning with
---strict). "Complete" means every concept section is laddered (R1-R4 + checks), restated (same_as) or skipped with
-a documented reason, with no errors.
+--strict). Two coverage numbers per course and chapter:
+  * covered  = laddered (R1-R4 + checks) or same_as (a true duplicate of a laddered section in the same lesson).
+               THE TARGET IS 100%: every element of every lesson gets a ladder, activity and reference sections too.
+  * indexed  = covered + skip (a documented reason). Skips are counted and listed; the target is 0 skips.
+--max-skips N exits 1 when more than N sections in scope are skips; --require-complete exits 1 on any missing or
+stale section. Without --db, the lessons come from a copy of ciwt_lms.db, or (no ciwt_lms.db, e.g. a fresh
+worktree) from a fresh database the app seeds itself; lesson HTML is synced from the python sources either way.
 """
 import argparse
 import json
@@ -30,6 +35,7 @@ ap.add_argument('--scaffold', nargs=2, metavar=('COURSE', 'CHAPTER'))
 ap.add_argument('--stamp', nargs=2, metavar=('COURSE', 'CHAPTER'), help='print the STAMPS dict (r0_sha of each laddered section)')
 ap.add_argument('--no-coverage', action='store_true', help='static validation only (no database needed)')
 ap.add_argument('--require-complete', action='store_true', help='exit 1 if any section in scope is missing or stale')
+ap.add_argument('--max-skips', type=int, default=None, help='exit 1 if more than N sections in scope are skips (target 0)')
 a = ap.parse_args()
 
 from curriculum_v2 import ladder as L                     # noqa: E402
@@ -58,7 +64,9 @@ def lessons_from_db():
     if not db:
         tmp = tempfile.mkdtemp(prefix='ladder-')
         db = os.path.join(tmp, 'copy.db')
-        shutil.copy2(os.path.join(ROOT, 'ciwt_lms.db'), db)
+        real = os.path.join(ROOT, 'ciwt_lms.db')
+        if os.path.exists(real):
+            shutil.copy2(real, db)       # else: a fresh DB, seeded and synced by the app on import
     os.environ['DATABASE_URL'] = 'sqlite:///' + db
     import io, contextlib
     with contextlib.redirect_stdout(io.StringIO()):
@@ -139,18 +147,33 @@ if not a.no_coverage:
     for k in lad:
         if k not in used and (not a.course or k[0] == a.course.upper()) and not a.chapter:
             errors.append(f'{k}: ladder entry matches no section of the lesson (orphan; heading or lesson changed?)')
+    skip_reasons = defaultdict(Counter)
+    for r in rows:
+        if r['status'] == 'skip':
+            skip_reasons[r['course']][(lad.get((r['course'], r['label'], r['sid'])) or {}).get('reason', '?')] += 1
     for course, c in per.items():
         done = c['laddered'] + c['same_as'] + c['skip']
-        report['courses'][course] = dict(c, complete_pct=round(100.0 * done / c['sections'], 1) if c['sections'] else 0.0,
+        cov = c['laddered'] + c['same_as']
+        pct = (lambda n: round(100.0 * n / c['sections'], 1) if c['sections'] else 0.0)
+        report['courses'][course] = dict(c, complete_pct=pct(done), indexed_pct=pct(done), covered_pct=pct(cov),
+                                         skip_reasons=dict(skip_reasons[course]),
                                          chapters={ch: dict(v) for (cc, ch), v in sorted(per_ch.items()) if cc == course})
     report['sections'] = rows
-    print('Coverage (concept sections: laddered R1-R4 + checks / same_as / skip / missing / stale):')
+    report['skips'] = [r for r in rows if r['status'] == 'skip']
+    print('Coverage (concept sections). covered = laddered R1-R4 + checks or same_as (true duplicate); target 100%.')
+    print('                             indexed = covered + skip; skips are counted and the target is 0.')
     for course, c in report['courses'].items():
         print(f"  {course}: {c['sections']} sections — laddered {c.get('laddered', 0)}, same_as {c.get('same_as', 0)}, "
-              f"skip {c.get('skip', 0)}, missing {c.get('missing', 0)}, stale {c.get('stale', 0)} — {c['complete_pct']}% complete")
+              f"skip {c.get('skip', 0)}, missing {c.get('missing', 0)}, stale {c.get('stale', 0)} — "
+              f"covered {c['covered_pct']}%, indexed {c['indexed_pct']}%")
+        if c.get('skip'):
+            print('      skips by reason (target 0): ' + ', '.join(f'{k} {n}' for k, n in sorted(c['skip_reasons'].items())))
         for ch, v in c['chapters'].items():
-            d = v.get('laddered', 0) + v.get('same_as', 0) + v.get('skip', 0)
-            print(f"      ch{ch:>2}: {d}/{v['sections']}" + ('' if d == v['sections'] else f"  (missing {v.get('missing', 0)})"))
+            cv = v.get('laddered', 0) + v.get('same_as', 0)
+            note = [f"skip {v['skip']}" if v.get('skip') else '', f"missing {v['missing']}" if v.get('missing') else '',
+                    f"stale {v['stale']}" if v.get('stale') else '']
+            note = ', '.join(x for x in note if x)
+            print(f"      ch{ch:>2}: covered {cv}/{v['sections']}" + (f"  ({note})" if note else ''))
     if a.sections:
         for r in rows:
             print(f"  {r['course']} {r['label']:>5} {r['status']:<9} {r['sid']}  [{r['kind']}]")
@@ -170,4 +193,8 @@ if a.json:
 incomplete = a.require_complete and any(c.get('missing', 0) or c.get('stale', 0) for c in report['courses'].values())
 if incomplete:
     print('INCOMPLETE: some concept sections in scope have no ladder (or a stale one)')
-sys.exit(1 if errors or incomplete or (a.strict and warnings) else 0)
+n_skips = len(report.get('skips') or [])
+too_many_skips = a.max_skips is not None and n_skips > a.max_skips
+if too_many_skips:
+    print(f'TOO MANY SKIPS: {n_skips} skip entries in scope (allowed {a.max_skips}; target 0: give them ladders)')
+sys.exit(1 if errors or incomplete or too_many_skips or (a.strict and warnings) else 0)

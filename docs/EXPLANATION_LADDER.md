@@ -157,3 +157,17 @@ silently drift from the lesson they explain.
 Run `tools/ladder_check.py` with no arguments. It prints, per course and chapter, how many concept sections are
 laddered, `same_as`, skipped, missing or stale. `--json out.json` writes the same report together with every
 section's status.
+
+
+## Coverage target (updated pass 19): every element, 0 skips
+
+The user wants a ladder on **every** element of every lesson, activity and reference sections included.
+`tools/ladder_check.py` now reports two numbers per course and chapter:
+
+- **covered** = laddered (R1–R4 + checks) or `same_as` (a true duplicate of a laddered section in the same lesson). Target 100%.
+- **indexed** = covered + `skip`. Skips are counted, listed by reason (`report['skips']` in `--json`), and the target is **0**.
+
+`--max-skips 0` makes the run fail while any skip remains. Convert skips to ladders: an activity section's rungs explain
+what the activity practises and how to do it, step by step; a reference/vocabulary section's rungs explain the terms
+in plain words, as an analogy, as a picture or table, and as a sort or match widget. `same_as` stays only for real
+restatements of a section already laddered in the same lesson.

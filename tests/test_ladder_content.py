@@ -6,17 +6,45 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def test_ladder_files_validate_against_lessons(tmp_path):
+import json
+
+import pytest
+
+
+@pytest.fixture(scope='module')
+def fresh_db(tmp_path_factory):
+    """A brand-new DB path: the app seeds it and syncs the lesson HTML from the python sources on import, so these
+    tests never need (or touch) ciwt_lms.db and work in any worktree."""
+    return str(tmp_path_factory.mktemp('ladder') / 'fresh.db')
+
+
+def _check(args, db):
+    return subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'ladder_check.py'), '--db', db] + args,
+                          cwd=ROOT, capture_output=True, text=True, timeout=600,
+                          env=dict(os.environ, DATABASE_URL='sqlite:///' + db))
+
+
+def test_ladder_files_validate_against_lessons(tmp_path, fresh_db):
     out = tmp_path / 'ladder.json'
-    p = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'ladder_check.py'), '--json', str(out)],
-                       cwd=ROOT, capture_output=True, text=True, timeout=300)
+    p = _check(['--json', str(out)], fresh_db)
     assert p.returncode == 0, p.stdout[-4000:] + p.stderr[-2000:]
-    assert out.exists()
+    rep = json.loads(out.read_text())
+    for course, c in rep['courses'].items():   # skips are counted and listed (target 0)
+        assert 'covered_pct' in c and 'skip_reasons' in c
+        assert c.get('skip', 0) == sum(1 for s in rep['skips'] if s['course'] == course)
+        assert sum(c['skip_reasons'].values()) == c.get('skip', 0)
 
 
-def test_worked_example_lesson_1_1_is_complete():
-    p = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'ladder_check.py'), '--course', 'ITSUP', '--chapter', '1',
-                        '--sections'], cwd=ROOT, capture_output=True, text=True, timeout=300)
+def test_max_skips_gate(fresh_db):
+    p = _check(['--no-coverage'], fresh_db)
+    assert p.returncode == 0
+    p = _check(['--max-skips', '0'], fresh_db)
+    n = sum(1 for ln in p.stdout.splitlines() if ln.startswith('TOO MANY SKIPS'))
+    assert (p.returncode == 1) == bool(n), p.stdout[-1500:]
+
+
+def test_worked_example_lesson_1_1_is_complete(fresh_db):
+    p = _check(['--course', 'ITSUP', '--chapter', '1', '--sections'], fresh_db)
     rows = [ln for ln in p.stdout.splitlines() if ln.strip().startswith('ITSUP') and ' 1.1 ' in ln]
     assert len(rows) == 22 and not [r for r in rows if ' missing ' in r or ' stale ' in r], rows
 
