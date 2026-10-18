@@ -512,6 +512,49 @@ with sync_playwright() as p:
     pg.goto(a.base + f'/instructor/section/{SID}/mastery'); pg.wait_for_load_state('networkidle')
     tok = pg.get_attribute('meta[name="csrf-token"]', 'content')
     pg.request.post(a.base + f'/instructor/section/{SID}/mastery/settings', form={'csrf_token': tok, 'enabled': '1', 'testout': '1', 'cert_items': '1'}, max_redirects=0)
+    # ================================================================ X-IT bank and supplement items (content round 5)
+    # With "Also use the chapter item bank" on, a mix-up correction prefers the items carrying that mix-up, which for
+    # the MC-R5-* ids are X-IT/S- bank items; a tagged wrong answer there must be recorded as that mix-up.
+    BANK_MC, BANK_OBJ, BANK_ITEM, BANK_WRONG = 'MC-R5-IT5-DORA', 'IT-5.2', 'X-IT-5.2.2', 'Discover'
+    login(pg, 'instructor@lms.local', 'teach123')
+    pg.goto(a.base + f'/instructor/section/{SID}/mastery'); pg.wait_for_load_state('networkidle')
+    tok = pg.get_attribute('meta[name="csrf-token"]', 'content')
+    r = pg.request.post(a.base + f'/instructor/section/{SID}/mastery/settings',
+                        form={'csrf_token': tok, 'enabled': '1', 'testout': '1', 'cert_items': '1', 'testout_bank': '1'}, max_redirects=0)
+    pg.goto(a.base + f'/instructor/section/{SID}/mastery'); pg.wait_for_load_state('networkidle')
+    check('instructor: chapter item bank turned on (round 5)', r.status in (302, 303) and pg.locator('#mxBank').is_checked(), r.status)
+    login(pg, EMAIL[TESTER], 'student123')
+    pg.goto(a.base + f'/student/section/{SID}/review/{BANK_OBJ}?mc={BANK_MC}'); pg.wait_for_load_state('networkidle')
+    body = pg.locator('main').inner_text()
+    check('tester: round-5 mix-up correction shows its label and Pending SME review status',
+          'Mixing up the order of the DHCP exchange' in body and 'Status of this mix-up description: Pending SME review.' in body, body[:200])
+    layout(pg, 'round-5 mix-up correction (bank on)')
+    shot(pg, '20-tester-round5-bank-mixup', full=True)
+    cid, its = open_check(TESTER, 'review', BANK_OBJ)
+    ids = [it.get('bank_id') for it in its]
+    check('tester: with the bank on, the correction check serves the X-IT item that carries the mix-up first',
+          ids and ids[0] == BANK_ITEM and BANK_WRONG in its[0]['options'], ids)
+    answer_form(pg, its, 'q', lambda it: BANK_WRONG if it.get('bank_id') == BANK_ITEM else it['correct'])
+    tap(pg.locator('#mxReviewForm button[type=submit]')); pg.wait_for_load_state('networkidle')
+    check('tester: bank-item correction check completed', '/done/' in pg.url, pg.url)
+    layout(pg, 'review done (bank item missed)')
+    login(pg, 'instructor@lms.local', 'teach123')
+    pg.goto(a.base + f'/instructor/section/{SID}/mastery/today'); pg.wait_for_load_state('networkidle')
+    rows_txt = ' '.join(t.inner_text() for t in pg.locator('table tr').all() if 'DHCP exchange' in t.inner_text())
+    check('instructor: the tagged wrong answer on the X-IT item is recorded as the round-5 mix-up (Who needs me, mix-up table)',
+          'Mixing up the order of the DHCP exchange' in rows_txt and BANK_OBJ in rows_txt, rows_txt[:200])
+    layout(pg, 'who needs me (bank mix-up)')
+    pg.goto(a.base + f'/instructor/section/{SID}/briefing'); pg.wait_for_load_state('networkidle')
+    check('instructor: briefing loads with the bank on', pg.locator('main').count() == 1)
+    layout(pg, 'briefing (bank on)')
+    pg.goto(a.base + f'/instructor/section/{SID}/mastery'); pg.wait_for_load_state('networkidle')
+    tok = pg.get_attribute('meta[name="csrf-token"]', 'content')
+    pg.request.post(a.base + f'/instructor/section/{SID}/mastery/settings', form={'csrf_token': tok, 'enabled': '1', 'testout': '1', 'cert_items': '1'}, max_redirects=0)
+    login(pg, EMAIL[TESTER], 'student123')
+    pg.goto(a.base + f'/student/section/{SID}/review/{BANK_OBJ}?mc={BANK_MC}'); pg.wait_for_load_state('networkidle')
+    cid, its = open_check(TESTER, 'review', BANK_OBJ)
+    check('tester: with the bank off again, no X-IT/S- item is served in the correction check',
+          its and not any((it.get('bank_id') or '').startswith(('X-', 'S-')) for it in its), [it.get('bank_id') for it in its])
     check('no page JavaScript errors or server errors', not errors, '; '.join(errors)[:400])
     b.close()
 

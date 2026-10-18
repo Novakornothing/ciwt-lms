@@ -16,6 +16,8 @@ It verifies: (1) reviews are inserted for objectives a student is weak on; (2) s
 pass mastery checks (test-outs) and their path skips the chapter; (3) spaced review comes due; (4) "Who needs me"
 and the briefing rank the students who need help; (5) no adaptive action changes a grade (gradebook CSV is
 identical before and after each day's adaptive actions, and no adaptive route writes graded rows).
+With --bank (content round 5) the synthetic class also draws X-IT bank and S- supplement items, and it checks that
+tagged wrong answers on them are recorded as mix-ups; without it, that no bank item is served (the default setting).
 Refuses to run against ciwt_lms.db.
 """
 import argparse
@@ -51,7 +53,7 @@ DISENGAGE_DAY = 9
 GRADED_TEST_DAY = 10                           # week 2, Thursday-ish
 
 
-def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print):
+def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print, bank=False):
     import app as A
     from curriculum_v2 import misconceptions as MCS
     import interactive_labs as IL
@@ -121,6 +123,16 @@ def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print):
     staff = app.test_client()
     staff.post('/login', data={'email': 'instructor@lms.local', 'password': 'teach123'})
     prof_of = dict(users)
+    # content round 5: --bank turns on "Also use the chapter item bank" for the synthetic class through the real
+    # settings route, so review and mastery checks also draw X-IT bank / S- supplement items (and their round-5 tags)
+    R['bank'] = bool(bank)
+    if bank:
+        r = staff.post(f'/instructor/section/{sid}/mastery/settings',
+                       data={'enabled': '1', 'testout': '1', 'cert_items': '1', 'testout_bank': '1'})
+        with app.app_context():
+            check('the synthetic class has the chapter item bank turned on (settings route)',
+                  r.status_code in (302, 303) and eng.settings(sid)['testout_bank'], r.status_code)
+    bank_served, bank_mc = Counter(), Counter()
 
     def answer(uid, it):
         """Pick an answer from the synthetic ability; wrong answers favour a tagged misconception distractor."""
@@ -143,6 +155,11 @@ def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print):
         form = {'check_id': str(check_id)}
         for i, it in enumerate(items):
             form[f'q{i}'] = answer(uid, it)
+            if str(it.get('bank_id') or '').startswith(('X-', 'S-')):
+                bank_served[it['bank_id']] += 1
+                mc = MCS.tag_for(it, form[f'q{i}'])
+                if mc:
+                    bank_mc[(uid, mc)] += 1
         r = clients[uid].post(url, data=form)
         assert r.status_code in (302, 303), (url, r.status_code)
         return r
@@ -412,6 +429,21 @@ def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print):
         R['section_id'] = sid
         R['testouts_passed'] = {str(u): sorted(v) for u, v in tested_out.items() if v}
         R['testout_offered'] = {str(u): sorted(v) for u, v in testout_offered.items() if v}
+        R['bank_items_served'] = {'times': sum(bank_served.values()), 'distinct': len(bank_served),
+                                  'tagged_wrong_answers': sum(bank_mc.values())}
+        if bank:
+            check('with the bank on, review/mastery checks served X-IT bank or S- supplement items', bank_served,
+                  R['bank_items_served'])
+            missing = []
+            for (u, mc), n in bank_mc.items():
+                st = eng.student_state(s, db.session.get(A.User, u), log=False)
+                if mc not in st['misconceptions'] or st['misconceptions'][mc]['hits'] < n:
+                    missing.append((u, mc, n))
+            check('every tagged wrong answer on a bank/supplement item is recorded as that mix-up in the student\'s state',
+                  bank_mc and not missing, missing or R['bank_items_served'])
+        else:
+            check('with the bank off (default), no X-IT bank or S- supplement item was served', not bank_served,
+                  dict(bank_served))
     R['summary'] = {'passed': sum(c['ok'] for c in R['checks']), 'total': len(R['checks'])}
     return R
 
@@ -421,8 +453,9 @@ def main():
     ap.add_argument('out')
     ap.add_argument('--days', type=int, default=28)
     ap.add_argument('--seed', type=int, default=13)
+    ap.add_argument('--bank', action='store_true', help='turn on "Also use the chapter item bank" for the synthetic class')
     a = ap.parse_args()
-    R = run(a.days, a.seed)
+    R = run(a.days, a.seed, bank=a.bank)
     with open(a.out, 'w') as f:
         json.dump(R, f, indent=1, default=str)
     print(f"{R['summary']['passed']}/{R['summary']['total']} checks passed — synthetic simulation, not evidence of learning")

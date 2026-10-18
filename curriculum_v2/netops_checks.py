@@ -183,7 +183,7 @@ NETOPS_CHECKS = {
 def netops_quiz_payload(order):
     """Quiz JSON for a NETOPS chapter (same shape as pilot_slice.quiz_payload)."""
     from curriculum_v2.objectives import OBJECTIVES
-    from curriculum_v2 import parity_pass15
+    from curriculum_v2 import parity_pass15, rationales_round4
     out = []
     for i, it in enumerate(NETOPS_CHECKS.get(order) or []):
         wrong = [o for o in it['options'] if o != it['correct']]
@@ -196,7 +196,9 @@ def netops_quiz_payload(order):
             'text': it['q'], 'options': opts, 'correct': key,
             'lo': f'LO-NET-{order}', 'lo_text': o.get('text', f'Network chapter {order}'),
             'focus': o.get('text', f'Network chapter {order}'), 'keywords': [],
-            'study_tip': it['why'], 'explanation': it['why'],
+            'study_tip': it['why'], 'explanation': rationales_round4.served(f'NQ{order}.{i}', it['why']),
             'obj': it['obj'], 'obj_text': o.get('text', ''), 'bank_id': f'NQ{order}.{i}',
+            # content round 4: an extended rationale is new text, so the item shows its review status
+            **({'review': rationales_round4.FIX} if f'NQ{order}.{i}' in rationales_round4.RATIONALE else {}),
         })
     return out

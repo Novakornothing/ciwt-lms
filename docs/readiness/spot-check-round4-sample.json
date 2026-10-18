@@ -1,0 +1,846 @@
+{
+ "drawn": "2026-10-18, tools/spot_check_sample.py --round4 16, on branch content after content round 4 commits fa0fa2f (rationales) and fd31dc0 (tags)",
+ "note": "Text is as checked (served text, including the round-4 rationales for Q1.6 and Q6.0). Excludes the 40 round-1 ids (ROUND1_IDS) and the 120 ids in spot-check-round2-sample.json and spot-check-round3-sample.json. No item text was changed by this round. This file is the record of what was checked.",
+ "items": [
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q1.6",
+   "obj": "IT-1.1",
+   "text": "Adding a production DNS record after 1500 against shop policy is:",
+   "options": [
+    "A change",
+    "A repair",
+    "An incident",
+    "Optional documentation"
+   ],
+   "correct": "A change",
+   "explanation": "Adding a production DNS record introduces something new on shared infrastructure, so it is a change and goes through the shop’s change process, which here forbids it after 1500. A repair only restores a known-good state (reseat RAM, replace a failed disk), nothing has broken yet so it is not an incident, and documentation is never optional for work that can affect other people. See 1.3. Source: ITIL 4 Change enablement practice guide (a change is any addition, modification or removal that could affect services); course 1.3."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.37",
+   "obj": "IT-1.2",
+   "text": "While handling RAM modules, which practice reduces ESD risk most directly?",
+   "options": [
+    "Holding modules by the gold contacts",
+    "Storing modules in a plastic bag",
+    "A grounded wrist strap and an ESD-safe mat",
+    "Rubber-soled shoes"
+   ],
+   "correct": "A grounded wrist strap and an ESD-safe mat",
+   "explanation": "A grounded wrist strap and ESD mat keep you and the component at the same potential."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q1.3",
+   "obj": "IT-1.3",
+   "text": "Which note can the next watch actually use?",
+   "options": [
+    "VPN is broken again, user says it worked last week and wants it fixed fast",
+    "User cannot connect, tried rebooting, please look into it when you have time",
+    "Hotel Wi-Fi is bad, so I told the user to find a better network and to call us back later today",
+    "VPN client 4.2.1, error 809, LAN ping OK, gateway ping fails, since the weekend update"
+   ],
+   "correct": "VPN client 4.2.1, error 809, LAN ping OK, gateway ping fails, since the weekend update",
+   "explanation": "This note records the version, the error code and two tests with their results (LAN ping works, gateway ping fails), plus when it started, so the next technician can pick up at the gateway. “VPN is broken again” and the other notes give only opinions and requests, with no test a peer can build on. See 1.3."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-IT-1.4.1",
+   "obj": "IT-1.4",
+   "text": "A caller says they are the CFO and need their password reset now. What do you do first?",
+   "options": [
+    "Verify identity using the approved method",
+    "Reset it and read it out on the call",
+    "Email the new password to any address given",
+    "Disable MFA so they can sign in"
+   ],
+   "correct": "Verify identity using the approved method",
+   "explanation": "Identity verification comes before any credential change; urgency is a common social-engineering pressure."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q2.3",
+   "obj": "IT-2.1",
+   "text": "M.2 stick in the short slot on the card. Storage word?",
+   "options": [
+    "storage hdd",
+    "storage usb",
+    "storage nvme",
+    "storage sata"
+   ],
+   "correct": "storage nvme",
+   "explanation": "On the hw-board bench card, the stick in the short M.2 slot is the NVMe drive, so the interface word is nvme (a 2.5-inch drive in the SATA tray would be sata). “storage sata” is the tempting wrong answer because some M.2 sticks are SATA drives; the word names the interface the course card documents, not the slot shape or the brand. See 2.5."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.1",
+   "obj": "IT-2.2",
+   "text": "You install an M.2 NVMe SSD but the OS installer only lists a SATA HDD. BIOS shows the NVMe under a PCIe slot. What should you check first?",
+   "options": [
+    "The drive is larger than MBR allows",
+    "The SATA HDD must be removed first",
+    "The UEFI storage mode (RAID/VMD) needs a driver",
+    "Secure Boot blocks NVMe drives in Setup"
+   ],
+   "correct": "The UEFI storage mode (RAID/VMD) needs a driver",
+   "explanation": "Firmware already sees the drive, so it is healthy; the installer cannot see it because the controller is in a RAID/VMD mode that needs a driver (or the slot shares lanes with SATA). Change the storage mode or load the driver."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q3.7",
+   "obj": "IT-2.3",
+   "text": "Long beeps + MEM, no video. Display cable first?",
+   "options": [
+    "Only if the monitor is new",
+    "No. That is POST memory",
+    "Yes",
+    "Yes, if it uses HDMI"
+   ],
+   "correct": "No. That is POST memory",
+   "explanation": "Long beeps with a memory code and no video is a POST memory failure: the board stops before it ever sends a picture, so the display cable is not the next check. “Yes, if it uses HDMI” mixes the display order into a POST fault; reseat and test the memory first. See 2.5 / 3.4."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q2.7",
+   "obj": "IT-2.4",
+   "text": "Why list disk before imaging?",
+   "options": [
+    "To convert to MBR every time",
+    "To skip About",
+    "To know which handle is the OS disk",
+    "To clean every disk automatically"
+   ],
+   "correct": "To know which handle is the OS disk",
+   "explanation": "Disk numbers such as Disk 0 are handles that can change between machines and boots, so list disk shows which handle is the OS disk before anything is imaged or written. Cleaning or converting disks “automatically” is the failure this step prevents: run against the wrong handle, it destroys the wrong disk. See 2.6."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q3.0",
+   "obj": "IT-3.1",
+   "text": "M.2 is the slot. NVMe is:",
+   "options": [
+    "A protocol that often uses that slot",
+    "Always the same thing as M.2",
+    "A PSU rating",
+    "A board form factor, the same as ATX"
+   ],
+   "correct": "A protocol that often uses that slot",
+   "explanation": "M.2 is a physical slot and card shape; NVMe is the protocol a drive uses over PCIe, and it often uses an M.2 slot. Calling them “always the same thing” is the classic mix-up: an M.2 card can be a SATA drive, which an NVMe-only slot will not accept. See 3.1."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q3.3",
+   "obj": "IT-3.2",
+   "text": "RAID 0 if one disk dies:",
+   "options": [
+    "Firmware fixes it",
+    "The volume is gone",
+    "The volume stays up",
+    "Parity rebuilds overnight"
+   ],
+   "correct": "The volume is gone",
+   "explanation": "RAID 0 stripes data across the disks with no parity or mirror, so losing one disk loses the whole volume. “Parity rebuilds overnight” describes RAID 5 or 6; RAID 0 has nothing to rebuild from, which is why it is never used for data you cannot lose. See 3.2."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q3.9",
+   "obj": "IT-3.3",
+   "text": "Unstable workstation capstone: you change four parts at once. Problem?",
+   "options": [
+    "It takes too long",
+    "Nothing, if the PC works afterwards",
+    "It voids the warranty",
+    "You cannot tell what fixed it"
+   ],
+   "correct": "You cannot tell what fixed it",
+   "explanation": "Changing four parts at once means you cannot tell which change fixed the fault, so the note cannot explain it and the next technician cannot learn from it. “Nothing, if the PC works afterwards” ignores that: change one thing, test, write the result, then decide on the next change. See 3.5."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q3.6",
+   "obj": "IT-3.4",
+   "text": "POST already OK, panel is dark. First idea?",
+   "options": [
+    "clean disk",
+    "Disable Secure Boot",
+    "Cable and input on the panel",
+    "Replace the motherboard first"
+   ],
+   "correct": "Cable and input on the panel",
+   "explanation": "POST already passes, so the PC itself starts; a dark panel then points to the display path: the cable and the monitor’s input selection. Replacing the motherboard skips the cheap display-path checks and replaces a part that has already shown it works. See 3.4."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-4.1.2",
+   "obj": "IT-4.1",
+   "text": "Which command shows a laptop battery’s design capacity and full charge capacity?",
+   "options": [
+    "ipconfig /batteryinfo /all",
+    "chkdsk C: /battery",
+    "msinfo32 /report power",
+    "powercfg /batteryreport"
+   ],
+   "correct": "powercfg /batteryreport",
+   "explanation": "powercfg /batteryreport writes an HTML report with both capacities and their history."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-4.2.3",
+   "obj": "IT-4.2",
+   "text": "Mail syncs on cellular but not on the office Wi-Fi. What should you check next?",
+   "options": [
+    "The phone’s eSIM carrier profile",
+    "The battery report on the phone",
+    "The Activation Lock status",
+    "Which SSID and address it has"
+   ],
+   "correct": "Which SSID and address it has",
+   "explanation": "The device and account work; the building Wi-Fi path (wrong SSID, guest network, proxy) is the suspect."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q4.4",
+   "obj": "IT-4.3",
+   "text": "One user cannot print from the browser; Word on the same PC works. Where do you start?",
+   "options": [
+    "Replace the floor printer",
+    "Rebuild the print server for the floor",
+    "Swap the PSU",
+    "App / driver path for that browser"
+   ],
+   "correct": "App / driver path for that browser",
+   "explanation": "Word prints from the same PC, so the printer, network and print server all work; only the browser’s print path (its print settings or the driver it uses) differs. Rebuilding the print server treats one application on one PC as a floor-wide outage. See 4.3."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.21",
+   "obj": "IT-5.1",
+   "text": "A dual-stack host reaches IPv4 sites but not IPv6-only services. ipconfig shows a link-local IPv6 only. What is missing?",
+   "options": [
+    "A second IPv4 default gateway",
+    "Disabling IPv4 so IPv6 is preferred",
+    "Router advertisements or DHCPv6 address",
+    "An IPv6 DNS server set on the client"
+   ],
+   "correct": "Router advertisements or DHCPv6 address",
+   "explanation": "A link-local (fe80::) address alone means no router advertisement or DHCPv6 provided a global address."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q5.6",
+   "obj": "IT-5.2",
+   "text": "Outlook loops but ping to the mail server IP works. NIC is dead?",
+   "options": [
+    "No. The path is up; check name, account, service",
+    "Yes. Outlook failing means the NIC failed",
+    "Yes, if the address it shows is in the APIPA range",
+    "Yes, if the link light is blinking"
+   ],
+   "correct": "No. The path is up; check name, account, service",
+   "explanation": "A successful ping to the mail server’s IP proves the NIC, link and route work, so the problem is higher up: the name, the account or the mail service. “Outlook failing means the NIC failed” ignores that evidence; a dead NIC could not ping anything. See 5.2."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-5.3.1",
+   "obj": "IT-5.3",
+   "text": "A PC has a valid lease but cannot ping its default gateway. Which layer is next to check?",
+   "options": [
+    "The local LAN and the gateway",
+    "The DNS server and its records",
+    "The web proxy configuration",
+    "The application’s service port"
+   ],
+   "correct": "The local LAN and the gateway",
+   "explanation": "Stop at the first failing step: the gateway is unreachable, so name and service tests would prove nothing yet."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.17",
+   "obj": "IT-5.4",
+   "text": "A SOHO router was set to a static WAN IP but the ISP only provides DHCP. Symptom: WAN LED up, no Internet. Fix?",
+   "options": [
+    "Point the router at a public DNS resolver",
+    "Enable NAT on the LAN interface instead",
+    "Set the WAN interface to obtain an address automatically",
+    "Disable the DHCP server on the LAN side"
+   ],
+   "correct": "Set the WAN interface to obtain an address automatically",
+   "explanation": "The ISP assigns the WAN address by DHCP, so a static WAN setting leaves the router with no valid upstream address."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q6.0",
+   "obj": "IT-6.1",
+   "text": "A VM is:",
+   "options": [
+    "A remote desktop session",
+    "A guest PC made of files, running on a host",
+    "A physical server rack-mounted in a data centre",
+    "A backup copy of a hard drive"
+   ],
+   "correct": "A guest PC made of files, running on a host",
+   "explanation": "A virtual machine is a guest computer made of files (virtual disks and configuration) that runs on a host’s hypervisor, so the Windows on this bench may itself be a guest. A remote desktop session is only a remote view of some computer, physical or virtual. A rack server is physical hardware that may host VMs, and a backup copy of a disk does not run. See 6.1. Source: NIST SP 800-125, Guide to Security for Full Virtualization Technologies (host, hypervisor, guest OS)."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q6.3",
+   "obj": "IT-6.2",
+   "text": "Whole tenant cannot open mail; ipconfig on the laptop is fine. Next?",
+   "options": [
+    "format C:",
+    "Open the PSU",
+    "Vendor / tenant path, not a local disk",
+    "Reimage the first laptop that reported it"
+   ],
+   "correct": "Vendor / tenant path, not a local disk",
+   "explanation": "The laptop’s IP configuration is fine and every user in the tenant has the same failure, so the common factor is the SaaS tenant or the vendor: go to the vendor or tenant status path. Reimaging the first laptop treats a shared service outage as one device’s fault and destroys evidence. See 6.2."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.48",
+   "obj": "IT-6.3",
+   "text": "After cloning a VM, both clones fight for the same IP and computer name on the LAN. What was omitted?",
+   "options": [
+    "Disable DHCP on the lab LAN",
+    "Add a second virtual NIC to each clone",
+    "Take a snapshot of each clone",
+    "Generalise (Sysprep) for unique identity"
+   ],
+   "correct": "Generalise (Sysprep) for unique identity",
+   "explanation": "Clones need a generalised image (Sysprep) or regenerated identity, plus unique names and addresses."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q7.9",
+   "obj": "IT-7.2",
+   "text": "Capstone miss: diskpart on a mail-SaaS outage. Why fail?",
+   "options": [
+    "You followed 7.2",
+    "SaaS requires clean",
+    "You forgot to run list disk",
+    "You crossed fault domains"
+   ],
+   "correct": "You crossed fault domains",
+   "explanation": "Running diskpart on a PC during a mail-SaaS outage works on the local disk when the fault is in the vendor’s service: it crosses fault domains, and it risks data while testing nothing relevant. “Always list disk” is a good habit for disk work, but it does not make disk work the right domain here. See 7.4."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.49",
+   "obj": "IT-7.3",
+   "text": "A help desk agent escalates without listing steps already tried. What professionalism issue does this create?",
+   "options": [
+    "It breaches change control",
+    "It shortens time to repair",
+    "Tier 2 repeats work and lacks context",
+    "Nothing — tier 2 retests anyway"
+   ],
+   "correct": "Tier 2 repeats work and lacks context",
+   "explanation": "Without the steps already tried, tier 2 repeats work and lacks context, so resolution slows."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-7.4.3",
+   "obj": "IT-7.4",
+   "text": "During a high-impact outage, what should users hear while the owning team works?",
+   "options": [
+    "Nothing until the fix has been confirmed by the owning team",
+    "Status updates at an agreed interval, even if no change",
+    "A guess at the root cause to keep them calm",
+    "Instructions to restart their PCs every hour"
+   ],
+   "correct": "Status updates at an agreed interval, even if no change",
+   "explanation": "Regular, honest updates manage expectations; guesses and silence both erode trust."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q8.2",
+   "obj": "IT-8.1",
+   "text": "Clean install versus in-place:",
+   "options": [
+    "Neither one counts as a change",
+    "Clean wipes the OS volume; in-place tries to keep apps and files",
+    "Clean keeps apps and files; in-place wipes the whole OS volume",
+    "They are the same process with different names"
+   ],
+   "correct": "Clean wipes the OS volume; in-place tries to keep apps and files",
+   "explanation": "A clean install wipes the OS volume and starts again. An in-place upgrade or repair reinstalls Windows while trying to keep apps, files and settings. Both are changes that need a ticket, and they are not the same process. See 8.1."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q8.3",
+   "obj": "IT-8.2",
+   "text": "Why read Windows Update on a reboot loop?",
+   "options": [
+    "A pending update is a change window",
+    "Updates never cause restarts",
+    "It is a reason to disable Defender",
+    "It means the board has failed"
+   ],
+   "correct": "A pending update is a change window",
+   "explanation": "A pending or failed update can restart the PC repeatedly, so Update history is evidence for a reboot loop and a reason to plan a change window. Updates do cause restarts, and none of this justifies turning Defender off or blaming the board. See 8.2."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-8.3.3",
+   "obj": "IT-8.3",
+   "text": "Which tool shows a day-by-day timeline of crashes alongside software and driver installs?",
+   "options": [
+    "Disk Management (diskmgmt.msc)",
+    "Reliability Monitor (perfmon /rel)",
+    "Device encryption in Settings",
+    "The Windows Update troubleshooter tool"
+   ],
+   "correct": "Reliability Monitor (perfmon /rel)",
+   "explanation": "Reliability Monitor correlates failures with installs, which helps date a fault to a change."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.28",
+   "obj": "IT-8.4",
+   "text": "Time skew of 10 minutes appears on a domain client; logons intermittently fail. Root cause class?",
+   "options": [
+    "Expired DNS records on the client",
+    "An expired computer-account password",
+    "A corrupt local user profile",
+    "Kerberos clock-skew limits"
+   ],
+   "correct": "Kerberos clock-skew limits",
+   "explanation": "Kerberos rejects tickets when client and domain controller clocks differ by more than the allowed skew (5 minutes by default)."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q9.7",
+   "obj": "IT-9.2",
+   "text": "Which Windows lab view is the counterpart of About This Mac?",
+   "options": [
+    "Settings → Apps → Installed apps",
+    "Settings → Windows Update",
+    "Settings → Accounts → Your info",
+    "Settings → System → About"
+   ],
+   "correct": "Settings → System → About",
+   "explanation": "About This Mac shows the model, chip, memory and macOS version, and Settings → System → About shows the same identity facts on Windows. Installed apps, Windows Update and Your info show other things. See 9.2."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q9.5",
+   "obj": "IT-9.3",
+   "text": "A Mac user asks for access to a share they have never had. How do you classify it?",
+   "options": [
+    "Clean install",
+    "Service request / entitlement",
+    "Break/fix — the network card",
+    "Security incident"
+   ],
+   "correct": "Service request / entitlement",
+   "explanation": "Access the user has never had is new entitlement, so it is a service request. Nothing is broken, so it is not break/fix or a security incident, and a clean install would change nothing. See 9.3 / 1.1."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q9.11",
+   "obj": "IT-9.4",
+   "text": "A Linux share holds both Plan.docx and plan.docx. What does a Windows user browsing the share usually see?",
+   "options": [
+    "Both files, listed side by side under their original names and sizes",
+    "An error message, because SMB cannot share folders that live on Linux",
+    "Two copies of whichever file was saved most recently, under one name",
+    "Only one, as Windows treats names case-insensitively by default"
+   ],
+   "correct": "Only one, as Windows treats names case-insensitively by default",
+   "explanation": "Linux file names are case-sensitive, so two files can differ only by case. Windows treats names case-insensitively by default, so it shows only one of them. The fix is a naming rule on the Linux side, not a Windows repair."
+  },
+  {
+   "pool": "question_bank.A1",
+   "bank_id": "A1.44",
+   "obj": "IT-10.2",
+   "text": "Windows Event Viewer shows repeated failed logons from many internal IPs against one account. Best immediate action?",
+   "options": [
+    "Unlock the account so the user can work",
+    "Ignore it as normal authentication noise",
+    "Reboot the domain controller to clear it",
+    "Protect the account and investigate per process"
+   ],
+   "correct": "Protect the account and investigate per process",
+   "explanation": "Many sources against one account suggest an attack. Follow the incident process: protect the account, preserve logs and look for lateral movement."
+  },
+  {
+   "pool": "question_bank.A3",
+   "bank_id": "A3.5",
+   "obj": "IT-10.3",
+   "text": "Which attack is best mitigated by application allow-listing on fixed-function kiosks?",
+   "options": [
+    "Distributed denial of service",
+    "Wi-Fi eavesdropping",
+    "Running unauthorised programs such as ransomware",
+    "Phishing emails reaching inboxes"
+   ],
+   "correct": "Running unauthorised programs such as ransomware",
+   "explanation": "Allow-listing runs only approved programs, blocking unauthorised binaries such as ransomware."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-10.4.1",
+   "obj": "IT-10.4",
+   "text": "A user typed their password into a phishing page. Which step is part of the follow-up?",
+   "options": [
+    "Ask the user to change their desk phone PIN",
+    "Check the mailbox for new forwarding rules",
+    "Reinstall the user’s web browser at once",
+    "Clear the user’s browser history and cache"
+   ],
+   "correct": "Check the mailbox for new forwarding rules",
+   "explanation": "Attackers often add forwarding or deletion rules; these are checked along with sessions and MFA methods."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-11.1.1",
+   "obj": "IT-11.1",
+   "text": "Which Application-log event usually records a program crash, with the faulting module?",
+   "options": [
+    "Kernel-Power, event ID 41",
+    "Service Control Manager, event ID 7036",
+    "User Profile Service, ID 1530",
+    "Application Error, event ID 1000"
+   ],
+   "correct": "Application Error, event ID 1000",
+   "explanation": "Application Error 1000 names the faulting application and module; Kernel-Power 41 is an unexpected shutdown."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q11.4",
+   "obj": "IT-11.2",
+   "text": "Repair vs rebuild: default?",
+   "options": [
+    "Repair or in-place upgrade first",
+    "Rebuild from a clean image first",
+    "Always reset to factory defaults",
+    "Replace the disk, then reinstall"
+   ],
+   "correct": "Repair or in-place upgrade first",
+   "explanation": "Use the least disruptive fix first: an app repair or in-place upgrade keeps apps and data. A clean image, a factory reset or a new disk are bigger changes for when repair has failed and the user’s data is backed up. See 11.3 / 8.1."
+  },
+  {
+   "pool": "question_bank.A2",
+   "bank_id": "A2.6",
+   "obj": "IT-11.3",
+   "text": "Windows resource monitor shows a process locking a log file you need to truncate. Best approach?",
+   "options": [
+    "Delete the folder in Safe Mode",
+    "Stop the owning service gracefully, then manage the file",
+    "Delete the file while the service runs",
+    "Take ownership and force-delete it"
+   ],
+   "correct": "Stop the owning service gracefully, then manage the file",
+   "explanation": "Stop the owning service or process gracefully, then manage the file; forcing it can corrupt data."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-11.4.1",
+   "obj": "IT-11.4",
+   "text": "Logon sits on “Applying user settings” for five minutes. Which evidence helps most?",
+   "options": [
+    "The firmware event log and the boot order list",
+    "GroupPolicy Operational log and gpresult /h",
+    "The printer queue and the spooler status",
+    "The Wi-Fi channel and the signal strength"
+   ],
+   "correct": "GroupPolicy Operational log and gpresult /h",
+   "explanation": "User-policy delays (scripts, drive maps) show in the GroupPolicy Operational log and the gpresult report."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q12.0",
+   "obj": "IT-12.1",
+   "text": "Adding production DNS after 1500 against policy is:",
+   "options": [
+    "Repair",
+    "Optional",
+    "Always allowed",
+    "A change"
+   ],
+   "correct": "A change",
+   "explanation": "Adding a production DNS record outside the agreed window and against policy is a change: it needs a request, approval and a backout plan. It is not a repair, and policy says it is not optional or always allowed. See 12.1 / 1.3."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-12.2.3",
+   "obj": "IT-12.2",
+   "text": "During repair you see files suggesting a possible crime. What should you do?",
+   "options": [
+    "Open the files to confirm what they are before reporting",
+    "Copy the files to a USB stick as evidence",
+    "Discuss it with colleagues to get their views",
+    "Stop, record the facts and report through the procedure"
+   ],
+   "correct": "Stop, record the facts and report through the procedure",
+   "explanation": "Do not investigate, copy or discuss; record facts and report through the named channel."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q12.4",
+   "obj": "IT-12.3",
+   "text": "RAID vs backup vs snapshot?",
+   "options": [
+    "The same — all three protect against site loss",
+    "RAID is the off-site copy; snapshots are the local copy",
+    "Snapshots are the tenant backup; RAID is off-site",
+    "Different — RAID and snapshots are not off-site copies"
+   ],
+   "correct": "Different — RAID and snapshots are not off-site copies",
+   "explanation": "RAID keeps a volume running through a disk failure, and a snapshot is a point-in-time state on the same system; neither is a separate off-site copy. Only a backup kept elsewhere protects against site loss, deletion or ransomware. See 12.3 / 3.2 / 6.3."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-12.4.2",
+   "obj": "IT-12.4",
+   "text": "A laptop is sanitised and recycled. How should its asset record change?",
+   "options": [
+    "Status disposed, with date and sanitisation reference",
+    "Delete the record so that the asset list stays short",
+    "Keep it marked “in use” until the warranty ends",
+    "Move it to the new owner listed on the invoice"
+   ],
+   "correct": "Status disposed, with date and sanitisation reference",
+   "explanation": "Asset records track a device through disposal; the sanitisation reference is the evidence."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q13.2",
+   "obj": "IT-13.1",
+   "text": "ipconfig /all belongs in:",
+   "options": [
+    "The ticket as evidence",
+    "Only in your own notes",
+    "The password field",
+    "Nowhere — it changes too often"
+   ],
+   "correct": "The ticket as evidence",
+   "explanation": "ipconfig /all output is evidence of what the PC thought its network settings were at that time, so paste it into the ticket with the command. Keeping it in private notes or leaving it out loses that record, and it never goes in a password field. See 13.2 / 5.1."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q13.5",
+   "obj": "IT-13.2",
+   "text": "Firewall during 13.4?",
+   "options": [
+    "Only on Macs",
+    "Stays on",
+    "Off",
+    "Optional"
+   ],
+   "correct": "Stays on",
+   "explanation": "The firewall stays on during the name-resolution labs, as in every chapter. DNS faults are found with lease, IP and name tests, not by removing protection. See 13.4."
+  },
+  {
+   "pool": "ITSUP chapter checks",
+   "bank_id": "Q13.1",
+   "obj": "IT-13.3",
+   "text": "Before changing the lab VM:",
+   "options": [
+    "Delete host snapshots",
+    "Inventory",
+    "clean",
+    "Disable Defender"
+   ],
+   "correct": "Inventory",
+   "explanation": "Inventory the lab VM (name, edition, disks, network) before changing anything, so you can tell what changed. Deleting host snapshots, clean and disabling Defender are destructive or unsafe. See 13.1 / 2.6."
+  },
+  {
+   "pool": "itsup_core.EXPANSION",
+   "bank_id": "X-IT-13.4.1",
+   "obj": "IT-13.4",
+   "text": "A lease renew fails after a desk move while other ports on the row work. What should you do next?",
+   "options": [
+    "Run netsh int ip reset and then restart the PC",
+    "Perform a full Settings network reset now",
+    "Try a known-good port and escalate the bad one",
+    "Reinstall the network adapter driver first"
+   ],
+   "correct": "Try a known-good port and escalate the bad one",
+   "explanation": "Evidence points to the switch port or VLAN; changing the PC’s stack would alter the wrong thing."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.21",
+   "obj": "NO-1.1",
+   "text": "Which protocol resolves IPv4 addresses to MAC addresses on a LAN?",
+   "options": [
+    "DHCP",
+    "ICMP",
+    "ARP",
+    "DNS"
+   ],
+   "correct": "ARP",
+   "explanation": "ARP maps an IPv4 address to a MAC address on the local link."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ1.3",
+   "obj": "NO-1.2",
+   "text": "What is the broadcast address of 172.16.5.64/27?",
+   "options": [
+    "172.16.5.127",
+    "172.16.5.63",
+    "172.16.5.96",
+    "172.16.5.95"
+   ],
+   "correct": "172.16.5.95",
+   "explanation": "A /27 block is 32 addresses: 172.16.5.64–172.16.5.95, so .95 is the broadcast."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.1",
+   "obj": "NO-1.3",
+   "text": "Which scenario correctly prefers UDP over TCP?",
+   "options": [
+    "An interactive SSH session",
+    "A file transfer that must arrive intact",
+    "Live voice or video, where low delay matters most",
+    "Loading a web page over HTTP/1.1"
+   ],
+   "correct": "Live voice or video, where low delay matters most",
+   "explanation": "Live voice/video values low delay over recovering every packet, which suits UDP."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.15",
+   "obj": "NO-2.2",
+   "text": "802.1Q tagging is used to?",
+   "options": [
+    "Carry VLAN identity on trunk links",
+    "Encrypt frames between switches",
+    "Bundle links into one logical link",
+    "Prevent loops between switches"
+   ],
+   "correct": "Carry VLAN identity on trunk links",
+   "explanation": "802.1Q inserts a VLAN tag so a trunk can carry many VLANs."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.16",
+   "obj": "NO-2.3",
+   "text": "A copper run fails certification at 100m+ for 10GBASE-T. Likely factor?",
+   "options": [
+    "The NIC duplex and speed settings",
+    "The VLAN assigned to the access port",
+    "The switch’s PoE power budget",
+    "The 100 m channel limit and cable category"
+   ],
+   "correct": "The 100 m channel limit and cable category",
+   "explanation": "Beyond the 100 m channel, and with lower categories or poor installation, 10GBASE-T will not certify."
+  },
+  {
+   "pool": "question_bank.N2",
+   "bank_id": "N2.18",
+   "obj": "NO-3.1",
+   "text": "Which command-line tool on many systems shows the path packets take?",
+   "options": [
+    "netstat",
+    "traceroute/tracert",
+    "nslookup",
+    "arp -a"
+   ],
+   "correct": "traceroute/tracert",
+   "explanation": "traceroute (tracert on Windows) lists the router hops."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.22",
+   "obj": "NO-3.3",
+   "text": "A wireless survey shows high channel utilization on 2.4 GHz. Best first design response?",
+   "options": [
+    "Add more APs on channel 6",
+    "Move clients to 5/6 GHz and cut channel overlap",
+    "Raise every AP’s transmit power to maximum",
+    "Use 40 MHz channels on 2.4 GHz"
+   ],
+   "correct": "Move clients to 5/6 GHz and cut channel overlap",
+   "explanation": "2.4 GHz has only three non-overlapping channels; move capable clients to 5/6 GHz and reduce co-channel overlap."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ4.0",
+   "obj": "NO-4.1",
+   "text": "In what order do the DHCP DORA messages occur?",
+   "options": [
+    "Discover, Request, Offer, Acknowledge",
+    "Offer, Discover, Acknowledge, Request",
+    "Request, Offer, Discover, Acknowledge",
+    "Discover, Offer, Request, Acknowledge"
+   ],
+   "correct": "Discover, Offer, Request, Acknowledge",
+   "explanation": "The client discovers, servers offer, the client requests one offer and that server acknowledges."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.19",
+   "obj": "NO-5.3",
+   "text": "A zero-trust approach most strongly emphasizes?",
+   "options": [
+    "Verification and least privilege everywhere",
+    "Relying on a VPN for access control",
+    "Blocking all remote access",
+    "Trusting devices inside the perimeter"
+   ],
+   "correct": "Verification and least privilege everywhere",
+   "explanation": "Zero trust verifies every request and grants least privilege regardless of network location."
+  },
+  {
+   "pool": "question_bank.N1",
+   "bank_id": "N1.10",
+   "obj": "NO-6.1",
+   "text": "A user VLAN cannot reach the Internet; the server VLAN can. Both use the same core. First isolation step?",
+   "options": [
+    "Reboot the core switch to clear it",
+    "Compare routing, ACL and NAT rules per VLAN",
+    "Replace the user VLAN’s uplink cable",
+    "Disable Spanning Tree on the core"
+   ],
+   "correct": "Compare routing, ACL and NAT rules per VLAN",
+   "explanation": "Shared core works for one VLAN, so compare what differs per VLAN: routes, ACL/firewall rules and NAT."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ6.5",
+   "obj": "NO-6.2",
+   "text": "Which status update is most useful to stakeholders?",
+   "options": [
+    "Impact, current action, next update time",
+    "Technical details of every command run",
+    "“Working on it” every few minutes",
+    "A promise of when it will be fixed"
+   ],
+   "correct": "Impact, current action, next update time",
+   "explanation": "Stakeholders need impact, what is being done and when they will hear next; avoid promises you cannot keep."
+  },
+  {
+   "pool": "NETOPS chapter checks",
+   "bank_id": "NQ6.7",
+   "obj": "NO-6.3",
+   "text": "After the incident, what should be updated?",
+   "options": [
+    "Nothing more, as long as the service has been restored",
+    "The user’s password",
+    "Diagrams, configs and the runbook to match the change",
+    "Only the ticket status"
+   ],
+   "correct": "Diagrams, configs and the runbook to match the change",
+   "explanation": "Documentation that matches reality is what makes the next incident faster."
+  },
+  {
+   "pool": "exam_supplement",
+   "bank_id": "S-NO-9.2.2",
+   "obj": "NO-9.2",
+   "text": "Which command shows interface addresses and up/down status in one short list?",
+   "options": [
+    "show running-config",
+    "show vlan brief",
+    "show version",
+    "show ip interface brief"
+   ],
+   "correct": "show ip interface brief",
+   "explanation": "show ip interface brief lists each interface with its IP address, status and protocol."
+  }
+ ]
+}

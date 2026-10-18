@@ -1,4 +1,5 @@
-"""Measure misconception-tag coverage in the adaptive engine (content round 3).
+"""Measure misconception-tag coverage in the adaptive engine (content round 3; pass-15 subset round 4; X-IT bank and
+supplement subset round 5).
 
 An objective is *covered* when, among the single-answer items the engine can score for it (chapter checks and
 Tests A/B/C in the seeded course DB, certification items aligned to it, the X-IT expansion bank and the exam
@@ -116,6 +117,66 @@ def summary(cov):
                               sum(1 for o in objs if cov[o]['course'] == c)] for c in ('ITSUP', 'NETOPS')}}
 
 
+def p15_report(app):
+    """Content round 4: tag coverage of the pass-15 certification gap items (i05_gaps_p15.ITEMS) as the engine serves
+    them. A tag counts only if the served option text matches, it is not the key, the objective matches and
+    ``tag_for`` returns it."""
+    from mastery.engine import cert_items_for
+    from curriculum_v2 import misconceptions as MCS
+    from curriculum_v2.cert.content import i05_gaps_p15 as P
+    r = {'items': len(P.ITEMS), 'single': 0, 'served_single': 0, 'distractors': 0, 'tagged': 0, 'items_tagged': 0,
+         'not_scored': [], 'untagged_distractors': [], 'mcs_with_status': 0, 'mcs_with_source': 0,
+         'mcs': len(P.MISCONCEPTIONS)}
+    with app.app_context():
+        for q in P.ITEMS:
+            if q['type'] != 'single':
+                r['not_scored'].append(f"{q['bank_id']} ({q['type']})")
+                continue
+            r['single'] += 1
+            s = next((x for x in cert_items_for(q['obj']) if x.get('bank_id') == q['bank_id']), None)
+            if not s:
+                continue
+            r['served_single'] += 1
+            hit = False
+            for d in s['options']:
+                if d == s['correct']:
+                    continue
+                r['distractors'] += 1
+                if MCS.tag_for(s, d):
+                    r['tagged'] += 1
+                    hit = True
+                else:
+                    r['untagged_distractors'].append((q['bank_id'], d))
+            r['items_tagged'] += int(hit)
+    for k in P.MISCONCEPTIONS:
+        r['mcs_with_status'] += int(bool(MCS.MISCONCEPTIONS[k].get('status')))
+        r['mcs_with_source'] += int(bool(MCS.MISCONCEPTIONS[k].get('source')))
+    return r
+
+
+def bank_report(cov):
+    """Content round 5: the X-IT expansion bank and the exam supplement, as the engine serves them (Engine.pool with
+    include_bank). Items with no tagged distractor are listed by bank id; new MC-R5-* misconceptions are counted with
+    their status, source and whether the mix-up correction finds a lesson section."""
+    from curriculum_v2 import misconceptions as MCS
+    from curriculum_v2 import misconceptions_round5 as R5
+    r = {'bank': [0, 0], 'supplement': [0, 0], 'untagged': [], 'r5_mcs': len(R5.MISCONCEPTIONS), 'r5_tags': len(R5.TAGS),
+         'r5_with_status': 0, 'r5_with_source': 0, 'r5_with_correction': 0}
+    for o in cov.values():
+        for src in ('bank', 'supplement'):
+            n, t = o['by_src'].get(src, [0, 0])
+            r[src][0] += n
+            r[src][1] += t
+        r['untagged'] += [b for b in o['untagged_items'] if b and b[:2] in ('X-', 'S-')]
+    corr = {m for o in cov.values() for m in o['with_correction']}
+    for k in R5.MISCONCEPTIONS:
+        r['r5_with_status'] += int(MCS.MISCONCEPTIONS[k].get('status') == 'Pending SME review')
+        r['r5_with_source'] += int(bool(MCS.MISCONCEPTIONS[k].get('source')))
+        r['r5_with_correction'] += int(k in corr)
+    r['untagged'].sort()
+    return r
+
+
 def main(argv):
     import app as lms
     cov = measure(lms.app, lms)
@@ -132,8 +193,20 @@ def main(argv):
         print(f"  {o:8} items={c['items']:3} distractors={c['distractors']:3} tagged={c['tagged']:3} mcs={len(c['misconceptions']):2} "
               f"corr={len(c['with_correction']):2} items_tagged={c['items_tagged']:3} {'OK' if c['covered'] else '--'} "
               + ' '.join(f"{k}:{v[1]}/{v[0]}" for k, v in sorted(c['by_src'].items())))
+    p15 = p15_report(lms.app)
+    print(f"pass-15 cert gap items: {p15['served_single']}/{p15['single']} single-answer items served; tagged distractors "
+          f"{p15['tagged']}/{p15['distractors']}; items with >=1 tag {p15['items_tagged']}/{p15['served_single']}; "
+          f"misconceptions with status {p15['mcs_with_status']}/{p15['mcs']}, with source {p15['mcs_with_source']}/{p15['mcs']}; "
+          f"not scored per distractor: {', '.join(p15['not_scored'])}")
+    for b, d in p15['untagged_distractors']:
+        print(f"  p15 untagged: {b}: {d}")
+    bk = bank_report(cov)
+    print(f"X-IT bank items with >=1 tag: {bk['bank'][1]}/{bk['bank'][0]}; supplement: {bk['supplement'][1]}/{bk['supplement'][0]}; "
+          f"round-5 tags {bk['r5_tags']}, MC-R5 misconceptions {bk['r5_mcs']} (Pending status {bk['r5_with_status']}, "
+          f"source {bk['r5_with_source']}, correction found {bk['r5_with_correction']})")
+    print('  bank/supplement untagged (throw-away distractors only):', ', '.join(bk['untagged']) or 'none')
     if '--json' in argv:
-        Path(argv[argv.index('--json') + 1]).write_text(json.dumps({'summary': s, 'objectives': cov}, indent=1))
+        Path(argv[argv.index('--json') + 1]).write_text(json.dumps({'summary': s, 'objectives': cov, 'p15': p15, 'bank': bk}, indent=1))
 
 
 if __name__ == '__main__':

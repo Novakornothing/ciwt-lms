@@ -44,7 +44,9 @@ def _bank_items():
         for it in netops_quiz_payload(order):
             items.setdefault(it.get('bank_id'), []).append(it)
     from curriculum_v2.cert.items import CERT_ITEMS          # content round 2: MC-C-* tags on cert items
-    for pool in (QB.A1, QB.A2, QB.A3, QB.N1, QB.N2, QB.N3, CERT_ITEMS):
+    from curriculum_v2.exam_supplement import SUPPLEMENT     # content round 5: tags on the X-IT bank and supplement
+    from curriculum_v2.itsup_core import EXPANSION
+    for pool in (QB.A1, QB.A2, QB.A3, QB.N1, QB.N2, QB.N3, CERT_ITEMS, EXPANSION, SUPPLEMENT):
         for it in pool:
             items.setdefault(it.get('bank_id'), []).append(it)
     return items
