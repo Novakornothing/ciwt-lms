@@ -544,7 +544,117 @@ INCIDENT = {
         "printf 'ip=203.0.113.66\\nport=31337\\naccount=sysbak\\n' > /root/IR-6410.txt"]},
 }
 
-R4_LABS = [PERF, RESTORE, WEB, NAT, INCIDENT]
+# --------------------------------------------------------------------------------------------- 6: IPv6 SLAAC on a LAN (2 VMs)
+_V6_RTR = _prelude("rtr-40") + SYSLOG + r"""ip link set eth0 up; ip addr add 10.40.40.1/24 dev eth0
+ip -6 addr add 2001:db8:99::10/128 dev lo
+sysctl -qw net.ipv6.conf.all.forwarding=0
+cat > /etc/dnsmasq.conf <<'EOF'
+# rtr-40: IPv6 router advertisements (SLAAC) for LAN 40 - NET-4060. DNS is off (port=0).
+interface=eth0
+port=0
+# enable-ra
+dhcp-range=2001:db8:40::,ra-only,64,12h
+ra-param=eth0,4,1800
+log-dhcp
+log-facility=/var/log/dnsmasq.log
+EOF
+"""
+_V6_WS = _prelude("ws-40") + r"""ip link set eth0 up; ip addr add 10.40.40.31/24 dev eth0
+sysctl -qw net.ipv6.conf.eth0.accept_ra=0
+"""
+_V6_ASK = "/root/NET-4060.txt"
+_V6_G = "ip -6 addr show dev eth0 scope global | awk '/inet6/{print $2}' | cut -d/ -f1 | head -1"
+_V6_R = "ip -6 route | awk '/^default/{print $3}' | head -1"
+IPV6 = {
+    "id": "linux-vm-ipv6",
+    "title": "Real Linux VMs — IPv6 on a LAN: link-local, router advertisements, SLAAC and a default route",
+    "kind": "vm",
+    "blurb": "Two real Linux machines and real IPv6: a workstation that only has a link-local address and a router "
+             "that is not advertising. Read the address types, turn on router advertisements, find why the client "
+             "ignores them, and prove SLAAC, the learned default route and reachability — graded on the live kernels.",
+    "objectives": [
+        {"id": "boot", "text": "Boot both VMs (ws-40 and rtr-40)"},
+        {"id": "diagnose", "text": "ws-40 first: read its IPv6 addresses (ip -6 a) and routes (ip -6 route) before you change rtr-40"},
+        {"id": "rtr_addr", "text": "rtr-40: give eth0 the address 2001:db8:40::1/64 and turn on IPv6 forwarding (it is a router)"},
+        {"id": "ra", "text": "rtr-40: enable router advertisements in /etc/dnsmasq.conf and run dnsmasq — its log shows RTR-ADVERT"},
+        {"id": "accept", "text": "ws-40: find why it ignores the advertisements (sysctl net.ipv6.conf.eth0.accept_ra) and fix it"},
+        {"id": "slaac", "text": "ws-40: a SLAAC address in 2001:db8:40::/64 and a default route via the router's link-local address"},
+        {"id": "reach", "text": "ws-40: ping the router's link-local address (with %eth0) and the service address 2001:db8:99::10"},
+        {"id": "record", "text": "Write /root/NET-4060.txt on ws-40 with global=<its SLAAC address> and router=<the default router's address>"},
+    ],
+    "intro": "NET-4060: IPv6 is being rolled out on LAN 40 (prefix 2001:db8:40::/64, a documentation prefix). The workstation "
+             "ws-40 still has no IPv6 connectivity. You have two real Linux VMs: ws-40 and the router rtr-40 (its "
+             "dnsmasq.conf is prepared but not finished; the intranet service address 2001:db8:99::10 lives on rtr-40). "
+             "Address types to know: fe80::/10 link-local (every interface, never routed, needs %interface), "
+             "2000::/3 global unicast, fd00::/8 unique local, ff00::/8 multicast. Router advertisements are ICMPv6: watch "
+             "them with tcpdump -ni eth0 icmp6, or the Packets tab.",
+    "success_msg": "IPv6 working on LAN 40: real RAs, SLAAC on the client, a learned default route and the service reachable.",
+    "initial_state": {},
+    "obj_hints": {
+        "boot": ["Start both VMs; use the tabs to switch.", "Start VMs."],
+        "diagnose": ["Only an fe80:: address and no default route means no router advertisement has been accepted.",
+                     "on ws-40: ip -6 a ; ip -6 route"],
+        "rtr_addr": ["ip -6 addr add works like the IPv4 form. A Linux host only acts as an IPv6 router with forwarding on.",
+                     "on rtr-40: ip -6 addr add 2001:db8:40::1/64 dev eth0 ; sysctl -w net.ipv6.conf.all.forwarding=1"],
+        "ra": ["Remove the # in front of enable-ra, check the file with dnsmasq --test, then start (or restart) the service. "
+               "dnsmasq only advertises a prefix that is configured on the interface.",
+               "on rtr-40: sed -i 's/^# enable-ra/enable-ra/' /etc/dnsmasq.conf ; dnsmasq --test ; service dnsmasq restart ; "
+               "tail /var/log/dnsmasq.log"],
+        "accept": ["accept_ra=0 means the kernel drops every router advertisement on that interface.",
+                   "on ws-40: sysctl net.ipv6.conf.eth0.accept_ra ; sysctl -w net.ipv6.conf.eth0.accept_ra=1 ; "
+                   "ip link set eth0 down ; ip link set eth0 up"],
+        "slaac": ["After the next advertisement (every few seconds, or at once after a router solicitation) the kernel builds "
+                  "an address from the prefix and the interface ID.", "on ws-40: ip -6 a ; ip -6 route"],
+        "reach": ["Link-local addresses exist on every link, so you must say which one: fe80::…%eth0.",
+                  "on ws-40: ping -6 -c 2 fe80::…%eth0 (the address after 'default via') ; ping -6 -c 2 2001:db8:99::10"],
+        "record": ["Copy the scope global address from ip -6 a and the address after 'default via' from ip -6 route.",
+                   "on ws-40: echo \"global=$(ip -6 addr show dev eth0 scope global | awk '/inet6/{print $2}' | cut -d/ -f1)\" > /root/NET-4060.txt ; "
+                   "echo \"router=$(ip -6 route | awk '/^default/{print $3}')\" >> /root/NET-4060.txt"],
+    },
+    "course_objectives": ["IT-5.1", "NO-1.2", "NO-3.1", "IT-5.3"],
+    "minutes": 35,
+    "palette": ["ip -6 a", "ip -6 route", "ip -6 neigh", "ip -6 addr add ", "sysctl net.ipv6.conf.eth0.accept_ra", "sysctl -w ",
+                "cat /etc/dnsmasq.conf", "service dnsmasq restart", "tail /var/log/dnsmasq.log", "tcpdump -ni eth0 -c 4 icmp6",
+                "ping -6 -c 2 ", "clear"],
+    "fallback": ["net-subnet", "win-ipconfig"],
+    "vm": dict(IMAGE, machines=[_m("ws", "ws-40", "ws-40", ["lan40"]), _m("rtr", "rtr-40", "rtr-40", ["lan40"])],
+               setup={"ws": _V6_WS, "rtr": _V6_RTR},
+               net={"segments": ["lan40"], "topology": "ws-40 ── LAN 40 switch (2001:db8:40::/64) ── rtr-40 (2001:db8:40::1; service 2001:db8:99::10)"}),
+    "vm_checks": [
+        {"id": "boot"},
+        {"id": "diagnose", "seq": [r"^\[ws\]\s*ip\s+(-6\s+)?(a|addr|address)\b", r"^\[ws\]\s*ip\s+-6\s+r(oute)?\b"],
+         "before": r"^\[rtr\]\s*(ip\s+-6\s+a(ddr)?\s+add|service\s+dnsmasq|/etc/init\.d/dnsmasq|dnsmasq\b(?!\s+--test))",
+         "why": "Before changing rtr-40: on ws-40 run ip -6 a, then ip -6 route."},
+        {"id": "rtr_addr", "on": "rtr", "sh": "ip -6 addr show dev eth0 | grep -q 'inet6 2001:db8:40::1/64 scope global' && "
+                                             "[ \"$(cat /proc/sys/net/ipv6/conf/all/forwarding)\" = 1 ]",
+         "show": "ip -6 addr show dev eth0 scope global | awk '/inet6/{print $2}' | tr '\\n' ' '; echo forwarding=$(cat /proc/sys/net/ipv6/conf/all/forwarding)",
+         "why": "rtr-40: {v} (needs 2001:db8:40::1/64 and forwarding=1)."},
+        {"id": "ra", "on": "rtr", "sh": "grep -Eq '^[[:space:]]*enable-ra' /etc/dnsmasq.conf && dnsmasq --test && pidof dnsmasq && grep -q 'RTR-ADVERT' /var/log/dnsmasq.log",
+         "show": "echo \"$(grep -E 'enable-ra' /etc/dnsmasq.conf | head -1), dnsmasq $(pidof dnsmasq >/dev/null && echo running || echo stopped)\"",
+         "why": "Router advertisements are not going out yet: {v}"},
+        {"id": "accept", "on": "ws", "sh": "[ \"$(cat /proc/sys/net/ipv6/conf/eth0/accept_ra)\" -ge 1 ]",
+         "hist": [r"^\[ws\]\s*(sysctl\b.*accept_ra|cat\s+/proc/sys/net/ipv6/conf/\S+/accept_ra)"],
+         "show": "echo accept_ra=$(cat /proc/sys/net/ipv6/conf/eth0/accept_ra)", "why": "ws-40 {v} — look it up with sysctl, then fix it."},
+        {"id": "slaac", "on": "ws", "sh": "ip -6 addr show dev eth0 scope global | grep -q 'inet6 2001:db8:40:.*dynamic' && ip -6 route | grep -q '^default via fe80::'",
+         "show": f"echo addr=$({_V6_G}) default=$({_V6_R})", "why": "ws-40 has {v}"},
+        {"id": "reach", "on": "ws", "sh": "ping -6 -c 1 -W 2 2001:db8:99::10 | grep -q 'bytes from'", "secs": 5,
+         "hist": [r"^\[ws\]\s*ping6?\b.*(%eth0\b|-I\s*eth0\b.*fe80:)", r"^\[ws\]\s*ping6?\b.*2001:db8:99::10"],
+         "why": "From ws-40: ping the router's fe80:: address with %eth0, and 2001:db8:99::10 (it must answer)."},
+        {"id": "record", "on": "ws", "sh": f"g=$({_V6_G}); r=$({_V6_R}); f=$(tr -d ' \\r' < {_V6_ASK} | tr 'A-Z' 'a-z'); [ -n \"$g\" ] && [ -n \"$r\" ] && "
+                                           "echo \"$f\" | grep -qx \"global=$g\" && echo \"$f\" | grep -qx \"router=$r\"",
+         "show": f"cat {_V6_ASK} 2>&1 | head -2 | tr '\\n' ' '", "why": "/root/NET-4060.txt must match ws-40's live global address and default router (now: {v})."},
+    ],
+    "solution": {"vm_commands": [
+        "[ws] ip -6 a", "[ws] ip -6 route", "[rtr] ip -6 addr add 2001:db8:40::1/64 dev eth0", "[rtr] sysctl -w net.ipv6.conf.all.forwarding=1",
+        "[rtr] sed -i 's/^# enable-ra/enable-ra/' /etc/dnsmasq.conf", "[rtr] dnsmasq --test", "[rtr] service dnsmasq restart",
+        "[rtr] tail -3 /var/log/dnsmasq.log", "[ws] sysctl net.ipv6.conf.eth0.accept_ra", "[ws] sysctl -w net.ipv6.conf.eth0.accept_ra=1",
+        "[ws] ip link set eth0 down; ip link set eth0 up; sleep 6", "[ws] ip -6 a", "[ws] ip -6 route",
+        "[ws] ping -6 -c 2 $(ip -6 route | awk '/^default/{print $3}')%eth0", "[ws] ping -6 -c 2 2001:db8:99::10",
+        "[ws] echo \"global=$(ip -6 addr show dev eth0 scope global | awk '/inet6/{print $2}' | cut -d/ -f1)\" > /root/NET-4060.txt",
+        "[ws] echo \"router=$(ip -6 route | awk '/^default/{print $3}')\" >> /root/NET-4060.txt"]},
+}
+
+R4_LABS = [PERF, RESTORE, WEB, NAT, INCIDENT, IPV6]
 R4_FABRIC = {
     "nat_leak": lambda ev: any(e.get("type") == "ping" and str(e.get("from") or "").startswith("10.5.0.") for e in ev),
     "nat_ok": lambda ev: any(e.get("type") == "ping" and e.get("from") == "203.0.113.2" and e.get("to") == "203.0.113.10" for e in ev),

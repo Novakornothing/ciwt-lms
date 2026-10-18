@@ -9,7 +9,7 @@ import lab_runtime as RT
 import labs_vm as V
 from curriculum_v2.objectives import OBJECTIVES
 
-R4 = ["linux-vm-perf", "linux-vm-restore", "linux-vm-web", "linux-vm-nat", "linux-vm-incident"]
+R4 = ["linux-vm-perf", "linux-vm-restore", "linux-vm-web", "linux-vm-nat", "linux-vm-incident", "linux-vm-ipv6"]
 
 
 def _j(r):
@@ -90,6 +90,24 @@ def test_round4_answers_are_hashed_not_in_the_probe():
     st = V.fresh(V.VM_BY_ID["linux-vm-web"], 1)
     srv = V.probe_scripts(st, V.VM_BY_ID["linux-vm-web"])["srv"]
     assert "bound=" not in srv and "403" not in srv
+
+
+def test_round4_ipv6_order_link_local_scope_and_live_record():
+    v6 = V.VM_BY_ID["linux-vm-ipv6"]
+    # changing the router before reading the client's state does not earn the diagnosis
+    done = _grade(v6, ["[rtr] ip -6 addr add 2001:db8:40::1/64 dev eth0", "[ws] ip -6 a", "[ws] ip -6 route"])
+    assert "diagnose" not in done
+    # dnsmasq --test is only a syntax check, not a change: the diagnosis still counts after it
+    done = _grade(v6, ["[rtr] dnsmasq --test", "[ws] ip -6 a", "[ws] ip -6 route"])
+    assert "diagnose" in done
+    # the link-local ping must name the interface; the service ping alone is not enough
+    sol = v6["solution"]["vm_commands"]
+    no_scope = [c for c in sol if "%eth0" not in c]
+    assert "reach" not in _grade(v6, no_scope)
+    assert "reach" in _grade(v6, no_scope + ["[ws] ping -6 -c 2 fe80::222:15ff:fe00:1%eth0"])
+    # the record is compared with the live address and default router in the VM, not a fixed answer
+    probe = V.probe_scripts(V.fresh(v6, 1), v6)["ws"]
+    assert "ip -6 addr show dev eth0 scope global" in probe and "^default" in probe
 
 
 def test_round4_pages_and_http_flow(student, instructor):
