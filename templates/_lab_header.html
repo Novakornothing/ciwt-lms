@@ -1,0 +1,34 @@
+{# Shared header for every live lab page: exam banner, breadcrumb, title, scenario, objective codes, progress. #}
+{% if practical_back %}
+<div class="alert alert-warning d-flex flex-wrap gap-2 justify-content-between align-items-center">
+  <span>Skills exam station. Complete this lab, then return to the exam checklist.</span>
+  <a class="btn btn-sm btn-brand" href="{{ practical_back }}">Back to skills exam</a>
+</div>
+{% endif %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('interactive_labs_index') }}">Live labs</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ lab.title }}</li>
+  </ol>
+</nav>
+<header class="lab-head">
+  <div class="lab-head-main">
+    <p class="lab-kicker mb-1"><span class="lab-kind lab-kind-{{ lab.kind }}">{{ kind_label or lab.kind }}</span>
+      {% for code in lab.course_objectives or [] %}<span class="lab-obj-code">{{ code }}</span>{% endfor %}
+      {% if lab.minutes %}<span class="text-muted small">· about {{ lab.minutes }} min</span>{% endif %}</p>
+    <h1 class="h4 mb-1">{{ lab.title }}</h1>
+    <p class="mb-0 lab-scenario">{{ lab.intro }}</p>
+    {% if real_labs %}<p class="small mb-0 mt-2 lab-real-link"><i class="bi bi-cpu" aria-hidden="true"></i> Simulated practice. The same skills on a real Linux machine in your browser:
+      {% for r in real_labs %}<a href="{{ url_for('interactive_lab', lab_id=r.id) }}">{{ r.title }}</a>{{ ', ' if not loop.last else '' }}{% endfor %}.</p>{% endif %}
+  </div>
+  <div class="lab-progress-box">
+    <div class="d-flex justify-content-between align-items-baseline gap-2">
+      <span class="small fw-semibold lab-score-text">0 of {{ lab.objectives|length }} objectives · 0%</span>
+      <span class="badge text-bg-success lab-complete-flag" hidden>Complete</span>
+    </div>
+    <div class="progress lab-progress" role="progressbar" aria-label="Lab progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="progress-bar bg-success" id="labScoreBar" style="width:0%"></div>
+    </div>
+    <p class="small text-muted mb-0 mt-1">Saved automatically — leave and come back any time.</p>
+  </div>
+</header>

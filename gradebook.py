@@ -33,8 +33,10 @@ CATEGORIES = [
     ('tests', 'Knowledge tests'),
     ('skills', 'Skills exams'),
     ('quizzes', 'Progress quizzes'),
+    ('labs', 'Live labs'),
 ]
-DEFAULT_WEIGHTS = {'tests': 70, 'skills': 30, 'quizzes': 0}
+# labs weight defaults to 0 so existing grades are unchanged until an instructor opts in
+DEFAULT_WEIGHTS = {'tests': 70, 'skills': 30, 'quizzes': 0, 'labs': 0}
 DEFAULT_SCALE = [(93, 'A'), (90, 'A-'), (87, 'B+'), (83, 'B'), (80, 'B-'), (77, 'C+'), (73, 'C'), (70, 'C-'), (60, 'D'), (0, 'F')]
 PER_PAGE_CHOICES = (25, 50, 100, 200)
 _cache = {}
@@ -45,6 +47,7 @@ MIGRATIONS = [
     ('gradebook_setting', 'late_per_day', 'FLOAT DEFAULT 0'),
     ('gradebook_setting', 'late_max', 'FLOAT DEFAULT 0'),
     ('gradebook_setting', 'late_grace_hours', 'INTEGER DEFAULT 0'),
+    ('gradebook_setting', 'weight_labs', 'INTEGER DEFAULT 0'),
 ]
 
 
@@ -73,6 +76,7 @@ def define_models(db):
         weight_tests = db.Column(db.Integer, default=DEFAULT_WEIGHTS['tests'])
         weight_skills = db.Column(db.Integer, default=DEFAULT_WEIGHTS['skills'])
         weight_quizzes = db.Column(db.Integer, default=DEFAULT_WEIGHTS['quizzes'])
+        weight_labs = db.Column(db.Integer, default=DEFAULT_WEIGHTS['labs'])
         policy = db.Column(db.String(10), default='best')  # best | latest
         pass_mark = db.Column(db.Integer, default=80)
         updated_at = db.Column(db.DateTime, default=utcnow)
@@ -231,11 +235,11 @@ def register(app, db, deps):
         s = Setting.query.filter_by(section_id=section_id).first()
         if s is None:
             s = SimpleNamespace(weight_tests=DEFAULT_WEIGHTS['tests'], weight_skills=DEFAULT_WEIGHTS['skills'],
-                                weight_quizzes=DEFAULT_WEIGHTS['quizzes'], policy='best', pass_mark=80, id=None,
+                                weight_quizzes=DEFAULT_WEIGHTS['quizzes'], weight_labs=DEFAULT_WEIGHTS['labs'], policy='best', pass_mark=80, id=None,
                                 letter_scale=None, late_per_day=0, late_max=0, late_grace_hours=0, updated_at=None)
         # plain snapshot: safe to cache across requests
         return SimpleNamespace(id=s.id, weight_tests=s.weight_tests, weight_skills=s.weight_skills,
-                               weight_quizzes=s.weight_quizzes, policy=s.policy or 'best', pass_mark=s.pass_mark or 80,
+                               weight_quizzes=s.weight_quizzes, weight_labs=getattr(s, 'weight_labs', 0) or 0, policy=s.policy or 'best', pass_mark=s.pass_mark or 80,
                                scale=parse_scale(getattr(s, 'letter_scale', None)),
                                custom_scale=bool(getattr(s, 'letter_scale', None)),
                                late_per_day=getattr(s, 'late_per_day', 0) or 0, late_max=getattr(s, 'late_max', 0) or 0,
@@ -256,8 +260,24 @@ def register(app, db, deps):
             q(Setting.updated_at).filter(Setting.section_id == section.id).first(),
             q(func.count(d.KnowledgeTest.id), func.max(d.KnowledgeTest.id)).filter(d.KnowledgeTest.course_id == section.course_id).first(),
             (section.end_date, section.course_id),
+            lab_sig(section),
         ]
         return repr([tuple(x) if x is not None and not isinstance(x, tuple) else x for x in sig])
+
+    def labs_api():
+        return app.extensions.get('ciwt_lab_progress')
+
+    def section_uids(section):
+        return [e.user_id for e in d.Enrollment.query.filter_by(section_id=section.id).all()]
+
+    def lab_sig(section):
+        api = labs_api()
+        if not api:
+            return None
+        try:
+            return api.lab_signature(section_uids(section))
+        except Exception:
+            return None
 
     def invalidate(section_id):
         with _gb_lock:
@@ -283,6 +303,11 @@ def register(app, db, deps):
             for q in d.Quiz.query.filter_by(module_id=mod.id).all():
                 items.append({'type': 'quiz', 'id': q.id, 'title': q.title, 'short': f'Q{mod.order}',
                               'category': 'quizzes', 'passing': 80, 'module_order': mod.order, 'obj': q})
+        api = labs_api()
+        if api:
+            # one aggregated column: mean best score over the course lab set (unstarted labs count 0)
+            items.append({'type': 'lab', 'id': 0, 'title': 'Live labs (mean best score over the course lab set)', 'short': 'Labs',
+                          'category': 'labs', 'passing': 80})
         return items
 
     def short(title):
@@ -313,7 +338,8 @@ def register(app, db, deps):
 
     def _compute(section, items, user_ids=None):
         st = settings_for(section.id)
-        weights = {'tests': st.weight_tests or 0, 'skills': st.weight_skills or 0, 'quizzes': st.weight_quizzes or 0}
+        weights = {'tests': st.weight_tests or 0, 'skills': st.weight_skills or 0, 'quizzes': st.weight_quizzes or 0,
+                   'labs': getattr(st, 'weight_labs', 0) or 0}
         for it in items:
             it.pop('obj', None)          # keep the cached structure free of ORM objects
         enrolls = d.Enrollment.query.filter_by(section_id=section.id).all()
@@ -348,6 +374,12 @@ def register(app, db, deps):
                 q_excluded += 1
                 continue
             q_att.setdefault((a.user_id, a.quiz_id), []).append(SimpleNamespace(id=a.id, completed_at=a.completed_at, score=a.score))
+        lab_sc = {}
+        if any(i['type'] == 'lab' for i in items) and labs_api():
+            try:
+                lab_sc = labs_api().lab_scores(section, [e.user_id for e in enrolls])
+            except Exception as exc:  # pragma: no cover
+                print('gradebook labs note:', exc)
         overrides = {(o.user_id, o.item_type, o.item_id): SimpleNamespace(score=o.score, excused=o.excused, note=o.note,
                                                                          updated_at=o.updated_at)
                      for o in Override.query.filter_by(section_id=section.id).all()}
@@ -360,7 +392,12 @@ def register(app, db, deps):
             cells, cat_scores = [], {k: [] for k, _ in CATEGORIES}
             done = 0
             for it in items:
-                atts = (t_att if it['type'] == 'test' else q_att).get((u.id, it['id']), [])
+                if it['type'] == 'lab':
+                    sc, n_done, n_labs = lab_sc.get(u.id, (None, 0, 0))
+                    atts = [SimpleNamespace(id=0, completed_at=None, score=sc)] if sc is not None else []
+                    it['detail'] = f'{n_labs} labs'
+                else:
+                    atts = (t_att if it['type'] == 'test' else q_att).get((u.id, it['id']), [])
                 atts = sorted(atts, key=lambda a: a.completed_at or datetime.min, reverse=True)
                 due = dues.get((it['type'], it['id']))
                 adj = []
@@ -457,7 +494,7 @@ def register(app, db, deps):
         uid = request.form.get('user_id', type=int)
         item_type = request.form.get('item_type')
         item_id = request.form.get('item_id', type=int)
-        if item_type not in ('test', 'quiz') or not uid or not item_id:
+        if item_type not in ('test', 'quiz', 'lab') or not uid or (not item_id and item_type != 'lab'):
             abort(400)
         if not d.Enrollment.query.filter_by(section_id=section.id, user_id=uid).first():
             abort(404)
@@ -511,7 +548,8 @@ def register(app, db, deps):
         s.weight_tests = w('weight_tests', 70)
         s.weight_skills = w('weight_skills', 30)
         s.weight_quizzes = w('weight_quizzes', 0)
-        if s.weight_tests + s.weight_skills + s.weight_quizzes == 0:
+        s.weight_labs = w('weight_labs', 0)
+        if s.weight_tests + s.weight_skills + s.weight_quizzes + s.weight_labs == 0:
             flash('At least one category needs a weight above zero.', 'warning')
             return redirect(url_for('instructor_gradebook', section_id=section.id))
         s.policy = 'latest' if request.form.get('policy') == 'latest' else 'best'
@@ -529,7 +567,7 @@ def register(app, db, deps):
         db.session.add(s)
         db.session.commit()
         invalidate(section.id)
-        d.audit('gradebook_settings', f'section={section.id} w={s.weight_tests}/{s.weight_skills}/{s.weight_quizzes} policy={s.policy} '
+        d.audit('gradebook_settings', f'section={section.id} w={s.weight_tests}/{s.weight_skills}/{s.weight_quizzes}/{s.weight_labs} policy={s.policy} '
                                       f'late={s.late_per_day}/day max={s.late_max} grace={s.late_grace_hours}h')
         flash('Gradebook settings saved.', 'success')
         return redirect(url_for('instructor_gradebook', section_id=section.id))

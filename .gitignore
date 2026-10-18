@@ -6,3 +6,8 @@ ciwt_lms.db
 instance/
 .pytest_cache/
 narration_cache/
+# in-browser VM binaries: fetched by tools/fetch_v86.sh (pinned + sha256)
+static/vendor/v86/*.bin
+static/vendor/v86/*.wasm
+static/vendor/v86/libv86.js
+static/vendor/v86/LICENSE.v86

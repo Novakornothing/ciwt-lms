@@ -1,32 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Live CLI Labs — {{ site_name }}{% endblock %}
+{% block title %}Live labs — {{ site_name }}{% endblock %}
 {% block content %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') if current_user.role == 'student' else url_for('instructor_dashboard') }}">Home</a></li>
-    <li class="breadcrumb-item active">Live labs</li>
+    <li class="breadcrumb-item active" aria-current="page">Live labs</li>
   </ol>
 </nav>
+{% set n_done = progress.values()|selectattr('completed_at')|list|length %}
 <div class="page-hero">
   <h1 class="h3 mb-1">Live labs</h1>
-  <p class="mb-0">Work in order. Windows first, then switch, then router. Capstones reuse earlier commands.</p>
+  <p class="mb-0">{{ labs|length }} hands-on labs that run in the browser on a phone or a desktop, plus {{ classroom|length }} classroom labs your instructor signs off.
+    Work saves automatically. {% if n_done %}You have completed {{ n_done }}.{% endif %}</p>
 </div>
 {% from '_lab_row.html' import lab_row with context %}
-{% set groups = [('windows','Windows 11 command line','CMD and PowerShell'), ('win11gui','Windows 11 settings and services','GUI walk-throughs'), ('switch','Switch CLI','Cisco IOS access switch'), ('router','Router CLI','Cisco IOS router')] %}
 <nav class="chip-scroll mb-3" aria-label="Jump to lab type">
-  {% for kind, heading, _ in groups %}{% set n = labs|selectattr('kind', 'equalto', kind)|list|length %}<a class="chip-link" href="#{{ kind }}">{{ heading }} <span class="chip-count">{{ n }}</span></a>{% endfor %}
+  {% for kind, heading, _ in groups %}{% set n = labs|selectattr('kind', 'equalto', kind)|list|length %}{% if n %}<a class="chip-link" href="#k-{{ kind }}">{{ heading }} <span class="chip-count">{{ n }}</span></a>{% endif %}{% endfor %}
+  <a class="chip-link" href="#k-classroom">Classroom labs <span class="chip-count">{{ classroom|length }}</span></a>
   {% if current_user.role in ('admin', 'instructor') %}<a class="chip-link" href="{{ url_for('interactive_labs_verify') }}"><i class="bi bi-check2-circle" aria-hidden="true"></i> Self-test</a>{% endif %}
 </nav>
-
 {% for kind, heading, sub in groups %}
 {% set group = labs|selectattr('kind', 'equalto', kind)|list %}
-<section class="mb-4" aria-labelledby="{{ kind }}">
-  <h2 class="h6 section-label" id="{{ kind }}">{{ heading }} <span class="fw-normal text-muted">· {{ sub }}</span></h2>
-  {% if group %}
-  <div class="list-group">{% for lab in group %}{{ lab_row(lab, lab.blurb, false) }}{% endfor %}</div>
-  {% else %}
-  <div class="card"><div class="empty-state empty-state-sm"><i class="bi bi-terminal" aria-hidden="true"></i><p class="mb-0">No {{ heading|lower }} labs are loaded yet.</p></div></div>
-  {% endif %}
+{% if group %}
+<section class="mb-4" aria-labelledby="k-{{ kind }}">
+  <h2 class="h6 section-label" id="k-{{ kind }}">{{ heading }} <span class="fw-normal text-muted">· {{ sub }}</span></h2>
+  <div class="list-group">{% for lab in group %}{{ lab_row(lab, lab.blurb, false, progress.get(lab.id)) }}{% endfor %}</div>
 </section>
+{% endif %}
 {% endfor %}
+<section class="mb-4" aria-labelledby="k-classroom">
+  <h2 class="h6 section-label" id="k-classroom">Classroom labs <span class="fw-normal text-muted">· real or low-cost equipment, signed off by your instructor with the lab rubric</span></h2>
+  <div class="list-group">{% for cl in classroom %}{{ lab_row(cl, cl.objective, false, progress.get(cl.id), url_for('classroom_lab', cl_id=cl.id)) }}{% endfor %}</div>
+</section>
 {% endblock %}

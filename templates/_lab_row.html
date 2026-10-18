@@ -1,9 +1,15 @@
-{# Shared lab list row: kind tag, title, one-line purpose, chevron. Import with: {% from '_lab_row.html' import lab_row %} #}
-{% macro lab_row(lab, sub=None, show_kind=True) %}
-  <a class="list-group-item list-group-item-action lab-row{{ ' no-kind' if not show_kind }}" href="{{ url_for('interactive_lab', lab_id=lab.id) }}">
-    {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ lab.kind|upper }}</span>{% endif %}
+{# Shared lab list row: kind tag, title, one-line purpose, progress, chevron.
+   Import with: {% from '_lab_row.html' import lab_row %}  — pass prog (lab_progress row or None) to show progress. #}
+{% macro lab_row(lab, sub=None, show_kind=True, prog=None, href=None) %}
+  <a class="list-group-item list-group-item-action lab-row{{ ' no-kind' if not show_kind }}" href="{{ href or url_for('interactive_lab', lab_id=lab.id) }}">
+    {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ {'win11gui': 'GUI', 'activity': 'ACTIVITY', 'classroom': 'CLASSROOM', 'vm': 'REAL VM'}.get(lab.kind, lab.kind|upper) }}</span>{% endif %}
     <span class="lab-row-main"><span class="lab-row-title">{{ lab.title }}</span>
       {% set s = sub or lab.align or lab.blurb %}{% if s %}<span class="lab-row-sub">{{ s }}</span>{% endif %}</span>
-    <span class="lab-row-go" aria-hidden="true">Launch <i class="bi bi-chevron-right"></i></span>
+    {% if prog %}
+      {% set pct = [prog.best_score or 0, prog.score or 0]|max %}
+      {% if prog.completed_at %}<span class="lab-row-prog done"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Done{% if pct < 100 %} · {{ pct|round|int }}%{% endif %}</span>
+      {% else %}<span class="lab-row-prog"><span class="visually-hidden">Progress </span>{{ pct|round|int }}%</span>{% endif %}
+    {% endif %}
+    <span class="lab-row-go" aria-hidden="true">{{ 'Resume' if prog and not prog.completed_at else 'Open' if lab.kind == 'classroom' else 'Launch' }} <i class="bi bi-chevron-right"></i></span>
   </a>
 {% endmacro %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — {{ lab.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_lab_results', section_id=section.id) }}">Lab results</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ student.full_name }}</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <h1 class="h4 mb-1">{{ lab.title }}</h1>
+  <p class="mb-0">{{ student.full_name }} · {{ student.email }}</p>
+</div>
+{% if not row %}
+<div class="card"><div class="empty-state"><i class="bi bi-hourglass" aria-hidden="true"></i><p class="mb-0">Not started.</p></div></div>
+{% else %}
+<div class="row g-3">
+  <div class="col-12 col-lg-4">
+    <div class="card"><div class="card-body">
+      <dl class="row small mb-0">
+        <dt class="col-6">Score</dt><dd class="col-6">{{ row.score|round(1) }}% (best {{ [row.best_score or 0, row.score or 0]|max|round(1) }}%)</dd>
+        <dt class="col-6">Completed</dt><dd class="col-6">{{ row.completed_at.strftime('%d %b %Y %H:%M') if row.completed_at else '—' }}</dd>
+        <dt class="col-6">Started</dt><dd class="col-6">{{ row.started_at.strftime('%d %b %Y %H:%M') if row.started_at else '—' }}</dd>
+        <dt class="col-6">Actions</dt><dd class="col-6">{{ row.actions or 0 }} ({{ row.wrong or 0 }} errors)</dd>
+        <dt class="col-6">Hints used</dt><dd class="col-6">{{ row.hints_used or 0 }}</dd>
+        <dt class="col-6">Restarts</dt><dd class="col-6">{{ row.resets or 0 }}</dd>
+      </dl>
+    </div></div>
+    <div class="card mt-3"><div class="card-header navy"><h2 class="h6 mb-0">Objectives</h2></div>
+      <ul class="list-group list-group-flush">
+        {% for o in lab.objectives %}<li class="list-group-item small d-flex gap-2"><i class="bi {{ 'bi-check-circle-fill text-success' if o.id in done else 'bi-circle text-muted' }}" aria-hidden="true"></i><span>{{ o.text }} <span class="visually-hidden">{{ 'done' if o.id in done else 'not done' }}</span></span></li>{% endfor %}
+      </ul>
+    </div>
+    {% if levels %}
+    <div class="card mt-3"><div class="card-body small">
+      <div class="fw-semibold mb-1">Rubric: {{ levels|sum }}/16</div>
+      {% for name, descs in rubric.criteria %}<div>{{ name }}: {{ levels[loop.index0] }}/4</div>{% endfor %}
+      {% if row.feedback %}<p class="mt-2 mb-0">{{ row.feedback }}</p>{% endif %}
+    </div></div>
+    {% endif %}
+  </div>
+  <div class="col-12 col-lg-8">
+    {% if attempts %}
+    <h2 class="h6 section-label">Process (per attempt)</h2>
+    <div class="table-responsive mb-3"><table class="table table-sm align-middle lab-process">
+      <caption class="visually-hidden">How the student worked through each attempt</caption>
+      <thead><tr><th scope="col">Attempt</th><th scope="col">Actions</th><th scope="col">Unrecognised</th><th scope="col">Wrong answers / errors</th>
+        <th scope="col">Repeats</th><th scope="col">Hints</th><th scope="col">Undo</th><th scope="col">Minutes</th><th scope="col">Completed</th></tr></thead>
+      <tbody>{% for a in attempts %}<tr><td>{{ a.attempt }}</td><td>{{ a.actions }}</td><td>{{ a.unknown }}</td><td>{{ a.wrong + a.errors }}</td>
+        <td>{{ a.repeats }}</td><td>{{ a.hints }}</td><td>{{ a.undo }}</td><td>{{ a.minutes }}</td><td>{{ 'Yes' if a.complete else 'No' }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <details class="mb-3"><summary class="fw-semibold">Event log ({{ events|length }} actions, oldest first)</summary>
+      <ol class="lab-events small mt-2">{% for e in events %}
+        <li class="ev-{{ e.outcome or 'ok' }}"><span class="text-muted">#{{ e.attempt }}.{{ e.seq }} {{ e.at.strftime('%H:%M:%S') }}</span>
+          <strong>{{ e.kind }}</strong> <code>{{ e.action|truncate(160) }}</code>
+          {% if e.outcome and e.outcome not in ('ok',) %}<span class="badge text-bg-light">{{ e.outcome }}</span>{% endif %}
+          {% if e.newly %}<span class="badge text-bg-success">+{{ e.newly|replace('"','')|replace('[','')|replace(']','') }}</span>{% endif %}
+          {% if e.detail %}<span class="text-muted"> — {{ e.detail|truncate(140) }}</span>{% endif %}</li>{% endfor %}
+      </ol>
+      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_lab_events_csv', section_id=section.id, lab=lab.id) }}" data-no-busy>Download this lab's events (CSV, all students)</a>
+    </details>
+    {% endif %}
+    {% if transcript %}
+    <h2 class="h6 section-label">Transcript (last {{ transcript|length }} lines)</h2>
+    <pre class="term-transcript" tabindex="0" aria-label="Student terminal transcript">{% for t in transcript %}{{ t.t }}
+{% endfor %}</pre>
+    {% elif lab.kind in ('activity', 'win11gui') %}
+    <p class="small text-muted">This lab is graded from answers and desktop actions; objectives and the score above are the record.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

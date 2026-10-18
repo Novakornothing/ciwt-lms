@@ -64,7 +64,7 @@ def test_settings_change_policy_and_weights(instructor, app, mod, ids):
     assert _compute(app, mod)['weights']['tests'] == 70
     instructor.post(url, data={'weight_tests': 50, 'weight_skills': 50, 'weight_quizzes': 0, 'policy': 'latest', 'pass_mark': 75})
     d = _compute(app, mod)
-    assert d['weights'] == {'tests': 50, 'skills': 50, 'quizzes': 0} and d['settings'].policy == 'latest'
+    assert d['weights'] == {'tests': 50, 'skills': 50, 'quizzes': 0, 'labs': 0} and d['settings'].policy == 'latest'
     instructor.post(url, data={'weight_tests': 70, 'weight_skills': 30, 'weight_quizzes': 0, 'policy': 'best', 'pass_mark': 80})
 
 
