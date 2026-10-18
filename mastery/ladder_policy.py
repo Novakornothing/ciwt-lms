@@ -15,12 +15,17 @@ Progression, per student and per concept section:
 
 Learner profile (conservative on purpose: a wrong lead costs the student a rung, a late lead costs nothing):
 
-* Evidence = sections resolved on an alternative rung (R1..R4) since the student last reset their profile.
-  Resolutions on the original (R0) are counted and shown but are not evidence for a rung type.
-* A best rung type is used only when ALL hold: at least PROFILE_MIN_RESOLVED (4) alternative resolutions, from at
-  least PROFILE_MIN_LESSONS (2) different lessons; the best type has at least PROFILE_MIN_BEST (3) of them and at
-  least PROFILE_MIN_SHARE (50%) of them; and it leads the runner-up by at least PROFILE_MIN_LEAD (2).
-  Ties are never broken by guessing: no best type.
+* Evidence, per section since the student last reset their profile: which alternative rungs (R1..R4) the student
+  was shown AND responded to (answered its check, or asked for another way while on it), and which one resolved
+  the section. Resolutions on the original (R0) are counted and shown but are not evidence for a rung type.
+* Rates, not counts: R1 is always offered first, so it resolves the most sections even when it is not what helps
+  (the synthetic simulation, tools/ladder_sim.py, showed a count rule picking "plain" for most learners). A kind's
+  rate = sections it resolved / sections where it was shown and responded to.
+* A best rung type is used only when ALL hold: at least PROFILE_MIN_RESOLVED (4) sections resolved by an
+  alternative, from at least PROFILE_MIN_LESSONS (2) lessons; the best kind was responded to in at least
+  PROFILE_MIN_SHOWN (3) sections and resolved at least PROFILE_MIN_BEST (3); its rate is at least
+  PROFILE_MIN_RATE (60%); and it beats the rate of every other kind with at least PROFILE_MIN_SHOWN sections by
+  at least PROFILE_MIN_RATE_LEAD (25 points). Ties are never broken by guessing: no best type.
 """
 from collections import Counter
 
@@ -31,9 +36,10 @@ KIND_LABEL = {'original': 'The original explanation', 'plain': 'Plain language',
               'visual': 'A picture or step-by-step trace', 'try': 'Trying it hands-on'}
 PROFILE_MIN_RESOLVED = 4
 PROFILE_MIN_LESSONS = 2
+PROFILE_MIN_SHOWN = 3
 PROFILE_MIN_BEST = 3
-PROFILE_MIN_SHARE = 0.5
-PROFILE_MIN_LEAD = 2
+PROFILE_MIN_RATE = 0.6
+PROFILE_MIN_RATE_LEAD = 0.25
 DEFAULT_MAX_RUNG = 4
 
 
@@ -118,29 +124,43 @@ def show(state, rung):
     return dict(state, current=rung)
 
 
-def profile(resolutions):
-    """resolutions: [(lesson key, rung resolved)] since the last reset.
-    -> {'counts': {kind: n}, 'original': n, 'alt': n, 'lessons': n, 'best': kind | None, 'why': text}"""
-    alt = [(les, r) for les, r in resolutions if r in RUNGS]
-    counts = Counter(KIND[r] for _l, r in alt)
-    lessons = len({les for les, _r in alt})
-    out = {'counts': dict(counts), 'original': sum(1 for _l, r in resolutions if r == 'R0'), 'alt': len(alt),
-           'lessons': lessons, 'best': None}
-    if len(alt) < PROFILE_MIN_RESOLVED:
-        out['why'] = (f'Not enough evidence yet: {len(alt)} of {PROFILE_MIN_RESOLVED} sections resolved by another '
-                      'explanation.')
+def profile(sections):
+    """sections: [{'lesson': key, 'shown': rungs responded to, 'resolved': rung or None}] since the last reset.
+    -> {'counts': {kind: resolved}, 'shown': {kind: n}, 'rates': {kind: rate}, 'original': n, 'alt': n,
+        'lessons': n, 'best': kind | None, 'why': text}"""
+    shown, counts = Counter(), Counter()
+    alt_lessons, alt, original = set(), 0, 0
+    for s in sections:
+        r = s.get('resolved')
+        for x in set(s.get('shown') or ()) | ({r} if r in RUNGS else set()):
+            if x in RUNGS:
+                shown[KIND[x]] += 1
+        if r == 'R0':
+            original += 1
+        elif r in RUNGS:
+            counts[KIND[r]] += 1
+            alt += 1
+            alt_lessons.add(s.get('lesson'))
+    rates = {k: round(counts[k] / n, 3) for k, n in shown.items() if n}
+    out = {'counts': dict(counts), 'shown': dict(shown), 'rates': rates, 'original': original, 'alt': alt,
+           'lessons': len(alt_lessons), 'best': None}
+    if alt < PROFILE_MIN_RESOLVED:
+        out['why'] = f'Not enough evidence yet: {alt} of {PROFILE_MIN_RESOLVED} sections cleared by another explanation.'
         return out
-    if lessons < PROFILE_MIN_LESSONS:
+    if len(alt_lessons) < PROFILE_MIN_LESSONS:
         out['why'] = f'Not enough evidence yet: all of it comes from one lesson (needs {PROFILE_MIN_LESSONS}).'
         return out
-    ranked = counts.most_common()
-    best, n = ranked[0]
-    second = ranked[1][1] if len(ranked) > 1 else 0
-    if n < PROFILE_MIN_BEST or n / len(alt) < PROFILE_MIN_SHARE or n - second < PROFILE_MIN_LEAD:
-        out['why'] = ('No clear pattern yet: no single kind of explanation has worked clearly more often than the '
-                      'others.')
+    known = {k: rates[k] for k in rates if shown[k] >= PROFILE_MIN_SHOWN}
+    cands = sorted((k for k in known if counts[k] >= PROFILE_MIN_BEST), key=lambda k: (-known[k], k))
+    if not cands:
+        out['why'] = 'No clear pattern yet: no kind of explanation has been tried and has worked often enough.'
+        return out
+    best = cands[0]
+    others = [v for k, v in known.items() if k != best]
+    if known[best] < PROFILE_MIN_RATE or any(known[best] - v < PROFILE_MIN_RATE_LEAD for v in others):
+        out['why'] = 'No clear pattern yet: no single kind of explanation has worked clearly more often than the others.'
         return out
     out['best'] = best
-    out['why'] = (f'{KIND_LABEL[best]} resolved {n} of the {len(alt)} sections where another explanation helped, '
-                  f'across {lessons} lessons.')
+    out['why'] = (f'{KIND_LABEL[best]} cleared {counts[best]} of the {shown[best]} sections where you tried it '
+                  f'({round(known[best] * 100)}%), clearly more than the other kinds, across {len(alt_lessons)} lessons.')
     return out

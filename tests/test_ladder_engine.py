@@ -48,18 +48,49 @@ def test_resolved_section_stays_resolved_when_browsing():
     assert P.show(st, 'R2') == st      # not seen yet: ignored
 
 
+def _sec(lesson, shown, resolved):
+    return {'lesson': lesson, 'shown': set(shown), 'resolved': resolved}
+
+
 def test_profile_threshold_is_conservative():
     assert P.profile([])['best'] is None
-    three = [('a', 'R2'), ('a', 'R2'), ('b', 'R2')]
-    assert P.profile(three)['best'] is None                         # under 4 resolutions
-    one_lesson = [('a', 'R2')] * 4
-    assert P.profile(one_lesson)['best'] is None                    # one lesson only
-    close = [('a', 'R2'), ('a', 'R2'), ('b', 'R2'), ('b', 'R1'), ('c', 'R1')]
-    assert P.profile(close)['best'] is None                         # lead of 1 is not enough
-    clear = [('a', 'R2'), ('a', 'R2'), ('b', 'R2'), ('b', 'R1')]
-    assert P.profile(clear)['best'] == 'analogy'
-    with_orig = clear + [('c', 'R0')] * 10                          # R0 resolutions are not rung evidence
+    three = [_sec('a', ['R1', 'R2'], 'R2'), _sec('a', ['R1', 'R2'], 'R2'), _sec('b', ['R1', 'R2'], 'R2')]
+    assert P.profile(three)['best'] is None                                    # under 4 resolutions
+    one_lesson = [_sec('a', ['R1', 'R2'], 'R2')] * 4
+    assert P.profile(one_lesson)['best'] is None                               # one lesson only
+    clear = [_sec('a', ['R1', 'R2'], 'R2'), _sec('a', ['R1', 'R2'], 'R2'), _sec('b', ['R1', 'R2'], 'R2'),
+             _sec('b', ['R1'], 'R1')]
+    p = P.profile(clear)
+    assert p['best'] == 'analogy' and p['rates']['analogy'] == 1.0 and p['rates']['plain'] == 0.25
+    with_orig = clear + [_sec('c', [], 'R0')] * 10                             # R0 resolutions are not rung evidence
     assert P.profile(with_orig)['best'] == 'analogy' and P.profile(with_orig)['original'] == 10
+    # R1 comes first, so it is tried most: 4 of 8 for plain vs 4 of 4 for analogy -> analogy, by rate
+    biased = [_sec(f'l{i}', ['R1'], 'R1') for i in range(4)] + [_sec(f'm{i}', ['R1', 'R2'], 'R2') for i in range(4)]
+    assert P.profile(biased)['best'] == 'analogy'
+    only_plain = [_sec(f'l{i}', ['R1'], 'R1') for i in range(3)] + [_sec(f'm{i}', ['R1', 'R2'], None) for i in range(3)]
+    only_plain += [_sec('n', ['R1', 'R2', 'R3'], 'R3')]
+    assert P.profile(only_plain)['best'] is None                               # plain 3/7 = 43% < 60%
+    close = [_sec('a', ['R1', 'R2'], 'R2'), _sec('a', ['R1', 'R2'], 'R2'), _sec('b', ['R1', 'R2'], 'R2'),
+             _sec('b', ['R1', 'R2'], 'R1'), _sec('c', ['R1', 'R2'], 'R1'), _sec('c', ['R1', 'R2'], 'R1')]
+    assert P.profile(close)['best'] is None                                    # 50% vs 50%
+
+
+def test_synthetic_simulation_policy_properties():
+    """SYNTHETIC (tools/ladder_sim.py): not student evidence, only a check that the policy behaves as designed."""
+    import importlib.util, pathlib
+    spec = importlib.util.spec_from_file_location('ladder_sim', pathlib.Path(__file__).parents[1] / 'tools' / 'ladder_sim.py')
+    sim = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sim)
+    r = sim.simulate(400, 19)
+    assert r['label'].startswith('SYNTHETIC')
+    g = r['groups']
+    for k in ('plain', 'analogy', 'visual', 'try', 'None'):
+        assert g[k]['profile_wrong_lead'] <= 0.10, (k, g[k])
+        assert g[k]['exhausted_rate'] < 0.05
+    for k in ('plain', 'analogy', 'visual'):
+        assert g[k]['profile_right'] >= 0.6, (k, g[k])
+    for k in ('analogy', 'visual', 'try'):
+        assert g[k]['alt_rungs_after_profile'] < g[k]['alt_rungs_before_profile'], (k, g[k])
 
 
 def test_profile_leads_but_never_replaces_the_original_by_default():

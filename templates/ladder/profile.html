@@ -27,7 +27,7 @@
         <ul class="ladder-prof list-unstyled mb-3">
           <li><span class="ladder-prof-k">{{ kind_label['original'] }}</span> <span class="ladder-prof-n">{{ prof.original }} section{{ 's' if prof.original != 1 }}</span></li>
           {% for k in ['plain', 'analogy', 'visual', 'try'] %}
-          <li><span class="ladder-prof-k">{{ kind_label[k] }}</span> <span class="ladder-prof-n">{{ prof.counts.get(k, 0) }} section{{ 's' if prof.counts.get(k, 0) != 1 }}</span>{% if prof.best == k %} <span class="mx-badge">Leads when a section does not click</span>{% endif %}</li>
+          <li><span class="ladder-prof-k">{{ kind_label[k] }}</span> <span class="ladder-prof-n">cleared {{ prof.counts.get(k, 0) }} of {{ prof.shown.get(k, 0) }} section{{ 's' if prof.shown.get(k, 0) != 1 }} where tried</span>{% if prof.best == k %} <span class="mx-badge">Leads when a section does not click</span>{% endif %}</li>
           {% endfor %}
         </ul>
         {% else %}
@@ -35,7 +35,7 @@
         {% endif %}
         <p class="mb-1"><strong>{{ 'Pattern' if prof.best else 'No pattern used yet' }}:</strong> {{ prof.why }}</p>
         <details class="mx-why"><summary>How this is decided</summary><div class="mx-why-body small">
-          A kind of explanation is used first for {{ 'them' if staff else 'you' }} only when at least {{ P.PROFILE_MIN_RESOLVED }} sections, from at least {{ P.PROFILE_MIN_LESSONS }} lessons, were cleared by another explanation, one kind cleared at least {{ P.PROFILE_MIN_BEST }} of them and at least {{ (P.PROFILE_MIN_SHARE * 100)|int }}% of them, and it leads the next kind by at least {{ P.PROFILE_MIN_LEAD }}. Even then the original explanation is still shown first{% if cfg.adapt_first %}, except that the instructor of this class turned on “adapt the first presentation”{% endif %}; the preferred kind is simply the first alternative offered.
+          A kind of explanation is offered first for {{ 'them' if staff else 'you' }} only when at least {{ P.PROFILE_MIN_RESOLVED }} sections, from at least {{ P.PROFILE_MIN_LESSONS }} lessons, were cleared by another explanation; that kind was tried on at least {{ P.PROFILE_MIN_SHOWN }} sections and cleared at least {{ P.PROFILE_MIN_BEST }}; it worked at least {{ (P.PROFILE_MIN_RATE * 100)|int }}% of the times it was tried; and that is at least {{ (P.PROFILE_MIN_RATE_LEAD * 100)|int }} points better than every other kind tried as often. Rates, not counts, because “more simply” is always tried first. Even then the original explanation is still shown first{% if cfg.adapt_first %}, except that the instructor of this class turned on “adapt the first presentation”{% endif %}; the preferred kind is simply the first alternative offered.
         </div></details>
         {% if prof.reset_at %}<p class="small mx-muted mt-2 mb-0">Started fresh on {{ prof.reset_at.strftime('%d %b %Y') }}.</p>{% endif %}
         {% if not staff %}

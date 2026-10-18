@@ -90,6 +90,7 @@ def define_ladder_models(db):
         correct = db.Column(db.Boolean)
         mc = db.Column(db.String(60))
         source = db.Column(db.String(20))
+        from_rung = db.Column(db.String(4))                  # request: the rung the student was on
         created_at = db.Column(db.DateTime, default=utcnow, index=True)
 
     class LadderProfileReset(db.Model):
@@ -151,14 +152,22 @@ def register_ladder(app, db, ctx):
         return r.reset_at if r else None
 
     def profile_of(user_id):
-        q = m.LadderEvent.query.filter_by(user_id=user_id, kind='resolved')
+        q = m.LadderEvent.query.filter(m.LadderEvent.user_id == user_id,
+                                       m.LadderEvent.kind.in_(['check', 'request', 'resolved']))
         since = reset_at(user_id)
         if since:
             q = q.filter(m.LadderEvent.created_at > since)
-        seen = {}
-        for e in q.order_by(m.LadderEvent.created_at).all():
-            seen[(e.section_id, e.course, e.label, e.sid)] = (f'{e.course}|{e.label}', e.rung)   # latest per section
-        p = LP.profile(list(seen.values()))
+        secs = {}
+        for e in q.order_by(m.LadderEvent.created_at, m.LadderEvent.id).all():
+            s = secs.setdefault((e.section_id, e.course, e.label, e.sid),
+                                {'lesson': f'{e.course}|{e.label}', 'shown': set(), 'resolved': None})
+            if e.kind == 'check' and e.rung:
+                s['shown'].add(e.rung)
+            elif e.kind == 'request' and e.from_rung:
+                s['shown'].add(e.from_rung)
+            elif e.kind == 'resolved':
+                s['resolved'] = e.rung                      # the latest resolution of the section counts
+        p = LP.profile(list(secs.values()))
         p['reset_at'] = since
         return p
 
@@ -398,8 +407,9 @@ def register_ladder(app, db, ctx):
         row = ensure_row(current_user, section, course, label, sid, lesson.id, cfg, prof)
         st = as_state(row)
         seq = LP.order(allowed_for(cfg, label, sid), prof['best'])
+        was = st['current']
         st, nxt, event = LP.after_request(st, seq)
-        log(current_user.id, section.id, course, label, sid, 'request', rung=nxt, source=source)
+        log(current_user.id, section.id, course, label, sid, 'request', rung=nxt, source=source, from_rung=was)
         if event == 'exhausted':
             log(current_user.id, section.id, course, label, sid, 'exhausted', rung=st['current'])
         save_state(row, st)
