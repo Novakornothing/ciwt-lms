@@ -54,14 +54,23 @@
 </div>
 
 <section class="card mb-4" aria-labelledby="ladEscH">
-  <div class="card-header navy"><h2 class="h6 mb-0" id="ladEscH">Sections students most often needed explained another way</h2></div>
-  {% if a.rows %}
+  <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2"><h2 class="h6 mb-0" id="ladEscH">Sections students most often needed explained another way</h2>
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('ladder_class', section_id=section.id, chapter=chapter, format='csv') }}"><i class="bi bi-download" aria-hidden="true"></i> CSV</a></div>
+  {% if chapters|length > 1 %}
+  <form method="get" class="card-body pb-0 d-flex flex-wrap gap-2 align-items-end">
+    <div><label class="form-label small mb-0" for="ladCh">Chapter</label>
+      <select class="form-select form-select-sm" id="ladCh" name="chapter"><option value="">All chapters</option>{% for c in chapters %}<option value="{{ c }}"{% if chapter == c %} selected{% endif %}>Chapter {{ c }}</option>{% endfor %}</select></div>
+    <button class="btn btn-sm btn-outline-navy" type="submit">Show</button>
+  </form>
+  {% endif %}
+  {% if rows %}
   <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
-    <thead><tr><th scope="col">Section</th><th scope="col">Students</th><th scope="col">Needed another way</th><th scope="col">Saw every explanation</th><th scope="col">Resolved by</th><th scope="col">Most-picked mix-up</th><th scope="col"><span class="visually-hidden">Review</span></th></tr></thead>
-    <tbody>{% for r in a.rows[:25] %}<tr>
+    <thead><tr><th scope="col">Section</th><th scope="col">Students</th><th scope="col">Needed another way</th><th scope="col">Missed the original's check</th><th scope="col">Saw every explanation</th><th scope="col">Resolved by</th><th scope="col">Most-picked mix-up</th><th scope="col"><span class="visually-hidden">Review</span></th></tr></thead>
+    <tbody>{% for r in rows[:40] %}<tr>
       <td data-label="Section">{{ r.heading }} <span class="small mx-muted">(lesson {{ r.label }})</span></td>
       <td data-label="Students">{{ r.students }}</td>
       <td data-label="Needed another way">{{ r.escalated }} ({{ r.escalation_rate }}%)</td>
+      <td data-label="Missed the original's check">{% if r.r0_miss_rate is not none %}{{ r.r0_miss_rate }}% of {{ r.r0_answers }}{% if r.rewrite %} <span class="mx-badge mx-badge-req">Original may need rewriting</span>{% endif %}{% else %}—{% endif %}</td>
       <td data-label="Saw every explanation">{% if r.exhausted %}<span class="mx-badge mx-badge-req">{{ r.exhausted }}</span>{% else %}0{% endif %}</td>
       <td data-label="Resolved by">{% for k, n in r.resolved|dictsort %}{{ LABEL[k] }}: {{ n }}{% if not loop.last %}; {% endif %}{% else %}—{% endfor %}</td>
       <td data-label="Mix-up">{% for lbl, n in r.top_mc %}{{ lbl }} ({{ n }}){% if not loop.last %}; {% endif %}{% else %}—{% endfor %}</td>
@@ -69,6 +78,18 @@
     </tr>{% endfor %}</tbody>
   </table></div>
   {% else %}<div class="card-body">No quick-check answers or “explain it another way” requests in this class yet.</div>{% endif %}
+  <div class="card-body small mx-muted pt-2">“Original may need rewriting” appears when at least {{ REWRITE_MIN }} students answered the original's check first and at least {{ (REWRITE_SHARE * 100)|int }}% of them missed it. Sorted by students who needed another way, then those who saw every explanation.</div>
+</section>
+
+<section class="card mb-4" aria-labelledby="ladQH">
+  <div class="card-header"><h2 class="h6 mb-0" id="ladQH">Review the explanations (Pending SME review)</h2></div>
+  {% if queue %}
+  <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
+    <thead><tr><th scope="col">Lesson</th><th scope="col">Laddered sections</th><th scope="col">Restated (same as)</th><th scope="col">No ladder yet (skip)</th><th scope="col">Rungs</th><th scope="col">Checks</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead>
+    <tbody>{% for q in queue %}<tr><td data-label="Lesson">{{ q.label }}</td><td data-label="Laddered">{{ q.section }}</td><td data-label="Same as">{{ q.same_as }}</td><td data-label="Skip">{{ q.skip }}</td><td data-label="Rungs">{{ q.rungs }}</td><td data-label="Checks">{{ q.checks }}</td>
+      <td data-label="Open"><a href="{{ url_for('ladder_preview', section_id=section.id, label=q.label) }}">Read every explanation<span class="visually-hidden"> of lesson {{ q.label }}</span></a></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="card-body">No explanations written for this course yet.</div>{% endif %}
 </section>
 
 <section class="card mb-4" aria-labelledby="ladOvH">

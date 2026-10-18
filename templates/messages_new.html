@@ -76,11 +76,11 @@
     {% endif %}
     <div class="mb-3">
       <label class="form-label" for="f-subject">Subject</label>
-      <input id="f-subject" type="text" name="subject" class="form-control" required maxlength="200" placeholder="Short subject">
+      <input id="f-subject" type="text" name="subject" class="form-control" required maxlength="200" placeholder="Short subject" value="{{ request.args.get('subject', '')[:200] }}">
     </div>
     <div class="mb-3">
       <label class="form-label" for="f-body">Message</label>
-      <textarea id="f-body" name="body" class="form-control" rows="6" required placeholder="Your message…"></textarea>
+      <textarea id="f-body" name="body" class="form-control" rows="6" required placeholder="Your message…">{{ request.args.get('body', '')[:2000] }}</textarea>
     </div>
     <button type="submit" class="btn btn-brand">Send</button>
     <a href="{{ url_for('messages_inbox') }}" class="btn btn-outline-navy">Cancel</a>

@@ -29,6 +29,8 @@ from . import ladder_policy as LP
 _cache = {}
 DEMO_DOMAIN = '@lms.local'
 SOURCES = ('button', 'dontget', 'helix')
+REWRITE_MIN = 5          # analytics: flag "the original may need rewriting" with at least 5 first answers ...
+REWRITE_SHARE = 0.5      # ... and at least half of them wrong on the original's check
 HOW = {'R1': 'said more simply', 'R2': 'as an analogy', 'R3': 'as a picture or step by step', 'R4': 'as something to try'}
 
 
@@ -510,6 +512,14 @@ def register_ladder(app, db, ctx):
                 reach[r][0] += 1
             if s.resolved:
                 reach[s.resolved][1] += 1
+        first_r0 = {}
+        for e in sorted(evs, key=lambda e: (e.created_at, e.id)):
+            if e.kind == 'check' and e.rung == 'R0' and (e.label, e.sid, e.user_id) not in first_r0:
+                first_r0[(e.label, e.sid, e.user_id)] = bool(e.correct)
+        r0 = defaultdict(lambda: [0, 0])               # (label, sid) -> [first answers on the original, misses]
+        for (label, sid, _u), ok in first_r0.items():
+            r0[(label, sid)][0] += 1
+            r0[(label, sid)][1] += 0 if ok else 1
         for e in evs:
             p = per[(e.label, e.sid)]
             if e.kind == 'request':
@@ -524,12 +534,15 @@ def register_ladder(app, db, ctx):
             n = len(p['students'])
             mcs = LD.misconceptions()
             top_mc = sorted(p['mcs'].items(), key=lambda x: (-x[1], x[0]))[:2]
+            n0, miss0 = r0[(label, sid)]
             rows.append({'label': label, 'sid': sid, 'heading': raw.get('heading') or sid, 'students': n,
+                         'chapter': _lkey(label)[0], 'r0_answers': n0, 'r0_miss_rate': round(100 * miss0 / n0) if n0 else None,
+                         'rewrite': n0 >= REWRITE_MIN and miss0 / n0 >= REWRITE_SHARE,
                          'escalated': len(p['escalated']), 'exhausted': len(p['exhausted']), 'requests': p['requests'],
                          'misses': p['misses'], 'resolved': dict(p['resolved']),
                          'escalation_rate': round(100 * len(p['escalated']) / n) if n else 0,
                          'top_mc': [((mcs.get(k) or _global_mc(k) or {}).get('label', k), v) for k, v in top_mc]})
-        rows.sort(key=lambda r: (-r['escalated'], -r['exhausted'], -r['escalation_rate'], r['label'], r['sid']))
+        rows.sort(key=lambda r: (-r['escalated'], -r['exhausted'], -r['escalation_rate'], _lkey(r['label']), r['sid']))
         rungs = [{'rung': r, 'label': LS.LABEL[r], 'reached': reach[r][0], 'resolved': reach[r][1],
                   'rate': round(100 * reach[r][1] / reach[r][0]) if reach[r][0] else None} for r in ('R0',) + LP.RUNGS]
         demo = any(is_demo_user(u) for u in users.values())
@@ -545,14 +558,48 @@ def register_ladder(app, db, ctx):
                 out.append({'label': label, 'sid': sid, 'heading': e.get('heading') or sid, 'type': e['type']})
         return out
 
+    def review_queue(section):
+        """Per lesson of the class's course: laddered / same_as / skip counts and rung + check totals (SME review)."""
+        course = course_code(section)
+        by = defaultdict(lambda: {'section': 0, 'same_as': 0, 'skip': 0, 'checks': 0})
+        for (c, label, _sid), e in LD.ladder().items():
+            if c != course:
+                continue
+            b = by[label]
+            b[e.get('type', 'skip')] = b.get(e.get('type', 'skip'), 0) + 1
+            if e.get('type') == 'section':
+                b['checks'] += len(e['checks']) + sum(len(r['checks']) for r in e['rungs'].values())
+        return [dict(v, label=k, rungs=4 * v['section']) for k, v in sorted(by.items(), key=lambda kv: _lkey(kv[0]))]
+
     @login_required
     def ladder_class(section_id):
         section = ctx.staff_section(section_id)
         cfg = settings(section.id)
         a = analytics(section)
-        secs = course_sections(section)
-        return render_template('ladder/instructor.html', section=section, cfg=cfg, a=a, secs=secs,
-                               P=LP, LABEL=LS.LABEL, demo=a['demo'])
+        chapters = sorted({r['chapter'] for r in a['rows']})
+        ch = request.args.get('chapter', type=int)
+        rows = [r for r in a['rows'] if not ch or r['chapter'] == ch]
+        if request.args.get('format') == 'csv':
+            import csv
+            from io import StringIO
+            buf = StringIO()
+            w = csv.writer(buf)
+            w.writerow(['lesson', 'section', 'students', 'needed another way', 'rate %', 'saw every explanation',
+                        'first answers on original', 'original miss %', 'original may need rewriting', 'requests',
+                        'resolved by', 'top mix-ups', 'includes demo accounts'])
+            for r in rows:
+                w.writerow([r['label'], r['heading'], r['students'], r['escalated'], r['escalation_rate'], r['exhausted'],
+                            r['r0_answers'], r['r0_miss_rate'] if r['r0_miss_rate'] is not None else '',
+                            'yes' if r['rewrite'] else '', r['requests'],
+                            '; '.join(f'{LS.LABEL[k]}: {v}' for k, v in sorted(r['resolved'].items())),
+                            '; '.join(f'{lbl} ({n})' for lbl, n in r['top_mc']), 'yes' if a['demo'] else 'no'])
+            from flask import Response
+            return Response(buf.getvalue(), mimetype='text/csv', headers={
+                'Content-Disposition': f'attachment; filename=explanations-section-{section.id}.csv'})
+        return render_template('ladder/instructor.html', section=section, cfg=cfg, a=a, rows=rows, chapters=chapters,
+                               chapter=ch, secs=course_sections(section), queue=review_queue(section),
+                               P=LP, LABEL=LS.LABEL, demo=a['demo'], REWRITE_MIN=REWRITE_MIN,
+                               REWRITE_SHARE=REWRITE_SHARE)
 
     @login_required
     def ladder_settings(section_id):
@@ -642,8 +689,15 @@ def register_ladder(app, db, ctx):
                     f'({st["misses"]} misses, {st["requests"]} “explain another way”).')
             note = (f'One-on-one idea: ask them to talk you through “{heading}” in their own words'
                     + (f'; their last wrong answer points to “{mct["label"]}”' if mct else '') + '.')
+            subject = f'Let us go through “{heading}” together'
+            body = (f'Hi {user.first_name or ""},\n\nI can see you worked through every explanation of “{heading}” in lesson '
+                    f'{r.label}. That is useful to me, not a mark against you. Could we spend ten minutes on it '
+                    'together? Reply with a time that suits you, or bring it to the next class.\n')
             out.append({'kind': 'ladder', 'obj': ent.get('obj'), 'when': r.exhausted_at, 'text': text + ' ' + note,
-                        'ladder': {'label': r.label, 'sid': r.sid, 'heading': heading, 'tried': st['tried']}})
+                        'ladder': {'label': r.label, 'sid': r.sid, 'heading': heading, 'tried': st['tried'],
+                                   'message_url': url_for('messages_new', to=user.id, subject=subject, body=body),
+                                   'detail_url': url_for('ladder_student', section_id=section.id, user_id=user.id),
+                                   'preview_url': url_for('ladder_preview', section_id=section.id, label=r.label) + f'#pv-{r.sid}'}})
         return out
 
     def class_exhausted(section):

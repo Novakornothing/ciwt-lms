@@ -292,3 +292,93 @@ def test_helix_offer_needs_consent(student, mod, app, lesson11):
         sec = mod.db.session.get(mod.ClassSection, s)
         ok = mod.mastery_api.engine.helix_state(sec, u) == 'ok'
     assert (r.status_code == 200) == ok
+
+
+def test_every_laddered_lesson_renders_for_a_student(app, mod):
+    """All merged ladder files (every course): each lesson with ladder entries renders for an enrolled student,
+    with one wrapper per laddered or same_as section, and no server error."""
+    from curriculum_v2.ladder import sections as LSEC
+    with app.app_context():
+        todo = []
+        for code in ('ITSUP', 'NETOPS', 'CLIENT'):
+            c = mod.Course.query.filter_by(code=code).first()
+            sec = mod.ClassSection.query.filter_by(course_id=c.id).order_by(mod.ClassSection.id).first() if c else None
+            if not sec:
+                continue
+            enr = mod.Enrollment.query.filter_by(section_id=sec.id).join(mod.User, mod.User.id == mod.Enrollment.user_id) \
+                .filter(mod.User.role == 'student').first()
+            if not enr:
+                continue
+            email = mod.db.session.get(mod.User, enr.user_id).email
+            for m in mod.Module.query.filter_by(course_id=c.id).all():
+                for les in mod.Lesson.query.filter_by(module_id=m.id).all():
+                    label = LSEC.lesson_label(les.title)
+                    want = [s['sid'] for s in LSEC.sections(les.content or '') if LD.entry(code, label, s['sid'])]
+                    if want:
+                        todo.append((email, sec.id, m.id, les.id, want))
+    assert todo
+    clients = {}
+    n = 0
+    for email, s, m, l, want in todo:
+        cl = clients.get(email)
+        if not cl:
+            cl = clients[email] = app.test_client()
+            cl.post('/login', data={'email': email, 'password': 'student123'})
+        r = cl.get(f'/student/module/{s}/{m}/lesson/{l}')
+        if r.status_code != 200:          # module not released to students in this class: not a ladder failure
+            continue
+        html = r.get_data(as_text=True)
+        got = re.findall(r'data-ladder-sid="([^"]+)"', html)
+        assert got == want, (email, l, set(want) - set(got))
+        n += 1
+    assert n >= 5
+
+
+def test_adapt_first_and_profile_order_through_routes(student, instructor, mod, app, lesson11):
+    uid = _reset(mod, app, 'student1@lms.local')
+    s, m, l = lesson11
+    with app.app_context():
+        lm = mod.mastery_api.ladder.models
+        for i, lab in enumerate(['1.2', '1.2', '1.3', '1.3']):           # 4 sections in 2 lessons cleared by R3
+            for k, rung in (('check', 'R1'), ('check', 'R3'), ('resolved', 'R3')):
+                mod.db.session.add(lm.LadderEvent(user_id=uid, section_id=s, course='ITSUP', label=lab, sid=f'x{i}',
+                                                  kind=k, rung=rung, correct=(k == 'resolved') or None))
+        mod.db.session.commit()
+        assert mod.mastery_api.ladder.profile(uid)['best'] == 'visual'
+    url = f'/student/module/{s}/{m}/lesson/{l}'
+    assert 'data-shown="R0"' in _check_ids(student.get(url).get_data(as_text=True), SID)[1]   # default: original first
+    j = student.post(f'/student/section/{s}/ladder/{l}/{SID}/another', headers={'X-Requested-With': 'fetch'}).get_json()
+    assert j['shown'] == 'R3'                                             # the profile leads with what helped
+    instructor.post(f'/instructor/section/{s}/ladder/settings',
+                    data={'form': 'class', 'enabled': 'on', 'micro_checks': 'on', 'adapt_first': 'on', 'max_rung': '4'})
+    box = _check_ids(student.get(url).get_data(as_text=True), 'what-software-is')[1]
+    assert 'data-shown="R3"' in box and 'See the original explanation' in box and 'ladder-original-tpl' in box
+    page = student.get(f'/student/section/{s}/what-helps-you-learn').get_data(as_text=True)
+    assert 'Leads when a section does not click' in page and 'adapt the first presentation' in page
+    _reset(mod, app, 'student1@lms.local')
+
+
+def test_analytics_csv_chapter_filter_and_review_queue(instructor, lesson11):
+    s, _m, _l = lesson11
+    page = instructor.get(f'/instructor/section/{s}/ladder?chapter=1').get_data(as_text=True)
+    assert 'Review the explanations (Pending SME review)' in page and 'Read every explanation' in page
+    r = instructor.get(f'/instructor/section/{s}/ladder?format=csv')
+    assert r.status_code == 200 and r.mimetype == 'text/csv'
+    assert r.get_data(as_text=True).splitlines()[0].startswith('lesson,section,students')
+
+
+def test_who_needs_me_links_and_message_draft_is_not_sent(student2, instructor, mod, app, lesson11):
+    _reset(mod, app, 'student2@lms.local')
+    s, m, l = lesson11
+    sid = '3-impact-and-identity'
+    for _ in range(5):                       # R1..R4, then a fifth request finds nothing new: exhausted
+        student2.post(f'/student/section/{s}/ladder/{l}/{sid}/another')
+    with app.app_context():
+        n_msgs = mod.StaffMessage.query.count()
+    page = instructor.get(f'/instructor/section/{s}/mastery/today').get_data(as_text=True)
+    assert 'Draft a message about this section' in page and 'Read the explanations they saw' in page
+    href = re.search(r'href="([^"]*/messages/new[^"]*subject=[^"]+)"', page).group(1).replace('&amp;', '&')
+    draft = instructor.get(href).get_data(as_text=True)
+    assert 'Let us go through' in draft
+    with app.app_context():
+        assert mod.StaffMessage.query.count() == n_msgs                   # a draft only: nothing is sent

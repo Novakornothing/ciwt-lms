@@ -26,7 +26,8 @@
         <h2 class="h6 mb-1"><span class="mx-muted">{{ loop.index }}.</span> <a href="{{ url_for('mastery_class_student', section_id=section.id, user_id=p.user.id) }}">{{ p.user.full_name }}</a></h2>
         <span class="small mx-muted">{% if p.severity %}{{ p.severity }} objective{{ 's' if p.severity != 1 }} need{{ 's' if p.severity == 1 }} review · {% endif %}{% if p.last %}last active {{ p.last.strftime('%d %b') }}{% else %}no recorded activity{% endif %}</span>
       </div>
-      <ul class="mb-2 mx-reasons">{% for r in p.reasons %}<li><span class="mx-badge">{{ {'stuck': 'Stuck', 'misconception': 'Mix-up', 'ladder': 'Every explanation tried', 'missed_review': 'Review waiting', 'drop': 'Drop', 'lab': 'Lab', 'inactive': 'Inactive'}[r.kind] }}</span> {{ r.text }}</li>{% endfor %}</ul>
+      <ul class="mb-2 mx-reasons">{% for r in p.reasons %}<li><span class="mx-badge">{{ {'stuck': 'Stuck', 'misconception': 'Mix-up', 'ladder': 'Every explanation tried', 'missed_review': 'Review waiting', 'drop': 'Drop', 'lab': 'Lab', 'inactive': 'Inactive'}[r.kind] }}</span> {{ r.text }}{% if r.ladder %}
+        <span class="d-block small mt-1"><a href="{{ r.ladder.message_url }}">Draft a message about this section<span class="visually-hidden"> to {{ p.user.full_name }}</span></a> · <a href="{{ r.ladder.detail_url }}">What helps {{ p.user.first_name }} learn</a> · <a href="{{ r.ladder.preview_url }}">Read the explanations they saw</a></span>{% endif %}</li>{% endfor %}</ul>
       <div class="d-flex flex-wrap gap-2 align-items-end">
         <a class="btn btn-sm btn-brand" href="{{ url_for('messages_new', to=p.user.id) }}"><i class="bi bi-envelope" aria-hidden="true"></i> Message<span class="visually-hidden"> {{ p.user.full_name }}</span></a>
         {% if p.top_obj %}
