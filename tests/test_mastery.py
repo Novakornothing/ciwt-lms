@@ -268,10 +268,10 @@ def test_review_answers_are_graded_server_side_and_keys_not_shown(app, student, 
 
 def test_settings_toggle(app, instructor, mod):
     api = app.extensions['ciwt_mastery']
-    instructor.post('/instructor/section/1/mastery/settings', data={'testout': '1'})
+    instructor.post('/instructor/section/1/mastery/settings', data={'testout': '1', 'cert_items': '1'})
     with app.app_context():
         assert api.engine.settings(1)['enabled'] is False
-    instructor.post('/instructor/section/1/mastery/settings', data={'enabled': '1', 'testout': '1'})
+    instructor.post('/instructor/section/1/mastery/settings', data={'enabled': '1', 'testout': '1', 'cert_items': '1'})
     with app.app_context():
         assert api.engine.settings(1)['enabled'] is True
 

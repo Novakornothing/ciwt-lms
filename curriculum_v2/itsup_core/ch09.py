@@ -279,7 +279,7 @@ ITEMS = [
          'Credentials are never shared with or stored by support; test with your own permitted accounts.'),
     item('IT-9.4', 1, 'A USB drive must be read and written on Windows, macOS and Linux and hold 6 GB files. Which format fits?',
          'exFAT', ['FAT32', 'APFS', 'ext4'],
-         'exFAT is natively read/write on all three and has no 4 GB file limit; FAT32 limits files to 4 GB.'),
+         'exFAT is read/write out of the box on current Windows, macOS and Linux (in-kernel driver since Linux 5.7) and has no 4 GB file limit; FAT32 limits files to 4 GB.'),
     item('IT-9.4', 2, 'How does a Mac user connect to the Windows share \\\\files\\budget?',
          'Finder → Go → Connect to Server → smb://files/budget', ['System Settings → Network → Add Server → files/budget', 'Terminal: ping files, then open the result list', 'Disk Utility → File → New Image → files/budget'],
          'macOS connects to SMB shares with smb:// URLs from Finder’s Connect to Server.'),

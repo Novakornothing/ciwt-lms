@@ -91,11 +91,7 @@ def package_manifest(folder):
     return {'ok': not bad, 'bad': bad, 'head': man.get('git_head'), 'n': len(man['documents'])}
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('out')
-    ap.add_argument('--package', default='')
-    a = ap.parse_args()
+def run(package=''):
     app, db = M.app, M.db
     app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
     R = {'checks': [], 'details': {}}
@@ -274,12 +270,21 @@ def main():
         check('lesson plans match the current chapters (lessons, objectives, minutes)', not plan_bad, plan_bad, 'documents')
         check('syllabus lists every current chapter and states the computed contact hours', not syl_bad, syl_bad, 'documents')
         # ------------------------------------------------------------ 6. package
-        if a.package:
-            man = package_manifest(a.package)
+        if package:
+            man = package_manifest(package)
             check('course package regenerated from this tree; every document hash matches its MANIFEST entry',
                   man['ok'], man['bad'], 'package')
             R['details']['package'] = man
     R['summary'] = {'passed': sum(c['ok'] for c in R['checks']), 'total': len(R['checks'])}
+    return R
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('out')
+    ap.add_argument('--package', default='')
+    a = ap.parse_args()
+    R = run(a.package)
     with open(a.out, 'w') as f:
         json.dump(R, f, indent=1, default=str)
     print(f"{R['summary']['passed']}/{R['summary']['total']} checks passed")

@@ -6993,6 +6993,10 @@ def init_db():
     if User.query.count() == 0:
         print('Seeding database...')
         seed_database()
+        # pass 13 (readiness audit): a brand-new install used to stop here, so until the first restart its chapter
+        # checks were the generic seed sets (no objective tags, so the adaptive engine had no check items) and the
+        # skills midterm/final were not synced. Run the same content syncs as an existing database.
+        _sync_content()
         return
     try:
         live = (HelixGazeSession.query
@@ -7010,6 +7014,10 @@ def init_db():
         print('Helix seed note:', e)
     # Do not drop_all on an existing schoolhouse DB — that hangs startup
     # and looks like the site is down. Sync lesson text only.
+    _sync_content()
+
+
+def _sync_content():
     try:
         sync_curriculum()
     except Exception as e:
