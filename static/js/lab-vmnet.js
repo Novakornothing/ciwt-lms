@@ -58,6 +58,7 @@
       var op = (f[20] << 8) | f[21];
       return op === 1 ? 'ARP who has ' + a2ip(f, 38) + '? tell ' + a2ip(f, 28) : 'ARP ' + a2ip(f, 28) + ' is at ' + mac2s(f, 22);
     }
+    if (et === 0x86dd) return summarize6(f);
     if (et !== 0x0800) return null;
     var ihl = (f[14] & 15) * 4, pr = f[23], s = a2ip(f, 26), d = a2ip(f, 30), o = 14 + ihl, ttl = f[22];
     if (pr === 1) {
@@ -73,6 +74,35 @@
     }
     if (pr === 6) return 'TCP ' + s + ' → ' + d + ':' + ((f[o + 2] << 8) | f[o + 3]);
     return 'IP ' + s + ' → ' + d + ' proto ' + pr;
+  }
+  /* r5: IPv6 frames (the IPv6 lab's Packets tab was empty): ICMPv6 incl. router/neighbour discovery, UDP, TCP */
+  function a6(f, o) {
+    var w = []; for (var i = 0; i < 8; i++) w.push(((f[o + 2 * i] << 8) | f[o + 2 * i + 1]).toString(16));
+    var bs = -1, bl = 0;                                   // RFC 5952: compress the longest run (≥ 2) of zero words
+    for (var j = 0; j < 8;) { if (w[j] !== '0') { j++; continue; } var k = j; while (k < 8 && w[k] === '0') k++; if (k - j > bl && k - j > 1) { bs = j; bl = k - j; } j = k; }
+    if (bs < 0) return w.join(':');
+    return w.slice(0, bs).join(':') + '::' + w.slice(bs + bl).join(':');
+  }
+  function summarize6(f) {
+    if (f.length < 54) return null;
+    var nh = f[20], hl = f[21], s = a6(f, 22), d = a6(f, 38), o = 54;
+    if (nh === 58) {
+      var t = f[o];
+      var n = { 1: 'unreachable', 3: 'time exceeded', 128: 'echo request', 129: 'echo reply', 133: 'router solicitation', 134: 'router advertisement',
+        135: 'neighbor solicitation', 136: 'neighbor advertisement', 137: 'redirect' }[t] || ('type ' + t);
+      if ((t === 135 || t === 136) && f.length >= o + 24) n += ' ' + a6(f, o + 8);
+      if (t === 134 && f.length >= o + 16) {                 // the advertised prefix (option 3), the part SLAAC uses
+        for (var p = o + 16; p + 8 <= f.length && f[p + 1];) { if (f[p] === 3 && p + 32 <= f.length) { n += ' prefix ' + a6(f, p + 16) + '/' + f[p + 2]; break; } p += f[p + 1] * 8; }
+      }
+      return 'ICMPv6 ' + s + ' → ' + d + ' ' + n + ' (hop limit ' + hl + ')';
+    }
+    if (nh === 17) {
+      var sp = (f[o] << 8) | f[o + 1], dp = (f[o + 2] << 8) | f[o + 3];
+      return (dp === 547 || dp === 546 ? 'DHCPv6 ' : 'UDP ') + '[' + s + ']:' + sp + ' → [' + d + ']:' + dp;
+    }
+    if (nh === 6) return 'TCP [' + s + '] → [' + d + ']:' + ((f[o + 2] << 8) | f[o + 3]);
+    if (nh === 0) return 'IPv6 ' + s + ' → ' + d + ' hop-by-hop (MLD)';
+    return 'IPv6 ' + s + ' → ' + d + ' next header ' + nh;
   }
   function dhcpType(f, o) {
     var p = o + 240;
