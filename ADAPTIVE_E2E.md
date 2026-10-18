@@ -187,3 +187,122 @@ conflicts and the item counts are unchanged. Results on `1c1518a`:
 - node: 41/41.
 - `adaptive_e2e`: desktop 92/92, phone 128/128.
 - Readiness with `--package`: 28/28.
+
+## Round 3 (Oct 18 2026, 05:07–05:40 UTC): misconception tags for the graded tests, spot-check round 3
+
+A previous round-3 worker stalled at 04:58 with two untracked files. Their mtimes and sha256 did not change over a
+3-minute check (05:07:37 → 05:10:27) or since 04:58, so this worker took the work over and kept it.
+
+### Commits (branch `content`, local only)
+| Commit | What |
+|---|---|
+| `115b85b` | Merge `refinement` `f9ffdc4` (pass 15 rationales, option-length parity, cert gap items, readiness checks) into `content`. No conflicts. |
+| `548f8f8` | The stalled worker's files, committed as WIP and not wired: `tools/misconception_coverage.py`, `curriculum_v2/misconceptions_round3.py`. |
+| `6cabe39` | Round 3 finished and wired into the engine (`curriculum_v2/misconceptions.py`). The correction page shows the status. Tests are in `tests/test_misconceptions_round3.py`, and before/after coverage is in `docs/readiness/misconception-coverage-round3-*.txt`. |
+| `409fa84`, `508e2e2` | Semester sim: the strong-student checks were adjusted for the denser tags (see below). Documented in `docs/SEMESTER_SIMULATION.md`. |
+| `493c410` | Accuracy spot-check round 3: `docs/readiness/SPOT_CHECK_ROUND3.md`, frozen sample, `--round3` sampler, one stem fix, tests. |
+
+### Misconception tagging (rules in the `misconceptions_round3.py` docstring)
+- **Tags.** 305 (item, distractor) tags. Every one was checked against the items the engine actually serves:
+  - the option text matches exactly
+  - it is not the key
+  - its objective matches the misconception's
+  - `tag_for` returns it
+
+  The stalled worker's 90 tags were kept. Three of them pointed at chapter-check distractors that pass 15 had
+  rewritten for option-length parity (Q4.7, Q4.9, Q6.7), so they were updated to the served text.
+- **Misconceptions.** 91 new `MC-R3-*` entries. Each one has:
+  - a primary `source` (standard, RFC, NIST, vendor documentation, or the course lesson for course procedure)
+  - `status: 'Pending SME review'`, which the mix-up correction page now shows ("Status of this mix-up description:
+    Pending SME review.")
+  - a lesson section for its correction (tested)
+- **Reuse.** 18 existing ids were reused, on 42 tags, where the wrong idea is the same. Two drafted ids were dropped in favour of
+  existing ones:
+  - A1.23 → `MC-C-IT8-REPAIR-TOOL`
+  - NQ6.4 → `MC-C-NO6-NO-ROLLBACK`
+- **Left untagged on purpose:**
+  - Q13.6 and NQ5.5: their distractors are throw-aways, not a wrong idea the explanation names.
+  - Single throw-away distractors on items that are otherwise tagged, such as "Reset every user's password" on A1.32.
+- **Label edit.** One draft label was narrowed: `MC-R3-IT8-DESTRUCTIVE-FIRST` no longer lists "convert", because
+  MBR2GPT is non-destructive.
+
+Coverage, measured with `tools/misconception_coverage.py` on a throwaway DB. Before is `548f8f8`, merged but not
+wired; after is `6cabe39`.
+
+| | Before | After |
+|---|---|---|
+| Objectives covered | 70/70 | 70/70 |
+| Tagged scorable distractors | 883/2349 | **1188/2349** |
+| Items with ≥ 1 tagged distractor | 381/783 | **495/783** |
+| Tests A/B/C (single-answer) | 30/129 | **129/129** |
+| Chapter checks | 183/200 | **198/200** (Q13.6, NQ5.5 untagged) |
+| Cert / X-IT bank / supplement | 168/293, 0/131, 0/30 | unchanged |
+| Objectives with only one correctable misconception | IT-2.3, IT-11.3, NO-6.1 | none |
+
+### Semester simulation: a behaviour change caused by the denser tags (decision needed)
+With Tests A/B/C tagged, strong synthetic student 31 picked the same mix-up twice: `MC-IT4-SWOLLEN-HANDS-ON`. The
+engine recorded the two hits on one simulated day, from a daily review and a review check. So "Who needs me" and the
+briefing focus listed them last, with severity 0, under "Picked the same mix-up 2 times". That is the engine's rule.
+Two sim checks had said "no strong student". They now say a strong student may appear only for a repeated mix-up and
+only below every weak, mixed and disengaged student. The run is 15/15, and `strong_in_needs_me` in the JSON records who
+appeared. **No engine rule was changed.**
+
+### Results on `493c410` (final)
+| Run | Result |
+|---|---|
+| `pytest -q tests` | **653 passed, 30 skipped**. All 30 skips are `test_vm_real.py`: the v86 assets are not in content-wt. |
+| `node --test tests/js` | **41/41** |
+| `adaptive_e2e.py` desktop 1366 | **92/92** |
+| `adaptive_e2e.py` phone 390 | **128/128** |
+| Round-3 correction page (`IT-5.3?mc=MC-R3-IT5-DUPLEX`), 1366 and 390 | HTTP 200, label and Pending SME status shown, no horizontal scroll |
+| `curriculum_readiness.py --package` | **30/30**. Refinement added two checks since round 2. |
+| `semester_sim.py --days 28` | **15/15** |
+
+Run details:
+- The earlier run on `6cabe39`, before the spot-check, was also 92/92 and 128/128. The first full pytest on `6cabe39`
+  had 1 failure, the semester sim; the fix is above.
+- Server: `app.py` on :5291 against `/tmp/r3/work2.db`, a copy of `ciwt_lms.db`. The server is stopped.
+- Screenshots and JSON: `/workspace/scratch/adaptive-e2e-r3-final/`.
+- Readiness JSON: `/workspace/artifacts/pass-reports/readiness-content-round3.json`.
+
+### Spot-check round 3 (60 original items, no certification items; checked by Grok Bot, not an SME)
+- **0 wrong answer keys. No key was changed.**
+- **1 stem fixed: X-IT-9.2.3.** "from their Mac" made "the device owner" ambiguous. The stem now says the Mac is
+  college-owned. *Pending SME review*.
+- **SME notes, no change:**
+  - X-IT-6.3.3: Microsoft also names the checkpoint-file volume for Paused-Critical.
+  - X-IT-8.1.1: "Fix problems using Windows Update" is hidden on managed PCs.
+- **Thin rationales.** 23 ITSUP chapter-check items still have a one-line rationale under 90 characters, listed in
+  `SPOT_CHECK_ROUND3.md`. Pass 15 did not reach them because they carry their study tip as their review rationale.
+
+### Course package
+Rebuilt from `493c410`, with a clean tree:
+- `/workspace/artifacts/course-package-content/`: 45 files including the MANIFEST
+- `/workspace/artifacts/course-package-content.zip`: 52 entries
+
+The answer keys contain the X-IT-9.2.3 fix. The ITSUP answer key PDF has 147 "Pending SME review" labels and the
+NETOPS one has 1. Refinement's `/workspace/artifacts/course-package/` was not touched.
+
+`ciwt_lms.db` sha256 is `47fabc92…7939` in `/workspace/ciwt/ciwt-lms`. content-wt has no `ciwt_lms.db`, because it is
+git-ignored. All runs used `/tmp/r3/*.db` copies.
+
+### Open questions for a human (none decided here)
+1. **Test-out bar.** A perfect chapter 1 check alone does not reach mastery on IT-1.2 to IT-1.4 (2 items each, n_eff
+   1.6 < 2). Options: keep it strict, add a third item per objective, or accept a perfect check.
+2. **Chapter lock skips ahead.** With CH-3 locked, the engine offers the chapter 4 mastery check. Should a lock stop
+   later offers?
+3. **"Reset"** means clear the override. Should there be an evidence reset? That would ignore real answers.
+4. **Time estimates are unmeasured:** 2 min for a mix-up correction, 5 min for a review.
+5. **Heatmap payload.** The status-line JSON adds about 55 KB with the demo roster and grows with class size ×
+   objectives. Is that acceptable, or should it load on demand?
+6. **Thin rationales.** 23 ITSUP chapter-check items, down from the 61 counted in round 2. Write full ones next?
+7. **(new) Repeated mix-up on a strong student.** Should "picked the same mix-up 2 times" list a student whose other
+   evidence is strong? It appears last, at severity 0. With the graded tests now tagged, it will happen more often.
+   Options:
+   - keep it
+   - require 3 hits
+   - require the objective to be below mastered
+8. **(new) Reused fix text.** Some reused pass-13 ids carry an item-specific fix. For example, `MC-IT5-PORT-SERVICE`'s
+   fix says "Port 53 is DNS". It now also fires on A1.16, the port 445 item, so the correction's one-line fix names a
+   different port than the student's question. An SME may want generic fix text on reused ids.
+9. **SME review** of the 91 new round-3 misconception labels, fixes and sources, all *Pending SME review*.

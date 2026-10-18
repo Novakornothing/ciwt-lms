@@ -72,3 +72,13 @@ age as it would over a real term. No clock is patched.
 - Answer probabilities are fixed. Nobody in the cohort learns, so this can't test whether reviews help.
 - **Reproducibility (pass 14):** the same `--seed` used to give different runs, because item draws followed Python's per-process string hash seed. With hash seed 3, strong student 29 picked the same distractor twice. That put them in "Who needs me" with a mix-up reason (correct engine behaviour) and failed two profile checks. The tool now pins `PYTHONHASHSEED=0` unless you set one. Small differences remain from wall-clock timestamps: which misconception tops a score tie, and the order of the strong-Monday log. All 15 checks still pass on repeat runs.
 - The smoke test runs the documented 28-day window. At 22 days a strong student gets only one mastery-check offer, and a single failed attempt with fixed probabilities says nothing about the engine.
+
+## Content round 3 (Oct 18 2026): denser misconception tags
+Round 3 tagged the Tests A/B/C distractors (30/129 → 129/129 items). With the default seed, strong synthetic student 31
+then slipped twice onto the same tagged mix-up (MC-IT4-SWOLLEN-HANDS-ON, IT-4.1; the engine records the two hits from a
+daily review and a review check on the same simulated day; round 3 added this id to Test A item A2.2), so "Who needs me" and the briefing focus list showed them, last, with severity 0 and the single reason
+"Picked the same mix-up 2 times". That is the engine's documented rule, not a ranking fault. The two checks that said
+"no strong student" now say: a strong student may appear only for a repeated mix-up and only below every weak, mixed
+and disengaged student (`strong_in_needs_me` in the JSON lists who). Whether a student whose objective is otherwise
+mastered should be listed for a 2-hit mix-up is an open policy question (ADAPTIVE_E2E.md, round 3). Result on
+`content` after round 3: 15/15 checks.

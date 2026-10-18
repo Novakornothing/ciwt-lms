@@ -265,9 +265,11 @@ ITEMS = [
     item('IT-9.2', 2, 'A MacBook’s battery is draining quickly. In Activity Monitor, which tab shows which apps have the highest energy impact?',
          'Energy', ['Disk', 'Network', 'Memory'],
          'The Energy tab lists Energy Impact per app; Disk, Network and Memory show other resources.'),
-    item('IT-9.2', 3, 'A user asks you to remove the college’s management profile from their Mac because it blocks an app. What do you do?',
+    # spot-check round 3 (Oct 18 2026, Pending SME review): "their Mac" read as a personally owned Mac, which made "the
+    # device owner" the user; the stem now says the Mac is college-owned and the rationale names the owner. Key unchanged.
+    item('IT-9.2', 3, 'A user asks you to remove the management profile from the college-owned Mac they use, because it blocks an app. What do you do?',
          'Decline and send the request to the device owner', ['Remove it, then reinstall it after the app is set up', 'Wipe the Mac so that the profile is cleared away', 'Turn off FileVault so the app can be installed'],
-         'MDM profiles enforce organisation policy; changing them is the device owner’s decision.'),
+         'MDM profiles enforce organisation policy; changing them is the device owner’s decision, and here the owner is the college.'),
     item('IT-9.3', 1, 'A user cannot open a share, but a colleague opens it from the same device. What is most likely?',
          'The user lacks access to that share', ['The device’s network adapter is faulty', 'The file server is offline for everyone', 'DNS cannot resolve the server’s name'],
          'Success for another user on the same device rules out the device, network and server; entitlement remains.'),
