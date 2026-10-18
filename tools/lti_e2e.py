@@ -1,7 +1,7 @@
 """Browser e2e for LTI 1.3 against the local mock platform (not a real LMS).
 
 Needs the tool running with LTI_ALLOW_LOOPBACK_HTTP=1 on a throwaway DB copy, e.g.
-  LTI_ALLOW_LOOPBACK_HTTP=1 DATABASE_URL=sqlite:////tmp/x.db PORT=5078 python app.py
+  HOST=127.0.0.1 LTI_ALLOW_LOOPBACK_HTTP=1 DATABASE_URL=sqlite:////tmp/x.db PORT=5078 python app.py
 Then: python tools/lti_e2e.py [--tool http://127.0.0.1:5078] [--shots DIR]
 Starts the mock on 5088 (stopped at the end), registers it through the admin UI, then:
 teacher deep-links content (maps the LMS course to section 1), a learner launches a chapter check,

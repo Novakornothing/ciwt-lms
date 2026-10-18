@@ -30,7 +30,7 @@ def own_server():
     shutil.copyfile(a.src_db, db)
     with socket.socket() as s_:
         s_.bind(('127.0.0.1', 0)); port = s_.getsockname()[1]
-    env = dict(os.environ, DATABASE_URL='sqlite:///' + db, PORT=str(port))
+    env = dict(os.environ, DATABASE_URL='sqlite:///' + db, PORT=str(port), HOST='127.0.0.1')
     env.pop('CIWT_ALLOW_REAL_DB', None)
     log = open(os.path.join(tmp, 'server.log'), 'w')
     proc = subprocess.Popen([sys.executable, os.path.join(ROOT, 'app.py')], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)

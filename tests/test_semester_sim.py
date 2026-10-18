@@ -9,9 +9,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def test_semester_simulation_smoke(tmp_path):
+    # Pass 14: run the documented 28-day window (default). At 22 days a strong student has a single
+    # mastery-check offer (day 21); with the fixed answer probability and the larger pass-14 check pools
+    # one of them can fail that single attempt, which tells us nothing about the engine.
     out = tmp_path / 'sim.json'
     env = dict(os.environ, DATABASE_URL='sqlite:///' + str(tmp_path / 'sim.db'))
-    p = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'semester_sim.py'), str(out), '--days', '22'],
+    p = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'semester_sim.py'), str(out), '--days', '28'],
                        cwd=ROOT, env=env, capture_output=True, text=True, timeout=600)
     assert out.exists(), p.stdout[-3000:] + p.stderr[-3000:]
     R = json.loads(out.read_text())
