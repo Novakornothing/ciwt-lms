@@ -29,6 +29,12 @@ import sys
 from collections import Counter, defaultdict
 from datetime import datetime
 
+# Reproducibility (pass 14): set/dict-of-set iteration in the app follows Python's per-process string hash seed, so
+# the same --seed could draw different items from run to run (found when one hash seed put a strong student in
+# "Who needs me" for a repeated mix-up). Pin the hash seed by re-executing once, unless the caller chose one.
+if __name__ == '__main__' and os.environ.get('PYTHONHASHSEED') is None:
+    os.execve(sys.executable, [sys.executable] + sys.argv, dict(os.environ, PYTHONHASHSEED='0'))
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 URL = os.environ.get('DATABASE_URL', '')
