@@ -18,6 +18,8 @@
       {% if lab.minutes %}<span class="text-muted small">· about {{ lab.minutes }} min</span>{% endif %}</p>
     <h1 class="h4 mb-1">{{ lab.title }}</h1>
     <p class="mb-0 lab-scenario">{{ lab.intro }}</p>
+    {% if real_labs %}<p class="small mb-0 mt-2 lab-real-link"><i class="bi bi-cpu" aria-hidden="true"></i> Simulated practice. The same skills on a real Linux machine in your browser:
+      {% for r in real_labs %}<a href="{{ url_for('interactive_lab', lab_id=r.id) }}">{{ r.title }}</a>{{ ', ' if not loop.last else '' }}{% endfor %}.</p>{% endif %}
   </div>
   <div class="lab-progress-box">
     <div class="d-flex justify-content-between align-items-baseline gap-2">

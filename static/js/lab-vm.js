@@ -1,84 +1,172 @@
-/* Real Linux VM lab: v86 (x86 in WebAssembly) boots Buildroot Linux in the page; serial console terminal.
- * Line mode (default, phone-friendly): a line is sent on Enter; Tab asks the shell to complete; ↑/↓ recall lines.
- * Keys mode (desktop): every key goes straight to the VM (vi, less, Ctrl keys).
- * Grading: "Check my work" drops a probe script into the VM's 9p share, runs it hidden, reads the result back and
- * posts it; the server decides the objectives. Every line sent is posted to the attempt's event log. */
+/* Real Linux VM labs: v86 (x86 in WebAssembly) boots Buildroot Linux in the page — one or more machines, each with
+ * its own serial console, optionally cabled to a virtual network (lab-vmnet.js: isolating switch + DHCP/DNS host).
+ *  - Line mode (default, phone-friendly): a line is sent on Enter; Tab asks the shell to complete; ↑/↓ recall lines.
+ *  - Keys mode (desktop): every key goes straight to the VM (vi, less, top, Ctrl keys).
+ *  - Setup: after the first boot the lab's scenario script is dropped into each VM's 9p share and sourced (hidden).
+ *    A clean snapshot is then kept in memory so "Reset VM" is instant.
+ *  - Grading: "Check my work" runs the server's probe in each VM (hidden), reads the results back and posts them with
+ *    the virtual network's evidence; the server decides the objectives. Every line sent is logged to the attempt.
+ *  - Save: the whole machine state (all VMs + DHCP leases) goes to IndexedDB on this device; Resume restores it. */
 (function () {
   'use strict';
   var cfg = LabKit.config();
   var kit = LabKit.init(cfg);
   var $ = function (id) { return document.getElementById(id); };
-  var wrap = $('termWrap'), body = $('termBody'), form = $('termForm'), input = $('termInput'), promptEl = $('termPrompt');
-  var status = $('vmStatus'), bar = $('vmBar'), fb = $('vmFeedback'), perf = $('vmPerf');
-  var emu = null, booted = false, t0 = 0, raw = false, suppress = null, tabUsed = false;
-  var hist = [], hpos = -1, screen = '', cur = null, MAXLINES = 1500;
-  var PROMPT_RE = new RegExp(cfg.vm.prompt_re || '[#%$] $');
+  var VMC = cfg.vm || {};
+  var SPECS = VMC.machines && VMC.machines.length ? VMC.machines : [{ name: 'vm', label: 'VM', memory_mb: 64 }];
+  var MULTI = SPECS.length > 1;
+  var PROMPT_RE = new RegExp(VMC.prompt_re || '[#%$] $');
+  var LINE_PROMPT = /^(.*?[#%$]) $/;
+  var wrap = $('termWrap'), form = $('termForm'), input = $('termInput'), promptEl = $('termPrompt');
+  var status = $('vmStatus'), bar = $('vmBar'), fb = $('vmFeedback'), perf = $('vmPerf'), titleEl = $('vmTitle');
   var nonce = (cfg.boot && cfg.boot.vm_nonce) || '';
   var DBKEY = cfg.lab_id + ':' + nonce;
+  var raw = false, t0 = 0, started = false, allReady = false, cleanSnap = null;
+  var fabric = null, services = null, MAXLINES = 1500;
 
-  /* ---------------- tiny terminal renderer (serial bytes -> lines) */
-  var esc = '', lineCount = 0;
-  function newLine() { cur = document.createElement('div'); cur.className = 'ln'; body.appendChild(cur); lineCount++; if (lineCount > MAXLINES) { body.removeChild(body.firstChild); lineCount--; } }
-  newLine();
-  function put(ch) {
-    if (esc) {                                         // swallow ANSI CSI / OSC sequences
-      esc += ch;
-      if (esc.length === 2 && ch !== '[' && ch !== ']') { esc = ''; }
-      else if (esc.length > 2 && /[@-~]/.test(ch) && esc[1] === '[') { if (esc === '\x1b[K' ) {} esc = ''; }
-      else if (esc[1] === ']' && (ch === '\x07' || esc.length > 64)) esc = '';
+  /* ---------------------------------------------------------------- machines + their consoles */
+  function Machine(spec) {
+    this.spec = spec; this.name = spec.name; this.label = spec.label || spec.name;
+    this.screenEl = document.querySelector('.vm-screen[data-m="' + spec.name + '"]');
+    this.cur = null; this.scr = ''; this.esc = ''; this.lines = 0; this.pending = ''; this.flushT = null;
+    this.suppress = null; this.booted = false; this.ready = false; this.hist = []; this.hpos = -1; this.tabUsed = false;
+    this.emu = null; this.rawLine = '';
+    this.newLine();
+  }
+  Machine.prototype.newLine = function () {
+    this.cur = document.createElement('div'); this.cur.className = 'ln'; this.screenEl.appendChild(this.cur); this.lines++;
+    if (this.lines > MAXLINES) { this.screenEl.removeChild(this.screenEl.firstChild); this.lines--; }
+  };
+  Machine.prototype.clearScreen = function () { this.screenEl.innerHTML = ''; this.lines = 0; this.newLine(); this.scr = ''; };
+  Machine.prototype.put = function (ch) {
+    if (this.esc) {                                      // swallow ANSI CSI / OSC sequences
+      this.esc += ch;
+      if (this.esc.length === 2 && ch !== '[' && ch !== ']') this.esc = '';
+      else if (this.esc.length > 2 && this.esc[1] === '[' && /[@-~]/.test(ch)) this.esc = '';
+      else if (this.esc[1] === ']' && (ch === '\x07' || this.esc.length > 64)) this.esc = '';
       return;
     }
-    if (ch === '\x1b') { esc = ch; return; }
+    if (ch === '\x1b') { this.esc = ch; return; }
     if (ch === '\r' || ch === '\x07') return;
-    if (ch === '\n') { newLine(); screen = ''; return; }
-    if (ch === '\b') { var t = cur.textContent; cur.textContent = t.slice(0, -1); screen = screen.slice(0, -1); return; }
-    cur.textContent += ch; screen += ch;
-  }
-  var pending = '', flushT = null;
-  function onByte(b) {
-    var ch = String.fromCharCode(b);
-    if (suppress) { suppress.buf += ch; if (suppress.done && PROMPT_RE.test(suppress.buf.split('\n').pop())) endSuppress(); return; }
-    pending += ch;
-    if (!flushT) flushT = requestAnimationFrame(flush);
-  }
-  function flush() {
-    flushT = null;
-    for (var i = 0; i < pending.length; i++) put(pending[i]);
-    pending = '';
-    var last = screen;
-    var m = last.match(/^(.*?[#%$]) $/);
-    if (m) promptEl.textContent = m[1].slice(-24);
-    body.scrollTop = body.scrollHeight;
-    if (!booted && PROMPT_RE.test(last)) onBooted();
-  }
-  function idle() { return PROMPT_RE.test(screen); }
+    if (ch === '\n') { this.newLine(); this.scr = ''; return; }
+    if (ch === '\b') { this.cur.textContent = this.cur.textContent.slice(0, -1); this.scr = this.scr.slice(0, -1); return; }
+    this.cur.textContent += ch; this.scr += ch;
+  };
+  Machine.prototype.onByte = function (b) {
+    var ch = String.fromCharCode(b), self = this;
+    if (this.suppress) {
+      this.suppress.buf += ch;
+      if (this.suppress.done && PROMPT_RE.test(this.suppress.buf.split('\n').pop())) this.endSuppress();
+      return;
+    }
+    this.pending += ch;
+    if (!this.flushT) this.flushT = requestAnimationFrame(function () { self.flush(); });
+  };
+  Machine.prototype.flush = function () {
+    this.flushT = null;
+    for (var i = 0; i < this.pending.length; i++) this.put(this.pending[i]);
+    this.pending = '';
+    if (this === active) syncPrompt();
+    this.screenEl.scrollTop = this.screenEl.scrollHeight;
+    if (!this.booted && PROMPT_RE.test(this.scr)) this.onBooted();
+  };
+  Machine.prototype.idle = function () { return PROMPT_RE.test(this.scr); };
+  Machine.prototype.send = function (s) { if (this.emu) this.emu.serial0_send(s); };
+  /* run a script hidden: drop it into the 9p share, source or sh it, swallow the output until the prompt returns */
+  Machine.prototype.hidden = function (path, text, how) {
+    var self = this;
+    return this.emu.create_file('/' + path, new TextEncoder().encode(text)).then(function () {
+      return new Promise(function (res) {
+        self.suppress = { buf: '', done: false, cb: res };
+        self.send(' ' + how + ' /mnt/' + path + '; rm -f /mnt/' + path + '\n');
+        setTimeout(function () { if (self.suppress) self.suppress.done = true; if (self.suppress && PROMPT_RE.test(self.suppress.buf.split('\n').pop())) self.endSuppress(); }, 50);
+      });
+    });
+  };
+  Machine.prototype.endSuppress = function () {
+    var s = this.suppress; this.suppress = null;
+    var tail = s.buf.split('\n').pop();
+    if (!(PROMPT_RE.test(this.scr) && PROMPT_RE.test(tail))) {
+      // the prompt may have changed (setup sets PS1): replace the current line with the new prompt
+      this.cur.textContent = ''; this.scr = '';
+      for (var i = 0; i < tail.length; i++) this.put(tail[i]);
+    }
+    if (this === active) syncPrompt();
+    s.cb && s.cb(s.buf);
+  };
+  Machine.prototype.onBooted = function () {
+    var self = this;
+    this.booted = true;
+    if (this.resumed || !(VMC.setup && VMC.setup[this.name])) { this.ready = true; return checkAllReady(); }
+    setStatus('Preparing the scenario on ' + this.label + '…', 92);
+    this.hidden('.ciwt-setup', VMC.setup[this.name], '.').then(function () { self.ready = true; checkAllReady(); });
+  };
 
-  /* ---------------- sending */
-  function sendRaw(s) { if (emu) emu.serial0_send(s); }
+  var machines = SPECS.map(function (s) { return new Machine(s); });
+  var byName = {}; machines.forEach(function (m) { byName[m.name] = m; });
+  var active = machines[0];
+
+  function syncPrompt() {
+    var m = active.scr.match(LINE_PROMPT);
+    promptEl.textContent = m ? m[1].slice(-26) : (active.ready ? '$' : '…');
+  }
+
+  /* ---------------------------------------------------------------- tabs (machines + Packets) */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-vm-tab]'));
+  var packetsEl = $('vmPackets');
+  function showTab(name) {
+    tabs.forEach(function (t) { var on = t.getAttribute('data-vm-tab') === name; t.setAttribute('aria-selected', on ? 'true' : 'false'); t.tabIndex = on ? 0 : -1; });
+    machines.forEach(function (m) { m.screenEl.hidden = m.name !== name; });
+    if (packetsEl) packetsEl.hidden = name !== '_packets';
+    form.hidden = raw || name === '_packets';
+    if (byName[name]) {
+      active = byName[name];
+      if (titleEl) titleEl.textContent = 'root@' + (active.spec.hostname || active.label) + ' — real Linux (BusyBox sh)';
+      syncPrompt();
+      active.screenEl.scrollTop = active.screenEl.scrollHeight;
+      if (!raw && started) input.focus({ preventScroll: true }); else if (raw) active.screenEl.focus();
+    } else if (packetsEl) { packetsEl.scrollTop = packetsEl.scrollHeight; }
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { showTab(t.getAttribute('data-vm-tab')); });
+    t.addEventListener('keydown', function (e) {
+      var d = e.key === 'ArrowRight' ? 1 : (e.key === 'ArrowLeft' ? -1 : 0);
+      if (d) { e.preventDefault(); var n = tabs[(i + d + tabs.length) % tabs.length]; n.focus(); n.click(); }
+    });
+  });
+
+  /* ---------------------------------------------------------------- sending + logging */
   var logQ = [], logT = null;
-  function logLine(l) { logQ.push(l); if (!logT) logT = setTimeout(postLog, 250); }
+  function logLine(m, l) { logQ.push(MULTI ? '[' + m.name + '] ' + l : l); if (!logT) logT = setTimeout(postLog, 250); }
   function postLog() {
     logT = null;
-    if (!logQ.length) return;
+    if (!logQ.length) return Promise.resolve();
     var lines = logQ.splice(0, 50);
-    kit.post(cfg.urls.log, { lines: lines }).then(function (p) { kit.apply(p); }).catch(function () { logQ = lines.concat(logQ); });
+    return kit.post(cfg.urls.log, { lines: lines }).then(function (p) { kit.apply(p); if (logQ.length) return postLog(); })
+      .catch(function () { logQ = lines.concat(logQ); });
   }
   function sendLine(text) {
-    var full = text;
-    if (tabUsed) { var m = screen.match(/^.*?[#%$] (.*)$/); full = (m ? m[1] : '') + text; tabUsed = false; }
-    sendRaw(text + '\n');
-    if (full.trim()) { hist.push(full); if (hist.length > 200) hist.shift(); logLine(full); }
-    hpos = -1;
+    var m = active, full = text;
+    if (!m.emu || !m.ready) { kit.toast(m.booted ? 'Preparing the scenario — one moment.' : 'Start the VM first.', 'bad'); return; }
+    if (m.tabUsed) { var mm = m.scr.match(/^.*?[#%$] (.*)$/); full = (mm ? mm[1] : '') + text; m.tabUsed = false; }
+    m.send(text + '\n');
+    if (full.trim()) { m.hist.push(full); if (m.hist.length > 200) m.hist.shift(); logLine(m, full); }
+    m.hpos = -1;
   }
   form.addEventListener('submit', function (e) { e.preventDefault(); var v = input.value; input.value = ''; sendLine(v); });
-  function tab() { sendRaw(input.value + '\t'); input.value = ''; tabUsed = true; input.focus(); }
-  function histMove(d) { if (!hist.length) return; if (hpos === -1) hpos = hist.length; hpos = Math.max(0, Math.min(hist.length, hpos + d)); input.value = hpos === hist.length ? '' : hist[hpos]; }
+  function tab() { active.send(input.value + '\t'); input.value = ''; active.tabUsed = true; input.focus(); }
+  function histMove(d) {
+    var m = active; if (!m.hist.length) return;
+    if (m.hpos === -1) m.hpos = m.hist.length;
+    m.hpos = Math.max(0, Math.min(m.hist.length, m.hpos + d));
+    input.value = m.hpos === m.hist.length ? '' : m.hist[m.hpos];
+  }
   input.addEventListener('keydown', function (e) {
     if (e.key === 'Tab') { e.preventDefault(); tab(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); histMove(-1); }
     else if (e.key === 'ArrowDown') { e.preventDefault(); histMove(1); }
     else if (e.ctrlKey && /^[a-z]$/i.test(e.key) && !(e.key.toLowerCase() === 'c' && window.getSelection().toString())) {
-      e.preventDefault(); sendRaw(input.value + String.fromCharCode(e.key.toUpperCase().charCodeAt(0) - 64)); input.value = '';
+      e.preventDefault(); active.send(input.value + String.fromCharCode(e.key.toUpperCase().charCodeAt(0) - 64)); input.value = '';
     }
   });
   document.querySelectorAll('[data-key-act]').forEach(function (b) {
@@ -89,12 +177,12 @@
       if (a === 'tab') tab();
       else if (a === 'up') histMove(-1);
       else if (a === 'down') histMove(1);
-      else if (a === 'ctrlc') { sendRaw('\x03'); input.value = ''; }
-      else if (a === 'ctrld') sendRaw('\x04');
-      else if (a === 'esc') sendRaw('\x1b');
+      else if (a === 'ctrlc') { active.send('\x03'); input.value = ''; }
+      else if (a === 'ctrld') active.send('\x04');
+      else if (a === 'esc') active.send('\x1b');
       else if (a === 'check') { $('vmCheck').click(); return; }
-      else if (a === 'clear') { body.innerHTML = ''; lineCount = 0; newLine(); sendRaw('\x0c'); sendRaw('\n'); }
-      if (!raw) input.focus(); else body.focus();
+      else if (a === 'clear') { active.clearScreen(); active.send('\n'); }
+      if (!raw) input.focus(); else active.screenEl.focus();
     });
   });
   document.querySelectorAll('[data-chip]').forEach(function (b) {
@@ -104,132 +192,189 @@
 
   /* keys mode: every key to the VM (desktop keyboards) */
   var KEYS = { Enter: '\r', Backspace: '\x7f', Tab: '\t', Escape: '\x1b', ArrowUp: '\x1b[A', ArrowDown: '\x1b[B', ArrowRight: '\x1b[C', ArrowLeft: '\x1b[D', Home: '\x1b[H', End: '\x1b[F', Delete: '\x1b[3~' };
-  var rawLine = '';
-  body.addEventListener('keydown', function (e) {
-    if (!raw || !emu) return;
-    var s = null;
-    if (e.ctrlKey && /^[a-z]$/i.test(e.key)) s = String.fromCharCode(e.key.toUpperCase().charCodeAt(0) - 64);
-    else if (KEYS[e.key]) s = KEYS[e.key];
-    else if (e.key.length === 1 && !e.metaKey) s = e.key;
-    if (s === null) return;
-    e.preventDefault();
-    if (e.key === 'Enter') { var m = screen.match(/^.*?[#%$] (.*)$/); var l = m ? m[1] : rawLine; if (l.trim()) logLine(l); rawLine = ''; }
-    else if (e.key.length === 1) rawLine += e.key;
-    sendRaw(s);
+  machines.forEach(function (m) {
+    m.screenEl.addEventListener('keydown', function (e) {
+      if (!raw || !m.emu) return;
+      var s = null;
+      if (e.ctrlKey && /^[a-z]$/i.test(e.key)) s = String.fromCharCode(e.key.toUpperCase().charCodeAt(0) - 64);
+      else if (KEYS[e.key]) s = KEYS[e.key];
+      else if (e.key.length === 1 && !e.metaKey) s = e.key;
+      if (s === null) return;
+      e.preventDefault();
+      if (e.key === 'Enter') { var mm = m.scr.match(/^.*?[#%$] (.*)$/); var l = mm ? mm[1] : m.rawLine; if (l.trim()) logLine(m, l); m.rawLine = ''; }
+      else if (e.key.length === 1) m.rawLine += e.key;
+      m.send(s);
+    });
+    m.screenEl.addEventListener('paste', function (e) { if (!raw) return; e.preventDefault(); m.send((e.clipboardData.getData('text') || '').replace(/\n/g, '\r')); });
+    m.screenEl.addEventListener('click', function () { if (!window.getSelection().toString()) { if (raw) m.screenEl.focus(); else input.focus(); } });
   });
-  body.addEventListener('paste', function (e) { if (!raw) return; e.preventDefault(); sendRaw((e.clipboardData.getData('text') || '').replace(/\n/g, '\r')); });
   $('vmRaw').addEventListener('click', function () {
     raw = !raw;
     this.setAttribute('aria-pressed', raw ? 'true' : 'false');
     this.textContent = raw ? 'Keys: direct' : 'Keys: line';
     form.hidden = raw;
-    if (raw) { body.focus(); kit.toast('Direct keys: type in the console. Line mode is easier on phones.', 'ok'); } else input.focus();
+    if (raw) { active.screenEl.focus(); kit.toast('Direct keys: type in the console (vi, less, top work). Line mode is easier on phones.', 'ok'); } else input.focus();
   });
-  body.addEventListener('click', function () { if (!window.getSelection().toString()) { if (raw) body.focus(); else input.focus(); } });
 
-  /* ---------------- boot */
+  /* ---------------------------------------------------------------- network */
+  function buildNet(snapshot) {
+    if (!VMC.net || !window.VMNet) return;
+    fabric = new window.VMNet.Fabric({ max_log: 400 });
+    if (packetsEl) {
+      packetsEl.innerHTML = '';
+      fabric.onframe = function (r) {
+        var d = document.createElement('div'); d.className = 'ln pk';
+        d.textContent = '#' + r.n + '  ' + r.from + '  ' + r.s;
+        packetsEl.appendChild(d);
+        if (packetsEl.childNodes.length > 300) packetsEl.removeChild(packetsEl.firstChild);
+        if (!packetsEl.hidden) packetsEl.scrollTop = packetsEl.scrollHeight;
+      };
+    }
+    machines.forEach(function (m) {
+      var port = fabric.attach(m.label, m.spec.segs || [], function (frame) { if (m.emu) m.emu.bus.send('net0-receive', frame); });
+      m.port = port;
+    });
+    if (VMC.net.services) {
+      var sc = JSON.parse(JSON.stringify(VMC.net.services)); sc.state = snapshot || null;
+      services = new window.VMNet.Services(fabric, sc);
+    }
+  }
+
+  /* ---------------------------------------------------------------- boot */
   function setStatus(t, pct) { status.textContent = t; if (pct !== undefined) { bar.style.width = pct + '%'; bar.parentNode.setAttribute('aria-valuenow', Math.round(pct)); } }
-  function loadLib() {
+  function loadScript(src, test) {
     return new Promise(function (res, rej) {
-      if (window.V86) return res();
-      var s = document.createElement('script'); s.src = cfg.assets.lib; s.onload = function () { res(); }; s.onerror = function () { rej(new Error('emulator script failed to load')); };
+      if (test()) return res();
+      var s = document.createElement('script'); s.src = src; s.onload = function () { res(); }; s.onerror = function () { rej(new Error('emulator script failed to load')); };
       document.head.appendChild(s);
     });
   }
-  function start(initial) {
-    $('vmBoot').disabled = true; $('vmResume').disabled = true;
+  var slowTimer = null;
+  function start(saved) {
+    started = true; allReady = false;
+    $('vmBoot').disabled = true; if ($('vmResume')) $('vmResume').disabled = true;
     $('vmProgress').hidden = false;
     setStatus('Loading the emulator…', 3);
     t0 = performance.now();
-    loadLib().then(function () {
-      var opts = {
-        wasm_path: cfg.assets.wasm, memory_size: (cfg.vm.memory_mb || 64) * 1024 * 1024, vga_memory_size: 2 * 1024 * 1024,
-        bios: { url: cfg.assets.bios }, vga_bios: { url: cfg.assets.vga_bios },
-        cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
-        filesystem: {}, autostart: true, disable_keyboard: true, disable_mouse: true, disable_speaker: true
-      };
-      if (initial) opts.initial_state = { buffer: initial }; else opts.bzimage = { url: cfg.assets.bzimage };
-      emu = new window.V86(opts);
-      window.CIWT_VM = emu;
-      emu.add_listener('download-progress', function (e) {
-        if (e.lengthComputable && e.total) setStatus('Downloading ' + (e.file_name || '').split('/').pop() + ' — ' + Math.round(e.loaded / 1048576 * 10) / 10 + ' of ' + Math.round(e.total / 1048576 * 10) / 10 + ' MB', 5 + 70 * e.loaded / e.total);
+    clearTimeout(slowTimer);
+    slowTimer = setTimeout(function () { if (!allReady) showWeak('This device is taking a while to boot the VM.'); }, 60000);
+    var libs = loadScript(cfg.assets.lib, function () { return !!window.V86; });
+    if (VMC.net) libs = libs.then(function () { return loadScript(cfg.assets.net, function () { return !!window.VMNet; }); });
+    libs.then(function () {
+      buildNet(saved && saved.net);
+      var loaded = {};
+      machines.forEach(function (m) {
+        var opts = {
+          wasm_path: cfg.assets.wasm, memory_size: (m.spec.memory_mb || 64) * 1024 * 1024, vga_memory_size: 2 * 1024 * 1024,
+          bios: { url: cfg.assets.bios }, vga_bios: { url: cfg.assets.vga_bios },
+          cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
+          filesystem: {}, autostart: true, disable_keyboard: true, disable_mouse: true, disable_speaker: true
+        };
+        if (VMC.net) opts.net_device = { type: 'ne2k' };
+        var st = saved && saved.machines && saved.machines[m.name];
+        m.resumed = !!st;
+        if (st) opts.initial_state = { buffer: st }; else opts.bzimage = { url: cfg.assets.bzimage };
+        m.emu = new window.V86(opts);
+        m.emu.add_listener('download-progress', function (e) {
+          if (e.lengthComputable && e.total) { loaded[e.file_name] = [e.loaded, e.total]; var a = 0, b = 0; Object.keys(loaded).forEach(function (k) { a += loaded[k][0]; b += loaded[k][1]; });
+            setStatus('Downloading the VM — ' + Math.round(a / 1048576 * 10) / 10 + ' of ' + Math.round(b / 1048576 * 10) / 10 + ' MB', 5 + 70 * a / b); }
+        });
+        m.emu.add_listener('emulator-ready', function () { setStatus('Booting Linux' + (MULTI ? ' on ' + machines.length + ' machines' : '') + '…', 80); });
+        m.emu.add_listener('serial0-output-byte', function (b) { m.onByte(b); });
+        if (m.port) m.emu.add_listener('net0-send', function (d) { m.port.send(new Uint8Array(d)); });
+        if (st) setTimeout(function () { m.send('\n'); }, 500);
       });
-      emu.add_listener('emulator-ready', function () { setStatus('Booting Linux…', 80); });
-      emu.add_listener('serial0-output-byte', onByte);
-      if (initial) setTimeout(function () { sendRaw('\n'); }, 400);
-      $('vmStart').querySelector('.btn') && null;
+      window.CIWT_VM = machines[0].emu;
+      window.CIWT_VMS = byName;
+      window.CIWT_NET = { fabric: fabric, services: services };
       wrap.hidden = false;
-    }).catch(function (e) { setStatus('Could not start the VM: ' + e.message + '. Try a current Chrome, Edge, Firefox or Safari.', 0); $('vmBoot').disabled = false; });
+      showTab(active.name);
+    }).catch(function (e) { setStatus('Could not start the VM: ' + e.message + '. Try a current Chrome, Edge, Firefox or Safari.', 0); $('vmBoot').disabled = false; showWeak('The VM could not start here.'); });
   }
-  function onBooted() {
-    booted = true;
+  function checkAllReady() {
+    if (allReady || !machines.every(function (m) { return m.ready; })) return;
+    allReady = true;
+    clearTimeout(slowTimer);
     var ms = Math.round(performance.now() - t0);
-    setStatus('Ready — booted in ' + (ms / 1000).toFixed(1) + ' s.', 100);
+    setStatus('Ready — ' + (MULTI ? machines.length + ' machines ' : '') + 'booted in ' + (ms / 1000).toFixed(1) + ' s.', 100);
     $('vmTools').hidden = false;
     var mem = (performance.memory && performance.memory.usedJSHeapSize) ? ' · JS heap ' + Math.round(performance.memory.usedJSHeapSize / 1048576) + ' MB' : '';
     perf.textContent = 'This device: boot ' + (ms / 1000).toFixed(1) + ' s' + mem + ' · ' + (navigator.hardwareConcurrency || '?') + ' CPU threads.';
     kit.post(cfg.urls.log, { lines: [], booted: true, boot_ms: ms, ua: navigator.userAgent }).then(function (p) { kit.apply(p); });
     setTimeout(function () { $('vmProgress').hidden = true; }, 1500);
+    machines.forEach(function (m) { if (m.resumed) m.send('\n'); });
+    snapshotClean();
     if (!raw) input.focus({ preventScroll: true });
+    if (ms > 45000) showWeak('Booting took ' + Math.round(ms / 1000) + ' s on this device.');
   }
-  $('vmBoot') && $('vmBoot').addEventListener('click', function () { start(null); });
+  function snapshotClean() {
+    if (machines.some(function (m) { return m.resumed; })) return;   // only a fresh scenario is "clean"
+    Promise.all(machines.map(function (m) { return m.emu.save_state(); })).then(function (bufs) {
+      cleanSnap = {}; machines.forEach(function (m, i) { cleanSnap[m.name] = bufs[i]; });
+    }).catch(function () { cleanSnap = null; });
+  }
+  $('vmBoot').addEventListener('click', function () { start(null); });
 
-  /* ---------------- grading */
-  function endSuppress() {
-    var tail = suppress.buf.split('\n').pop();
-    var cb = suppress.cb;
-    suppress = null;
-    if (!(PROMPT_RE.test(screen) && PROMPT_RE.test(tail))) for (var i = 0; i < tail.length; i++) put(tail[i]);
-    cb && cb();
+  /* weak devices: offer the simulated version of the same skills */
+  function showWeak(why) {
+    var w = $('vmWeak'); if (!w) return;
+    w.hidden = false;
+    var t = w.querySelector('.why'); if (t) t.textContent = why + ' ';
   }
-  function readResult(tries) {
-    return emu.read_file('/.ciwt-result').then(function (u8) {
+  (function advise() {
+    var dm = navigator.deviceMemory, need = machines.length;
+    if ((dm && dm <= 2 && need > 1) || (dm && dm < 2) || typeof WebAssembly !== 'object') showWeak(typeof WebAssembly !== 'object' ? 'This browser cannot run WebAssembly.' : 'This device reports little memory (' + dm + ' GB).');
+  })();
+
+  /* ---------------------------------------------------------------- grading */
+  function readResult(m, tries) {
+    return m.emu.read_file('/.ciwt-result').then(function (u8) {
       var t = new TextDecoder().decode(u8);
       if (!/\nend\s*$/.test(t)) throw new Error('partial');
       return t;
     }).catch(function () {
-      if (tries <= 0) throw new Error('The VM did not answer the check (is a program still running? press Ctrl-C).');
-      return new Promise(function (r) { setTimeout(r, 150); }).then(function () { return readResult(tries - 1); });
+      if (tries <= 0) throw new Error('The VM ' + m.label + ' did not answer the check (is a program still running? press Ctrl-C).');
+      return new Promise(function (r) { setTimeout(r, 150); }).then(function () { return readResult(m, tries - 1); });
     });
   }
   $('vmCheck').addEventListener('click', function () {
     var btn = this;
-    if (!emu || !booted) return;
-    if (!idle()) { fb.className = 'lab-feedback bad mt-2'; fb.textContent = 'Finish the current command first (the prompt must be showing), or press Ctrl-C.'; return; }
-    btn.disabled = true; fb.className = 'lab-feedback mt-2'; fb.textContent = 'Checking inside the VM…';
-    var started = performance.now();
-    fetch(cfg.urls.probe, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
-      return emu.create_file('/.ciwt-probe', new TextEncoder().encode(j.script));
+    if (!allReady) return;
+    var busy = machines.filter(function (m) { return !m.idle(); });
+    if (busy.length) { fb.className = 'lab-feedback bad mt-2'; fb.textContent = 'Finish the current command on ' + busy.map(function (m) { return m.label; }).join(' and ') + ' first (the prompt must be showing), or press Ctrl-C.'; return; }
+    btn.disabled = true; fb.className = 'lab-feedback mt-2'; fb.textContent = 'Checking inside the VM' + (MULTI ? 's' : '') + '…';
+    var t1 = performance.now(), probes = {};
+    postLog().then(function () { return fetch(cfg.urls.probe, { credentials: 'same-origin' }); }).then(function (r) { return r.json(); }).then(function (j) {
+      var scripts = j.scripts || { }; if (!j.scripts) scripts[machines[0].name] = j.script;
+      return machines.reduce(function (p, m) {
+        return p.then(function () {
+          if (!scripts[m.name]) return;
+          return m.hidden('.ciwt-probe', scripts[m.name], 'sh').then(function () { return readResult(m, 40); }).then(function (t) { probes[m.name] = t; });
+        });
+      }, Promise.resolve());
     }).then(function () {
-      suppress = { buf: '', done: false };
-      sendRaw(' sh /mnt/.ciwt-probe; rm -f /mnt/.ciwt-probe\n');
-      return readResult(60);
-    }).then(function (text) {
-      if (suppress) suppress.done = true;
-      if (suppress && PROMPT_RE.test(suppress.buf.split('\n').pop())) endSuppress();
-      return kit.post(cfg.urls.vmcheck, { probe: text });
+      return kit.post(cfg.urls.vmcheck, { probes: probes, fabric: services ? { events: services.events.slice(-200) } : null });
     }).then(function (p) {
       kit.apply(p);
       var r = p.result || {};
-      var ms = Math.round(performance.now() - started);
-      var inFocus = wrap.classList.contains('term-focus');
-      if (inFocus) kit.toast(r.error ? r.error : (p.complete ? '✓ All checks passed' : ((r.messages || [])[0] || 'Not yet')), r.error || !p.complete ? 'bad' : 'ok');
+      var ms = Math.round(performance.now() - t1);
+      if (wrap.classList.contains('term-focus')) kit.toast(r.error ? r.error : (p.complete ? '✓ All checks passed' : ((r.messages || [])[0] || 'Not yet')), r.error || !p.complete ? 'bad' : 'ok');
       if (r.error) { fb.className = 'lab-feedback bad mt-2'; fb.textContent = r.error; }
       else if (p.complete) { fb.className = 'lab-feedback ok mt-2'; fb.textContent = 'All checks passed (' + ms + ' ms).'; saveVM(true); }
       else {
         fb.className = 'lab-feedback bad mt-2';
         fb.innerHTML = '';
         var ul = document.createElement('ul'); ul.className = 'mb-0';
-        (r.messages || []).forEach(function (m) { var li = document.createElement('li'); li.textContent = m; ul.appendChild(li); });
-        fb.appendChild(document.createTextNode('Not yet — the VM shows:')); fb.appendChild(ul);
+        (r.messages || []).forEach(function (msg) { var li = document.createElement('li'); li.textContent = msg; ul.appendChild(li); });
+        fb.appendChild(document.createTextNode('Not yet — the VM' + (MULTI ? 's show' : ' shows') + ':')); fb.appendChild(ul);
       }
     }).catch(function (e) {
-      if (suppress) { suppress.done = true; endSuppress(); }
+      machines.forEach(function (m) { if (m.suppress) { m.suppress.done = true; m.endSuppress(); } });
       fb.className = 'lab-feedback bad mt-2'; fb.textContent = e.message || 'Check failed — try again.';
     }).then(function () { btn.disabled = false; });
   });
 
-  /* ---------------- save / resume on this device (IndexedDB) */
+  /* ---------------------------------------------------------------- save / resume on this device (IndexedDB) */
   function idb() {
     return new Promise(function (res, rej) {
       if (!window.indexedDB) return rej(new Error('no IndexedDB'));
@@ -240,33 +385,51 @@
   }
   function idbDo(mode, fn) { return idb().then(function (db) { return new Promise(function (res, rej) { var tx = db.transaction('state', mode); var q = fn(tx.objectStore('state')); tx.oncomplete = function () { res(q && q.result); }; tx.onerror = function () { rej(tx.error); }; }); }); }
   function saveVM(quiet) {
-    if (!emu) return;
+    if (!allReady) return;
     var t = performance.now();
-    emu.save_state().then(function (buf) {
-      return idbDo('readwrite', function (s) { s.clear(); return s.put(buf, DBKEY); }).then(function () {
-        if (!quiet) kit.toast('VM saved on this device (' + Math.round(buf.byteLength / 1048576) + ' MB, ' + Math.round(performance.now() - t) + ' ms).', 'ok');
+    Promise.all(machines.map(function (m) { return m.emu.save_state(); })).then(function (bufs) {
+      var rec = { v: 2, machines: {}, net: services ? services.snapshot() : null, at: Date.now() }, size = 0;
+      machines.forEach(function (m, i) { rec.machines[m.name] = bufs[i]; size += bufs[i].byteLength; });
+      return idbDo('readwrite', function (s) { s.delete(DBKEY); return s.put(rec, DBKEY); }).then(function () {
+        if (!quiet) kit.toast('Saved on this device (' + Math.round(size / 1048576) + ' MB, ' + Math.round(performance.now() - t) + ' ms). Resume it from this page later.', 'ok');
       });
     }).catch(function (e) { if (!quiet) kit.toast('Could not save: ' + e.message, 'bad'); });
   }
   $('vmSave').addEventListener('click', function () { saveVM(false); });
   $('vmRestart').addEventListener('click', function () {
-    if (!window.confirm('Restart the VM? Unsaved changes inside it are lost (your lab progress is kept).')) return;
-    if (emu) { emu.stop(); emu.destroy && emu.destroy(); }
-    emu = null; booted = false; body.innerHTML = ''; lineCount = 0; newLine(); screen = ''; start(null);
+    if (!window.confirm('Reset the VM' + (MULTI ? 's' : '') + ' to the start of the scenario? Changes inside are lost (your lab progress and objectives are kept).')) return;
+    if (cleanSnap) {
+      var btn = this; btn.disabled = true;
+      Promise.all(machines.map(function (m) { return m.emu.restore_state(cleanSnap[m.name]); })).then(function () {
+        if (services) { services.leases = {}; services.arp = {}; services.events = []; }
+        machines.forEach(function (m) { m.clearScreen(); m.hist = []; m.send('\n'); });
+        kit.toast('Back to the start of the scenario.', 'ok');
+      }).catch(function (e) { kit.toast('Reset failed: ' + e.message, 'bad'); }).then(function () { btn.disabled = false; });
+      return;
+    }
+    machines.forEach(function (m) { if (m.emu) { m.emu.stop(); m.emu.destroy && m.emu.destroy(); } m.emu = null; m.booted = m.ready = false; m.clearScreen(); });
+    $('vmTools').hidden = true; start(null);
   });
-  idbDo('readonly', function (s) { return s.get(DBKEY); }).then(function (buf) {
-    if (buf && $('vmResume')) { $('vmResume').hidden = false; $('vmResume').addEventListener('click', function () { start(buf); }); }
+  idbDo('readonly', function (s) { return s.get(DBKEY); }).then(function (rec) {
+    if (!rec || !$('vmResume')) return;
+    if (rec instanceof ArrayBuffer) { var o = {}; o[machines[0].name] = rec; rec = { v: 2, machines: o }; }
+    if (!machines.every(function (m) { return rec.machines && rec.machines[m.name]; })) return;
+    $('vmResume').hidden = false;
+    if (rec.at) $('vmResume').title = 'Saved ' + new Date(rec.at).toLocaleString();
+    $('vmResume').addEventListener('click', function () { start(rec); });
   }).catch(function () {});
 
-  /* ---------------- focus mode (phones), shared look with the simulator terminal */
+  /* ---------------------------------------------------------------- focus mode (phones), shared look with the simulator terminal */
   var narrow = window.matchMedia('(max-width: 699px)');
   var vv = window.visualViewport;
-  function fit() { if (!wrap.classList.contains('term-focus')) return; wrap.style.setProperty('--vvh', (vv ? vv.height : innerHeight) + 'px'); wrap.style.setProperty('--vvtop', (vv ? vv.offsetTop : 0) + 'px'); body.scrollTop = body.scrollHeight; }
+  function fit() { if (!wrap.classList.contains('term-focus')) return; wrap.style.setProperty('--vvh', (vv ? vv.height : innerHeight) + 'px'); wrap.style.setProperty('--vvtop', (vv ? vv.offsetTop : 0) + 'px'); active.screenEl.scrollTop = active.screenEl.scrollHeight; }
   function enterFocus() { wrap.classList.add('term-focus'); document.documentElement.classList.add('term-focus-on'); $('btnFocus').setAttribute('aria-pressed', 'true'); fit(); }
   function exitFocus() { wrap.classList.remove('term-focus'); document.documentElement.classList.remove('term-focus-on'); $('btnFocus').setAttribute('aria-pressed', 'false'); input.blur(); }
   if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
   input.addEventListener('focus', function () { if (narrow.matches) enterFocus(); });
   $('btnFocus').addEventListener('click', function () { if (wrap.classList.contains('term-focus')) exitFocus(); else { enterFocus(); input.focus(); } });
   $('btnFocusExit').addEventListener('click', exitFocus);
-  window.addEventListener('beforeunload', function () { if (logQ.length) navigator.sendBeacon && postLog(); });
+  window.addEventListener('beforeunload', function () {
+    if (logQ.length && navigator.sendBeacon) { /* best effort: the next check re-posts anything queued */ postLog(); }
+  });
 })();

@@ -268,3 +268,16 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
 .lab-events li { margin-bottom: .2rem; overflow-wrap: anywhere; }
 .lab-events code { white-space: pre-wrap; }
 .term-keys .tkey-check { background: var(--brand, #0a5fc4); color: #fff; font-weight: 600; }
+
+/* ---------- real VM labs: machine tabs, packets panel */
+.vm-screen .ln, .vm-packets .ln { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-height: 1.2em; }
+.vm-screen[hidden], .vm-packets[hidden] { display: none !important; }
+.vm-tabs { display: flex; gap: .25rem; padding: .3rem .5rem 0; border-bottom: 1px solid #22344d; overflow-x: auto; scrollbar-width: thin; }
+.vm-tab { flex: 0 0 auto; min-height: 40px; min-width: 44px; padding: .3rem .8rem; border: 1px solid #3a5272; border-bottom: 0; border-radius: 8px 8px 0 0;
+  background: #0d1a2c; color: #bfe6ff; font: inherit; font-size: .85rem; touch-action: manipulation; }
+.vm-tab[aria-selected="true"] { background: #1d3354; color: #fff; font-weight: 600; box-shadow: inset 0 -3px 0 #f0c14b; }
+.vm-tab:focus-visible { outline: 2px solid #3ec7ff; outline-offset: 1px; }
+.vm-packets { font-size: .8rem; color: #cfe3ff; }
+.vm-packets .pk { border-bottom: 1px dotted #1d2d44; padding: .1rem 0; }
+.vm-topology { overflow-wrap: anywhere; }
+.term-wrap.term-focus .vm-tabs { flex: 0 0 auto; }

@@ -1,23 +1,27 @@
 {% extends "base.html" %}
 {% block title %}{{ lab.title }} — Live Lab{% endblock %}
 {% block content %}
-{% set kind_label = 'Real Linux VM · runs in your browser' %}
+{% set ms = lab.vm.machines %}
+{% set multi = ms|length > 1 %}
+{% set kind_label = ('Real Linux VMs (' ~ ms|length ~ ') · run in your browser') if multi else 'Real Linux VM · runs in your browser' %}
 {% include '_lab_header.html' %}
 {% set assets_ok = vm_assets_ok %}
+{% set mem = (ms|sum(attribute='memory_mb')) + 90 * ms|length %}
 <div class="lab-shell">
   <div class="lab-main">
     <div class="vm-start card mb-2" id="vmStart">
       <div class="card-body">
-        <p class="mb-2"><strong>This is a real computer.</strong> Linux 6.8 with BusyBox boots inside this page (x86 emulated in WebAssembly). Every command really runs — on your device, not on our server.</p>
+        <p class="mb-2"><strong>{{ 'These are real computers.' if multi else 'This is a real computer.' }}</strong> Linux 6.8 with BusyBox boots inside this page (x86 emulated in WebAssembly){% if multi %} — {{ ms|length }} machines: {{ ms|map(attribute='label')|join(', ') }}{% endif %}. Every command really runs — on your device, not on our server.</p>
+        {% if lab.vm.net %}<p class="small mb-2 vm-topology"><i class="bi bi-diagram-3" aria-hidden="true"></i> <strong>Network:</strong> {{ lab.vm.net.topology }}</p>{% endif %}
         <ul class="small mb-2">
-          <li>First start downloads about {{ lab.vm.download_mb }} MB (then your browser caches it). On mobile data, use Wi-Fi.</li>
-          <li>Boot takes a few seconds on a laptop, longer on a phone. The VM uses about {{ lab.vm.memory_mb + 90 }} MB of memory — close other tabs on older phones.</li>
-          <li>Leaving the page stops the VM. <em>Save VM to this device</em> keeps it for later (stored only in this browser).</li>
+          <li>First start downloads about {{ lab.vm.download_mb }} MB from this LMS (then your browser caches it). On mobile data, use Wi-Fi.</li>
+          <li>Boot takes a few seconds on a laptop, longer on a phone. {{ 'They use' if multi else 'It uses' }} about {{ mem }} MB of memory — close other tabs on older phones.</li>
+          <li>Leaving the page stops the VM. <em>Save to this device</em> keeps it for later (stored only in this browser).</li>
         </ul>
         {% if assets_ok %}
         <div class="d-flex flex-wrap gap-2">
-          <button type="button" class="btn btn-brand" id="vmBoot"><i class="bi bi-power" aria-hidden="true"></i> Start VM</button>
-          <button type="button" class="btn btn-outline-navy" id="vmResume" hidden><i class="bi bi-play-circle" aria-hidden="true"></i> Resume saved VM</button>
+          <button type="button" class="btn btn-brand" id="vmBoot"><i class="bi bi-power" aria-hidden="true"></i> {{ 'Start VMs' if multi else 'Start VM' }}</button>
+          <button type="button" class="btn btn-outline-navy" id="vmResume" hidden><i class="bi bi-play-circle" aria-hidden="true"></i> Resume saved {{ 'VMs' if multi else 'VM' }}</button>
         </div>
         <div class="vm-progress mt-2" id="vmProgress" hidden>
           <div class="progress" role="progressbar" aria-label="VM download and boot" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar" id="vmBar" style="width:0%"></div></div>
@@ -26,18 +30,32 @@
         {% else %}
         <div class="alert alert-warning mb-0" role="alert">The VM files are not installed on this server yet. An administrator runs <code>tools/fetch_v86.sh</code> once (about 12.5 MB, pinned and checksummed).</div>
         {% endif %}
+        {% if fallback_labs %}
+        <p class="small mb-0 mt-2 vm-fallback">Older phone or slow connection? The same skills are in the simulated version{{ 's' if fallback_labs|length > 1 else '' }}:
+          {% for f in fallback_labs %}<a href="{{ url_for('interactive_lab', lab_id=f.id) }}">{{ f.title }}</a>{{ ', ' if not loop.last else '' }}{% endfor %}.</p>
+        <div class="alert alert-info mt-2 mb-0 small" id="vmWeak" role="status" hidden><span class="why"></span>If it stays slow, use the simulated version above — it runs on any device and counts as practice for the same objectives.</div>
+        {% endif %}
       </div>
     </div>
     <div class="term-wrap term-vm" id="termWrap" hidden>
       <div class="term-bar">
-        <span class="term-title"><span class="term-live-dot" aria-hidden="true"></span> root@ciwt-vm — real Linux (BusyBox sh)</span>
+        <span class="term-title"><span class="term-live-dot" aria-hidden="true"></span> <span id="vmTitle">root@{{ ms[0].hostname }} — real Linux (BusyBox sh)</span></span>
         <span class="term-bar-tools">
-          <button type="button" class="btn btn-sm term-btn" id="vmRaw" aria-pressed="false" title="Direct keyboard mode (for vi, less, Ctrl keys)">Keys: line</button>
+          <button type="button" class="btn btn-sm term-btn" id="vmRaw" aria-pressed="false" title="Direct keyboard mode (for vi, less, top, Ctrl keys)">Keys: line</button>
           <button type="button" class="btn btn-sm term-btn" id="btnFocus" aria-pressed="false" title="Full-screen terminal"><i class="bi bi-arrows-fullscreen" aria-hidden="true"></i><span class="visually-hidden">Full-screen terminal</span></button>
           <button type="button" class="btn btn-sm term-btn term-exit" id="btnFocusExit">Done</button>
         </span>
       </div>
-      <div class="term-body vm-screen" id="termBody" role="log" aria-live="polite" aria-label="VM serial console" tabindex="0"></div>
+      {% if multi or lab.vm.net %}
+      <div class="vm-tabs" role="tablist" aria-label="Machines">
+        {% for m in ms %}<button type="button" role="tab" class="vm-tab" data-vm-tab="{{ m.name }}" id="vmTab-{{ m.name }}" aria-controls="vmScreen-{{ m.name }}" aria-selected="{{ 'true' if loop.first else 'false' }}"><i class="bi bi-{{ 'router' if 'rtr' in m.name else 'pc-display' }}" aria-hidden="true"></i> {{ m.label }}</button>{% endfor %}
+        {% if lab.vm.net %}<button type="button" role="tab" class="vm-tab" data-vm-tab="_packets" id="vmTab-_packets" aria-controls="vmPackets" aria-selected="false"><i class="bi bi-activity" aria-hidden="true"></i> Packets</button>{% endif %}
+      </div>
+      {% endif %}
+      {% for m in ms %}
+      <div class="term-body vm-screen" id="vmScreen-{{ m.name }}" data-m="{{ m.name }}" {% if multi or lab.vm.net %}role="tabpanel" aria-labelledby="vmTab-{{ m.name }}"{% else %}role="log"{% endif %} aria-live="polite" aria-label="{{ m.label }} serial console" tabindex="0" {% if not loop.first %}hidden{% endif %}></div>
+      {% endfor %}
+      {% if lab.vm.net %}<div class="term-body vm-packets" id="vmPackets" role="tabpanel" aria-labelledby="vmTab-_packets" aria-label="Packets on the virtual network" tabindex="0" hidden></div>{% endif %}
       <form class="term-input-row" id="termForm" autocomplete="off">
         <label class="prompt" id="termPrompt" for="termInput">$</label>
         <input id="termInput" class="term-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
@@ -57,24 +75,24 @@
       <div class="term-chips" role="toolbar" aria-label="Insert a command (does not run it)">
         {% for p in palette %}<button type="button" class="tchip" data-chip="{{ p }}">{{ p }}</button>{% endfor %}
       </div>
-      <p class="visually-hidden" id="termHelpLine">Type a line and press Enter to send it to the VM. Tab asks the shell to complete. Up and down recall your earlier lines.</p>
+      <p class="visually-hidden" id="termHelpLine">Type a line and press Enter to send it to the {{ 'selected machine' if multi else 'VM' }}. Tab asks the shell to complete. Up and down recall your earlier lines.</p>
     </div>
     <div class="d-flex flex-wrap gap-2 mt-2" id="vmTools" hidden>
       <button type="button" class="btn btn-brand" id="vmCheck"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Check my work</button>
-      <button type="button" class="btn btn-outline-navy" id="vmSave"><i class="bi bi-hdd" aria-hidden="true"></i> Save VM to this device</button>
-      <button type="button" class="btn btn-outline-navy" id="vmRestart"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Restart VM</button>
+      <button type="button" class="btn btn-outline-navy" id="vmSave"><i class="bi bi-hdd" aria-hidden="true"></i> Save to this device</button>
+      <button type="button" class="btn btn-outline-navy" id="vmRestart"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Reset {{ 'VMs' if multi else 'VM' }}</button>
     </div>
     <div class="lab-feedback mt-2" id="vmFeedback" role="status" aria-live="polite"></div>
     <p class="small text-muted mt-2 mb-3" id="vmPerf"></p>
     <details class="small mb-3"><summary>How grading works</summary>
-      <p class="mb-1 mt-1">Check my work runs a short read-only script inside your VM (it lists the files and their permissions and runs your check.sh) and sends the result to the LMS. Your command lines are recorded in order so your instructor can see how you worked, not only whether you finished.</p>
+      <p class="mb-1 mt-1">Check my work runs a short read-only script inside {{ 'each VM' if multi else 'your VM' }} (it looks at files, permissions, processes, services and network configuration) and sends the result to the LMS.{% if lab.vm.net %} The virtual network's DHCP and DNS servers also report what they saw (for example a DHCP acknowledgement), so a hand-typed address does not count as a lease.{% endif %} Your command lines are recorded in order so your instructor can see how you worked, not only whether you finished.</p>
       <p class="mb-0">Credits: <a href="https://github.com/copy/v86">v86</a> (BSD-2-Clause), SeaBIOS (LGPL-3.0), Linux and BusyBox (GPL-2.0) via Buildroot. <a href="{{ url_for('static', filename='vendor/v86/LICENSES.md') }}">Licences and source</a>.</p>
     </details>
   </div>
   {% include '_lab_side.html' %}
 </div>
 {% set cfg = {'kind': lab.kind, 'boot': boot, 'lab_id': lab.id, 'vm': lab.vm,
-  'assets': {'lib': url_for('static', filename='vendor/v86/libv86.js'), 'wasm': url_for('static', filename='vendor/v86/v86.wasm'), 'bios': url_for('static', filename='vendor/v86/seabios.bin'), 'vga_bios': url_for('static', filename='vendor/v86/vgabios.bin'), 'bzimage': url_for('static', filename='vendor/v86/' ~ lab.vm.image)},
+  'assets': {'lib': url_for('static', filename='vendor/v86/libv86.js'), 'net': url_for('static', filename='js/lab-vmnet.js'), 'wasm': url_for('static', filename='vendor/v86/v86.wasm'), 'bios': url_for('static', filename='vendor/v86/seabios.bin'), 'vga_bios': url_for('static', filename='vendor/v86/vgabios.bin'), 'bzimage': url_for('static', filename='vendor/v86/' ~ lab.vm.image)},
   'urls': {'log': url_for('interactive_lab_vm_log', lab_id=lab.id), 'vmcheck': url_for('interactive_lab_vm_check', lab_id=lab.id), 'probe': url_for('interactive_lab_vm_probe', lab_id=lab.id), 'hint': url_for('interactive_lab_hint', lab_id=lab.id), 'undo': url_for('interactive_lab_undo', lab_id=lab.id), 'reset': url_for('interactive_lab_reset', lab_id=lab.id), 'check': url_for('interactive_lab_check', lab_id=lab.id), 'state': url_for('interactive_lab_state', lab_id=lab.id)}} %}
 <script type="application/json" id="labConfig">{{ cfg|tojson }}</script>
 <script src="{{ url_for('static', filename='js/lab-common.js') }}"></script>
