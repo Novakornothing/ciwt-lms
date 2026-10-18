@@ -1,0 +1,782 @@
+{
+ "synthetic": true,
+ "note": "Synthetic cohort with fixed answer probabilities; checks engine behaviour only, not learning gains.",
+ "seed": 13,
+ "days": 28,
+ "checks": [
+  {
+   "check": "reviews were inserted for every objective a \"mixed\" student is weak on (10 weak objective/student pairs)",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "check": "every strong student was offered a mastery check and passed at least one (test-out)",
+   "ok": true,
+   "detail": {
+    "29": [
+     4
+    ],
+    "30": [
+     2
+    ],
+    "31": [
+     4
+    ],
+    "32": [
+     4
+    ]
+   }
+  },
+  {
+   "check": "after a test-out the student path no longer sends the student into that chapter",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "check": "no weak student passed a mastery check",
+   "ok": true,
+   "detail": {}
+  },
+  {
+   "check": "spaced review came due: daily review served items marked \"due\" to every engaged student",
+   "ok": true,
+   "detail": {}
+  },
+  {
+   "check": "\"Who needs me\" lists every weak student with a non-inactivity reason",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "check": "\"Who needs me\" flags both disengaged students as inactive",
+   "ok": true,
+   "detail": [
+    {
+     "user": 43,
+     "profile": "weak",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review",
+      "drop"
+     ]
+    },
+    {
+     "user": 44,
+     "profile": "weak",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review",
+      "drop"
+     ]
+    },
+    {
+     "user": 45,
+     "profile": "weak",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review",
+      "drop"
+     ]
+    },
+    {
+     "user": 46,
+     "profile": "weak",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review",
+      "drop"
+     ]
+    },
+    {
+     "user": 42,
+     "profile": "mixed",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review",
+      "drop"
+     ]
+    },
+    {
+     "user": 47,
+     "profile": "disengaged",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review",
+      "inactive"
+     ]
+    },
+    {
+     "user": 38,
+     "profile": "mixed",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review"
+     ]
+    },
+    {
+     "user": 39,
+     "profile": "mixed",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review"
+     ]
+    },
+    {
+     "user": 40,
+     "profile": "mixed",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review"
+     ]
+    },
+    {
+     "user": 41,
+     "profile": "mixed",
+     "kinds": [
+      "stuck",
+      "misconception",
+      "missed_review"
+     ]
+    },
+    {
+     "user": 33,
+     "profile": "good",
+     "kinds": [
+      "stuck",
+      "misconception"
+     ]
+    },
+    {
+     "user": 37,
+     "profile": "good",
+     "kinds": [
+      "misconception",
+      "missed_review"
+     ]
+    },
+    {
+     "user": 34,
+     "profile": "good",
+     "kinds": [
+      "misconception"
+     ]
+    },
+    {
+     "user": 35,
+     "profile": "good",
+     "kinds": [
+      "misconception"
+     ]
+    },
+    {
+     "user": 48,
+     "profile": "disengaged",
+     "kinds": [
+      "inactive"
+     ]
+    }
+   ]
+  },
+  {
+   "check": "the top of \"Who needs me\" is weak, mixed or disengaged students \u2014 never a strong one",
+   "ok": true,
+   "detail": [
+    [
+     43,
+     "weak"
+    ],
+    [
+     44,
+     "weak"
+    ],
+    [
+     45,
+     "weak"
+    ],
+    [
+     46,
+     "weak"
+    ],
+    [
+     42,
+     "mixed"
+    ],
+    [
+     47,
+     "disengaged"
+    ]
+   ]
+  },
+  {
+   "check": "no strong student is in \"Who needs me\"",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "check": "the briefing to-do names only students who need help (weak, mixed or disengaged)",
+   "ok": true,
+   "detail": [
+    {
+     "kind": "misconception",
+     "title": "Re-teach: Closing a ticket on a signal (green icon, silence, timer) instead of a verified fix",
+     "score": 24
+    },
+    {
+     "kind": "objective",
+     "title": "Review IT-8.4 with the class",
+     "score": 20
+    },
+    {
+     "kind": "student",
+     "title": "Check in with Synthetic student 14 (mixed)",
+     "score": 10
+    }
+   ]
+  },
+  {
+   "check": "the briefing's focus list includes every weak student and no strong one",
+   "ok": true,
+   "detail": [
+    [
+     43,
+     "weak"
+    ],
+    [
+     44,
+     "weak"
+    ],
+    [
+     45,
+     "weak"
+    ],
+    [
+     46,
+     "weak"
+    ],
+    [
+     42,
+     "mixed"
+    ],
+    [
+     47,
+     "disengaged"
+    ],
+    [
+     38,
+     "mixed"
+    ],
+    [
+     39,
+     "mixed"
+    ],
+    [
+     40,
+     "mixed"
+    ],
+    [
+     41,
+     "mixed"
+    ],
+    [
+     33,
+     "good"
+    ],
+    [
+     37,
+     "good"
+    ],
+    [
+     34,
+     "good"
+    ],
+    [
+     35,
+     "good"
+    ]
+   ]
+  },
+  {
+   "check": "no adaptive action changed a grade (gradebook CSV and graded rows identical before/after on every day)",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "events": {
+  "lesson_reads": 364,
+  "chapter_checks": 72,
+  "daily_reviews": 354,
+  "reviews": 194,
+  "labs": 63,
+  "testouts": 5,
+  "graded_tests": 18,
+  "mastery_check_rows": 826
+ },
+ "daily_why": {
+  "soon": 390,
+  "due": 1859
+ },
+ "cohort": {
+  "strong": 4,
+  "good": 5,
+  "mixed": 5,
+  "weak": 4,
+  "disengaged": 2
+ },
+ "weak_objectives": {
+  "38": [
+   "IT-2.1",
+   "IT-1.3"
+  ],
+  "39": [
+   "IT-1.3",
+   "IT-2.2"
+  ],
+  "40": [
+   "IT-1.4",
+   "IT-2.2"
+  ],
+  "41": [
+   "IT-1.3",
+   "IT-2.3"
+  ],
+  "42": [
+   "IT-1.4",
+   "IT-2.2"
+  ]
+ },
+ "strong_mondays": [
+  {
+   "day": 0,
+   "user": 29,
+   "upcoming": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "not_started": 50
+   }
+  },
+  {
+   "day": 0,
+   "user": 30,
+   "upcoming": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "not_started": 50
+   }
+  },
+  {
+   "day": 0,
+   "user": 31,
+   "upcoming": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "not_started": 50
+   }
+  },
+  {
+   "day": 0,
+   "user": 32,
+   "upcoming": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "not_started": 50
+   }
+  },
+  {
+   "day": 7,
+   "user": 29,
+   "upcoming": [
+    2,
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "mastered": 4,
+    "not_started": 40,
+    "developing": 6
+   }
+  },
+  {
+   "day": 7,
+   "user": 30,
+   "upcoming": [
+    2,
+    3,
+    4
+   ],
+   "offers": [
+    2
+   ],
+   "states": {
+    "mastered": 4,
+    "not_started": 46
+   }
+  },
+  {
+   "day": 7,
+   "user": 31,
+   "upcoming": [
+    2,
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "mastered": 4,
+    "not_started": 40,
+    "developing": 6
+   }
+  },
+  {
+   "day": 7,
+   "user": 32,
+   "upcoming": [
+    2,
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "mastered": 4,
+    "not_started": 40,
+    "developing": 6
+   }
+  },
+  {
+   "day": 14,
+   "user": 29,
+   "upcoming": [
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "mastered": 21,
+    "not_started": 22,
+    "review": 1,
+    "developing": 6
+   }
+  },
+  {
+   "day": 14,
+   "user": 30,
+   "upcoming": [
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "mastered": 21,
+    "not_started": 23,
+    "developing": 5,
+    "review": 1
+   }
+  },
+  {
+   "day": 14,
+   "user": 31,
+   "upcoming": [
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "mastered": 19,
+    "not_started": 22,
+    "developing": 9
+   }
+  },
+  {
+   "day": 14,
+   "user": 32,
+   "upcoming": [
+    3,
+    4
+   ],
+   "offers": [],
+   "states": {
+    "mastered": 20,
+    "not_started": 22,
+    "developing": 8
+   }
+  },
+  {
+   "day": 21,
+   "user": 29,
+   "upcoming": [
+    4
+   ],
+   "offers": [
+    4
+   ],
+   "states": {
+    "mastered": 27,
+    "developing": 4,
+    "not_started": 19
+   }
+  },
+  {
+   "day": 21,
+   "user": 30,
+   "upcoming": [
+    4
+   ],
+   "offers": [
+    4
+   ],
+   "states": {
+    "mastered": 29,
+    "not_started": 20,
+    "developing": 1
+   }
+  },
+  {
+   "day": 21,
+   "user": 31,
+   "upcoming": [
+    4
+   ],
+   "offers": [
+    4
+   ],
+   "states": {
+    "mastered": 28,
+    "developing": 3,
+    "not_started": 19
+   }
+  },
+  {
+   "day": 21,
+   "user": 32,
+   "upcoming": [
+    4
+   ],
+   "offers": [
+    4
+   ],
+   "states": {
+    "mastered": 27,
+    "developing": 4,
+    "not_started": 19
+   }
+  }
+ ],
+ "needs_me": [
+  {
+   "user": 43,
+   "profile": "weak",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review",
+    "drop"
+   ]
+  },
+  {
+   "user": 44,
+   "profile": "weak",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review",
+    "drop"
+   ]
+  },
+  {
+   "user": 45,
+   "profile": "weak",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review",
+    "drop"
+   ]
+  },
+  {
+   "user": 46,
+   "profile": "weak",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review",
+    "drop"
+   ]
+  },
+  {
+   "user": 42,
+   "profile": "mixed",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review",
+    "drop"
+   ]
+  },
+  {
+   "user": 47,
+   "profile": "disengaged",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review",
+    "inactive"
+   ]
+  },
+  {
+   "user": 38,
+   "profile": "mixed",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review"
+   ]
+  },
+  {
+   "user": 39,
+   "profile": "mixed",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review"
+   ]
+  },
+  {
+   "user": 40,
+   "profile": "mixed",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review"
+   ]
+  },
+  {
+   "user": 41,
+   "profile": "mixed",
+   "kinds": [
+    "stuck",
+    "misconception",
+    "missed_review"
+   ]
+  },
+  {
+   "user": 33,
+   "profile": "good",
+   "kinds": [
+    "stuck",
+    "misconception"
+   ]
+  },
+  {
+   "user": 37,
+   "profile": "good",
+   "kinds": [
+    "misconception",
+    "missed_review"
+   ]
+  },
+  {
+   "user": 34,
+   "profile": "good",
+   "kinds": [
+    "misconception"
+   ]
+  },
+  {
+   "user": 35,
+   "profile": "good",
+   "kinds": [
+    "misconception"
+   ]
+  },
+  {
+   "user": 48,
+   "profile": "disengaged",
+   "kinds": [
+    "inactive"
+   ]
+  }
+ ],
+ "briefing_todo": [
+  {
+   "kind": "misconception",
+   "title": "Re-teach: Closing a ticket on a signal (green icon, silence, timer) instead of a verified fix",
+   "score": 24
+  },
+  {
+   "kind": "objective",
+   "title": "Review IT-8.4 with the class",
+   "score": 20
+  },
+  {
+   "kind": "student",
+   "title": "Check in with Synthetic student 14 (mixed)",
+   "score": 10
+  }
+ ],
+ "mastered_objectives_by_profile": {
+  "strong": [
+   15,
+   15,
+   15,
+   15
+  ],
+  "good": [
+   13,
+   14,
+   15,
+   15,
+   15
+  ],
+  "mixed": [
+   11,
+   11,
+   12,
+   13,
+   13
+  ],
+  "weak": [
+   0,
+   1,
+   1,
+   2
+  ],
+  "disengaged": [
+   1,
+   3
+  ]
+ },
+ "section_id": 5,
+ "summary": {
+  "passed": 12,
+  "total": 12
+ }
+}

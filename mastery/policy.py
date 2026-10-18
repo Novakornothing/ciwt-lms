@@ -70,7 +70,8 @@ def decide_objective(obj, est, *, chapter, settings, overrides, history, helix, 
     kind, ov, scope = effective_override(overrides, obj, chapter)
     status = est['status'] if est else 'not_started'
     out = {'obj': obj, 'state': status, 'label': STATUS_LABEL.get(status, status), 'action': None,
-           'override': kind, 'override_scope': scope, 'override_row': ov, 'stuck': False, 'notes': []}
+           'override': kind, 'override_scope': scope, 'override_row': ov, 'stuck': False, 'notes': [],
+           'answered': bool(est and (est.get('n_items') or (est.get('counts') or {}).get('lab')))}
     if kind == 'waive':
         out['state'], out['label'] = 'waived', STATUS_LABEL['waived']
         out['notes'].append('Your instructor waived this objective for you.')
@@ -125,7 +126,9 @@ def decide_objective(obj, est, *, chapter, settings, overrides, history, helix, 
 
 
 def strong_so_far(rows):
-    worked = [r for r in rows if r['state'] not in ('not_started', 'waived')]
+    # 'worked' means answered (or lab) evidence. Reading alone makes an objective "developing"; counting those
+    # meant that starting a chapter's lessons blocked the mastery-check offer (pass 13 semester simulation).
+    worked = [r for r in rows if r['state'] not in ('not_started', 'waived') and r.get('answered', True)]
     mastered = [r for r in worked if r['state'] == 'mastered']
     review = [r for r in worked if r['state'] == 'review']
     ok = len(worked) >= STRONG_MIN_OBJECTIVES and not review and len(mastered) >= STRONG_SHARE * len(worked)
