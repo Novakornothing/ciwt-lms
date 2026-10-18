@@ -306,3 +306,203 @@ git-ignored. All runs used `/tmp/r3/*.db` copies.
    fix says "Port 53 is DNS". It now also fires on A1.16, the port 445 item, so the correction's one-line fix names a
    different port than the student's question. An SME may want generic fix text on reused ids.
 9. **SME review** of the 91 new round-3 misconception labels, fixes and sources, all *Pending SME review*.
+
+## Round 4 (Oct 18 2026, 06:08–06:45 UTC): full rationales, cert-gap misconception tags, spot-check round 4
+
+Same worktree (`/workspace/ciwt/content-wt`), branch `content`, port 5291. Local commits only, nothing pushed or
+merged. The refinement repo, port 5078, labs-wt and port 5191 were not touched.
+
+### Commits (branch `content`, oldest first, on top of `df46e29`)
+| Commit | What |
+|---|---|
+| `fa0fa2f` | Full rationales for the 23 thin ITSUP chapter-check items, plus NQ5.5 (`curriculum_v2/rationales_round4.py`). Wired in `item_review.review_check` and `netops_quiz_payload`. Tests: `tests/test_rationales_round4.py`. |
+| `fd31dc0` | Misconception coverage for the pass-15 cert gap items and the last two untagged chapter checks (`curriculum_v2/misconceptions_round4.py`), wired into `curriculum_v2/misconceptions.py`. `tools/misconception_coverage.py` now reports the pass-15 subset. Before/after: `docs/readiness/misconception-coverage-round4-*.txt`. Tests: `tests/test_misconceptions_round4.py`. |
+| `464f181` | `curriculum_v2/cert/alignment.json` and `CERT_COVERAGE.md` regenerated. `test_alignment_json_is_up_to_date` failed after `fa0fa2f`, because the keyword mapper reads rationale text (see below). |
+| `c006e6c` | Spot-check round 4: `docs/readiness/SPOT_CHECK_ROUND4.md`, frozen sample, `--round4` sampler, AM5 lesson fix, citation erratum, tests (`tests/test_spot_check_round4.py`), and a `CURRICULUM_READINESS.md` line. |
+
+### 1. Thin chapter-check rationales: 23 → 0
+- **Measure (same as round 3).** A served rationale under 90 characters that starts with a section pointer
+  ("1.1 — …", "2.1 / hw-board card — …").
+  - Before: 23/200 chapter-check items, all ITSUP: Q1.0, Q1.1, Q1.5, Q1.6, Q1.8, Q2.0, Q2.1, Q2.2, Q2.4, Q2.5, Q2.6,
+    Q2.8, Q4.0, Q4.2, Q4.3, Q4.6, Q5.7, Q6.0, Q6.1, Q6.6, Q6.7, Q7.0, Q7.3.
+  - After: **0/200**, measured on the quiz payloads and on the engine's course map (what students are served).
+- **What each rationale does.**
+  - Says why the key is right and why each distractor is wrong, using what the cited lesson teaches.
+  - Keeps the original "See x.y" pointer, and the served text ends "Source: …" with a primary source. The sources
+    are ITIL 4 practice guides, the Intel ATX/microATX specs, EIA-310, JEDEC, UEFI 2.10, Microsoft Learn, U.S. EPA,
+    CISA, NIST SP 800-125, Broadcom KB 1025279 and IETF RFCs. Where the item tests the course's own lab command, the
+    course card is the source.
+- **Status.** Each item's `review` now says "rationale rewritten in content round 4 …; Pending SME review".
+- **Tests** (`tests/test_rationales_round4.py`):
+  - zero thin items, in the payloads and in the engine
+  - keys unchanged against a frozen list
+  - at least 45 words per rationale
+  - every distractor's distinctive word appears in its rationale
+  - pointer kept, source appended, status Pending
+- **NQ5.5 rationale extended.** Its "removes the need for SNMP" distractor gained a tag (below), so the rationale now
+  explains syslog vs SNMP.
+- **Unchanged.** No key, stem or option changed: all 200 items were compared before and after, and only the 24
+  rationales differ.
+- **Side effect: cert alignment.** `tools/cert_coverage.py` maps items to exam objectives by keyword hits in stem,
+  options and rationale, so longer rationales moved 5 items within their curated candidates:
+  - Q1.0: A2:4.1 → A2:4.2
+  - Q1.1 and Q1.8: + A2:4.2
+  - Q2.2: + A1:3.4
+  - Q4.2: + A2:2.8
+
+  Coverage is still 100% on A+ Core 1, Core 2 and Network+. Q1.0 (service-request classification) now maps only to
+  change management, which is a worse fit. It is a heuristic artefact, left as measured (open question 10).
+
+### 2. Misconception tags: pass-15 cert gap items and the last chapter checks
+The brief assumed the 59 pass-15 items were untagged. Measured, they were not:
+- Pass 15 wrote `mc=` tags in `i05_gaps_p15.py`, and they already reached the engine through
+  `curriculum_v2.cert.misconceptions`.
+- 155 of the 165 distractors on the 55 single-answer items were tagged. All 155 verified against the served items:
+  - the option text matches exactly
+  - it is not the key
+  - the objective matches
+  - `tag_for` returns it
+- The gap was elsewhere:
+  - 10 distractors had no tag
+  - none of the 47 pass-15 `MC-C-*` misconceptions had a `source` or a `status`, so the correction page did not say
+    they are unreviewed
+  - the 2 choose-N and 2 ordering items are not scored per distractor by the engine (same as every bank)
+
+Done:
+- **Five new tags on pass-15 distractors** whose wrong idea the item explanation names:
+
+  | Item | Distractor | Tag |
+  |---|---|---|
+  | C-A2-4.1-105 | "Order another 8 GB module" | `MC-C-IT2-RECONCILE-SKIP` |
+  | C-A1-2.6-101 | "An administrator set a static address" | `MC-C-IT5-APIPA` |
+  | C-N-5.1-103 | "Escalate all three to the network team at once" | `MC-C-IT7-BUNDLE` |
+  | C-A2-4.3-102 | "Three backups a day, two admins, one restore test" | new `MC-R4-IT12-321-COUNTS` |
+  | C-N-3.4-105 | "The DHCP server for its scope" | new `MC-R4-NO4-DHCP-RESOLVES` |
+
+  Five throw-aways stay untagged. They are listed in the module docstring.
+- **Source and status on the 47 pass-15 misconceptions.**
+  - `source` is the distinct primary sources pass 15 recorded for the items carrying each tag (`i05_gaps_p15.SOURCE`).
+  - `status` is `Pending SME review`.
+  - The correction page now shows the status. Checked in a test, and in a browser at 1366 and 390 on
+    `IT-1.1?mc=MC-C-IT1-REQ-VS-INC`.
+- **Last two chapter checks.**
+  - Q13.6: "Hyper-V delete-all, snapshots, vSwitch, uplinks" → `MC-IT13-CHANGE-BEFORE-STATE`. Its rationale names
+    deleting snapshots as the unsafe move.
+  - NQ5.5: "It removes the need for SNMP" → new `MC-R4-NO5-LOG-VS-SNMP`.
+- Each of the 3 new `MC-R4-*` entries has a primary source and Pending SME review, and finds a lesson section for its
+  correction (tested).
+
+Coverage, measured with `tools/misconception_coverage.py` on a throwaway DB. Before is `df46e29` (an archive of the
+tree, run with the new tool); after is `c006e6c`.
+
+| | Before | After |
+|---|---|---|
+| Objectives covered | 70/70 | 70/70 |
+| Tagged scorable distractors (all banks) | 1188/2349 | **1195/2349** |
+| Items with ≥ 1 tagged distractor | 495/783 | **497/783** |
+| Chapter checks with ≥ 1 tag | 198/200 | **200/200** |
+| Tests A/B/C | 129/129 | 129/129 |
+| Pass-15 single-answer items served / with ≥ 1 tag | 55/55 / 55/55 | 55/55 / 55/55 |
+| Pass-15 served distractors tagged | 155/165 | **160/165** |
+| Pass-15 misconceptions with source / status | 0/47 / 0/47 | **47/47 / 47/47** |
+| All misconceptions with a status | 91/400 | 141/403 |
+
+Not covered by this round:
+- The X-IT bank (0/131) and the exam supplement (0/30) are still untagged.
+- The 262 misconceptions from passes 11, 13 and 14 still have no `status`, so their correction pages show no Pending
+  line. For example, `MC-IT13-CHANGE-BEFORE-STATE` was checked on the page and shows none.
+
+### 3. Spot-check round 4 (60 original items, no certification items; checked by Grok Bot, not an SME)
+Details are in `docs/readiness/SPOT_CHECK_ROUND4.md`. The frozen list is `spot-check-round4-sample.json`, drawn with
+`--round4 16`. It excludes rounds 1–3, puts the least-checked objectives first, covers every chapter, and has 60
+objectives. Pools:
+
+| Pool | Items |
+|---|---|
+| ITSUP checks | 25 |
+| X-IT bank | 11 |
+| A1 | 8 |
+| N1 | 6 |
+| NETOPS checks | 4 |
+| supplement | 2 |
+| N2 | 2 |
+| A2 | 1 |
+| A3 | 1 |
+
+- **0 answer keys changed. 0 stems changed. 0 rationales changed.**
+- **1 key disputed, sent to an SME: Q9.11.**
+  - The item: a Linux share holds Plan.docx and plan.docx, and the key says Windows "shows only one". Lesson 9.4
+    says the same.
+  - `smb.conf(5)` documents caseless name matching for Windows clients.
+  - Samba community sources and user tests report that Explorer and `dir` list both names, and opening either one
+    opens the first match. So the key is probably inaccurate about what a user sees.
+  - Not changed: no official primary source covers listing, and it needs a test with a real Windows client. A
+    suggested rewrite is in the doc.
+- **SME notes, no change:**
+  - Q8.3: the key's wording.
+  - X-IT-5.3.1: some gateways do not answer ping.
+  - A1.48: Sysprep does not fix a static IP baked into the image.
+  - Q1.6 and Q12.0: near-duplicates.
+- **Lesson fact fixed (outside the sample, found while writing Q2.1's rationale).** Lessons 2.1 and 2.3
+  (`block2_hardware.py`) said "AMD AM4/AM5: pins on the CPU". AMD's AM5 quick reference guide says "1718-pin LGA
+  socket", so it now says AM5 is LGA. *Pending SME review.*
+- **Citation erratum.** CompTIA's 220-1201 objectives document says the troubleshooting methodology "does not
+  constitute a formal objective". 220-1201 objective 5.1 is motherboards, RAM, CPUs and power.
+  - Fixed: three round-3 misconception sources and two round-4 sources had cited "220-1201 objective 5.1".
+  - Not edited: `SPOT_CHECK_ROUND3.md` is the round-3 record. Its rows A1.38, A3.0 and X-IT-7.1.1 carry the same
+    mis-citation; their verdicts are unaffected.
+
+### Results on `c006e6c` (final)
+| Run | Result |
+|---|---|
+| `pytest -q tests` | **671 passed, 30 skipped**. All 30 skips are `test_vm_real.py`: the v86 assets are not in content-wt. Round 3 was 653 passed; round 4 adds 18 tests. |
+| `node --test tests/js` | **41/41** |
+| `adaptive_e2e.py` desktop 1366 | **92/92** |
+| `adaptive_e2e.py` phone 390 | **128/128** |
+| Round-4 correction pages, 1366 and 390 | HTTP 200, label shown, "Pending SME review" status shown, no horizontal scroll. Pages: `IT-12.3?mc=MC-R4-IT12-321-COUNTS` and `IT-1.1?mc=MC-C-IT1-REQ-VS-INC`. |
+| `curriculum_readiness.py --package` | **30/30**. The key is uniquely the longest option in 31/200 chapter checks (15.5%), unchanged. |
+| `semester_sim.py --days 28` | **15/15**. `strong_in_needs_me` is `[31, misconception]`, the same as round 3. |
+
+Run details:
+- During the round, a mid-run pytest showed one failure, `test_alignment_json_is_up_to_date`, after `fa0fa2f`. It was
+  fixed in `464f181`, and the next full run was 666 passed.
+- Server: `app.py` on :5291 (PID 1088812) against `/tmp/r4/e2e.db`, a copy of `ciwt_lms.db`. It was stopped by PID,
+  and port 5291 is free.
+- Readiness used `/tmp/r4/ready2.db` and the sim used `/tmp/r4/sim.db`. Both are copies.
+- Screenshots and JSON: `/workspace/scratch/adaptive-e2e-r4-final/`.
+- Readiness JSON: `/workspace/artifacts/pass-reports/readiness-content-round4.json`.
+
+### Course package
+Rebuilt from `c006e6c`, with a clean tree:
+- `/workspace/artifacts/course-package-content/`: 45 files including the MANIFEST, the same file set as round 3
+- `/workspace/artifacts/course-package-content.zip`: 52 entries, written with Python `zipfile`, because `zip` is not
+  installed
+
+"Pending SME review" labels in the answer-key PDFs:
+
+| Answer key | Round 3 | Round 4 |
+|---|---|---|
+| ITSUP | 147 | **170** (+23 rewritten rationales) |
+| NETOPS | 1 | **2** (+NQ5.5) |
+| CLIENT | — | 87 |
+
+The old one-liners are gone from the ITSUP key. Readiness `--package` matched every MANIFEST hash. Refinement's
+`/workspace/artifacts/course-package/` was not touched.
+
+`ciwt_lms.db` sha256 is still `47fabc92dafe16cf128b34e90c8235d61d02bc735738a83b8a6172fb93597939`.
+
+### Open questions for a human (round 4 additions; round-3 questions 1–9 still open)
+10. **Cert alignment heuristic.** Longer rationales move items between curated exam objectives, for example Q1.0 →
+    change management only. Options: pin chapter-check items with a curated item map, or score the stem and options
+    only.
+11. **Q9.11 / lesson 9.4.** Test Plan.docx/plan.docx on a real Windows client against Samba, then either keep the
+    key or apply the suggested rewrite (stem, key and lesson clause).
+12. **Pending status on older misconceptions.** 262 of 403 have no `status`. Should passes 11/13/14 also show
+    "Pending SME review" on the correction page?
+13. **SME review of round 4 content:**
+    - the 24 rationales and their sources
+    - the 3 `MC-R4-*` entries
+    - the derived sources on the 47 pass-15 misconceptions (some list several item sources, for example
+      `MC-C-IT1-REQ-VS-INC` also cites the change-management objective)
+    - the AM5 lesson correction
+14. **X-IT bank and supplement** (161 items) still have no misconception tags. Is that the next tagging target?
