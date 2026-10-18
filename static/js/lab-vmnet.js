@@ -58,6 +58,7 @@
       var op = (f[20] << 8) | f[21];
       return op === 1 ? 'ARP who has ' + a2ip(f, 38) + '? tell ' + a2ip(f, 28) : 'ARP ' + a2ip(f, 28) + ' is at ' + mac2s(f, 22);
     }
+    if (et === 0x86dd) return summarize6(f);
     if (et !== 0x0800) return null;
     var ihl = (f[14] & 15) * 4, pr = f[23], s = a2ip(f, 26), d = a2ip(f, 30), o = 14 + ihl, ttl = f[22];
     if (pr === 1) {
@@ -73,6 +74,42 @@
     }
     if (pr === 6) return 'TCP ' + s + ' → ' + d + ':' + ((f[o + 2] << 8) | f[o + 3]);
     return 'IP ' + s + ' → ' + d + ' proto ' + pr;
+  }
+  // IPv6 (the IPv6 lab's router advertisements, neighbour discovery, ping -6): shown like tcpdump would name them.
+  function a2ip6(f, o) {
+    var w = [], i;
+    for (i = 0; i < 8; i++) w.push(((f[o + 2 * i] << 8) | f[o + 2 * i + 1]).toString(16));
+    var bs = -1, bl = 0, cs = -1, cl = 0;                     // longest run of zero words (length >= 2) becomes ::
+    for (i = 0; i < 8; i++) {
+      if (w[i] === '0') { if (cs < 0) cs = i; cl++; if (cl > bl) { bs = cs; bl = cl; } } else { cs = -1; cl = 0; }
+    }
+    if (bl < 2) return w.join(':');
+    return w.slice(0, bs).join(':') + '::' + w.slice(bs + bl).join(':');
+  }
+  function summarize6(f) {
+    if (f.length < 54) return 'IPv6 (short frame)';
+    var nh = f[20], hl = f[21], s = a2ip6(f, 22), d = a2ip6(f, 38), o = 54, guard = 0;
+    while ((nh === 0 || nh === 43 || nh === 60) && o + 2 <= f.length && guard++ < 4) { nh = f[o]; o += (f[o + 1] + 1) * 8; }  // hop-by-hop, routing, dest opts
+    if (nh === 58 && o < f.length) {
+      var t = f[o], tgt = o + 24 <= f.length ? a2ip6(f, o + 8) : '';
+      if (t === 133) return 'ICMPv6 ' + s + ' → ' + d + ' router solicitation';
+      if (t === 134) {
+        var pfx = '', p = o + 16;                                 // options after the 16-byte RA header; type 3 = prefix
+        while (p + 2 <= f.length && f[p + 1] > 0) { if (f[p] === 3 && p + 32 <= f.length) { pfx = ' prefix ' + a2ip6(f, p + 16) + '/' + f[p + 2]; break; } p += f[p + 1] * 8; }
+        return 'ICMPv6 ' + s + ' → ' + d + ' router advertisement' + pfx;
+      }
+      if (t === 135) return 'ICMPv6 ' + s + ' → ' + d + ' neighbor solicitation, who has ' + tgt;
+      if (t === 136) return 'ICMPv6 ' + s + ' → ' + d + ' neighbor advertisement, tgt is ' + tgt;
+      var n6 = { 128: 'echo request', 129: 'echo reply', 1: 'destination unreachable', 2: 'packet too big', 3: 'time exceeded', 137: 'redirect', 143: 'multicast listener report v2' }[t] || ('type ' + t);
+      return 'ICMPv6 ' + s + ' → ' + d + ' ' + n6 + ' (hlim ' + hl + ')';
+    }
+    if ((nh === 17 || nh === 6) && o + 4 <= f.length) {
+      var sp = (f[o] << 8) | f[o + 1], dp = (f[o + 2] << 8) | f[o + 3];
+      if (nh === 17 && (dp === 53 || sp === 53)) { var q = dnsName(f, o + 8 + 12); return 'DNS ' + (sp === 53 ? 'answer' : 'query') + ' ' + (q ? q.name : '') + ' ' + s + ' → ' + d; }
+      if (nh === 17 && (dp === 547 || dp === 546)) return 'DHCPv6 ' + s + ' → ' + d;
+      return (nh === 17 ? 'UDP ' : 'TCP ') + '[' + s + ']:' + sp + ' → [' + d + ']:' + dp;
+    }
+    return 'IPv6 ' + s + ' → ' + d + ' next header ' + nh;
   }
   function dhcpType(f, o) {
     var p = o + 240;

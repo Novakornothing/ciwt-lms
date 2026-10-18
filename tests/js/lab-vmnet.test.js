@@ -111,3 +111,25 @@ test('IPv6 multicast reaches the other ports addressed to their own MAC (v86 ne2
   pa.send(arpReq(MAC, '10.1.0.10', '10.1.0.1'));
   assert.deepStrictEqual(Array.from(b[b.length - 1].slice(0, 6)), [255, 255, 255, 255, 255, 255], 'broadcast is untouched');
 });
+
+test('the Packets panel names IPv6 frames (router advertisement with prefix, neighbour solicitation, ping -6)', () => {
+  const v6 = (s) => { const out = []; const [h, tl] = s.split('::'); const hw = h ? h.split(':') : []; const tw = tl !== undefined && tl ? tl.split(':') : [];
+    const all = tl === undefined ? hw : [...hw, ...Array(8 - hw.length - tw.length).fill('0'), ...tw];
+    all.forEach((x) => { const n = parseInt(x, 16); out.push(n >> 8, n & 255); }); return out; };
+  function ip6(src, dst, nh, payload, hlim = 255) { const p = new Uint8Array(40 + payload.length); p[0] = 0x60; p[4] = payload.length >> 8; p[5] = payload.length & 255; p[6] = nh; p[7] = hlim; p.set(v6(src), 8); p.set(v6(dst), 24); p.set(payload, 40); return p; }
+  const ra = new Uint8Array(16 + 32); ra[0] = 134; ra[16] = 3; ra[17] = 4; ra[18] = 64; ra.set(v6('2001:db8:40::'), 32);
+  const MC1 = [0x33, 0x33, 0, 0, 0, 1];
+  assert.strictEqual(N.summarize(eth(MC1, MAC, 0x86dd, ip6('fe80::222:15ff:fe00:2', 'ff02::1', 58, ra))),
+    'ICMPv6 fe80::222:15ff:fe00:2 → ff02::1 router advertisement prefix 2001:db8:40::/64');
+  const ns = new Uint8Array(24); ns[0] = 135; ns.set(v6('2001:db8:40::1'), 8);
+  assert.strictEqual(N.summarize(eth(MC1, MAC, 0x86dd, ip6('fe80::1', 'ff02::1:ff00:1', 58, ns))),
+    'ICMPv6 fe80::1 → ff02::1:ff00:1 neighbor solicitation, who has 2001:db8:40::1');
+  const echo = new Uint8Array(8); echo[0] = 128;
+  assert.strictEqual(N.summarize(eth(MAC, MAC, 0x86dd, ip6('2001:db8:40:0:222:15ff:fe01:203', '2001:db8:99::10', 58, echo, 64))),
+    'ICMPv6 2001:db8:40:0:222:15ff:fe01:203 → 2001:db8:99::10 echo request (hlim 64)');
+  const rs = new Uint8Array(8); rs[0] = 133;   // behind a hop-by-hop header (as MLD/RS can be)
+  const hbh = new Uint8Array(8 + 8); hbh[0] = 58; hbh[1] = 0; hbh.set(rs, 8);
+  assert.strictEqual(N.summarize(eth(MC1, MAC, 0x86dd, ip6('fe80::5', 'ff02::2', 0, hbh))), 'ICMPv6 fe80::5 → ff02::2 router solicitation');
+  const fab = new N.Fabric(); fab.attach('a', ['lan'], () => {}).send(eth(MC1, MAC, 0x86dd, ip6('fe80::1', 'ff02::1', 58, ra)));
+  assert.strictEqual(fab.log.length, 1, 'IPv6 frames reach the Packets log');
+});
