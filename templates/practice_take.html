@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
+{% block content %}
+<p class="practice-label small mb-2"><strong>{{ label }}.</strong> Timed: it submits itself when the time runs out.</p>
+{% set a_kind = 'test' %}
+{% set a_title = title %}
+{% set a_meta = 'Practice · ' ~ (questions|length) ~ ' questions · ' ~ (questions|length) ~ ' min' %}
+{% set a_store_key = 'practice-' ~ att.id ~ '-' ~ current_user.id %}
+{% set a_report = {'practice_attempt': att.id} %}
+{% set a_submit_label = 'Submit practice exam' %}
+{% set a_remaining = remaining %}
+{% include '_assessment.html' %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/pbq-core.js') }}"></script><script src="{{ url_for('static', filename='js/assessment.js') }}"></script>{% endblock %}

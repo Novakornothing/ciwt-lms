@@ -54,6 +54,9 @@
           <a class="rail-link {% if ep == 'interactive_labs_index' %}active{% endif %}" href="{{ url_for('interactive_labs_index') }}">
             <i class="bi bi-grid"></i><span>All live labs</span>
           </a>
+          <a class="rail-link {% if ep and ep.startswith('practice_') %}active{% endif %}" href="{{ url_for('practice_index') }}">
+            <i class="bi bi-stopwatch"></i><span>Practice exams</span>
+          </a>
           <a class="rail-link {% if ep == 'convening_home' %}active{% endif %}" href="{{ url_for('convening_home') }}">
             <i class="bi bi-flag"></i><span>Convening home</span>
           </a>
@@ -132,6 +135,12 @@
           </a>
           <a class="rail-link {% if ep in ('materials_index','materials_view','syllabus_settings') %}active{% endif %}" href="{{ url_for('materials_index') }}">
             <i class="bi bi-folder2-open"></i><span>Course materials</span>
+          </a>
+          <a class="rail-link {% if ep == 'cert_coverage' %}active{% endif %}" href="{{ url_for('cert_coverage') }}">
+            <i class="bi bi-patch-check"></i><span>Certification coverage</span>
+          </a>
+          <a class="rail-link {% if ep and ep.startswith('practice_') %}active{% endif %}" href="{{ url_for('practice_index') }}">
+            <i class="bi bi-stopwatch"></i><span>Practice exams</span>
           </a>
         </div>
       </details>

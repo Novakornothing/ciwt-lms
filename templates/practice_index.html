@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Practice exams — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Practice exams</h1>
+  <p class="mb-0">Timed practice drawn from the CIWT question bank and weighted by the published exam domains, with a score report by domain and links back to the lessons.</p>
+</div>
+<p class="practice-label"><strong>{{ label }}.</strong> {{ disclaimer }} Questions are written by CIWT staff, not taken from CompTIA exams, and a practice score does not predict an exam result.</p>
+
+<div class="practice-grid">
+{% for k, e in exams.items() %}
+  <section class="card practice-card" aria-labelledby="pe-{{ k }}">
+    <div class="card-header navy"><h2 class="h5 mb-0" id="pe-{{ k }}">{{ e.name }} <span class="small opacity-75">{{ e.code }}</span></h2></div>
+    <div class="card-body">
+      <p class="small mb-2">{{ pools[k] }} questions in the pool. The official exam: {{ e.official.questions|lower }} questions in {{ e.official.minutes }} minutes{% if 'not stated' not in e.official.passing %}, passing score {{ e.official.passing }}{% endif %}.</p>
+      <form method="post" action="{{ url_for('practice_start') }}" class="mb-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="exam" value="{{ k }}">
+        <button class="btn btn-brand w-100" type="submit">Full practice: {{ full_len }} questions, {{ full_len }} minutes<span class="visually-hidden"> — {{ e.short }}</span></button>
+      </form>
+      <h3 class="h6">Domain drills ({{ drill_len }} questions, {{ drill_len }} minutes)</h3>
+      <div class="drill-list">
+      {% for d, name, w in domains[k] %}
+        <form method="post" action="{{ url_for('practice_start') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="exam" value="{{ k }}"><input type="hidden" name="domain" value="{{ d }}">
+          <button class="btn btn-outline-navy btn-sm" type="submit">{{ d }} {{ name }} <span class="small">({{ w }}% of exam)</span><span class="visually-hidden"> — {{ e.short }} drill</span></button>
+        </form>
+      {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endfor %}
+</div>
+
+<section class="mt-4" aria-labelledby="pe-recent">
+  <h2 class="h5" id="pe-recent">Your recent practice</h2>
+  {% if recent %}
+  <ul class="list-unstyled">
+    {% for a in recent %}
+    <li class="mb-1">{{ exams[a.exam].short }} {% if a.domain %}domain {{ a.domain }} drill{% else %}full practice{% endif %} —
+      {% if a.submitted_at %}<a href="{{ url_for('practice_result', attempt_id=a.id) }}">{{ a.correct }}/{{ a.total }} ({{ ((100 * a.correct / a.total) if a.total else 0)|round|int }}%)</a>
+      {% else %}<a href="{{ url_for('practice_take', attempt_id=a.id) }}">resume</a>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="small text-muted">No practice attempts yet.</p>{% endif %}
+</section>
+{% endblock %}

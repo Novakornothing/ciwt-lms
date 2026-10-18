@@ -207,7 +207,7 @@ def _static_cache(resp):
 
 # ---- Assessment items sent to the browser carry only what the player renders. The answer key, rationales and
 # study tips stay on the server (they used to ship inside the page's JSON, readable with View Source).
-_PUBLIC_ITEM_FIELDS = ('options', 'lo', 'lo_code', 'lo_text')
+_PUBLIC_ITEM_FIELDS = ('options', 'lo', 'lo_code', 'lo_text', 'type', 'prompts', 'choose')  # pass 11: PBQ metadata, no keys
 
 
 @app.template_filter('public_questions')
@@ -7101,6 +7101,12 @@ SyllabusSettings = materials_mod.register(app, db, dict(
     Course=Course, ClassSection=ClassSection, Enrollment=Enrollment,
     instructor_can_access_section=lambda user, section: instructor_can_access_section(user, section),
     instructor_course_ids=lambda uid: instructor_course_ids(uid),
+    audit=lambda action, detail='': audit(action, detail),
+))
+# pass 11: certification coverage (staff) and practice exams — curriculum_v2/cert/practice.py
+from curriculum_v2.cert import practice as cert_practice  # noqa: E402
+PracticeAttempt = cert_practice.register(app, db, dict(
+    Course=Course, Module=Module, Lesson=Lesson, ClassSection=ClassSection, Enrollment=Enrollment, utcnow=utcnow,
     audit=lambda action, detail='': audit(action, detail),
 ))
 
