@@ -203,3 +203,11 @@ def test_gradebook_pagination_and_server_filter(instructor, ids):
     assert p2.status_code == 200           # clamps to the last page
     one = instructor.get(f'/instructor/section/{sid}/gradebook?q=student1%40').get_data(as_text=True)
     assert 'filtered from' in one and one.count('data-risk=') == 1
+
+
+def test_gradebook_labels_seeded_demo_grades(instructor, app, mod, ids):
+    # the seeded @lms.local accounts have generated test attempts; the instructor gradebook must say so (pass 16)
+    data = _compute(app, mod)
+    assert data['summary']['demo'] is True
+    page = instructor.get(f"/instructor/section/{ids['section']}/gradebook").get_data(as_text=True)
+    assert 'Includes demo seed data' in page and 'they are not real students' in page

@@ -484,6 +484,9 @@ def register(app, db, deps):
             'cat_means': {k: describe([r['cat_avgs'][k] for r in rows])['mean'] for k, _ in CATEGORIES},
             'late_cells': late_cells, 'quiz_attempts_excluded': q_excluded,
             'letters': letter_counts(grades, st.scale),
+            # seeded demo accounts (@lms.local) have generated test attempts: say so wherever their grades show
+            'demo': any((r['user'].email or '').endswith('@lms.local') and
+                        any(c['item']['type'] == 'test' and c['attempts'] for c in r['cells']) for r in rows),
         })
         return {'settings': st, 'weights': weights, 'columns': items, 'rows': rows, 'col_stats': col_stats,
                 'summary': summary, 'dues': dues}
