@@ -96,3 +96,18 @@ test('remote: an address one hop behind the services host — TTL 63 replies, ti
   assert.strictEqual(r[14 + 20], 11, 'ICMP time exceeded'); assert.strictEqual(Array.from(r.slice(26, 30)).join('.'), '10.1.0.1', 'from the router interface');
   assert.ok(svc.events.some((e) => e.type === 'ttl' && e.at === '10.1.0.1'));
 });
+
+test('IPv6 multicast reaches the other ports addressed to their own MAC (v86 ne2k drops multicast otherwise)', () => {
+  const fab = new N.Fabric(); const a = [], b = [];
+  const MB = [0, 0x22, 0x15, 0, 0, 2];
+  const pa = fab.attach('ws', ['lan'], (f) => a.push(f));
+  const pb = fab.attach('rtr', ['lan'], (f) => b.push(f));
+  pb.send(eth(MAC, MB, 0x86dd, new Uint8Array(40)));                       // rtr talks once: the switch learns its MAC
+  const rs = eth([0x33, 0x33, 0, 0, 0, 2], MAC, 0x86dd, new Uint8Array(40)); // ws -> ff02::2 (router solicitation)
+  pa.send(rs);
+  const got = b[b.length - 1];
+  assert.deepStrictEqual(Array.from(got.slice(0, 6)), MB, 'delivered to the router addressed to its own MAC');
+  assert.deepStrictEqual(Array.from(rs.slice(0, 6)), [0x33, 0x33, 0, 0, 0, 2], 'the sender frame is not modified');
+  pa.send(arpReq(MAC, '10.1.0.10', '10.1.0.1'));
+  assert.deepStrictEqual(Array.from(b[b.length - 1].slice(0, 6)), [255, 255, 255, 255, 255, 255], 'broadcast is untouched');
+});

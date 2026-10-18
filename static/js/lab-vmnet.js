@@ -33,7 +33,7 @@
     if (frame.length < 14) return;
     this.count++;
     var smac = mac2s(frame, 6), dmac = mac2s(frame, 0);
-    this.macs[smac] = src;
+    this.macs[smac] = src; if (!(frame[6] & 1)) src.mac = frame.slice(6, 12);
     var sum = summarize(frame);
     if (sum) { this.log.push({ n: this.count, from: src.name, s: sum }); if (this.log.length > this.max) this.log.shift(); if (this.onframe) this.onframe(this.log[this.log.length - 1]); }
     var known = !isBcast(frame) && this.macs[dmac];
@@ -43,6 +43,10 @@
       var seg = this.common(src, q);
       if (!seg) continue;
       if (known && known !== q) continue;
+      // v86's ne2k model (0.5.471) drops every multicast frame unless the NIC is promiscuous, so IPv6 neighbour and
+      // router discovery (ff02::1, ff02::2, solicited-node groups) would never arrive. Deliver multicast to a port
+      // addressed to that port's own MAC (the guest kernel still filters by IPv6 group), like a NIC that accepts it.
+      if (isBcast(frame) && dmac !== 'ff:ff:ff:ff:ff:ff' && q.mac) { var c = frame.slice(); c.set(q.mac, 0); q.deliver(c, seg); continue; }
       q.deliver(frame, seg);
     }
   };
