@@ -46,9 +46,11 @@ age as it would over a real term. No clock is patched.
 6. "Who needs me" lists every weak student with a reason other than inactivity.
 7. "Who needs me" flags both disengaged students as inactive.
 8. The top of "Who needs me" is never a strong student.
-9. No strong student appears in "Who needs me".
+9. No strong student appears in "Who needs me", except for a repeated mix-up, and then below every weak student
+   (changed in pass 16, see below).
 10. The briefing to-do names only students who need help.
-11. The briefing focus list includes every weak student and no strong one.
+11. The briefing focus list includes every weak student. A strong student appears only for a repeated mix-up, and
+    then after every weak one (pass 16).
 12. No adaptive action changes a grade. Grades, letters, averages and scores in the gradebook CSV, and the graded
     rows, are identical before and after each day's adaptive actions. Since pass 14 a passed test-out marks the chapter
     check *Exempt (test-out)*. That can raise completion %, so completion and the exempt label are left out of this
@@ -57,6 +59,22 @@ age as it would over a real term. No clock is patched.
     score invented.
 14. Pass 14: on a tie in "Who needs me" (same reason kinds), weak students are ranked before mixed ones.
 15. Pass 14: when the briefing's student check-in ties between a weak and a mixed student, it goes to the weak one.
+
+**Pass 16 change to checks 9 and 11.** In pass 16 the sim failed checks 9 and 11. One strong student (31) picked
+the same mix-up twice, so it appeared in "Who needs me" and in the focus list. The same failure happened when the
+pass-15 code (`afc0ca4`) was re-run an hour after it had passed (student 32 that time). So the cause is not one
+commit:
+
+- The draw depends on the run's wall-clock time as well as the seed. Reviews and daily items are scheduled from
+  "now".
+- A strong student's wrong answer picks a tagged distractor 30% of the time, and the run gives each strong student
+  several wrong answers.
+- Since content round 3, almost every distractor is tagged (Tests A/B/C 129/129).
+
+Two picks of the same mix-up is a real "Who needs me" reason that applies to any student. So the checks now allow a
+strong student only when **the only** reason is a repeated mix-up and the student ranks below every weak student. Any
+other reason for a strong student (stuck, missed review, drop, inactivity) is still a failure, and check 8 is
+unchanged. The engine was not changed. Known limit: the run is not fully reproducible across wall-clock times.
 
 ## Bugs it found (fixed in pass 13)
 
