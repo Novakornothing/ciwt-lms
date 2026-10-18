@@ -76,3 +76,10 @@ Original instructional content for demonstration only.
 ## Refinement (2026-10)
 
 See [REFINEMENT_NOTES.md](REFINEMENT_NOTES.md) for the Helix attention package, the gradebook, the mobile shell, and how to run the tests.
+
+### Pass 13 tools
+
+- **Database guard.** The app refuses to open `ciwt_lms.db` unless `DATABASE_URL` is set or `CIWT_ALLOW_REAL_DB=1` is set. `start_lms.sh`, `Procfile` and `render.yaml` set it.
+- **Curriculum readiness audit.** Run `DATABASE_URL=sqlite:////tmp/copy.db ./venv/bin/python tools/curriculum_readiness.py out.json`. See [CURRICULUM_READINESS.md](CURRICULUM_READINESS.md).
+- **Adaptive semester simulation.** This is a synthetic check. See [docs/SEMESTER_SIMULATION.md](docs/SEMESTER_SIMULATION.md).
+- **First-run experience.** Instructors see a "Set up your class" checklist on the class page. It covers adaptivity, the Helix policy, certification items, the first release and optional LTI. Instructors can review or skip each item, or hide the whole checklist for that class. Students see a one-time "How your path works" card. Both are stored in `onboarding_flag`, and neither changes a setting or a grade.
