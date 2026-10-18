@@ -75,8 +75,8 @@ age as it would over a real term. No clock is patched.
 
 ## Content round 3 (Oct 18 2026): denser misconception tags
 Round 3 tagged the Tests A/B/C distractors (30/129 → 129/129 items). With the default seed, strong synthetic student 31
-then slipped twice onto the same tagged mix-up (MC-IT4-SWOLLEN-HANDS-ON, IT-4.1: once on a chapter check, once on the
-graded Test A), so "Who needs me" and the briefing focus list showed them, last, with severity 0 and the single reason
+then slipped twice onto the same tagged mix-up (MC-IT4-SWOLLEN-HANDS-ON, IT-4.1; the engine records the two hits from a
+daily review and a review check on the same simulated day; round 3 added this id to Test A item A2.2), so "Who needs me" and the briefing focus list showed them, last, with severity 0 and the single reason
 "Picked the same mix-up 2 times". That is the engine's documented rule, not a ranking fault. The two checks that said
 "no strong student" now say: a strong student may appear only for a repeated mix-up and only below every weak, mixed
 and disengaged student (`strong_in_needs_me` in the JSON lists who). Whether a student whose objective is otherwise
