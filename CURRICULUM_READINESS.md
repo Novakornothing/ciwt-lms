@@ -8,6 +8,7 @@
 >   - All 14 are labelled *Pending SME review*, and the instructor answer key shows that label.
 > - **Rationales.** The 64 ITSUP chapter-check items whose rationale was only a section reference (the earlier count of 62 used a stricter rule) now have full explanations, in `curriculum_v2/rationales_pass14.py`. Keys and options are unchanged and the section pointer is kept. These rationales are also pending SME review.
 > - **Audit.** The audit now has 28 checks, all passing. The three new checks are: ITSUP and NETOPS objectives each have chapter-check items, and every chapter-check rationale explains its answer. Output is in `docs/readiness/readiness-pass14.json`.
+> - **Accuracy spot-check round 2.** 60 more original items were checked, one per objective, covering every chapter. The list is in `docs/readiness/SPOT_CHECK_ROUND2.md`. **No answer key was wrong.** Fixes: 4 stems clarified (A2.17, N1.20, NQ1.1, NQ4.5) and 4 rationales made precise (X-IT-3.1.1, X-IT-13.2.1, N1.20, NQ4.5), all *Pending SME review*. Still open: 61 of the 144 ITSUP chapter-check items have a one-line rationale under 90 characters that starts with a section pointer, for example Q1.5 "1.2 / 1.5 — heat and shock are not solo swaps." The audit accepts these because they are not pointer-only, but they are thin.
 > - The pass 13 text below is kept as written, except that SME items 1 and 5 are updated.
 
 

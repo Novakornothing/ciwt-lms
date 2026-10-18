@@ -106,3 +106,16 @@ The tests are in `tests/test_spot_check_round2.py`.
 | 58 | S-NO-6.3.1 (NO-6.3) | exam_supplement | Proof of fix = the original failing test passes | CompTIA Network+ N10-009 obj. 5.1 (verify full functionality) | Correct |
 | 59 | S-NO-9.1.2 (NO-9.1) | exam_supplement | `show interfaces trunk` shows allowed and active VLANs | Cisco Catalyst IOS command reference | Correct |
 | 60 | NQ9.3 (NO-9.2) | NETOPS chapter checks | One router interface for VLANs 10 and 20 → router-on-a-stick with 802.1Q subinterfaces | Cisco IOS inter-VLAN routing configuration guide | Correct |
+
+## After merging refinement pass 14
+
+Refinement pass 14 is now merged into `content`. Twelve sampled ITSUP chapter-check items had a pointer rationale.
+
+- **8 now have full rationales** from `rationales_pass14.py`: Q7.8, Q8.0, Q9.4, Q10.7, Q10.6, Q11.1, Q11.8 and Q13.0. I read all eight. They match the key and the course rules, and none contradicts its source.
+  - Q10.7 still points to section 10.4 although the item is tagged IT-10.2.
+  - Q13.0 says chapter 13 is "required rather than optional". That holds for the standard schedule, but `course_package.py` mentions a 3-credit variant that moves the chapter 13 reps.
+- **4 still have a one-line "section — fragment" rationale:** Q1.5, Q1.9, Q2.1 and Q6.2. The pass-14 audit does not count these as pointer-only.
+  - Across the whole ITSUP chapter-check bank, 61 of 144 items have a rationale like this: under 90 characters and starting with a section pointer.
+  - They are thin rather than wrong. They are the next authoring job.
+
+The merge dropped no items. Before and after the merge the item counts are equal: A1–N3 140; ITSUP checks 144, which is 130 plus the 14 pass-14 items; NETOPS checks 56; supplement 30; passes 9–10 bank 131; review entries 284; stem-guard mismatches 0.

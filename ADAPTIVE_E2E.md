@@ -122,12 +122,60 @@ New tests (12) also cover engine paths that had no test before:
 - **The time estimates are not measured:** "about 2 min" for a mix-up correction and "about 5 min" for a review or
   alternate explanation. The correction page includes two lesson sections plus 3 questions, so 2 minutes may be
   optimistic.
-- **The heatmap has no marker for stuck cells.** A stuck cell has no "R" (nothing is inserted). Stuck is shown only
+- ~~**The heatmap has no marker for stuck cells.**~~ Fixed in round 2 (below). A stuck cell has no "R" (nothing is inserted). Stuck is shown only
   in the "Stuck" list above the grid.
-- **The override dialog's status line goes stale.** It describes the cell that opened the dialog and does not change
+- ~~**The override dialog's status line goes stale.**~~ Fixed in round 2 (below). It describes the cell that opened the dialog and does not change
   if the instructor picks a different objective under "Applies to".
-- **The review page repeats the evidence.** It appears both as the last "Why" bullet and as the "Evidence:" line.
+- ~~**The review page repeats the evidence.**~~ Fixed in round 2 (below). It appears both as the last "Why" bullet and as the "Evidence:" line.
 - **New learner-facing wording is Pending SME review.** This pass added the two reason sentences in
   `policy.apply_misconceptions` ("Your answers still suggest this mix-up… You already worked through a mix-up
   correction here, so it is not repeated…" and "You already did one review on this objective and the estimate is
   still low."). No curriculum content was added or removed.
+
+## Round 2 (Oct 18 2026, later)
+
+### UI fixes (commit `a80cf2b`, tests in `tests/test_adaptive_ui_round2.py`)
+1. **Stuck cells on the instructor heatmap now have a marker.**
+   - A red "S" flag and a dashed outline, so the signal is not colour alone.
+   - Screen-reader text ("stuck after two reviews") and a legend entry.
+   - Dark-theme colours included.
+2. **The override dialog's status line follows "Applies to".**
+   - The heatmap and the per-student page embed status lines (`#mxStates`, JSON) for every objective and every
+     "Whole chapter N" target of each student, built by `mastery.status_lines`.
+   - The dialog updates the line when the target changes (`aria-live="polite"`, and the select has `aria-describedby`).
+   - Chapter targets get a summary, for example "Whole chapter 1: 4 needs review (of 4 objectives) · 1 stuck".
+   - Cost: about 55 KB of extra HTML on the class heatmap with the demo roster (gzip shrinks it a lot). It is not
+     paginated.
+3. **The review page shows the evidence once.**
+   - The "Evidence:" line is dropped when one of the engine's reasons already contains it.
+   - It stays when no reason carries it, for example on a self-opened practice review.
+
+### Results (branch `content`, after merging refinement pass 14 at `22355a3`)
+
+| Run | Round 1 | Round 2 |
+|---|---|---|
+| `adaptive_e2e.py` desktop 1366 | 81/81 | **92/92** (11 new round-2 checks) |
+| `adaptive_e2e.py` phone 390 | 115/115 | **128/128** |
+| pytest | 568 passed, 10 skipped | **595 passed, 10 skipped** |
+| node --test tests/js | 40/40 | **40/40** |
+| axe on mastery pages (390 and 1280, light and dark) | 56 checks, 0 violations | 40 page/width checks, **0 violation nodes** |
+
+New round-2 e2e checks:
+- evidence shown once on the mix-up correction page and on the alternate-explanation page
+- stuck cell: visible S flag and outline, screen-reader text, and only stuck cells marked
+- override dialog: opens with the cell's line, follows another objective, gives a chapter summary for a whole-chapter
+  target, and restores the original line
+
+Run details:
+- Server: `app.py` on :5320 against `/tmp/r2/work.db`, a copy of `ciwt_lms.db`. The sha256 of `ciwt_lms.db` is
+  unchanged.
+- Screenshots and JSON: `/workspace/scratch/adaptive-e2e-r2/`.
+
+### Still open for a decision
+These are unchanged from round 1:
+- the test-out threshold (a perfect chapter check alone is not enough for IT-1.2 to IT-1.4)
+- a chapter lock skips ahead to the next chapter's offer
+- "Reset" means clear the override, not reset the evidence
+- the unmeasured time estimates
+
+Pass 14 added a related gradebook change: a passed test-out now marks the chapter check "Exempt (test-out)".
