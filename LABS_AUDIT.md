@@ -37,8 +37,9 @@ through its UI and then reloaded. **Now** is the code at the end of this branch,
 - **The `gui-renew` instructions** told students to use a Renew button that Windows 11 does not have.
 - **There were no "did you mean" suggestions** and no Linux equivalents for Windows habits.
 
-**Now: 69 labs (46 original + 23 new, including five real Linux VM labs) plus 9 classroom labs (CL-4, CL-6…CL-13).**
-- All 69 labs complete through the UI at desktop, phone and tablet.
+**Now (round 2): 79 labs (46 original + 33 new, including 15 real Linux VM labs), 2 lab scenarios with 4 PBQ stage
+labs (2 of them on real VMs), plus 9 classroom labs (CL-4, CL-6…CL-13).**
+- All 79 labs and all 4 stages complete through the UI at desktop, phone and tablet.
 - Each completion checks:
   - a server-side record (`lab_progress` score 100 plus a `lab_completion` row)
   - reload resume (every objective still ticked)
@@ -46,6 +47,46 @@ through its UI and then reloaded. **Now** is the code at the end of this branch,
   - the instructor views
 - CL-4…CL-13 are signed off in the UI by the instructor, and the student sees the score and the feedback.
 - Results per lab and view are in the table below.
+
+## Round 2 (18 Oct 2026): ten more real Linux labs, Windows fidelity, lab scenarios
+
+All of it is tagged *Pending SME review*. Details are in `REAL_ENVIRONMENTS.md`.
+
+- **Ten more real-VM labs** (`labs_vm_more.py`), on our own image (`docs/VM_IMAGE.md`):
+  - `linux-vm-logs`: log investigation, including a rotated `.gz` log
+  - `linux-vm-cron`: cron, with proof that the job really fired
+  - `linux-vm-users`: users, groups and sudo
+  - `linux-vm-packages`: apk plus a port conflict
+  - `linux-vm-firewall`: iptables, proved from a second VM
+  - `linux-vm-disk`: partitions, ext4, fstab by UUID, swap
+  - `linux-vm-ssh`: keys between two VMs, then passwords off
+  - `linux-vm-script`: a shell script, black-box tested
+  - `linux-vm-dns`: dnsmasq zone and forwarder on 2 VMs
+  - `linux-vm-nettrouble`: DHCP typo, router option and default route on 2 VMs, path to a remote host
+
+  Each lab has the phone key bar, sim fallbacks, hints and the event log. Each passes headless with its solution and
+  scores only `boot` with no commands. All of them pass e2e on desktop, phone and tablet.
+- **Windows simulator fidelity** (`win_fidelity.py`):
+  - realistic `ipconfig /all`, `ping`, `tracert`, `nslookup`, PowerShell tables and error records
+  - elevation errors
+  - wrong turns that branch: double release, flushing before evidence, a flush that cannot fix the fault. They are
+    recorded in `state.wrong_turns`.
+
+  Grading is unchanged (`tests/test_win_fidelity.py` re-runs every solution), and the simulators still say they are
+  simulations.
+- **Lab scenarios (PBQ mode)** (`labs_scenario.py`, `/labs/scenario/<id>`): SCN-DNS (Windows sim → 2 real VMs) and
+  SCN-LAN2 (2 real VMs → Windows sim).
+  - The ticket text only, with hidden checks.
+  - Count-only feedback; hints and the event log are unchanged.
+  - Stage 2 unlocks after stage 1.
+  - A hub with time, hints, failed checks and wrong turns per stage.
+- **SME tag.** Every lab added on this branch, every stage and every scenario has `review: "Pending SME review"`,
+  the same tag as the curriculum passes 9–10. Instructors see a note on the lab page and a tag in the lists;
+  students see nothing (`test_new_labs_tagged_pending_sme_review_instructor_only`).
+- **Results.**
+  - e2e: 288/288.
+  - axe light/dark sweep of the lab pages: see "Known limits" for the latest run.
+  - pytest and Node: see `REFINEMENT_NOTES.md`.
 
 ## What was broken → what is fixed
 
@@ -237,7 +278,10 @@ Kind legend:
 | vm | real Linux VM(s) in the browser (v86) |
 
 
-## Inventory and results (e2e run of 18 Oct 2026, 246/246 checks passed: 234 lab×view + 12 instructor/classroom)
+## Inventory and results (e2e run of 18 Oct 2026, round 2: 288/288 checks passed: 276 lab×view + 12 instructor/classroom)
+
+🆕 = added on the labs branch. † = tagged *Pending SME review* (shown to instructors only).
+Run: `tools/labs_e2e.py --views desktop,phone,tablet --json …` against `labs_dev.db` on port 5191.
 
 | # | Lab | Kind | Obj. | Course objectives | Chapters | Baseline D/P/T | Now D/P/T (e2e) |
 |---|---|---|---|---|---|---|---|
@@ -287,29 +331,43 @@ Kind legend:
 | 44 | `sw-describe` — Switch — Access port description | switch | 2 | – | NO2 | ok/ok/ok | ✅✅✅ |
 | 45 | `ticket-intake` — Block 1 — Ticket intake desk | ticket | 6 | – | IT1 | ok/ok/ok | ✅✅✅ |
 | 46 | `hw-board` — Block 2 — Identify the board on the bench | ticket | 7 | – | IT2 | ok/ok/ok | ✅✅✅ |
-| 47 | `net-subnet` 🆕 — Subnetting workbench — calculate, size and validate | activity | 4 | NO-1.2, IT-5.1 | IT5, NO1 | new/new/new | ✅✅✅ |
-| 48 | `hw-cables` 🆕 — Connector and cable identification bench | activity | 3 | IT-3.4, NO-2.3 | IT3, NO2 | new/new/new | ✅✅✅ |
-| 49 | `hw-pc-build` 🆕 — Workstation build — pick compatible parts | activity | 2 | IT-2.1, IT-2.2, IT-3.1, IT-3.3 | IT2, IT3 | new/new/new | ✅✅✅ |
-| 50 | `ticket-method` 🆕 — Troubleshooting methodology — work a ticket end to end | activity | 6 | IT-7.1, IT-7.2, IT-7.3, IT-1.3, NO-6.1 | IT7, NO6 | new/new/new | ✅✅✅ |
-| 51 | `win-net-cli` 🆕 — Windows CLI — isolate a name-resolution fault | windows | 10 | IT-5.3, IT-13.1, IT-13.2, NO-4.2 | CL6, IT13, IT5, NO4 | new/new/new | ✅✅✅ |
-| 52 | `linux-shell` 🆕 — Linux shell — files, permissions and logs | linux | 8 | IT-9.1, IT-9.3 | CL2, IT9 | new/new/new | ✅✅✅ |
-| 53 | `print-trouble` 🆕 — PowerShell — clear a stuck print queue | windows | 9 | IT-4.3, IT-13.1 | CL6, IT13, IT4 | new/new/new | ✅✅✅ |
-| 54 | `rtr-vlan-acl` 🆕 — Router — inter-VLAN routing and a guest ACL | router | 9 | NO-2.2, NO-4.3, NO-5.3, NO-9.2 | NO4, NO5, NO9 | new/new/new | ✅✅✅ |
-| 55 | `sw-vlan-multi` 🆕 — Switch — two VLANs, access ports and a pruned trunk | switch | 8 | NO-2.2, NO-9.1 | NO2, NO9 | new/new/new | ✅✅✅ |
-| 56 | `wifi-secure` 🆕 — SOHO router — secure the admin page, Wi-Fi and guest network | activity | 4 | IT-5.4, NO-3.3, NO-5.2 | IT5, NO3, NO5 | new/new/new | ✅✅✅ |
-| 57 | `sec-malware` 🆕 — Malware response — the seven-step removal process | activity | 5 | IT-10.2, IT-10.4 | CL3, IT10 | new/new/new | ✅✅✅ |
-| 58 | `ops-backup` 🆕 — Backup and recovery — types, restore sets, 3-2-1, RPO/RTO | activity | 6 | IT-12.3, IT-3.2 | CL5, IT12 | new/new/new | ✅✅✅ |
-| 59 | `virt-vm` 🆕 — Virtualization — build a Windows 11 lab VM | activity | 3 | IT-6.1, IT-6.3, IT-8.1 | IT6 | new/new/new | ✅✅✅ |
-| 60 | `mob-mdm` 🆕 — Mobile devices — connectivity and MDM tickets inside policy | activity | 4 | IT-4.2, IT-1.4 | IT4 | new/new/new | ✅✅✅ |
-| 61 | `win-ad-users` 🆕 — Active Directory Users and Computers — onboard, unlock, offboard | win11gui | 6 | IT-10.1, IT-8.4, IT-1.4 | CL1, CL3, IT10, IT8 | new/new/new | ✅✅✅ |
-| 62 | `win-laptop-ports` 🆕 — Windows CLI — battery health, VM check, MX records and port tests | windows | 6 | IT-4.1, IT-5.1, IT-5.2, IT-6.1 | IT4, IT5, IT6 | new/new/new | ✅✅✅ |
-| 63 | `win-wifi-survey` 🆕 — Windows CLI — Wi-Fi survey on a laptop (signal, band, channel) | windows | 6 | IT-5.4, NO-3.3 | IT5, NO3 | new/new/new | ✅✅✅ |
-| 64 | `hv-vswitch` 🆕 — Hyper-V host — isolated virtual switch and checkpoints (PowerShell) | windows | 8 | IT-6.1, IT-6.3 | IT6 | new/new/new | ✅✅✅ |
-| 65 | `linux-vm-perms` 🆕 — Real Linux VM — files, ownership, permissions and a support script | vm | 7 | IT-9.1, IT-9.3 | CL2, IT9 | new/new/new | ✅✅✅ |
-| 66 | `linux-vm-shell` 🆕 — Real Linux VM — shell basics: files, permissions, scripts and logs | vm | 8 | IT-9.1, IT-9.3 | CL2, IT9 | new/new/new | ✅✅✅ |
-| 67 | `linux-vm-services` 🆕 — Real Linux VM — services, processes, a filling disk, cron and syslog | vm | 8 | IT-9.1, NO-5.1 | CL2, IT9, NO5 | new/new/new | ✅✅✅ |
-| 68 | `linux-vm-netclient` 🆕 — Real Linux VM — lease, gateway and name resolution on a live network | vm | 8 | IT-5.1, IT-5.3, IT-13.2, NO-4.1, NO-4.2 | CL6, IT13, IT5, NO4 | new/new/new | ✅✅✅ |
-| 69 | `linux-vm-routing` 🆕 — Real Linux VMs — route between two networks (two machines, one router) | vm | 8 | NO-9.2, IT-5.1, IT-5.3 | IT5, NO9 | new/new/new | ✅✅✅ |
+| 47 | `net-subnet` 🆕 — Subnetting workbench — calculate, size and validate † | activity | 4 | NO-1.2, IT-5.1 | IT5, NO1 | new/new/new | ✅✅✅ |
+| 48 | `hw-cables` 🆕 — Connector and cable identification bench † | activity | 3 | IT-3.4, NO-2.3 | IT3, NO2 | new/new/new | ✅✅✅ |
+| 49 | `hw-pc-build` 🆕 — Workstation build — pick compatible parts † | activity | 2 | IT-2.1, IT-2.2, IT-3.1, IT-3.3 | IT2, IT3 | new/new/new | ✅✅✅ |
+| 50 | `ticket-method` 🆕 — Troubleshooting methodology — work a ticket end to end † | activity | 6 | IT-7.1, IT-7.2, IT-7.3, IT-1.3, NO-6.1 | IT7, NO6 | new/new/new | ✅✅✅ |
+| 51 | `win-net-cli` 🆕 — Windows CLI — isolate a name-resolution fault † | windows | 10 | IT-5.3, IT-13.1, IT-13.2, NO-4.2 | CL6, IT13, IT5, NO4 | new/new/new | ✅✅✅ |
+| 52 | `linux-shell` 🆕 — Linux shell — files, permissions and logs † | linux | 8 | IT-9.1, IT-9.3 | CL2, IT9 | new/new/new | ✅✅✅ |
+| 53 | `print-trouble` 🆕 — PowerShell — clear a stuck print queue † | windows | 9 | IT-4.3, IT-13.1 | CL6, IT13, IT4 | new/new/new | ✅✅✅ |
+| 54 | `rtr-vlan-acl` 🆕 — Router — inter-VLAN routing and a guest ACL † | router | 9 | NO-2.2, NO-4.3, NO-5.3, NO-9.2 | NO4, NO5, NO9 | new/new/new | ✅✅✅ |
+| 55 | `sw-vlan-multi` 🆕 — Switch — two VLANs, access ports and a pruned trunk † | switch | 8 | NO-2.2, NO-9.1 | NO2, NO9 | new/new/new | ✅✅✅ |
+| 56 | `wifi-secure` 🆕 — SOHO router — secure the admin page, Wi-Fi and guest network † | activity | 4 | IT-5.4, NO-3.3, NO-5.2 | IT5, NO3, NO5 | new/new/new | ✅✅✅ |
+| 57 | `sec-malware` 🆕 — Malware response — the seven-step removal process † | activity | 5 | IT-10.2, IT-10.4 | CL3, IT10 | new/new/new | ✅✅✅ |
+| 58 | `ops-backup` 🆕 — Backup and recovery — types, restore sets, 3-2-1, RPO/RTO † | activity | 6 | IT-12.3, IT-3.2 | CL5, IT12 | new/new/new | ✅✅✅ |
+| 59 | `virt-vm` 🆕 — Virtualization — build a Windows 11 lab VM † | activity | 3 | IT-6.1, IT-6.3, IT-8.1 | IT6 | new/new/new | ✅✅✅ |
+| 60 | `mob-mdm` 🆕 — Mobile devices — connectivity and MDM tickets inside policy † | activity | 4 | IT-4.2, IT-1.4 | IT4 | new/new/new | ✅✅✅ |
+| 61 | `win-ad-users` 🆕 — Active Directory Users and Computers — onboard, unlock, offboard † | win11gui | 6 | IT-10.1, IT-8.4, IT-1.4 | CL1, CL3, IT10, IT8 | new/new/new | ✅✅✅ |
+| 62 | `win-laptop-ports` 🆕 — Windows CLI — battery health, VM check, MX records and port tests † | windows | 6 | IT-4.1, IT-5.1, IT-5.2, IT-6.1 | IT4, IT5, IT6 | new/new/new | ✅✅✅ |
+| 63 | `win-wifi-survey` 🆕 — Windows CLI — Wi-Fi survey on a laptop (signal, band, channel) † | windows | 6 | IT-5.4, NO-3.3 | IT5, NO3 | new/new/new | ✅✅✅ |
+| 64 | `hv-vswitch` 🆕 — Hyper-V host — isolated virtual switch and checkpoints (PowerShell) † | windows | 8 | IT-6.1, IT-6.3 | IT6 | new/new/new | ✅✅✅ |
+| 65 | `linux-vm-perms` 🆕 — Real Linux VM — files, ownership, permissions and a support script † | vm | 7 | IT-9.1, IT-9.3 | CL2, IT9 | new/new/new | ✅✅✅ |
+| 66 | `linux-vm-shell` 🆕 — Real Linux VM — shell basics: files, permissions, scripts and logs † | vm | 8 | IT-9.1, IT-9.3 | CL2, IT9 | new/new/new | ✅✅✅ |
+| 67 | `linux-vm-services` 🆕 — Real Linux VM — services, processes, a filling disk, cron and syslog † | vm | 8 | IT-9.1, NO-5.1 | CL2, IT9, NO5 | new/new/new | ✅✅✅ |
+| 68 | `linux-vm-netclient` 🆕 — Real Linux VM — lease, gateway and name resolution on a live network † | vm | 8 | IT-5.1, IT-5.3, IT-13.2, NO-4.1, NO-4.2 | CL6, IT13, IT5, NO4 | new/new/new | ✅✅✅ |
+| 69 | `linux-vm-routing` 🆕 — Real Linux VMs — route between two networks (two machines, one router) † | vm | 8 | NO-9.2, IT-5.1, IT-5.3 | IT5, NO9 | new/new/new | ✅✅✅ |
+| 70 | `linux-vm-logs` 🆕 — Real Linux VM — log investigation: brute force, a breach and a failed backup † | vm | 8 | IT-9.1, IT-10.4, NO-5.1 | CL2, CL3, IT10, IT9, NO5 | new/new/new | ✅✅✅ |
+| 71 | `linux-vm-cron` 🆕 — Real Linux VM — scheduled tasks that never ran (cron) † | vm | 8 | IT-9.1, IT-12.3 | CL2, CL5, IT12, IT9 | new/new/new | ✅✅✅ |
+| 72 | `linux-vm-users` 🆕 — Real Linux VM — accounts, groups and least-privilege sudo for a help-desk team † | vm | 8 | IT-9.1, IT-10.1, IT-9.3 | CL2, CL3, IT10, IT9 | new/new/new | ✅✅✅ |
+| 73 | `linux-vm-packages` 🆕 — Real Linux VM — package and service troubleshooting (apk, init scripts, ports) † | vm | 8 | IT-9.1, IT-10.3 | CL2, CL3, IT10, IT9 | new/new/new | ✅✅✅ |
+| 74 | `linux-vm-firewall` 🆕 — Real Linux VMs — host firewall with iptables (default deny, stateful, admin-only SSH) † | vm | 8 | NO-4.3, NO-5.3, IT-10.1 | CL3, IT10, NO4, NO5 | new/new/new | ✅✅✅ |
+| 75 | `linux-vm-disk` 🆕 — Real Linux VM — add a data disk: partitions, ext4, mount by UUID, swap and fstab † | vm | 8 | IT-9.1, IT-3.1, IT-9.4 | CL2, IT3, IT9 | new/new/new | ✅✅✅ |
+| 76 | `linux-vm-ssh` 🆕 — Real Linux VMs — SSH between two machines with keys, then turn passwords off † | vm | 9 | NO-5.2, IT-10.1, IT-9.4 | CL2, IT9, NO5 | new/new/new | ✅✅✅ |
+| 77 | `linux-vm-script` 🆕 — Real Linux VM — automate it: a backup script with rotation, exit codes and logging † | vm | 8 | IT-9.1, IT-12.3, IT-12.4 | CL2, CL5, IT12, IT9 | new/new/new | ✅✅✅ |
+| 78 | `linux-vm-dns` 🆕 — Real Linux VMs — DNS troubleshooting chain: client, internal resolver, records and forwarding † | vm | 8 | NO-4.2, IT-13.2, IT-5.3 | CL6, IT13, IT5, NO4 | new/new/new | ✅✅✅ |
+| 79 | `linux-vm-nettrouble` 🆕 — Real Linux VMs — multi-VM network troubleshooting: no lease, wrong gateway, broken route † | vm | 9 | NO-4.1, NO-6.1, NO-6.3, NO-1.1 | NO1, NO4, NO6 | new/new/new | ✅✅✅ |
+| 80 | `scn-dns-evidence` 🆕 — SCN-DNS · Stage 1 · User's PC (Windows 11 simulation) † | windows | 5 | NO-4.2, NO-6.1, IT-13.2 | – | new/new/new | ✅✅✅ |
+| 81 | `scn-dns-fix` 🆕 — SCN-DNS · Stage 2 · DNS server and test client (2 real Linux VMs) † | vm | 8 | NO-4.2, NO-6.1, IT-13.2, IT-5.3 | – | new/new/new | ✅✅✅ |
+| 82 | `scn-lan2-fix` 🆕 — SCN-LAN2 · Stage 1 · LAN 2 router and PC (2 real Linux VMs) † | vm | 9 | NO-4.1, NO-6.1, NO-6.3, NO-1.1 | – | new/new/new | ✅✅✅ |
+| 83 | `scn-lan2-verify` 🆕 — SCN-LAN2 · Stage 2 · CFO's laptop (Windows 11 simulation) † | windows | 4 | NO-4.1, NO-6.1, NO-6.3 | – | new/new/new | ✅✅✅ |
 | – | `CL-4` — Print path and laptop FRU identification | classroom (sign-off) | rubric | – | – | not recorded | ✅✅✅ |
 | – | `CL-6` — Build, snapshot and network a virtual machine | classroom (sign-off) | rubric | – | – | not recorded | ✅✅✅ |
 | – | `CL-7` — Structured troubleshooting drills on staged faults | classroom (sign-off) | rubric | – | – | not recorded | ✅✅✅ |
@@ -376,9 +434,17 @@ Kind legend:
 - **Concurrent requests for the same lab can race.** Last write wins. The terminal client queues its commands,
   so this matters only if a student has the same lab open in two tabs.
 - **Real-VM labs are standard for the Linux and network-client skills, but two things are still open.** First,
-  test them on physical phones; the figures above come from CPU-throttled Chromium. Second, build an
-  institution-owned image (recipe in `docs/VM_IMAGE.md`) to meet the GPL source obligation and to unlock
-  in-VM namespaces, bridges and VLANs. To turn a real lab off, remove it from `NEW_CHAPTER_LABS`. Its simulated
+  test them on physical phones; the figures above come from CPU-throttled Chromium. Second, the image is now
+  our own build (`tools/vm_image/`). Before public use, publish its sources or a written offer
+  (`static/vendor/v86/LICENSES.md`). To turn a real lab off, remove it from `NEW_CHAPTER_LABS`. Its simulated
   fallback stays in place.
 - **Simulated device output follows the real tools but is not exhaustive.** Unknown commands get "Did you mean"
   suggestions and a pointer to `help`.
+- **Round 2 limits.**
+  - PBQ masking is a UI and response layer. A student who reads the page source or the network responses still
+    cannot see the check text, but the stage's base lab (its sim fallback) is a normal lab with visible
+    objectives. That makes it a formative scenario, not a secure exam.
+  - Windows PowerShell cmdlets still run at a `C:\>` prompt in the CLI simulator.
+  - `tracert` stops honestly where the model ends.
+  - The cron lab's solution waits up to 75 s for the next minute.
+  - The VM labs were measured in Chromium with no CPU throttle (round 2). Throttled-phone numbers are from round 1.
