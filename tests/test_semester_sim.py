@@ -58,3 +58,22 @@ def test_reading_alone_does_not_block_a_mastery_check_offer():
     assert P.strong_so_far(mastered + read_only)[0] is True
     answered_dev = [{'state': 'developing', 'answered': True} for _ in range(6)]
     assert P.strong_so_far(mastered + answered_dev)[0] is False
+
+
+def test_strong_rank_check_uses_the_ranked_list_round6():
+    """Content round 6: replay of the failing full-suite order (strong 32 listed for a repeated mix-up below every weak,
+    mixed and disengaged student in the ranked list, but above inactive-only disengaged 47, whom the page lists
+    separately). The check passes; a strong student above a mixed one, or listed for another reason, still fails."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('semester_sim_mod', os.path.join(ROOT, 'tools', 'semester_sim.py'))
+    src = open(spec.origin).read()
+    ns = {}
+    exec(compile(src[src.index('def strong_rank_ok'):src.index('\n\n\n', src.index('def strong_rank_ok'))], spec.origin, 'exec'), ns)
+    ok = ns['strong_rank_ok']
+    prof = {45: 'weak', 48: 'disengaged', 40: 'mixed', 38: 'mixed', 35: 'good', 32: 'strong', 47: 'disengaged'}
+    order = [(45, ['stuck', 'misconception']), (48, ['stuck', 'misconception', 'inactive']), (40, ['stuck', 'misconception']),
+             (38, ['stuck', 'misconception']), (35, ['misconception']), (32, ['misconception']), (47, ['inactive'])]
+    assert ok(order, prof, {32})
+    above_mixed = order[:3] + [(32, ['misconception'])] + [x for x in order[3:] if x[0] != 32]
+    assert not ok(above_mixed, prof, {32})
+    assert not ok([x if x[0] != 32 else (32, ['misconception', 'missed_review']) for x in order], prof, {32})
