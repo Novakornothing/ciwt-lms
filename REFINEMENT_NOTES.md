@@ -1166,8 +1166,10 @@ IT-13.1 and NO-9.2, which had only one.
   heuristic mapping of Q5.5.
 
 **4. Course packages.** Both `/workspace/artifacts/course-package` and `course-package-content` (and their `.zip`s) were
-rebuilt from the clean tree at 5377028. Their MANIFESTs record `git_head` 5377028 with no dirty files, and all document
-model hashes are identical. `curriculum_readiness --package` passes on both. Each zip has 45 files, matching its folder.
+rebuilt from the clean tree at the final pass-15 HEAD, afc0ca4, after the last commit of the pass. Their MANIFESTs
+record `git_head` afc0ca4 with no dirty files, and all document model hashes are identical. (A first build at 5377028
+was replaced; the two commits in between changed only these notes and the readiness JSON, not any packaged document.)
+Pass 16 rebuilt them again at its own final HEAD; see that section. `curriculum_readiness --package` passes on both. Each zip has 45 files, matching its folder.
 The old content-branch build from b6a32e3 was replaced.
 
 **Tests.** Full pytest: 674 passed (`env -u PYTHONHASHSEED`, 11 min 15 s). Node: 41/41. Cert tests 33/33. New:
