@@ -233,6 +233,20 @@ def drive_gui(page, lab, view, notes):
                 notes.append(f'{ev}: {err}')
 
 
+
+MARK = "()=>{const s=document.querySelector('.vm-screen:not([hidden])');const l=s&&s.querySelector('.ln:last-child');if(l)l._e2eMark=1}"
+MOVED = "()=>{const s=document.querySelector('.vm-screen:not([hidden])');const l=s&&s.querySelector('.ln:last-child');return !!l&&!l._e2eMark}"
+
+
+def vm_send(page, send, last_ln, timeout=240000):
+    """round 5: send one line and wait for *its* prompt. Waiting only for "a prompt is last" raced on throttled
+    phones: the old prompt was still the last line when the echo had not arrived yet, so the next line went to the
+    still-running program (ssh-copy-id took the next command as its answer)."""
+    page.evaluate(MARK)
+    send()
+    page.wait_for_function(MOVED, timeout=60000)       # the VM echoed the newline: a new console line exists
+    page.wait_for_function(last_ln, timeout=timeout)
+
 def drive_vm(page, lab, view, notes):
     """Real VM(s): boot v86 in the page, type the commands into the real shells (switching machine tabs), Check my work."""
     import re as _re
@@ -255,9 +269,7 @@ def drive_vm(page, lab, view, notes):
             cur = mach
         page.wait_for_function(last_ln, timeout=60000)
         page.fill('#termInput', cmd)
-        page.press('#termInput', 'Enter')
-        page.wait_for_timeout(80)
-        page.wait_for_function(last_ln, timeout=180000)   # some steps really wait (cron: sleep 75)
+        vm_send(page, lambda: page.press('#termInput', 'Enter'), last_ln, 180000)   # some steps really wait (cron: sleep 75)
     if lab['vm'].get('net'):
         page.click('#vmTab-_packets')
         n = page.locator('#vmPackets .pk').count()
@@ -391,9 +403,7 @@ def drive_vm_touch(page, lab, view, notes, metrics):
         page.wait_for_function(last_ln, timeout=60000)
         if page.evaluate("document.activeElement && document.activeElement.id") != 'termInput':
             page.tap('#termInput')
-        type_line(page, cmd, i)
-        page.wait_for_timeout(80)
-        page.wait_for_function(last_ln, timeout=240000)
+        vm_send(page, lambda: type_line(page, cmd, i), last_ln)
     if lab['vm'].get('net'):
         page.locator('#vmTab-_packets').tap()
         n = page.locator('#vmPackets .pk').count()
