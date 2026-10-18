@@ -297,3 +297,5 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
 /* instructor-only "Pending SME review" tag on labs added in the labs overhaul */
 .lab-sme-tag { display: inline-block; font-size: .7rem; font-weight: 600; line-height: 1.3; padding: .05rem .4rem; margin-left: .35rem;
   border: 1px solid currentColor; border-radius: .25rem; color: var(--bs-secondary-color, #555); vertical-align: middle; white-space: nowrap; }
+/* the theme's light alert-success text (#0d9f6e on #e4f8f1) is ~3.2:1; darker text for the scenario's resolved banner (~6.6:1) */
+html:not([data-theme="dark"]) .scn-resolved { color: #08603f; }
