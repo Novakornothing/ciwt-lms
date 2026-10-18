@@ -717,3 +717,8 @@ Windows), `docs/VM_IMAGE.md` (image, measurements, institution build recipe). Me
   - e2e: `tools/labs_e2e.py` passed 246/246 (78 labs × desktop/phone/tablet + 12 instructor checks).
   - `tools/vm_device_check.py` covers throttled phones: boot, save/resume, reset and an axe check.
   - Screenshots are in `/workspace/ciwt/screenshots/labs/`.
+  - After the merge of `refinement` at ee0a353 (pass 11):
+    - pytest: 477 passed.
+    - e2e sample (13 labs of every kind × desktop/phone, plus instructor checks): 35/35.
+    - axe on every lab page at 390/820/1280 px: 0 violations in light and dark themes. Fixed two contrast bugs: the
+      router tag, and the Windows 11 desk in dark theme.
