@@ -4,7 +4,7 @@
     {% set pbq_hidden = lab.pbq and not (boot and boot.complete) %}
     <div class="card-header navy"><h2 class="h6 mb-0">{{ 'Checks' if lab.pbq else 'Objectives' }}</h2></div>
     <div class="card-body">
-      {% if lab.pbq %}<p class="small mb-2 pbq-note"><i class="bi bi-eye-slash" aria-hidden="true"></i> Performance-based ticket: the {{ lab.objectives|length }} checks are hidden until you resolve it. Work from the symptoms; Check my work tells you how many pass.</p>{% endif %}
+      {% if lab.pbq %}<p class="small mb-2 pbq-note"><i class="bi bi-eye-slash" aria-hidden="true"></i> Performance-based ticket: the {{ lab.objectives|length }} checks are hidden until you resolve it. Work from the symptoms; the progress bar{% if lab.kind == "vm" %} and Check my work{% endif %} show how many pass, not which.</p>{% endif %}
       <ol class="lab-objectives" id="labObjectives">
         {% for o in lab.objectives %}
         <li class="obj-item" data-oid="{{ o.id }}"{% if lab.pbq %} data-pbq="1"{% endif %}><span class="ck" aria-hidden="true"></span><span><span class="obj-text">{{ ('Hidden check ' ~ loop.index) if pbq_hidden else o.text }}</span> <span class="visually-hidden">(<span class="sr-state">not done</span>)</span></span></li>
