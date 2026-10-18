@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% from "mastery/_macros.html" import status_chip, demo_ribbon with context %}
+{% block title %}My learning plan — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">My plan</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">My learning plan</div>
+  <h1 class="h3 mb-1">{{ plan.mastered }} of {{ plan.total }} objectives mastered</h1>
+  <p class="mb-0">{% if plan.exam_date %}Target exam date {{ plan.exam_date.strftime('%a %d %b %Y') }}{% if plan.days_left is not none and plan.days_left > 0 %} · {{ plan.days_left }} day{{ 's' if plan.days_left != 1 }} to go{% endif %}{% else %}Set a target exam date and the plan works backward from it.{% endif %}</p>
+</div>
+<div class="d-flex flex-wrap gap-2 mb-3">{{ demo_ribbon(st.demo) }}</div>
+<p class="mx-frame">This plan shows your progress toward mastering each objective. It is <strong>not</strong> a prediction of your exam result, and nothing here changes a grade.</p>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-5">
+    <section class="card mb-3" aria-labelledby="mxPlanToday">
+      <div class="card-header navy"><h2 class="h6 mb-0" id="mxPlanToday">Today</h2></div>
+      <div class="card-body">
+        {% if daily and daily.done_today %}<p class="mb-2"><span aria-hidden="true">✓</span> Daily review done.</p>
+        {% elif daily and daily.n %}<p class="mb-2">Daily review: {{ daily.n }} question{{ 's' if daily.n != 1 }}, about {{ daily.minutes }} min.</p>
+        <a class="btn btn-brand mb-2" href="{{ daily.url }}">Start daily review</a>
+        {% else %}<p class="mb-2">No daily review yet: it starts after your first answers on an objective.</p>{% endif %}
+        {% for c in checkins %}<p class="small mb-0"><i class="bi bi-people" aria-hidden="true"></i> Check-in with your instructor on {{ c.on_date.strftime('%a %d %b') }}{% if c.note %}: {{ c.note }}{% endif %}</p>{% endfor %}
+      </div>
+    </section>
+    <section class="card" aria-labelledby="mxPlanSet">
+      <div class="card-header navy"><h2 class="h6 mb-0" id="mxPlanSet">My settings</h2></div>
+      <form class="card-body" method="post" action="{{ url_for('mastery_plan', section_id=section.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label" for="mxExam">Target exam date</label>
+          <input class="form-control" type="date" id="mxExam" name="exam_date" min="{{ min_date }}" max="{{ max_date }}" value="{{ pl.exam_date.isoformat() if pl and pl.exam_date else '' }}" aria-describedby="mxExamHelp">
+          <div class="form-text" id="mxExamHelp">Any date after today, up to two years ahead.</div>
+          {% if pl and pl.exam_date %}<div class="form-check mt-1"><input class="form-check-input" type="checkbox" name="clear_date" value="1" id="mxClear"><label class="form-check-label" for="mxClear">Remove the date (leave the date box empty)</label></div>{% endif %}
+        </div>
+        <fieldset class="mb-3">
+          <legend class="form-label">When a review is suggested, show me</legend>
+          {% for v, label in [('', 'Whatever the engine picks'), ('review', 'Short review (lesson sections)'), ('alt', 'Another way to see it (plain English, analogy, worked example)'), ('practice', 'Practice questions only')] %}
+          <div class="form-check mx-opt"><input class="form-check-input" type="radio" name="review_pref" id="mxPref{{ loop.index }}" value="{{ v }}"{% if (pl.review_pref if pl else '') == v %} checked{% endif %}><label class="form-check-label" for="mxPref{{ loop.index }}">{{ label }}</label></div>
+          {% endfor %}
+        </fieldset>
+        <div class="mb-3">
+          <label class="form-label" for="mxSize">Daily review size</label>
+          <select class="form-select" id="mxSize" name="daily_size">{% for n in range(daily_min, daily_max + 1) %}<option value="{{ n }}"{% if (pl.daily_size if pl else 8) == n %} selected{% endif %}>{{ n }} questions (about {{ ((n * 30) / 60)|round(0, 'ceil')|int }} min)</option>{% endfor %}</select>
+        </div>
+        <button class="btn btn-brand" type="submit">Save my plan</button>
+      </form>
+    </section>
+  </div>
+  <div class="col-lg-7">
+    <section class="card h-100" aria-labelledby="mxPlanWeeks">
+      <div class="card-header navy"><h2 class="h6 mb-0" id="mxPlanWeeks">Week by week</h2></div>
+      <div class="card-body">
+        {% if not plan.exam_date %}
+        <p class="mb-0">Set a target exam date to see weekly targets. {{ plan.remaining|length }} objective{{ 's' if plan.remaining|length != 1 }} still to master.</p>
+        {% elif plan.days_left is not none and plan.days_left <= 0 %}
+        <p class="mb-0">Your target date has passed. Pick a new one to re-plan.</p>
+        {% elif not plan.remaining %}
+        <p class="mb-0">Every objective is mastered. Keep the daily review going so it stays that way.</p>
+        {% else %}
+        <p>About <strong>{{ plan.per_week }} objective{{ 's' if plan.per_week != 1 }} a week</strong> gets everything mastered by your date. This week: {{ plan.this_week }} mastered with evidence from this week; last 14 days: {{ plan.recent }}.
+          {% if plan.status == 'ahead' %}You are at or above this week’s target.{% elif plan.status == 'on' %}Your last two weeks match this pace.{% else %}Your last two weeks are below this pace; the daily review and the reviews on your path are the quickest way to catch up.{% endif %}</p>
+        <ol class="mx-weeks">
+          {% for w in plan.weeks %}
+          <li class="mx-week">
+            <div class="d-flex flex-wrap justify-content-between gap-2"><strong>Week {{ w.n }}</strong><span class="small mx-muted">{{ w.start.strftime('%d %b') }} – {{ w.end.strftime('%d %b') }}</span></div>
+            {% if w.targets %}<div class="small">Master: {% for o in w.targets %}<span class="mx-code">{{ o }}</span>{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
+            <div class="small mx-muted">Spaced reviews coming due: {{ w.review_due }}{% if w.review_due %} (about {{ ((w.review_due * 30) / 60)|round(0, 'ceil')|int }} min over the week){% endif %}</div>
+          </li>
+          {% endfor %}
+        </ol>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="card mb-4" aria-labelledby="mxMapH">
+  <div class="card-header navy"><h2 class="h6 mb-0" id="mxMapH">My mastery map</h2></div>
+  <div class="card-body">
+    <p class="small">Choose how you want to work on any objective. All options are optional and never graded.</p>
+    {% for c in chapters %}
+    <details class="mx-why mb-2"{% if loop.first %} open{% endif %}>
+      <summary>Chapter {{ c.chapter }} · {{ c.rows|selectattr('row.state', 'equalto', 'mastered')|list|length }} of {{ c.rows|length }} mastered</summary>
+      <div class="mx-why-body">
+        {% for r in c.rows %}
+        <div class="mx-obj-row">
+          <div><span class="mx-code">{{ r.obj }}</span> {{ r.text }}</div>
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            {{ status_chip(r.row.state, r.est.pct, r.est.confidence) }}
+            {% if r.row.state != 'waived' %}
+            <a class="btn btn-sm btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=r.obj, variant='review') }}">Review<span class="visually-hidden"> {{ r.obj }}</span></a>
+            <a class="btn btn-sm btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=r.obj, variant='alt') }}">Another way<span class="visually-hidden"> {{ r.obj }}</span></a>
+            <a class="btn btn-sm btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=r.obj, variant='practice') }}">Practice<span class="visually-hidden"> {{ r.obj }}</span></a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

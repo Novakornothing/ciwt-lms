@@ -1,0 +1,34 @@
+{
+  "_note": "Fixture event lists in the lab_event schema of the labs branch (lab_progress.LabEvent): seq, at, kind, action, outcome, newly, score, detail. Hand-written for tests; not real student data.",
+  "lab": {"id": "win-ipconfig", "objectives": [{"id": "show", "text": "Show the IP configuration"}, {"id": "renew", "text": "Renew the lease"}, {"id": "ping", "text": "Ping the gateway"}]},
+  "efficient": [
+    {"seq": 1, "at": "2026-10-01T10:00:00", "kind": "cmd", "action": "ipconfig /all", "outcome": "progress", "newly": "[\"show\"]"},
+    {"seq": 2, "at": "2026-10-01T10:01:00", "kind": "cmd", "action": "ipconfig /renew", "outcome": "progress", "newly": "[\"renew\"]"},
+    {"seq": 3, "at": "2026-10-01T10:02:00", "kind": "cmd", "action": "ping 10.0.0.1", "outcome": "progress", "newly": "[\"ping\"]"},
+    {"seq": 4, "at": "2026-10-01T10:02:30", "kind": "complete", "action": "win-ipconfig", "outcome": "ok"}
+  ],
+  "guessing": [
+    {"seq": 1, "at": "2026-10-01T10:00:00", "kind": "cmd", "action": "ipconfig /show", "outcome": "unknown"},
+    {"seq": 2, "at": "2026-10-01T10:00:20", "kind": "cmd", "action": "ip config", "outcome": "unknown"},
+    {"seq": 3, "at": "2026-10-01T10:00:40", "kind": "cmd", "action": "ipconfig -a", "outcome": "unknown"},
+    {"seq": 4, "at": "2026-10-01T10:01:00", "kind": "cmd", "action": "ipconfig /all", "outcome": "progress", "newly": ["show"]},
+    {"seq": 5, "at": "2026-10-01T10:01:20", "kind": "cmd", "action": "renew", "outcome": "unknown"},
+    {"seq": 6, "at": "2026-10-01T10:01:40", "kind": "cmd", "action": "ipconfig /renew", "outcome": "progress", "newly": ["renew"]}
+  ],
+  "no_verify": [
+    {"seq": 1, "at": "2026-10-01T10:00:00", "kind": "cmd", "action": "netsh interface ip set address Ethernet dhcp", "outcome": "progress", "newly": ["renew"]},
+    {"seq": 2, "at": "2026-10-01T10:00:30", "kind": "cmd", "action": "netsh interface ip set dns Ethernet dhcp", "outcome": "progress", "newly": ["dns"]}
+  ],
+  "skipped": [
+    {"seq": 1, "at": "2026-10-01T10:00:00", "kind": "cmd", "action": "ipconfig /all", "outcome": "progress", "newly": ["show"]},
+    {"seq": 2, "at": "2026-10-01T10:00:30", "kind": "cmd", "action": "ping 10.0.0.1", "outcome": "progress", "newly": ["ping"]},
+    {"seq": 3, "at": "2026-10-01T10:00:40", "kind": "hint", "action": "renew tier 1", "outcome": "ok"},
+    {"seq": 4, "at": "2026-10-01T10:00:50", "kind": "hint", "action": "renew tier 2", "outcome": "ok"}
+  ],
+  "repeats": [
+    {"seq": 1, "at": "2026-10-01T10:00:00", "kind": "cmd", "action": "ping 10.0.0.1", "outcome": "ok"},
+    {"seq": 2, "at": "2026-10-01T10:00:05", "kind": "cmd", "action": "ping 10.0.0.1", "outcome": "ok"},
+    {"seq": 3, "at": "2026-10-01T10:00:10", "kind": "cmd", "action": "ping 10.0.0.1", "outcome": "ok"},
+    {"seq": 4, "at": "2026-10-01T10:00:15", "kind": "cmd", "action": "PING 10.0.0.1", "outcome": "ok"}
+  ]
+}

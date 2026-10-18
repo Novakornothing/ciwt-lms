@@ -260,6 +260,14 @@
                  href="{{ url_for('instructor_gradebook', section_id=s.id) }}">
                 <i class="bi bi-table"></i><span>Gradebook</span>
               </a>
+              <a class="rail-link rail-sublink {% if ep in ('mastery_class','mastery_class_student') and open_section_id == s.id %}active{% endif %}"
+                 href="{{ url_for('mastery_class', section_id=s.id) }}">
+                <i class="bi bi-signpost-split"></i><span>Mastery</span>
+              </a>
+              <a class="rail-link rail-sublink {% if ep == 'mastery_today' and open_section_id == s.id %}active{% endif %}"
+                 href="{{ url_for('mastery_today', section_id=s.id) }}">
+                <i class="bi bi-people"></i><span>Who needs me</span>
+              </a>
               <a class="rail-link rail-sublink {% if ep == 'syllabus_settings' and open_section_id == s.id %}active{% endif %}"
                  href="{{ url_for('syllabus_settings', section_id=s.id) }}">
                 <i class="bi bi-file-earmark-text"></i><span>Syllabus</span>

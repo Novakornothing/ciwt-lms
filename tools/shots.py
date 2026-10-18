@@ -12,12 +12,16 @@ PAGES = {
     ('student-home', '/student'), ('student-class', '/student/section/1'),
     ('lesson', '/student/module/1/1/lesson/1'), ('quiz', '/student/quiz/1/1'),
     ('labs', '/labs'), ('grades', '/student/grades'), ('grades-section', '/student/section/1/grades'),
+    ('mastery', '/student/section/1/mastery'), ('mastery-review', '/student/section/1/review/IT-1.1'),
+    ('mastery-plan', '/student/section/1/plan'), ('mastery-daily', '/student/section/1/daily'),
   ],
   'instructor@lms.local:teach123': [
     ('instr-home', '/instructor'), ('instr-section', '/instructor/section/1'),
     ('attention', '/instructor/section/1/attention'), ('attention-student', '/instructor/section/1/attention/student/4'),
     ('attention-lesson', '/instructor/section/1/attention/lesson/1'),
     ('gradebook', '/instructor/section/1/gradebook'), ('item-analysis', '/analysis/test/1'),
+    ('mastery-class', '/instructor/section/1/mastery'), ('mastery-student', '/instructor/section/1/mastery/student/4'),
+    ('mastery-today', '/instructor/section/1/mastery/today'),
   ],
   'admin@lms.local:admin123': [('admin', '/admin'), ('admin-analytics', '/admin/test-analytics')],
 }

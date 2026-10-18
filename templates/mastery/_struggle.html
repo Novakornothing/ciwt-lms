@@ -1,0 +1,22 @@
+{# Inline result for a lesson quick check (returned as an HTML fragment). Never shows the answer key. #}
+{% from "mastery/_macros.html" import why with context %}
+<p class="mb-2 fw-semibold">{% if ok %}<span aria-hidden="true">✓</span> Right.{% else %}Not quite.{% endif %}</p>
+{% if offer %}
+<div class="mx-struggle" role="region" aria-labelledby="mxSo{{ check.id }}">
+  <h3 class="h6 mb-1" id="mxSo{{ check.id }}">{% if offer.mc %}This answer often means a mix-up{% else %}Want another way to see it?{% endif %}</h3>
+  {% if offer.mc_label %}<p class="small mb-2"><strong>The idea to check:</strong> {{ offer.mc_label }}. Here is what the lessons say instead.</p>{% else %}<p class="small mb-2">Here is the same idea from a different angle, from your course lessons.</p>{% endif %}
+  {% for b in offer.content.blocks %}
+  <details class="mx-why mb-2"{% if loop.first %} open{% endif %}>
+    <summary>{{ b.label }}{% if b.lesson %} <span class="mx-muted small">(lesson {{ b.lesson }})</span>{% endif %}</summary>
+    <div class="mx-why-body module-content mx-excerpt">{{ b.html|safe }}</div>
+  </details>
+  {% endfor %}
+  {{ why(offer.reasons, section_id=section.id) }}
+  <div class="d-flex flex-wrap gap-2 mt-2">
+    <a class="btn btn-sm btn-brand" href="{{ offer.review_url }}">Open the full {{ 'correction' if offer.mc else 'alternate explanation' }}</a>
+    <button type="button" class="btn btn-sm btn-outline-navy" data-mx-dismiss="{{ url_for('mastery_quickcheck_dismiss', section_id=section.id, check_id=check.id) }}">Dismiss</button>
+  </div>
+</div>
+{% elif not ok %}
+<p class="small mb-0">{% if heading %}The section “{{ heading }}” covers this. {% endif %}It is not graded; try the chapter check when you are ready.</p>
+{% endif %}

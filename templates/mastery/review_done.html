@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "mastery/_macros.html" import why, status_chip with context %}
+{% block title %}Review done — {{ obj }} — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="eyebrow">Review done</div>
+  <h1 class="h3 mb-1">Nice work on {{ obj }}</h1>
+  <p class="mb-0">{{ o.text }}</p>
+</div>
+<div class="card mb-3"><div class="card-body">
+  <p class="mb-2">You answered <strong>{{ check.correct }} of {{ check.total }}</strong> check question{{ 's' if check.total != 1 }} right.</p>
+  <p class="mb-2">Your estimate now: {{ status_chip(row.state, est.pct, est.confidence) }}</p>
+  <ul class="mx-results">
+    {% for p in per %}<li><span class="mx-glyph" aria-hidden="true">{{ '✓' if p.ok else '·' }}</span> {{ p.n }}. {{ 'Right' if p.ok else ('Not yet' if p.answered else 'Not answered') }} <span class="mx-muted">— {{ p.text|truncate(90) }}</span></li>{% endfor %}
+  </ul>
+  {% if row.state == 'review' %}<p class="small mb-0">Still low? That is fine. Next time the engine explains it another way, or your instructor can help.</p>{% endif %}
+</div></div>
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <a class="btn btn-brand" href="{{ continue_url }}">Continue to your next lesson</a>
+  <a class="btn btn-outline-navy" href="{{ url_for('mastery_student', section_id=section.id) }}">My mastery</a>
+</div>
+{% endblock %}

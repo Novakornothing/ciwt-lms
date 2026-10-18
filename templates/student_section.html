@@ -23,6 +23,8 @@
     <a class="btn btn-outline-navy" href="{{ url_for('section_material', section_id=section.id, kind='syllabus') }}"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Syllabus</a>
     {% endif %}
     <a class="btn btn-outline-navy" href="{{ url_for('student_section_grades', section_id=section.id) }}"><i class="bi bi-journal-check" aria-hidden="true"></i> My grades</a>
+    {% if current_user.role == 'student' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_student', section_id=section.id) }}"><i class="bi bi-signpost-split" aria-hidden="true"></i> My mastery</a>
+    <a class="btn btn-outline-navy" href="{{ url_for('mastery_plan', section_id=section.id) }}"><i class="bi bi-book" aria-hidden="true"></i> My plan</a>{% endif %}
     <a class="btn btn-brand" href="{{ url_for('course_labs', section_id=section.id) }}"><i class="bi bi-terminal" aria-hidden="true"></i> All labs</a>
   </div>
 </div>

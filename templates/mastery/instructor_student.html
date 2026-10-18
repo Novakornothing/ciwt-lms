@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "mastery/_macros.html" import status_chip, demo_ribbon with context %}
+{% block title %}Mastery — {{ u.full_name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('mastery_class', section_id=section.id) }}">Mastery</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ u.full_name }}</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+    <div>
+      <div class="eyebrow">Evidence breakdown</div>
+      <h1 class="h3 mb-1">{{ u.full_name }}</h1>
+      <p class="mb-0">Helix: {{ {'ok': 'current consent (advisory only)', 'no_consent': 'no current consent — not used', 'disabled': 'off for this class — not used', 'unavailable': 'not available'}[st.helix_status] }} · {{ st.decision.actions|length }} active action{{ 's' if st.decision.actions|length != 1 }}{% if st.sources.stale %} · {{ st.sources.stale }} older answer{{ 's' if st.sources.stale != 1 }} not used (the question was reworded after it was answered){% endif %}</p>
+    </div>
+    <button type="button" class="btn btn-sm btn-brand" data-bs-toggle="modal" data-bs-target="#mxOverride" data-mx-user="{{ u.id }}" data-mx-name="{{ u.full_name }}" data-mx-target="CH-{{ chapters[0] }}" data-mx-state="">New override</button>
+  </div>
+</div>
+<div class="d-flex flex-wrap gap-2 mb-3">{{ demo_ribbon(st.demo) }}</div>
+
+{% for c in chapters %}
+<section class="card mb-3" aria-labelledby="mxSc{{ c }}">
+  <div class="card-header"><h2 class="h6 mb-0" id="mxSc{{ c }}">Chapter {{ c }}{% if st.testout_history.get(c, {}).get('passed') %} · mastery check passed{% endif %}</h2></div>
+  <div class="table-responsive">
+  <table class="table table-sm mb-0 table-stack mx-evid">
+    <thead><tr><th scope="col">Objective</th><th scope="col">Estimate</th><th scope="col">Evidence</th><th scope="col">Lesson used</th><th scope="col">Action</th><th scope="col"><span class="visually-hidden">Override</span></th></tr></thead>
+    <tbody>
+    {% for r in rows if r.o.chapter == c %}
+    <tr>
+      <td data-label="Objective"><span class="mx-code">{{ r.obj }}</span> {{ r.o.text }}</td>
+      <td data-label="Estimate">{{ status_chip(r.row.state, r.est.pct, r.est.confidence) }}{% if r.row.stuck %} <span class="mx-badge mx-badge-req">Stuck</span>{% endif %}</td>
+      <td data-label="Evidence" class="small">{{ r.evidence }}{% if r.est.read_lessons %}; read {{ r.est.read_lessons|join(', ') }}{% endif %}{% for sr in r.est.short_reads %}; short time on {{ sr.lesson }} ({{ (sr.seconds // 60) }} of {{ (sr.expected // 60) }} min){% endfor %}{% if r.helix %}<br><span class="mx-muted">Helix (advisory): {% if r.helix.skimmed %}quick pass over {{ r.helix.skimmed|join(', ') }}{% endif %}{% if r.helix.reread %} re-read {{ r.helix.reread|join(', ') }}{% endif %}</span>{% endif %}</td>
+      <td data-label="Lesson used" class="small">{% if r.lesson %}{{ r.lesson.label }} <span class="mx-muted">— {{ r.lesson.why }}</span>{% endif %}</td>
+      <td data-label="Action" class="small">{% if r.row.action %}{{ mastery_action_label[r.row.action.type] }}{{ ' (required)' if r.row.action.required }}{% else %}—{% endif %}{% if r.row.override %}<br>Override: {{ r.row.override }} ({{ r.row.override_scope }}){% endif %}</td>
+      <td data-label="Override"><button type="button" class="btn btn-sm btn-outline-navy" data-bs-toggle="modal" data-bs-target="#mxOverride" data-mx-user="{{ u.id }}" data-mx-name="{{ u.full_name }}" data-mx-target="{{ r.obj }}" data-mx-state="{{ r.obj }}: {{ mastery_status_label[r.row.state] }} {{ r.est.pct }}%">Override<span class="visually-hidden"> {{ r.obj }}</span></button></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endfor %}
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-7">
+    <section class="card h-100" aria-labelledby="mxSlog">
+      <div class="card-header navy"><h2 class="h6 mb-0" id="mxSlog">Decision log</h2></div>
+      {% if log %}
+      <ul class="list-group list-group-flush">
+        {% for e in log %}
+        <li class="list-group-item small">
+          <div class="d-flex flex-wrap justify-content-between gap-2"><strong>{{ mastery_action_label.get(e.action, e.action) }} · {{ e.target }}{{ ' (required)' if e.required }}</strong><span class="mx-muted">{{ e.created_at.strftime('%d %b %H:%M') }} UTC · {{ e.source }} · {{ e.status }}</span></div>
+          <ul class="mb-0">{% for x in reasons_of(e) %}<li>{{ x }}</li>{% endfor %}</ul>
+          {% set ev = evidence_of(e) %}{% if ev %}<div class="mx-muted">Snapshot: {{ ev.pct }}%, {{ ev.confidence }} confidence, {{ ev.n_correct }}/{{ ev.n_items }} right</div>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<div class="card-body small">No decisions yet.</div>{% endif %}
+    </section>
+  </div>
+  <div class="col-lg-5">
+    <section class="card h-100" aria-labelledby="mxOvH">
+      <div class="card-header"><h2 class="h6 mb-0" id="mxOvH">Overrides</h2></div>
+      {% if overrides %}
+      <ul class="list-group list-group-flush">
+        {% for o in overrides %}<li class="list-group-item small"><strong>{{ o.kind }}</strong> · {{ o.target }} · {{ 'active' if o.active else 'cleared' }}<div>{{ o.note }}</div><div class="mx-muted">{{ o.created_at.strftime('%d %b %H:%M') }} UTC</div></li>{% endfor %}
+      </ul>
+      {% else %}<div class="card-body small">No overrides.</div>{% endif %}
+    </section>
+  </div>
+</div>
+{% set cmap = st.cmap %}{% set default_user_id = u.id %}{% set default_name = u.full_name %}
+{% include "mastery/_override_modal.html" %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/mastery.js') }}" defer></script>{% endblock %}

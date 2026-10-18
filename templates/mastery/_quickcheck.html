@@ -1,0 +1,27 @@
+{# In-lesson quick check (struggle detection). Needs mastery_quick, section_id. #}
+{% if mastery_quick %}
+<section class="card mb-3 mx-quick" aria-labelledby="mxQuickH" id="mxQuick">
+  <div class="card-header"><h2 class="h6 mb-0" id="mxQuickH"><i class="bi bi-patch-check" aria-hidden="true"></i> Quick check (not graded)</h2></div>
+  <div class="card-body">
+    {% for q in mastery_quick %}
+    <form class="mx-quick-form mb-3" method="post" action="{{ q.url }}" data-heading="{{ q.heading }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="heading" value="{{ q.heading }}">
+      <input type="hidden" name="dwell_ms" value="0">
+      <fieldset class="mx-q mb-2">
+        <legend>{{ q.text }}{% if q.heading %}<span class="d-block small mx-muted">About: {{ q.heading }}</span>{% endif %}</legend>
+        {% for opt in q.options %}
+        <div class="form-check mx-opt">
+          <input class="form-check-input" type="radio" name="answer" id="qc{{ q.check_id }}o{{ loop.index0 }}" value="{{ opt }}" required>
+          <label class="form-check-label" for="qc{{ q.check_id }}o{{ loop.index0 }}">{{ opt }}</label>
+        </div>
+        {% endfor %}
+      </fieldset>
+      <button type="submit" class="btn btn-sm btn-brand">Check</button>
+      <div class="mx-quick-result mt-2" aria-live="polite"></div>
+    </form>
+    {% endfor %}
+    <p class="small mx-muted mb-0">If you miss one after spending a while on its section (or, if you have turned Helix on, it sees you re-reading it), you will be offered a different explanation right here. It is only an offer.</p>
+  </div>
+</section>
+{% endif %}
