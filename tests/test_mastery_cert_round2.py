@@ -92,3 +92,49 @@ def test_a_tagged_wrong_cert_answer_becomes_a_misconception(app, mod, cert_revie
         eng = app.extensions['ciwt_mastery'].engine
         st = eng.student_state(mod.db.session.get(mod.ClassSection, 1), mod.db.session.get(mod.User, uid), log=False)
     assert mc in st['misconceptions'] and st['misconceptions'][mc]['obj'] == it['obj']
+
+
+def test_cert_switch_defaults_on_and_turns_cert_items_off(app, mod, instructor):
+    with app.app_context():
+        eng = app.extensions['ciwt_mastery'].engine
+        assert eng.settings(1)['cert_items'] is True
+    h = instructor.get('/instructor/section/1/mastery').data.decode()
+    assert 'Include certification practice items (pending SME review)' in h and 'id="mxCert" checked' in h
+    r = instructor.post('/instructor/section/1/mastery/settings', data={'enabled': '1', 'testout': '1'})
+    assert r.status_code in (302, 303)
+    try:
+        with app.test_request_context():
+            eng = app.extensions['ciwt_mastery'].engine
+            sec = mod.db.session.get(mod.ClassSection, 1)
+            assert eng.settings(1)['cert_items'] is False
+            cmap = eng.course_map(sec)
+            obj = next(o for o in cmap['objs'] if E.cert_items_for(o))
+            assert not [i for i in eng.pool(cmap, obj, include_cert=False) if i['src'] == 'cert']
+            u = mod.User.query.filter_by(email='student1@lms.local').first()
+            st = eng.student_state(sec, u, log=False)
+            items = eng.pick_items(cmap, list(cmap['objs']), 3, 999, st['checks'], False, include_cert=st['settings']['cert_items'])
+            assert all(i['src'] != 'cert' for i in items)
+            on = eng.pick_items(cmap, list(cmap['objs']), 3, 999, st['checks'], False, include_cert=True)
+            assert any(i['src'] == 'cert' for i in on)
+    finally:
+        instructor.post('/instructor/section/1/mastery/settings', data={'enabled': '1', 'testout': '1', 'cert_items': '1'})
+    with app.app_context():
+        assert app.extensions['ciwt_mastery'].engine.settings(1)['cert_items'] is True
+
+
+def test_cert_items_column_migration_on_an_old_table(tmp_path):
+    import sqlite3
+    from flask import Flask
+    from flask_sqlalchemy import SQLAlchemy
+    from mastery.models import ensure_schema
+    p = tmp_path / 'old.db'
+    con = sqlite3.connect(p)
+    con.execute('create table mastery_setting (id integer primary key, section_id integer, enabled boolean, testout boolean, testout_bank boolean)')
+    con.execute('insert into mastery_setting (section_id, enabled, testout, testout_bank) values (1, 1, 1, 0)')
+    con.commit(); con.close()
+    a = Flask('m'); a.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{p}'
+    db = SQLAlchemy(a)
+    with a.app_context():
+        ensure_schema(db); ensure_schema(db)            # idempotent
+    con = sqlite3.connect(p)
+    assert con.execute('select cert_items from mastery_setting').fetchall() == [(1,)]

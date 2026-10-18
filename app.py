@@ -6988,6 +6988,8 @@ def init_db():
     _ensure_schema()
     helix_pkg.ensure_schema(db)
     gradebook_mod.ensure_schema(db)
+    from mastery.models import ensure_schema as _mastery_schema   # pass 13: mastery_setting.cert_items
+    _mastery_schema(db)
     if User.query.count() == 0:
         print('Seeding database...')
         seed_database()

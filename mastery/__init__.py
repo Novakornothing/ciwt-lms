@@ -227,7 +227,8 @@ def register(app, db, deps):
                                     glossary=d.glossary, marked=d.glossary_marked)
         prefer = {b for (b, _d), m in MCS.TAGS.items() if m == mc} if mc else None
         n_items = 5 if variant == 'practice' else REVIEW_ITEMS
-        items = eng.pick_items(cmap, [obj], n_items, n_items, st['checks'], st['settings']['testout_bank'], prefer=prefer)
+        items = eng.pick_items(cmap, [obj], n_items, n_items, st['checks'], st['settings']['testout_bank'], prefer=prefer,
+                               include_cert=st['settings']['cert_items'])
         check = _open_check(section, current_user, 'review', obj, variant if not mc else f'mc:{mc}', items)
         reasons = action['reasons'] if action and (variant != 'mc' or action.get('mc') == mc) else [
             'You opened this review yourself. It is optional.', P.evidence_reason(st['states'][obj], M.describe_counts)]
@@ -323,7 +324,7 @@ def register(app, db, deps):
             check = open_c
         else:
             items = eng.pick_items(cmap, cmap['chapter_objs'][chapter], TESTOUT_PER_OBJ, TESTOUT_MAX, st['checks'],
-                                   st['settings']['testout_bank'])
+                                   st['settings']['testout_bank'], include_cert=st['settings']['cert_items'])
             if not items:
                 flash('There are no check questions for that chapter yet.', 'info')
                 return redirect(url_for('mastery_student', section_id=section.id))
@@ -473,9 +474,10 @@ def register(app, db, deps):
         s.enabled = request.form.get('enabled') == '1'
         s.testout = request.form.get('testout') == '1'
         s.testout_bank = request.form.get('testout_bank') == '1'
+        s.cert_items = request.form.get('cert_items') == '1'
         s.updated_at, s.updated_by = utcnow(), current_user.id
         db.session.commit()
-        d.audit('mastery_settings', f'section={section.id} enabled={s.enabled} testout={s.testout} bank={s.testout_bank}')
+        d.audit('mastery_settings', f'section={section.id} enabled={s.enabled} testout={s.testout} bank={s.testout_bank} cert={s.cert_items}')
         flash('Adaptivity ' + ('on' if s.enabled else 'off') + ' for this class.', 'success')
         return redirect(url_for('mastery_class', section_id=section.id), code=303)
 

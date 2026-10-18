@@ -21,6 +21,7 @@ def define_models(db):
         enabled = db.Column(db.Boolean, default=True)
         testout = db.Column(db.Boolean, default=True)
         testout_bank = db.Column(db.Boolean, default=False)   # also draw from the X-IT chapter item bank
+        cert_items = db.Column(db.Boolean, default=True)      # pass 13: aligned certification items (pending SME review)
         updated_at = db.Column(db.DateTime, default=utcnow)
         updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
@@ -102,3 +103,15 @@ def define_models(db):
                                   MasteryDecision=MasteryDecision, MasteryCheck=MasteryCheck,
                                   LearningPlan=LearningPlan, MasteryCheckin=MasteryCheckin)
     return _cache['m']
+
+
+def ensure_schema(db):
+    """Columns added after first install (SQLite-friendly, idempotent)."""
+    from sqlalchemy import inspect, text
+    insp = inspect(db.engine)
+    if 'mastery_setting' in insp.get_table_names():
+        cols = {c['name'] for c in insp.get_columns('mastery_setting')}
+        if 'cert_items' not in cols:
+            with db.engine.begin() as conn:
+                conn.execute(text('ALTER TABLE mastery_setting ADD COLUMN cert_items BOOLEAN DEFAULT 1'))
+                conn.execute(text('UPDATE mastery_setting SET cert_items = 1 WHERE cert_items IS NULL'))

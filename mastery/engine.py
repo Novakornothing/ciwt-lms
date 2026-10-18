@@ -199,8 +199,9 @@ class Engine:
     def settings(self, section_id):
         s = self.m.MasterySetting.query.filter_by(section_id=section_id).first()
         if not s:
-            return {'enabled': True, 'testout': True, 'testout_bank': False, 'row': None}
-        return {'enabled': bool(s.enabled), 'testout': bool(s.testout), 'testout_bank': bool(s.testout_bank), 'row': s}
+            return {'enabled': True, 'testout': True, 'testout_bank': False, 'cert_items': True, 'row': None}
+        return {'enabled': bool(s.enabled), 'testout': bool(s.testout), 'testout_bank': bool(s.testout_bank),
+                'cert_items': s.cert_items is not False, 'row': s}
 
     def overrides(self, section_id, user_id):
         out = {}
@@ -513,12 +514,13 @@ class Engine:
                               evidence_json=json.dumps(self.snapshot(est), default=str), actor_id=actor_id))
 
     # ------------------------------------------------------------------ item pools
-    def pool(self, cmap, obj, include_bank=False):
+    def pool(self, cmap, obj, include_bank=False, include_cert=True):
         """Single-answer items for one objective, in preference order: the class's chapter-check items,
         then certification items aligned to the objective (curriculum_v2/cert, mapped to IT-/NO- objectives
         through the alignment; Pending SME review), then — if the class allows it — the X-IT bank and supplement."""
         items = [dict(it) for it in cmap['check_items'] if it.get('obj') == obj]
-        items += [dict(it, src='cert', ref=it['bank_id']) for it in cert_items_for(obj)]
+        if include_cert:
+            items += [dict(it, src='cert', ref=it['bank_id']) for it in cert_items_for(obj)]
         if include_bank:
             from curriculum_v2.exam_supplement import SUPPLEMENT
             from curriculum_v2.itsup_core import EXPANSION
@@ -550,11 +552,11 @@ class Engine:
                 pass
         return ids
 
-    def pick_items(self, cmap, objs, per_obj, cap, checks, include_bank, prefer=None):
+    def pick_items(self, cmap, objs, per_obj, cap, checks, include_bank, prefer=None, include_cert=True):
         used = self._answered(checks)
         out = []
         for obj in objs:
-            pool = self.pool(cmap, obj, include_bank)
+            pool = self.pool(cmap, obj, include_bank, include_cert)
             pool.sort(key=lambda it: (0 if prefer and it['bank_id'] in prefer else 1, used.get(it['bank_id'], 0),
                                       SRC_RANK.get(it['src'], 3), it['bank_id'] or ''))
             out.extend(pool[:per_obj])
@@ -587,7 +589,7 @@ class Engine:
                           'required': False, 'why': [], 'source': 'path'})
         for o in st['decision']['testout']:
             n = len(self.pick_items(cmap, cmap['chapter_objs'].get(o['chapter'], []), TESTOUT_PER_OBJ, TESTOUT_MAX,
-                                    st['checks'], st['settings']['testout_bank']))
+                                    st['checks'], st['settings']['testout_bank'], include_cert=st['settings']['cert_items']))
             if not n:
                 continue
             steps.append({'kind': 'testout', 'title': f"Already know chapter {o['chapter']}? Take the mastery check",

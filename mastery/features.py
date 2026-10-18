@@ -47,7 +47,7 @@ def register_features(app, db, ctx):
         items = []
         used = eng._answered(st['checks'])
         for obj, state, why in q:
-            pool = eng.pool(st['cmap'], obj, st['settings']['testout_bank'])
+            pool = eng.pool(st['cmap'], obj, st['settings']['testout_bank'], st['settings']['cert_items'])
             if not pool:
                 continue
             pool.sort(key=lambda it: (used.get(it['bank_id'], 0), SRC_RANK.get(it['src'], 3), it['bank_id'] or ''))
@@ -139,7 +139,7 @@ def register_features(app, db, ctx):
         checks = eng.checks(section.id, user.id)
         settings = eng.settings(section.id)
         for obj in (cmap['lesson_objs'].get(lesson.id) or [])[:2]:
-            items = eng.pick_items(cmap, [obj], 1, 1, checks, settings['testout_bank'])
+            items = eng.pick_items(cmap, [obj], 1, 1, checks, settings['testout_bank'], include_cert=settings['cert_items'])
             if not items:
                 continue
             c = ctx.open_check(section, user, 'inline', obj, 'inline', items)
