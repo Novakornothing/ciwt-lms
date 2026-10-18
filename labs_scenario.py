@@ -68,7 +68,6 @@ def build(get_lab):
                 "intro": s["ticket"] + " — " + st["brief"],
                 "blurb": st["brief"], "builds_on": [],
                 "success_msg": f"Stage {i + 1} of {n} resolved. " + (base.get("success_msg") or ""),
-                "fallback": [],
             })
             lab["course_objectives"] = list(dict.fromkeys(list(s["course_objectives"]) + list(base.get("course_objectives") or [])))
             out.append(lab)

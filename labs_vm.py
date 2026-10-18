@@ -37,7 +37,7 @@ VM_ASSETS = {
     "bzimage": "vendor/v86/ciwt-linux.bin",
 }
 # One image for every lab: tools/vm_image/build.sh (kernel 6.8.12 + netfilter/loop/ATA, BusyBox + real Alpine packages).
-IMAGE = {"image": "ciwt-linux.bin", "download_mb": 13.2, "prompt_re": r"[#%$] $"}
+IMAGE = {"image": "ciwt-linux.bin", "download_mb": 13.3, "prompt_re": r"[#%$] $"}
 
 
 def _prelude(host, home="/root"):
