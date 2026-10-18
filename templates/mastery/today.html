@@ -15,7 +15,7 @@
   <p class="mb-0">{{ focus|length }} of {{ n_students }} students have a reason to look at them today. No risk score: every reason is shown.</p>
 </div>
 <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">{{ demo_ribbon(demo) }}
-  <span class="small mx-muted">Ordered by how many different reasons apply, then the most serious (stuck, repeated mix-up, waiting review, drop, lab, inactivity).</span></div>
+  <span class="small mx-muted">Ordered by how many different reasons apply, then the most serious (stuck, repeated mix-up, waiting review, drop, lab, inactivity); ties go to the student with more objectives needing review, then the most recent struggle, then name.</span></div>
 
 {% if focus %}
 <ol class="mx-needs list-unstyled">
@@ -24,7 +24,7 @@
     <div class="card-body">
       <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start">
         <h2 class="h6 mb-1"><span class="mx-muted">{{ loop.index }}.</span> <a href="{{ url_for('mastery_class_student', section_id=section.id, user_id=p.user.id) }}">{{ p.user.full_name }}</a></h2>
-        <span class="small mx-muted">{% if p.last %}last active {{ p.last.strftime('%d %b') }}{% else %}no recorded activity{% endif %}</span>
+        <span class="small mx-muted">{% if p.severity %}{{ p.severity }} objective{{ 's' if p.severity != 1 }} need{{ 's' if p.severity == 1 }} review · {% endif %}{% if p.last %}last active {{ p.last.strftime('%d %b') }}{% else %}no recorded activity{% endif %}</span>
       </div>
       <ul class="mb-2 mx-reasons">{% for r in p.reasons %}<li><span class="mx-badge">{{ {'stuck': 'Stuck', 'misconception': 'Mix-up', 'missed_review': 'Review waiting', 'drop': 'Drop', 'lab': 'Lab', 'inactive': 'Inactive'}[r.kind] }}</span> {{ r.text }}</li>{% endfor %}</ul>
       <div class="d-flex flex-wrap gap-2 align-items-end">

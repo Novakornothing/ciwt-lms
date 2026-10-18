@@ -23,6 +23,14 @@ DROP_POINTS = 20                 # estimate fell by 20+ points in 7 days into "n
 REASON_ORDER = ['stuck', 'misconception', 'missed_review', 'drop', 'lab', 'inactive']
 
 
+def need_rank(p):
+    """Sort key for a "Who needs me" entry (also the briefing's tie-break among students). Deterministic."""
+    t = p.get('struggle_at')
+    u = p['user']
+    return (-len(p['kinds']), REASON_ORDER.index(p['kinds'][0]), -(p.get('severity') or 0),
+            -t.timestamp() if t else float('inf'), (u.last_name or '').lower(), (u.first_name or '').lower(), u.id)
+
+
 def register_features(app, db, ctx):
     eng, m, d = ctx.eng, ctx.m, ctx.d
 
@@ -327,6 +335,12 @@ def register_features(app, db, ctx):
             whens.append(t)
         return max(whens) if whens else None
 
+    def severity(st, reasons):
+        """(objectives the engine has at 'review' + objectives stuck, time of the latest non-inactivity reason)."""
+        n_review = sum(1 for row in st['decision']['rows'].values() if row.get('state') == 'review')
+        whens = [x['when'] for x in reasons if x['kind'] != 'inactive' and x.get('when')]
+        return n_review + len(st['decision'].get('stuck') or []), (max(whens) if whens else None)
+
     def needs_me_reasons(st, user, now=None):
         now = now or utcnow()
         cmap = st['cmap']
@@ -376,6 +390,9 @@ def register_features(app, db, ctx):
         return out, last
 
     def needs_me(section):
+        """Ranked: (1) how many different kinds of reason apply, (2) the most serious kind (REASON_ORDER), then
+        pass-14 tie-breaks: (3) severity = objectives at "Needs review" + objectives stuck (a weak student before a
+        mixed one), (4) the most recent struggle first (latest non-inactivity reason), (5) name."""
         cmap, rows = ctx.class_rows(section)
         out = []
         for r in rows:
@@ -383,11 +400,11 @@ def register_features(app, db, ctx):
             if not reasons:
                 continue
             top_obj = next((x['obj'] for x in reasons if x.get('obj') and x['obj'] in cmap['objs']), None)
+            sev, struggle_at = severity(r['st'], reasons)
             out.append({'user': r['user'], 'reasons': reasons, 'last': last, 'top_obj': top_obj, 'st': r['st'],
-                        'kinds': sorted({x['kind'] for x in reasons}, key=REASON_ORDER.index)})
-        # ranked by how many different kinds of reason apply, then the most serious kind, then most recent activity
-        out.sort(key=lambda x: (-len(x['kinds']), REASON_ORDER.index(x['kinds'][0]),
-                                -(x['last'] or datetime.min).timestamp() if x['last'] else 0))
+                        'kinds': sorted({x['kind'] for x in reasons}, key=REASON_ORDER.index),
+                        'severity': sev, 'struggle_at': struggle_at})
+        out.sort(key=need_rank)
         return cmap, rows, out
 
     @login_required
