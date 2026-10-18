@@ -11,6 +11,7 @@ from copy import deepcopy
 SCENARIOS = [
     {
         "id": "SCN-DNS",
+        "review": "Pending SME review",
         "title": "Ticket SR-5307 — “The intranet is down for everyone”",
         "blurb": "Prove it is DNS from a user's Windows 11 PC (simulation), then fix the real resolver and client on two real Linux VMs.",
         "ticket": ("Reported 08:12 by the service desk: since this morning nobody on the 3rd floor can open the intranet or "
@@ -30,6 +31,7 @@ SCENARIOS = [
     },
     {
         "id": "SCN-LAN2",
+        "review": "Pending SME review",
         "title": "Ticket NET-2207 — “LAN 2 has no network after Friday's change”",
         "blurb": "Fix a DHCP server and a router on two real Linux VMs, then bring the CFO's Windows laptop back (simulation).",
         "ticket": ("P2, raised Monday 07:55: every PC on LAN 2 shows 'No network' since Friday evening's change CHG-3317 on "

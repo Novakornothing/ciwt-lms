@@ -42,7 +42,7 @@ def list_labs():
         out.append({"id": lab["id"], "title": lab["title"], "kind": lab["kind"], "kind_label": KIND_LABEL.get(lab["kind"], lab["kind"]),
                     "blurb": lab.get("blurb") or "", "builds_on": lab.get("builds_on") or [],
                     "objectives": len(lab["objectives"]), "minutes": lab.get("minutes") or 10 + 3 * len(lab["objectives"]),
-                    "course_objectives": lab.get("course_objectives") or []})
+                    "course_objectives": lab.get("course_objectives") or [], "review": lab.get("review") or ""})
     return out
 
 

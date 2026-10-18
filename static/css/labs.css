@@ -293,3 +293,7 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
 [data-theme="dark"] .lab-kind-scenario { color: var(--ink); }
 .scn-stage.resolved { border-left: 4px solid #2b8a3e; }
 .pbq-note { color: var(--ink); }
+
+/* instructor-only "Pending SME review" tag on labs added in the labs overhaul */
+.lab-sme-tag { display: inline-block; font-size: .7rem; font-weight: 600; line-height: 1.3; padding: .05rem .4rem; margin-left: .35rem;
+  border: 1px solid currentColor; border-radius: .25rem; color: var(--bs-secondary-color, #555); vertical-align: middle; white-space: nowrap; }

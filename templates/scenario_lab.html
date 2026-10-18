@@ -14,6 +14,7 @@
       <span class="text-muted small">· about {{ s.minutes }} min</span></p>
     <h1 class="h4 mb-1">{{ s.title }}</h1>
     <p class="mb-0 lab-scenario">{{ s.ticket }}</p>
+    {% if s.review and current_user.role in ('admin', 'instructor') %}<p class="small mb-0 mt-2 lab-sme-note"><strong>{{ s.review }}</strong> (instructors only). Run the scenario yourself before you use it for grades.</p>{% endif %}
   </div>
   <div class="lab-progress-box" id="scnStatus">
     {% if st.resolved %}

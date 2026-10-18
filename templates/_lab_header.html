@@ -11,6 +11,9 @@
   <a class="btn btn-sm btn-outline-navy" href="{{ url_for('scenario_lab', sid=lab.scenario) }}">Back to the ticket</a>
 </div>
 {% endif %}
+{% if lab.review and current_user.is_authenticated and current_user.role in ('admin', 'instructor') %}
+<div class="alert alert-secondary small py-2 lab-sme-note" role="note"><strong>{{ lab.review }}</strong> (instructors only). This lab was added in the labs overhaul. Try it on your own equipment, and check its steps, outputs and grading against local practice, before you rely on it for grades.</div>
+{% endif %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ url_for('interactive_labs_index') }}">Live labs</a></li>

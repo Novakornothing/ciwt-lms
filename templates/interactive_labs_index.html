@@ -25,7 +25,7 @@
 {% if group %}
 <section class="mb-4" aria-labelledby="k-{{ kind }}">
   <h2 class="h6 section-label" id="k-{{ kind }}">{{ heading }} <span class="fw-normal text-muted">· {{ sub }}</span></h2>
-  <div class="list-group">{% for lab in group %}{{ lab_row(lab, lab.blurb, false, progress.get(lab.id)) }}{% endfor %}</div>
+  <div class="list-group">{% for lab in group %}{{ lab_row(lab, lab.blurb, false, progress.get(lab.id), sme=lab.review if current_user.role in ('admin', 'instructor') else None) }}{% endfor %}</div>
 </section>
 {% endif %}
 {% endfor %}
@@ -34,7 +34,7 @@
   <h2 class="h6 section-label" id="k-scenario">Lab scenarios <span class="fw-normal text-muted">· performance-based tickets that chain a real VM lab and a simulation; no step list up front</span></h2>
   <div class="list-group">{% for s in scenarios %}
     <a class="list-group-item list-group-item-action lab-row no-kind" href="{{ url_for('scenario_lab', sid=s.id) }}">
-      <span class="lab-row-main"><span class="lab-row-title">{{ s.title }}</span><span class="lab-row-sub">{{ s.blurb }}</span></span>
+      <span class="lab-row-main"><span class="lab-row-title">{{ s.title }}{% if s.review and current_user.role in ('admin', 'instructor') %} <span class="lab-sme-tag">{{ s.review }}</span>{% endif %}</span><span class="lab-row-sub">{{ s.blurb }}</span></span>
       {% set ns = namespace(n=0) %}{% for x in s.stages %}{% if progress.get(x.id) and progress.get(x.id).completed_at %}{% set ns.n = ns.n + 1 %}{% endif %}{% endfor %}
       {% set nres = ns.n %}
       {% if nres %}<span class="lab-row-prog{{ ' done' if nres == s.stages|length }}">{{ nres }}/{{ s.stages|length }} stages</span>{% endif %}

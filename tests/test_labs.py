@@ -408,3 +408,18 @@ def test_privacy_delete_covers_lab_records(student, mod):
     with mod.app.app_context():
         doomed = privacy_tools.plan(mod.db, uid)[0]
         assert doomed.get("lab_progress") and doomed.get("lab_event")
+
+
+def test_new_labs_tagged_pending_sme_review_instructor_only(student, instructor):
+    """Every lab added on the labs branch (and every scenario and stage) carries the curriculum's SME tag. Instructors see it; students do not."""
+    import labs_scenario as SC
+    tag = "Pending SME review"
+    stages = [s["id"] for sc in SC.SCENARIOS for s in sc["stages"]]
+    for lid in NEW + stages:
+        assert RT.get_lab(lid).get("review") == tag, lid
+    assert all(sc.get("review") == tag for sc in SC.SCENARIOS)
+    assert not RT.get_lab("win-ipconfig").get("review")     # original labs are not tagged
+    for path in ["/labs/linux-vm-dns", "/labs/linux-vm-perms", "/labs/scenario/SCN-DNS", "/labs"]:
+        assert tag not in student.get(path).data.decode(), path
+        assert tag in instructor.get(path).data.decode(), path
+    assert tag not in instructor.get("/labs/win-ipconfig").data.decode()

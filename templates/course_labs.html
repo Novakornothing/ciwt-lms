@@ -43,13 +43,13 @@
 {% for block in by_chapter %}
 <section class="mb-4" aria-labelledby="ch-{{ block.module.order }}">
   <h2 class="h6 section-label" id="ch-{{ block.module.order }}">{{ block.module.title }}</h2>
-  <div class="list-group">{% for lab in block.labs %}{{ lab_row(lab, None, True, progress.get(lab.id)) }}{% endfor %}</div>
+  <div class="list-group">{% for lab in block.labs %}{{ lab_row(lab, None, True, progress.get(lab.id), sme=lab.review if current_user.role != 'student' else None) }}{% endfor %}</div>
 </section>
 {% endfor %}
 {% if other %}
 <section class="mb-4" aria-labelledby="ch-other">
   <h2 class="h6 section-label" id="ch-other">Other labs</h2>
-  <div class="list-group">{% for lab in other %}{{ lab_row(lab, None, True, progress.get(lab.id)) }}{% endfor %}</div>
+  <div class="list-group">{% for lab in other %}{{ lab_row(lab, None, True, progress.get(lab.id), sme=lab.review if current_user.role != 'student' else None) }}{% endfor %}</div>
 </section>
 {% endif %}
 {% if classroom %}

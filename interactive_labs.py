@@ -3513,9 +3513,13 @@ def verify_all_labs():
 
 
 # ── Labs added in pass L1 (labs_catalog_new.py) ─────────────────────
+SME_PENDING = "Pending SME review"   # same tag as curriculum_v2.itsup_core.PENDING; instructor-only
+
+
 def _install_new_labs():
     import labs_catalog_new as _N
     for lab in _N.NEW_LABS:
+        lab.setdefault("review", SME_PENDING)   # every lab added on the labs branch waits for SME sign-off
         st = lab["initial_state"]
         if isinstance(st, dict) and st.get("_base") == "win":
             extra = {k: v for k, v in st.items() if k != "_base"}
@@ -3535,6 +3539,7 @@ def _install_new_labs():
     import labs_scenario as _S
     import labs_vm as _V
     for lab in _S.build(LABS_BY_ID.get):
+        lab.setdefault("review", SME_PENDING)
         if not lab.get("solution") and lab["base_lab"] in VERIFY_SEQUENCES:
             lab["solution"] = {"commands": list(VERIFY_SEQUENCES[lab["base_lab"]][0])}
         if lab["id"] not in LABS_BY_ID:
