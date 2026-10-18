@@ -1,4 +1,4 @@
-"""Explanation ladder — CLIENT chapter 3 (Security Hygiene & Incident Basics). Pending SME review.
+"""Explanation ladder — CLIENT chapter 3 (Endpoint Security). Pending SME review.
 
 CLIENT chapter 3 is built from the same lessons as ITSUP chapter 10 (labels 10.1-10.4; identical section ids and
 original-section hashes), so this module reuses the ladder authored in curriculum_v2/ladder/itsup/ch10.py by the

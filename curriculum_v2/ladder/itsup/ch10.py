@@ -1,4 +1,4 @@
-"""Explanation ladder — ITSUP chapter 10 (Security Hygiene & Incident Basics). Pending SME review.
+"""Explanation ladder — ITSUP chapter 10 (Endpoint Security). Pending SME review.
 
 Author B (labs branch, pass 19). Every concept section of lessons 10.1-10.4 is laddered, restated with same_as, or
 skipped with a reason. CLIENT chapter 3 holds the same lessons and reuses this ladder (curriculum_v2/ladder/client/ch03.py).
