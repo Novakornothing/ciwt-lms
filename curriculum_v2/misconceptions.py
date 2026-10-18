@@ -239,6 +239,11 @@ from curriculum_v2 import misconceptions_pass13 as _p13  # noqa: E402
 MISCONCEPTIONS.update(_p13.MISCONCEPTIONS)
 TAGS.update(_p13.TAGS)
 
+# pass 14: the new chapter-check items for IT-7.4 … IT-13.4 (curriculum_v2/checks_pass14.py), same rules
+from curriculum_v2 import checks_pass14 as _p14  # noqa: E402
+MISCONCEPTIONS.update(_p14.MISCONCEPTIONS)
+TAGS.update(_p14.TAGS)
+
 # pass 12 (content round 2): certification-item tags (MC-C-* ids, same schema) so the engine sees them
 from curriculum_v2.cert import misconceptions as _cert_mc  # noqa: E402
 MISCONCEPTIONS.update(_cert_mc.MISCONCEPTIONS)

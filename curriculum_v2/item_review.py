@@ -657,6 +657,12 @@ for _k in ('Q8.5', 'Q10.1', 'Q11.3', 'Q11.5', 'Q11.8', 'Q12.1', 'Q13.8'):
 MISMATCHES = []   # entries whose stem guard failed (reported by tests; such entries are not applied)
 
 
+# pass 14: review entries for the new chapter-check items (curriculum_v2/checks_pass14.py), Pending SME review
+from curriculum_v2 import checks_pass14 as _p14  # noqa: E402
+for _k, (_obj, _why) in _p14.REVIEW.items():
+    REVIEW[_k] = R(_p14.STEMS[_k], _obj, _why, fix=_p14.PENDING)
+
+
 def _obj_text(code):
     from curriculum_v2.objectives import OBJECTIVES
     o = OBJECTIVES.get(code)
