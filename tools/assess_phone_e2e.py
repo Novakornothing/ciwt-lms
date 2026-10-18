@@ -1,19 +1,63 @@
 """Phone end-to-end for the quiz and knowledge-test runner (pass 6).
 
-Runs against a throwaway server (DATABASE_URL pointing at a DB copy). Usage:
-  python tools/assess_phone_e2e.py <outdir> [--base URL] [--quiz /student/quiz/1/1] [--test /student/test/1/2] [--theme dark]
+Self-contained by default (pass 14): without --base it copies the database (--src-db, default ciwt_lms.db; the
+source is only read) to a temporary file, starts its own app.py on a free port with DATABASE_URL pointing at the
+copy, runs every check including timer auto-submit, then stops that server and deletes the copy. So it passes on its
+own, whatever other suites did to their databases. Usage:
+  python tools/assess_phone_e2e.py <outdir> [--src-db ciwt_lms.db] [--theme dark]
+  python tools/assess_phone_e2e.py <outdir> --base URL [--db /path/to/that/servers/copy.db]   # an existing server
+  [--quiz /student/quiz/1/1] [--test /student/test/1/2]
 Checks: no horizontal overflow, tab bar hidden in focus mode, sticky action bar and timer stay on screen,
 answer/flag/reload-restore, review modal jump chips, submit -> results, and timer auto-submit.
 """
-import argparse, json, os, sys, time
+import argparse, atexit, json, os, shutil, socket, subprocess, sys, tempfile, time, urllib.request
 from playwright.sync_api import sync_playwright
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ap = argparse.ArgumentParser()
-ap.add_argument('out'); ap.add_argument('--base', default='http://127.0.0.1:5077')
+ap.add_argument('out'); ap.add_argument('--base', default='')
 ap.add_argument('--quiz', default='/student/quiz/1/1'); ap.add_argument('--test', default='/student/test/1/2')
 ap.add_argument('--theme', default='light'); ap.add_argument('--db', default='')
+ap.add_argument('--src-db', default=os.path.join(ROOT, 'ciwt_lms.db'))
 a = ap.parse_args(); os.makedirs(a.out, exist_ok=True)
 results = []
+
+
+def own_server():
+    """Copy the DB, start app.py on a free port against the copy; cleaned up at exit (this process's child only)."""
+    tmp = tempfile.mkdtemp(prefix='assess-e2e-')
+    db = os.path.join(tmp, 'e2e.db')
+    shutil.copyfile(a.src_db, db)
+    with socket.socket() as s_:
+        s_.bind(('127.0.0.1', 0)); port = s_.getsockname()[1]
+    env = dict(os.environ, DATABASE_URL='sqlite:///' + db, PORT=str(port))
+    env.pop('CIWT_ALLOW_REAL_DB', None)
+    log = open(os.path.join(tmp, 'server.log'), 'w')
+    proc = subprocess.Popen([sys.executable, os.path.join(ROOT, 'app.py')], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
+
+    def stop():
+        proc.terminate()
+        try:
+            proc.wait(10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+        shutil.rmtree(tmp, ignore_errors=True)
+    atexit.register(stop)
+    base = f'http://127.0.0.1:{port}'
+    for _ in range(120):
+        try:
+            if urllib.request.urlopen(base + '/login', timeout=2).status == 200:
+                return base, db
+        except Exception:
+            time.sleep(0.5)
+        if proc.poll() is not None:
+            break
+    raise SystemExit('own server did not start; see ' + log.name)
+
+
+if not a.base:
+    a.base, a.db = own_server()
+    print(f'own server {a.base} on a fresh copy of {os.path.basename(a.src_db)}')
 
 def check(name, ok, detail=''):
     results.append({'check': name, 'ok': bool(ok), 'detail': detail})
@@ -146,4 +190,4 @@ with sync_playwright() as p:
 json.dump(results, open(os.path.join(a.out, f'phone-e2e-{a.theme}.json'), 'w'), indent=1)
 fails = [r for r in results if not r['ok']]
 print(f"{len(results) - len(fails)}/{len(results)} checks passed")
-sys.exit(1 if fails else 0)
+sys.exit(1 if fails else 0)   # atexit stops the own server

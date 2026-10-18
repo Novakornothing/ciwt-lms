@@ -221,7 +221,29 @@ def test_email_linking_is_opt_in_and_never_links_admins(app, mod, env):
 
 
 # ---------------------------------------------------------------- deep linking
+def ensure_course_mapped(app, env, section_id=1):
+    """Pass 14: make the deep-link tests self-contained (they pass alone or under -k): map the mock LMS course to a
+    class unless an earlier test already did, through the same instructor launch a teacher would use."""
+    t = app.test_client()
+    r, _, _ = browser_launch(env, t, 'mock-teacher-1', target='course', rl='rl-map-fixture')
+    if r.status_code == 302 and '/lti/context/' in r.headers['Location'] and r.headers['Location'].endswith('/map'):
+        cid = int(re.search(r'/lti/context/(\d+)/map', r.headers['Location']).group(1))
+        assert t.post(f'/lti/context/{cid}/map', data={'section_id': section_id}).status_code == 302
+
+
+def ensure_learner_launched(app, env):
+    """Course mapped and mock-student-1 launched into quiz 1 (resource link rl-quiz-1), as the launch test does."""
+    ensure_course_mapped(app, env)
+    with app.app_context():
+        have = (env['m'].LtiUserLink.query.filter_by(sub='mock-student-1').first() is not None and
+                env['m'].LtiResourceLink.query.filter_by(resource_link_id='rl-quiz-1').first() is not None)
+    if not have:
+        r, _, _ = browser_launch(env, app.test_client(), 'mock-student-1', target='quiz:1', rl='rl-quiz-1')
+        assert r.status_code == 302
+
+
 def test_deep_linking_returns_signed_items_with_line_items_for_graded_ones(app, mod, env, ids):
+    ensure_course_mapped(app, env)
     t = app.test_client()
     r, _, _ = browser_launch(env, t, 'mock-teacher-1', kind='deeplink')
     assert r.status_code == 302 and '/lti/deep-link/' in r.headers['Location']
@@ -254,6 +276,7 @@ def test_learners_cannot_deep_link(app, env):
 
 # ---------------------------------------------------------------- AGS + NRPS
 def test_scores_go_to_the_lms_from_the_gradebook(app, mod, env, instructor):
+    ensure_learner_launched(app, env)
     m = env['m']
     with app.app_context():
         uid = m.LtiUserLink.query.filter_by(sub='mock-student-1').first().user_id
@@ -274,6 +297,7 @@ def test_scores_go_to_the_lms_from_the_gradebook(app, mod, env, instructor):
 
 
 def test_roster_sync_pages_enrolls_learners_and_removes_nobody(app, mod, env, instructor):
+    ensure_learner_launched(app, env)
     with app.app_context():
         before = mod.Enrollment.query.filter_by(section_id=1).count()
     r = instructor.post('/instructor/section/1/lti/roster')
