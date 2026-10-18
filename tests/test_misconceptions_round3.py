@@ -100,7 +100,8 @@ def test_tests_abc_and_chapter_checks_now_carry_tags(served):
             untagged[src].append(b)
     # measured with tools/misconception_coverage.py: Tests A/B/C 30/129 -> 129/129 tagged, checks 183/200 -> 198/200
     assert untagged['test'] == []
-    assert sorted(untagged['check']) == ['NQ5.5', 'Q13.6']             # throw-away distractors only, left untagged
+    # round 3 left NQ5.5 and Q13.6 untagged; content round 4 tagged them (tests/test_misconceptions_round4.py)
+    assert set(untagged['check']) <= {'NQ5.5', 'Q13.6'}
 
 
 @pytest.fixture

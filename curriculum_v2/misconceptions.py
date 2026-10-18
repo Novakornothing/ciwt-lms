@@ -255,6 +255,14 @@ from curriculum_v2 import misconceptions_round3 as _r3  # noqa: E402
 MISCONCEPTIONS.update(_r3.MISCONCEPTIONS)
 TAGS.update(_r3.TAGS)
 
+# content round 4: pass-15 cert gap items get a source + Pending SME review status on their misconceptions, five more
+# tags, and the last two untagged chapter checks (Q13.6, NQ5.5) are tagged (curriculum_v2/misconceptions_round4.py)
+from curriculum_v2 import misconceptions_round4 as _r4  # noqa: E402
+MISCONCEPTIONS.update(_r4.MISCONCEPTIONS)
+TAGS.update(_r4.TAGS)
+for _k, _ann in _r4.p15_annotations().items():
+    MISCONCEPTIONS[_k] = dict(MISCONCEPTIONS[_k], **{f: v for f, v in _ann.items() if v and not MISCONCEPTIONS[_k].get(f)})
+
 # pass 15: option-length parity rewrote some distractors (curriculum_v2/parity_pass15.py). The rewritten text keeps
 # the same wrong idea, so its tag moves to the new text (tags must point at distractors that are actually shown).
 from curriculum_v2 import parity_pass15 as _par15  # noqa: E402

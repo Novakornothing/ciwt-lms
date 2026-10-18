@@ -116,6 +116,43 @@ def summary(cov):
                               sum(1 for o in objs if cov[o]['course'] == c)] for c in ('ITSUP', 'NETOPS')}}
 
 
+def p15_report(app):
+    """Content round 4: tag coverage of the pass-15 certification gap items (i05_gaps_p15.ITEMS) as the engine serves
+    them. A tag counts only if the served option text matches, it is not the key, the objective matches and
+    ``tag_for`` returns it."""
+    from mastery.engine import cert_items_for
+    from curriculum_v2 import misconceptions as MCS
+    from curriculum_v2.cert.content import i05_gaps_p15 as P
+    r = {'items': len(P.ITEMS), 'single': 0, 'served_single': 0, 'distractors': 0, 'tagged': 0, 'items_tagged': 0,
+         'not_scored': [], 'untagged_distractors': [], 'mcs_with_status': 0, 'mcs_with_source': 0,
+         'mcs': len(P.MISCONCEPTIONS)}
+    with app.app_context():
+        for q in P.ITEMS:
+            if q['type'] != 'single':
+                r['not_scored'].append(f"{q['bank_id']} ({q['type']})")
+                continue
+            r['single'] += 1
+            s = next((x for x in cert_items_for(q['obj']) if x.get('bank_id') == q['bank_id']), None)
+            if not s:
+                continue
+            r['served_single'] += 1
+            hit = False
+            for d in s['options']:
+                if d == s['correct']:
+                    continue
+                r['distractors'] += 1
+                if MCS.tag_for(s, d):
+                    r['tagged'] += 1
+                    hit = True
+                else:
+                    r['untagged_distractors'].append((q['bank_id'], d))
+            r['items_tagged'] += int(hit)
+    for k in P.MISCONCEPTIONS:
+        r['mcs_with_status'] += int(bool(MCS.MISCONCEPTIONS[k].get('status')))
+        r['mcs_with_source'] += int(bool(MCS.MISCONCEPTIONS[k].get('source')))
+    return r
+
+
 def main(argv):
     import app as lms
     cov = measure(lms.app, lms)
@@ -132,8 +169,15 @@ def main(argv):
         print(f"  {o:8} items={c['items']:3} distractors={c['distractors']:3} tagged={c['tagged']:3} mcs={len(c['misconceptions']):2} "
               f"corr={len(c['with_correction']):2} items_tagged={c['items_tagged']:3} {'OK' if c['covered'] else '--'} "
               + ' '.join(f"{k}:{v[1]}/{v[0]}" for k, v in sorted(c['by_src'].items())))
+    p15 = p15_report(lms.app)
+    print(f"pass-15 cert gap items: {p15['served_single']}/{p15['single']} single-answer items served; tagged distractors "
+          f"{p15['tagged']}/{p15['distractors']}; items with >=1 tag {p15['items_tagged']}/{p15['served_single']}; "
+          f"misconceptions with status {p15['mcs_with_status']}/{p15['mcs']}, with source {p15['mcs_with_source']}/{p15['mcs']}; "
+          f"not scored per distractor: {', '.join(p15['not_scored'])}")
+    for b, d in p15['untagged_distractors']:
+        print(f"  p15 untagged: {b}: {d}")
     if '--json' in argv:
-        Path(argv[argv.index('--json') + 1]).write_text(json.dumps({'summary': s, 'objectives': cov}, indent=1))
+        Path(argv[argv.index('--json') + 1]).write_text(json.dumps({'summary': s, 'objectives': cov, 'p15': p15}, indent=1))
 
 
 if __name__ == '__main__':
