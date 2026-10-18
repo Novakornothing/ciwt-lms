@@ -11,7 +11,8 @@
     <span class="small">{{ done_n }} of {{ gold_path.steps|length }} steps done</span>
     {% set mx_first = mastery_path.next if (mastery_path and mastery_path.next and mastery_path.next.kind in ('review', 'alt_review', 'misconception')) else none %}
     {% if mx_first %}<a class="btn btn-brand" href="{{ mx_first.url }}">Continue: {{ mx_first.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-    {% elif gold_path.next %}<a class="btn btn-brand" href="{{ gold_path.next.url }}">Continue: {{ gold_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
+    {% elif gold_path.next %}<a class="btn btn-brand" href="{{ gold_path.next.url }}">Continue: {{ gold_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    {% elif mastery_path and mastery_path.next %}<a class="btn btn-brand" href="{{ mastery_path.next.url }}">Continue: {{ mastery_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
   </div>
   {% elif mastery_path and mastery_path.next %}
   <div class="home-progress"><a class="btn btn-brand" href="{{ mastery_path.next.url }}">Continue: {{ mastery_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div>

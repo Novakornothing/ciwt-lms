@@ -228,10 +228,25 @@ def apply_misconceptions(decision, misconceptions, *, settings, history=None, la
         a = dict(a)
         cands = by_obj.get(a['obj'])
         if a['type'] in ('review', 'alt_review') and cands:
+            # Once the student has completed a mix-up correction on this objective and it is still low, the next
+            # review is the alternate explanation (the engine's documented order), not another correction; the
+            # other mix-ups stay one tap away on the review page (adaptive e2e, Oct 18 2026).
+            done_mc = set((history.get(a['obj']) or {}).get('mc_done') or ())
             hits, _last, mc = cands[0]
-            a['type'], a['mc'] = 'misconception', mc
-            a['reasons'] = ([f'Your answers suggest this mix-up: {labels.get(mc, mc)} (seen {hits} time{"s" if hits != 1 else ""}).',
-                             'So this review goes straight at that idea instead of re-reading the whole lesson.'] + list(a['reasons']))
+            seen = f'{labels.get(mc, mc)} (seen {hits} time{"s" if hits != 1 else ""})'
+            if a['type'] == 'alt_review' and done_mc:
+                a['mc_seen'] = mc
+                a['reasons'] = ([f'Your answers still suggest this mix-up: {seen}. You already worked through a '
+                                 'mix-up correction here, so it is not repeated (it stays available below the questions).']
+                                + list(a['reasons']))
+            else:
+                a['type'], a['mc'] = 'misconception', mc
+                # an alt review turned into a correction must not keep promising the alternate explanation
+                rest = [r for r in a['reasons'] if not r.startswith('You already did one review')]
+                if len(rest) != len(a['reasons']):
+                    rest.insert(0, 'You already did one review on this objective and the estimate is still low.')
+                a['reasons'] = ([f'Your answers suggest this mix-up: {seen}.',
+                                 'So this review goes straight at that idea instead of re-reading the whole lesson.'] + rest)
             rows[a['obj']]['action'] = a
         actions.append(a)
         have.add(a['obj'])
@@ -239,12 +254,14 @@ def apply_misconceptions(decision, misconceptions, *, settings, history=None, la
         for obj, cands in by_obj.items():
             hits, last, mc = cands[0]
             row = rows.get(obj)
-            if obj in have or not row or row['state'] in ('waived', 'mastered') or hits < MC_REPEAT:
+            # stuck (two reviews done): nothing more is inserted, the instructor takes it from here
+            if (obj in have or not row or row['state'] in ('waived', 'mastered') or row.get('stuck')
+                    or hits < MC_REPEAT):
                 continue
             sk = (history.get(obj) or {}).get('skipped_at')
             if sk and last and sk >= last:
                 continue
-            a = {'type': 'misconception', 'obj': obj, 'mc': mc, 'required': False, 'source': 'engine',
+            a = {'type': 'misconception', 'obj': obj, 'mc': mc, 'required': False, 'source': 'engine', 'offer': True,
                  'reasons': [f'Your answers suggest this mix-up: {labels.get(mc, mc)} (seen {hits} times).',
                              'A two-minute correction is offered. It is optional and never graded.']}
             rows[obj]['action'] = a
