@@ -359,6 +359,9 @@ def run(days=28, seed=13, chapters=(1, 2, 3, 4), log=print):
         # engine (correctly, by its rule) lists "picked the same mix-up 2 times". Whether a mastered student should be
         # listed for that is an open policy question (ADAPTIVE_E2E.md round 3); the check keeps what matters here: a
         # strong student is never listed for anything else, and only below every weak, mixed and disengaged student.
+        # Pass 16 (refinement, d0d764c) found the same thing independently: which items a strong student misses also
+        # depends on the wall-clock time of the run, so some runs list a strong student for a repeated mix-up and some
+        # do not. Merge (pass 16b): content's stricter form is kept (below every weak, mixed and disengaged student).
         def _strong_ok(order):
             needy = [i for i, p in enumerate(order) if prof_of[p['user'].id] in ('weak', 'mixed', 'disengaged')]
             last_needy = max(needy) if needy else -1
