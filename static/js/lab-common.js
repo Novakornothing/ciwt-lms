@@ -100,7 +100,8 @@
     document.querySelectorAll('.lab-complete-flag').forEach(function (f) { f.hidden = !p.complete; });
     if (!first && p.newly && p.newly.length) {
       var texts = (p.objectives || []).filter(function (o) { return p.newly.indexOf(o.id) >= 0; }).map(function (o) { return o.text; });
-      this.toast('✓ ' + texts.join(' · '), 'ok');
+      // r5: one check can complete many objectives at once; a toast listing them all covered the phone screen
+      this.toast(texts.length > 2 ? '✓ ' + texts.length + ' objectives complete (' + n + ' of ' + total + ')' : '✓ ' + texts.join(' · '), 'ok');
       this.say('Objective complete: ' + texts.join('; ') + '. ' + n + ' of ' + total + ' done.');
       if (p.complete) this.say('Lab complete. ' + (p.success_msg || ''));
     }
@@ -122,7 +123,36 @@
         if (h.max) box.appendChild(el('div', { class: 'small text-muted mt-1', text: 'That is the full answer for this objective.' }));
         self.say('Hint: ' + (h.text || ''));
       }
+      // phones: the side panel is behind the full-screen terminal, so the hint is shown in the terminal too
+      self.note(h.objective_text ? ('Hint ' + h.tier + ' of 2 — ' + h.objective_text) : 'Hint', [h.text || ''], 'hint', h.max ? 'That is the full answer for this objective.' : '');
     });
+  };
+
+  /* r5: a note inside the terminal (#termNote): hints and check results while the phone terminal is full-screen.
+   * Shown only when the terminal is in focus mode (or force); otherwise the side panel / feedback area has it. */
+  Kit.prototype.note = function (title, items, kind, foot, force) {
+    var box = document.getElementById('termNote');
+    if (!box) return false;
+    if (!force && !document.documentElement.classList.contains('term-focus-on')) { box.hidden = true; return false; }
+    var body = box.querySelector('.term-note-body');
+    body.innerHTML = '';
+    body.appendChild(el('div', { class: 'term-note-title', text: title }));
+    items = (items || []).filter(function (t) { return t; });
+    if (items.length === 1) body.appendChild(el('div', { class: kind === 'hint' ? 'lab-hint-text' : '', text: items[0] }));
+    else if (items.length) body.appendChild(el('ul', null, items.map(function (t) { return el('li', { text: t }); })));
+    if (foot) body.appendChild(el('div', { class: 'small mt-1', text: foot }));
+    box.className = 'term-note ' + (kind || '');
+    box.hidden = false;
+    box.scrollTop = 0;
+    if (!box._wired) {
+      box._wired = true;
+      var x = document.getElementById('termNoteX');
+      if (x) {
+        x.addEventListener('pointerdown', function (e) { e.preventDefault(); });   // keep the on-screen keyboard open
+        x.addEventListener('click', function () { box.hidden = true; var i = document.getElementById('termInput'); if (i && document.documentElement.classList.contains('term-focus-on')) i.focus({ preventScroll: true }); });
+      }
+    }
+    return true;
   };
 
   Kit.prototype.undo = function () {

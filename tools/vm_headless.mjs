@@ -15,13 +15,11 @@ for (const m of spec.vm.machines) {
   if (net) { const port = fab.attach(m.label, m.segs, fr => e.bus.send("net0-receive", fr)); e.add_listener("net0-send", d => port.send(new Uint8Array(d))); }
 }
 const svc = net && net.services ? new N.Services(fab, net.services) : null;
-let step = "boot";   // what we are waiting for, so a timeout says which step stalled (pass 17: a one-off firewall timeout in a full suite could not be placed)
-const wait = (o, re, ms=+(process.env.VM_WAIT_MS||150000)) => new Promise((res, rej) => { const st = Date.now(); const iv = setInterval(() => { if (re.test(o.out)) { clearInterval(iv); res(); } else if (Date.now() - st > ms) { clearInterval(iv); rej(new Error(`timeout after ${ms} ms waiting on [${o.name}] ${step}; console tail: ${JSON.stringify(o.out.slice(-300))}`)); } }, 20); });
+let step = "boot";   // what the harness is waiting for, so a timeout says where it stuck (r5 flake hardening)
+const wait = (o, re, ms=+(process.env.VM_WAIT_MS||150000)) => new Promise((res, rej) => { const st = Date.now(); const iv = setInterval(() => { if (re.test(o.out)) { clearInterval(iv); res(); } else if (Date.now() - st > ms) { clearInterval(iv); rej(new Error(`harness timeout after ${ms} ms on ${o.name} during ${step}; console tails: ` + Object.values(vms).map(v => `${v.name}=${JSON.stringify(v.out.slice(-400))}`).join(" "))); } }, 20); });
 const P = /(\n[^\n]*[#%$] |assword: ?|\(yes\/no[^)]*\)\? ?)$/;   // shell prompt, or a password / host-key question
-async function run(o, c, quiet) { step = "command " + JSON.stringify(c.slice(0, 120)); o.out = ""; o.e.serial0_send(c + "\n"); await wait(o, P); const t = o.out.split("\n").slice(1, -1).join("\n"); if (!quiet) console.error(`$ ${c}\n${t}`); return t; }
-const T0 = Date.now();
+async function run(o, c, quiet) { step = JSON.stringify(c.slice(0, 80)); o.out = ""; o.e.serial0_send(c + "\n"); await wait(o, P); const t = o.out.split("\n").slice(1, -1).join("\n"); if (!quiet) console.error(`$ ${c}\n${t}`); return t; }
 await Promise.all(Object.values(vms).map(o => wait(o, /[#%$] $/)));
-console.error(`[boot] ${Date.now() - T0} ms`);
 for (const [name, o] of Object.entries(vms)) {
   const s = (spec.vm.setup || {})[name]; if (!s) continue;
   await o.e.create_file("/.ciwt-setup", new TextEncoder().encode(s));

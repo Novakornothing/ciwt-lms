@@ -110,7 +110,11 @@
     var c = input.value;
     input.value = '';
     send(c);
+    if (wrap.classList.contains('term-focus') && document.activeElement !== input) input.focus({ preventScroll: true });
   });
+  // r5: tapping ↵ must not take focus from the input (that closed the phone keyboard after every command)
+  var sendBtn = form.querySelector('.term-send');
+  if (sendBtn) sendBtn.addEventListener('pointerdown', function (e) { e.preventDefault(); });
   input.addEventListener('keydown', function (e) {
     if (e.key === 'Tab') { e.preventDefault(); tab(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); histMove(-1); }
@@ -161,6 +165,7 @@
     var top = vv ? vv.offsetTop : 0;
     wrap.style.setProperty('--vvh', h + 'px');
     wrap.style.setProperty('--vvtop', top + 'px');
+    wrap.classList.toggle('term-short', h < 560);   // r5: keyboard open — drop the chips row, keep prompt + keys
     scroll();
   }
   function enterFocus() {
@@ -171,8 +176,9 @@
     fit();
   }
   function exitFocus() {
-    wrap.classList.remove('term-focus');
+    wrap.classList.remove('term-focus', 'term-short');
     document.documentElement.classList.remove('term-focus-on');
+    var tn = document.getElementById('termNote'); if (tn) tn.hidden = true;
     document.getElementById('btnFocus').setAttribute('aria-pressed', 'false');
     wrap.style.removeProperty('--vvh');
     input.blur();

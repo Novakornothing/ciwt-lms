@@ -133,3 +133,28 @@ test('the Packets panel names IPv6 frames (router advertisement with prefix, nei
   const fab = new N.Fabric(); fab.attach('a', ['lan'], () => {}).send(eth(MC1, MAC, 0x86dd, ip6('fe80::1', 'ff02::1', 58, ra)));
   assert.strictEqual(fab.log.length, 1, 'IPv6 frames reach the Packets log');
 });
+
+// labs round 5 wrote its own IPv6 summary (20a32f4) in parallel with pass 16 (55f6d92); the pass-17 merge keeps the pass-16
+// summarize6 (extension headers, DNS over v6) and keeps these round-5 cases, asserted against the kept wording
+function v6frame(nh, src, dst, payload, hl = 255) {
+  const f = new Uint8Array(54 + payload.length);
+  f.set([0x33, 0x33, 0, 0, 0, 1, 0x02, 0, 0, 0, 0, 0x40], 0); f[12] = 0x86; f[13] = 0xdd;
+  f[14] = 0x60; f[18] = payload.length >> 8; f[19] = payload.length & 255; f[20] = nh; f[21] = hl;
+  f.set(src, 22); f.set(dst, 38); f.set(payload, 54);
+  return f;
+}
+const LL = [0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0x02, 0x22, 0x15, 0xff, 0xfe, 0, 0, 1];
+const ALLN = [0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+const G = [0x20, 0x01, 0x0d, 0xb8, 0, 0x99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x10];
+
+test('IPv6: router advertisement with its prefix, neighbour discovery, echo, compressed addresses', () => {
+  const ra = [134, 0, 0, 0, 64, 0, 0x07, 0x08, 0, 0, 0, 0, 0, 0, 0, 0,
+    3, 4, 64, 0xc0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x20, 0x01, 0x0d, 0xb8, 0, 0x40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  assert.strictEqual(N.summarize(v6frame(58, LL, ALLN, ra)),
+    'ICMPv6 fe80::222:15ff:fe00:1 → ff02::1 router advertisement prefix 2001:db8:40::/64');
+  const ns = [135, 0, 0, 0, 0, 0, 0, 0].concat(LL);
+  assert.match(N.summarize(v6frame(58, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ALLN, ns)), /^ICMPv6 :: → ff02::1 neighbor solicitation, who has fe80::222:15ff:fe00:1$/);
+  assert.match(N.summarize(v6frame(58, G, LL, [128, 0, 0, 0, 0, 1, 0, 1], 64)), /^ICMPv6 2001:db8:99::10 → fe80::222:15ff:fe00:1 echo request \(hlim 64\)$/);
+  assert.match(N.summarize(v6frame(6, G, LL, [0, 80, 0x1f, 0x90, 0, 0, 0, 0])), /^TCP \[2001:db8:99::10\]:80 → \[fe80::222:15ff:fe00:1\]:8080$/);
+  assert.strictEqual(N.summarize(v6frame(58, G, LL, [128]).slice(0, 40)), 'IPv6 (short frame)');   // truncated frame: named, no throw
+});

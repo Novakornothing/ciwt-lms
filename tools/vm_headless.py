@@ -2,7 +2,8 @@
 
 usage: python tools/vm_headless.py LAB_ID [--commands solution|none|FILE] [--verbose]
 Needs node and the self-hosted assets (tools/fetch_v86.sh); uses static/vendor/v86 and static/js/lab-vmnet.js.
-Exit 0 when the expected outcome holds (solution → complete; none → nothing but boot).
+Exit 0 when the expected outcome holds (solution → complete; none → nothing but boot), 1 when it does not,
+3 when the harness timed out waiting for a VM prompt (VM_WAIT_MS, default 150 s), 2 on any other node error.
 """
 import argparse
 import json
@@ -31,7 +32,10 @@ with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
 r = subprocess.run(["node", str(HERE / "vm_headless.mjs"), f.name], capture_output=True, text=True, timeout=1500)
 sys.stderr.write(r.stderr[-6000:])
 if r.returncode:
-    sys.exit(f"node failed: {r.returncode}")
+    # exit 3 = the harness gave up waiting for a VM (boot/prompt timeout: box load, not a grading result);
+    # tests/test_vm_real.py retries that once and says so. Anything else is a real failure.
+    print(f"node failed: {r.returncode}", file=sys.stderr)
+    sys.exit(3 if "harness timeout" in r.stderr else 2)
 out = json.loads(r.stdout.strip().splitlines()[-1])
 V.record_commands(state, cmds)
 res, state, done = V.grade(lab, state, [], out["probes"], booted=True, fabric={"events": out["events"]})

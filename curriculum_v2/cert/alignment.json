@@ -4783,6 +4783,7 @@
     "linux-vm-dns",
     "linux-vm-web",
     "linux-vm-ipv6",
+    "linux-vm-method",
     "linux-vm-users",
     "linux-vm-firewall",
     "linux-vm-logs",
@@ -5391,6 +5392,7 @@
     "hw-pc-build",
     "win-full-triage",
     "ticket-method",
+    "linux-vm-method",
     "win-ad-users"
    ],
    "lessons": [
@@ -5664,6 +5666,7 @@
     "linux-vm-web",
     "win-full-triage",
     "ticket-method",
+    "linux-vm-method",
     "linux-vm-script"
    ],
    "lessons": [
@@ -6444,7 +6447,8 @@
    "labs": [
     "win-dns-break",
     "win-full-triage",
-    "ticket-method"
+    "ticket-method",
+    "linux-vm-method"
    ],
    "lessons": [
     "NETOPS 6.2",

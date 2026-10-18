@@ -130,6 +130,8 @@ def diagnose(events, lab=None):
     run, prev, start, worst = 0, None, None, (0, None, '')
     for e in acts:
         a = (_get(e, 'action') or '').strip().lower()
+        if _get(e, 'kind') == 'check' and a.startswith('vm probe') and ': "t"' in a:
+            a = ''   # a check the probe watchdog stopped (slow device) is not the student repeating themselves (labs r5)
         if a and a == prev and not _newly(e):
             run += 1
         else:

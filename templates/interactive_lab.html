@@ -15,6 +15,7 @@
         </span>
       </div>
       <div class="term-body" id="termBody" role="log" aria-live="polite" aria-label="Terminal output" tabindex="0"></div>
+      <div class="term-note" id="termNote" role="status" aria-live="polite" hidden><div class="term-note-body"></div><button type="button" class="term-note-x" id="termNoteX" aria-label="Close note">×</button></div>
       <form class="term-input-row" id="termForm" autocomplete="off">
         <label class="prompt" id="termPrompt" for="termInput">{{ prompt }}</label>
         <input id="termInput" class="term-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
@@ -27,6 +28,7 @@
         <button type="button" class="tkey" data-key-act="down" aria-label="Next command">↓</button>
         <button type="button" class="tkey" data-key-act="ctrlc" aria-label="Ctrl-C (cancel line)">Ctrl-C</button>
         <button type="button" class="tkey" data-key-act="clear">Clear</button>
+        <button type="button" class="tkey tkey-hint" data-key-act="hint" aria-label="Hint (shown here in the terminal)">Hint</button>
         <button type="button" class="tkey" data-key-act="help">{{ '?' if lab.kind in ('switch', 'router') else 'help' }}</button>
       </div>
       {% if palette %}

@@ -32,7 +32,7 @@
         {% endif %}
         {% if fallback_labs %}
         <p class="small mb-0 mt-2 vm-fallback">Older phone or slow connection? The same skills are in the simulated version{{ 's' if fallback_labs|length > 1 else '' }}:
-          {% for f in fallback_labs %}<a href="{{ url_for('interactive_lab', lab_id=f.id) }}">{{ f.title }}</a>{{ ', ' if not loop.last else '' }}{% endfor %}.</p>
+          {% for f in fallback_labs %}<a href="{{ url_for('interactive_lab', lab_id=f.id, from=lab.id) }}">{{ f.title }}</a>{{ ', ' if not loop.last else '' }}{% endfor %}.</p>
         <div class="alert alert-info mt-2 mb-0 small" id="vmWeak" role="status" hidden><span class="why"></span>If it stays slow, use the simulated version above — it runs on any device and counts as practice for the same objectives.</div>
         {% endif %}
       </div>
@@ -41,7 +41,7 @@
       <div class="term-bar">
         <span class="term-title"><span class="term-live-dot" aria-hidden="true"></span> <span id="vmTitle">root@{{ ms[0].hostname }} — real Linux (BusyBox sh)</span></span>
         <span class="term-bar-tools">
-          <button type="button" class="btn btn-sm term-btn" id="vmRaw" aria-pressed="false" title="Direct keyboard mode (for vi, less, top, Ctrl keys)">Keys: line</button>
+          <button type="button" class="btn btn-sm term-btn" id="vmRaw" aria-pressed="false" title="Direct keys: every key goes to the VM (vi, Ctrl keys). Full-screen programs draw roughly here.">Keys: line</button>
           <button type="button" class="btn btn-sm term-btn" id="btnFocus" aria-pressed="false" title="Full-screen terminal"><i class="bi bi-arrows-fullscreen" aria-hidden="true"></i><span class="visually-hidden">Full-screen terminal</span></button>
           <button type="button" class="btn btn-sm term-btn term-exit" id="btnFocusExit">Done</button>
         </span>
@@ -56,6 +56,7 @@
       <div class="term-body vm-screen" id="vmScreen-{{ m.name }}" data-m="{{ m.name }}" {% if multi or lab.vm.net %}role="tabpanel" aria-labelledby="vmTab-{{ m.name }}"{% else %}role="log"{% endif %} aria-live="polite" aria-label="{{ m.label }} serial console" tabindex="0" {% if not loop.first %}hidden{% endif %}></div>
       {% endfor %}
       {% if lab.vm.net %}<div class="term-body vm-packets" id="vmPackets" role="tabpanel" aria-labelledby="vmTab-_packets" aria-label="Packets on the virtual network" tabindex="0" hidden></div>{% endif %}
+      <div class="term-note" id="termNote" role="status" aria-live="polite" hidden><div class="term-note-body"></div><button type="button" class="term-note-x" id="termNoteX" aria-label="Close note">×</button></div>
       <form class="term-input-row" id="termForm" autocomplete="off">
         <label class="prompt" id="termPrompt" for="termInput">$</label>
         <input id="termInput" class="term-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
@@ -67,10 +68,11 @@
         <button type="button" class="tkey" data-key-act="up" aria-label="Previous command">↑</button>
         <button type="button" class="tkey" data-key-act="down" aria-label="Next command">↓</button>
         <button type="button" class="tkey" data-key-act="ctrlc" aria-label="Ctrl-C (interrupt)">Ctrl-C</button>
+        <button type="button" class="tkey tkey-check" data-key-act="check">Check ✓</button>
+        <button type="button" class="tkey tkey-hint" data-key-act="hint" aria-label="Hint (shown here in the terminal)">Hint</button>
         <button type="button" class="tkey" data-key-act="ctrld" aria-label="Ctrl-D (end of input)">Ctrl-D</button>
         <button type="button" class="tkey" data-key-act="esc">Esc</button>
         <button type="button" class="tkey" data-key-act="clear">Clear</button>
-        <button type="button" class="tkey tkey-check" data-key-act="check">Check ✓</button>
       </div>
       <div class="term-chips" role="toolbar" aria-label="Insert a command (does not run it)">
         {% for p in palette %}<button type="button" class="tchip" data-chip="{{ p }}">{{ p }}</button>{% endfor %}

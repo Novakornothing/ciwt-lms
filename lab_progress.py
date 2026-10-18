@@ -283,6 +283,13 @@ def register(app, db, deps):
             vm_ok = all(os.path.isfile(os.path.join(vdir, f)) for f in ('libv86.js', 'v86.wasm', 'seabios.bin', 'vgabios.bin', lab['vm']['image']))
         fallback_labs = [x for x in (RT.get_lab(f) for f in lab.get('fallback') or []) if x]
         real_labs = [x for x in RT.VM.VM_LABS if lab['id'] in (x.get('fallback') or [])]
+        # r5: a simulator opened from a real-VM page that is not a catalogue twin (a scenario stage such as scn-dns-fix)
+        # links back to that page too; scenario stages are only offered when the student came from them (?from=),
+        # so a generic simulator never skips a scenario's stage lock
+        src = RT.get_lab(str(request.args.get('from') or '')[:80])
+        if (src and src.get('kind') == 'vm' and lab['id'] in (src.get('fallback') or [])
+                and all(x['id'] != src['id'] for x in real_labs)):
+            real_labs = [src] + real_labs
         return render_template(tpl, lab=lab, boot=boot, prompt=boot.get('prompt', ''), practical_back=back, vm_assets_ok=vm_ok,
                                fallback_labs=fallback_labs, real_labs=real_labs,
                                palette=RT.palette(lab), steps=RT.public_steps(lab, state))
