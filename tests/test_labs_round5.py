@@ -118,3 +118,86 @@ def test_phone_terminal_with_keyboard_open(live, lab_id):
             assert pg.evaluate("document.activeElement.id") == 'termInput'
             assert 'ipconfig' in pg.inner_text('#termBody')
         b.close()
+
+
+# ------------------------------------------------------------------ round 5 lab: troubleshooting methodology (ITSUP 7)
+import json  # noqa: E402
+
+import interactive_labs as IL  # noqa: E402
+import lab_runtime as RT  # noqa: E402
+import labs_vm as V  # noqa: E402
+from curriculum_v2.objectives import OBJECTIVES  # noqa: E402
+
+METHOD = 'linux-vm-method'
+
+
+def _grade(lab, cmds):
+    st = V.fresh(lab, 7)
+    V.record_commands(st, cmds)
+    _, _, done = V.grade(lab, st, [], V.solved_probes(st, lab), booted=True)
+    return done
+
+
+def test_method_lab_registered_mapped_tagged_and_has_fallbacks():
+    lab = RT.get_lab(METHOD)
+    assert lab and lab['kind'] == 'vm' and METHOD in V.VM_BY_ID
+    assert lab.get('review') == IL.SME_PENDING
+    assert all(o in OBJECTIVES for o in lab['course_objectives']) and 'IT-7.1' in lab['course_objectives']
+    assert METHOD in IL.CHAPTER_LABS.get(('ITSUP', 7), []), 'mapped to the thin chapter ITSUP 7'
+    assert set(lab['obj_hints']) == {o['id'] for o in lab['objectives']}
+    assert all(len(h) == 2 and all(x.strip() for x in h) for h in lab['obj_hints'].values())
+    assert lab['fallback'] and all(RT.get_lab(f) and RT.get_lab(f)['kind'] != 'vm' for f in lab['fallback'])
+    json.dumps(lab['vm']), json.dumps(lab['vm_checks'])
+
+
+def test_method_solution_earns_everything_and_empty_only_boot():
+    lab = V.VM_BY_ID[METHOD]
+    assert sorted(_grade(lab, lab['solution']['vm_commands'])) == sorted(o['id'] for o in lab['objectives'])
+    _, _, done = V.grade(lab, V.fresh(lab, 7), [], {}, booted=True)
+    assert done in ([], ['boot'])
+
+
+def test_method_order_is_graded():
+    lab = V.VM_BY_ID[METHOD]
+    sol = lab['solution']['vm_commands']
+    edit = next(c for c in sol if c.startswith('sed -i'))
+    # fixing first, then going through the motions: identify / domain / theory / test are not earned
+    done = _grade(lab, [edit] + [c for c in sol if c != edit])
+    assert not {'identify', 'domain', 'theory', 'test'} & set(done), done
+    assert {'fix', 'document'} <= set(done)
+    # testing before writing the theory does not count as testing the theory
+    th = next(c for c in sol if 'theory=' in c)
+    tests_first = [c for c in sol if c != th]
+    i = tests_first.index(edit)
+    done = _grade(lab, tests_first[:i] + [th] + tests_first[i:])
+    assert 'theory' in done and 'test' not in done
+    # copying the settings to the backup is not an edit (identify still counts); writing into the live file is
+    assert 'identify' in _grade(lab, ['cp /etc/default/timeclock /etc/default/timeclock.bak'] + sol)
+    assert 'identify' not in _grade(lab, ["echo DOCROOT=/srv/timeclock >> /etc/default/timeclock"] + sol)
+    # verify needs a page load after the restart
+    no_curl_after = [c for c in sol if not c.startswith('curl -s -o') and 'grep -o' not in c]
+    assert 'verify' not in _grade(lab, no_curl_after)
+
+
+def test_method_answers_hashed_not_in_probe():
+    lab = V.VM_BY_ID[METHOD]
+    probe = V.probe_script(V.fresh(lab, 1), lab)
+    assert 'domain=service' not in probe and 'cause=docroot' not in probe.lower()
+
+
+def test_method_page_and_http_flow(student, instructor):
+    lab = RT.get_lab(METHOD)
+    page = student.get(f'/labs/{METHOD}').data.decode()
+    assert 'Pending SME review' not in page and all(f'/labs/{f}' in page for f in lab['fallback'])
+    assert 'Pending SME review' in instructor.get(f'/labs/{METHOD}').data.decode()
+    assert f'/labs/{METHOD}' in student.get('/labs/ticket-method').data.decode()   # the simulator links its real twin
+    student.post(f'/labs/{METHOD}/reset')
+    import app as lms
+    api = lms.app.extensions['ciwt_lab_progress']
+    with lms.app.app_context():
+        u = lms.User.query.filter_by(email='student1@lms.local').first()
+        st = json.loads(api.LabProgress.query.filter_by(user_id=u.id, lab_id=METHOD).first().state_json)
+    student.post(f'/labs/{METHOD}/vm-log', json={'lines': [], 'booted': True, 'boot_ms': 1})
+    student.post(f'/labs/{METHOD}/vm-log', json={'lines': lab['solution']['vm_commands']})
+    r = student.post(f'/labs/{METHOD}/vm-check', json={'probes': V.solved_probes(st, lab)}).get_json()
+    assert r['complete'] and r['score'] == 100, r

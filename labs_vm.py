@@ -472,6 +472,8 @@ from labs_vm_more import MORE_LABS, MORE_FABRIC, MORE_FABRIC_WHY  # noqa: E402  
 VM_LABS += MORE_LABS
 from labs_vm_r4 import R4_LABS, R4_FABRIC, R4_FABRIC_WHY  # noqa: E402  (round 4: perf, restore, web, NAT, incident)
 VM_LABS += R4_LABS
+from labs_vm_r5 import R5_LABS  # noqa: E402  (round 5: troubleshooting methodology, ITSUP 7)
+VM_LABS += R5_LABS
 VM_BY_ID = {l["id"]: l for l in VM_LABS}
 VM_LINUX = PERMS  # backwards name
 

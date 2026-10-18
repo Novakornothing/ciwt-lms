@@ -1693,7 +1693,7 @@ NEW_CHAPTER_LABS = {
     ("ITSUP", 4): ["print-trouble", "mob-mdm", "win-laptop-ports"],
     ("ITSUP", 5): ["net-subnet", "win-net-cli", "wifi-secure", "win-laptop-ports", "win-wifi-survey", "linux-vm-netclient", "linux-vm-routing", "linux-vm-dns", "linux-vm-web", "linux-vm-ipv6"],
     ("ITSUP", 6): ["virt-vm", "win-laptop-ports", "hv-vswitch"],
-    ("ITSUP", 7): ["ticket-method"],
+    ("ITSUP", 7): ["ticket-method", "linux-vm-method"],
     ("ITSUP", 8): ["win-ad-users"],
     ("ITSUP", 9): ["linux-vm-shell", "linux-shell", "linux-vm-perms", "linux-vm-services", "linux-vm-logs", "linux-vm-cron", "linux-vm-users", "linux-vm-packages", "linux-vm-disk", "linux-vm-ssh", "linux-vm-script", "linux-vm-perf", "linux-vm-web"],
     ("ITSUP", 10): ["sec-malware", "win-ad-users", "linux-vm-users", "linux-vm-firewall", "linux-vm-logs", "linux-vm-packages", "linux-vm-incident"],
