@@ -183,6 +183,7 @@ NETOPS_CHECKS = {
 def netops_quiz_payload(order):
     """Quiz JSON for a NETOPS chapter (same shape as pilot_slice.quiz_payload)."""
     from curriculum_v2.objectives import OBJECTIVES
+    from curriculum_v2 import parity_pass15
     out = []
     for i, it in enumerate(NETOPS_CHECKS.get(order) or []):
         wrong = [o for o in it['options'] if o != it['correct']]
@@ -190,8 +191,9 @@ def netops_quiz_payload(order):
         s = (i + order) % 4
         opts = opts[s:] + opts[:s]
         o = OBJECTIVES.get(it['obj']) or {}
+        opts, key = parity_pass15.apply(f'NQ{order}.{i}', opts, it['correct'])  # pass 15: option-length parity
         out.append({
-            'text': it['q'], 'options': opts, 'correct': it['correct'],
+            'text': it['q'], 'options': opts, 'correct': key,
             'lo': f'LO-NET-{order}', 'lo_text': o.get('text', f'Network chapter {order}'),
             'focus': o.get('text', f'Network chapter {order}'), 'keywords': [],
             'study_tip': it['why'], 'explanation': it['why'],

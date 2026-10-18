@@ -20,8 +20,10 @@ def test_every_chapter_check_objective_has_tags_on_its_check_items():
 
 def test_new_tags_are_real_distractors_with_matching_objectives():
     by = {q['bank_id']: q for q in _checks()}
+    from curriculum_v2.parity_pass15 import REWRITE  # pass 15: some distractors were rewritten for length parity
     for (b, d), mc in P13.TAGS.items():
         q = by[b]
+        d = REWRITE.get(b, {}).get(d, d)
         assert d in q['options'] and d != q['correct'], (b, d)
         assert P13.MISCONCEPTIONS[mc]['obj'] == q['obj'], (b, mc)
         assert MCS.tag_for(q, d) == mc

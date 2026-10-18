@@ -51,8 +51,10 @@ def test_stems_are_new():
 
 def test_misconception_tags_are_real_distractors_on_the_right_objective():
     by = {q['bank_id']: q for q in _new()}
+    from curriculum_v2.parity_pass15 import REWRITE  # pass 15: some distractors were rewritten for length parity
     for (b, d), mc in P14.TAGS.items():
         q = by[b]
+        d = REWRITE.get(b, {}).get(d, d)
         assert d in q['options'] and d != q['correct'], (b, d)
         assert MCS.MISCONCEPTIONS[mc]['obj'] == q['obj']
         assert MCS.tag_for(q, d) == mc and MCS.tag_for(q, q['correct']) is None

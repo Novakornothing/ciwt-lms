@@ -86,7 +86,7 @@ REVIEW = {
     'Q12.10': ('IT-12.4', 'A KB title in the user’s words matches what the next technician will search for when the same symptom is reported. Problem numbers, shorthand and fix names do not match how the fault is reported.'),
     'Q12.11': ('IT-12.4', 'An asset record tracks a device through its life: status (in use, in repair, spare, disposed) and location/owner change when it moves, with the ticket linked. The tag and serial stay the same; disposal is a different status.'),
     'Q13.10': ('IT-13.4', 'Climb the reset ladder one rung at a time: renewing the lease (rung 1) only drops and re-requests the DHCP address. A stack reset, a full network reset and a driver reinstall undo far more configuration.'),
-    'Q13.11': ('IT-13.4', 'Microsoft removed the WMIC utility from Windows 11 24H2 and later (WMI itself remains). Get-NetIPConfiguration (NetTCPIP module) summarises addresses, gateway and DNS servers per adapter; the other cmdlets restart an adapter or show/clear the DNS cache.'),
+    'Q13.11': ('IT-13.4', 'Microsoft removed the WMIC utility from Windows 11 24H2 and later (WMI itself remains). Get-NetIPConfiguration (NetTCPIP module) summarises addresses, gateway and DNS servers per adapter; the other cmdlets restart an adapter, clear the DNS cache, or list only the DNS server addresses per interface (Get-DnsClientServerAddress), not the addresses and gateway.'),
 }
 
 SOURCE = {
