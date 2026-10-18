@@ -49,7 +49,7 @@ PAGES = {
         ('instr-home', '/instructor'), ('instr-section', '/instructor/section/1'),
         ('attention', '/instructor/section/1/attention'), ('attention-student', '/instructor/section/1/attention/student/4'),
         ('gradebook', '/instructor/section/1/gradebook'),
-        ('mastery-class', '/instructor/section/1/mastery'), ('mastery-class-ch1', '/instructor/section/1/mastery?ch=1'), ('mastery-class-student', '/instructor/section/1/mastery/student/4'), ('mastery-today', '/instructor/section/1/mastery/today'),
+        ('mastery-class', '/instructor/section/1/mastery'), ('mastery-class-ch1', '/instructor/section/1/mastery?ch=1'), ('mastery-class-student', '/instructor/section/1/mastery/student/4'), ('mastery-today', '/instructor/section/1/mastery/today'), ('briefing', '/instructor/section/1/briefing'),
         ('materials', '/instructor/materials'), ('materials-plans', '/instructor/materials/ITSUP/lesson-plans'),
         ('materials-key', '/instructor/materials/ITSUP/answer-key'), ('syllabus-settings', '/instructor/section/1/syllabus'),
         ('instr-lesson-13.1', '/student/module/1/13/lesson/54'), ('calibration', '/instructor/section/1/attention/calibration'), ('materials-labs', '/instructor/materials/ITSUP/lab-manual'),

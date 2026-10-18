@@ -22,6 +22,7 @@ PAGES = {
     ('gradebook', '/instructor/section/1/gradebook'), ('item-analysis', '/analysis/test/1'),
     ('mastery-class', '/instructor/section/1/mastery'), ('mastery-student', '/instructor/section/1/mastery/student/4'),
     ('mastery-today', '/instructor/section/1/mastery/today'),
+    ('briefing', '/instructor/section/1/briefing'),
   ],
   'admin@lms.local:admin123': [('admin', '/admin'), ('admin-analytics', '/admin/test-analytics')],
 }
