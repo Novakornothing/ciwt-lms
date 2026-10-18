@@ -152,3 +152,30 @@ def test_correction_page_shows_label_and_pending_status_for_a_round6_misconcepti
     page = s13.get(f'/student/section/1/review/IT-4.2?mc={mc}').data.decode()
     assert 'Thinking a jailbroken or rooted phone can be trusted again' in page
     assert 'Status of this mix-up description: Pending SME review.' in page
+
+
+def test_a_round6_cert_tag_reaches_the_student_through_the_review_route(app, mod, s13):
+    """Cert items are on by default (MasterySetting.cert_items), so round-6 tags on certification items reach students
+    without a class setting: the correction check for MC-R6-IT4-JAILBREAK-TRUST serves its tagged cert item, and the
+    tagged wrong answer is recorded as that mix-up."""
+    import json
+    api = app.extensions['ciwt_mastery']
+    mc, obj = 'MC-R6-IT4-JAILBREAK-TRUST', 'IT-4.2'
+    tagged = {b: d for b, d, m in R6._T if m == mc}
+    with app.app_context():
+        uid = mod.User.query.filter_by(email=EMAIL).first().id
+    assert s13.get(f'/student/section/1/review/{obj}?mc={mc}').status_code == 200
+    with app.app_context():
+        c = (api.models.MasteryCheck.query.filter_by(section_id=1, user_id=uid, kind='review', target=obj, completed_at=None)
+             .order_by(api.models.MasteryCheck.id.desc()).first())
+        cid, items = c.id, json.loads(c.items_json)
+    hit = [i for i, it in enumerate(items) if it.get('bank_id') in tagged and tagged[it['bank_id']] in it['options']]
+    assert hit, [it.get('bank_id') for it in items]
+    k = hit[0]
+    data = {'check_id': cid}
+    data.update({f'q{i}': (tagged[it['bank_id']] if i == k else it['correct']) for i, it in enumerate(items)})
+    assert s13.post(f'/student/section/1/review/{obj}', data=data).status_code == 303
+    with app.app_context():
+        st = api.engine.student_state(mod.db.session.get(mod.ClassSection, 1), mod.db.session.get(mod.User, uid), log=False)
+    assert mc in st['misconceptions'], sorted(st['misconceptions'])
+    assert st['misconceptions'][mc]['label'].startswith('Thinking a jailbroken or rooted phone')
