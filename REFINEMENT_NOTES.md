@@ -999,3 +999,125 @@ plus the axe report).
 - Fill in rationales.
 - Add check items for the IT-x.4 objectives in ch7–13.
 - Pilot with real students before claiming any learning effect.
+
+## Pass 14 (Oct 18 2026): test-out exemption, tie-breaks, self-contained e2e, IT-x.4 check items, full rationales, labs round-3 merge
+
+All work was local; nothing was pushed. Every server and e2e run used a DB copy (`/tmp/p14/e2e.db`, `/tmp/p14/sim.db`,
+`/tmp/p14/merge.db`), and every server bound 127.0.0.1. `ciwt_lms.db` is still at sha `47fabc92…`. The
+`content-wt` and `labs-wt` worktrees were not touched.
+
+**1. Test-out vs gradebook (6d3f068, 22355a3).**
+
+- When a student passes a chapter's mastery check (a test-out) and has no attempt on that chapter's check, the check
+  cell becomes `exempt`. No score is recorded or invented.
+- An exempt check is left out of completion and averages, the same as an excused item. Completion % rises; the course
+  grade stays the same, because missing scores were never averaged.
+- A real attempt always wins over the exemption. A failed test-out, or one for another chapter, exempts nothing.
+- What people see:
+  - instructor grid: a "TO" chip with a visually hidden "Exempt (test-out)" label, plus a legend entry;
+  - student detail: a staff note;
+  - student grades: an "Exempt (test-out)" badge;
+  - CSV: `Exempt (test-out)`.
+- The cache signature includes the test-outs.
+- 390 px fix: the long note now wraps instead of running under the score chip (`ts-title` allows wrapping).
+- Tests: `tests/test_testout_exempt.py` (5). The simulation adds an "exempt label shown" check, and its grade-invariance
+  check now ignores completion and the label.
+
+**2. Ranking ties (c120498).**
+
+- "Who needs me" orders students by:
+  1. the number of reasons;
+  2. the most serious reason;
+  3. severity, which is objectives in review plus stuck objectives;
+  4. the most recent struggle;
+  5. last name, then first name.
+- The briefing's student to-dos use the same rank as their tie-break, so weak students come before mixed ones.
+- Both pages explain the ordering.
+- Tests: `tests/test_ranking_ties.py` (5), plus two simulation checks.
+
+**3. Self-contained e2e (e330def).**
+
+- `tools/assess_phone_e2e.py` starts its own server on a temporary copy of the DB unless you pass `--base`. It is
+  wrapped by `tests/test_assess_phone_e2e.py`, which is skipped without Chromium.
+- The LTI deep-link, scores and roster tests set up their own course mapping and learner launch. All 15 LTI tests
+  pass alone, with `-k`, or as the full file.
+
+**4. IT-x.4 chapter-check items (a87cf8e).**
+
+- 14 new items, two each for IT-7.4 … IT-13.4, appended as Q{ch}.10–11. No existing item ids moved.
+- Each item has a primary source (RFC 3227, Microsoft Learn/Support, Apple Support). Q7.10/7.11 and Q12.10/12.11 rest
+  on the course's own escalation, knowledge-base and asset practice.
+- All 14 are tagged *Pending SME review* in the answer keys, with 14 new misconceptions and 37 tags.
+- Option lengths were balanced so the key is not the longest option. That is still true for 2 of the 14.
+- `CURRICULUM_READINESS.md` is updated. The audit now also checks chapter-check coverage per objective and non-terse
+  rationales: 28/28 passed (`docs/readiness/readiness-pass14.json`, re-run after the merge and package rebuild).
+- Tests: `tests/test_checks_pass14.py` (6).
+
+**5. Rationales (266362f).**
+
+- 64 ITSUP chapter-check rationales that were only a section reference are now full explanations. Each still ends with
+  "See x.y". Keys are unchanged.
+- The readiness doc counted 62; the audit rule finds 64, and all 64 are done.
+- Tests: `tests/test_rationales_pass14.py` (2).
+
+**Labs round 2/3 merge (37d20d1).**
+
+- `labs` at 757cc99 was merged. The only conflict was `REFINEMENT_NOTES.md`: both sides were kept, and the labs
+  subsection sits under "Labs branch".
+- `alignment.json` was regenerated; the new VM labs now count as lab evidence.
+- See `MERGE_NOTES_LABS.md`.
+- Lab smoke on a fresh DB copy: 29/29 (10 labs × desktop/phone + 9 instructor checks).
+
+**Simulation reproducibility (a4c705f).**
+
+- `tools/semester_sim.py` now pins `PYTHONHASHSEED=0`. Before this, item draws followed the per-process hash seed.
+  With hash seed 3, a strong student repeated a mix-up and showed up in "Who needs me". The engine was right; two
+  profile checks failed.
+- The smoke test now runs the documented 28 days. At 22 days, a strong student could fail their single mastery-check
+  offer.
+- The simulation is synthetic and not evidence of learning gains. The run with seed 13 passed 15/15.
+
+**Results (final HEAD).**
+
+- pytest: 647 passed. That is 585 before the merge plus the labs tests; the same tree gave 646 + 1 before the sim fix.
+- node: 41/41.
+- e2e on `/tmp/p14/e2e.db` (before the merge):
+  - mastery: 38/38
+  - helix: 6/6
+  - practice phone: 29/29
+  - LTI: 9/9
+  - assess phone (own server and DB copy): 43/43
+  - site audit: 376 page views with no overflow. The only non-200 pages are the deliberate 403/404 checks.
+- axe on gradebook, grades, grades-class, mastery-today, mastery-testout, mastery-class-student, briefing and
+  materials-key at 390/1280 in light and dark: 32 page checks, 0 violations. Gradebook student detail at 390/1280 in
+  light and dark: 0.
+
+**Screenshots** are in `/workspace/ciwt/screenshots/pass14/`, at 390 and 1280 in light and dark:
+
+- `gradebook-legend-*`, `gradebook-student-exempt-*`, `student-grades-exempt-*`;
+- `who-needs-me-*` and `briefing-*`, taken on the clearly labelled *SYNTHETIC SIMULATION — not real students* class
+  in `/tmp/p14/sim.db`;
+- `answer-key-pending-sme-*` (Q7.10);
+- `semester-sim-{390,1280}`.
+
+The exempt screenshots use one synthetic passed test-out row (student1, CH-2) that I inserted in the DB copy
+`/tmp/p14/e2e.db` only.
+
+**Known limits.**
+
+- 41 chapter-check rationales (39 ITSUP, 2 CLIENT) are still short "section + principle" lines, such as "3.2 — stripe
+  has no fault tolerance." They pass the audit's rule (at least 4 words beyond the section reference) but do not fully
+  explain the answer.
+- The 14 new items and 64 rationales need SME review. In 2 of the 14 new items the key is still the longest option.
+- The exemption applies only to test-outs; other mastery evidence does not exempt anything.
+- Severity is a transparent count, not a weighted risk score.
+- Some simulation details still vary between runs because of wall-clock timestamps (which misconception tops a score
+  tie). All checks are stable.
+- Cert-item gaps remain: 15 ITSUP and 7 NETOPS objectives have no cert items.
+
+**Next steps.**
+
+- SME review of the 14 items, the 64 rationales and the 41 short ones; expand the 41.
+- Fill the cert-item gaps.
+- Back up `ciwt_lms.db` before the first boot on the merged tree.
+- Pilot with real students before claiming any learning effect.

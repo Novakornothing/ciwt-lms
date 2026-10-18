@@ -249,7 +249,7 @@
      "gui-accounts",
      "w11-firewall"
     ],
-    "chapter_labs": 5,
+    "chapter_labs": 9,
     "glossary_terms": 11
    },
    {
@@ -263,7 +263,7 @@
     "lesson_labs": [
      "ticket-intake"
     ],
-    "chapter_labs": 5,
+    "chapter_labs": 9,
     "glossary_terms": 12
    },
    {
@@ -278,7 +278,7 @@
      "gui-services",
      "gui-update"
     ],
-    "chapter_labs": 5,
+    "chapter_labs": 9,
     "glossary_terms": 13
    },
    {
@@ -293,7 +293,7 @@
      "gui-accounts",
      "ticket-intake"
     ],
-    "chapter_labs": 5,
+    "chapter_labs": 9,
     "glossary_terms": 10
    },
    {
@@ -362,7 +362,7 @@
     "original_items": 7,
     "cert_items": 6,
     "lesson_labs": [],
-    "chapter_labs": 1,
+    "chapter_labs": 3,
     "glossary_terms": 14
    },
    {
@@ -376,7 +376,7 @@
     "lesson_labs": [
      "gui-accounts"
     ],
-    "chapter_labs": 1,
+    "chapter_labs": 3,
     "glossary_terms": 10
    },
    {
@@ -388,7 +388,7 @@
     "original_items": 8,
     "cert_items": 0,
     "lesson_labs": [],
-    "chapter_labs": 1,
+    "chapter_labs": 3,
     "glossary_terms": 8
    },
    {
@@ -404,7 +404,7 @@
      "ticket-intake",
      "win-full-triage"
     ],
-    "chapter_labs": 1,
+    "chapter_labs": 3,
     "glossary_terms": 8
    },
    {
@@ -420,7 +420,7 @@
      "w11-powershell-net",
      "win-ipconfig"
     ],
-    "chapter_labs": 19,
+    "chapter_labs": 20,
     "glossary_terms": 9
    },
    {
@@ -435,7 +435,7 @@
      "win-dns-break",
      "win-full-triage"
     ],
-    "chapter_labs": 19,
+    "chapter_labs": 20,
     "glossary_terms": 9
    },
    {
@@ -450,7 +450,7 @@
      "w11-netsh",
      "w11-processes"
     ],
-    "chapter_labs": 19,
+    "chapter_labs": 20,
     "glossary_terms": 8
    },
    {
@@ -465,7 +465,7 @@
      "gui-renew",
      "win-dhcp-renew"
     ],
-    "chapter_labs": 19,
+    "chapter_labs": 20,
     "glossary_terms": 6
    },
    {
@@ -538,7 +538,7 @@
     "lesson_labs": [
      "w11-disk"
     ],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 8
    },
    {
@@ -550,7 +550,7 @@
     "original_items": 8,
     "cert_items": 4,
     "lesson_labs": [],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 12
    },
    {
@@ -564,7 +564,7 @@
     "lesson_labs": [
      "ticket-intake"
     ],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 9
    },
    {
@@ -576,7 +576,7 @@
     "original_items": 7,
     "cert_items": 17,
     "lesson_labs": [],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 4
    },
    {
@@ -628,7 +628,7 @@
     "lesson_labs": [
      "win-ipconfig"
     ],
-    "chapter_labs": 21,
+    "chapter_labs": 22,
     "glossary_terms": 13
    },
    {
@@ -640,7 +640,7 @@
     "original_items": 7,
     "cert_items": 12,
     "lesson_labs": [],
-    "chapter_labs": 21,
+    "chapter_labs": 22,
     "glossary_terms": 13
    },
    {
@@ -656,7 +656,7 @@
      "win-dns-break",
      "win-ipconfig"
     ],
-    "chapter_labs": 21,
+    "chapter_labs": 22,
     "glossary_terms": 12
    },
    {
@@ -670,7 +670,7 @@
     "lesson_labs": [
      "w11-wlan"
     ],
-    "chapter_labs": 21,
+    "chapter_labs": 22,
     "glossary_terms": 9
    },
    {
@@ -841,7 +841,7 @@
     "original_items": 10,
     "cert_items": 4,
     "lesson_labs": [],
-    "chapter_labs": 4,
+    "chapter_labs": 11,
     "glossary_terms": 9
    },
    {
@@ -855,7 +855,7 @@
     "lesson_labs": [
      "gui-accounts"
     ],
-    "chapter_labs": 4,
+    "chapter_labs": 11,
     "glossary_terms": 9
    },
    {
@@ -869,7 +869,7 @@
     "lesson_labs": [
      "gui-accounts"
     ],
-    "chapter_labs": 4,
+    "chapter_labs": 11,
     "glossary_terms": 10
    },
    {
@@ -884,7 +884,7 @@
      "gui-accounts",
      "ticket-intake"
     ],
-    "chapter_labs": 4,
+    "chapter_labs": 11,
     "glossary_terms": 4
    }
   ],
@@ -898,7 +898,7 @@
     "original_items": 4,
     "cert_items": 4,
     "lesson_labs": [],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 9
    },
    {
@@ -912,7 +912,7 @@
     "lesson_labs": [
      "win-ipconfig"
     ],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 14
    },
    {
@@ -924,7 +924,7 @@
     "original_items": 5,
     "cert_items": 0,
     "lesson_labs": [],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 15
    },
    {
@@ -1017,7 +1017,7 @@
     "lesson_labs": [
      "win-dhcp-renew"
     ],
-    "chapter_labs": 5,
+    "chapter_labs": 8,
     "glossary_terms": 12
    },
    {
@@ -1031,7 +1031,7 @@
     "lesson_labs": [
      "win-dns-break"
     ],
-    "chapter_labs": 5,
+    "chapter_labs": 8,
     "glossary_terms": 12
    },
    {
@@ -1043,7 +1043,7 @@
     "original_items": 6,
     "cert_items": 7,
     "lesson_labs": [],
-    "chapter_labs": 5,
+    "chapter_labs": 8,
     "glossary_terms": 16
    },
    {
@@ -1055,7 +1055,7 @@
     "original_items": 9,
     "cert_items": 4,
     "lesson_labs": [],
-    "chapter_labs": 6,
+    "chapter_labs": 9,
     "glossary_terms": 8
    },
    {
@@ -1067,7 +1067,7 @@
     "original_items": 7,
     "cert_items": 6,
     "lesson_labs": [],
-    "chapter_labs": 6,
+    "chapter_labs": 9,
     "glossary_terms": 11
    },
    {
@@ -1079,7 +1079,7 @@
     "original_items": 5,
     "cert_items": 21,
     "lesson_labs": [],
-    "chapter_labs": 6,
+    "chapter_labs": 9,
     "glossary_terms": 26
    },
    {
@@ -1091,7 +1091,7 @@
     "original_items": 5,
     "cert_items": 5,
     "lesson_labs": [],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 15
    },
    {
@@ -1103,7 +1103,7 @@
     "original_items": 5,
     "cert_items": 0,
     "lesson_labs": [],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 8
    },
    {
@@ -1115,7 +1115,7 @@
     "original_items": 4,
     "cert_items": 20,
     "lesson_labs": [],
-    "chapter_labs": 4,
+    "chapter_labs": 5,
     "glossary_terms": 15
    },
    {
@@ -1185,7 +1185,7 @@
   "package": {
    "ok": true,
    "bad": [],
-   "head": "266362f",
+   "head": "a4c705f",
    "n": 22
   }
  },

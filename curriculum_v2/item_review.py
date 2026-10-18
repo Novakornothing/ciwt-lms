@@ -669,6 +669,10 @@ for _k, _why in _RAT14.items():
         REVIEW[_k]['why'] = _why
         RATIONALE_UPDATED.append(_k)
 
+# pass 15: full rationales for the chapter-check items that still had a one-line rationale
+# (curriculum_v2/rationales_pass15.py); used by review_check only where no review rationale exists.
+from curriculum_v2.rationales_pass15 import RATIONALE as _RAT15  # noqa: E402
+
 # pass 14: review entries for the new chapter-check items (curriculum_v2/checks_pass14.py), Pending SME review
 from curriculum_v2 import checks_pass14 as _p14  # noqa: E402
 for _k, (_obj, _why) in _p14.REVIEW.items():
@@ -735,7 +739,10 @@ def review_check(order, i, item):
         q['obj'] = rv['obj']
         q['obj_text'] = _obj_text(rv['obj'])
         q['review'] = rv['fix'] or 'reviewed, no change'
-    q['explanation'] = (rv and rv['why']) or item.get('study_tip') or ''
+    q['explanation'] = (rv and rv['why']) or _RAT15.get(key) or item.get('study_tip') or ''
+    # pass 15: option-length parity (curriculum_v2/parity_pass15.py), text replaced in place
+    from curriculum_v2 import parity_pass15
+    q['options'], q['correct'] = parity_pass15.apply(key, q['options'], q['correct'])
     return q
 
 

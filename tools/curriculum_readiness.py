@@ -247,6 +247,24 @@ def run(package=''):
         terse = [q.get('bank_id') for name, p in pools.items() if ' check ' in name for q in p
                  if len(re.sub(r'^[\d\s./]+(overview)?\.?\s*(—|-)?\s*', '', (q.get('explanation') or q.get('study_tip') or '').strip()).split()) < 4]
         check('every chapter-check rationale explains the answer (not only a section reference)', not terse, terse, 'items')
+        # pass 15: a rationale of under 10 words is a slogan, not an explanation (the 4-word rule above let those through)
+        thin = [q.get('bank_id') for name, p in pools.items() if ' check ' in name for q in p
+                if len(re.sub(r'^\[Pending SME review\]\s*', '', (q.get('explanation') or q.get('study_tip') or '').strip()).split()) < 10]
+        check('every chapter-check rationale has at least 10 words (why the key is right and the main distractor wrong)', not thin, thin, 'items')
+        # pass 15: option-length cue. With four options a key is uniquely longest by chance in roughly a quarter of
+        # items; the original checks had it in 108 of 200. Report the share; pass at <= 30% and almost no clear margins.
+        chk = [q for name, p in pools.items() if ' check ' in name for q in p]
+        def _lens(q):
+            others = [len(o) for o in q['options'] if o != q['correct']]
+            return len(q['correct']), others
+        uniq = [q.get('bank_id') for q in chk if _lens(q)[0] > max(_lens(q)[1])]
+        clear = [q.get('bank_id') for q in chk if _lens(q)[0] >= 1.15 * max(_lens(q)[1])]
+        share = round(100.0 * len(uniq) / len(chk), 1) if chk else 0.0
+        R['key_longest'] = {'items': len(chk), 'uniquely_longest': len(uniq), 'share_pct': share,
+                            'clear_margin_15pct': clear}
+        check(f'key is uniquely the longest option in {share}% of chapter-check items ({len(uniq)}/{len(chk)}; target <= 30%, '
+              f'clear 15% margin in {len(clear)})', share <= 30.0 and len(clear) <= max(2, len(chk) // 50),
+              {'uniquely_longest': uniq, 'clear_margin': clear}, 'items')
         # ------------------------------------------------------------ 5. plans and syllabus
         plan_bad, syl_bad = [], []
         for code in COURSES:

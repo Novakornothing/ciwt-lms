@@ -249,6 +249,14 @@ from curriculum_v2.cert import misconceptions as _cert_mc  # noqa: E402
 MISCONCEPTIONS.update(_cert_mc.MISCONCEPTIONS)
 TAGS.update(_cert_mc.TAGS)
 
+# pass 15: option-length parity rewrote some distractors (curriculum_v2/parity_pass15.py). The rewritten text keeps
+# the same wrong idea, so its tag moves to the new text (tags must point at distractors that are actually shown).
+from curriculum_v2 import parity_pass15 as _par15  # noqa: E402
+for _b, _rw in _par15.REWRITE.items():
+    for _old, _new in _rw.items():
+        if (_b, _old) in TAGS:
+            TAGS[(_b, _new)] = TAGS.pop((_b, _old))
+
 
 def _norm(s):
     return ' '.join((s or '').replace('\u2019', "'").lower().split())
