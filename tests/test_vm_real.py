@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
+import warnings
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,14 @@ pytestmark = pytest.mark.skipif(not ready or os.environ.get("CIWT_SKIP_REAL_VM")
 @pytest.mark.parametrize("lab_id", [l["id"] for l in V.VM_LABS])
 @pytest.mark.parametrize("mode", ["solution", "none"])
 def test_real_vm_grades_real_state(lab_id, mode):
-    r = subprocess.run([sys.executable, str(ROOT / "tools" / "vm_headless.py"), lab_id, "--commands", mode],
-                       capture_output=True, text=True, timeout=1500, cwd=ROOT)
-    assert r.returncode == 0, (lab_id, mode, r.stdout[-1500:], r.stderr[-1500:])
+    def go():
+        return subprocess.run([sys.executable, str(ROOT / "tools" / "vm_headless.py"), lab_id, "--commands", mode],
+                              capture_output=True, text=True, timeout=1500, cwd=ROOT)
+    r = go()
+    if r.returncode == 3:   # harness waited > VM_WAIT_MS for a prompt (box under load): retry once, never on a grading failure
+        first = r.stderr[-2500:]
+        r = go()
+        if r.returncode == 0:
+            warnings.warn(f"{lab_id}/{mode}: harness timeout on the first run, passed on retry. First run: {first}")
+    if r.returncode:
+        pytest.fail(f"{lab_id} {mode}: exit {r.returncode}\nstdout: {r.stdout[-2500:]}\nstderr: {r.stderr[-4000:]}", pytrace=False)
