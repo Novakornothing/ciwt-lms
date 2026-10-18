@@ -248,6 +248,7 @@ CSS_BUNDLE_PARTS = (
     'css/helix.css',
     'css/labs.css',
     'css/mastery.css',
+    'css/ladder.css',
 )
 _css_bundle = {'key': None}
 _CSS_URL = re.compile(r'url\(\s*([\'"]?)([^)\'"]+)\1\s*\)')
@@ -2981,8 +2982,16 @@ def view_lesson(section_id, module_id, lesson_id):
         if mastery_gate and mastery_gate.get('block'):
             flash('Before this lesson: a short review your instructor asked for. It takes about five minutes.', 'info')
             return redirect(mastery_review_url, code=303)
+        try:   # pass 19: explanation ladder, per student (None = ladder off for the class or no ladder for this lesson)
+            ladder_html = mastery_api.ladder.render_lesson(current_user, section, module, lesson)
+        except Exception as exc:
+            db.session.rollback()
+            ladder_html = None
+            print('ladder render:', exc)
+    else:
+        ladder_html = None
     return render_template(
-        'lesson.html', module=module, lesson=lesson, lessons=lessons,
+        'lesson.html', module=module, lesson=lesson, lessons=lessons, ladder_html=ladder_html,
         mastery_gate=mastery_gate, mastery_review_url=mastery_review_url, mastery_quick=mastery_quick,
         prev_l=prev_l, next_l=next_l, section_id=section_id, quizzes=quizzes,
         chapter_labs=chapter_labs,
@@ -3023,7 +3032,7 @@ def take_quiz(section_id, quiz_id):
         # Post/Redirect/Get: the results page has its own URL, so a reload never resubmits the quiz
         return redirect(url_for('quiz_result', section_id=section_id, quiz_id=quiz_id, attempt_id=attempt.id), code=303)
     mod = db.session.get(Module, quiz.module_id)
-    return render_template('quiz.html', quiz=quiz, questions=questions, section_id=section_id, course_id=mod.course_id if mod else None)
+    return render_template('quiz.html', ladder_chapter=_ladder_chapter(db.session.get(ClassSection, section_id), mod), quiz=quiz, questions=questions, section_id=section_id, course_id=mod.course_id if mod else None)
 
 
 @app.route('/student/quiz/<int:section_id>/<int:quiz_id>/result/<int:attempt_id>')
@@ -3039,13 +3048,30 @@ def quiz_result(section_id, quiz_id, attempt_id):
     correct, focus_areas = _quiz_outcome(quiz, module, questions, answers)
     section = db.session.get(ClassSection, section_id)
     return render_template(
-        'quiz_results.html',
+        'quiz_results.html', ladder_chapter=_ladder_chapter(section, module) if attempt.user_id == current_user.id else None,
         quiz=quiz, section_id=section_id, module_id=quiz.module_id,
         score=attempt.score if attempt.score is not None else ((correct / len(questions)) * 100 if questions else 0),
         correct=correct, total=len(questions),
         focus_areas=focus_areas, module=module,
         gold_path=student_gold_path(current_user, section) if section and attempt.user_id == current_user.id else None,
     )
+
+
+from curriculum_v2.ladder import sections as LadderSections  # noqa: E402
+
+
+def _ladder_chapter(section, module):
+    """Pass 19: for the chapter check, the explanations that worked for this student per objective of the chapter,
+    and the sections they never resolved (re-taught with an explanation they have not seen yet)."""
+    if not section or not module or current_user.role != 'student':
+        return None
+    try:
+        labels = {LadderSections.lesson_label(les.title) for les in Lesson.query.filter_by(module_id=module.id).all()}
+        return mastery_api.ladder.for_objectives(current_user, section, labels=labels) or None
+    except Exception as exc:
+        db.session.rollback()
+        print('ladder chapter:', exc)
+        return None
 
 
 def _quiz_outcome(quiz, module, questions, answers):

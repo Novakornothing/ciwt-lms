@@ -1,0 +1,20 @@
+{# Explanation ladder at the end of a chapter / in a review: needs lad = {obj: {worked: [...], open: [...]}} and heading text. #}
+{% if lad %}
+<section class="card mb-3 ladder-chapter" aria-labelledby="ladChH">
+  <div class="card-header"><h2 class="h6 mb-0" id="ladChH"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ lad_title or 'Explanations picked for you' }}</h2></div>
+  <div class="card-body">
+    <p class="small mx-muted">From the quick checks in the lessons. Not graded. {{ 'Pending SME review' }}.</p>
+    {% for obj, b in lad.items() %}
+      {% for w in b.worked %}
+      <details class="ladder-recap mb-2"><summary><strong>{{ w.heading }}</strong> <span class="small">(lesson {{ w.label }}) · the explanation that worked for you: {{ w.view.label }}</span></summary>
+        <div class="ladder-content mt-2">{{ w.view.html|safe }}</div></details>
+      {% endfor %}
+      {% for o in b.open %}
+      <details class="ladder-recap ladder-recap-open mb-2"{% if loop.first and not b.worked %} open{% endif %}><summary><strong>{{ o.heading }}</strong> <span class="small">(lesson {{ o.label }}) · not resolved yet{% if o.view %}, here it is another way: {{ o.view.label }}{% endif %}</span></summary>
+        {% if o.view %}<div class="ladder-content mt-2">{{ o.view.html|safe }}</div>{% endif %}
+        {% if o.exhausted %}<p class="small mb-0">You have seen every explanation of this one; your instructor knows it needs a conversation.</p>{% endif %}</details>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

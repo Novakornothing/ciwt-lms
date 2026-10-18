@@ -7,6 +7,7 @@
 {% set a_store_key = 'quiz-' ~ quiz.id ~ '-' ~ (section_id or 0) ~ '-' ~ current_user.id %}
 {% set a_report = {'quiz_id': quiz.id, 'section_id': section_id or '', 'course_id': course_id or ''} %}
 {% set a_submit_label = 'Submit quiz' %}
+{% if ladder_chapter %}<details class="mb-3 ladder-before"><summary>Before you start: the explanations that worked for you in this chapter</summary>{% set lad = ladder_chapter %}{% set lad_title = 'Explanations that worked for you' %}{% include 'ladder/_chapter.html' %}</details>{% endif %}
 {% include '_assessment.html' %}
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='js/assessment.js') }}"></script>{% endblock %}

@@ -1,0 +1,25 @@
+{# R4 try-it widgets: order / sort / reveal. Needs w (rung_view widget) and L. Practice only: nothing is recorded. #}
+<div class="ladder-widget ladder-w-{{ w.type }}" data-widget="{{ w.type }}"{% if w.answer_json %} data-answer='{{ w.answer_json }}'{% endif %}>
+  <p class="ladder-w-prompt"><strong>Try it:</strong> {{ w.prompt }}</p>
+  {% if w.type == 'order' %}
+  <ol class="ladder-order">{% for s in w.shuffled %}
+    <li data-step="{{ s }}"><span class="ladder-step">{{ s }}</span>
+      <span class="ladder-move"><button type="button" class="btn btn-sm btn-outline-navy" data-move="-1">Up<span class="visually-hidden">: {{ s }}</span></button>
+      <button type="button" class="btn btn-sm btn-outline-navy" data-move="1">Down<span class="visually-hidden">: {{ s }}</span></button></span></li>{% endfor %}
+  </ol>
+  <button type="button" class="btn btn-sm btn-brand" data-wcheck>Check my order</button>
+  {% elif w.type == 'sort' %}
+  <ul class="list-unstyled ladder-sort">{% for b, it in w['items'] %}
+    <li><label class="form-label small mb-0" for="ws-{{ L.sid }}-{{ loop.index0 }}">{{ it }}</label>
+      <select class="form-select form-select-sm" id="ws-{{ L.sid }}-{{ loop.index0 }}" data-item="{{ it }}">
+        <option value="">Choose…</option>{% for k in w.buckets %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+      </select></li>{% endfor %}
+  </ul>
+  <button type="button" class="btn btn-sm btn-brand" data-wcheck>Check my sorting</button>
+  {% else %}
+  <label class="form-label small" for="wr-{{ L.sid }}">Your answer (just for you; nothing is saved)</label>
+  <textarea class="form-control form-control-sm mb-2" id="wr-{{ L.sid }}" rows="2"></textarea>
+  <details class="ladder-reveal"><summary>Show the answer</summary><div class="mt-1">{{ w.answer }}</div></details>
+  {% endif %}
+  {% if w.done %}<div class="ladder-w-done" role="status" aria-live="polite" data-done="{{ w.done }}"></div>{% endif %}
+</div>

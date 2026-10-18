@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "mastery/_macros.html" import demo_ribbon with context %}
+{% block title %}Explanations — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('mastery_class', section_id=section.id) }}">Mastery</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Explanations</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">Explanation ladder · {{ a.course }}</div>
+  <h1 class="h3 mb-1">Explanations: what students needed explained another way</h1>
+  <p class="mb-0">After each lesson section students get a quick check (not graded). A miss, or “I don't get it”, replaces that section, for that student only, with the next explanation: more simply, an analogy, a picture or trace, then something to try. Grades are never changed. All alternative explanations are <strong>Pending SME review</strong>.</p>
+</div>
+{% if demo %}<div class="mb-3">{{ demo_ribbon(true) }} <span class="small mx-muted">Some of this activity comes from the demo accounts (@lms.local), not real students.</span></div>{% endif %}
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-5">
+    <section class="card h-100" aria-labelledby="ladSetH">
+      <div class="card-header navy"><h2 class="h6 mb-0" id="ladSetH">Settings for this class</h2></div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('ladder_settings', section_id=section.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="form" value="class">
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ladOn" name="enabled"{% if cfg.enabled %} checked{% endif %}>
+            <label class="form-check-label" for="ladOn">Explain sections another way when a student struggles</label></div>
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ladMc" name="micro_checks"{% if cfg.micro_checks %} checked{% endif %}>
+            <label class="form-check-label" for="ladMc">Show a quick check after each section</label>
+            <div class="form-text">Off: students can still press “I don't get it”.</div></div>
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ladAf" name="adapt_first"{% if cfg.adapt_first %} checked{% endif %}>
+            <label class="form-check-label" for="ladAf">Adapt the first presentation</label>
+            <div class="form-text">Off (default): every student sees the original first. On: a student with a clear pattern (see the rule on their page) sees their best kind of explanation first, with “See the original” one tap away.</div></div>
+          <div class="mb-3"><label class="form-label" for="ladMax">Explanations before the instructor is flagged</label>
+            <select class="form-select form-select-sm" id="ladMax" name="max_rung">{% for n in [1, 2, 3, 4] %}
+              <option value="{{ n }}"{% if cfg.max_rung == n %} selected{% endif %}>{{ n }} ({{ ['more simply', '+ analogy', '+ picture or trace', '+ try it'][n - 1] }})</option>{% endfor %}</select></div>
+          <button class="btn btn-sm btn-brand" type="submit">Save settings</button>
+        </form>
+      </div>
+    </section>
+  </div>
+  <div class="col-lg-7">
+    <section class="card h-100" aria-labelledby="ladRungH">
+      <div class="card-header"><h2 class="h6 mb-0" id="ladRungH">Which explanation resolved the section</h2></div>
+      <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
+        <thead><tr><th scope="col">Explanation</th><th scope="col">Student-sections that reached it</th><th scope="col">Resolved there</th><th scope="col">Rate</th></tr></thead>
+        <tbody>{% for r in a.rungs %}<tr><td data-label="Explanation">{{ r.label }}</td><td data-label="Reached">{{ r.reached }}</td><td data-label="Resolved">{{ r.resolved }}</td>
+          <td data-label="Rate">{% if r.rate is not none %}<span class="ladder-bar" aria-hidden="true"><span style="width: {{ r.rate }}%"></span></span> {{ r.rate }}%{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      <div class="card-body small mx-muted pt-2">{{ a.students }} student{{ 's' if a.students != 1 }} have used the quick checks or asked for another explanation. A low rate for the original on one section usually means the original writing needs work.</div>
+    </section>
+  </div>
+</div>
+
+<section class="card mb-4" aria-labelledby="ladEscH">
+  <div class="card-header navy"><h2 class="h6 mb-0" id="ladEscH">Sections students most often needed explained another way</h2></div>
+  {% if a.rows %}
+  <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
+    <thead><tr><th scope="col">Section</th><th scope="col">Students</th><th scope="col">Needed another way</th><th scope="col">Saw every explanation</th><th scope="col">Resolved by</th><th scope="col">Most-picked mix-up</th><th scope="col"><span class="visually-hidden">Review</span></th></tr></thead>
+    <tbody>{% for r in a.rows[:25] %}<tr>
+      <td data-label="Section">{{ r.heading }} <span class="small mx-muted">(lesson {{ r.label }})</span></td>
+      <td data-label="Students">{{ r.students }}</td>
+      <td data-label="Needed another way">{{ r.escalated }} ({{ r.escalation_rate }}%)</td>
+      <td data-label="Saw every explanation">{% if r.exhausted %}<span class="mx-badge mx-badge-req">{{ r.exhausted }}</span>{% else %}0{% endif %}</td>
+      <td data-label="Resolved by">{% for k, n in r.resolved|dictsort %}{{ LABEL[k] }}: {{ n }}{% if not loop.last %}; {% endif %}{% else %}—{% endfor %}</td>
+      <td data-label="Mix-up">{% for lbl, n in r.top_mc %}{{ lbl }} ({{ n }}){% if not loop.last %}; {% endif %}{% else %}—{% endfor %}</td>
+      <td data-label="Review"><a href="{{ url_for('ladder_preview', section_id=section.id, label=r.label) }}#pv-{{ r.sid }}">Read its explanations<span class="visually-hidden"> for {{ r.heading }}</span></a></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="card-body">No quick-check answers or “explain it another way” requests in this class yet.</div>{% endif %}
+</section>
+
+<section class="card mb-4" aria-labelledby="ladOvH">
+  <div class="card-header"><h2 class="h6 mb-0" id="ladOvH">Per-section override</h2></div>
+  <div class="card-body">
+    <p class="small">Turn the ladder off for one section (no quick check, no alternative explanations), or allow fewer explanations there. {{ secs|length }} sections in this course have explanations written so far.</p>
+    {% if secs %}
+    <form method="post" action="{{ url_for('ladder_settings', section_id=section.id) }}" class="row g-2 align-items-end">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="form" value="override">
+      <div class="col-md-7"><label class="form-label small mb-0" for="ovSec">Section</label>
+        <select class="form-select form-select-sm" id="ovSec" name="pick" data-ladder-pick>{% for s in secs %}
+          <option value="{{ s.label }}|{{ s.sid }}">{{ s.label }} · {{ s.heading }}{% set o = cfg.overrides.get(s.label ~ '|' ~ s.sid) %}{% if o %} — {{ 'off' if o.off else 'max ' ~ o.max }}{% endif %}</option>{% endfor %}</select></div>
+      <input type="hidden" name="label" value="{{ secs[0].label }}"><input type="hidden" name="sid" value="{{ secs[0].sid }}">
+      <div class="col-md-3"><label class="form-label small mb-0" for="ovVal">Setting</label>
+        <select class="form-select form-select-sm" id="ovVal" name="value"><option value="">Class setting</option><option value="off">Off for this section</option><option value="1">At most 1 explanation</option><option value="2">At most 2</option><option value="3">At most 3</option></select></div>
+      <div class="col-md-2"><button class="btn btn-sm btn-brand w-100" type="submit">Save</button></div>
+    </form>
+    {% if cfg.overrides %}<ul class="small mt-2 mb-0">{% for k, o in cfg.overrides|dictsort %}<li>{{ k.replace('|', ' · ') }}: {{ 'off' if o.off else 'at most ' ~ o.max }}</li>{% endfor %}</ul>{% endif %}
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var pick = document.querySelector('[data-ladder-pick]');
+  if (!pick) return;
+  var f = pick.form;
+  function sync() { var p = pick.value.split('|'); f.elements.label.value = p[0]; f.elements.sid.value = p.slice(1).join('|'); }
+  pick.addEventListener('change', sync); sync();
+})();
+</script>
+{% endblock %}

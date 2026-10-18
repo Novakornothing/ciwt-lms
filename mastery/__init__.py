@@ -89,6 +89,7 @@ def register(app, db, deps):
 
     # ------------------------------------------------------------------ helpers
     plan_pref_ref = {}
+    ladder_ref = {}
 
     def plan_pref(section_id, user_id):
         fn = plan_pref_ref.get('fn')
@@ -169,6 +170,14 @@ def register(app, db, deps):
         block = bool(a['required']) and lesson.id != mapped
         return (dict(a, text=st['cmap']['objs'][a['obj']]['text'], block=block),
                 url_for('mastery_review', section_id=section.id, obj=a['obj']))
+
+    def _ladder_review(section, obj):
+        try:
+            return (ladder_ref['api'].for_objectives(current_user, section, {obj}) or {}).get(obj)
+        except Exception as exc:              # the review page must never fail because of the ladder
+            db.session.rollback()
+            print('ladder review:', exc)
+            return None
 
     # ------------------------------------------------------------------ student pages
     @login_required
@@ -281,6 +290,7 @@ def register(app, db, deps):
                                items=json.loads(check.items_json or '[]'), action=action, required=required,
                                reasons=reasons, est=st['states'][obj], lesson=les, map_info=info, st=st,
                                lesson_link=lesson_url(section, les) if les else None, variant=variant,
+                               ladder_review=_ladder_review(section, obj),
                                evidence=M.describe_counts(st['states'][obj]))
 
     @login_required
@@ -565,14 +575,19 @@ def register(app, db, deps):
         out.sort(key=lambda r: (not r['struggling'], -(r['last_at'].timestamp() if r['last_at'] else 0)))
         return out
 
+    # pass 19: explanation ladder (per-student in-place re-explanation of lesson sections)
+    from .ladder import register_ladder
+    ladder = register_ladder(app, db, SimpleNamespace(d=d, eng=eng, enrolled_section=enrolled_section,
+                                                      staff_section=staff_section))
+    ladder_ref['api'] = ladder
     from .features import register_features
     feats = register_features(app, db, SimpleNamespace(
-        eng=eng, m=m, d=d, enrolled_section=enrolled_section, staff_section=staff_section, grade=_grade,
+        ladder=ladder, eng=eng, m=m, d=d, enrolled_section=enrolled_section, staff_section=staff_section, grade=_grade,
         open_check=_open_check, class_rows=class_rows, diagnose=lab_diagnosis.diagnose, lab_diagnoses=lab_diagnoses))
     plan_pref_ref['fn'] = feats['plan_pref']
     from .briefing import register_briefing
     brief = register_briefing(app, db, SimpleNamespace(eng=eng, m=m, d=d, staff_section=staff_section,
-                                                       needs_me=feats['needs_me']))
+                                                       needs_me=feats['needs_me'], ladder=ladder))
 
     for rule, ep, fn, methods in [
         ('/student/section/<int:section_id>/mastery', 'mastery_student', mastery_student, ['GET']),
@@ -591,6 +606,6 @@ def register(app, db, deps):
     api = SimpleNamespace(engine=eng, models=m, student_path=student_path, lesson_gate=lesson_gate,
                           daily_summary=feats['daily_summary'], lesson_quickcheck=feats['lesson_quickcheck'],
                           features=feats, diagnose=lab_diagnosis.diagnose, lab_diagnoses=lab_diagnoses,
-                          briefing=brief)
+                          briefing=brief, ladder=ladder)
     app.extensions['ciwt_mastery'] = api
     return api

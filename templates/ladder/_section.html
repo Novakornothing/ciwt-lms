@@ -1,0 +1,71 @@
+{# Explanation ladder: one concept section for one student (pass 19). Needs L (mastery/ladder.py section_ctx). #}
+{%- set v = L.view -%}
+{%- set st = L.state -%}
+<div class="ladder{% if v %} ladder-swapped ladder-k-{{ v.kind }}{% endif %}{% if st.exhausted %} ladder-exhausted{% endif %}" id="ladder-{{ L.sid }}"
+     data-ladder-sid="{{ L.sid }}" data-shown="{{ L.shown }}" data-heading="{{ L.heading }}"
+     data-event-url="{{ L.url_event }}" data-next="{{ 1 if L.next_available else 0 }}">
+  {% if v %}
+  <section class="sublesson ladder-rung" aria-labelledby="lh-{{ L.sid }}">
+    <p class="ladder-label" tabindex="-1"><span class="ladder-badge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ v.label }}</span>
+      <span class="ladder-review">{{ L.review }}</span></p>
+    <h3 id="lh-{{ L.sid }}">{{ L.heading }}</h3>
+    {% if v.title %}<p class="ladder-title">{{ v.title }}</p>{% endif %}
+    <div class="ladder-content">{{ v.html|safe }}</div>
+    {% if v.widget %}{% set w = v.widget %}{% include 'ladder/_widget.html' %}{% endif %}
+    {% if v.lab %}<p class="ladder-lab"><a class="btn btn-sm btn-outline-navy" href="{{ v.lab.url }}"><i class="bi bi-terminal" aria-hidden="true"></i> Open the lab: {{ v.lab.title }}</a>{% if v.lab.note %} <span class="small">{{ v.lab.note }}</span>{% endif %}</p>{% endif %}
+  </section>
+  <template class="ladder-original-tpl">{{ L.orig_html|safe }}</template>
+  {% else %}
+  {{ L.orig_html|safe }}
+  {% endif %}
+  <div class="ladder-panel">
+    <div class="ladder-feedback{% if L.feedback %} {{ 'is-ok' if L.feedback.ok else 'is-miss' }}{% endif %}" role="status" aria-live="polite">{% if L.feedback %}{{ L.feedback.text }}{% endif %}</div>
+    {% if st.exhausted %}
+    <p class="ladder-note small mb-2"><i class="bi bi-person-raised-hand" aria-hidden="true"></i> You have seen every explanation of this section. Your instructor can see it needs a conversation. You can look back at any of them:</p>
+    {% endif %}
+    {% if L.check and not (st.resolved and st.resolved == L.shown) %}
+    <form class="ladder-check" method="post" action="{{ L.url_answer }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="check_id" value="{{ L.check.id }}">
+      <fieldset>
+        <legend><span class="ladder-check-tag">Quick check · not graded</span> <span class="ladder-q">{{ L.check.q }}</span></legend>
+        {% for opt in L.check.options %}
+        <div class="form-check ladder-opt">
+          <input class="form-check-input" type="radio" name="answer" id="lq-{{ L.sid }}-{{ loop.index0 }}" value="{{ opt }}" required>
+          <label class="form-check-label" for="lq-{{ L.sid }}-{{ loop.index0 }}">{{ opt }}</label>
+        </div>
+        {% endfor %}
+      </fieldset>
+      <button type="submit" class="btn btn-sm btn-brand ladder-submit">Check</button>
+    </form>
+    {% elif st.resolved and st.resolved == L.shown %}
+    <p class="ladder-ok small mb-2"><i class="bi bi-check2-circle" aria-hidden="true"></i> You got the check on this section{% if L.shown != 'R0' %} with this explanation{% endif %}.</p>
+    {% endif %}
+    <div class="ladder-tools">
+      {% if L.next_available %}
+      <form class="ladder-another" method="post" action="{{ L.url_another }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="source" value="button">
+        <button type="submit" class="btn btn-sm btn-outline-navy"><i class="bi bi-lightbulb" aria-hidden="true"></i> I don't get it: explain it another way<span class="visually-hidden"> ({{ L.heading }})</span></button>
+      </form>
+      {% endif %}
+      {% if v %}
+      <a class="btn btn-sm btn-link ladder-orig-toggle" href="?ladder_original={{ L.sid }}#ladder-{{ L.sid }}" aria-pressed="false"
+         data-back="Back to: {{ v.label }}">See the original explanation<span class="visually-hidden"> of {{ L.heading }}</span></a>
+      {% elif L.shown == 'R0' and st.tried|length > 1 %}
+      <a class="btn btn-sm btn-link" href="{{ L.lesson_url }}">Back to the explanation you were on</a>
+      {% endif %}
+      {% if st.exhausted or (st.tried|length > 2) %}
+      <details class="ladder-seen">
+        <summary class="small">Explanations you have seen ({{ st.tried|length }})</summary>
+        <ul class="list-unstyled mb-0">{% for t in L.tried_views %}{% if t.rung == 'R0' or t.rung in st.tried %}
+          <li><form method="post" action="{{ L.url_show(t.rung) }}" class="ladder-showform d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-link p-0"{% if t.rung == L.shown %} aria-current="true"{% endif %}>{{ t.label }}</button></form></li>
+        {% endif %}{% endfor %}</ul>
+      </details>
+      {% endif %}
+    </div>
+    <div class="ladder-helix" hidden></div>
+  </div>
+</div>

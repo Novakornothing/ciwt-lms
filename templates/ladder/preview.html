@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Explanations for lesson {{ label }} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('ladder_class', section_id=section.id) }}">Explanations</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Lesson {{ label }}</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">For review · Pending SME review</div>
+  <h1 class="h3 mb-1">Every explanation for lesson {{ label }}{% if lesson %}: {{ lesson.title }}{% endif %}</h1>
+  <p class="mb-0">Staff only. Each section's alternative explanations in the order students meet them, with every quick check and its key (✓). Students never see keys.</p>
+</div>
+{% for x in view %}
+<section class="card mb-3" id="pv-{{ x.sid }}" aria-labelledby="pvh-{{ x.sid }}">
+  <div class="card-header"><h2 class="h6 mb-0" id="pvh-{{ x.sid }}">{{ x.e.heading }} <span class="small mx-muted">· {{ x.sid }}{% if x.e.obj %} · {{ x.e.obj }}{% endif %}</span></h2></div>
+  <div class="card-body">
+  {% if x.e.type == 'same_as' %}<p class="mb-0">Uses the explanations of <a href="#pv-{{ x.e.target }}">{{ x.e.target }}</a>. {{ x.e.note }}</p>
+  {% elif x.e.type == 'skip' %}<p class="mb-0">No ladder ({{ x.e.reason }}): {{ x.e.note }}</p>
+  {% else %}
+    {% for c in x.checks['R0'] %}{% include 'ladder/_pvcheck.html' %}{% endfor %}
+    {% for v in x.rungs %}
+    <div class="ladder-pv mt-3"><p class="ladder-label"><span class="ladder-badge">{{ v.rung }} · {{ v.label }}</span> <span class="ladder-review">{{ x.e.rungs[v.rung].review }} · source: {{ x.e.rungs[v.rung].source }}</span></p>
+      {% if v.title %}<p class="ladder-title">{{ v.title }}</p>{% endif %}
+      <div class="ladder-content">{{ v.html|safe }}</div>
+      {% if v.widget %}<p class="small"><strong>Try-it ({{ v.widget.type }}):</strong> {{ v.widget.prompt }}{% if v.widget.steps %} Order: {{ v.widget.steps|join(' → ') }}.{% endif %}{% if v.widget.buckets %} {% for k, its in v.widget.buckets.items() %}{{ k }}: {{ its|join(', ') }}. {% endfor %}{% endif %}{% if v.widget.answer %} Answer: {{ v.widget.answer }}{% endif %}</p>{% endif %}
+      {% if v.lab %}<p class="small">Lab: {{ v.lab.title }} ({{ v.lab.id }}). {{ v.lab.note }}</p>{% endif %}
+      {% for c in x.checks[v.rung] %}{% include 'ladder/_pvcheck.html' %}{% endfor %}
+    </div>
+    {% endfor %}
+  {% endif %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

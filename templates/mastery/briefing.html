@@ -75,6 +75,9 @@
           <a class="btn btn-sm btn-brand" href="{{ url_for('view_lesson', section_id=section.id, module_id=t.section.module_id, lesson_id=t.section.lesson_id) }}">Open lesson {{ t.section.lesson }}</a>
         {% elif t.kind == 'assessment' %}
           <a class="btn btn-sm btn-brand" href="{{ t.result.url }}">Open {{ t.result.title }}</a>
+        {% elif t.kind == 'explain' %}
+          <a class="btn btn-sm btn-brand" href="{{ url_for('ladder_class', section_id=section.id) }}">Open explanation analytics</a>
+          <a class="btn btn-sm btn-outline-navy" href="{{ url_for('ladder_preview', section_id=section.id, label=t.ladder.label) }}">See every explanation of lesson {{ t.ladder.label }}</a>
         {% endif %}
         </div>
       </div>
