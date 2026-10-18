@@ -24,7 +24,7 @@
   <div class="card mb-3"><div class="card-body">
     <h3 class="h6 mb-1">{{ d.id }} {{ d.name }} <span class="small text-muted">({{ d.weight }}% of the exam)</span></h3>
     <p class="mb-1">{{ d.correct }} of {{ d.total }} correct — {{ d.pct }}%</p>
-    <div class="domain-bar mb-2" aria-hidden="true"><span style="width: {{ d.pct }}%"></span></div>
+    <div class="domain-bar mb-2" aria-hidden="true"><span class="db-{{ ((d.pct / 5)|round|int) * 5 }}"></span></div>
     {% if d.missed %}
     <p class="small mb-1">Review these objectives:</p>
     <ul class="small mb-0">

@@ -57,3 +57,28 @@
 .pbq-prompt { font-weight: 500; overflow-wrap: anywhere; margin: 0; }
 .pbq-select { min-height: 44px; }
 @media (max-width: 575.98px) { .pbq-match { grid-template-columns: 1fr; } }
+
+/* pass 11: targets >= 44px; domain bar widths without inline styles */
+.cert-exam-link { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+.cert-method > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.domain-bar > span.db-0 { width: 0%; }
+.domain-bar > span.db-5 { width: 5%; }
+.domain-bar > span.db-10 { width: 10%; }
+.domain-bar > span.db-15 { width: 15%; }
+.domain-bar > span.db-20 { width: 20%; }
+.domain-bar > span.db-25 { width: 25%; }
+.domain-bar > span.db-30 { width: 30%; }
+.domain-bar > span.db-35 { width: 35%; }
+.domain-bar > span.db-40 { width: 40%; }
+.domain-bar > span.db-45 { width: 45%; }
+.domain-bar > span.db-50 { width: 50%; }
+.domain-bar > span.db-55 { width: 55%; }
+.domain-bar > span.db-60 { width: 60%; }
+.domain-bar > span.db-65 { width: 65%; }
+.domain-bar > span.db-70 { width: 70%; }
+.domain-bar > span.db-75 { width: 75%; }
+.domain-bar > span.db-80 { width: 80%; }
+.domain-bar > span.db-85 { width: 85%; }
+.domain-bar > span.db-90 { width: 90%; }
+.domain-bar > span.db-95 { width: 95%; }
+.domain-bar > span.db-100 { width: 100%; }
