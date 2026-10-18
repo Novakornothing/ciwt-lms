@@ -2,7 +2,7 @@
    Import with: {% from '_lab_row.html' import lab_row %}  — pass prog (lab_progress row or None) to show progress. #}
 {% macro lab_row(lab, sub=None, show_kind=True, prog=None, href=None) %}
   <a class="list-group-item list-group-item-action lab-row{{ ' no-kind' if not show_kind }}" href="{{ href or url_for('interactive_lab', lab_id=lab.id) }}">
-    {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ {'win11gui': 'GUI', 'activity': 'ACTIVITY', 'classroom': 'CLASSROOM'}.get(lab.kind, lab.kind|upper) }}</span>{% endif %}
+    {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ {'win11gui': 'GUI', 'activity': 'ACTIVITY', 'classroom': 'CLASSROOM', 'vm': 'REAL VM'}.get(lab.kind, lab.kind|upper) }}</span>{% endif %}
     <span class="lab-row-main"><span class="lab-row-title">{{ lab.title }}</span>
       {% set s = sub or lab.align or lab.blurb %}{% if s %}<span class="lab-row-sub">{{ s }}</span>{% endif %}</span>
     {% if prog %}
