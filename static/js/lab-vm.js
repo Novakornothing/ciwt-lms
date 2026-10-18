@@ -110,8 +110,8 @@
 
   var PW_RE = /(pass(word|phrase)[^\n]*|PIN):\s*$/i;
   function syncPrompt() {
-    var m = active.scr.match(LINE_PROMPT), pw = PW_RE.test(active.scr);
-    promptEl.textContent = pw ? 'password' : (m ? m[1].slice(-26) : (active.ready ? '$' : '…'));
+    var m = active.scr.match(LINE_PROMPT), pw = !raw && PW_RE.test(active.scr);
+    promptEl.textContent = raw ? 'keys' : (pw ? 'password' : (m ? m[1].slice(-26) : (active.ready ? '$' : '…')));
     var t = pw ? 'password' : 'text';
     if (input.type !== t) { input.type = t; input.setAttribute('autocomplete', pw ? 'off' : 'off'); }
   }
@@ -123,13 +123,13 @@
     tabs.forEach(function (t) { var on = t.getAttribute('data-vm-tab') === name; t.setAttribute('aria-selected', on ? 'true' : 'false'); t.tabIndex = on ? 0 : -1; });
     machines.forEach(function (m) { m.screenEl.hidden = m.name !== name; });
     if (packetsEl) packetsEl.hidden = name !== '_packets';
-    form.hidden = raw || name === '_packets';
+    form.hidden = name === '_packets';
     if (byName[name]) {
       active = byName[name];
       if (titleEl) titleEl.textContent = 'root@' + (active.spec.hostname || active.label) + ' — real Linux (BusyBox sh)';
       syncPrompt();
       active.screenEl.scrollTop = active.screenEl.scrollHeight;
-      if (!raw && started) input.focus({ preventScroll: true }); else if (raw) active.screenEl.focus();
+      if (started) input.focus({ preventScroll: true });
     } else if (packetsEl) { packetsEl.scrollTop = packetsEl.scrollHeight; }
   }
   tabs.forEach(function (t, i) {
@@ -160,7 +160,9 @@
     m.hpos = -1;
   }
   form.addEventListener('submit', function (e) {
-    e.preventDefault(); var v = input.value; input.value = ''; sendLine(v);
+    e.preventDefault();
+    if (raw) { rawFlushInput(); rawEnter(active); active.send('\r'); }
+    else { var v = input.value; input.value = ''; sendLine(v); }
     if (wrap.classList.contains('term-focus') && document.activeElement !== input) input.focus({ preventScroll: true });
   });
   // r5: tapping ↵ must not take focus from the input (that closed the phone keyboard after every line)
@@ -174,6 +176,18 @@
     input.value = m.hpos === m.hist.length ? '' : m.hist[m.hpos];
   }
   input.addEventListener('keydown', function (e) {
+    if (raw) {   // direct keys through the input: special keys here, printable text via input/composition events below
+      var s = null;
+      if (e.ctrlKey && /^[a-z]$/i.test(e.key)) s = String.fromCharCode(e.key.toUpperCase().charCodeAt(0) - 64);
+      else if (KEYS[e.key] && !(e.key === 'Backspace' && input.value)) s = KEYS[e.key];
+      if (s === null || !active.emu) return;
+      e.preventDefault(); rawFlushInput();
+      if (e.key === 'Enter') rawEnter(active);
+      else if (e.key === 'Backspace') active.rawLine = active.rawLine.slice(0, -1);
+      else if (e.key === 'Escape' || (e.ctrlKey && /^[cu]$/i.test(e.key))) active.rawLine = '';
+      active.send(s);
+      return;
+    }
     if (e.key === 'Tab') { e.preventDefault(); tab(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); histMove(-1); }
     else if (e.key === 'ArrowDown') { e.preventDefault(); histMove(1); }
@@ -186,16 +200,17 @@
     b.addEventListener('click', function (e) {
       e.preventDefault();
       var a = b.getAttribute('data-key-act');
-      if (a === 'tab') tab();
+      if (raw && (a === 'tab' || a === 'up' || a === 'down' || a === 'clear')) { rawFlushInput(); active.send({ tab: '\t', up: '\x1b[A', down: '\x1b[B', clear: '\x0c' }[a]); }
+      else if (a === 'tab') tab();
       else if (a === 'up') histMove(-1);
       else if (a === 'down') histMove(1);
-      else if (a === 'ctrlc') { active.send('\x03'); input.value = ''; }
+      else if (a === 'ctrlc') { active.send('\x03'); input.value = ''; active.rawLine = ''; }
       else if (a === 'ctrld') active.send('\x04');
-      else if (a === 'esc') active.send('\x1b');
+      else if (a === 'esc') { if (raw) rawFlushInput(); active.rawLine = ''; active.send('\x1b'); }
       else if (a === 'check') { $('vmCheck').click(); return; }
       else if (a === 'hint') kit.hint();
       else if (a === 'clear') { active.clearScreen(); active.send('\n'); }
-      if (!raw) input.focus(); else active.screenEl.focus();
+      input.focus();
     });
   });
   document.querySelectorAll('[data-chip]').forEach(function (b) {
@@ -214,19 +229,40 @@
       else if (e.key.length === 1 && !e.metaKey) s = e.key;
       if (s === null) return;
       e.preventDefault();
-      if (e.key === 'Enter') { var mm = m.scr.match(/^.*?[#%$] (.*)$/); var l = mm ? mm[1] : m.rawLine; if (l.trim()) logLine(m, l); m.rawLine = ''; }
-      else if (e.key.length === 1) m.rawLine += e.key;
+      if (e.key === 'Enter') rawEnter(m);
+      else if (e.key === 'Escape' || (e.ctrlKey && /^[cu]$/i.test(e.key))) m.rawLine = '';
+      else if (e.key === 'Backspace') m.rawLine = m.rawLine.slice(0, -1);
+      else if (e.key.length === 1 && !e.ctrlKey) m.rawLine += e.key;
       m.send(s);
     });
     m.screenEl.addEventListener('paste', function (e) { if (!raw) return; e.preventDefault(); m.send((e.clipboardData.getData('text') || '').replace(/\n/g, '\r')); });
-    m.screenEl.addEventListener('click', function () { if (!window.getSelection().toString()) { if (raw) m.screenEl.focus(); else input.focus(); } });
+    m.screenEl.addEventListener('click', function () { if (!window.getSelection().toString()) input.focus(); });
   });
   $('vmRaw').addEventListener('click', function () {
     raw = !raw;
     this.setAttribute('aria-pressed', raw ? 'true' : 'false');
     this.textContent = raw ? 'Keys: direct' : 'Keys: line';
-    form.hidden = raw;
-    if (raw) { active.screenEl.focus(); kit.toast('Direct keys: type in the console (vi, less, top work). Line mode is easier on phones.', 'ok'); } else input.focus();
+    input.value = ''; input.type = 'text';
+    input.setAttribute('aria-label', raw ? 'Direct keys: every key goes to the VM' : '');
+    if (!raw) input.removeAttribute('aria-label');
+    syncPrompt();
+    input.focus();
+    if (raw) kit.toast('Direct keys: every key goes straight to the VM (vi, Ctrl keys). Full-screen programs draw roughly in this console, so prefer sed, cat or top -b -n 1. Esc, Ctrl-C and the arrows are on the keys bar.', 'ok');
+  });
+
+  /* r5: direct keys work through the input as well, so phones can use them: a focused <div> opens no on-screen
+   * keyboard. Printable text comes from input/composition events (Android keyboards send keyCode 229, not keys). */
+  var composing = false;
+  // what was typed (the screen echo can lag behind fast typing on a slow phone, so it is only the fallback)
+  function rawEnter(m) { var mm = m.scr.match(/^.*?[#%$] (.*)$/); var l = m.rawLine.trim() ? m.rawLine : (mm ? mm[1] : ''); if (l.trim()) logLine(m, l); m.rawLine = ''; }
+  function rawFlushInput() { var v = input.value; if (!v || !active.emu) return; input.value = ''; active.rawLine += v; active.send(v.replace(/\n/g, '\r')); }
+  input.addEventListener('compositionstart', function () { composing = true; });
+  input.addEventListener('compositionend', function () { composing = false; if (raw) rawFlushInput(); });
+  input.addEventListener('input', function (e) { if (raw && !composing && !e.isComposing) rawFlushInput(); });
+  input.addEventListener('beforeinput', function (e) {
+    if (!raw || !active.emu) return;
+    if (e.inputType === 'deleteContentBackward' && !input.value) { e.preventDefault(); active.rawLine = active.rawLine.slice(0, -1); active.send('\x7f'); }
+    else if (e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph') { e.preventDefault(); rawFlushInput(); rawEnter(active); active.send('\r'); }
   });
 
   /* ---------------------------------------------------------------- network */
@@ -321,7 +357,7 @@
     setTimeout(function () { $('vmProgress').hidden = true; }, 1500);
     machines.forEach(function (m) { if (m.resumed) m.send('\n'); });
     snapshotClean();
-    if (!raw) input.focus({ preventScroll: true });
+    input.focus({ preventScroll: true });
     if (ms > 45000) showWeak('Booting took ' + Math.round(ms / 1000) + ' s on this device.');
   }
   function snapshotClean() {
