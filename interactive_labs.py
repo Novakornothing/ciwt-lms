@@ -2477,6 +2477,7 @@ def run_windows(cmd, state, done):
     if cl == "ipconfig /release" and state.get("released"):
         return ["", "Windows IP Configuration", "",
                 "The operation failed as no adapter is in the state permissible for this operation."], state, done
+    before = {"released": state.get("released"), "dns_cache_flushed": state.get("dns_cache_flushed")}
     server = None
     if cl.startswith("nslookup "):
         r = WF.nslookup_server(c, state)
@@ -2516,6 +2517,7 @@ def run_windows(cmd, state, done):
             new = WF.route_print(state)
         if new is not None:
             lines = new
+        lines = WF.wrong_turns(cl, before, state, done, lines)
     except Exception:      # a rendering problem must never break the lab; fall back to the engine's own lines
         pass
     return lines, state, done

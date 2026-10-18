@@ -331,3 +331,26 @@ def nslookup(c, st, lines, server=None):
         i = next(i for i, ln in enumerate(out) if ln.startswith("Name:"))
         out.insert(i, "Non-authoritative answer:")
     return out
+
+
+def wrong_turns(cl, before, st, done, lines):
+    """Branching on a wrong hypothesis: the engine already applied the real consequence (e.g. /release really takes the
+    user offline); this adds what a senior tech would point out, and records it so scenario mode can report it."""
+    objs = st.get("objectives") or []
+    dns_ticket = "nslookup_fail" in objs
+    note = None
+    if cl == "ipconfig /release" and dns_ticket and "release" not in objs and not before.get("released"):
+        note = ("wrong_release", "(Ticket impact: the user is now offline. The evidence points at name resolution, and /release "
+                "does not touch DNS. Restore service with ipconfig /renew and record what happened.)")
+    elif cl == "ipconfig /flushdns" and dns_ticket and "nslookup_fail" not in done:
+        note = ("early_flush", "(Flushing before you have evidence throws away what was cached. Document first: nslookup the name, "
+                "then flush.)")
+    elif cl.startswith("ping ") and dns_ticket and before.get("dns_cache_flushed") and any("could not find host" in ln for ln in lines):
+        note = ("flush_not_fix", "(Still failing after /flushdns, so the client cache was not the problem: the DNS server has no "
+                "record for this name. That is a server-side fix — escalate with your nslookup output.)")
+    if note:
+        wt = st.setdefault("wrong_turns", [])
+        if note[0] not in wt:
+            wt.append(note[0])
+        return lines + ["", note[1]]
+    return lines

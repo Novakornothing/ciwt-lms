@@ -64,3 +64,16 @@ def test_powershell_error_records():
 def test_grading_is_unchanged():
     ok, _ = RT.verify_all_labs()
     assert ok
+
+
+def test_wrong_turns_have_real_consequences_and_are_recorded():
+    st, done = RT.fresh_state("win-dns-break"), []
+    r, st, done = IL.run_command("win-dns-break", st, done, "ipconfig /flushdns")[:3]
+    assert "Document first" in "\n".join(r["lines"])
+    r, st, done = IL.run_command("win-dns-break", st, done, "ping app.training.local")[:3]
+    assert "server-side fix" in "\n".join(r["lines"])
+    r, st, done = IL.run_command("win-dns-break", st, done, "ipconfig /release")[:3]
+    assert "user is now offline" in "\n".join(r["lines"])
+    r, st, done = IL.run_command("win-dns-break", st, done, "ping 10.20.30.50")[:3]
+    assert "General failure" in "\n".join(r["lines"]) and "ping_ip_ok" not in done   # really offline
+    assert st["wrong_turns"] == ["early_flush", "flush_not_fix", "wrong_release"]
