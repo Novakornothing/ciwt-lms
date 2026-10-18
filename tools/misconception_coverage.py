@@ -1,4 +1,5 @@
-"""Measure misconception-tag coverage in the adaptive engine (content round 3).
+"""Measure misconception-tag coverage in the adaptive engine (content round 3; pass-15 subset round 4; X-IT bank and
+supplement subset round 5).
 
 An objective is *covered* when, among the single-answer items the engine can score for it (chapter checks and
 Tests A/B/C in the seeded course DB, certification items aligned to it, the X-IT expansion bank and the exam
@@ -153,6 +154,29 @@ def p15_report(app):
     return r
 
 
+def bank_report(cov):
+    """Content round 5: the X-IT expansion bank and the exam supplement, as the engine serves them (Engine.pool with
+    include_bank). Items with no tagged distractor are listed by bank id; new MC-R5-* misconceptions are counted with
+    their status, source and whether the mix-up correction finds a lesson section."""
+    from curriculum_v2 import misconceptions as MCS
+    from curriculum_v2 import misconceptions_round5 as R5
+    r = {'bank': [0, 0], 'supplement': [0, 0], 'untagged': [], 'r5_mcs': len(R5.MISCONCEPTIONS), 'r5_tags': len(R5.TAGS),
+         'r5_with_status': 0, 'r5_with_source': 0, 'r5_with_correction': 0}
+    for o in cov.values():
+        for src in ('bank', 'supplement'):
+            n, t = o['by_src'].get(src, [0, 0])
+            r[src][0] += n
+            r[src][1] += t
+        r['untagged'] += [b for b in o['untagged_items'] if b and b[:2] in ('X-', 'S-')]
+    corr = {m for o in cov.values() for m in o['with_correction']}
+    for k in R5.MISCONCEPTIONS:
+        r['r5_with_status'] += int(MCS.MISCONCEPTIONS[k].get('status') == 'Pending SME review')
+        r['r5_with_source'] += int(bool(MCS.MISCONCEPTIONS[k].get('source')))
+        r['r5_with_correction'] += int(k in corr)
+    r['untagged'].sort()
+    return r
+
+
 def main(argv):
     import app as lms
     cov = measure(lms.app, lms)
@@ -176,8 +200,13 @@ def main(argv):
           f"not scored per distractor: {', '.join(p15['not_scored'])}")
     for b, d in p15['untagged_distractors']:
         print(f"  p15 untagged: {b}: {d}")
+    bk = bank_report(cov)
+    print(f"X-IT bank items with >=1 tag: {bk['bank'][1]}/{bk['bank'][0]}; supplement: {bk['supplement'][1]}/{bk['supplement'][0]}; "
+          f"round-5 tags {bk['r5_tags']}, MC-R5 misconceptions {bk['r5_mcs']} (Pending status {bk['r5_with_status']}, "
+          f"source {bk['r5_with_source']}, correction found {bk['r5_with_correction']})")
+    print('  bank/supplement untagged (throw-away distractors only):', ', '.join(bk['untagged']) or 'none')
     if '--json' in argv:
-        Path(argv[argv.index('--json') + 1]).write_text(json.dumps({'summary': s, 'objectives': cov, 'p15': p15}, indent=1))
+        Path(argv[argv.index('--json') + 1]).write_text(json.dumps({'summary': s, 'objectives': cov, 'p15': p15, 'bank': bk}, indent=1))
 
 
 if __name__ == '__main__':
