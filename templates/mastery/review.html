@@ -89,7 +89,7 @@
   {% if variant != 'alt' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, variant='alt') }}">Explain it another way</a>{% endif %}
   {% if variant != 'review' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, variant='review') }}">Short review instead</a>{% endif %}
   {% if variant != 'practice' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, variant='practice') }}">Just practice questions</a>{% endif %}
-  {% for x in mc_opts if not mcinfo or x.id != mcinfo.id %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, mc=x.id) }}">Fix: {{ x.label|truncate(50) }}</a>{% endfor %}
+  {% for x in mc_opts if not mcinfo or x.id != mcinfo.id %}<a class="btn btn-outline-navy mx-btn-wrap" href="{{ url_for('mastery_review', section_id=section.id, obj=obj, mc=x.id) }}">Fix: {{ x.label|truncate(50) }}</a>{% endfor %}
   {% if lesson_link %}<a class="btn btn-outline-navy" href="{{ lesson_link }}">Open the full lesson</a>{% endif %}
 </div>
 {% endblock %}
