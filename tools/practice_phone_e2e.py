@@ -103,14 +103,14 @@ with sync_playwright() as p:
     pg.wait_for_load_state('networkidle')
     body = pg.locator('main').inner_text()
     check('result: own URL', pg.url.endswith('/result'), pg.url)
-    check('result: practice label and scaled-score caveat', 'not an official CompTIA exam' in body and 'does not convert' in body)
+    check('result: practice label and scaled-score caveat', 'not an official CompTIA exam' in body and 'does not convert' in body and 'scaled scores' in body)
     check('result: domain breakdown', body.count('% of the exam') == 4, body.count('% of the exam'))
     check('result: lesson links for missed objectives', pg.locator('main a[href*="/lesson/"]').count() > 0 or 'Every question in this domain was correct' in body)
     check('result: fits 390 px', overflow(pg) <= 1, overflow(pg))
     v = axe(pg)
     if v is not None:
         check('result: axe WCAG 2.1 AA clean', not v, v)
-    shot('practice-result-390', pg, True)
+    shot('practice-result-390', pg, True); shot('practice-result-390-top', pg)
     pg.set_viewport_size({'width': 390, 'height': 844}); pg.evaluate('window.scrollTo(0,0)')
     check('result: sessionStorage cleared', pg.evaluate("() => Object.keys(sessionStorage).filter(k => k.startsWith('ciwt-assess:')).length") == 0)
 

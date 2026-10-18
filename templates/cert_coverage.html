@@ -27,7 +27,7 @@
         <td>{{ s.covered }} <span class="cert-was">(was {{ b.covered }})</span></td>
         <td>{{ s.partial }} <span class="cert-was">(was {{ b.partial }})</span></td>
         <td>{{ s.gap }} <span class="cert-was">(was {{ b.gap }})</span></td>
-        <td>{{ s.items }} <span class="cert-was">(was {{ b.items }})</span></td>
+        <td>{{ s['items'] }} <span class="cert-was">(was {{ b['items'] }})</span></td>
       </tr>
       {% endfor %}
       </tbody>

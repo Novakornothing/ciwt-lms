@@ -282,6 +282,7 @@ def test_coverage_page_staff_only_and_cites_sources(student, instructor, admin, 
         html = c.get('/staff/cert-coverage').get_data(as_text=True)
         assert 'Exam Objectives Document Version 4.0' in html and 'Version 6.0' in html
         assert 'Not affiliated' in html and 'heuristic' in html
+        assert 'built-in method' not in html and 'object at 0x' not in html, 'template printed a Python method'
         assert html.count('class="cert-obj"') == len(OBJECTIVES)
     html = admin.get('/staff/cert-coverage?exam=N&status=partial').get_data(as_text=True)
     assert 0 < html.count('class="cert-obj"') < 25

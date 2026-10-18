@@ -6,7 +6,7 @@
   <h1 class="h3 mb-1">Practice score report</h1>
   <p class="mb-0">{{ title }}</p>
 </div>
-<p class="practice-label small"><strong>{{ label }}.</strong> Scores are percent correct. CompTIA reports scaled scores (100–900){% if 'not stated' not in exam.official.passing %}; this exam’s passing score is {{ exam.official.passing }}{% endif %}. A practice percentage does not convert to a scaled score or predict a result.</p>
+<p class="practice-label small"><strong>{{ label }}.</strong> Scores are percent correct. CompTIA reports scaled scores{% if 'not stated' not in exam.official.passing %}; this exam’s passing score is {{ exam.official.passing }}{% endif %}. A practice percentage does not convert to a scaled score or predict a result.</p>
 
 <section class="card mb-4" aria-labelledby="sr-overall">
   <div class="card-body d-flex flex-wrap gap-3 align-items-center">
