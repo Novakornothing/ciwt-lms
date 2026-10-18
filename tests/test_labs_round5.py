@@ -201,3 +201,25 @@ def test_method_page_and_http_flow(student, instructor):
     student.post(f'/labs/{METHOD}/vm-log', json={'lines': lab['solution']['vm_commands']})
     r = student.post(f'/labs/{METHOD}/vm-check', json={'probes': V.solved_probes(st, lab)}).get_json()
     assert r['complete'] and r['score'] == 100, r
+
+
+# ---- linux-vm-ssh on slow phones (r5): the default post-quantum KEX made every connection ~25 s at 4x CPU throttle
+def test_ssh_lab_pins_fast_kex_on_the_client_and_in_the_probe():
+    import labs_vm as V
+    lab = V.VM_BY_ID['linux-vm-ssh']
+    ws = lab['vm']['setup']['ws']
+    assert 'KexAlgorithms %s' in ws and ws.rstrip().endswith('>> /etc/ssh/ssh_config') and 'curve25519-sha256' in ws
+    assert 'sshd_config' not in ws            # the server side the student repairs is untouched
+    probe = V.probe_script(V.fresh(lab, 1), lab, 'ws')
+    ssh_lines = [ln for ln in probe.splitlines() if 'ssh ' in ln and ln.startswith(('_c ', '_v '))]
+    assert ssh_lines and all('KexAlgorithms=curve25519-sha256' in ln for ln in ssh_lines), ssh_lines
+    assert 'KexAlgorithms curve25519-sha256' in lab['intro']   # the student is told, not silently changed
+
+
+def test_ssh_lab_probe_watchdogs_outlast_a_slow_phone_and_the_client_timeout():
+    import labs_vm as V
+    lab = V.VM_BY_ID['linux-vm-ssh']
+    by = {c['id']: c for c in lab['vm_checks']}
+    m = re.search(r'ConnectTimeout=(\d+)', by['keylogin']['sh'])
+    assert m and by['keylogin']['secs'] > int(m.group(1))   # ssh's own timeout fires (and reports) before the watchdog kills it
+    assert by['refused']['secs'] > 2 * int(m.group(1)) - 1   # two connections in that check

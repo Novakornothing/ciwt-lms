@@ -549,10 +549,18 @@ _SSH_SRV = _prelude("app-01") + SYSLOG + _SSH_HOSTS + r"""ip link set eth0 up; i
 useradd -m -s /bin/sh deploy; echo 'deploy:Deploy#2026' | chpasswd
 sed -i 's/^PermitRootLogin .*/PermitRootLogin noo/' /etc/ssh/sshd_config
 """
+# r5: OpenSSH 9.7 negotiates the post-quantum hybrid sntrup761x25519-sha512 by default. In the in-browser VM that
+# key exchange alone costs ~20 s of client CPU per connection on a 4x-throttled (mid-range phone) page — measured
+# 25.6 s per ssh vs 6.5 s with curve25519-sha256 — so every ssh/scp/ssh-copy-id and the grading probe crawled and the
+# probe's 15/20 s watchdogs expired. dev-ws's client config pins curve25519-sha256 (the student is told why in the intro).
+_KEX = "curve25519-sha256"
 _SSH_WS = _prelude("dev-ws") + _SSH_HOSTS + r"""ip link set eth0 up; ip addr add 10.40.0.21/24 dev eth0
 { echo 'release 1.4'; seq 1 2000; } > /root/release-1.4.txt
+printf '\n# CIWT lab: classic X25519 key exchange - the post-quantum default (sntrup761x25519) is too slow in an in-browser VM\nHost *\n    KexAlgorithms %s\n' """ + _KEX + r""" >> /etc/ssh/ssh_config
 """
-_BATCH = "-o BatchMode=yes -o ConnectTimeout=5"
+# the probe pins the KEX itself too (in case the student edits ssh_config); watchdogs stay generous for slow phones —
+# they only matter when a connection hangs, a refused/denied login returns at once
+_BATCH = f"-o BatchMode=yes -o ConnectTimeout=30 -o KexAlgorithms={_KEX}"
 SSH = {
     "id": "linux-vm-ssh",
     "title": "Real Linux VMs — SSH between two machines with keys, then turn passwords off",
@@ -573,7 +581,9 @@ SSH = {
     "intro": "CHG-6120: the deploy pipeline on dev-ws must reach app-01 without stored passwords. The temporary deploy "
              "password is Deploy#2026 (you need it once, for ssh-copy-id). After key login works, password logins must "
              "be turned off. Two real VMs, real OpenSSH — the password prompt hides what you type and is never logged. "
-             "Type exit to leave a remote session before you press Check my work.",
+             "Type exit to leave a remote session before you press Check my work. Note: dev-ws's /etc/ssh/ssh_config pins "
+             "KexAlgorithms curve25519-sha256 because OpenSSH 9.x's default post-quantum hybrid key exchange "
+             "(sntrup761x25519) takes ~20 s per login in an in-browser VM on a phone; real servers keep the default.",
     "success_msg": "Key-only SSH for real: sshd fixed, ed25519 key installed with correct permissions, passwords refused, release copied.",
     "initial_state": {},
     "obj_hints": {
@@ -607,11 +617,11 @@ SSH = {
         {"id": "installed", "on": "srv", "sh": "grep -q '^ssh-ed25519 .* root@dev-ws' /home/deploy/.ssh/authorized_keys && ls -ld /home/deploy/.ssh | grep -q '^drwx------ .* deploy ' && ls -l /home/deploy/.ssh/authorized_keys | grep -Eq '^-rw-------.* deploy '",
          "show": "ls -ld /home/deploy/.ssh /home/deploy/.ssh/authorized_keys 2>&1 | tr -s ' ' | cut -d' ' -f1,3,9 | tr '\\n' ' '",
          "why": "deploy's key setup: {v} (want .ssh 700 and authorized_keys 600 owned by deploy, with dev-ws's key)."},
-        {"id": "keylogin", "on": "ws", "sh": f"ssh {_BATCH} deploy@app-01 true", "secs": 15, "why": "Key login as deploy@app-01 does not work yet."},
+        {"id": "keylogin", "on": "ws", "sh": f"ssh {_BATCH} deploy@app-01 true", "secs": 60, "why": "Key login as deploy@app-01 does not work yet (or took over a minute on this device)."},
         {"id": "harden", "on": "srv", "sh": "sshd -T | grep -qx 'passwordauthentication no' && sshd -T | grep -qx 'permitrootlogin no' && pidof sshd",
          "show": "sshd -T 2>&1 | grep -E '^(passwordauthentication|permitrootlogin)' | tr '\\n' ' '", "why": "app-01 sshd: {v}"},
         {"id": "refused", "on": "ws", "sh": f"ssh {_BATCH} -o PubkeyAuthentication=no deploy@app-01 true 2>&1 | grep -q 'denied (publickey)' && ssh {_BATCH} deploy@app-01 true",
-         "secs": 20, "hist": [r"^\[ws\]\s*ssh\b.*(PubkeyAuthentication=no|PreferredAuthentications=(password|keyboard))"],
+         "secs": 90, "hist": [r"^\[ws\]\s*ssh\b.*(PubkeyAuthentication=no|PreferredAuthentications=(password|keyboard))"],
          "show": f"ssh {_BATCH} -o PubkeyAuthentication=no deploy@app-01 true 2>&1 | tail -1",
          "why": "A password-only attempt should get 'Permission denied (publickey)': {v}. Did you restart sshd?"},
         {"id": "copy", "on": "srv", "sh": f"[ \"$(sha256sum < /home/deploy/release-1.4.txt | cut -c1-16)\" = {hashlib.sha256(_REL.encode()).hexdigest()[:16]} ] && ls -l /home/deploy/release-1.4.txt | grep -q ' deploy '",

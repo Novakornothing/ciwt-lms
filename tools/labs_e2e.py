@@ -238,6 +238,13 @@ MARK = "()=>{const s=document.querySelector('.vm-screen:not([hidden])');const l=
 MOVED = "()=>{const s=document.querySelector('.vm-screen:not([hidden])');const l=s&&s.querySelector('.ln:last-child');return !!l&&!l._e2eMark}"
 
 
+def dump_consoles(page, lab, view):
+    """a failed VM check: keep every machine's console next to the screenshot (r5)"""
+    if a.shots:
+        Path(f"{a.shots}/FAIL-{lab['id']}-{view}-consoles.txt").write_text(page.evaluate(
+            "()=>[...document.querySelectorAll('.vm-screen')].map(s=>'===== '+s.dataset.m+'\\n'+s.innerText).join('\\n')"))
+
+
 def vm_send(page, send, last_ln, timeout=240000):
     """round 5: send one line and wait for *its* prompt. Waiting only for "a prompt is last" raced on throttled
     phones: the old prompt was still the last line when the echo had not arrived yet, so the next line went to the
@@ -281,8 +288,9 @@ def drive_vm(page, lab, view, notes):
         page.click(f'#vmTab-{first}')
     page.wait_for_timeout(400)   # let the batched command log post
     sel = '[data-key-act="check"]' if page.locator('#termWrap.term-focus').count() else '#vmCheck'
-    r = wait_post(page, '/vm-check', lambda: page.click(sel), timeout=60000)
+    r = wait_post(page, '/vm-check', lambda: page.click(sel), timeout=120000)
     if not r['complete']:
+        dump_consoles(page, lab, view)
         raise AssertionError('VM check not complete: ' + '; '.join(r['result'].get('messages') or [r['result'].get('error') or '']))
     if page.locator('#termWrap.term-focus').count():
         page.click('#btnFocusExit')
@@ -416,6 +424,7 @@ def drive_vm_touch(page, lab, view, notes, metrics):
     r = wait_post(page, '/vm-check', lambda: page.tap('[data-key-act="check"]'), timeout=120000)
     metrics['check_s'] = round(time.time() - t1, 1)
     if not r['complete']:
+        dump_consoles(page, lab, view)
         raise AssertionError('VM check not complete: ' + '; '.join(r['result'].get('messages') or [r['result'].get('error') or '']))
     try:
         page.wait_for_selector('#termNote.ok:not([hidden])', timeout=3000)
