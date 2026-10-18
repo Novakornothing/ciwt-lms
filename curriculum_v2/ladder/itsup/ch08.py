@@ -11,10 +11,10 @@ SCHEMA = 1
 COURSE = 'ITSUP'
 CHAPTER = 8
 
-L81 = 'Course lesson 8.1 “Windows Installation and Upgrade” (the original section), re-explained'
-L82 = 'Course lesson 8.2 “Configuration and Baseline” (the original section), re-explained'
+L81 = 'Course lesson 8.1 “Clean vs In-Place” (the original section), re-explained'
+L82 = 'Course lesson 8.2 “Baseline Configuration” (the original section), re-explained'
 L83 = 'Course lesson 8.3 “Repair Tools” (the original section), re-explained'
-L84 = 'Course lesson 8.4 “Failed-Update Capstone” (the original section), re-explained'
+L84 = 'Course lesson 8.4 “Capstone — Failed Update” (the original section), re-explained'
 MS_RECOVERY = 'Microsoft Support — “Recovery options in Windows” and “Fix issues by reinstalling the current version of Windows”'
 MS_SFC = ('Microsoft Support — “Use the System File Checker tool to repair missing or corrupted system files” '
           '(DISM /Online /Cleanup-Image /RestoreHealth before sfc /scannow)')

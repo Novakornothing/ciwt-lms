@@ -11,10 +11,10 @@ SCHEMA = 1
 COURSE = 'ITSUP'
 CHAPTER = 9
 
-L91 = 'Course lesson 9.1 “Linux for Support” (the original section), re-explained'
-L92 = 'Course lesson 9.2 “macOS for Support” (the original section), re-explained'
-L93 = 'Course lesson 9.3 “Access and Entitlement” (the original section), re-explained'
-L94 = 'Course lesson 9.4 “Cross-Platform Files” (the original section), re-explained'
+L91 = 'Course lesson 9.1 “Linux CLI Essentials” (the original section), re-explained'
+L92 = 'Course lesson 9.2 “macOS Support Patterns” (the original section), re-explained'
+L93 = 'Course lesson 9.3 “Cross-Platform Access” (the original section), re-explained'
+L94 = 'Course lesson 9.4 “Capstone — Mixed Environment” (the original section), re-explained'
 MAN = ('Linux man-pages project (man7.org): chmod(1), ls(1), sudo(8), passwd(5), shadow(5), fstab(5), hosts(5); '
        'systemd documentation (systemctl, journalctl)')
 APPLE = ('Apple Support — “How to start up from macOS Recovery”; Mac User Guide (Activity Monitor, Disk Utility, '
