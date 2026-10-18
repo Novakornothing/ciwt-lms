@@ -55,7 +55,7 @@
         <tr>
           <td data-label="Item" class="ts-title"><span class="fw-semibold">{{ c.item.title }}</span><div class="small text-muted">pass {{ c.item.passing }}%</div>
             {% if c.override %}<div class="small text-info-emphasis"><i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Excused' if c.override.excused else 'Override' }}: {{ c.override.note }}{% if staff and c.raw is not none %} (recorded {{ c.raw|round(1) }}%){% endif %}</div>{% endif %}
-            {% if c.status == 'exempt' %}<div class="small"><i class="bi bi-skip-forward" aria-hidden="true"></i> Exempt (test-out): passed this chapter’s mastery check. No score is recorded; the item is left out of completion and averages.</div>{% endif %}</td>
+            {% if c.status == 'exempt' %}<div class="small"><i class="bi bi-patch-check" aria-hidden="true"></i> Exempt (test-out): passed this chapter’s mastery check. No score is recorded; the item is left out of completion and averages.</div>{% endif %}</td>
           <td data-label="Score" class="ts-score">{{ score_cell(c, section, staff=staff) }}</td>
           <td data-label="Attempts" class="ts-meta">{{ c.attempts }}</td>
           <td data-label="Last" class="small ts-meta">{{ c.latest_at.strftime('%b %d, %Y') if c.latest_at else '—' }}</td>
