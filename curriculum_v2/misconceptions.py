@@ -249,6 +249,12 @@ from curriculum_v2.cert import misconceptions as _cert_mc  # noqa: E402
 MISCONCEPTIONS.update(_cert_mc.MISCONCEPTIONS)
 TAGS.update(_cert_mc.TAGS)
 
+# content round 3: Tests A/B/C and the remaining untagged chapter-check items (curriculum_v2/misconceptions_round3.py), same
+# rules; every new entry carries a primary `source` and status 'Pending SME review'
+from curriculum_v2 import misconceptions_round3 as _r3  # noqa: E402
+MISCONCEPTIONS.update(_r3.MISCONCEPTIONS)
+TAGS.update(_r3.TAGS)
+
 # pass 15: option-length parity rewrote some distractors (curriculum_v2/parity_pass15.py). The rewritten text keeps
 # the same wrong idea, so its tag moves to the new text (tags must point at distractors that are actually shown).
 from curriculum_v2 import parity_pass15 as _par15  # noqa: E402
