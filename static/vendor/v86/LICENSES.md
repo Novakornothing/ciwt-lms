@@ -1,4 +1,4 @@
-# In-browser Linux VM assets (lab `linux-vm-perms`)
+# In-browser Linux VM assets (all `vm` labs: linux-vm-perms, linux-vm-shell, linux-vm-services, linux-vm-netclient, linux-vm-routing)
 
 Fetched by `tools/fetch_v86.sh` (pinned, sha256-checked) and served from this LMS — the lab never loads code
 from a third-party host. Binaries are not committed to git (see `.gitignore`).
