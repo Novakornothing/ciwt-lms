@@ -681,6 +681,24 @@
   "C-A1-3.1-3": [
    "A1:3.1"
   ],
+  "C-A1-3.2-11": [
+   "A1:3.2"
+  ],
+  "C-A1-3.2-12": [
+   "A1:3.2"
+  ],
+  "C-A1-3.2-13": [
+   "A1:3.2"
+  ],
+  "C-A1-3.2-14": [
+   "A1:3.2"
+  ],
+  "C-A1-3.2-15": [
+   "A1:3.2"
+  ],
+  "C-A1-3.2-16": [
+   "A1:3.2"
+  ],
   "C-A1-3.3-1": [
    "A1:3.3"
   ],
@@ -885,6 +903,21 @@
   "C-A2-1.9-4": [
    "A2:1.9"
   ],
+  "C-A2-2.1-11": [
+   "A2:2.1"
+  ],
+  "C-A2-2.1-12": [
+   "A2:2.1"
+  ],
+  "C-A2-2.1-13": [
+   "A2:2.1"
+  ],
+  "C-A2-2.1-14": [
+   "A2:2.1"
+  ],
+  "C-A2-2.1-15": [
+   "A2:2.1"
+  ],
   "C-A2-2.11-1": [
    "A2:2.11"
   ],
@@ -1008,7 +1041,34 @@
   "C-A2-4.10-4": [
    "A2:4.10"
   ],
+  "C-A2-4.2-11": [
+   "A2:4.2"
+  ],
+  "C-A2-4.2-12": [
+   "A2:4.2"
+  ],
+  "C-A2-4.2-13": [
+   "A2:4.2"
+  ],
+  "C-A2-4.2-14": [
+   "A2:4.2"
+  ],
   "C-A2-4.4-1": [
+   "A2:4.4"
+  ],
+  "C-A2-4.4-11": [
+   "A2:4.4"
+  ],
+  "C-A2-4.4-12": [
+   "A2:4.4"
+  ],
+  "C-A2-4.4-13": [
+   "A2:4.4"
+  ],
+  "C-A2-4.4-14": [
+   "A2:4.4"
+  ],
+  "C-A2-4.4-15": [
    "A2:4.4"
   ],
   "C-A2-4.5-1": [
@@ -1022,6 +1082,33 @@
   ],
   "C-A2-4.5-4": [
    "A2:4.5"
+  ],
+  "C-A2-4.6-11": [
+   "A2:4.6"
+  ],
+  "C-A2-4.6-12": [
+   "A2:4.6"
+  ],
+  "C-A2-4.6-13": [
+   "A2:4.6"
+  ],
+  "C-A2-4.6-14": [
+   "A2:4.6"
+  ],
+  "C-A2-4.6-15": [
+   "A2:4.6"
+  ],
+  "C-A2-4.7-11": [
+   "A2:4.7"
+  ],
+  "C-A2-4.7-12": [
+   "A2:4.7"
+  ],
+  "C-A2-4.7-13": [
+   "A2:4.7"
+  ],
+  "C-A2-4.7-14": [
+   "A2:4.7"
   ],
   "C-A2-4.8-1": [
    "A2:4.8"
@@ -1051,6 +1138,21 @@
    "A2:4.9"
   ],
   "C-N-1.2-1": [
+   "N:1.2"
+  ],
+  "C-N-1.2-11": [
+   "N:1.2"
+  ],
+  "C-N-1.2-12": [
+   "N:1.2"
+  ],
+  "C-N-1.2-13": [
+   "N:1.2"
+  ],
+  "C-N-1.2-14": [
+   "N:1.2"
+  ],
+  "C-N-1.2-15": [
    "N:1.2"
   ],
   "C-N-1.3-1": [
@@ -1124,6 +1226,21 @@
   ],
   "C-N-2.4-4": [
    "N:2.4"
+  ],
+  "C-N-3.1-11": [
+   "N:3.1"
+  ],
+  "C-N-3.1-12": [
+   "N:3.1"
+  ],
+  "C-N-3.1-13": [
+   "N:3.1"
+  ],
+  "C-N-3.1-14": [
+   "N:3.1"
+  ],
+  "C-N-3.1-15": [
+   "N:3.1"
   ],
   "C-N-3.3-1": [
    "N:3.3"
@@ -2520,6 +2637,7 @@
    "labs": [],
    "lessons": [
     "ITSUP 4.1",
+    "ITSUP 3.4",
     "ITSUP 4.2"
    ],
    "status": "covered",
@@ -2656,8 +2774,10 @@
     "ITSUP 4.2",
     "NETOPS 5.2",
     "NETOPS 6.1",
+    "NETOPS 6.3",
     "ITSUP 5.1",
     "ITSUP 5.3",
+    "NETOPS 4.3",
     "ITSUP 5.5",
     "NETOPS 4.4"
    ],
@@ -2683,6 +2803,7 @@
    "lessons": [
     "ITSUP 5.3",
     "NETOPS 2.3",
+    "NETOPS 4.3",
     "NETOPS 5.3",
     "ITSUP 5.1",
     "ITSUP 5.4",
@@ -2729,12 +2850,12 @@
     "ITSUP 13.3",
     "NETOPS 1.1",
     "NETOPS 3.2",
+    "NETOPS 4.3",
     "ITSUP 1.3",
     "ITSUP 5.2",
     "ITSUP 7.2",
     "NETOPS 1.4",
     "NETOPS 3.1",
-    "NETOPS 4.3",
     "NETOPS 4.4",
     "NETOPS 5.3",
     "NETOPS 6.1",
@@ -2748,7 +2869,7 @@
   "A1:2.7": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.75,
+   "content_ratio": 0.833,
    "items": [
     "C-A1-2.7-1",
     "C-A1-2.7-2",
@@ -2765,14 +2886,14 @@
     "NETOPS 3.2",
     "NETOPS 2.3",
     "ITSUP 5.3",
+    "NETOPS 4.3",
     "NETOPS 3.3"
    ],
    "status": "covered",
    "title": "Compare and contrast internet connection types, network types, and their characteristics.",
    "topics_missing": [
     "PAN",
-    "MAN",
-    "SAN"
+    "MAN"
    ],
    "weight": 2.88
   },
@@ -2820,39 +2941,34 @@
   },
   "A1:3.2": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.655,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.43",
     "A3.7",
     "N2.5",
     "NQ2.6",
     "X-IT-3.4.1",
-    "X-IT-3.4.3"
+    "X-IT-3.4.3",
+    "C-A1-3.2-11",
+    "C-A1-3.2-12",
+    "C-A1-3.2-13",
+    "C-A1-3.2-14",
+    "C-A1-3.2-15",
+    "C-A1-3.2-16"
    ],
    "labs": [
     "gui-devices"
    ],
    "lessons": [
-    "NETOPS 2.3",
     "ITSUP 3.4",
+    "NETOPS 2.3",
     "ITSUP 3.1",
     "ITSUP 3.3"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Summarize basic cable types and their connectors, features, and purposes.",
-   "topics_missing": [
-    "Shielded twisted pair",
-    "Unshielded twisted pair",
-    "Direct burial",
-    "DVI",
-    "VGA",
-    "eSATA",
-    "Punchdown block",
-    "MicroUSB/MiniUSB",
-    "Molex",
-    "DB9"
-   ],
+   "topics_missing": [],
    "weight": 3.12
   },
   "A1:3.3": {
@@ -3112,6 +3228,7 @@
    "lessons": [
     "ITSUP 3.3",
     "ITSUP 11.1",
+    "ITSUP 1.2",
     "ITSUP 3.2",
     "ITSUP 3.4",
     "ITSUP 4.1",
@@ -3230,6 +3347,7 @@
     "NETOPS 2.1",
     "NETOPS 6.1",
     "ITSUP 7.2",
+    "ITSUP 3.4",
     "ITSUP 5.1",
     "ITSUP 5.3",
     "ITSUP 5.4",
@@ -3242,6 +3360,7 @@
     "NETOPS 2.3",
     "NETOPS 3.2",
     "NETOPS 3.3",
+    "NETOPS 4.3",
     "NETOPS 5.1",
     "NETOPS 5.3",
     "NETOPS 6.3",
@@ -3590,7 +3709,7 @@
   "A2:1.7": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.889,
+   "content_ratio": 0.944,
    "items": [
     "A1.24",
     "A1.28",
@@ -3631,12 +3750,14 @@
     "ITSUP 13.3",
     "NETOPS 2.3",
     "NETOPS 3.2",
+    "NETOPS 4.3",
     "NETOPS 6.1",
     "ITSUP 1.3",
     "ITSUP 5.1",
     "ITSUP 5.5",
     "ITSUP 8.2",
     "ITSUP 9.3",
+    "ITSUP 12.1",
     "NETOPS 2.1",
     "NETOPS 3.1",
     "NETOPS 4.1",
@@ -3655,7 +3776,6 @@
    "status": "covered",
    "title": "Given a scenario, configure Microsoft Windows networking features on a client/desktop.",
    "topics_missing": [
-    "Shared printers",
     "Metered connections"
    ],
    "weight": 2.55
@@ -3723,8 +3843,8 @@
   },
   "A2:2.1": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.655,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.31",
     "A1.40",
@@ -3734,7 +3854,12 @@
     "Q10.5",
     "X-IT-10.1.1",
     "X-IT-10.1.2",
-    "X-IT-10.1.3"
+    "X-IT-10.1.3",
+    "C-A2-2.1-11",
+    "C-A2-2.1-12",
+    "C-A2-2.1-13",
+    "C-A2-2.1-14",
+    "C-A2-2.1-15"
    ],
    "labs": [],
    "lessons": [
@@ -3744,20 +3869,9 @@
     "ITSUP 10.4",
     "ITSUP 10.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Summarize various security measures and their purposes.",
-   "topics_missing": [
-    "Bollards",
-    "Access control vestibule",
-    "Alarm systems/motion sensors",
-    "Security guards",
-    "Key fobs",
-    "Mobile digital key",
-    "Lighting",
-    "Magnetometers",
-    "MDM",
-    "DLP"
-   ],
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:2.10": {
@@ -3814,7 +3928,7 @@
   "A2:2.2": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.826,
+   "content_ratio": 0.87,
    "items": [
     "A1.33",
     "A1.41",
@@ -3858,7 +3972,6 @@
    "status": "covered",
    "title": "Given a scenario, configure and apply basic Microsoft Windows OS security settings.",
    "topics_missing": [
-    "SSO",
     "NTFS vs. share permissions",
     "Log-in script",
     "Security groups"
@@ -3938,7 +4051,8 @@
    "labs": [],
    "lessons": [
     "ITSUP 10.4",
-    "NETOPS 5.3"
+    "NETOPS 5.3",
+    "ITSUP 10.1"
    ],
    "status": "covered",
    "title": "Compare and contrast common social engineering attacks, threats, and vulnerabilities.",
@@ -4051,7 +4165,8 @@
     "ITSUP 11.1",
     "ITSUP 11.3",
     "ITSUP 12.2",
-    "NETOPS 3.3"
+    "NETOPS 3.3",
+    "NETOPS 6.3"
    ],
    "status": "covered",
    "title": "Compare and contrast common data destruction and disposal methods.",
@@ -4172,6 +4287,7 @@
    "lessons": [
     "ITSUP 10.2",
     "ITSUP 4.2",
+    "ITSUP 10.1",
     "ITSUP 10.3"
    ],
    "status": "covered",
@@ -4213,6 +4329,8 @@
     "ITSUP 12.4",
     "ITSUP 1.1",
     "ITSUP 8.1",
+    "NETOPS 6.3",
+    "ITSUP 3.4",
     "ITSUP 7.3",
     "ITSUP 10.4",
     "ITSUP 1.2",
@@ -4261,8 +4379,8 @@
   },
   "A2:4.2": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.688,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.36",
     "A2.14",
@@ -4274,16 +4392,22 @@
     "S-IT-11.2.2",
     "X-IT-12.1.1",
     "X-IT-12.1.2",
-    "X-IT-12.1.3"
+    "X-IT-12.1.3",
+    "C-A2-4.2-11",
+    "C-A2-4.2-12",
+    "C-A2-4.2-13",
+    "C-A2-4.2-14"
    ],
    "labs": [
     "ticket-intake"
    ],
    "lessons": [
     "ITSUP 12.1",
+    "ITSUP 1.2",
     "ITSUP 12.4",
     "NETOPS 6.2",
     "ITSUP 7.4",
+    "NETOPS 6.3",
     "ITSUP 1.1",
     "ITSUP 7.1",
     "ITSUP 11.1",
@@ -4293,15 +4417,9 @@
     "ITSUP 1.4",
     "ITSUP 12.2"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, apply change management procedures.",
-   "topics_missing": [
-    "Documented business processes",
-    "Sandbox testing",
-    "Responsible staff",
-    "Peer review",
-    "End-user acceptance"
-   ],
+   "topics_missing": [],
    "weight": 2.1
   },
   "A2:4.3": {
@@ -4336,36 +4454,37 @@
   },
   "A2:4.4": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.667,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A1.37",
     "Q1.4",
     "Q1.5",
-    "C-A2-4.4-1"
+    "C-A2-4.4-1",
+    "C-A2-4.4-11",
+    "C-A2-4.4-12",
+    "C-A2-4.4-13",
+    "C-A2-4.4-14",
+    "C-A2-4.4-15"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 1.2",
     "ITSUP 4.1",
+    "ITSUP 3.4",
     "ITSUP 10.2",
     "ITSUP 1.3",
     "ITSUP 1.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, use common safety procedures.",
-   "topics_missing": [
-    "ESD mats",
-    "Cable management",
-    "Government regulations",
-    "Air filter mask"
-   ],
+   "topics_missing": [],
    "weight": 2.1
   },
   "A2:4.5": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.727,
+   "content_ratio": 0.818,
    "items": [
     "C-A2-4.5-1",
     "C-A2-4.5-2",
@@ -4375,8 +4494,8 @@
    "labs": [],
    "lessons": [
     "ITSUP 3.3",
-    "NETOPS 6.3",
     "ITSUP 1.2",
+    "NETOPS 6.3",
     "ITSUP 4.1",
     "ITSUP 4.4"
    ],
@@ -4384,15 +4503,14 @@
    "title": "Summarize environmental impacts and local environment controls.",
    "topics_missing": [
     "MSDS/SDS",
-    "Toner disposal",
-    "Compressed air/vacuums"
+    "Toner disposal"
    ],
    "weight": 2.1
   },
   "A2:4.6": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.471,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "A2.5",
     "A2.11",
@@ -4409,65 +4527,59 @@
     "X-IT-10.4.3",
     "X-IT-12.2.1",
     "X-IT-12.2.2",
-    "X-IT-12.2.3"
+    "X-IT-12.2.3",
+    "C-A2-4.6-11",
+    "C-A2-4.6-12",
+    "C-A2-4.6-13",
+    "C-A2-4.6-14",
+    "C-A2-4.6-15"
    ],
    "labs": [],
    "lessons": [
     "ITSUP 12.2",
+    "ITSUP 1.4",
     "ITSUP 10.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain the importance of prohibited content/activity and privacy, licensing, and policy concepts.",
-   "topics_missing": [
-    "Inform management/law enforcement",
-    "Copy of drive",
-    "Incident documentation",
-    "Personal vs. corporate license",
-    "Open-source license",
-    "NDA/MNDA",
-    "Government-issued information",
-    "Data retention",
-    "Splash screens"
-   ],
+   "topics_missing": [],
    "weight": 2.1
   },
   "A2:4.7": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.562,
+   "content": "covered",
+   "content_ratio": 0.938,
    "items": [
     "A3.4",
     "Q7.8",
     "Q12.9",
     "X-IT-7.3.1",
     "X-IT-7.3.3",
-    "X-IT-7.4.3"
+    "X-IT-7.4.3",
+    "C-A2-4.7-11",
+    "C-A2-4.7-12",
+    "C-A2-4.7-13",
+    "C-A2-4.7-14"
    ],
    "labs": [
     "win-dns-break",
     "win-full-triage"
    ],
    "lessons": [
+    "ITSUP 1.4",
     "NETOPS 5.3",
     "NETOPS 1.3",
     "NETOPS 4.2",
     "NETOPS 6.1",
-    "ITSUP 1.4",
     "ITSUP 1.1",
-    "ITSUP 7.4",
     "ITSUP 12.2",
+    "ITSUP 7.4",
     "ITSUP 12.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Given a scenario, use proper communication techniques and professionalism.",
    "topics_missing": [
-    "Professional appearance/attire",
-    "Cultural sensitivity",
-    "Be on time",
-    "Avoid distractions",
-    "Clarify/open-ended questions",
-    "Discretion",
-    "Offer repair/replacement options"
+    "Discretion"
    ],
    "weight": 2.1
   },
@@ -4543,17 +4655,24 @@
   },
   "N:1.2": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.692,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "N1.4",
     "N3.0",
     "NQ4.7",
-    "C-N-1.2-1"
+    "C-N-1.2-1",
+    "C-N-1.2-11",
+    "C-N-1.2-12",
+    "C-N-1.2-13",
+    "C-N-1.2-14",
+    "C-N-1.2-15"
    ],
    "labs": [],
    "lessons": [
+    "NETOPS 4.3",
     "NETOPS 5.3",
+    "NETOPS 6.3",
     "NETOPS 3.2",
     "ITSUP 4.2",
     "ITSUP 5.3",
@@ -4561,14 +4680,9 @@
     "NETOPS 4.2",
     "NETOPS 4.4"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Compare and contrast networking appliances, applications, and functions.",
-   "topics_missing": [
-    "NAS",
-    "SAN",
-    "CDN",
-    "QoS"
-   ],
+   "topics_missing": [],
    "weight": 2.88
   },
   "N:1.3": {
@@ -4645,7 +4759,8 @@
    ],
    "labs": [],
    "lessons": [
-    "NETOPS 2.3"
+    "NETOPS 2.3",
+    "ITSUP 3.4"
    ],
    "status": "covered",
    "title": "Compare and contrast transmission media and transceivers.",
@@ -4868,14 +4983,19 @@
   },
   "N:3.1": {
    "assessment": "covered",
-   "content": "partial",
-   "content_ratio": 0.615,
+   "content": "covered",
+   "content_ratio": 1.0,
    "items": [
     "NQ6.6",
     "NQ6.7",
     "NQ9.6",
     "S-NO-6.3.1",
-    "S-NO-6.3.2"
+    "S-NO-6.3.2",
+    "C-N-3.1-11",
+    "C-N-3.1-12",
+    "C-N-3.1-13",
+    "C-N-3.1-14",
+    "C-N-3.1-15"
    ],
    "labs": [
     "sw-trunk-basics",
@@ -4887,18 +5007,14 @@
     "ITSUP 8.1",
     "ITSUP 10.4",
     "ITSUP 11.3",
+    "ITSUP 12.1",
+    "NETOPS 4.3",
     "NETOPS 6.1",
     "NETOPS 9.1"
    ],
-   "status": "partial",
+   "status": "covered",
    "title": "Explain the purpose of organizational processes and procedures.",
-   "topics_missing": [
-    "Rack diagrams",
-    "Cable maps",
-    "SLA",
-    "Wireless survey/heat map",
-    "Decommissioning"
-   ],
+   "topics_missing": [],
    "weight": 3.8
   },
   "N:3.2": {
@@ -4968,7 +5084,8 @@
    "lessons": [
     "NETOPS 4.2",
     "ITSUP 5.2",
-    "NETOPS 4.1"
+    "NETOPS 4.1",
+    "NETOPS 4.3"
    ],
    "status": "covered",
    "title": "Given a scenario, implement IPv4 and IPv6 network services.",
@@ -5022,6 +5139,7 @@
    "labs": [],
    "lessons": [
     "NETOPS 5.3",
+    "ITSUP 10.1",
     "NETOPS 5.2",
     "NETOPS 5.4"
    ],
@@ -5120,6 +5238,7 @@
     "NETOPS 6.2",
     "ITSUP 7.1",
     "ITSUP 1.1",
+    "ITSUP 1.2",
     "ITSUP 1.3",
     "ITSUP 1.4",
     "ITSUP 11.1",
@@ -5155,8 +5274,10 @@
    "lessons": [
     "NETOPS 6.1",
     "NETOPS 2.3",
+    "ITSUP 3.4",
     "NETOPS 2.1",
-    "NETOPS 2.2"
+    "NETOPS 2.2",
+    "NETOPS 6.3"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot common cabling and physical interface issues.",
@@ -5221,7 +5342,8 @@
     "NETOPS 3.2",
     "NETOPS 5.1",
     "NETOPS 3.1",
-    "NETOPS 3.4"
+    "NETOPS 3.4",
+    "NETOPS 6.3"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot common performance issues.",
@@ -5299,34 +5421,34 @@
  },
  "summary": {
   "A1": {
-   "covered": 26,
+   "covered": 27,
    "gap": 0,
-   "items": 205,
-   "partial": 1,
-   "topic_ratio": 0.932,
+   "items": 211,
+   "partial": 0,
+   "topic_ratio": 0.965,
    "total": 27,
-   "weighted_covered": 96.9,
-   "weighted_partial": 3.1
+   "weighted_covered": 100.0,
+   "weighted_partial": 0
   },
   "A2": {
-   "covered": 31,
+   "covered": 36,
    "gap": 0,
-   "items": 329,
-   "partial": 5,
-   "topic_ratio": 0.868,
+   "items": 352,
+   "partial": 0,
+   "topic_ratio": 0.932,
    "total": 36,
-   "weighted_covered": 89.1,
-   "weighted_partial": 10.9
+   "weighted_covered": 100.1,
+   "weighted_partial": 0
   },
   "N": {
-   "covered": 23,
+   "covered": 25,
    "gap": 0,
-   "items": 214,
-   "partial": 2,
-   "topic_ratio": 0.908,
+   "items": 224,
+   "partial": 0,
+   "topic_ratio": 0.934,
    "total": 25,
-   "weighted_covered": 93.4,
-   "weighted_partial": 6.7
+   "weighted_covered": 100.0,
+   "weighted_partial": 0
   }
  }
 }

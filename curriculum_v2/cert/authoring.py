@@ -87,6 +87,33 @@ SOURCES = {
     'nist-80041r1': 'NIST SP 800-41 Rev. 1, Guidelines on Firewalls and Firewall Policy (September 2009)',
     'ieee-8021x': 'IEEE 802.1X-2020, Port-Based Network Access Control',
     'nist-80057p1': 'NIST SP 800-57 Part 1 Rev. 5, Recommendation for Key Management (May 2020)',
+    # pass 11, round 2
+    'tia568': 'ANSI/TIA-568 cabling standards (T568A and T568B pin-outs; 100 m channel)',
+    'usbif': 'USB Implementers Forum — USB 2.0, USB 3.2, USB4 and USB Type-C specifications',
+    'vesa-dp': 'VESA — DisplayPort standard',
+    'hdmi-la': 'HDMI Licensing Administrator — HDMI specification overview',
+    'nfpa70': 'NFPA 70, National Electrical Code — communications cable ratings (plenum CMP, riser CMR)',
+    'nist-80053r5': 'NIST SP 800-53 Rev. 5 — Physical and Environmental Protection (PE) and Access Control (AC) control families',
+    'fido': 'FIDO Alliance — FIDO2 / WebAuthn passkeys and security keys overview',
+    'rfc6238': 'RFC 6238, TOTP: Time-Based One-Time Password Algorithm',
+    'oasis-saml': 'OASIS — Security Assertion Markup Language (SAML) 2.0',
+    'itil4-change': 'ITIL 4 — Change enablement practice guide (PeopleCert/AXELOS)',
+    'nist-800128': 'NIST SP 800-128, Guide for Security-Focused Configuration Management of Information Systems (2011)',
+    'osha-lift': 'OSHA — Materials handling and ergonomics guidance; NIOSH Revised Lifting Equation (load constant 23 kg / 51 lb)',
+    'nfpa10': 'NFPA 10, Standard for Portable Fire Extinguishers (extinguisher classes)',
+    'esda-s2020': 'ANSI/ESD S20.20 — ESD control program standard (EOS/ESD Association)',
+    'nist-80086': 'NIST SP 800-86, Guide to Integrating Forensic Techniques into Incident Response (2006)',
+    'rfc3227': 'RFC 3227, Guidelines for Evidence Collection and Archiving (order of volatility)',
+    'pci-dss': 'PCI Security Standards Council — PCI DSS v4.0',
+    'hhs-hipaa': 'U.S. Department of Health and Human Services — HIPAA Privacy Rule summary',
+    'osi-osd': 'Open Source Initiative — The Open Source Definition and approved licenses',
+    'comptia-a2-obj': 'CompTIA A+ Core 2 (220-1202) Exam Objectives document — objective 4.7 bullet list (used for the list of behaviours only)',
+    'snia-dict': 'SNIA Dictionary — network-attached storage (NAS) and storage area network (SAN)',
+    'rfc2474': 'RFC 2474, Definition of the Differentiated Services Field (DSCP) in the IPv4 and IPv6 Headers',
+    'rfc791': 'RFC 791, Internet Protocol (time to live); RFC 8200, IPv6 (hop limit)',
+    'rfc7336': 'RFC 7336, Framework for Content Distribution Network Interconnection (CDNI)',
+    'tia606': 'ANSI/TIA-606 — Administration standard for telecommunications infrastructure (labelling and records)',
+    'nist-80088': 'NIST SP 800-88, Guidelines for Media Sanitization',
 }
 
 
@@ -110,20 +137,30 @@ def _bid(cert, n):
     return f'C-{ex}-{num}-{n}'
 
 
-def single(cert, obj, n, q, correct, wrong, why, extra=()):
+def _mc(wrong, mc):
+    """Misconception tags for wrong options, aligned with ``wrong`` (None = untagged throw-away distractor).
+    Stored as {distractor text: misconception id}; see curriculum_v2/cert/misconceptions.py."""
+    if not mc:
+        return {}
+    assert len(mc) == len(wrong), (wrong, mc)
+    return {w: m for w, m in zip(wrong, mc) if m}
+
+
+def single(cert, obj, n, q, correct, wrong, why, extra=(), mc=None):
     assert len(wrong) == 3 and correct not in wrong and len(set(wrong)) == 3, (cert, n)
     return {'bank_id': _bid(cert, n), 'type': 'single', 'cert': [cert, *extra], 'obj': obj, 'text': q,
-            'correct': correct, 'wrong': list(wrong), 'explanation': why, 'review': PENDING}
+            'correct': correct, 'wrong': list(wrong), 'explanation': why, 'review': PENDING, 'mc': _mc(wrong, mc)}
 
 
-def multi(cert, obj, n, q, correct, wrong, why, extra=()):
+def multi(cert, obj, n, q, correct, wrong, why, extra=(), mc=None):
     """Choose-N. ``correct`` 2–3 options, ``wrong`` the rest (5–6 options in total)."""
     assert 2 <= len(correct) <= 3 and 5 <= len(correct) + len(wrong) <= 6 and not set(correct) & set(wrong), (cert, n)
     bid = _bid(cert, n)
     opts = list(correct) + list(wrong)
     _rng(bid).shuffle(opts)
     return {'bank_id': bid, 'type': 'multi', 'cert': [cert, *extra], 'obj': obj, 'text': q, 'options': opts,
-            'correct': sorted(correct, key=opts.index), 'choose': len(correct), 'explanation': why, 'review': PENDING}
+            'correct': sorted(correct, key=opts.index), 'choose': len(correct), 'explanation': why, 'review': PENDING,
+            'mc': _mc(wrong, mc)}
 
 
 def order(cert, obj, n, q, steps, why, extra=()):

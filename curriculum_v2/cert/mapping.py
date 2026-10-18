@@ -253,7 +253,7 @@ def compute():
         rows = [v for v in out.values() if v['exam'] == ex]
         s = {k: sum(1 for v in rows if v['status'] == k) for k in ('covered', 'partial', 'gap')}
         s['total'] = len(rows)
-        s['weighted_covered'] = round(sum(v['weight'] for v in rows if v['status'] == 'covered'), 1)
+        s['weighted_covered'] = min(100.0, round(sum(v['weight'] for v in rows if v['status'] == 'covered'), 1))
         s['weighted_partial'] = round(sum(v['weight'] for v in rows if v['status'] == 'partial'), 1)
         s['items'] = sum(len(v['items']) for v in rows)
         s['topic_ratio'] = round(sum(len(v['topics_hit']) for v in rows) / sum(v['topics_total'] for v in rows), 3)
