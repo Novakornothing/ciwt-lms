@@ -617,3 +617,37 @@ objectives, explanations, worked examples and scenarios, eight described SVG fig
 updates and 46 items (IT-3.1–6.3, ≥2 per objective). Facts were checked against the named sources; details, the SME notes and the
 **lab gaps for the labs worker** are in CURRICULUM_AUDIT.md (“Pass 10”). No lab formats were changed. Documents and docstrings
 that said “chapters 7–13” now say 3–13.
+
+## Labs branch (Oct 18 2026): every lab works on desktop/phone/tablet; real Linux VMs are standard
+
+Details: `LABS_AUDIT.md` (audit, fixes, per-lab results), `REAL_ENVIRONMENTS.md` (real vs simulated per lab, networking,
+Windows), `docs/VM_IMAGE.md` (image, measurements, institution build recipe). Merged `refinement` at bc19ca8.
+
+- **Counts:** 46 → **69 labs** (23 new; 5 of them real Linux VM labs) plus 9 classroom labs (CL-4, CL-6…CL-13) with instructor
+  sign-off. Kinds: windows 25, switch 11, activity 9, win11gui 8, router 8, vm 5, ticket 2, linux 1.
+- **State in the DB:** `lab_progress` (one row per student and lab) replaces the session cookie, so labs resume after reload
+  or re-login. Completion is graded on the server, and a client can no longer fake it. **Undo/reset/hints**,
+  "did you mean", aliases and tab completion work in every terminal.
+- **Process log:** `lab_event` keeps an ordered log per attempt of each command, GUI action, check, hint, undo, reset,
+  VM probe and completion. You can view it per student (`/instructor/section/<id>/labs/student/<uid>`) or export it
+  (`…/labs/events.csv`).
+- **Gradebook:** new `labs` category, default weight 0, so existing grades don't change. The syllabus lists the category.
+- **Mobile:**
+  - The terminal has a keys bar, focus mode and no zoom on input.
+  - Windows 11 GUI labs reflow into a narrow mode. Long-press works as right-click.
+  - Activities support drag and drop, with tap-to-place as a touch alternative.
+- **Real environments:** linux-vm-perms, -shell, -services, -netclient and -routing run real Linux in the browser (v86,
+  self-hosted, pinned with SHA256, fetched by `tools/fetch_v86.sh`):
+  - They boot in about 3 s, with save/resume through IndexedDB and an instant reset from a snapshot.
+  - Grading reads the real VM state through a probe script and combines it with command history and evidence from the
+    virtual network (`static/js/lab-vmnet.js`: a switch, ARP/ping, a DHCP server and a DNS server).
+  - linux-vm-routing runs two VMs that route between two segments.
+  - Weak devices get a link to the simulated twin.
+  - Windows stays a high-fidelity simulation, because in-browser Windows isn't viable. A hosted-VM option is noted.
+- **Tests:**
+  - pytest: `tests/` 440 passed, including `tests/test_vm_real.py`, which boots each VM lab headlessly in Node and grades
+    both the solution run and an empty run.
+  - Node: 35/35 tests (`tests/js`).
+  - e2e: `tools/labs_e2e.py` passed 246/246 (78 labs × desktop/phone/tablet + 12 instructor checks).
+  - `tools/vm_device_check.py` covers throttled phones: boot, save/resume, reset and an axe check.
+  - Screenshots are in `/workspace/ciwt/screenshots/labs/`.
