@@ -155,6 +155,11 @@ def reteach_for(mc, cmap, d):
         pools += [SUPPLEMENT, EXPANSION]                                             # course banks (tests draw on these)
     except ImportError:
         pass
+    try:
+        from curriculum_v2.cert.items import CERT_ITEMS
+        pools.append(CERT_ITEMS)                                                      # certification items (MC-C-* tags)
+    except ImportError:
+        pass
     pools += [t['qs'] for _, t in sorted(cmap.get('tests', {}).items()) if isinstance(t.get('qs'), list)]
     pools += [q.get('items') or [] for q in sorted(cmap.get('quizzes', {}).values(), key=lambda q: q['id'])]
     for pool in pools:                                                               # later pools win

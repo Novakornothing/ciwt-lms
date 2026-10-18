@@ -43,7 +43,8 @@ def _bank_items():
     for order in NETOPS_CHECKS:
         for it in netops_quiz_payload(order):
             items.setdefault(it.get('bank_id'), []).append(it)
-    for pool in (QB.A1, QB.A2, QB.A3, QB.N1, QB.N2, QB.N3):
+    from curriculum_v2.cert.items import CERT_ITEMS          # content round 2: MC-C-* tags on cert items
+    for pool in (QB.A1, QB.A2, QB.A3, QB.N1, QB.N2, QB.N3, CERT_ITEMS):
         for it in pool:
             items.setdefault(it.get('bank_id'), []).append(it)
     return items
@@ -59,7 +60,8 @@ def test_every_tag_is_a_real_distractor_of_its_item():
         for it in cands:
             opts = [MCS._norm(o) for o in it['options']]
             assert MCS._norm(distractor) in opts, (bank, distractor)
-            assert MCS._norm(distractor) != MCS._norm(it['correct']), 'never tag the key'
+            keys = it['correct'] if isinstance(it['correct'], list) else [it['correct']]   # multi-select cert items
+            assert MCS._norm(distractor) not in [MCS._norm(k) for k in keys], 'never tag the key'
         assert MCS.MISCONCEPTIONS[mc]['label'] and MCS.MISCONCEPTIONS[mc]['terms']
 
 

@@ -70,6 +70,24 @@ def misconception_summary(ev):
 TYPED = ('multi', 'order', 'match')
 
 
+SRC_RANK = {'check': 0, 'cert': 1, 'bank': 2, 'supplement': 2}   # least-used first, then this order
+_CERT_BY_OBJ = {}
+
+
+def cert_items_for(obj):
+    """Certification items whose aligned objective is ``obj`` (single-answer only; typed items stay in the practice exams)."""
+    if not _CERT_BY_OBJ:
+        try:
+            from curriculum_v2.cert.items import CERT_ITEMS
+        except ImportError:
+            CERT_ITEMS = []
+        _CERT_BY_OBJ['_loaded'] = []
+        for it in CERT_ITEMS:
+            if (it.get('type') or 'single') == 'single' and it.get('obj'):
+                _CERT_BY_OBJ.setdefault(it['obj'], []).append(it)
+    return _CERT_BY_OBJ.get(obj, [])
+
+
 def judge(q, ans):
     """(judgeable, correct) for one stored answer. Single-answer items: the answer must be one of the current
     options (an older wording cannot be judged). Typed items (pass 12, content merge: multi-select, ordering,
@@ -496,7 +514,11 @@ class Engine:
 
     # ------------------------------------------------------------------ item pools
     def pool(self, cmap, obj, include_bank=False):
+        """Single-answer items for one objective, in preference order: the class's chapter-check items,
+        then certification items aligned to the objective (curriculum_v2/cert, mapped to IT-/NO- objectives
+        through the alignment; Pending SME review), then — if the class allows it — the X-IT bank and supplement."""
         items = [dict(it) for it in cmap['check_items'] if it.get('obj') == obj]
+        items += [dict(it, src='cert', ref=it['bank_id']) for it in cert_items_for(obj)]
         if include_bank:
             from curriculum_v2.exam_supplement import SUPPLEMENT
             from curriculum_v2.itsup_core import EXPANSION
@@ -533,7 +555,8 @@ class Engine:
         out = []
         for obj in objs:
             pool = self.pool(cmap, obj, include_bank)
-            pool.sort(key=lambda it: (0 if prefer and it['bank_id'] in prefer else 1, used.get(it['bank_id'], 0), it['bank_id'] or ''))
+            pool.sort(key=lambda it: (0 if prefer and it['bank_id'] in prefer else 1, used.get(it['bank_id'], 0),
+                                      SRC_RANK.get(it['src'], 3), it['bank_id'] or ''))
             out.extend(pool[:per_obj])
         return out[:cap]
 

@@ -14,7 +14,7 @@ def define_models(db):
         return _cache['m']
 
     class MasterySetting(db.Model):
-        """Per-class switches. No row = defaults (adaptivity on, mastery checks on, chapter checks only)."""
+        """Per-class switches. No row = defaults (adaptivity on, mastery checks on, chapter checks + aligned cert items, no X-IT bank)."""
         __tablename__ = 'mastery_setting'
         id = db.Column(db.Integer, primary_key=True)
         section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), unique=True, nullable=False)

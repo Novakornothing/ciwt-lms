@@ -60,6 +60,7 @@ def build():
     for s in SUPPLEMENTS:
         L.append(f"| {s['title']} | {s['course']} {s['chapter']}.{s['lesson']} | {', '.join(label(c) for c in sorted(s['cert'], key=sort_key))} | "
                  f"{'; '.join(SOURCES[x] for x in s['sources'])} |")
+    L += _round2(objs, a['summary'])
     L += ['', '## Remaining gaps and partials', '',
           'No exam objective is a gap. Every objective that is not yet *covered* is listed with the reason and the checklist terms '
           'the linked lessons still do not mention. Objectives are in exam order; the assumed weight is the share of that exam.', '']
@@ -90,6 +91,54 @@ def build():
           '- Practice exams report percent correct by domain. CompTIA reports scaled scores, so practice percentages do not convert to a pass or fail.',
           '- Items are CIWT-written, aligned to the objectives; none are CompTIA exam items.', '']
     return '\n'.join(L)
+
+
+# Snapshot of alignment.json at the start of round 2 (the commit before d1c4341), kept so the doc can show the step.
+_ROUND2_BEFORE = {'A1': (26, 1, 96.9, 205), 'A2': (31, 5, 89.1, 329), 'N': (23, 2, 93.4, 214)}
+_ROUND2_BEFORE_SHORT = 48    # objectives with fewer than 8 mapped items
+_ROUND2_BEFORE_MIN = 4
+
+# Quality pass (round 2): 40 items drawn with random.Random(20261018) — 24 from the earlier pass-11 items, 16 from round 2 —
+# checked against the primary sources cited by their sections.  Every change is listed.
+QUALITY_FIXES = [
+    ('C-N-4.3-1', 'Distractor "MAC addresses change every time a device reboots" is partly true for phones using MAC randomisation '
+                  '(Android non-persistent randomisation, iOS rotating private addresses), so it was defensible. Replaced with '
+                  '"MAC filtering needs a RADIUS server before it can work".'),
+    ('C-A1-4.2-2', 'Single-answer item asked "Which TWO characteristics…", which reads as a choose-two item. Reworded to "Which pair of cloud '
+                   'characteristics…" (key unchanged: rapid elasticity and measured service, NIST SP 800-145).'),
+    ('C-A1-1.1-25 (outside the sample)', 'Prompt "Wi-Fi works only with the lid open" was unsound: a closed lid normally sleeps the laptop. Replaced with "Wi-Fi '
+                    'signal has been weak since the screen was replaced" (antenna leads run through the display hinge).'),
+    ('C-A1-1.2-26 (outside the sample)', 'Stem said Lightning charges "current mobile devices"; Apple moved iPhone to USB-C with iPhone 15. Reworded to '
+                    '"phones still in everyday use".'),
+    ('C-N-4.1-25 (outside the sample)', 'Distractors were confusing or partly defensible ("The domain controllers’ backup console only"). Replaced with clear '
+                   'staff-LAN devices; key unchanged (IoT and OT/SCADA segmentation, Network+ 4.1).'),
+    ('(bank-wide scan)', 'Checked every multi item’s "Choose TWO/THREE" wording against its choose count, and every single item for '
+                         '"TWO/THREE" wording: no other mismatches.'),
+    ('(round 2 authoring)', '82 of the new single-answer keys were the longest option; 82 distractors were lengthened so the key is the '
+                            'longest in 19% of single items bank-wide (test limit 45%).'),
+]
+QUALITY_CHECKED_OK = 38   # of the 40 sampled; C-N-4.3-1 and C-A1-4.2-2 were fixed
+
+
+def _round2(objs, summary):
+    from curriculum_v2.cert import misconceptions as MC
+    counts = [len(v['items']) for v in objs.values()]
+    short = sum(1 for n in counts if n < 8)
+    o_objs, n_tags, n_mc = MC.coverage()
+    L = ['', '## Round 2 (pass 11): partials closed, item depth, misconception tags, quality pass', '',
+         '| Exam | Covered (before → after) | Partial | Weighted covered | Mapped items |', '|---|---|---|---|---|']
+    for ex, (c, p, w, it) in _ROUND2_BEFORE.items():
+        s = summary[ex]
+        L.append(f"| {EXAMS[ex]['short']} | {c} → {s['covered']} of {s['total']} | {p} → {s['partial']} | {w}% → {s['weighted_covered']}% | {it} → {s['items']} |")
+    L += ['', f'- Objectives with fewer than 8 mapped items: {_ROUND2_BEFORE_SHORT} → {short}; fewest items on any objective: '
+              f'{_ROUND2_BEFORE_MIN} → {min(counts)}. High-weight objectives (A+ Core 1 domains 1 and 5, Core 2 domain 3, Network+ 2.4, 4.1, 4.2, 5.4) '
+              'were taken to at least 10.',
+          f'- Misconception tags: {n_mc} misconceptions and {n_tags} tagged wrong options across {len(o_objs)} CIWT objectives, in the schema of '
+          'the adaptive engine on `refinement` (`curriculum_v2/misconceptions.py`: MISCONCEPTIONS[id] = obj/label/fix/terms; '
+          'TAGS[(bank_id, distractor)] = id). Ids use the `MC-C-` prefix. See `curriculum_v2/cert/misconceptions.py` for the merge hook.',
+          f'- Quality pass: 40 sampled items reviewed; {QUALITY_CHECKED_OK} needed no change. Fixes, including ones found while re-reading round-2 items outside the sample:', '']
+    L += [f'  - `{b}`: {t}' for b, t in QUALITY_FIXES]
+    return L + ['']
 
 
 def _count(items):

@@ -12,7 +12,7 @@ from curriculum_v2 import misconceptions as MCS
 from . import content as C
 from . import memory as MEM
 from . import model as M
-from .engine import DAILY_MAX, DAILY_MIN, short_text
+from .engine import DAILY_MAX, DAILY_MIN, SRC_RANK, short_text
 from .models import utcnow
 
 STRUGGLE_DWELL_MS = 45_000      # without Helix: 45 s on the section, then a miss, counts as struggling
@@ -50,7 +50,7 @@ def register_features(app, db, ctx):
             pool = eng.pool(st['cmap'], obj, st['settings']['testout_bank'])
             if not pool:
                 continue
-            pool.sort(key=lambda it: (used.get(it['bank_id'], 0), it['bank_id'] or ''))
+            pool.sort(key=lambda it: (used.get(it['bank_id'], 0), SRC_RANK.get(it['src'], 3), it['bank_id'] or ''))
             r = MEM.recall(state, now)
             it = dict(pool[0], why=why, recall=r, interval=state['interval'])
             items.append(it)

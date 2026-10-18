@@ -107,7 +107,7 @@ ITEMS = [
            ('On-premises systems linked to a provider for overflow capacity', 'Hybrid cloud')],
           'NIST SP 800-145 deployment models: community, private, public and hybrid.',
           decoys=['Multitenant SaaS']),
-    single('A1:4.2', 'IT-6.2', 2, 'A web shop’s cloud servers scale out automatically for a sale and back in afterwards, and the bill reflects the extra hours. Which TWO characteristics does this show?',
+    single('A1:4.2', 'IT-6.2', 2, 'A web shop’s cloud servers scale out automatically for a sale and back in afterwards, and the bill reflects the extra hours. Which pair of cloud characteristics does this show?',
            'Rapid elasticity and metered (measured) service',
            ['Multitenancy and a dedicated host', 'Broad network access and a single-tenant private cloud', 'Resource pooling and a community cloud'],
            'Scaling with demand is elasticity; paying for the hours used is measured service.'),

@@ -284,8 +284,11 @@ def test_coverage_page_staff_only_and_cites_sources(student, instructor, admin, 
         assert 'Not affiliated' in html and 'heuristic' in html
         assert 'built-in method' not in html and 'object at 0x' not in html, 'template printed a Python method'
         assert html.count('class="cert-obj"') == len(OBJECTIVES)
+    # filters: round 2 closed every partial, so the partial filter is empty and the exam filter narrows to one exam
     html = admin.get('/staff/cert-coverage?exam=N&status=partial').get_data(as_text=True)
-    assert 0 < html.count('class="cert-obj"') < 25
+    assert html.count('class="cert-obj"') == 0
+    html = admin.get('/staff/cert-coverage?exam=N&status=covered').get_data(as_text=True)
+    assert html.count('class="cert-obj"') == sum(1 for o in OBJECTIVES.values() if o['exam'] == 'N')
 
 
 # ------------------------------------------------------------------------------------------- course package
@@ -320,3 +323,40 @@ def test_cert_coverage_md_is_current():
     r = subprocess.run([sys.executable, 'tools/cert_coverage_md.py', '--check'], cwd=str(__import__('pathlib').Path(__file__).resolve().parents[1]),
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr + ' — run: python tools/cert_coverage_md.py'
+
+
+# ------------------------------------------------------------------------------------------- misconception tags (round 2)
+def test_cert_misconception_tags_follow_the_refinement_schema():
+    from curriculum_v2.cert import misconceptions as M
+    by = {q['bank_id']: q for q in CERT_ITEMS}
+    assert len(M.MISCONCEPTIONS) >= 60 and len(M.TAGS) >= 200
+    for mc, m in M.MISCONCEPTIONS.items():
+        assert mc.startswith('MC-C-') and set(m) == {'obj', 'label', 'fix', 'terms'}, mc
+        assert m['label'] and m['fix'] and isinstance(m['terms'], list) and m['terms'], mc
+    assert set(M.TAGS.values()) == set(M.MISCONCEPTIONS), 'every misconception is used and every tag is defined'
+    for (bid, d), mc in M.TAGS.items():
+        q = by[bid]
+        assert q['type'] in ('single', 'multi') and d in q['options'] and d not in (q['correct'] if q['type'] == 'multi' else [q['correct']])
+        assert M.MISCONCEPTIONS[mc]['obj'] == q['obj'], (bid, mc)
+        assert M.tag_for(dict(q, correct=q['correct'] if q['type'] == 'single' else None), d) == mc
+    single = next(q for q in CERT_ITEMS if q['type'] == 'single' and q.get('mc'))
+    assert M.tag_for(single, single['correct']) is None
+
+
+def test_misconception_tags_never_reach_the_browser():
+    from curriculum_v2.cert import practice
+    q = next(q for q in CERT_ITEMS if q.get('mc'))
+    it = {'raw': q, 'text': q['text'], 'options': q['options'], 'type': q['type'], 'correct': q['correct']}
+    pub = practice.public_item(it, q['cert'][0])
+    assert 'mc' not in pub and not any(mc in str(pub) for mc in q['mc'].values())
+
+
+def test_round_2_item_depth():
+    import json
+    import pathlib
+    a = json.load(open(pathlib.Path(__file__).resolve().parents[1] / 'curriculum_v2' / 'cert' / 'alignment.json'))
+    counts = {k: len(v['items']) for k, v in a['objectives'].items()}
+    assert min(counts.values()) >= 8, sorted(counts.items(), key=lambda kv: kv[1])[:5]
+    assert all(v['status'] == 'covered' for v in a['objectives'].values())
+    types = collections.Counter(q['type'] for q in CERT_ITEMS)
+    assert types['order'] >= 25 and types['match'] >= 80
