@@ -67,6 +67,32 @@ def misconception_summary(ev):
     return out
 
 
+TYPED = ('multi', 'order', 'match')
+
+
+def judge(q, ans):
+    """(judgeable, correct) for one stored answer. Single-answer items: the answer must be one of the current
+    options (an older wording cannot be judged). Typed items (pass 12, content merge: multi-select, ordering,
+    matching) are stored as a JSON list and scored all-or-nothing like curriculum_v2.cert.practice.grade;
+    the list must only use current options. Unanswered (None) is judgeable and wrong, as before."""
+    if ans is None:
+        return True, False
+    t = q.get('type') or 'single'
+    opts = [str(o) for o in (q.get('options') or [])]
+    if t not in TYPED:
+        return (ans in (q.get('options') or [])), ans == q.get('correct')
+    try:
+        val = json.loads(ans) if isinstance(ans, str) else ans
+    except ValueError:
+        return False, False
+    if not isinstance(val, list) or any(str(v) not in opts for v in val):
+        return False, False
+    key = [str(v) for v in (q.get('correct') or [])]
+    if t == 'multi':
+        return True, sorted(map(str, val)) == sorted(key)
+    return True, [str(v) for v in val] == key
+
+
 class Engine:
     def __init__(self, db, d, m):
         self.db, self.d, self.m = db, d, m
@@ -218,10 +244,11 @@ class Engine:
                 if obj not in cmap['objs']:
                     continue
                 ans = answers.get(str(i))
-                if ans is not None and ans not in (q.get('options') or []):
+                ok_judge, right = judge(q, ans)
+                if not ok_judge:
                     sources['stale'] += 1   # answered an older wording of this question: cannot be judged now
                     continue
-                ev[obj].append({'kind': 'test', 'correct': ans is not None and ans == q.get('correct'),
+                ev[obj].append({'kind': 'test', 'correct': right,
                                 'when': a.completed_at, 'ref': q.get('bank_id') or f'test:{a.test_id}:{i}', 'source': t['title'],
                                 'mc': MCS.tag_for(q, ans), 'bank_id': q.get('bank_id')})
                 sources['test'] += 1
@@ -239,10 +266,11 @@ class Engine:
                 if obj not in cmap['objs']:
                     continue
                 ans = answers.get(str(i))
-                if ans is not None and ans not in (q.get('options') or []):
+                ok_judge, right = judge(q, ans)
+                if not ok_judge:
                     sources['stale'] += 1
                     continue
-                ev[obj].append({'kind': 'quiz', 'correct': ans is not None and ans == q.get('correct'),
+                ev[obj].append({'kind': 'quiz', 'correct': right,
                                 'when': a.completed_at, 'ref': q.get('bank_id') or f'quiz:{a.quiz_id}:{i}', 'source': qz['title'],
                                 'mc': MCS.tag_for(q, ans), 'bank_id': q.get('bank_id')})
                 sources['quiz'] += 1
@@ -266,6 +294,28 @@ class Engine:
                                 'when': c.completed_at, 'ref': it.get('bank_id', ''), 'source': CHECK_SOURCE.get(kind, 'Review check'),
                                 'mc': MCS.tag_for(it, ans), 'bank_id': it.get('bank_id')})
                 sources[kind] += 1
+        # practice exams (pass 12, content merge): submitted attempts, items mapped to this course's objectives.
+        # Account-level (not per class), so they count in every class of the course. Blank answers are skipped.
+        PA, bank, grade = getattr(d, 'PracticeAttempt', None), getattr(d, 'practice_bank', None), getattr(d, 'practice_grade', None)
+        if PA is not None and bank and grade:
+            items = bank()
+            for a in PA.query.filter(PA.user_id == user.id, PA.submitted_at.isnot(None)).all():
+                try:
+                    chosen, answers = json.loads(a.items or '[]'), json.loads(a.answers or '{}')
+                except ValueError:
+                    continue
+                for i, pair in enumerate(chosen):
+                    it = items.get(pair[0]) if pair else None
+                    obj = (it or {}).get('obj')
+                    if obj not in cmap['objs']:
+                        continue
+                    ans = answers.get(str(i))
+                    if ans in (None, ''):
+                        continue
+                    ev[obj].append({'kind': 'practice', 'correct': bool(grade(it, ans)), 'when': a.submitted_at,
+                                    'ref': it['id'], 'source': 'Practice exam', 'mc': MCS.tag_for(dict(it, bank_id=it['id']), ans)
+                                    if (it.get('type') or 'single') == 'single' else None, 'bank_id': it['id']})
+                    sources['practice'] += 1
         # interactive lab completions (all lab objectives met)
         seen_lab = set()
         for lc in (d.LabCompletion.query.filter_by(user_id=user.id)
@@ -457,7 +507,8 @@ class Engine:
         seen, out = set(), []
         for it in items:
             k = ' '.join((it.get('text') or it.get('q') or '').lower().split())
-            if not k or k in seen or not it.get('options') or it.get('correct') not in it['options']:
+            if (not k or k in seen or not it.get('options') or (it.get('type') or 'single') != 'single'
+                    or it.get('correct') not in it['options']):
                 continue
             seen.add(k)
             out.append({'bank_id': it.get('bank_id') or it.get('ref'), 'obj': obj, 'src': it.get('src', 'check'),

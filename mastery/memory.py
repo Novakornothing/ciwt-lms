@@ -18,7 +18,7 @@ EASE_MAX = 2.8
 DAY_PASS = 0.6
 FIRST, SECOND = 1.0, 3.0
 TARGET_R = 0.9
-RETRIEVAL_KINDS = ('test', 'testout', 'quiz', 'review_check', 'daily', 'inline')
+RETRIEVAL_KINDS = ('test', 'testout', 'quiz', 'practice', 'review_check', 'daily', 'inline')
 
 
 def _day(when):

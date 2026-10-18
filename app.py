@@ -7054,6 +7054,8 @@ mastery_api = mastery_mod.register(app, db, dict(
     can_access_section=lambda user, section: instructor_can_access_section(user, section),
     audit=lambda action, detail='': audit(action, detail),
     # pass 12: live lab event log (latest attempt per lab, this class only) + lab definitions for process diagnosis
+    # pass 12: practice exams (content merge) as evidence, weight 0.8, graded with the practice module's own rules
+    PracticeAttempt=PracticeAttempt, practice_bank=cert_practice.bank, practice_grade=cert_practice.grade,
     lab_events=_mx_lab_events(lab_progress_api.LabProgress, lab_progress_api.LabEvent), lab_def=_mx_lab_def(_mx_get_lab),
 ))
 
