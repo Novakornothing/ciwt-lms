@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Certification coverage — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Certification coverage</h1>
+  <p class="mb-0">Each published exam objective, the CIWT lessons, labs and bank items aligned to it, and an honest status.</p>
+</div>
+<p class="small cert-disclaimer">{{ disclaimer }}</p>
+<ul class="small cert-sources">
+  {% for k, e in exams.items() %}
+  <li><strong>{{ e.name }} {{ e.code }} ({{ e.version }})</strong> — {{ e.doc_version }}. <a href="{{ e.url }}" rel="noopener">Objectives document</a> (linked from <a href="{{ e.page }}" rel="noopener">comptia.org</a>).</li>
+  {% endfor %}
+</ul>
+
+<section class="card mb-4" aria-labelledby="cov-sum">
+  <div class="card-header navy"><h2 class="h5 mb-0" id="cov-sum">Summary</h2></div>
+  <div class="card-body">
+    <div class="table-responsive">
+    <table class="table table-sm align-middle mb-2 cert-sum">
+      <caption class="visually-hidden">Objectives by status, before and after the content pass</caption>
+      <thead><tr><th scope="col">Exam</th><th scope="col">Covered</th><th scope="col">Partial</th><th scope="col">Gap</th><th scope="col">Items</th></tr></thead>
+      <tbody>
+      {% for k, e in exams.items() %}{% set s = summary[k] %}{% set b = before[k] %}
+      <tr>
+        <th scope="row"><a class="cert-exam-link" href="{{ url_for('cert_coverage', exam=k) }}">{{ e.short }}</a></th>
+        <td>{{ s.covered }} <span class="cert-was">(was {{ b.covered }})</span></td>
+        <td>{{ s.partial }} <span class="cert-was">(was {{ b.partial }})</span></td>
+        <td>{{ s.gap }} <span class="cert-was">(was {{ b.gap }})</span></td>
+        <td>{{ s['items'] }} <span class="cert-was">(was {{ b['items'] }})</span></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <details class="small cert-method"><summary>How status is decided</summary>
+      <p class="mb-1"><strong>Content</strong> is measured with a keyword checklist per objective (our own list of the terms the objective names): <em>covered</em> when at least 70&nbsp;% of the checklist appears in aligned lessons and labs, <em>partial</em> from 25&nbsp;%, otherwise a <em>gap</em>. <strong>Assessment</strong> is covered with at least 4 aligned bank items. An objective is <em>covered</em> only when both are; it is a <em>gap</em> when the content is.</p>
+      <p class="mb-0">This is a heuristic: a term appearing does not prove it is taught to exam depth. New content added for alignment is tagged <em>Pending SME review</em>. Per-objective weights shown are the published domain weight shared equally across the domain’s objectives — CompTIA publishes domain weights only.</p>
+    </details>
+  </div>
+</section>
+
+<form class="cert-filters" method="get" action="{{ url_for('cert_coverage') }}" aria-label="Filter objectives">
+  <div>
+    <label for="f-exam" class="form-label small mb-1">Exam</label>
+    <select id="f-exam" name="exam" class="form-select form-select-sm">
+      <option value="">All exams</option>
+      {% for k, e in exams.items() %}<option value="{{ k }}" {% if exam == k %}selected{% endif %}>{{ e.short }} {{ e.code }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="f-status" class="form-label small mb-1">Status</label>
+    <select id="f-status" name="status" class="form-select form-select-sm">
+      <option value="">Any status</option>
+      {% for st in ('covered', 'partial', 'gap') %}<option value="{{ st }}" {% if status == st %}selected{% endif %}>{{ st|capitalize }}</option>{% endfor %}
+    </select>
+  </div>
+  <button class="btn btn-sm btn-navy" type="submit">Apply</button>
+</form>
+<p class="small text-muted" aria-live="polite">{{ rows|length }} objective{{ '' if rows|length == 1 else 's' }} shown.</p>
+
+{% set ns = namespace(cur='') %}
+<div class="cert-list">
+{% for r in rows %}
+  {% set dkey = r.o.exam ~ ':' ~ r.o.domain %}
+  {% if dkey != ns.cur %}{% set ns.cur = dkey %}
+  <h2 class="h6 cert-domain">{{ exams[r.o.exam].short }} · {{ r.o.domain }} {{ r.o.domain_name }}</h2>
+  {% endif %}
+  <details class="cert-obj">
+    <summary>
+      <span class="cert-id">{{ exams[r.o.exam].short }} {{ r.o.id }}</span>
+      <span class="cert-title">{{ r.o.title }}</span>
+      <span class="cert-badge st-{{ r.v.status }}">{{ r.v.status|capitalize }}</span>
+    </summary>
+    <div class="cert-body">
+      <p class="small mb-2">Content: <strong>{{ r.v.content }}</strong> ({{ (r.v.content_ratio * 100)|round|int }}&nbsp;% of checklist) · Assessment: <strong>{{ r.v.assessment }}</strong> ({{ r.v['items']|length }} items) · Weight ≈ {{ r.o.weight }}&nbsp;% (assumed){% if r.before and r.before != r.v.status %} · was <em>{{ r.before }}</em>{% endif %}</p>
+      <h3 class="h6">Lessons</h3>
+      {% if r.lessons %}<ul class="small">{% for l in r.lessons %}<li>{% if l.url %}<a href="{{ l.url }}">{{ l.title }}</a>{% else %}{{ l.title }}{% endif %}</li>{% endfor %}</ul>
+      {% else %}<p class="small text-muted">None aligned.</p>{% endif %}
+      {% if r.v.labs %}<h3 class="h6">Labs</h3><p class="small">{{ r.v.labs|join(', ') }}</p>{% endif %}
+      <h3 class="h6">Bank items</h3>
+      <p class="small">{% if r.v['items'] %}{{ r.v['items']|length }}: {{ r.v['items'][:12]|join(', ') }}{% if r.v['items']|length > 12 %} …{% endif %}{% else %}None aligned.{% endif %}</p>
+      {% if r.v.topics_missing %}<h3 class="h6">Checklist terms not found</h3><p class="small">{{ r.v.topics_missing|join(' · ') }}</p>{% endif %}
+    </div>
+  </details>
+{% else %}
+  <p>No objectives match these filters.</p>
+{% endfor %}
+</div>
+{% endblock %}

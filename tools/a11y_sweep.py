@@ -41,6 +41,9 @@ PAGES = {
         ('mastery-student', '/student/section/1/mastery'), ('mastery-review', '/student/section/1/review/IT-1.1'), ('mastery-review-alt', '/student/section/1/review/IT-1.1?variant=alt'),
         ('mastery-plan', '/student/section/1/plan'), ('mastery-daily', '/student/section/1/daily'), ('mastery-testout', '/student/section/1/testout/2'),
         ('helix-study', '/helix/study'), ('lesson-7.1', '/student/module/1/7/lesson/30'), ('lesson-10.1', '/student/module/1/10/lesson/42'), ('lesson-13.4', '/student/module/1/13/lesson/57'),
+        ('lesson-cert-4.2', '/student/module/1/4/lesson/18'), ('lesson-cert-2.3', '/student/module/1/2/lesson/8'), ('lesson-cert-3.1', '/student/module/1/3/lesson/12'),
+        ('lesson-cert-8.1', '/student/module/1/8/lesson/34'), ('lesson-cert-9.2', '/student/module/1/9/lesson/39'), ('lesson-cert-10.3', '/student/module/1/10/lesson/44'),
+        ('lesson-cert-13.5', '/student/module/1/13/lesson/58'), ('practice', '/practice'), ('practice-take', '@practice-take'), ('practice-result', '@practice-result'),
     ],
     'instructor@lms.local:teach123': [
         ('instr-home', '/instructor'), ('instr-section', '/instructor/section/1'),
@@ -52,11 +55,13 @@ PAGES = {
         ('instr-lesson-13.1', '/student/module/1/13/lesson/54'), ('calibration', '/instructor/section/1/attention/calibration'), ('materials-labs', '/instructor/materials/ITSUP/lab-manual'),
         ('lab-results', '/instructor/section/1/labs/results'), ('lab-student', '/instructor/section/1/labs/student/4/win-ipconfig'),
         ('class-labs-instr', '/class/1/labs'),
+        ('cert-coverage', '/staff/cert-coverage'), ('cert-coverage-filtered', '/staff/cert-coverage?exam=N&status=partial'),
     ],
     'admin@lms.local:admin123': [('admin', '/admin'), ('admin-classes', '/admin/classes'), ('admin-people', '/admin/people'),
                                  ('admin-curriculum', '/admin/curriculum'), ('admin-tqi', '/admin/tqi'),
                                  ('admin-analytics', '/admin/test-analytics'), ('admin-tickets', '/admin/tickets'),
-                                 ('admin-privacy', '/admin/privacy?q=student1&user_id=4'), ('admin-accuracy', '/admin/helix/accuracy')],
+                                 ('admin-privacy', '/admin/privacy?q=student1&user_id=4'), ('admin-accuracy', '/admin/helix/accuracy'),
+                                 ('lesson-cert-netops-5.2', '/student/module/2/18/lesson/77'), ('lesson-cert-netops-5.3', '/student/module/2/18/lesson/78')],
 }
 OVERFLOW_JS = """()=>{const W=innerWidth;let mx=0,who='';document.querySelectorAll('main, main *').forEach(e=>{const r=e.getBoundingClientRect(); if(r.right<=W+2||!r.width) return; let p=e.parentElement; while(p&&p.tagName!=='BODY'){const o=getComputedStyle(p).overflowX; if(o!=='visible'&&o!=='clip'&&p.tagName!=='HTML') return; p=p.parentElement} if(r.right>mx){mx=r.right;who=e.tagName+'.'+(e.className||'').toString().slice(0,40)}}); return mx?Math.round(mx)+' '+who:''}"""
 report = []
@@ -78,7 +83,15 @@ with sync_playwright() as p:
                 if a.only and not re.search(a.only, name):
                     continue
                 try:
-                    r = pg.goto(a.base + path, wait_until='networkidle', timeout=25000)
+                    if path.startswith('@practice'):
+                        # pass 11: start a practice drill through the real form (CSRF), optionally submit it
+                        pg.goto(a.base + '/practice', wait_until='networkidle')
+                        pg.locator('form:has(input[name=domain]) button').first.click(); pg.wait_for_url('**/practice/attempt/*')
+                        if path == '@practice-result':
+                            pg.evaluate("() => document.getElementById('testForm').submit()"); pg.wait_for_url('**/result')
+                        r = pg.reload(wait_until='networkidle', timeout=25000)
+                    else:
+                        r = pg.goto(a.base + path, wait_until='networkidle', timeout=25000)
                 except Exception as e:
                     report.append({'page': name, 'width': w, 'theme': theme, 'error': str(e)[:200]}); continue
                 pg.wait_for_timeout(350)

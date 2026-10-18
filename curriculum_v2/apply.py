@@ -51,6 +51,8 @@ def apply_itsup(pack, course='ITSUP'):
         les['html'] += (f'\n<section id="reference" class="sublesson reference-depth"><h3>{heading}</h3>{body}{src}</section>')
         _log(course, ch, les_o, 'reference', heading)
     apply_itsup_core(pack, course)
+    from .cert.supplements import apply_cert   # pass 11: exam-alignment supplements
+    apply_cert(pack, course)
 
 
 def apply_itsup_core(pack, course='ITSUP'):
@@ -97,3 +99,5 @@ def apply_netops(pack, course='NETOPS'):
             continue
         les['html'] = _LO.sub(lambda _m: _objective_panel(objs + ['Explain what you did, and why, in plain language']), les['html'], count=1)
         _log(course, ch, 4, 'objective', 'capstone objectives made specific')
+    from .cert.supplements import apply_cert   # pass 11: exam-alignment supplements
+    apply_cert(pack, course)
