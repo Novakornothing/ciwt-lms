@@ -2353,7 +2353,7 @@ def _win_printers(c, cl, state, done):
     return None
 
 
-def run_windows(cmd, state, done):
+def _run_windows_core(cmd, state, done):
     c = re.sub(r"\s+", " ", (cmd or "").strip())
     if c.lower().endswith(".exe") and " " not in c:
         c = c[:-4]
@@ -2461,6 +2461,65 @@ def run_windows(cmd, state, done):
 
 
 # ── Switch ──────────────────────────────────────────────────────────
+
+def run_windows(cmd, state, done):
+    """The engine decides what a command does; win_fidelity re-renders what Windows would print (see win_fidelity.py)."""
+    import win_fidelity as WF
+    c = re.sub(r"\s+", " ", (cmd or "").strip())
+    cl = c.lower()
+    if cl.endswith(".exe") and " " not in cl:
+        cl = cl[:-4]
+    cl = _WIN_ALIASES.get(cl, cl)
+    state["_fid_n"] = (state.get("_fid_n") or 0) + 1
+    el = WF.elevation(c, state)
+    if el is not None:
+        return el, state, done
+    if cl == "ipconfig /release" and state.get("released"):
+        return ["", "Windows IP Configuration", "",
+                "The operation failed as no adapter is in the state permissible for this operation."], state, done
+    server = None
+    if cl.startswith("nslookup "):
+        r = WF.nslookup_server(c, state)
+        if r is not None:
+            if r[0] is None:
+                return r[1], state, done
+            c, server = r
+    lines, state, done = _run_windows_core(c, state, done)
+    if not isinstance(lines, list):
+        return lines, state, done
+    try:
+        new = None
+        if cl in ("ipconfig", "ipconfig /all"):
+            new = WF.ipconfig(state, cl.endswith("/all"))
+        elif cl == "ipconfig /renew" and not state.get("released"):
+            state["lease_at"] = None
+            new = WF.ipconfig(state, False)
+        elif cl == "ipconfig /release" and state.get("released"):
+            new = WF.ipconfig(state, False)
+        elif cl.startswith("ping "):
+            new = WF.ping(c, state, lines)
+        elif cl.startswith(("tracert ", "traceroute ")):
+            new = WF.tracert(c, state, lines)
+        elif cl.startswith("nslookup "):
+            new = WF.nslookup(c, state, lines, server)
+        elif cl.startswith("resolve-dnsname "):
+            new = WF.resolve_dnsname(c, state, lines)
+        elif cl.startswith("test-connection "):
+            new = WF.test_connection(c, state, lines)
+        elif cl.startswith("get-service"):
+            new = WF.get_service(c, state, lines)
+        elif cl == "getmac":
+            new = WF.getmac(state)
+        elif cl in ("arp -a", "arp"):
+            new = WF.arp(state)
+        elif cl in ("route print", "route"):
+            new = WF.route_print(state)
+        if new is not None:
+            lines = new
+    except Exception:      # a rendering problem must never break the lab; fall back to the engine's own lines
+        pass
+    return lines, state, done
+
 
 def run_switch(cmd, state, done):
     state = _norm_sw(state)
