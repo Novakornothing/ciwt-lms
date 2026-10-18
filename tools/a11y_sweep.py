@@ -35,7 +35,9 @@ PAGES = {
         ('syllabus', '/section/1/materials/syllabus'), ('rubrics', '/section/1/materials/rubrics'), ('lab-cli', '/labs/win-ipconfig'),
         ('lesson-3.2', '/student/module/1/3/lesson/13'), ('lesson-4.3', '/student/module/1/4/lesson/19'), ('lesson-5.1', '/student/module/1/5/lesson/21'), ('lesson-6.3', '/student/module/1/6/lesson/28'),
         ('helix-study', '/helix/study'), ('lesson-7.1', '/student/module/1/7/lesson/30'), ('lesson-10.1', '/student/module/1/10/lesson/42'), ('lesson-13.4', '/student/module/1/13/lesson/57'),
-        ('lesson-cert-4.2', '/student/module/1/4/lesson/18'), ('practice', '/practice'), ('practice-take', '@practice-take'), ('practice-result', '@practice-result'),
+        ('lesson-cert-4.2', '/student/module/1/4/lesson/18'), ('lesson-cert-2.3', '/student/module/1/2/lesson/8'), ('lesson-cert-3.1', '/student/module/1/3/lesson/12'),
+        ('lesson-cert-8.1', '/student/module/1/8/lesson/34'), ('lesson-cert-9.2', '/student/module/1/9/lesson/39'), ('lesson-cert-10.3', '/student/module/1/10/lesson/44'),
+        ('lesson-cert-13.5', '/student/module/1/13/lesson/58'), ('practice', '/practice'), ('practice-take', '@practice-take'), ('practice-result', '@practice-result'),
     ],
     'instructor@lms.local:teach123': [
         ('instr-home', '/instructor'), ('instr-section', '/instructor/section/1'),
@@ -49,7 +51,8 @@ PAGES = {
     'admin@lms.local:admin123': [('admin', '/admin'), ('admin-classes', '/admin/classes'), ('admin-people', '/admin/people'),
                                  ('admin-curriculum', '/admin/curriculum'), ('admin-tqi', '/admin/tqi'),
                                  ('admin-analytics', '/admin/test-analytics'), ('admin-tickets', '/admin/tickets'),
-                                 ('admin-privacy', '/admin/privacy?q=student1&user_id=4'), ('admin-accuracy', '/admin/helix/accuracy')],
+                                 ('admin-privacy', '/admin/privacy?q=student1&user_id=4'), ('admin-accuracy', '/admin/helix/accuracy'),
+                                 ('lesson-cert-netops-5.2', '/student/module/2/18/lesson/77'), ('lesson-cert-netops-5.3', '/student/module/2/18/lesson/78')],
 }
 OVERFLOW_JS = """()=>{const W=innerWidth;let mx=0,who='';document.querySelectorAll('main, main *').forEach(e=>{const r=e.getBoundingClientRect(); if(r.right<=W+2||!r.width) return; let p=e.parentElement; while(p&&p.tagName!=='BODY'){const o=getComputedStyle(p).overflowX; if(o!=='visible'&&o!=='clip'&&p.tagName!=='HTML') return; p=p.parentElement} if(r.right>mx){mx=r.right;who=e.tagName+'.'+(e.className||'').toString().slice(0,40)}}); return mx?Math.round(mx)+' '+who:''}"""
 report = []

@@ -113,7 +113,7 @@
     </div>
     <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
       {% if prev_l %}
-      <a class="btn btn-outline-navy" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=prev_l.id) }}">
+      <a class="btn btn-outline-navy lesson-prev" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=prev_l.id) }}">
         ← {{ prev_l.title }}
       </a>
       {% else %}<span></span>{% endif %}
