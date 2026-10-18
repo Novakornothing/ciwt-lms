@@ -20,7 +20,7 @@ SECONDS_PER_QUESTION = 30        # used for the honest "about N minutes" on the 
 INACTIVE_DAYS = 7
 REVIEW_OVERDUE_DAYS = 3
 DROP_POINTS = 20                 # estimate fell by 20+ points in 7 days into "needs review"
-REASON_ORDER = ['stuck', 'misconception', 'missed_review', 'drop', 'lab', 'inactive']
+REASON_ORDER = ['stuck', 'misconception', 'ladder', 'missed_review', 'drop', 'lab', 'inactive']
 
 
 def need_rank(p):
@@ -381,6 +381,9 @@ def register_features(app, db, ctx):
                     out.append({'kind': 'lab', 'obj': None, 'when': r['last_at'], 'lab': r,
                                 'text': f"Lab “{r['title']}” (attempt {r['attempt']}): "
                                         + ', '.join(p['label'].lower() for p in r['concerns'])})
+        lad = getattr(ctx, 'ladder', None)
+        if lad:
+            out.extend(lad.needs_me_reasons(user, st['section']))   # pass 19: every explanation tried, still missing
         last = last_activity(st, user)
         if not last:
             out.append({'kind': 'inactive', 'obj': None, 'when': None, 'text': 'No recorded activity in this class yet'})

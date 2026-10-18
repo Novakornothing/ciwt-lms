@@ -108,7 +108,8 @@
         </button>
       </div>
       <div class="card-body module-content" id="lessonBody">
-        {{ lesson.content | render_lesson | safe }}
+        {% if ladder_html %}<p class="ladder-intro small"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Each section ends with a quick check (not graded). If a section does not click, it is explained another way, right here, just for you. <a href="{{ url_for('ladder_profile', section_id=section_id) }}">What helps you learn</a></p>
+        {{ ladder_html | safe }}{% else %}{{ lesson.content | render_lesson | safe }}{% endif %}
         {% include '_lesson_labs.html' %}
         {% if mastery_quick is defined %}{% include 'mastery/_quickcheck.html' %}{% endif %}
       </div>
@@ -362,6 +363,7 @@
 </script>
 {% endif %}
 {% if mastery_quick %}<script src="{{ url_for('static', filename='js/mastery-lesson.js') }}" defer></script>{% endif %}
+{% if ladder_html %}<script src="{{ url_for('static', filename='js/ladder.js') }}" defer></script>{% endif %}
 <script>
 /* narration bar: the native player only appears once audio is playing; options fold away on phones */
 (function () {

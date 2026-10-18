@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}What helps you learn{% if staff %} — {{ student.full_name }}{% endif %} — {{ site_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    {% if staff %}
+    <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('ladder_class', section_id=section.id) }}">Explanations</a></li>
+    {% else %}
+    <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active" aria-current="page">What helps {{ 'them' if staff else 'you' }} learn</li>
+  </ol>
+</nav>
+<div class="page-hero">
+  <div class="eyebrow">Explanation ladder</div>
+  <h1 class="h3 mb-1">What helps {{ student.full_name if staff else 'you' }} learn</h1>
+  <p class="mb-0">When a section does not click, the course explains it another way: more simply, with an analogy, as a picture or step-by-step trace, or as something to try. This page shows which of those has helped{% if not staff %} you{% endif %}. Nothing here affects grades.</p>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <section class="card h-100" aria-labelledby="lpH">
+      <div class="card-header navy"><h2 class="h6 mb-0" id="lpH">What has helped so far</h2></div>
+      <div class="card-body">
+        {% if prof.alt or prof.original %}
+        <ul class="ladder-prof list-unstyled mb-3">
+          <li><span class="ladder-prof-k">{{ kind_label['original'] }}</span> <span class="ladder-prof-n">{{ prof.original }} section{{ 's' if prof.original != 1 }}</span></li>
+          {% for k in ['plain', 'analogy', 'visual', 'try'] %}
+          <li><span class="ladder-prof-k">{{ kind_label[k] }}</span> <span class="ladder-prof-n">cleared {{ prof.counts.get(k, 0) }} of {{ prof.shown.get(k, 0) }} section{{ 's' if prof.shown.get(k, 0) != 1 }} where tried</span>{% if prof.best == k %} <span class="mx-badge">Leads when a section does not click</span>{% endif %}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p>Nothing yet. Answer the quick checks after lesson sections, or press “I don't get it: explain it another way”.</p>
+        {% endif %}
+        <p class="mb-1"><strong>{{ 'Pattern' if prof.best else 'No pattern used yet' }}:</strong> {{ prof.why }}</p>
+        <details class="mx-why"><summary>How this is decided</summary><div class="mx-why-body small">
+          A kind of explanation is offered first for {{ 'them' if staff else 'you' }} only when at least {{ P.PROFILE_MIN_RESOLVED }} sections, from at least {{ P.PROFILE_MIN_LESSONS }} lessons, were cleared by another explanation; that kind was tried on at least {{ P.PROFILE_MIN_SHOWN }} sections and cleared at least {{ P.PROFILE_MIN_BEST }}; it worked at least {{ (P.PROFILE_MIN_RATE * 100)|int }}% of the times it was tried; and that is at least {{ (P.PROFILE_MIN_RATE_LEAD * 100)|int }} points better than every other kind tried as often. Rates, not counts, because “more simply” is always tried first. Even then the original explanation is still shown first{% if cfg.adapt_first %}, except that the instructor of this class turned on “adapt the first presentation”{% endif %}; the preferred kind is simply the first alternative offered.
+        </div></details>
+        {% if prof.reset_at %}<p class="small mx-muted mt-2 mb-0">Started fresh on {{ prof.reset_at.strftime('%d %b %Y') }}.</p>{% endif %}
+        {% if not staff %}
+        <form method="post" class="mt-3" onsubmit="return confirm('Reset what the course has learned about what helps you? Sections you already worked through keep their explanation.');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-navy" type="submit">Reset and start fresh</button>
+        </form>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+  <div class="col-lg-6">
+    <section class="card h-100" aria-labelledby="lsH">
+      <div class="card-header"><h2 class="h6 mb-0" id="lsH">Sections in this class</h2></div>
+      {% if rows %}
+      <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
+        <thead><tr><th scope="col">Section</th><th scope="col">Explanations seen</th><th scope="col">What worked</th></tr></thead>
+        <tbody>{% for r in rows[:60] %}<tr>
+          <td data-label="Section">{{ r.heading }} <span class="small mx-muted">(lesson {{ r.row.label }})</span></td>
+          <td data-label="Explanations seen">{{ r.tried|join(', ') }}</td>
+          <td data-label="What worked">{% if r.resolved_label %}{{ r.resolved_label }}{% elif r.state.exhausted %}<span class="mx-badge mx-badge-req">Not yet: every explanation seen</span>{% else %}Not yet{% endif %}</td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="card-body">No sections worked through yet.</div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

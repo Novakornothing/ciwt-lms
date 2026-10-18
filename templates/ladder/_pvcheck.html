@@ -1,0 +1,3 @@
+<div class="ladder-pvcheck small mt-2"><strong>Check {{ c.id.rsplit('-', 2)[-2] }}:</strong> {{ c.q }}
+  <ul class="mb-1">{% for o in c.options %}<li>{% if o == c.correct %}<strong>✓ {{ o }}</strong>{% else %}{{ o }}{% if c.mc.get(o) %} <span class="mx-muted">[{{ c.mc[o] }}]</span>{% endif %}{% endif %}</li>{% endfor %}</ul>
+  <span class="mx-muted">Why: {{ c.why }}</span></div>

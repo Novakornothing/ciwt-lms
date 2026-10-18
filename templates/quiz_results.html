@@ -52,6 +52,7 @@
   </section>
   {% endif %}
 
+  {% if ladder_chapter %}{% set lad = ladder_chapter %}{% set lad_title = 'This chapter, explained the way that worked for you' %}{% include 'ladder/_chapter.html' %}{% endif %}
   {% include '_gold_path.html' %}
 
   <div class="result-actions">

@@ -1,0 +1,77 @@
+/* Explanation ladder (pass 19): in-place, per-student re-explanation of lesson sections. Mobile first. */
+.ladder { position: relative; margin: 0 0 1.25rem; }
+.ladder-intro { background: var(--info-bg); border-radius: var(--radius-sm); padding: .5rem .75rem; color: var(--ink-secondary); }
+.ladder-rung { border-left: 4px solid #0b6e99; padding-left: .85rem; }
+.ladder-k-analogy .ladder-rung { border-left-color: #7b3fa0; }
+.ladder-k-visual .ladder-rung { border-left-color: #0d7a52; }
+.ladder-k-try .ladder-rung { border-left-color: #a35200; }
+.ladder-label { margin: 0 0 .35rem; display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.ladder-label:focus { outline: 2px solid #0b6e99; outline-offset: 2px; }
+.ladder-badge { display: inline-flex; gap: .3rem; align-items: center; border-radius: 999px; padding: .1rem .6rem; font-size: .8rem; font-weight: 700;
+  background: #e3f3fb; color: #0a4c6b; border: 1px solid #8fcbe6; }
+.ladder-k-analogy .ladder-badge { background: #f3e9f9; color: #5a2577; border-color: #cfa8e3; }
+.ladder-k-visual .ladder-badge { background: #e2f5ec; color: #0a5c3d; border-color: #93d3b5; }
+.ladder-k-try .ladder-badge { background: #fff0e0; color: #7a3d00; border-color: #f0bd85; }
+.ladder-review { font-size: .75rem; color: var(--ink-muted); }
+.ladder-title { font-weight: 600; margin-bottom: .4rem; }
+.ladder-panel { margin-top: .6rem; padding: .75rem; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--surface-3); }
+.ladder-check fieldset { margin: 0 0 .5rem; }
+.ladder-check legend { font-size: 1rem; font-weight: 600; margin-bottom: .35rem; }
+.ladder-check-tag { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-muted); }
+.ladder-opt { padding: .35rem .25rem .35rem 1.9rem; border-radius: 8px; min-height: 44px; display: flex; align-items: center; }
+.ladder-opt:hover { background: var(--surface-3); }
+.ladder-opt .form-check-input { margin-top: 0; margin-right: .5rem; }
+.ladder-tools { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-top: .5rem; }
+.ladder-tools .btn { min-height: 44px; }
+.ladder-submit { min-height: 44px; min-width: 6rem; }
+.ladder-feedback:empty { display: none; }
+.ladder-feedback { padding: .5rem .65rem; border-radius: 8px; margin-bottom: .5rem; }
+.ladder-feedback.is-ok { background: var(--success-bg); color: #075c40; }
+.ladder-feedback.is-miss { background: var(--warning-bg); color: #6b4300; }
+.ladder-ok { color: #075c40; }
+.ladder-note { color: var(--ink-secondary); }
+.ladder-seen summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.ladder-helix { margin-top: .5rem; padding: .6rem .75rem; border-radius: 8px; background: var(--info-bg); border: 1px solid #9cd3ee; }
+.ladder-svg { max-width: 100%; height: auto; color: var(--ink); }
+.ladder-svg text { fill: currentColor; font-family: var(--font); }
+.ladder-trace { counter-reset: none; padding-left: 1.4rem; }
+.ladder-trace li { margin-bottom: .35rem; }
+.ladder-widget { margin: .75rem 0; padding: .65rem .75rem; border: 1px dashed var(--surface-4); border-radius: 10px; }
+.ladder-order { padding-left: 1.4rem; }
+.ladder-order li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .35rem; padding: .3rem 0; border-bottom: 1px solid var(--surface-3); }
+.ladder-move { display: inline-flex; gap: .25rem; }
+.ladder-move .btn { min-height: 44px; min-width: 44px; }
+.ladder-sort li { margin-bottom: .45rem; }
+.ladder-w-done:empty { display: none; }
+.ladder-w-done { margin-top: .5rem; padding: .45rem .6rem; border-radius: 8px; background: var(--surface-2); }
+.ladder-reveal summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+.ladder-bar { display: inline-block; width: 4.5rem; height: .55rem; border-radius: 999px; background: var(--surface-3); vertical-align: middle; overflow: hidden; }
+.ladder-bar > span { display: block; height: 100%; background: #0b6e99; }
+.ladder-prof li { display: flex; flex-wrap: wrap; gap: .5rem; padding: .3rem 0; border-bottom: 1px solid var(--surface-3); }
+.ladder-prof-k { font-weight: 600; min-width: 14rem; }
+.ladder-recap summary { cursor: pointer; min-height: 44px; }
+.ladder-pv { border-top: 1px solid var(--surface-3); padding-top: .5rem; }
+/* the swap: old explanation fades and slides out, the new one fades in (no motion when reduced motion is asked for) */
+.ladder-leaving { opacity: 0; transform: translateY(-6px); transition: opacity .18s ease, transform .18s ease; }
+.ladder-entering { animation: ladder-in .35s ease both; }
+@keyframes ladder-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ladder-leaving { transition: none; } .ladder-entering { animation: none; } }
+@media (min-width: 768px) { .ladder-panel { padding: .85rem 1rem; } }
+[data-theme="dark"] .ladder-rung { border-left-color: #5cc3ee; }
+[data-theme="dark"] .ladder-k-analogy .ladder-rung { border-left-color: #c79be0; }
+[data-theme="dark"] .ladder-k-visual .ladder-rung { border-left-color: #6fd6a8; }
+[data-theme="dark"] .ladder-k-try .ladder-rung { border-left-color: #f2a65a; }
+[data-theme="dark"] .ladder-badge { background: #10283a; color: #b6e6ff; border-color: #2d5f80; }
+[data-theme="dark"] .ladder-k-analogy .ladder-badge { background: #2c1838; color: #e7c9f5; border-color: #6c4585; }
+[data-theme="dark"] .ladder-k-visual .ladder-badge { background: #0d3324; color: #a9ecca; border-color: #2f7556; }
+[data-theme="dark"] .ladder-k-try .ladder-badge { background: #3a2408; color: #ffd2a1; border-color: #8a5a22; }
+[data-theme="dark"] .ladder-feedback.is-ok { color: #9cf0c9; }
+[data-theme="dark"] .ladder-feedback.is-miss { color: #ffd978; }
+[data-theme="dark"] .ladder-ok { color: #9cf0c9; }
+[data-theme="dark"] .ladder-helix { border-color: #2d5f80; }
+[data-theme="dark"] .ladder-bar > span { background: #5cc3ee; }
+[data-theme="dark"] .ladder-label:focus { outline-color: #5cc3ee; }
+
+.ladder-intro a, .ladder-tools .btn-link, .ladder-seen .btn-link { color: #0a4c6b; text-decoration: underline; }
+[data-theme="dark"] .ladder-intro a, [data-theme="dark"] .ladder-tools .btn-link, [data-theme="dark"] .ladder-seen .btn-link { color: #9fdcff; }
+.ladder-badge.ladder-badge-orig { background: var(--surface-2); color: var(--ink-secondary); border-color: var(--surface-4); }

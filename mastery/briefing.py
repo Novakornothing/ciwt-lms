@@ -11,7 +11,9 @@ Every line says where it comes from. Rules (all constants below):
     with answers and ≥ OBJ_SHARE of them below mastered);
   - revisit a section many measured students skimmed or skipped: 1 × those students (needs ≥ HELIX_MIN measured);
   - look at a chapter check / test with a low class average: 1 × attempts below LOW_SCORE;
-  - talk through a lab several students struggled with: 2 × students struggling (needs ≥ 2).
+  - talk through a lab several students struggled with: 2 × students struggling (needs ≥ 2);
+  - re-explain a lesson section several students ran out of explanations on (explanation ladder, pass 19):
+    2 × those students (needs ≥ 2).
   Highest score first, at most one item per kind while other kinds remain, ties by kind order, then (students,
   pass 14) the "Who needs me" order (severity — objectives needing review or stuck —, then most recent struggle),
   then name.
@@ -47,9 +49,9 @@ LOW_SCORE = 70
 RECENT_DAYS = 7
 UPCOMING_DAYS = 7
 TODO_N = 3
-KIND_ORDER = ['misconception', 'student', 'objective', 'lab', 'section', 'assessment']
+KIND_ORDER = ['misconception', 'student', 'objective', 'lab', 'section', 'assessment', 'explain']
 KIND_LABEL = {'misconception': 'Re-teach', 'student': 'Check in', 'objective': 'Review', 'lab': 'Lab',
-              'section': 'Reading', 'assessment': 'Results'}
+              'section': 'Reading', 'assessment': 'Results', 'explain': 'Re-explain'}
 HOME_TTL = 300   # seconds the instructor-home card may reuse a briefing (the page itself is always fresh)
 
 
@@ -288,6 +290,15 @@ def register_briefing(app, db, ctx):
                 cands.append({'kind': 'assessment', 'score': r['low'], 'title': f'Go over {r["title"]}',
                               'why': [f'Class average {r["mean"]}% over {r["attempts"]} attempts in the last {RECENT_DAYS} days; '
                                       f'{r["low"]} below {LOW_SCORE}%.'], 'formula': f'1 × {r["low"]} low attempts', 'result': r})
+        lad = getattr(ctx, 'ladder', None)
+        for x in (lad.class_exhausted(section) if lad else [])[:3]:
+            if len(x['users']) >= 2:
+                cands.append({'kind': 'explain', 'score': 2 * len(x['users']),
+                              'title': f'Re-explain “{x["heading"]}” (lesson {x["label"]}) to the class',
+                              'why': [f'{len(x["users"])} students saw every explanation of this section (original, '
+                                      'simpler, analogy, step by step, try it) and still missed its check. The original '
+                                      'writing may need work too.'],
+                              'formula': f'2 × {len(x["users"])} students', 'ladder': x})
         lab_list = sorted(({'lab_id': k, 'title': v[0]['diag']['title'], 'students': [x['user'] for x in v],
                             'concerns': sorted({c['label'] for x in v for c in x['diag']['concerns']})}
                            for k, v in labs.items()), key=lambda x: (-len(x['students']), x['title']))

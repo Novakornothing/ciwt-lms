@@ -40,6 +40,8 @@
 {% if variant != 'practice' %}<p>There is no lesson excerpt for this objective yet. <a href="{{ lesson_link }}">Open the lesson</a>.</p>{% endif %}
 {% endfor %}
 
+{% if ladder_review and (ladder_review.worked or ladder_review.open) %}{% set lad = {obj: ladder_review} %}{% set lad_title = 'From your lessons: what worked for you, and what is still open' %}{% include 'ladder/_chapter.html' %}{% endif %}
+
 {% if review.glossary %}
 <section class="card mb-3" aria-labelledby="mxGloss">
   <div class="card-header"><h2 class="h6 mb-0" id="mxGloss">Key terms (course glossary)</h2></div>
