@@ -602,9 +602,12 @@ def lesson_plan(code, chapter):
     classroom = [cl for cl in CLASSROOM_LABS.values() if (code, chapter) in cl['chapters'] or labs_key in cl['chapters']]
     objs = objectives_for(code, chapter)
     plan = None  # noqa: F841
-    sessions = max(1, round((meta.get('minutes') or 180) / 150))
+    # Plan time is the LMS lesson time (pass 13: NETOPS chapter totals in lessons.py included extra time the
+    # lesson-plan text described as "LMS content"; the per-lesson minutes are what the LMS shows).
+    lesson_minutes = sum(l.get('minutes') or 0 for l in meta['lessons']) or meta.get('minutes')
+    sessions = max(1, round((lesson_minutes or 180) / 150))
     plan = {
-        'course': code, 'chapter': chapter, 'title': meta['title'], 'minutes': meta.get('minutes'),
+        'course': code, 'chapter': chapter, 'title': meta['title'], 'minutes': lesson_minutes,
         'sessions': sessions,
         'objectives': objs,
         'lessons': [l['title'] for l in meta['lessons']],
