@@ -159,7 +159,13 @@
     if (full.trim()) { m.hist.push(full); if (m.hist.length > 200) m.hist.shift(); logLine(m, full); }
     m.hpos = -1;
   }
-  form.addEventListener('submit', function (e) { e.preventDefault(); var v = input.value; input.value = ''; sendLine(v); });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault(); var v = input.value; input.value = ''; sendLine(v);
+    if (wrap.classList.contains('term-focus') && document.activeElement !== input) input.focus({ preventScroll: true });
+  });
+  // r5: tapping ↵ must not take focus from the input (that closed the phone keyboard after every line)
+  var sendBtn = form.querySelector('.term-send');
+  if (sendBtn) sendBtn.addEventListener('pointerdown', function (e) { e.preventDefault(); });
   function tab() { active.send(input.value + '\t'); input.value = ''; active.tabUsed = true; input.focus(); }
   function histMove(d) {
     var m = active; if (!m.hist.length) return;
@@ -187,6 +193,7 @@
       else if (a === 'ctrld') active.send('\x04');
       else if (a === 'esc') active.send('\x1b');
       else if (a === 'check') { $('vmCheck').click(); return; }
+      else if (a === 'hint') kit.hint();
       else if (a === 'clear') { active.clearScreen(); active.send('\n'); }
       if (!raw) input.focus(); else active.screenEl.focus();
     });
@@ -354,7 +361,7 @@
     var btn = this;
     if (!allReady) return;
     var busy = machines.filter(function (m) { return !m.idle(); });
-    if (busy.length) { fb.className = 'lab-feedback bad mt-2'; fb.textContent = 'Finish the current command on ' + busy.map(function (m) { return m.label; }).join(' and ') + ' first (the prompt must be showing), or press Ctrl-C.'; return; }
+    if (busy.length) { fb.className = 'lab-feedback bad mt-2'; fb.textContent = 'Finish the current command on ' + busy.map(function (m) { return m.label; }).join(' and ') + ' first (the prompt must be showing), or press Ctrl-C.'; if (wrap.classList.contains('term-focus')) kit.note('Not checked yet', [fb.textContent], 'bad'); return; }
     btn.disabled = true; fb.className = 'lab-feedback mt-2'; fb.textContent = 'Checking inside the VM' + (MULTI ? 's' : '') + '…';
     var t1 = performance.now(), probes = {};
     postLog().then(function () { return fetch(cfg.urls.probe, { credentials: 'same-origin' }); }).then(function (r) { return r.json(); }).then(function (j) {
@@ -371,7 +378,11 @@
       kit.apply(p);
       var r = p.result || {};
       var ms = Math.round(performance.now() - t1);
-      if (wrap.classList.contains('term-focus')) kit.toast(r.error ? r.error : (p.complete ? '✓ All checks passed' : ((r.messages || [])[0] || 'Not yet')), r.error || !p.complete ? 'bad' : 'ok');
+      if (wrap.classList.contains('term-focus')) {   // phone full-screen terminal: every message, inside the terminal (r5)
+        if (r.error) kit.note('Check could not finish', [r.error], 'bad');
+        else if (p.complete) kit.note('✓ All checks passed (' + ms + ' ms)', [p.success_msg || 'Lab complete.'], 'ok', 'Tap Done to see your objectives.');
+        else kit.note('Not yet — the VM' + (MULTI ? 's show' : ' shows') + ':', r.messages || ['A check is not met yet.'], 'bad');
+      }
       if (r.error) { fb.className = 'lab-feedback bad mt-2'; fb.textContent = r.error; }
       else if (p.complete) { fb.className = 'lab-feedback ok mt-2'; fb.textContent = 'All checks passed (' + ms + ' ms).'; saveVM(true); }
       else {
@@ -384,6 +395,7 @@
     }).catch(function (e) {
       machines.forEach(function (m) { if (m.suppress) { m.suppress.done = true; m.endSuppress(); } });
       fb.className = 'lab-feedback bad mt-2'; fb.textContent = e.message || 'Check failed — try again.';
+      if (wrap.classList.contains('term-focus')) kit.note('Check could not finish', [fb.textContent], 'bad');
     }).then(function () { btn.disabled = false; });
   });
 
@@ -436,9 +448,16 @@
   /* ---------------------------------------------------------------- focus mode (phones), shared look with the simulator terminal */
   var narrow = window.matchMedia('(max-width: 699px)');
   var vv = window.visualViewport;
-  function fit() { if (!wrap.classList.contains('term-focus')) return; wrap.style.setProperty('--vvh', (vv ? vv.height : innerHeight) + 'px'); wrap.style.setProperty('--vvtop', (vv ? vv.offsetTop : 0) + 'px'); active.screenEl.scrollTop = active.screenEl.scrollHeight; }
+  function fit() {
+    if (!wrap.classList.contains('term-focus')) return;
+    var h = vv ? vv.height : innerHeight;
+    wrap.style.setProperty('--vvh', h + 'px'); wrap.style.setProperty('--vvtop', (vv ? vv.offsetTop : 0) + 'px');
+    wrap.classList.toggle('term-short', h < 560);   // keyboard open: drop the chips row so the prompt and keys stay visible
+    active.screenEl.scrollTop = active.screenEl.scrollHeight;
+  }
   function enterFocus() { wrap.classList.add('term-focus'); document.documentElement.classList.add('term-focus-on'); $('btnFocus').setAttribute('aria-pressed', 'true'); fit(); }
-  function exitFocus() { wrap.classList.remove('term-focus'); document.documentElement.classList.remove('term-focus-on'); $('btnFocus').setAttribute('aria-pressed', 'false'); input.blur(); }
+  function exitFocus() { wrap.classList.remove('term-focus', 'term-short'); document.documentElement.classList.remove('term-focus-on'); $('btnFocus').setAttribute('aria-pressed', 'false'); var n = $('termNote'); if (n) n.hidden = true; input.blur(); }
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 250); });
   if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
   input.addEventListener('focus', function () { if (narrow.matches) enterFocus(); });
   $('btnFocus').addEventListener('click', function () { if (wrap.classList.contains('term-focus')) exitFocus(); else { enterFocus(); input.focus(); } });

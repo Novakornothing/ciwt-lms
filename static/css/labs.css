@@ -47,9 +47,10 @@
 .lab-tools .btn { min-height: 44px; }
 .lab-hint { margin-top: .75rem; background: var(--info-bg, #eaf6fd); border-radius: 10px; padding: .6rem .75rem; font-size: .9rem; color: var(--ink); }
 .lab-hint-text { font-family: var(--mono); font-size: .85rem; overflow-wrap: anywhere; white-space: pre-wrap; }
-.lab-toast { position: fixed; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom)); transform: translate(-50%, 150%); z-index: 1090; max-width: min(92vw, 520px);
+.lab-toast { position: fixed; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom)); transform: translate(-50%, 150%); z-index: 1090; max-width: min(92vw, 520px); width: max-content;   /* r5: left:50% capped the shrink-to-fit width at 50vw */
   background: var(--navy-800, #101c32); color: #fff; border-radius: 12px; padding: .6rem .9rem; box-shadow: var(--shadow-lg); transition: transform .2s ease; pointer-events: none; font-size: .92rem; }
-.lab-toast.show { transform: translate(-50%, 0); }
+.lab-toast.show { transform: translate(-50%, 0); visibility: visible; transition: transform .2s ease, visibility 0s; }
+.lab-toast:not(.show) { visibility: hidden; transition: transform .2s ease, visibility 0s .2s; }   /* r5: an empty toast peeked out at the top of the phone terminal */
 .lab-toast.ok { background: #0b6e4d; }
 .lab-toast.error { background: #a32a2a; }
 html.term-focus-on .lab-toast { bottom: auto; top: calc(var(--vvtop, 0px) + 3.2rem); transform: translate(-50%, -300%); }
@@ -89,7 +90,10 @@ html.term-focus-on .lab-toast.show { transform: translate(-50%, 0); }
 @media (min-width: 992px) { .term-keys { display: none; } }
 /* phone focus mode: fixed overlay sized to the visual viewport, so the keyboard never covers the prompt */
 .term-wrap.term-focus { position: fixed; z-index: 1080; left: 0; right: 0; top: var(--vvtop, 0px); height: var(--vvh, 100dvh); border-radius: 0; border-width: 0; }
-.term-wrap.term-focus .term-body { height: auto; flex: 1 1 auto; }
+.term-wrap.term-focus .term-body { height: auto; min-height: 0; max-height: none; flex: 1 1 auto; }   /* r5: the phone min/max-height (ciwt-ui.css) pushed the input and keys under the keyboard */
+.term-wrap.term-focus > :not(.term-body) { flex: 0 0 auto; }
+.term-wrap.term-focus.term-short .term-chips { display: none; }   /* keyboard open (short viewport): keep the prompt, keys and Check visible */
+.term-wrap.term-focus.term-short .term-bar { padding-top: .15rem; padding-bottom: .15rem; }
 .term-wrap.term-focus .term-exit { display: inline-block; }
 .term-wrap.term-focus .term-chips { max-height: 3.2rem; }
 html.term-focus-on, html.term-focus-on body { overflow: hidden; }
@@ -265,7 +269,7 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
 .w11-desk.narrow .w11-kv dd { margin-bottom: .35rem; }
 .w11-desk.short .w11-icon i { font-size: 1.2rem; }
 .w11-desk.short .w11-icon { min-height: 48px; }
-@media (prefers-reduced-motion: reduce) { .lab-toast { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .lab-toast, .lab-toast.show, .lab-toast:not(.show) { transition: none; } }
 /* instructor: process log */
 .lab-events { padding-left: 1.2rem; max-height: 420px; overflow: auto; }
 .lab-events li { margin-bottom: .2rem; overflow-wrap: anywhere; }
@@ -299,3 +303,15 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
   border: 1px solid currentColor; border-radius: .25rem; color: var(--bs-secondary-color, #555); vertical-align: middle; white-space: nowrap; }
 /* the theme's light alert-success text (#0d9f6e on #e4f8f1) is ~3.2:1; darker text for the scenario's resolved banner (~6.6:1) */
 html:not([data-theme="dark"]) .scn-resolved { color: #08603f; }
+
+/* r5: in-terminal note (hint / check results) so phone users never leave the full-screen terminal to read them */
+.term-note { position: relative; flex: 0 0 auto; max-height: 38%; overflow-y: auto; margin: 0; padding: .5rem 2.6rem .5rem .8rem; border-top: 1px solid #22344d;
+  background: #10233b; color: #f2f7ff; font-size: .85rem; line-height: 1.35; overflow-wrap: anywhere; }
+.term-note[hidden] { display: none !important; }
+.term-note.ok { background: #0b3d2c; }
+.term-note.bad { background: #3a1c1c; }
+.term-note .term-note-title { font-weight: 600; margin-bottom: .15rem; }
+.term-note ul { margin: 0; padding-left: 1.1rem; }
+.term-note .term-note-x { position: absolute; top: .2rem; right: .25rem; min-width: 40px; min-height: 40px; border: 0; background: transparent; color: #dbe9fb; font-size: 1.2rem; }
+.term-note .term-note-x:focus-visible { outline: 2px solid #3ec7ff; }
+.tkey-hint { color: #ffe08a; }

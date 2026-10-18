@@ -56,6 +56,7 @@
       <div class="term-body vm-screen" id="vmScreen-{{ m.name }}" data-m="{{ m.name }}" {% if multi or lab.vm.net %}role="tabpanel" aria-labelledby="vmTab-{{ m.name }}"{% else %}role="log"{% endif %} aria-live="polite" aria-label="{{ m.label }} serial console" tabindex="0" {% if not loop.first %}hidden{% endif %}></div>
       {% endfor %}
       {% if lab.vm.net %}<div class="term-body vm-packets" id="vmPackets" role="tabpanel" aria-labelledby="vmTab-_packets" aria-label="Packets on the virtual network" tabindex="0" hidden></div>{% endif %}
+      <div class="term-note" id="termNote" role="status" aria-live="polite" hidden><div class="term-note-body"></div><button type="button" class="term-note-x" id="termNoteX" aria-label="Close note">×</button></div>
       <form class="term-input-row" id="termForm" autocomplete="off">
         <label class="prompt" id="termPrompt" for="termInput">$</label>
         <input id="termInput" class="term-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
@@ -67,10 +68,11 @@
         <button type="button" class="tkey" data-key-act="up" aria-label="Previous command">↑</button>
         <button type="button" class="tkey" data-key-act="down" aria-label="Next command">↓</button>
         <button type="button" class="tkey" data-key-act="ctrlc" aria-label="Ctrl-C (interrupt)">Ctrl-C</button>
+        <button type="button" class="tkey tkey-check" data-key-act="check">Check ✓</button>
+        <button type="button" class="tkey tkey-hint" data-key-act="hint" aria-label="Hint (shown here in the terminal)">Hint</button>
         <button type="button" class="tkey" data-key-act="ctrld" aria-label="Ctrl-D (end of input)">Ctrl-D</button>
         <button type="button" class="tkey" data-key-act="esc">Esc</button>
         <button type="button" class="tkey" data-key-act="clear">Clear</button>
-        <button type="button" class="tkey tkey-check" data-key-act="check">Check ✓</button>
       </div>
       <div class="term-chips" role="toolbar" aria-label="Insert a command (does not run it)">
         {% for p in palette %}<button type="button" class="tchip" data-chip="{{ p }}">{{ p }}</button>{% endfor %}
