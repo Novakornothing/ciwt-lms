@@ -35,7 +35,7 @@ PAGES = {
         ('syllabus', '/section/1/materials/syllabus'), ('rubrics', '/section/1/materials/rubrics'), ('lab-cli', '/labs/win-ipconfig'),
         ('lab-ad', '/labs/win-ad-users'), ('lab-match', '/labs/hw-cables'), ('lab-config', '/labs/wifi-secure'),
         ('lab-build', '/labs/hw-pc-build'), ('lab-linux', '/labs/linux-shell'), ('lab-ios', '/labs/rtr-vlan-acl'),
-        ('lab-vm', '/labs/linux-vm-perms'), ('lab-ticket', '/labs/ticket-intake'), ('lab-classroom', '/labs/classroom/CL-7'),
+        ('lab-vm', '/labs/linux-vm-perms'), ('lab-vm-net', '/labs/linux-vm-routing'), ('lab-ticket', '/labs/ticket-intake'), ('lab-classroom', '/labs/classroom/CL-7'),
         ('lab-ports', '/labs/win-laptop-ports'), ('lab-order', '/labs/ticket-method'),
         ('lesson-3.2', '/student/module/1/3/lesson/13'), ('lesson-4.3', '/student/module/1/4/lesson/19'), ('lesson-5.1', '/student/module/1/5/lesson/21'), ('lesson-6.3', '/student/module/1/6/lesson/28'),
         ('helix-study', '/helix/study'), ('lesson-7.1', '/student/module/1/7/lesson/30'), ('lesson-10.1', '/student/module/1/10/lesson/42'), ('lesson-13.4', '/student/module/1/13/lesson/57'),

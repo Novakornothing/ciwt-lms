@@ -309,6 +309,9 @@
   }
   function snapshotClean() {
     if (machines.some(function (m) { return m.resumed; })) return;   // only a fresh scenario is "clean"
+    // a snapshot costs ~45 MB per VM in memory: keep it on roomy devices; small phones cold-boot on reset instead
+    var dm = navigator.deviceMemory, mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+    if (dm ? dm < 4 && MULTI : (mobile && MULTI)) return;
     Promise.all(machines.map(function (m) { return m.emu.save_state(); })).then(function (bufs) {
       cleanSnap = {}; machines.forEach(function (m, i) { cleanSnap[m.name] = bufs[i]; });
     }).catch(function () { cleanSnap = null; });

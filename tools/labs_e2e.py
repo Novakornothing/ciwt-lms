@@ -71,8 +71,8 @@ def login(page, email, pw):
 OVERFLOW = "()=>{const W=document.documentElement.clientWidth;return document.documentElement.scrollWidth>W+1?document.documentElement.scrollWidth-W:0}"
 
 
-def wait_post(page, path_part, fn):
-    with page.expect_response(lambda r: path_part in r.url and r.request.method == 'POST', timeout=15000) as info:
+def wait_post(page, path_part, fn, timeout=15000):
+    with page.expect_response(lambda r: path_part in r.url and r.request.method == 'POST', timeout=timeout) as info:
         fn()
     r = info.value
     assert r.status == 200, (path_part, r.status)
@@ -211,20 +211,40 @@ def drive_gui(page, lab, view, notes):
 
 
 def drive_vm(page, lab, view, notes):
-    """Real VM: boot v86 in the page, type the commands into the real shell, press Check my work."""
+    """Real VM(s): boot v86 in the page, type the commands into the real shells (switching machine tabs), Check my work."""
+    import re as _re
     t = time.time()
     page.click('#vmBoot')
-    page.wait_for_selector('#vmTools:not([hidden])', timeout=240000)
-    notes.append(f'VM boot {time.time() - t:.1f}s')
-    last_ln = "()=>{const l=[...document.querySelectorAll('#termBody .ln')];return l.length>1&&/[#%$] $/.test(l[l.length-1].textContent)}"
+    page.wait_for_selector('#vmTools:not([hidden])', timeout=300000)
+    notes.append(f'VM boot {time.time() - t:.1f}s' + (f" ×{len(lab['vm']['machines'])}" if len(lab['vm']['machines']) > 1 else ''))
+    last_ln = ("()=>{const s=document.querySelector('.vm-screen:not([hidden])');if(!s)return false;"
+               "const l=[...s.querySelectorAll('.ln')];return l.length>0&&/[#%$] $/.test(l[l.length-1].textContent)}")
+    first = lab['vm']['machines'][0]['name']
+    cur = first
     for c in lab['solution']['vm_commands']:
-        page.fill('#termInput', c)
-        page.press('#termInput', 'Enter')
-        page.wait_for_timeout(60)
+        m = _re.match(r'^\[(\w+)\] (.*)$', c)
+        mach, cmd = (m.group(1), m.group(2)) if m else (first, c)
+        if mach != cur:
+            tab = page.locator(f'#vmTab-{mach}')
+            if page.locator('#termWrap.term-focus').count():
+                tab.scroll_into_view_if_needed()
+            tab.click()
+            cur = mach
         page.wait_for_function(last_ln, timeout=60000)
+        page.fill('#termInput', cmd)
+        page.press('#termInput', 'Enter')
+        page.wait_for_timeout(80)
+        page.wait_for_function(last_ln, timeout=60000)
+    if lab['vm'].get('net'):
+        page.click('#vmTab-_packets')
+        n = page.locator('#vmPackets .pk').count()
+        notes.append(f'{n} packets')
+        if not n:
+            raise AssertionError('Packets panel is empty')
+        page.click(f'#vmTab-{first}')
     page.wait_for_timeout(400)   # let the batched command log post
     sel = '[data-key-act="check"]' if page.locator('#termWrap.term-focus').count() else '#vmCheck'
-    r = wait_post(page, '/vm-check', lambda: page.click(sel))
+    r = wait_post(page, '/vm-check', lambda: page.click(sel), timeout=60000)
     if not r['complete']:
         raise AssertionError('VM check not complete: ' + '; '.join(r['result'].get('messages') or [r['result'].get('error') or '']))
     if page.locator('#termWrap.term-focus').count():
