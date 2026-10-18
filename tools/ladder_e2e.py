@@ -108,7 +108,12 @@ def answer(pg, box_sel, right):
             box.locator(f'label[for="{radios.nth(i).get_attribute("id")}"]').click()
             break
     shown = box.get_attribute('data-shown')
+    box.evaluate("el => el.setAttribute('data-old', '1')")
     box.locator('button.ladder-submit').click()
+    try:   # the section is replaced in place: wait until the old node is gone
+        pg.wait_for_selector(f'{box_sel}[data-old]', state='detached', timeout=8000)
+    except Exception:
+        pass
     return cid, shown
 
 
@@ -174,7 +179,9 @@ with sync_playwright() as p:
     # ---- "I don't get it" on another section, then up to R4 (try it)
     b2 = '#ladder-what-software-is'
     for want in ('R1', 'R2', 'R3', 'R4'):
+        pg.locator(b2).evaluate("el => el.setAttribute('data-old', '1')")
         pg.locator(f'{b2} form.ladder-another button').click()
+        pg.wait_for_selector(f'{b2}[data-old]', state='detached', timeout=8000)
         ok = wait_shown(pg, 'what-software-is', want)
     check('"I don\'t get it" climbs R1..R4', ok)
     if pg.locator(f'{b2} .ladder-widget').count():
