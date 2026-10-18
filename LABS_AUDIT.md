@@ -37,8 +37,8 @@ through its UI and then reloaded. **Now** is the code at the end of this branch,
 - **The `gui-renew` instructions** told students to use a Renew button that Windows 11 does not have.
 - **There were no "did you mean" suggestions** and no Linux equivalents for Windows habits.
 
-**Now: 66 labs (46 original + 20 new, including one real Linux VM) plus 10 classroom labs.**
-- All 66 labs complete through the UI at desktop, phone and tablet.
+**Now: 69 labs (46 original + 23 new, including five real Linux VM labs) plus 9 classroom labs (CL-4, CL-6…CL-13).**
+- All 69 labs complete through the UI at desktop, phone and tablet.
 - Each completion checks:
   - a server-side record (`lab_progress` score 100 plus a `lab_completion` row)
   - reload resume (every objective still ticked)
@@ -138,7 +138,11 @@ They appear in CHAPTER_LABS, so they flow into the lab manual, lesson plans and 
 | **win-laptop-ports** | ITSUP 4/5/6 | Battery report (canned; the VM has no battery, as on a real VM), "Virtual machine" check in systeminfo, MX records, Test-NetConnection on ports 25 and 587 |
 | **win-wifi-survey** | ITSUP 5, NETOPS 3 | A simulated laptop **with** a Wi-Fi adapter: show interfaces, show networks mode=bssid, profiles, reconnect to 5 GHz, verify |
 | **hv-vswitch** | ITSUP 6 | A simulated Hyper-V host: Get-VM, Get-VMSwitch, New-VMSwitch Private (with feedback if Internal or External is chosen), Connect-VMNetworkAdapter, Checkpoint-VM, Get-VMCheckpoint, Restore-VMCheckpoint |
-| **linux-vm-perms** | ITSUP 9 | **A real Linux VM in the browser** (see below) |
+| **linux-vm-perms** | ITSUP 9 | **Real Linux VM**: files, ownership, permissions and a support script |
+| **linux-vm-shell** | ITSUP 9 | **Real Linux VM** twin of linux-shell (the simulator stays as the fallback) |
+| **linux-vm-services** | ITSUP 9, NETOPS 5 | **Real Linux VM**: runaway process filling /tmp, broken init script, cron, syslog |
+| **linux-vm-netclient** | ITSUP 5/13, NETOPS 4 | **Real Linux VM on a virtual LAN**: APIPA address → DHCP lease, gateway, DNS, stale hosts entry |
+| **linux-vm-routing** | ITSUP 5, NETOPS 9 | **Two real Linux VMs**: address a PC and a Linux router, forwarding, default route, traceroute |
 | (CL-4…CL-13) | — | Already existed as paper labs; they are now recorded through instructor sign-off |
 
 ### Pass-10 lab gaps from refinement (CURRICULUM_AUDIT "Pass 10")
@@ -152,56 +156,69 @@ They appear in CHAPTER_LABS, so they flow into the lab manual, lesson plans and 
 | 6.1 "Virtual machine" | `systeminfo` in every Windows lab (w11-inventory included) now shows *System Model: Virtual Machine* and the hypervisor line; win-laptop-ports grades it |
 | 6.3 virtual switch and checkpoints | hv-vswitch (simulated Hyper-V host) |
 
-## Real-environment prototype: a Linux VM in the browser (opt-in)
+## Real environments: real Linux is now the standard for the Linux and network-client skills
 
-`linux-vm-perms` boots **real** Linux in the page with v86 (an x86 emulator compiled to WebAssembly). The
-image is Buildroot: kernel 6.8.12 and BusyBox 1.36.1. Nothing runs on the server.
+Full detail is in `REAL_ENVIRONMENTS.md`: a real-vs-simulated table for every lab, what each probe reads, the
+networking evaluation and the Windows feasibility notes. The image, the measurements and an institution build
+recipe are in `docs/VM_IMAGE.md`.
 
-- **Grading.** "Check my work" writes a read-only probe script into the VM's 9p share (`/mnt`) and runs it
-  (the probe's echo is hidden). It reads the result file back and posts it with the attempt nonce. The server
-  then decides the objectives:
-  - the directory exists
-  - the file contents
-  - the mode is `-rw-r-----`
-  - the owner is tech1 and the user exists
-  - the script is executable and prints "disk ok" (run with a 3 s watchdog)
-  - `ls -l` appears **after** `chmod` in the student's real command history (a process rule)
-- **Logging.** Every line the student sends to the VM, and the boot time, go to the attempt's event log.
-- **Save / resume.** "Save VM to this device" stores `save_state()` in IndexedDB (about 43 MB). The save is
-  keyed to the attempt nonce, so Start over discards it.
-- **Measured** (this box, headless Chromium; phone figures use Chrome CPU throttling, which approximates
-  but is not a real phone):
+**Five labs run on real Linux machines that boot in the browser** (v86, kernel 6.8.12 and BusyBox 1.36.1).
+Nothing runs on the server.
 
-  | Setting | Download + boot | Per command | Check | Renderer memory |
-  |---|---|---|---|---|
-  | Desktop, cached assets | 2.9 s boot | 60–85 ms | 0.4–0.5 s | +~170 MB (155 → 325 MB RSS) |
-  | 20 Mbit/s, CPU ×1 | 8.4 s | – | – | – |
-  | 20 Mbit/s, CPU ×4 (mid-range phone) | 15.0 s | 76–265 ms | 1.3 s | – |
-  | 20 Mbit/s, CPU ×6 (low-end phone) | 17.6 s | – | – | – |
+| Lab | Machines | Real state that is graded |
+|---|---|---|
+| linux-vm-perms | 1 | directory, file contents, mode 640, owner tech1, the script runs |
+| linux-vm-shell | 1 | the linux-shell ticket on a real box: files, chmod, `backup.sh` really ran, `grep` |
+| linux-vm-services | 1 | runaway process killed, `/tmp` freed, init script repaired and running, crontab entry, syslog line |
+| linux-vm-netclient | 1 + virtual LAN | real `udhcpc` lease from the in-page DHCP server (ACK required), gateway, `resolv.conf`, stale `/etc/hosts` removed, live ping by name |
+| linux-vm-routing | 2 + two LANs | addresses on the PC and the router, default route, `ip_forward`, live ping through the router with TTL 63, traceroute; the fault was isolated *before* forwarding was turned on |
 
-  Save to device took 255 / 657 / 828 ms (×1 / ×4 / ×6). The JS heap is about 26 MB; the guest RAM is 64 MB.
-  The e2e completes this lab at desktop, phone and tablet emulation.
-- **Phones:** feasible. It works in line mode with the keys bar and a Check key inside focus mode. The costs
-  are a 12.5 MB first download (the page says so and does not start until the student taps Start VM) and
-  about 170 MB of extra memory. Very old phones with 2–3 GB of RAM may reload the tab. It has not been tested
-  on a physical iPhone or Android device; that should be done before relying on it.
-- **Licences:**
-  - v86: BSD-2-Clause
-  - SeaBIOS and VGABIOS: LGPL-3.0
-  - kernel and BusyBox: GPL-2.0
-  - the other Buildroot packages under their own licences
+**How grading works.**
+- A generic engine (`labs_vm.py`) generates a probe for each machine from the lab's `vm_checks`. Each probe is
+  run under a watchdog and carries a nonce and the machine name.
+- Grading combines three kinds of evidence:
+  - shell tests run inside the VM
+  - the ordered command history (`hist` / `seq` / `before` rules)
+  - evidence from the virtual network: the DHCP ACK, a ping to the gateway, the DNS query
+- Each machine gets a hidden scenario setup on its first boot: broken services, a runaway process, an APIPA
+  address, a stale hosts entry.
 
-  The image is the v86 author's Buildroot build. **Serving it obliges you to offer the matching source.** For
-  production, build your own image (Buildroot config + source tarball) and publish it next to the image.
-  Details are in `static/vendor/v86/LICENSES.md`.
-- **Assets are not committed.** `tools/fetch_v86.sh` downloads pinned versions and checks their sha256. Without
-  them the page shows an admin notice instead of the Start button.
-- **Trust:** the VM runs on the student's device, so a determined student could forge the probe output. The
-  nonce stops replaying an old attempt, but not forging. Treat it as formative. For summative use, review the
-  event log or sign it off.
-- **Not done:** a network-topology emulator (several VMs linked). v86 supports NE2000 networking between
-  instances through a relay, but that needs a WebSocket relay server, which breaks the no-server-cost rule.
-  The router and switch labs stay simulated.
+**Devices.**
+- Machine tabs and a Packets tab (every frame summarised).
+- The keys bar and focus mode work on phones.
+- **Save** stores all the VMs plus the DHCP leases in IndexedDB.
+- **Resume** takes about 1 s.
+- **Reset** returns to the start of the scenario in under 1 s from an in-memory clean snapshot. Small phones in
+  the two-VM lab cold-boot instead.
+- Boot on a mid-range phone (CPU ×4) is about 9 s for one VM and 16 s for two. On an older phone (×6) it is
+  about 15 s for one VM and 25 s for two.
+
+**Fallback.**
+- Every real lab names a simulated fallback, and its page links to it.
+- The page recommends the fallback on weak devices (under 2 GB of reported memory, no WebAssembly, or a boot
+  over 45 s).
+- Each simulator links back to its real twin.
+
+**Networking.**
+- Namespaces, veth, bridges and VLANs are not in this kernel (tested). Several VMs cabled by an isolating switch
+  in the page do give real routing.
+- An in-page DHCP and DNS server gives real lease and resolution practice.
+
+**Windows.** It cannot run in the browser, so the Windows labs stay high-fidelity simulators. A hosted-VM option
+that reuses the same probe contract is described in `REAL_ENVIRONMENTS.md`.
+
+**Verification:**
+- `tools/vm_headless.py` boots each lab's real VMs in Node and runs the real grader. Every solution completes,
+  and doing nothing earns only `boot`.
+- `tools/labs_e2e.py` passes all five labs at desktop, phone and tablet.
+- `tools/vm_device_check.py` runs on a throttled phone and checks:
+  - boot
+  - save → reload → resume (the VM's files persist)
+  - cold and snapshot reset (the scenario is clean again)
+  - axe on the booted console: 0 violations
+
+**Trust.** The VMs run on the student's device, so a determined student could forge results. Treat these labs as
+formative, or pair them with the event log (every line, per machine) or a sign-off.
 
 ## Per-lab inventory and results
 
@@ -217,7 +234,7 @@ Kind legend:
 | linux | bash simulator |
 | ticket | scenario desk |
 | activity | drag, tap and type steps |
-| vm | real Linux VM |
+| vm | real Linux VM(s) in the browser (v86) |
 
 
 ## Inventory and results (e2e run of 17 Oct 2026, 234/234 checks passed)
@@ -354,8 +371,10 @@ Kind legend:
   stations summatively.
 - **Concurrent requests for the same lab can race.** Last write wins. The terminal client queues its commands,
   so this matters only if a student has the same lab open in two tabs.
-- **The real-VM lab is an opt-in prototype.** It is listed with the Linux labs and in ITSUP chapter 9. To turn
-  it off, remove it from `NEW_CHAPTER_LABS` / `VM_LABS`. Before using it at scale, test it on physical phones
-  and build an institution-owned image to meet the GPL source obligation.
+- **Real-VM labs are standard for the Linux and network-client skills, but two things are still open.** First,
+  test them on physical phones; the figures above come from CPU-throttled Chromium. Second, build an
+  institution-owned image (recipe in `docs/VM_IMAGE.md`) to meet the GPL source obligation and to unlock
+  in-VM namespaces, bridges and VLANs. To turn a real lab off, remove it from `NEW_CHAPTER_LABS`. Its simulated
+  fallback stays in place.
 - **Simulated device output follows the real tools but is not exhaustive.** Unknown commands get "Did you mean"
   suggestions and a pointer to `help`.
