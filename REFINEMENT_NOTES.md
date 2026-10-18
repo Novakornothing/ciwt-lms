@@ -723,3 +723,171 @@ Windows), `docs/VM_IMAGE.md` (image, measurements, institution build recipe). Me
     - e2e sample (13 labs of every kind × desktop/phone, plus instructor checks): 35/35.
     - axe on every lab page at 390/820/1280 px: 0 violations in light and dark themes. Fixed two contrast bugs: the
       router tag, and the Windows 11 desk in dark theme.
+
+## Pass 12 (Oct 18 2026): briefing, LTI 1.3, labs + content merges
+
+Local work only: nothing was pushed. Every server and e2e run used a copy of the DB (`/tmp/p12/work.db`, `/tmp/p12/fresh.db`).
+At the end, `ciwt_lms.db` is at its baseline sha `47fabc92…`.
+
+During the pass, two ad-hoc inspection scripts imported `app` without `DATABASE_URL` set. That ran the start-up sync
+against the real `ciwt_lms.db` and changed it. I caught this with a sha check and restored the file byte for byte
+from `dbsnap/ciwt_lms.pass6-before.db`, which has the baseline sha. The changed copy is kept at
+`/tmp/p12/ciwt_lms.mutated-0130.db` for reference. Ad-hoc scripts now always export `DATABASE_URL` to a copy.
+
+### Merges
+- **`labs` (3350882).**
+  - Merged cleanly.
+  - The 10 VM tests need `tools/fetch_v86.sh` (pinned and sha-checked; the binaries are gitignored).
+- **`content` round 1 (be25252).**
+  - Merged following MERGE_NOTES_CONTENT.md.
+  - `a11y_sweep.py` and `site_audit.py` keep both page lists. The icon subset was rebuilt, and
+    `cert_coverage.py` / `cert_coverage_md.py` were re-run.
+- **`content` round 2 (e01b923).**
+  - Conflicts were limited to CERT_COVERAGE.md, alignment.json (regenerated) and a11y_sweep (union; the coverage
+    filter is now `status=covered`).
+  - Coverage: A1/A2/N at 100% weighted.
+  - `curriculum_v2/misconceptions.py` now imports the cert tags (the three lines from the merge notes, placed before
+    `_NORM` is built), adding 83 `MC-C-*` misconceptions and 277 tags.
+
+### Mastery engine changes
+- **Typed items** (multi-select, ordering, matching) are judged all-or-nothing by `engine.judge()`.
+  - Before this they were miscounted as "stale".
+  - An answer that uses options the item no longer has is still treated as stale.
+- **Review, daily, test-out and inline pools stay single-answer**, because those UIs are radio-only.
+- **Practice exams count as evidence at weight 0.8.**
+  - Only submitted attempts count, and blank answers are skipped.
+  - Attempts are account-level, so they count in every class of the course.
+  - They never appear in the gradebook (tested).
+  - Wrong single answers now carry `MC-C-*` tags too.
+- **Cert items join the pools (round 2).**
+  - `engine.pool()` now serves, in order: the class's chapter-check items, then aligned single-answer cert items
+    (`cert_items_for(obj)`: 238 items over 48 objectives; Pending SME review), then the X-IT bank and supplement if
+    the class turned that on.
+  - The pick order is least-used first, then that source order (`SRC_RANK`).
+  - This feeds reviews, struggle and misconception offers, daily practice, test-outs and in-lesson checks.
+  - A tagged wrong cert answer surfaces as a misconception (tested).
+  - The instructor mastery page says so.
+
+### Lab process diagnosis wired in
+- `mastery/lab_source.py` reads `lab_event` for the latest attempt per lab (1 + resets), limited to `LabProgress`
+  rows of this class. `lab=` comes from `interactive_labs.get_lab`.
+- **How event kinds are mapped:**
+  - `vm` lines are actions, except `vm boot`, and are never "rejected".
+  - A `vm probe` check counts as rejected only on `error`; "not finished" is not rejected, but repeating it unchanged
+    is flagged.
+  - Guided `check` answers that come back wrong are rejected.
+  - Hints count only on `ok`; `repeat` is a re-view.
+  - Linux read-only commands count as verification.
+- **Where diagnoses show up:**
+  - "Who needs me" has a lab-struggle reason.
+  - The instructor student page has a "How X works the labs" section, with an event-log link and coaching tips.
+  - The briefing has a lab-struggles card and to-do items.
+- Patterns never change a lab score (tested).
+
+### Instructor co-pilot briefing (`mastery/briefing.py`)
+- **Pages and exports:**
+  - `/instructor/section/<id>/briefing`, plus `.txt` (email-ready text, download only) and `.csv`.
+  - A card on the instructor home with the top item per class, cached for 5 minutes.
+  - Links from the class page and the sidebar.
+- **It is deterministic. No AI model writes any of it.**
+  - Candidates are scored with visible formulas:
+    - mix-up: 3 × students with it active (at least 2)
+    - student: 2 × reasons, +2 if stuck
+    - objective: 2 × students below mastered
+    - lab: 2 × students
+    - section: students who skimmed or skipped it
+    - assessment: low attempts
+  - The top 3 are chosen one per kind first, then by score, with deterministic ties.
+- **One-click actions:**
+  - jump to the re-teach
+  - assign review to those students (bulk `force_review`, logged and audited)
+  - message
+  - check in (returns to the briefing)
+  - open the heatmap, the lesson or the result
+- **Content of the page:**
+  - **Re-teach.** Each re-teach takes 5 minutes (1 + 2 + 2). It is built from the course's own `fix` text, the lesson
+    blocks (instructor notes stripped), and a tagged question from the check, cert or test pools showing the tempting
+    answer.
+  - **Skimmed and skipped sections.** These come from Helix data, but only for consented students and non-demo
+    sessions of at least 60 s. A section is skipped at 0 ms and skimmed under 3 s. It is listed only when at least 2
+    measured students and at least half of them skimmed or skipped it.
+  - **Other sections:**
+    - objectives most of the class has not mastered
+    - who to check in with
+    - results from the last 7 days
+    - what is coming up (releases and check-ins)
+    - engine log counts
+    - "How this briefing is made"
+- **Accessibility and output:**
+  - The demo ribbon carries through.
+  - Mobile-first, with print CSS.
+  - axe finds 0 violations at 390/820/1280 px in light and dark.
+- Nothing is sent anywhere (tested).
+
+### LTI 1.3 + LTI Advantage, tool side (`lti/`; see docs/LTI_SETUP.md)
+- **Built on PyJWT and cryptography** (added to requirements.txt).
+- **Endpoints:**
+  - OIDC login initiation: `/lti/login`, with `?reg=` for disambiguation.
+  - Launch: `/lti/launch`. It checks:
+    - a single-use 10-minute state, bound to the browser by a cookie, and a single-use nonce
+    - the id_token against the platform JWKS by kid, with one refresh on rotation
+    - RS256/384/512 only
+    - iss, aud, azp, exp, iat (max age), version, message type, deployment, resource link and deep-link settings
+  - Tool JWKS: `/lti/jwks`. The key comes from `LTI_PRIVATE_KEY`, `LTI_PRIVATE_KEY_FILE` or `instance/lti/` (0600,
+    gitignored), with rotation through `instance/lti/previous/`.
+  - `/lti/config.json`, and a Canvas developer-key JSON.
+- **Accounts:**
+  - People are mapped by (platform, sub).
+  - Linking by email is opt-in per platform and never touches admin accounts.
+  - New accounts get a random password.
+  - LMS roles map to instructor or student, never admin. Existing roles are never changed.
+  - Learners are enrolled in the mapped class. Instructors map an LMS course to one of their classes.
+- **Deep Linking 2.0:**
+  - The instructor picks lessons, chapter checks, tests, labs or the class home.
+  - Graded items get a `lineItem`.
+  - The response JWT is signed and auto-posted. The picker is single-use, valid for 1 hour, and tied to its owner.
+- **AGS:**
+  - Scores are sent from the gradebook, with late penalties, overrides and excused cells applied; missing and excused
+    cells are skipped. Labs send the best lab score; the class home sends the course grade.
+  - Uses client-credentials JWT assertions.
+  - Finds or creates the line item.
+  - Sends happen only on the instructor's button press.
+- **NRPS:**
+  - Follows `Link: rel=next` paging.
+  - Enrolls learners, links staff, counts inactive members, and removes nobody.
+- **Admin UI:** `/admin/lti`, with Canvas, Blackboard, Moodle and other presets and HTTPS validation. The class page
+  is `/instructor/section/<id>/lti`, with a sync log.
+- **Mock platform:** `tools/lti_mock_platform.py`, in memory, with fictional demo people on `mock-lms.invalid`.
+- **Tests:**
+  - `tests/test_lti.py` has 15 tests: each refused claim, roles, JWKS and key handling, launch and enrollment, state
+    replay, missing cookie, email-link safety, the deep-link round trip, learner DL refusal, AGS score POST, NRPS
+    paging, access and admin validation.
+  - `tools/lti_e2e.py` drives a real Chromium run: 9/9.
+- **Honest status:**
+  - Not 1EdTech-certified.
+  - Not tested against a live Canvas, Blackboard or Moodle.
+  - Platform Storage, Dynamic Registration and automatic score sync are not done.
+
+### Other
+- `tools/helix_e2e.py` walks the "Get into position" step. It now checks properly and exits non-zero on failure:
+  6/6.
+- The CSRF form test allows `data-external-post` forms. That is the deep-link auto-post to the LMS, which must not
+  carry our token.
+
+### Results at the end of pass 12
+- `pytest tests`: 547 passed, run with the VM assets fetched.
+- node: 40/40.
+- axe:
+  - all 202 page/width checks per theme, at 390 and 1280 px, in light and dark.
+  - Ended with 0 violations after one fix: the LTI sync log `<pre>` scrolled at 390 px.
+  - The briefing and LTI pages also pass at 820 px.
+- site_audit: every page returned 200, except the intended 403/404 pages. There was no overflow.
+- e2e suites:
+
+  | Suite | Result |
+  |---|---|
+  | mastery_e2e | 38/38 |
+  | helix_e2e | 6/6 |
+  | assess_phone_e2e | 43/43 |
+  | practice_phone_e2e | 29/29 |
+  | lti_e2e | 9/9 |
