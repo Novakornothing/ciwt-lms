@@ -42,10 +42,17 @@ def syllabus_doc(code, section=None, gb=None):
           ('p', cr['basis']), ('note', cr['source']), ('p', cr['note'])]
     b += [('h2', 'Course learning outcomes'), ('p', 'By the end of the course, students will be able to:'),
           ('ol', [f"{c['code']}: {c['text']}" for c in s['clos']])]
+    from curriculum_v2.cert import package as CERT  # pass 11: certification alignment
+    ca = CERT.syllabus_section(code)
+    b += [('h2', 'Certification alignment'), ('p', ca['statement']),
+          ('ul', [f"{e['name']} {e['code']} — {e['doc_version']}: {e['url']}" for e in ca['exams']]),
+          ('p', 'Each lesson objective below lists the exam objectives it is aligned to.')]
     b += [('h2', 'Chapters and lesson objectives')]
     for ch in s['chapters']:
         b.append(('h3', ch['title']))
-        b.append(('ul', [f"{o['code']} ({o['bloom']}): {o['text']}" for o in ch['objectives']] or ['See chapter overview in the LMS']))
+        b.append(('ul', [f"{o['code']} ({o['bloom']}): {o['text']}"
+                         + (f" Aligned to: {', '.join(CERT.labels_for(o['code'], code))}." if CERT.labels_for(o['code'], code) else '')
+                         for o in ch['objectives']] or ['See chapter overview in the LMS']))
     g = s['grading']
     b += [('h2', 'Grading'),
           ('table', ['Category', 'Weight', 'What it includes'], [[r['label'], f"{r['weight']}%", r['what']] for r in g['categories']]),
@@ -63,7 +70,7 @@ def syllabus_doc(code, section=None, gb=None):
     for p in s['policies']:
         b += [('h3', p['label']), ('p', _v(p))]
     b += [('h2', 'Accessibility'), ('p', s['accessibility']['statement']), ('ul', s['accessibility']['features'])]
-    b += [('note', s['disclaimer'])]
+    b += [('note', s['disclaimer']), ('note', ca['disclaimer'])]
     return {'title': f"{s['title']} — Syllabus", 'blocks': b}
 
 
@@ -95,8 +102,18 @@ def lesson_plans_doc(code, section=None, gb=None):
         if p.get('review'):
             b.append(('note', f"{p['review']}: chapter content, objectives, checks and items were expanded in {'pass 10' if code == 'ITSUP' and ch['order'] < 7 else 'pass 9'}. "
                               'Confirm timing and technical detail before teaching.'))
+        from curriculum_v2.cert import package as CERT  # pass 11
+        ca = CERT.plan_section(code, ch['order'], p['objectives'])
+        cert_blocks = []
+        if ca['rows']:
+            cert_blocks += [('h3', 'Certification alignment'),
+                            ('ul', [f"{r['code']}: aligned to {', '.join(r['labels'])}" for r in ca['rows']])]
+        if ca['supplements']:
+            cert_blocks += [('note', 'Certification supplements added in pass 11 — Pending SME review. Each is a section appended to '
+                                     'the lesson shown, with a described diagram, worked example, scenario, checks, key terms and sources.'),
+                            ('ul', [f"Lesson {x['lesson']}: {x['title']} ({', '.join(x['cert'])})" for x in ca['supplements']])]
         b += [('p', f"About {p['minutes']} minutes of LMS content; plan {p['sessions']} block(s)."),
-              ('h3', 'Objectives'), ('ul', [f"{o['code']}: {o['text']}" for o in p['objectives']]),
+              ('h3', 'Objectives'), ('ul', [f"{o['code']}: {o['text']}" for o in p['objectives']])] + cert_blocks + [
               ('h3', 'Lesson sequence (direct instruction)'), ('ol', p['lessons']),
               ('h3', 'Warm-up'), ('p', p['warmup']),
               ('h3', 'Guided practice'), ('p', p['guided']),
@@ -205,14 +222,28 @@ def answer_key_doc(code, section=None, gb=None):
         b += [
               ('table', ['#', 'Item', 'Key', 'Objective', 'Rationale'],
                [[str(r['n']), r['stem'] + '\n' + '\n'.join(r['options']), r['key'], r['objective'], r['rationale']] for r in key['rows']])]
+    from curriculum_v2.cert import package as CERT  # pass 11: certification items, all four item types
+    rows = CERT.answer_key_rows(code)
+    if rows:
+        b += [('pagebreak',), ('h2', 'Certification-aligned items, pass 11 (Pending SME review)'),
+              ('note', 'Used by the LMS practice exams (Practice exams page). Single-answer, multiple-select, ordering and '
+                       'matching items; ordering keys list the steps in the correct order.')]
+        for r in rows:   # one block per item: typed keys are long text, which does not fit a narrow key column
+            b += [('h3', f"{r['n']}. {r['id']} — {r['type']}"), ('p', r['stem']), ('ul', r['options']),
+                  ('p', f"Key: {r['key']}"), ('p', f"Objective: {r['objective']}. Why: {r['rationale']}")]
     return {'title': f'{title} — Answer keys', 'blocks': b}
 
 
 def glossary_doc(code=None, section=None, gb=None):
     from curriculum_v2.itsup_core import PENDING
-    rows = [[t + (' †' if t in CP.GLOSSARY_NEW else ''), d] for t, d in CP.GLOSSARY]
+    from curriculum_v2.cert import package as CERT
+    have = {t.lower() for t, _d in CP.GLOSSARY}
+    extra = [(t, d) for t, d in CERT.glossary_terms() if t.lower() not in have]
+    rows = sorted([[t + (' †' if t in CP.GLOSSARY_NEW else ''), d] for t, d in CP.GLOSSARY] + [[t + ' ‡', d] for t, d in extra],
+                  key=lambda r: r[0].lower())
     return {'title': 'Glossary', 'blocks': [('h1', 'Glossary'),
-                                            ('note', f'† Added for IT Support chapters 3–13 in passes 9–10 — {PENDING.lower()}.'),
+                                            ('note', f'† Added for IT Support chapters 3–13 in passes 9–10 — {PENDING.lower()}. '
+                                                     f'‡ Added with the certification-alignment supplements in pass 11 — {PENDING.lower()}.'),
                                             ('table', ['Term', 'Definition'], rows)]}
 
 

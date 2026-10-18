@@ -286,3 +286,30 @@ def test_coverage_page_staff_only_and_cites_sources(student, instructor, admin, 
         assert html.count('class="cert-obj"') == len(OBJECTIVES)
     html = admin.get('/staff/cert-coverage?exam=N&status=partial').get_data(as_text=True)
     assert 0 < html.count('class="cert-obj"') < 25
+
+
+# ------------------------------------------------------------------------------------------- course package
+def test_course_package_shows_cert_alignment():
+    from curriculum_v2 import documents as D
+    from curriculum_v2.cert import package as CP
+    from curriculum_v2.cert.supplements import GLOSSARY
+    for code, exams in (('ITSUP', ('A1', 'A2')), ('NETOPS', ('N',)), ('CLIENT', ('A2',))):
+        syl = str(D.build('syllabus', code)['blocks'])
+        assert 'Certification alignment' in syl and 'Aligned to: ' in syl
+        for k in exams:
+            assert EXAMS[k]['doc_version'] in syl and EXAMS[k]['url'] in syl
+        assert not re.search(r'(?<!not )(?<!or )endorsed by CompTIA', syl.replace('not reviewed or endorsed by CompTIA', ''))
+        plans = str(D.build('lesson-plans', code)['blocks'])
+        assert 'Certification alignment' in plans and 'Pending SME review' in plans
+        key = str(D.build('answer-key', code)['blocks'])
+        rows = CP.answer_key_rows(code)
+        assert rows and all(r['id'] in key for r in rows)
+    glo = str(D.build('glossary', 'ITSUP')['blocks'])
+    assert all(t in glo for t, _d in GLOSSARY)
+
+
+def test_student_syllabus_has_no_answer_keys():
+    from curriculum_v2 import documents as D
+    syl = str(D.build('syllabus', 'ITSUP')['blocks'])
+    for q in CERT_ITEMS[:40]:
+        assert q['explanation'] not in syl
