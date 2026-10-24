@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.pytest_cache/
+instance/
+backups/
+narration_cache/
+archive/
+tests/
+*.db-wal
+*.db-shm
+.DS_Store

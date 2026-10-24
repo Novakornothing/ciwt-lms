@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ inst.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero tenant-hero">
+  {% if inst.logo_url %}<img class="tenant-logo mb-2" src="{{ inst.logo_url }}" alt="{{ inst.name }} logo" width="160" height="48">{% endif %}
+  <h1 class="h3 mb-1">{{ inst.name }}</h1>
+  <p class="mb-0">IT support and network operations training, hosted by {{ site_name }}.</p>
+</div>
+<section class="card card-body inst-signin" aria-labelledby="ts-h">
+  <h2 class="h5" id="ts-h">Sign in</h2>
+  {% if inst.sso.get('protocol') in ('oidc', 'saml') %}
+  <p><a class="btn btn-tenant btn-lg" href="{{ url_for('sso_login', slug=inst.slug) }}"><i class="bi bi-building" aria-hidden="true"></i> Sign in with your campus ID</a></p>
+  {% endif %}
+  <p class="mb-0"><a href="{{ url_for('login') }}">Sign in with email and password instead</a></p>
+</section>
+{% endblock %}

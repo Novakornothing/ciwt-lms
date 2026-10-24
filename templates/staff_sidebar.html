@@ -282,6 +282,10 @@
                  href="{{ url_for('tutor_instructor', section_id=s.id) }}">
                 <i class="bi bi-chat-square-text"></i><span>AI tutor</span>
               </a>
+              <a class="rail-link rail-sublink {% if ep == 'section_outcomes' and open_section_id == s.id %}active{% endif %}"
+                 href="{{ url_for('section_outcomes', section_id=s.id) }}">
+                <i class="bi bi-graph-up-arrow"></i><span>Outcomes</span>
+              </a>
               <a class="rail-link rail-sublink {% if ep in ('mastery_class','mastery_class_student') and open_section_id == s.id %}active{% endif %}"
                  href="{{ url_for('mastery_class', section_id=s.id) }}">
                 <i class="bi bi-signpost-split"></i><span>Mastery</span>

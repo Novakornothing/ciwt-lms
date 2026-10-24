@@ -1,0 +1,12 @@
+.tenant-banner{padding:.4rem 1rem;font-weight:600;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.tenant-banner img{max-height:28px;width:auto}
+.tenant-logo{max-height:48px;width:auto}
+.inst-signin{max-width:36rem}
+.inst-grid,.oc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem}
+.inst-urls dt{font-weight:600;margin-top:.5rem}
+.inst-urls dd{margin:0;overflow-wrap:anywhere}
+.inst-urls code,.inst-table code{overflow-wrap:anywhere}
+.oc-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.75rem}
+.oc-num{font-size:2rem;font-weight:700;line-height:1.1}
+.sso-picker{border-top:1px solid var(--bs-border-color);padding-top:1rem;margin-top:1rem}
+@media print{.oc-grid,.oc-kpis{display:block}.oc-grid .card,.oc-kpis .card{break-inside:avoid;margin-bottom:.5rem}}

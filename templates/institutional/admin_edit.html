@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ inst.name }} — Institutions — {{ site_name }}{% endblock %}
+
+{% block content %}
+{% with title=inst.name, lede='Branding, email domains and campus single sign-on for this institution.' %}{% include '_admin_nav.html' %}{% endwith %}
+{% if errors %}<div class="alert alert-danger" role="alert"><ul class="mb-0">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<div class="inst-grid">
+<form method="post" class="card card-body" aria-labelledby="ie-h">
+  <h2 class="h5" id="ie-h">Settings</h2>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label class="form-label" for="ie-name">Name</label><input class="form-control mb-2" id="ie-name" name="name" required value="{{ inst.name }}">
+  {% if platform %}<label class="form-label" for="ie-slug">Slug</label><input class="form-control mb-2" id="ie-slug" name="slug" required value="{{ inst.slug }}">
+  <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="ie-act" name="active" value="1"{% if inst.active %} checked{% endif %}><label class="form-check-label" for="ie-act">Active</label></div>{% endif %}
+  <label class="form-label" for="ie-dom">Email domain(s), comma-separated</label><input class="form-control mb-2" id="ie-dom" name="domain" value="{{ inst.domain or '' }}">
+  <label class="form-label" for="ie-logo">Logo URL (https:// or /static/)</label><input class="form-control mb-2" id="ie-logo" name="logo_url" value="{{ inst.logo_url or '' }}">
+  <div class="d-flex gap-3 mb-2"><div><label class="form-label" for="ie-p">Primary colour</label><input type="color" class="form-control form-control-color" id="ie-p" name="primary_color" value="{{ inst.primary_color }}"></div>
+  <div><label class="form-label" for="ie-a">Accent colour</label><input type="color" class="form-control form-control-color" id="ie-a" name="accent_color" value="{{ inst.accent_color }}"></div></div>
+  <label class="form-label" for="ie-sso">Campus SSO settings (JSON)</label>
+  <textarea class="form-control font-monospace mb-1" id="ie-sso" name="sso_config_json" rows="12" aria-describedby="ie-sso-help">{{ inst.sso_config_json or '{}' }}</textarea>
+  <p class="small text-body-secondary" id="ie-sso-help">OIDC: <code>{"protocol":"oidc","issuer":"https://login.microsoftonline.com/&lt;tenant&gt;/v2.0","client_id":"…","role_map":{"instructor":["faculty"],"admin":["lms-admins"]}}</code>. Keep the client secret out of the database with <code>SSO_{{ inst.slug|upper|replace('-', '_') }}_CLIENT_SECRET</code>.
+  SAML: <code>{"protocol":"saml","idp_entity_id":"…","idp_sso_url":"https://idp/…/SSO","idp_cert":"-----BEGIN CERTIFICATE-----…"}</code>. Options: <code>jit</code> (default true), <code>sync_roles</code>, <code>role_attribute</code>, <code>allow_idp_initiated</code>.</p>
+  <button class="btn btn-brand" type="submit">Save</button>
+</form>
+<section class="card card-body" aria-labelledby="ie-sp">
+  <h2 class="h5" id="ie-sp">Give these to campus IT</h2>
+  <dl class="inst-urls mb-0">
+    <dt>SAML SP metadata</dt><dd><a href="{{ urls.metadata }}">{{ urls.metadata }}</a></dd>
+    <dt>SAML entity ID</dt><dd><code>{{ urls.entity }}</code></dd>
+    <dt>SAML ACS (HTTP-POST)</dt><dd><code>{{ urls.acs }}</code></dd>
+    <dt>OIDC redirect URI</dt><dd><code>{{ urls.oidc_redirect }}</code></dd>
+    <dt>Branded sign-in page</dt><dd><a href="{{ urls.landing }}">{{ urls.landing }}</a></dd>
+  </dl>
+  {% if inst.sso.get('protocol') %}<p class="mt-3 mb-0"><a class="btn btn-outline-secondary btn-sm" href="{{ urls.login }}">Test campus sign-in</a></p>{% endif %}
+</section>
+</div>
+{% endblock %}

@@ -35,7 +35,8 @@ def utcnow():
     """Naive UTC now. Replaces the deprecated datetime.utcnow(); stored columns stay naive UTC."""
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
-app = Flask(__name__)
+# Persistent hosting: CIWT_INSTANCE_DIR (e.g. /var/data/ciwt/instance) keeps LTI and SSO keys on the mounted disk.
+app = Flask(__name__, instance_path=os.environ.get('CIWT_INSTANCE_DIR') or None)
 
 # ---- Product name: change it here (or set the SITE_NAME / SITE_TAGLINE env vars). Used in every
 # page <title>, the header wordmark, the footer, the sign-in page and site_email_subject().
@@ -129,10 +130,28 @@ if not real_db_allowed(as_main=(__name__ == '__main__')):
         'Set DATABASE_URL to a copy (e.g. DATABASE_URL=sqlite:////tmp/copy.db), or set CIWT_ALLOW_REAL_DB=1 '
         'if you really mean the real DB (servers: start_lms.sh / Procfile / render.yaml already do).')
 db_path = os.environ.get('DATABASE_URL', 'sqlite:///' + _default_db)
+if db_path.startswith('postgres://'):            # Render/Heroku style URL -> SQLAlchemy psycopg 3 driver
+    db_path = 'postgresql+psycopg://' + db_path[len('postgres://'):]
+elif db_path.startswith('postgresql://'):
+    db_path = 'postgresql+psycopg://' + db_path[len('postgresql://'):]
 app.config['SQLALCHEMY_DATABASE_URI'] = db_path
+if db_path.startswith('postgresql'):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 280}
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+if db_path.startswith('sqlite') and os.environ.get('CIWT_SQLITE_WAL') == '1':
+    # opt-in (production disk only): WAL lets readers run during writes; busy_timeout rides out short write locks
+    from sqlalchemy import event as _sa_event
+    with app.app_context():
+        @_sa_event.listens_for(db.engine, 'connect')
+        def _sqlite_pragmas(dbapi_conn, _rec):
+            cur = dbapi_conn.cursor()
+            cur.execute('PRAGMA journal_mode=WAL')
+            cur.execute('PRAGMA busy_timeout=5000')
+            cur.execute('PRAGMA synchronous=NORMAL')
+            cur.close()
 login_manager = LoginManager(app)
 
 # ---- CSRF: every cookie-authenticated POST (forms and fetch/JSON) must carry a token.
@@ -249,6 +268,7 @@ CSS_BUNDLE_PARTS = (
     'css/labs.css',
     'css/mastery.css',
     'css/ladder.css',
+    'css/institutional.css',
 )
 _css_bundle = {'key': None}
 _CSS_URL = re.compile(r'url\(\s*([\'"]?)([^)\'"]+)\1\s*\)')
@@ -322,6 +342,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='student')
     created_at = db.Column(db.DateTime, default=utcnow)
+    institution_id = db.Column(db.Integer, index=True)   # tenant; NULL = default institution
     enrollments = db.relationship('Enrollment', backref='user', lazy=True)
     quiz_attempts = db.relationship('QuizAttempt', backref='user', lazy=True)
     test_attempts = db.relationship('TestAttempt', backref='user', lazy=True)
@@ -406,6 +427,7 @@ class ClassSection(db.Model):
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
     is_active = db.Column(db.Boolean, default=True)
+    institution_id = db.Column(db.Integer, index=True)   # tenant; NULL = default institution
     course = db.relationship('Course')
     instructor = db.relationship('User', foreign_keys=[instructor_id])
     enrollments = db.relationship('Enrollment', backref='section', lazy=True)
@@ -730,8 +752,21 @@ def instructor_course_ids(user_id):
     return list(ids)
 
 
+def _tenant_ok(user, section):
+    """Multi-tenant isolation: staff only reach classes of their own institution (platform admins excepted)."""
+    api = app.extensions.get('ciwt_institutional')
+    return api is None or api.same_tenant(user, section)
+
+
+def _tenant_scope(query, model, user):
+    api = app.extensions.get('ciwt_institutional')
+    return query if api is None else api.scope(query, model, user)
+
+
 def instructor_can_access_section(user, section):
     if not user or not section:
+        return False
+    if not _tenant_ok(user, section):
         return False
     if user.role == 'admin':
         return True
@@ -749,7 +784,7 @@ def instructor_accessible_sections(user, course_id=None, active_only=True):
     if not user:
         return []
     if user.role == 'admin':
-        q = ClassSection.query
+        q = _tenant_scope(ClassSection.query, ClassSection, user)
         if course_id:
             q = q.filter_by(course_id=course_id)
         if active_only:
@@ -758,7 +793,7 @@ def instructor_accessible_sections(user, course_id=None, active_only=True):
     access_ids = {
         r.section_id for r in SectionInstructorAccess.query.filter_by(user_id=user.id).all()
     }
-    q = ClassSection.query.filter(
+    q = _tenant_scope(ClassSection.query, ClassSection, user).filter(
         db.or_(
             ClassSection.instructor_id == user.id,
             ClassSection.id.in_(access_ids or [0]),
@@ -1576,12 +1611,27 @@ REQUIRED_TEMPLATES = (
 def healthz():
     tpl = Path(_base) / 'templates'
     missing = [name for name in REQUIRED_TEMPLATES if not (tpl / name).is_file()]
-    ok = not missing
+    db_ok, db_err = True, None
+    try:
+        from sqlalchemy import text as _t
+        db.session.execute(_t('SELECT 1'))
+    except Exception as e:   # report, don't leak details
+        db.session.rollback()
+        db_ok, db_err = False, e.__class__.__name__
+    url = db.engine.url
+    storage = {'backend': url.get_backend_name()}
+    if url.get_backend_name() == 'sqlite' and url.database:
+        dbdir = os.path.dirname(os.path.abspath(url.database))
+        storage.update(writable=os.access(dbdir, os.W_OK),
+                       persistent_hint=dbdir.startswith(os.environ.get('CIWT_DATA_DIR', '/var/data')))
+    ok = not missing and db_ok
     return jsonify({
         'ok': ok,
         'service': 'ciwt-lms',
         'time': utcnow().isoformat() + 'Z',
         'missing_templates': missing,
+        'database': 'ok' if db_ok else 'error: ' + db_err,
+        'storage': storage,
     }), (200 if ok else 503)
 
 
@@ -5283,6 +5333,8 @@ ADMIN_TABS = [
     ('admin_curriculum', 'Curriculum', 'bi-journal-bookmark'),
     ('admin_tqi', 'Quality / TQI', 'bi-clipboard2-pulse'),
     ('admin_privacy', 'Privacy', 'bi-shield-lock'),
+    ('admin_institutions', 'Institutions', 'bi-building'),
+    ('admin_outcomes', 'Outcomes', 'bi-graph-up-arrow'),
 ]
 
 
@@ -7012,6 +7064,7 @@ def _ensure_gold_path_releases():
 
 def init_db():
     db.create_all()
+    institutional_api.ensure_schema()   # tenant columns + default institution before any User query
     _ensure_schema()
     helix_pkg.ensure_schema(db)
     gradebook_mod.ensure_schema(db)
@@ -7024,6 +7077,7 @@ def init_db():
         # checks were the generic seed sets (no objective tags, so the adaptive engine had no check items) and the
         # skills midterm/final were not synced. Run the same content syncs as an existing database.
         _sync_content()
+        institutional_api.ensure_schema()   # seeding recreates tables: re-assert the default institution
         return
     try:
         live = (HelixGazeSession.query
@@ -7143,6 +7197,14 @@ portfolio_api = portfolio_mod.register(app, db, dict(
     User=User, Course=Course, ClassSection=ClassSection, Enrollment=Enrollment, mastery=lambda: mastery_api,
     lab_api=lab_progress_api, get_lab=get_lab,
     can_access_section=lambda user, section: instructor_can_access_section(user, section),
+))
+
+# Priority 3/4: institutions (tenants), campus SSO, outcomes reporting
+import institutional as institutional_mod  # noqa: E402
+institutional_api = institutional_mod.register(app, db, dict(
+    User=User, ClassSection=ClassSection, Enrollment=Enrollment, TimeLog=TimeLog, get_lab=get_lab,
+    can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    audit=lambda action, detail='': audit(action, detail),
 ))
 
 # pass 13: first-run experience (instructor "Set up your class" checklist, one-time student introduction)

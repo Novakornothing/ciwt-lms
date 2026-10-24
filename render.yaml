@@ -1,11 +1,41 @@
+# Render Blueprint — PAID plan with a persistent disk. The free plan has no disk: its filesystem is wiped on every
+# deploy/restart, which would lose grades, mastery and lab history. Do not deploy production on the free plan.
 services:
   - type: web
     name: ciwt-lms
     runtime: python
-    plan: free
+    plan: starter                 # any paid instance type; disks require a paid plan
+    region: virginia
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    startCommand: >-
+      mkdir -p /var/data/ciwt/instance /var/data/ciwt/backups &&
+      ([ -f /var/data/ciwt/ciwt_lms.db ] || cp ciwt_lms.db /var/data/ciwt/ciwt_lms.db) &&
+      gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120
+    healthCheckPath: /healthz
+    disk:
+      name: ciwt-data
+      mountPath: /var/data
+      sizeGB: 5
     envVars:
-      # pass 13 DB guard: the server is meant to use the bundled SQLite DB (or set DATABASE_URL instead)
-      - key: CIWT_ALLOW_REAL_DB
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CIWT_DATA_DIR
+        value: /var/data/ciwt
+      - key: DATABASE_URL           # SQLite on the persistent disk (WAL). For PostgreSQL see the block below.
+        value: sqlite:////var/data/ciwt/ciwt_lms.db
+      - key: CIWT_INSTANCE_DIR      # LTI tool key + rotation keys survive deploys
+        value: /var/data/ciwt/instance
+      - key: CIWT_BACKUP_DIR
+        value: /var/data/ciwt/backups
+      - key: CIWT_SQLITE_WAL
         value: "1"
+      - key: CIWT_ALLOW_REAL_DB     # pass 13 DB guard: this server is meant to open the configured database
+        value: "1"
+      - key: FORWARDED_ALLOW_IPS
+        value: "*"
+# PostgreSQL alternative (recommended above ~300 concurrent users or for multiple instances):
+#   1. add   databases: [{name: ciwt-db, plan: basic-256mb}]
+#   2. replace the DATABASE_URL entry with   - key: DATABASE_URL\n        fromDatabase: {name: ciwt-db, property: connectionString}
+#   3. keep the disk for CIWT_INSTANCE_DIR (keys) or set LTI_PRIVATE_KEY instead, and raise --workers.

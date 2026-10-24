@@ -1,0 +1,39 @@
+# Single-host deployment (school server, DoD-ready VM, any Docker host).
+#   cp .env.example .env   # set SECRET_KEY at minimum
+#   docker compose up -d --build
+#   docker compose exec web python tools/backup_db.py      # on-demand backup into the volume
+# SQLite on the named volume by default; uncomment the db service + DATABASE_URL for PostgreSQL.
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"     # publish behind your TLS reverse proxy (nginx/Caddy/IIS ARR); not directly
+    env_file: .env
+    environment:
+      CIWT_DATA_DIR: /var/data/ciwt
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////var/data/ciwt/ciwt_lms.db}
+      CIWT_INSTANCE_DIR: /var/data/ciwt/instance
+      CIWT_SQLITE_WAL: "1"
+      FORWARDED_ALLOW_IPS: "*"
+    volumes:
+      - ciwt-data:/var/data/ciwt
+  backup:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////var/data/ciwt/ciwt_lms.db}
+      CIWT_BACKUP_DIR: /var/data/ciwt/backups
+      CIWT_BACKUP_KEEP: "14"
+    volumes:
+      - ciwt-data:/var/data/ciwt
+    entrypoint: ["/bin/sh", "-c", "while true; do python tools/backup_db.py || echo BACKUP FAILED; sleep 86400; done"]
+  # db:
+  #   image: postgres:16
+  #   restart: unless-stopped
+  #   environment: {POSTGRES_DB: ciwt, POSTGRES_USER: ciwt, POSTGRES_PASSWORD: change-me}
+  #   volumes: [pg-data:/var/lib/postgresql/data]
+volumes:
+  ciwt-data:
+  # pg-data:

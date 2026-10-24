@@ -28,6 +28,17 @@
         <button type="submit" class="btn btn-brand btn-lg w-100">Sign in</button>
       </form>
       <p class="small mt-3 mb-0 text-muted">Your account decides where you land, whichever option you picked.</p>
+      {% set _sso = sso_institutions() %}{% if _sso %}
+      <form method="get" action="{{ url_for('sso_start') }}" class="sso-picker" aria-labelledby="ssoH">
+        <h2 class="h6" id="ssoH">Sign in with your campus ID</h2>
+        <label class="form-label small" for="ssoTenant">Your college or command</label>
+        <div class="d-flex gap-2">
+          <select class="form-select" id="ssoTenant" name="tenant" required>
+            {% for i in _sso %}<option value="{{ i.slug }}"{% if tenant_brand and tenant_brand.slug == i.slug %} selected{% endif %}>{{ i.name }}</option>{% endfor %}
+          </select>
+          <button class="btn btn-outline-secondary text-nowrap" type="submit">Continue</button>
+        </div>
+      </form>{% endif %}
     </div>
   </div>
   <details class="entry-demo mt-3">

@@ -37,6 +37,7 @@
   <noscript><link href="{{ url_for('static', filename='vendor/bootstrap-icons/1.11.3/bootstrap-icons-subset.css') }}" rel="stylesheet"></noscript>
   <meta name="theme-color" content="#060d18">
   <script>try{if(localStorage.getItem('ciwt-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+  {% if tenant_brand %}<link rel="stylesheet" href="{{ url_for('tenant_css', slug=tenant_brand.slug) }}">{% endif %}
   {% block head %}{% endblock %}
 </head>
 {% set ui_role = acting_role if acting_role is defined and acting_role else (current_user.role if current_user.is_authenticated else 'student') %}
@@ -136,6 +137,7 @@
     </div>
     {% endif %}
   </header>
+  {% if tenant_brand %}<div class="tenant-banner" role="note">{% if tenant_brand.logo_url %}<img src="{{ tenant_brand.logo_url }}" alt="" width="84" height="28">{% endif %}<span>{{ tenant_brand.name }}</span></div>{% endif %}
   <main id="main" class="container-fluid px-3 px-md-4 px-xl-4 py-3 py-md-4 flex-grow-1 app-main" tabindex="-1">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}

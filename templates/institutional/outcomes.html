@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Outcomes — {{ scope_label }} — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/tutor.css') }}">{% endblock %}
+{% block content %}
+{% if admin_tab %}{% with title='Institutional outcomes', lede=scope_label %}{% include '_admin_nav.html' %}{% endwith %}
+{% else %}<div class="page-hero"><h1 class="h3 mb-1">Outcomes — {{ scope_label }}</h1><p class="mb-0">Measured from this class's recorded activity.</p></div>{% endif %}
+<div class="d-flex flex-wrap gap-2 mb-3 no-print">
+  <a class="btn btn-outline-secondary btn-sm" href="?{% if sel %}institution={{ sel }}&amp;{% endif %}format=csv"><i class="bi bi-download" aria-hidden="true"></i> Download CSV</a>
+  <button class="btn btn-outline-secondary btn-sm" type="button" data-print><i class="bi bi-printer" aria-hidden="true"></i> Print report</button>
+  {% if institutions %}<form method="get" class="d-flex gap-2"><label class="visually-hidden" for="oc-inst">Institution</label>
+    <select class="form-select form-select-sm" id="oc-inst" name="institution"><option value="">All institutions</option>{% for i in institutions %}<option value="{{ i.id }}"{% if sel == i.id %} selected{% endif %}>{{ i.name }}</option>{% endfor %}</select>
+    <button class="btn btn-sm btn-outline-secondary" type="submit">Show</button></form>{% endif %}
+</div>
+{% if rep.demo %}<div class="alert alert-warning" role="note"><strong>Contains demo seed data.</strong> {{ rep.demo_students }} of {{ rep.students }} students are seeded demo accounts{% if rep.helix_demo %}, and Helix attention data includes demo sessions{% endif %}. Do not report these figures as real outcomes.</div>{% endif %}
+<p class="small">{{ rep.students }} students in {{ rep.sections|length }} class{{ '' if rep.sections|length == 1 else 'es' }}. Every percentage shows its denominator; "—" means no data was recorded. Nothing is estimated or filled in.</p>
+<div class="oc-kpis mb-3">
+  <div class="card card-body"><div class="small">Objectives right first time</div><div class="oc-num">{{ rep.mastery.pre_pct if rep.mastery.pre_pct is not none else '—' }}{% if rep.mastery.pre_pct is not none %}%{% endif %}</div><div class="small text-body-secondary">of {{ rep.mastery.pairs }} student-objective pairs</div></div>
+  <div class="card card-body"><div class="small">Objectives mastered now</div><div class="oc-num">{{ rep.mastery.cur_pct if rep.mastery.cur_pct is not none else '—' }}{% if rep.mastery.cur_pct is not none %}%{% endif %}</div><div class="small text-body-secondary">same {{ rep.mastery.pairs }} pairs</div></div>
+  <div class="card card-body"><div class="small">Struggles resolved by the explanation ladder</div><div class="oc-num">{{ rep.ladder.resolved_pct if rep.ladder.resolved_pct is not none else '—' }}{% if rep.ladder.resolved_pct is not none %}%{% endif %}</div><div class="small text-body-secondary">of {{ rep.ladder.struggles }} struggles</div></div>
+  <div class="card card-body"><div class="small">Labs: diagnosed before changing</div><div class="oc-num">{{ rep.labs.diagnosed_first_pct if rep.labs.diagnosed_first_pct is not none else '—' }}{% if rep.labs.diagnosed_first_pct is not none %}%{% endif %}</div><div class="small text-body-secondary">of {{ rep.labs.analysed }} analysed labs</div></div>
+</div>
+<div class="oc-grid">
+<section class="card card-body" aria-labelledby="oc-l"><h2 class="h5" id="oc-l">Which explanation resolved the struggle</h2>
+  {% for r in rep.ladder.rungs %}<div class="small">{{ r.name }} ({{ r.rung }}): {{ r.n }}{% if r.pct is not none %} — {{ r.pct }}%{% endif %}</div>
+  <div class="pf-bar mb-1" role="img" aria-label="{{ r.name }} {{ r.pct or 0 }} percent"><span class="pf-w-{{ ((r.pct or 0) // 5) * 5 }}"></span></div>{% endfor %}
+  <p class="small text-body-secondary mb-0">{{ rep.ladder.exhausted }} struggles went through every rung without resolving (sent to the instructor).</p></section>
+<section class="card card-body" aria-labelledby="oc-b"><h2 class="h5" id="oc-b">Lab process proficiency</h2>
+  <p class="mb-1">Completed labs: {{ rep.labs.completed }}, of which real Linux VM: {{ rep.labs.vm_completed }}</p>
+  <p class="mb-1">Students with a real-VM lab: {{ rep.labs.vm_students }}{% if rep.labs.vm_student_pct is not none %} ({{ rep.labs.vm_student_pct }}%){% endif %}</p>
+  <p class="mb-1">Diagnosed before changing: {{ rep.labs.diagnosed_first }} of {{ rep.labs.analysed }}</p>
+  <p class="mb-0">Verified before submitting: {{ rep.labs.verified }} of {{ rep.labs.analysed }}</p></section>
+<section class="card card-body" aria-labelledby="oc-c"><h2 class="h5" id="oc-c">Certification domain readiness</h2>
+  {% for e in rep.cert %}<h3 class="h6 mt-2">{{ e.name }} — {{ e.pct }}%</h3>
+    {% for dm in e.domains %}<div class="small">{{ dm.domain }} {{ dm.name }}: {{ dm.level }} ({{ dm.pct }}%, {{ dm.objectives }} estimates)</div>
+    <div class="pf-bar mb-1" role="img" aria-label="{{ dm.name }} {{ dm.pct }} percent"><span class="pf-w-{{ (dm.pct // 5) * 5 }}"></span></div>{% endfor %}
+  {% else %}<p class="mb-0">No mastery evidence on exam-mapped objectives yet.</p>{% endfor %}
+  <p class="small text-body-secondary mt-2 mb-0">Mean mastery estimate on objectives mapped to each domain. Not a predicted exam score; not endorsed by CompTIA.</p></section>
+<section class="card card-body" aria-labelledby="oc-g"><h2 class="h5" id="oc-g">Grades and time on task</h2>
+  {% if rep.grades.n %}<p class="mb-1">Course grade: mean {{ rep.grades.mean }}, median {{ rep.grades.median }} ({{ rep.grades.n }} students graded)</p>
+  {% for h in rep.grades.histogram %}<div class="small">{{ h.label }}: {{ h.n }}</div><div class="pf-bar mb-1" role="img" aria-label="{{ h.label }}: {{ h.n }} students"><span class="pf-w-{{ (h.pct // 5) * 5 }}"></span></div>{% endfor %}
+  {% else %}<p class="mb-1">No graded work yet.</p>{% endif %}
+  <p class="mb-0 mt-2">Study time logged: {{ rep.time.total_hours }} h across {{ rep.time.students }} students{% if rep.time.median_hours is not none %} (median {{ rep.time.median_hours }} h each){% endif %}.</p></section>
+</div>
+{% if rep.sections|length > 1 %}
+<section class="card card-body mt-3" aria-labelledby="oc-s"><h2 class="h5" id="oc-s">By class</h2>
+<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th scope="col">Class</th><th scope="col">Students</th><th scope="col">Objectives mastered</th><th scope="col">Mean grade</th></tr></thead><tbody>
+{% for r in rep.sections %}<tr><td>{{ r.section.name }}</td><td>{{ r.students }}</td><td>{{ r.mastered_pct if r.mastered_pct is not none else '—' }}{% if r.mastered_pct is not none %}% of {{ r.pairs }}{% endif %}</td><td>{{ r.mean_grade if r.mean_grade is not none else '—' }}</td></tr>{% endfor %}
+</tbody></table></div></section>{% endif %}
+<section class="card card-body mt-3" aria-labelledby="oc-o"><h2 class="h5" id="oc-o">Objective mastery, first attempt vs now</h2>
+{% if rep.mastery.objectives %}<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th scope="col">Objective</th><th scope="col">Pairs</th><th scope="col">Right first time</th><th scope="col">Mastered now</th></tr></thead><tbody>
+{% for o in rep.mastery.objectives %}<tr><td><strong>{{ o.id }}</strong> {{ o.text }}</td><td>{{ o.pairs }}</td><td>{{ o.pre_pct }}%</td><td>{{ o.cur_pct }}%</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p class="mb-0">No answered checks yet.</p>{% endif %}
+<p class="small text-body-secondary mt-2 mb-0">"Right first time" = the student's first answered item on the objective was correct. "Mastered now" = the adaptive engine's current status. Generated {{ now_str if now_str else '' }}.</p></section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/portfolio.js') }}" defer></script>{% endblock %}

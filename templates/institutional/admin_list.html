@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Institutions — {{ site_name }}{% endblock %}
+
+{% block content %}
+{% with title='Institutions & campus SSO', lede='Each college or command is a tenant: its people, classes, grades and mastery data are visible only to its own staff.' %}{% include '_admin_nav.html' %}{% endwith %}
+{% if errors %}<div class="alert alert-danger" role="alert"><ul class="mb-0">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<div class="table-responsive card mb-3"><table class="table table-sm mb-0 inst-table">
+  <thead><tr><th scope="col">Institution</th><th scope="col">Slug</th><th scope="col">Sign-in</th><th scope="col">People</th><th scope="col">Classes</th><th scope="col">Status</th></tr></thead>
+  <tbody>{% for r in rows %}<tr>
+    <td><a href="{{ url_for('admin_institution_edit', inst_id=r.inst.id) }}">{{ r.inst.name }}</a></td>
+    <td><code>{{ r.inst.slug }}</code></td>
+    <td>{{ (r.inst.sso.get('protocol') or 'password')|upper }}</td>
+    <td>{{ r.users }}</td><td>{{ r.sections }}</td>
+    <td>{% if r.inst.active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Off</span>{% endif %}</td>
+  </tr>{% endfor %}</tbody></table></div>
+{% if platform %}
+<section class="card card-body" aria-labelledby="ni-h">
+  <h2 class="h5" id="ni-h">Add an institution</h2>
+  <form method="post" class="row g-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="col-md-5"><label class="form-label" for="ni-name">Name</label><input class="form-control" id="ni-name" name="name" required value="{{ draft.name if draft else '' }}"></div>
+    <div class="col-md-3"><label class="form-label" for="ni-slug">Slug (web address)</label><input class="form-control" id="ni-slug" name="slug" required pattern="[a-z0-9-]{3,40}" value="{{ draft.slug if draft else '' }}"></div>
+    <div class="col-md-4"><label class="form-label" for="ni-dom">Email domain(s)</label><input class="form-control" id="ni-dom" name="domain" placeholder="college.edu" value="{{ draft.domain if draft and draft.domain else '' }}"></div>
+    <input type="hidden" name="active" value="1"><input type="hidden" name="sso_config_json" value="{}">
+    <div class="col-12"><button class="btn btn-brand" type="submit">Create</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
