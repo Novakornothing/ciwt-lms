@@ -62,6 +62,13 @@ When no one is struggling the card says so, and the class ladder page says "noth
 - Contact & Support (`novakornothing@gmail.com`, configurable with `NOVAK_CONTACT_EMAIL`) is in every page footer, on `/contact` (with an instructor and student FAQ) and on each section's Setup page.
 - novakornothing.com shows the hero, a privacy note, an FAQ and a contact section (preview at `/landing` or `/?landing=1`).
 
+## 5b. Option B practice tools (Pending SME review)
+- **Exam-Day Readiness Simulator.** Students open it from their section page (`/student/section/<id>/exam-sim`): pick 220-1201, 220-1202 or N10-009, full or sprint, practice or strict exam timing. PBQs come first (they can skip and return), questions can be flagged, and the result shows a 100–900 scaled score against the pass bar with a Ready / Borderline / Needs remediation badge and links to the lesson and ladder rung for each weak domain. You see every sitting at `/instructor/section/<id>/exam-sim`; use Borderline/Remediate badges to plan the week before a voucher.
+- **Live Windows 11 / IOS labs.** All 66 Windows and Cisco IOS command labs answer show/diagnostic commands from the lab's live state, so students see the fault and then the fix in the output.
+- **Packet / Frame Walk.** On 49 network labs, "Trace Packet Flow" walks an ARP, ping, DNS or HTTPS packet hop by hop and stops at the hop that fails. Ask students to trace before and after their fix.
+- **Hardware / cable bench.** `hw-board`, `hw-pc-build` and `hw-cables` include an SVG bench for board layout and T568A/T568B straight, crossover and split-pair wiring.
+- **Explanation ladders.** All 539 sections have their own four-rung ladder (plain, analogy, visual, try-it), so a struggling student always gets a fresh explanation rather than a reused or templated one.
+
 ## 6. End of term: pull the outcomes report
 - **Outcomes** (`/instructor/section/<id>/outcomes`) lists one row per course objective with:
   - the CompTIA objective it maps to

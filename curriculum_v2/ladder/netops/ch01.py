@@ -319,66 +319,8 @@ STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladde
     '1.4': {'the-scenario': '2564c7ec3e2c', 'your-turn-scaffolded-checklist': '743d0fd008ce', 'common-beginner-mistakes': '570dfc754ca2', 'check-your-understanding': 'cdda2cb3f068'},
 }
 
-# ---- pass 21: former skips laddered from lesson data (Pending SME review) ----
-from curriculum_v2.ladder.netops import _gen as _G  # noqa: E402
+# Option B pass 3: the practice/capstone blocks, core-concepts and depth signposts are bespoke ladders (_p3n1.py).
+from curriculum_v2.ladder.netops._p3 import wire as _wire  # noqa: E402
+from curriculum_v2.ladder.netops._p3n1 import SECS as _P3  # noqa: E402
 
-_DATA = {
-    '1.2': dict(
-        title='Addressing Ideas', an='neighbourhoods', ab='the gateway is the road out',
-        case='Three laptops in room 12 can print to the local printer but cannot reach any website.',
-        steps=[('09:02', 'ipconfig /all on one laptop', 'address and mask fine, gateway blank'),
-               ('09:04', 'Compare with a working PC next door', 'working PC has gateway 10.1.12.1'),
-               ('09:06', 'Ping 10.1.12.1 from the laptop', 'replies 4/4'),
-               ('09:08', 'Check the DHCP scope options', 'router option missing for room 12')],
-        esc='room 12 only, three laptops; local OK, no gateway in lease; scope option 3 missing; DHCP admin access needed.',
-        status='Room 12 laptops cannot reach the internet; local printing works. The cause is a missing gateway setting; next update at 09:30.',
-        neg='“Ping to the printer 10.1.12.40: 4/4” shows local delivery works.',
-        par='typing a static address, a new DNS server and a different mask at once on the same laptop.',
-        good=['Gateway blank in ipconfig, 09:02', 'Ping printer 4/4, 09:03'], bad=['Fiddled with settings, works now', 'Changed IP and DNS together'],
-        plist=[('Run ipconfig /all', 'address, mask, gateway, DNS all present', 'missing field named'),
-               ('Check for 169.254', 'no APIPA address', 'APIPA: no DHCP lease'),
-               ('Ping the gateway', 'replies', 'gateway unreachable'),
-               ('Ping a remote IP', 'replies', 'no route beyond gateway'),
-               ('Resolve a name', 'answer returned', 'DNS failing')],
-        up='a DHCP lease or correct static settings.', down='every remote connection when the gateway is missing.',
-        user='Your laptop can talk to things in this room but has not been told the way out; we are fixing that setting.',
-        mist=['Chasing DNS while the gateway is blank', 'Typing random static addresses'],
-        escw='the DHCP scope or router is the cause and you have no admin access.',
-        scen=('Local printing works but no websites load.', ['Gateway missing', 'DNS server missing', 'Mask wrong'],
-              'ping the gateway IP, then a remote IP, then a name', 'which of the three tests failed first, with times.'),
-        lab=('win-ipconfig', 'Read ipconfig /all and name the missing or wrong field.')),
-    '1.3': dict(
-        title='TCP versus UDP', an='tracked mail', ab='TCP tracks; UDP moves on',
-        case='After a firewall change, staff can browse the web but softphone calls have no audio.',
-        steps=[('14:00', 'Confirm which calls fail', 'all external calls, one-way silent'),
-               ('14:03', 'Ping the SIP server', 'replies, so the host is reachable'),
-               ('14:05', 'Test TCP 5060 to the SIP server', 'connects; signalling works'),
-               ('14:08', 'Compare firewall rule with media UDP range', 'UDP media ports not allowed')],
-        esc='all external calls, no audio since 13:40 change; signalling TCP OK, UDP media blocked by new rule; firewall owner needed.',
-        status='Phone calls connect but have no sound. We traced it to a firewall rule change and the firewall team is on it; next update at 14:30.',
-        neg='“TCP 5060 to SIP server connects” shows signalling is fine.',
-        par='opening every UDP port and also restarting the phone system in the same minute.',
-        good=['TCP 5060 connects, 14:05', 'UDP media range not in rule'], bad=['Opened all ports, calls OK', 'Restarted things, unsure which'],
-        plist=[('Name the app’s protocol and port', 'TCP or UDP and port known', 'unknown service; ask the owner'),
-               ('Ping the server', 'replies', 'host unreachable'),
-               ('Test the TCP port', 'connects', 'TCP port blocked or closed'),
-               ('Check the UDP rule', 'range allowed', 'UDP range blocked'),
-               ('Verify with the user', 'call has audio', 'still silent; escalate')],
-        up='a firewall rule that matches both protocol and port.', down='the app’s feature that uses the blocked protocol.',
-        user='Calls connect but sound is being stopped by a security setting; the team that owns it is changing it now.',
-        mist=['Treating ping as proof the app works', 'Opening TCP when the app needs UDP'],
-        escw='the firewall rule belongs to another team.',
-        scen=('Calls connect with no audio.', ['UDP media blocked', 'Server down', 'Wrong TCP port'],
-              'test TCP signalling, then check UDP media rule', 'protocol, port and rule name, with times.'),
-        lab=('w11-powershell-net', 'Test a TCP port with Test-NetConnection and note what ping cannot show.')),
-}
-_CAP = dict(
-    title='layer thinking', short='User cannot reach a website', an='a doctor’s triage', ab='check breathing before the broken finger',
-    scen='a user cannot reach a website, and you must say which layer you are testing with each tool.',
-    why='It trains you to name a layer for every test and stop at the first hard failure.',
-    steps=['Check the link light', 'Run ipconfig', 'Ping the gateway', 'Resolve the name', 'Open the site port'],
-    layer=['physical', 'network config', 'network', 'application (DNS)', 'transport/application'],
-    items=['Each test labelled with a layer', 'Stop at first hard failure', 'Notes readable'],
-    mist=[('Calling everything “network down”', 'Name the layer that failed'), ('Testing only the website URL', 'Test lower layers first')],
-    lab=('win-dns-break', 'Work up the layers and label each test.'))
-_G.apply(LESSONS, MISCONCEPTIONS, CHAPTER, _DATA, _CAP, 'NO-1.1')
+_wire(LESSONS, MISCONCEPTIONS, _P3, 'NO-1.1')

@@ -118,3 +118,21 @@ def B(label, sid, heading, obj, src, qs, r1, r2, r3, caption, r4, widget, lab):
     ent['r0_sha'] = STAMPS[f'{label}|{sid}']
     ent['note'] = 'Option B pass 2: bespoke ladder (was same_as).'
     return ent
+
+
+# ---------------------------------------------------------------- Option B pass 3
+# P3 builds the bespoke ladders that replaced the templated NETOPS practice/capstone blocks and the last same_as entries
+# (ITSUP ch2, NETOPS core-concepts / network-operations-depth). Heading, objective and r0 stamp come from _p3_meta.
+P3_NOTE = 'Option B pass 3: bespoke ladder (was templated or same_as).'
+
+
+def P3(course, label, sid, src, qs, r1, r2, r3, caption, r4, widget, lab):
+    from curriculum_v2.ladder.itsup._p3_meta import META
+    sha, heading, obj, _title = META[f'{course}|{label}|{sid}']
+    assert len(qs) == 5, (course, label, sid)
+    for i, q in enumerate(qs):
+        _balanced(f'{course} {label} {sid} check {i}', q)
+    ent = X(heading, obj, src, qs, r1_html(*r1), r2_html(*r2), r3_html(tuple(r3) + (caption,)), f'<p>{r4}</p>', widget, lab)
+    ent['r0_sha'] = sha
+    ent['note'] = P3_NOTE
+    return ent

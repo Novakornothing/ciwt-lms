@@ -1,9 +1,10 @@
 """Explanation ladder — ITSUP chapter 2 (Motherboards, CPU, Memory, POST, Inventory). Pending SME review.
 
-Refinement pass 20. Distinct concept sections are laddered; depth and teach-block sections that restate a core section
-of the same lesson use same_as.
+Refinement pass 20. Option B pass 3: the depth and teach-block sections that used to be same_as now have their own
+bespoke ladders (_p3c02.py).
 """
 from curriculum_v2.ladder.itsup._lk import M, P, X
+from curriculum_v2.ladder.itsup._p3c02 import SECS as _P2
 from curriculum_v2.ladder.schema import order, reveal, same_as, sort
 
 SCHEMA = 1
@@ -67,8 +68,7 @@ LESSONS = {
             '<p>Sort each part by what it does.</p>',
             sort('Part to job', {'Thinks': ['CPU'], 'Works now': ['RAM'], 'Keeps files': ['SSD', 'HDD'], 'Feeds power': ['PSU']},
                  'Every part has one main job.'), BUILD),
-        'what-form-factor-means-if-you-have-never-heard-it': same_as('1-form-factor-is-the-hole-pattern', 'What “form factor” means if you have never heard it',
-                                                                       'The same idea for beginners: size and screw pattern.'),
+        'what-form-factor-means-if-you-have-never-heard-it': _P2[('2.1', 'what-form-factor-means-if-you-have-never-heard-it')],
         '1-form-factor-is-the-hole-pattern': X('1. Form factor is the hole pattern', 'IT-2.1', S1, [
             ('A board is 9.6 × 9.6 in. Which form factor?', 'microATX', 'Full ATX', 'Mini-ITX',
              'ATX is 12 × 9.6 in, Mini-ITX about 6.7 in square; 9.6 × 9.6 is microATX.', FF, FF),
@@ -137,10 +137,8 @@ LESSONS = {
             sort('Symptom to connector', {'8-pin EPS': ['Instant off, no POST'], 'Front-panel header': ['Power button does nothing'],
                                           'SATA power': ['Drive not detected, data cable fine'], '24-pin ATX': ['No fans, no LEDs at all']},
                  'Check the connection before blaming the part.'), BUILD),
-        'what-a-motherboard-is-for': same_as('1-form-factor-is-the-hole-pattern', 'What a motherboard is for',
-                                             'A depth restatement of the board’s role and form factors.'),
-        'teach-block-boards-and-boxes': same_as('1-form-factor-is-the-hole-pattern', 'Teach block — boards and boxes',
-                                                'Teaching block for the same form-factor and socket ideas.'),
+        'what-a-motherboard-is-for': _P2[('2.1', 'what-a-motherboard-is-for')],
+        'teach-block-boards-and-boxes': _P2[('2.1', 'teach-block-boards-and-boxes')],
     },
     '2.2': {
         'firmware-before-windows-from-zero': X('Firmware before Windows — from zero', 'IT-2.2', S2, [
@@ -230,8 +228,7 @@ LESSONS = {
             sort('Symptom to setting', {'Boot order': ['“No OS found”, disk healthy'], 'XMP profile': ['Random POST failures'],
                                         'Internal video': ['Blank screen, no GPU'], 'CSM/Legacy': ['UEFI disk will not boot']},
                  'Settings can fake failures.'), HW),
-        'firmware-is-not-windows': same_as('firmware-before-windows-from-zero', 'Firmware is not Windows',
-                                           'Depth restatement: firmware runs before the OS.'),
+        'firmware-is-not-windows': _P2[('2.2', 'firmware-is-not-windows')],
     },
     '2.3': {
         '1-socket-first': X('1. Socket first', 'IT-2.1', S3, [
@@ -294,7 +291,7 @@ LESSONS = {
             '<p>Sort each finding into its cause.</p>',
             sort('Finding to cause', {'Support list / firmware': ['CPU not listed in firmware'], 'Cooling': ['0 RPM, shuts down hot', 'Throttles under load', 'Paste missing']},
                  'Check identity, detection and cooling.'), HW),
-        'cpu-cooler-header': same_as('2-cooler-is-part-of-the-cpu', 'CPU, cooler, header', 'Depth restatement of cooler, paste and header.'),
+        'cpu-cooler-header': _P2[('2.3', 'cpu-cooler-header')],
         'motherboards-cpu-architectures-firmware-security-and-add-on': X('Motherboards, CPU architectures, firmware security and add-on cards', 'IT-2.1', S3, [
             ('Which CPU architecture do most phones and some laptops use?', 'ARM', 'x86 only', 'PowerPC only',
              'ARM dominates phones and appears in some laptops; x64 is Intel/AMD.', SF, None),
@@ -401,7 +398,7 @@ LESSONS = {
             ['Power off, unplug, strap on.', 'Reseat both sticks.', 'Test one known-good stick in A2.', 'Clear firmware only per procedure.', 'Record each result.'],
             '<p>Order the tests.</p>',
             order('RAM isolation', ['Reseat both', 'One known-good in A2', 'Clear firmware if procedure', 'Record results'], 'Cheapest test first.'), HW),
-        'memory-generation-and-channels': same_as('2-channels', 'Memory generation and channels', 'Depth restatement of generation and channel rules.'),
+        'memory-generation-and-channels': _P2[('2.4', 'memory-generation-and-channels')],
         'reference-memory-generations-and-form-factors': X('Reference — memory generations and form factors', 'IT-2.3', S4, [
             ('Desktop DDR4 and DDR5 modules both have how many pins?', '288', '260', '204',
              'Both are 288-pin DIMMs, with the notch in a different place.', NOTCH, None),
@@ -491,8 +488,8 @@ LESSONS = {
             '<p>Sort each drive into its word.</p>',
             sort('Storage word', {'storage nvme': ['M.2 stick with end screw', 'Short slot on the board'], 'storage sata': ['2.5 in drive in tray', 'L-shaped data cable']},
                  'Interface, not brand.'), HW),
-        'post-order': same_as('1-order-of-work', 'POST order', 'Depth restatement of the power → POST → display order.'),
-        'teach-block-three-neighborhoods': same_as('1-order-of-work', 'Teach block — three neighborhoods', 'Teaching block for the same ordered isolation.'),
+        'post-order': _P2[('2.5', 'post-order')],
+        'teach-block-three-neighborhoods': _P2[('2.5', 'teach-block-three-neighborhoods')],
     },
     '2.6': {
         '1-about-is-the-polite-inventory': X('1. About is the polite inventory', 'IT-2.4', S6, [
@@ -578,8 +575,8 @@ LESSONS = {
             ['Name and edition/build.', 'RAM the OS sees vs sticks fitted.', 'list disk handles.', '“No wipe.”', 'Next step.'],
             '<p>Write the four-line inventory.</p>',
             reveal('Four-line inventory for a PC with 8 GB in About but two 8 GB sticks?', '“PC118, Win 11 Pro 25H2. About 8 GB vs 2×8 GB DDR5 fitted → reseat/firmware check. Disk 0 512 GB GPT OS. No wipe; next: reseat DIMMs.”'), ABOUT),
-        'inventory-before-you-change-the-box': same_as('4-note-that-ties-block-1-to-block-2', 'Inventory before you change the box', 'Depth restatement of the inventory note.'),
-        'teach-block-inventory-is-a-document': same_as('4-note-that-ties-block-1-to-block-2', 'Teach block — inventory is a document', 'Teaching block for the same four-line inventory.'),
+        'inventory-before-you-change-the-box': _P2[('2.6', 'inventory-before-you-change-the-box')],
+        'teach-block-inventory-is-a-document': _P2[('2.6', 'teach-block-inventory-is-a-document')],
     },
 }
 
