@@ -384,7 +384,7 @@ def test_who_needs_me_links_and_message_draft_is_not_sent(student2, instructor, 
         assert mod.StaffMessage.query.count() == n_msgs                   # a draft only: nothing is sent
 
 
-def test_lessons_without_ladder_content_are_unchanged(student, instructor, mod, app, lesson11):
+def test_lessons_without_ladder_content_are_unchanged(student, instructor, mod, app, lesson11, monkeypatch):
     """No ladder entries for the lesson (or staff viewing, or the ladder off): the lesson body is exactly the classic
     render_lesson output, no ladder markup or script."""
     from curriculum_v2.ladder import sections as LSEC
@@ -400,6 +400,13 @@ def test_lessons_without_ladder_content_are_unchanged(student, instructor, mod, 
                     break
             if plain:
                 break
+        if plain is None:   # every ITSUP lesson is laddered now: hide one lesson's entries to exercise the no-ladder path
+            m = mod.Module.query.filter_by(course_id=c.id).order_by(mod.Module.order.desc()).first()
+            les = mod.Lesson.query.filter_by(module_id=m.id).order_by(mod.Lesson.order).first()
+            label = LSEC.lesson_label(les.title)
+            for k in [k for k in LD.ladder() if k[0] == 'ITSUP' and k[1] == label]:
+                monkeypatch.delitem(LD.ladder(), k)
+            plain = (m.id, les.id, les.content)
         expected = mod._INSTRUCTOR_NOTE_RE.sub('', mod.render_lesson_html(plain[2]))
     html = student.get(f'/student/module/{s}/{plain[0]}/lesson/{plain[1]}').get_data(as_text=True)
     assert 'class="ladder' not in html and 'js/ladder.js' not in html and expected in html
