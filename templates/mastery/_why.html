@@ -7,7 +7,7 @@
   <dl class="why-grid mb-1">
     <dt>Where stuck</dt><dd>{% for s in w.stuck %}<span class="why-pill why-stuck">{% if s.url %}<a href="{{ s.url }}">{{ s.text }}</a>{% else %}{{ s.text }}{% endif %} — {{ s.detail }}</span>{% else %}<span class="small">Nothing open right now</span>{% endfor %}</dd>
     <dt>What clicked</dt><dd>{% if w.clicked.best_text %}{{ w.clicked.best_text }}{% else %}<span class="small">No resolved struggle yet</span>{% endif %}</dd>
-    <dt>Signals</dt><dd>{% for t in w.lab_tags %}<a class="why-pill why-lab" href="{{ t.url }}">{{ t.text }}</a>{% else %}<span class="why-pill">Lab: no flags</span>{% endfor %}{% for t in w.pills.helix %}<span class="why-pill why-helix">{{ t }}</span>{% endfor %}</dd>
+    <dt>Signals</dt><dd>{% for t in w.lab_tags %}<a class="why-pill why-lab" href="{{ t.url }}">{{ t.text }}</a>{% else %}<span class="why-pill">Lab: no flags</span>{% endfor %}{% for t in w.pills.helix %}<span class="why-pill why-helix">{{ t }}</span>{% endfor %}{% for t in w.pills.exam_sim %}{% if w.exam_sim %}<a class="why-pill why-exam" href="{{ url_for('exam_sim_result', section_id=section.id, attempt_id=w.exam_sim.att.id) }}">{{ t }}</a>{% endif %}{% endfor %}</dd>
     <dt>Next action</dt><dd class="d-flex flex-wrap gap-2">{% for a in w.actions %}
       {% if a.form %}<form method="post" action="{{ a.url }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="form" value="bypass">
         <input type="hidden" name="user_id" value="{{ w.user.id }}"><input type="hidden" name="lesson_id" value="{{ a.lesson_id }}">

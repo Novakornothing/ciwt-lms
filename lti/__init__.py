@@ -547,6 +547,45 @@ def register(app, db, deps, csrf):
             r.lineitem_url = (cr.json() or {}).get('id')
         return r.lineitem_url
 
+    def send_line_scores(section, actor, label, tag, scores, maximum=900.0):
+        """Option B pass 5: push one extra gradebook column (e.g. the Exam-Day Simulator) to every LTI context of the
+        class that granted line-item + score scopes. scores: {user_id: (score, comment)}. Returns (sent, failed, notes)."""
+        sent = failed = 0
+        notes = []
+        for c in m.LtiContext.query.filter_by(section_id=section.id).all():
+            p = db.session.get(m.LtiPlatform, c.platform_id)
+            scopes = (c.ags_scopes or '').split()
+            if not p or not p.active or not c.lineitems_url or core.SCOPE['score'] not in scopes \
+                    or core.SCOPE['lineitem'] not in scopes:
+                notes.append(f'{c.title or c.context_id}: the LMS did not grant line-item and score scopes.')
+                continue
+            links = {l.user_id: l for l in m.LtiUserLink.query.filter_by(platform_id=p.id) if l.user_id in scores}
+            try:
+                tok = access_token(p, [core.SCOPE['lineitem'], core.SCOPE['score']])
+                sep = '&' if '?' in c.lineitems_url else '?'
+                g = http()('GET', c.lineitems_url + sep + urlencode({'tag': tag}),
+                           {'Authorization': f'Bearer {tok}', 'Accept': core.MT_LINEITEMS})
+                found = [x for x in ((g.json() or []) if g.ok else []) if x.get('tag') == tag]
+                li = found[0]['id'] if found else None
+                if not li:
+                    cr = http()('POST', c.lineitems_url, {'Authorization': f'Bearer {tok}', 'Content-Type': core.MT_LINEITEM,
+                                                          'Accept': core.MT_LINEITEM},
+                                json.dumps({'scoreMaximum': maximum, 'label': label, 'tag': tag, 'resourceId': tag}))
+                    li = (cr.json() or {}).get('id') if cr.ok else None
+                if not li:
+                    notes.append(f'{c.title or c.context_id}: could not create the gradebook column.')
+                    continue
+                for uid, link in sorted(links.items()):
+                    sc, comment = scores[uid]
+                    res = http()('POST', core.scores_url(li), {'Authorization': f'Bearer {tok}', 'Content-Type': core.MT_SCORE},
+                                 json.dumps(core.score_payload(link.sub, sc, maximum=maximum, comment=comment)))
+                    sent, failed = (sent + 1, failed) if res.ok else (sent, failed + 1)
+            except (core.LtiError, ValueError, OSError) as e:
+                failed += 1
+                notes.append(f'{c.title or c.context_id}: {e}')
+        d.audit('lti_line_scores', f'section {section.id} {tag}: {sent} sent, {failed} failed')
+        return sent, failed, notes
+
     def section_setting(section_id):
         return db.session.get(m.LtiSectionSetting, section_id) or m.LtiSectionSetting(
             section_id=section_id, remove_dropped=False, auto_passback=False, exempt_full=False)
@@ -829,6 +868,6 @@ def register(app, db, deps, csrf):
         app.add_url_rule(rule, ep, fn, methods=methods)
     api = SimpleNamespace(models=m, keys=K, core=core, state=state, send_scores=send_scores, sync_roster=sync_roster,
                           jwks_cache=jwks_cache, token_cache=token_cache, catalog=catalog, scores_for=scores_for,
-                          section_setting=section_setting)
+                          section_setting=section_setting, send_line_scores=send_line_scores)
     app.extensions['ciwt_lti'] = api
     return api

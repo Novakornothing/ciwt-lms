@@ -169,7 +169,11 @@ def test_strict_timeout_grades_autosaved_answers(student, app, mod):
     r = student.post(f'{BASE}/{aid}', data=dict(_form_for(items, 15), timed_out='1'))
     assert r.status_code == 302
     _i, att = _att(app, mod, aid)
-    assert att.timed_out and att.correct == 5 and att.score == ES.scaled(5, 15)
+    earned, possible = ES.earned_and_possible(items, json.loads(att.answers), P.bank())
+    assert att.timed_out and att.correct == 5 and len(json.loads(att.answers)) == 5
+    assert att.score == ES.scaled(earned, possible) and earned == sum(P.partial(P.bank()[i], json.dumps(P.bank()[i]['correct'])
+                                                                                  if P.bank()[i]['type'] != 'single' else P.bank()[i]['correct'])[0]
+                                                                      for i, _o in items[:5])
 
 
 # ------------------------------------------------------------------ result page: report + drill
@@ -233,3 +237,142 @@ def test_speed_drill_route_filter_and_record(student, app, mod):
 def test_speed_drill_access(anon, outsider):
     assert anon.get('/student/section/1/speed-drill').status_code in (302, 401)
     assert outsider.get('/student/section/1/speed-drill').status_code == 403
+
+
+# ------------------------------------------------------------------ pass 5: partial credit, ADA time, agreement
+def test_partial_credit_scaled_scoring():
+    b = P.bank()
+    sim = b['SIM-N-1']
+    chosen = [['SIM-N-1', 'N:2.2'], [next(k for k, v in b.items() if v['type'] == 'single'), 'N:1.1']]
+    answers = {'0': json.dumps(sim['correct'][:2] + ['wrong'])}          # 2 of 3 parts, MCQ blank
+    assert ES.earned_and_possible(chosen, answers, b) == (2, 4)
+    assert ES.scaled(2, 4) == 500 and ES.scaled(45, 45) == 900 and ES.scaled(0, 0) == 100
+
+
+def test_partial_credit_in_a_real_sitting(student, app, mod):
+    aid = _start(student, 'N', 'sprint')
+    items, _a = _att(app, mod, aid)
+    assert P.bank()[items[0][0]]['type'] == 'sim_pbq'
+    data = _form_for(items, 15)
+    data[f'q0_0'] = 'not the key'                                          # one sub-part wrong on the first sim PBQ
+    student.post(f'{BASE}/{aid}', data=data)
+    _i, att = _att(app, mod, aid)
+    parts = len(P.bank()[items[0][0]]['correct'])
+    earned, possible = ES.earned_and_possible(items, json.loads(att.answers), P.bank())
+    assert att.correct == 14 and earned == possible - 1 and att.score == ES.scaled(possible - 1, possible) > ES.scaled(14, 15) - 1
+    assert parts >= 3
+    html = student.get(f'{BASE}/{aid}/result').get_data(as_text=True)
+    assert f'{parts - 1}/{parts} parts right' in html
+
+
+def test_pre_clock_agreement_and_begin(student, app, mod):
+    aid = _start(student, 'A1', 'sprint', 'exam')
+    _i, att = _att(app, mod, aid)
+    assert json.loads(att.domains)['_pre'] == 20 * 60
+    html = student.get(f'{BASE}/{aid}').get_data(as_text=True)
+    for s in ('id="esAgreement"', 'Candidate Agreement &amp; Exam Instructions', 'I Agree — Start Exam Clock', '220-1201',
+              'data-pre="1"', '20 minutes', 'Passing score', '675', 'class="es-pre"'):
+        assert s in html, s
+    with app.app_context():       # time spent reading the rules does not count
+        a = mod.db.session.get(mod.ExamSimAttempt, aid)
+        a.started_at, a.deadline = a.started_at - timedelta(minutes=19), a.deadline - timedelta(minutes=19)
+        mod.db.session.commit()
+    j = student.post(f'{BASE}/{aid}/begin', headers={'Accept': 'application/json'}).get_json()
+    assert 1190 <= j['remaining'] <= 1200
+    html = student.get(f'{BASE}/{aid}').get_data(as_text=True)
+    assert 'id="esAgreement"' not in html and 'data-pre="0"' in html
+
+
+def test_direct_post_without_begin_starts_the_clock(student, app, mod):
+    aid = _start(student, 'N', 'sprint', 'exam')
+    items, _a = _att(app, mod, aid)
+    student.post(f'{BASE}/{aid}', data=_form_for(items, 15))
+    _i, att = _att(app, mod, aid)
+    assert att.correct == 15 and att.score == 900 and not att.timed_out and '_pre' not in (att.domains or '')
+
+
+def _user_id(app, mod, email):
+    with app.app_context():
+        return mod.User.query.filter_by(email=email).first().id
+
+
+def test_ada_extended_time_accommodation(student, instructor, app, mod):
+    uid = _user_id(app, mod, 'student1@lms.local')
+    page = instructor.get('/instructor/section/1/exam-sim').get_data(as_text=True)
+    assert 'Time Accommodations (ADA / Section 504)' in page and '1.5× Time-and-a-half' in page and '2.0× Double time' in page
+    r = instructor.post('/instructor/section/1/exam-sim/accommodation', data={'user_id': uid, 'multiplier': '1.5'})
+    assert r.status_code == 302
+    assert student.post('/instructor/section/1/exam-sim/accommodation', data={'user_id': uid, 'multiplier': '2.0'}).status_code == 403
+    assert instructor.post('/instructor/section/1/exam-sim/accommodation', data={'user_id': uid, 'multiplier': '3'}).status_code == 400
+    home = student.get(BASE).get_data(as_text=True)
+    assert '1.5× time accommodation applied — 135 min' in home
+    aid = _start(student, 'N', 'full')
+    _i, att = _att(app, mod, aid)
+    assert json.loads(att.domains)['_pre'] == 135 * 60
+    html = student.get(f'{BASE}/{aid}').get_data(as_text=True)
+    assert '1.5× time accommodation applied — 135 min' in html and '135 minutes' in html
+    instructor.post('/instructor/section/1/exam-sim/accommodation', data={'user_id': uid, 'multiplier': '1.0'})
+    assert 'time accommodation applied' not in student.get(BASE).get_data(as_text=True)
+    from privacy_tools import plan
+    with app.app_context():
+        _doomed, _null, tables = plan(mod.db, uid)
+    assert 'exam_sim_accommodation' in str(tables) and 'exam_sim_grade' in str(tables)
+
+
+def test_csv_export_and_gradebook_sync(student, instructor, app, mod):
+    aid = _start(student, 'A2', 'sprint')
+    items, _a = _att(app, mod, aid)
+    student.post(f'{BASE}/{aid}', data=_form_for(items, 15))
+    r = instructor.get('/instructor/section/1/exam-sim/export.csv')
+    assert r.status_code == 200 and r.mimetype == 'text/csv'
+    body = r.get_data(as_text=True)
+    assert body.splitlines()[0].startswith('student,email,exam,exam_code') and '220-1202' in body and 'VOUCHER READY' in body
+    assert student.get('/instructor/section/1/exam-sim/export.csv').status_code == 403
+    page = instructor.get('/instructor/section/1/exam-sim').get_data(as_text=True)
+    assert 'Export Scores CSV' in page and 'Sync Latest Exam-Sim Scores to Gradebook / LTI' in page
+    r = instructor.post('/instructor/section/1/exam-sim/sync-gradebook')
+    assert r.status_code == 302
+    G = app.extensions['ciwt_exam_sim'].Grade
+    with app.app_context():
+        g = G.query.filter_by(section_id=1, user_id=_user_id(app, mod, 'student1@lms.local'), exam='A2').first()
+        assert g and g.score == 900 and g.pct == 100.0 and g.status == 'VOUCHER READY'
+    assert 'Last synced' in instructor.get('/instructor/section/1/exam-sim').get_data(as_text=True)
+
+
+def test_mastery_why_and_portfolio_integration(student, instructor, app, mod):
+    uid = _user_id(app, mod, 'student1@lms.local')
+    aid = _start(student, 'A1', 'sprint')
+    items, _a = _att(app, mod, aid)
+    student.post(f'{BASE}/{aid}', data={})                     # nothing answered → remediation, every domain weak
+    # mastery engine counts exam-sim answers (weight 0.85) — answer a second sitting fully
+    from mastery.model import WEIGHTS
+    assert WEIGHTS['exam_sim'] == 0.85
+    aid2 = _start(student, 'A1', 'sprint')
+    items2, _a = _att(app, mod, aid2)
+    student.post(f'{BASE}/{aid2}', data=_form_for(items2, 15))
+    with app.app_context():
+        sec = mod.db.session.get(mod.ClassSection, 1)
+        user = mod.db.session.get(mod.User, uid)
+        st = app.extensions['ciwt_mastery'].engine.student_state(sec, user, log=False)
+    assert st['sources'].get('exam_sim', 0) >= 1
+    assert any(o.get('kind') == 'exam_sim' for evs in st['evidence'].values() for o in evs)
+    # why: latest sitting is ready (aid2); make the failing one latest to check the remediation signal
+    with app.app_context():
+        a = mod.db.session.get(mod.ExamSimAttempt, aid)
+        a.submitted_at = a.submitted_at + timedelta(days=1)
+        mod.db.session.commit()
+        from mastery.why import why
+        with app.test_request_context():
+            w = why(app, mod.db, mod.db.session.get(mod.ClassSection, 1), mod.db.session.get(mod.User, uid))
+    assert any('Exam Sim (220-1201): 100/900 · Needs remediation (weak:' in p for p in w['pills']['exam_sim'])
+    assert any(s['text'].startswith('Exam Sim 220-1201') for s in w['stuck'])
+    assert any(a['kind'] == 'exam_sim' and f'/exam-sim/{aid}/result' in a['url'] for a in w['actions'])
+    assert w['severity'] >= 3
+    r = instructor.get(f'{BASE}/{aid}/result')
+    assert r.status_code == 200 and 'Candidate Score Report' in r.get_data(as_text=True)
+    # portfolio: best ready sitting per exam + OpenBadges assertion
+    html = student.get('/portfolio').get_data(as_text=True)
+    assert 'Exam-Day Simulator sittings' in html and 'VOUCHER READY' in html and '220-1201' in html
+    j = json.loads(student.get('/portfolio/export.json').get_data(as_text=True))
+    assert any(a['badge']['name'].startswith('VOUCHER READY: CompTIA A+ Core 1') for a in j['assertions'])
+    assert j['portfolio']['exam_sittings']

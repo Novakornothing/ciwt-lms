@@ -11,6 +11,7 @@ questions and skip the PBQs to come back to them. You get a simulated scaled sco
 readiness badge. <span class="badge text-bg-light">{{ review }}</span></p>
 <form method="post" action="{{ url_for('exam_sim_start', section_id=section.id) }}" class="card card-body mb-4 es-start" id="examSimStart">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if mult != 1.0 %}<p class="es-acc mb-3" id="esAccBadge"><span class="badge text-bg-info">{{ mult }}× time accommodation applied — {{ minutes_for('full', mult) }} min</span> <span class="small">{{ mult_label }} on every sitting length below.</span></p>{% endif %}
   <fieldset class="mb-3"><legend class="h6">Target exam</legend>
     {% for ex, meta in exams.items() %}
     <div class="form-check"><input class="form-check-input" type="radio" name="exam" id="ex-{{ ex }}" value="{{ ex }}" {% if ex == default_exam %}checked{% endif %}>
@@ -20,7 +21,7 @@ readiness badge. <span class="badge text-bg-light">{{ review }}</span></p>
   <fieldset class="mb-3"><legend class="h6">Length</legend>
     {% for k, m in modes.items() if not m.hidden %}
     <div class="form-check"><input class="form-check-input" type="radio" name="mode" id="mode-{{ k }}" value="{{ k }}" {% if k == 'full' %}checked{% endif %}>
-      <label class="form-check-label" for="mode-{{ k }}">{{ m.name }} — {{ m.minutes }} min, {{ m.questions }} questions, {{ m.pbqs }} PBQs first</label></div>
+      <label class="form-check-label" for="mode-{{ k }}">{{ m.name }} — {{ minutes_for(k, mult) }} min, {{ m.questions }} questions, {{ m.pbqs }} PBQs first</label></div>
     {% endfor %}
   </fieldset>
   <fieldset class="mb-3"><legend class="h6">Timing</legend>

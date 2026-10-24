@@ -338,6 +338,28 @@ class Engine:
                                     'ref': it['id'], 'source': 'Practice exam', 'mc': MCS.tag_for(dict(it, bank_id=it['id']), ans)
                                     if (it.get('type') or 'single') == 'single' else None, 'bank_id': it['id']})
                     sources['practice'] += 1
+        # Exam-Day Readiness Simulator sittings (Option B pass 5): submitted attempts, weight 0.85 (WEIGHTS['exam_sim']).
+        # Each [item_id, exam_oid] maps back to its course objective (it['raw']['obj']); blank answers are skipped.
+        ESA = getattr(d, 'ExamSimAttempt', None)
+        if ESA is not None and bank and grade:
+            items = bank()
+            for a in ESA.query.filter(ESA.user_id == user.id, ESA.submitted_at.isnot(None)).all():
+                try:
+                    chosen, answers = json.loads(a.items or '[]'), json.loads(a.answers or '{}')
+                except ValueError:
+                    continue
+                for i, pair in enumerate(chosen):
+                    it = items.get(pair[0]) if pair else None
+                    obj = ((it or {}).get('raw') or {}).get('obj') or (it or {}).get('obj')
+                    if obj not in cmap['objs']:
+                        continue
+                    ans = answers.get(str(i))
+                    if ans in (None, ''):
+                        continue
+                    ev[obj].append({'kind': 'exam_sim', 'correct': bool(grade(it, ans)), 'when': a.submitted_at,
+                                    'ref': it['id'], 'source': 'Exam-Day Simulator', 'mc': MCS.tag_for(dict(it, bank_id=it['id']), ans)
+                                    if (it.get('type') or 'single') == 'single' else None, 'bank_id': it['id']})
+                    sources['exam_sim'] += 1
         # interactive lab completions (all lab objectives met)
         seen_lab = set()
         for lc in (d.LabCompletion.query.filter_by(user_id=user.id)

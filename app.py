@@ -7233,6 +7233,7 @@ mastery_api = mastery_mod.register(app, db, dict(
     # pass 12: practice exams (content merge) as evidence, weight 0.8, graded with the practice module's own rules
     ContentRelease=ContentRelease,
     PracticeAttempt=PracticeAttempt, practice_bank=cert_practice.bank, practice_grade=cert_practice.grade,
+    ExamSimAttempt=ExamSimAttempt,  # Option B pass 5: exam-simulator sittings as mastery evidence (weight 0.85)
     lab_events=_mx_lab_events(lab_progress_api.LabProgress, lab_progress_api.LabEvent), lab_def=_mx_lab_def(_mx_get_lab),
 ))
 
@@ -7257,7 +7258,7 @@ tutor_api = tutor_mod.register(app, db, dict(
 ))
 portfolio_api = portfolio_mod.register(app, db, dict(
     User=User, Course=Course, ClassSection=ClassSection, Enrollment=Enrollment, mastery=lambda: mastery_api,
-    lab_api=lab_progress_api, get_lab=get_lab,
+    lab_api=lab_progress_api, get_lab=get_lab, ExamSimAttempt=ExamSimAttempt,
     can_access_section=lambda user, section: instructor_can_access_section(user, section),
 ))
 

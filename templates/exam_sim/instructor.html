@@ -5,11 +5,31 @@
 <p class="text-muted">Latest sitting per student and exam. Ready to sit: {{ counts.ready }} · Borderline: {{ counts.borderline }} · Needs remediation: {{ counts.remediate }}.</p>
 {% if weak %}<h2 class="h5">Weak domains across the class</h2>
 <ul>{% for w in weak %}<li>{{ w.exam }} {{ w.domain }} {{ w.name }} — {{ w.n }} student{{ 's' if w.n != 1 }} under 60%</li>{% endfor %}</ul>{% endif %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <a class="btn btn-outline-navy btn-sm" href="{{ url_for('instructor_exam_sim_csv', section_id=section.id) }}"><i class="bi bi-download" aria-hidden="true"></i> Export Scores CSV</a>
+  {% if can_grade %}<form method="post" action="{{ url_for('instructor_exam_sim_sync', section_id=section.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-navy btn-sm" type="submit"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Sync Latest Exam-Sim Scores to Gradebook / LTI</button>
+  </form>{% endif %}
+  {% if last_sync %}<span class="small text-muted align-self-center">Last synced {{ last_sync.strftime('%Y-%m-%d %H:%M') }} UTC</span>{% endif %}
+</div>
+<section class="card card-body mb-3" id="esAccommodations" aria-labelledby="esAccH">
+  <h2 class="h5" id="esAccH">Time Accommodations (ADA / Section 504)</h2>
+  <p class="small text-muted">Applies to every new sitting this student starts in this class (the Standard 45-question sitting is {{ minutes_for('full') }} min at 1.0×). Keep the documentation in your institution's accommodation record.</p>
+  {% if students %}<table class="table table-sm align-middle"><thead><tr><th>Student</th><th>Current</th><th>Set time multiplier</th></tr></thead><tbody>
+  {% for u in students %}{% set m = acc.get(u.id, 1.0) %}<tr><td>{{ u.full_name }}</td><td>{{ accommodations[m] }}{% if m != 1.0 %} <span class="badge text-bg-info">{{ m }}× time</span>{% endif %}</td>
+  <td>{% if can_grade %}<form method="post" action="{{ url_for('instructor_exam_sim_accommodation', section_id=section.id) }}" class="d-flex gap-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="user_id" value="{{ u.id }}">
+    <label class="visually-hidden" for="acc{{ u.id }}">Time multiplier for {{ u.full_name }}</label>
+    <select class="form-select form-select-sm" name="multiplier" id="acc{{ u.id }}">{% for k, lbl in accommodations.items() %}<option value="{{ k }}"{% if k == m %} selected{% endif %}>{{ lbl }}</option>{% endfor %}</select>
+    <button class="btn btn-sm btn-outline-navy" type="submit">Save</button></form>{% else %}<span class="small text-muted">Lead or TA only</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table>{% else %}<p class="mb-0">No students enrolled.</p>{% endif %}
+</section>
 <h2 class="h5">All sittings</h2>
 {% if rows %}
 <table class="table table-sm" id="esInstructorTable"><thead><tr><th>Student</th><th>Exam</th><th>Mode</th><th>Score</th><th>Pass bar</th><th>Readiness</th><th>Submitted</th></tr></thead><tbody>
 {% for r in rows %}<tr><td>{{ users[r.user_id].full_name if users.get(r.user_id) else r.user_id }}</td><td>{{ exams[r.exam].short }}</td>
-<td>{{ modes[r.mode].name }}{% if r.strict %} · exam{% endif %}</td><td>{{ r.score }}</td><td>{{ pass_score[r.exam] }}</td>
+<td>{{ modes[r.mode].name if r.mode in modes else r.mode }}{% if r.strict %} · exam{% endif %}</td><td>{{ r.score }}</td><td>{{ pass_score[r.exam] }}</td>
 <td>{{ badges[r.badge] if r.badge else '—' }}</td><td>{{ r.submitted_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>{% endfor %}
 </tbody></table>
 {% else %}<p>No sittings yet.</p>{% endif %}

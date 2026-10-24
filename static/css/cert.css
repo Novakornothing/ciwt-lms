@@ -154,3 +154,9 @@
   #esForm.es-wb-open > .es-wb { grid-column: 2; grid-row: 1 / span 3; position: sticky; top: 7rem; }
   #esForm.es-wb-open .es-wb-text { font-size: .74rem; }
 }
+/* pass 5: candidate agreement (clock not running yet) and accommodation badge */
+#esForm.es-pre { display: none !important; }
+.es-agreement { border: 2px solid #0b2545; }
+.es-agree-facts { display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; }
+.es-agree-facts dt { font-weight: 600; }
+.es-agree-facts dd { margin: 0; }

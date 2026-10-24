@@ -48,6 +48,38 @@ def lab_flags(app, section, user_id, limit=8):
     return flags, count
 
 
+def exam_sim_signal(db, section, user):
+    """Latest submitted Exam-Day Simulator sitting in this class (Option B pass 5), or None."""
+    ESA = _model(db, 'ExamSimAttempt')
+    if ESA is None:
+        return None
+    try:
+        att = (ESA.query.filter(ESA.user_id == user.id, ESA.section_id == section.id, ESA.submitted_at.isnot(None),
+                                ESA.mode != 'drill').order_by(ESA.submitted_at.desc()).first())
+    except Exception:
+        db.session.rollback()
+        return None
+    if not att:
+        return None
+    import json as _json
+    from curriculum_v2.cert import exam_sim as ES
+    from curriculum_v2.cert.exams import DOMAINS, EXAMS
+    names = {dd: n for dd, n, _w in DOMAINS[att.exam]}
+    doms = []
+    for dom, ct in (_json.loads(att.domains or '{}') or {}).items():
+        if isinstance(ct, list) and len(ct) == 2 and ct[1]:
+            doms.append((round(100 * ct[0] / ct[1]), dom))
+    weak = sorted(x for x in doms if x[0] < ES.DOMAIN_FLOOR)
+    worst = weak[0] if weak else None
+    code = EXAMS[att.exam]['code']
+    label = {'ready': 'Voucher ready', 'borderline': 'Borderline'}.get(att.badge, 'Needs remediation')
+    pill = f'Exam Sim ({code}): {att.score}/900 · {label}' + (f' (weak: {worst[1]} {names.get(worst[1], "")})' if worst else '')
+    flagged = att.badge == 'remediate' or bool(weak)
+    return {'att': att, 'pill': pill, 'flagged': flagged, 'worst': worst and {'domain': worst[1], 'name': names.get(worst[1], ''),
+                                                                              'pct': worst[0]},
+            'code': code, 'label': label}
+
+
 def why(app, db, section, user):
     lad = app.extensions['ciwt_mastery'].ladder
     c = lad.clicked(user.id, section.id)
@@ -65,13 +97,18 @@ def why(app, db, section, user):
         parts.append(lab_txt)
     if hx['text']:
         parts.append(hx['text'].lower())
+    es = exam_sim_signal(db, section, user)
+    if es and es['flagged']:
+        parts.append(f'scored {es["att"].score}/900 on the {es["code"]} exam simulator'
+                     + (f', weakest in {es["worst"]["domain"]} {es["worst"]["name"]} ({es["worst"]["pct"]}%)' if es['worst'] else ''))
     style = lad.STYLE.get(c['best']) if c['best'] else None
     sentence = (f'{user.first_name or user.full_name} ' + '; '.join(parts) + '.' if parts else
                 f'{user.first_name or user.full_name} has nothing open right now: {c["resolved"]} struggle{"s" if c["resolved"] != 1 else ""} resolved by an alternative explanation.')
     if style and c['best'] != 'R0':
         sentence += f' {style} explanations usually work for them.'
     pills = {'ladder': ([c['best_text']] if c['best_text'] else []) + [s['text'] + f' ({s["heading"]})' for s in (exhausted + repeated)[:3]],
-             'lab': [f'{k} ×{n}' for k, n in fcount.most_common(3)], 'helix': hx['pills']}
+             'lab': [f'{k} ×{n}' for k, n in fcount.most_common(3)], 'helix': hx['pills'],
+             'exam_sim': [es['pill']] if es else []}
     focus = (exhausted + repeated)[:1]
     actions = []
     subject = f'Let us go through “{focus[0]["heading"]}” together' if focus else ('Let us go through your recent labs together' if flags else 'Let us go through this week together')
@@ -89,11 +126,22 @@ def why(app, db, section, user):
     stuck = [{'text': f'{s["label"]} · {s["heading"]}', 'detail': (f'every explanation tried ({s["misses"]} misses)' if s['exhausted']
                                                                        else f'{s["misses"]} misses, still open')} for s in (exhausted + repeated)[:3]]
     stuck += [{'text': f'Lab {f["lab_id"]}', 'detail': f['label'], 'url': f['url']} for f in flags[:1]] if not stuck else []
+    if es and es['flagged']:
+        res_url = url_for('exam_sim_result', section_id=section.id, attempt_id=es['att'].id)
+        if es['worst']:
+            stuck.append({'text': f'Exam Sim {es["code"]} · {es["worst"]["domain"]} {es["worst"]["name"]}',
+                          'detail': f'{es["worst"]["pct"]}% in the latest sitting ({es["att"].score}/900, {es["label"].lower()})',
+                          'url': res_url})
+        actions.append({'kind': 'exam_sim', 'text': 'Open Exam-Day Simulator result', 'url': res_url})
+        actions.append({'kind': 'exam_sim_class', 'text': 'Class simulator overview',
+                        'url': url_for('instructor_exam_sim', section_id=section.id)})
     best_badge = f'✓ Best style: {style} ({c["best"]})' if style else None
     return {'user': user, 'sentence': sentence, 'stuck': stuck, 'best_badge': best_badge,
             'lab_tags': [{'text': f'Lab: {k} ×{n}' if n > 1 else f'Lab: {k}', 'url': next(f['url'] for f in flags if f['label'] == k)}
                          for k, n in fcount.most_common(2)], 'pills': pills, 'flags': flags[:4], 'clicked': c, 'helix': hx,
-            'actions': actions, 'severity': len(exhausted) * 3 + len(repeated) * 2 + sum(fcount.values())}
+            'actions': actions, 'exam_sim': es,
+            'severity': len(exhausted) * 3 + len(repeated) * 2 + sum(fcount.values())
+            + ((3 if es['att'].badge == 'remediate' else 2) if es and es['flagged'] else 0)}
 
 
 def _lesson_id(app, db, section, label):

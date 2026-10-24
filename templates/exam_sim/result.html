@@ -23,14 +23,14 @@
   {% for d in domains %}<div class="es-dombar"><span>{{ d.id }} {{ d.name }}</span><meter min="0" max="100" low="{{ 60 }}" optimum="100" value="{{ d.pct }}" aria-label="{{ d.name }} {{ d.pct }}%">{{ d.pct }}%</meter><span>{{ d.pct }}%</span></div>{% endfor %}
   <p class="small mt-2 mb-1"><strong>Objectives with missed items:</strong> {% if codes %}{{ codes|join(', ') }}{% else %}none{% endif %}</p>
   <p class="small text-muted mb-2">Simulated report for voucher planning only — not an official CompTIA score report. {{ review_tag }}.</p>
-  <div class="d-flex flex-wrap gap-2 no-print">
+  {% if not staff_view %}  <div class="d-flex flex-wrap gap-2 no-print">
     <button type="button" class="btn btn-outline-navy" id="esPrint"><i class="bi bi-printer" aria-hidden="true"></i> Print / Save Candidate Score Report</button>
     <form method="post" action="{{ url_for('exam_sim_remediate', section_id=section.id, attempt_id=att.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-navy" type="submit" id="esDrill"><i class="bi bi-bullseye" aria-hidden="true"></i> Drill My Missed Objectives Now (10 questions)</button>
     </form>
     <a class="btn btn-outline-secondary" href="{{ url_for('speed_drill', section_id=section.id, exam=att.exam) }}">Speed-Drill</a>
-  </div>
+  </div>{% else %}<p class="no-print"><a class="btn btn-outline-navy btn-sm" href="{{ url_for('instructor_exam_sim', section_id=section.id) }}">Back to class simulator overview</a> <button type="button" class="btn btn-outline-secondary btn-sm" id="esPrint">Print / Save Candidate Score Report</button></p>{% endif %}
 </section>
 <div class="card card-body mb-3 es-score">
   <div class="es-scaled"><span class="display-6" id="esScore">{{ att.score }}</span> <span class="text-muted">/ 900 simulated scaled score · pass bar {{ bar }}</span></div>
@@ -41,7 +41,7 @@
 <table class="table table-sm"><thead><tr><th>Domain</th><th>Score</th><th>Missed objectives → where to review</th></tr></thead><tbody>
 {% for d in domains %}<tr class="{% if d.weak %}table-warning{% endif %}">
   <td>{{ d.id }} {{ d.name }}{% if d.weak %} <span class="badge text-bg-warning">review</span>{% endif %}</td>
-  <td>{{ d.pct }}% ({{ d.correct }}/{{ d.total }})</td>
+  <td class="text-nowrap">{{ d.pct }}% <span class="small text-muted">({{ d.earned }}/{{ d.possible }} pts)</span></td>
   <td>{% for m in d.missed %}<div class="es-miss"><strong>{{ m.label }}</strong> {{ m.title }}
       {% for l in m.links %}<div class="small">Lesson <a href="{{ l.lesson_url }}">{{ l.ref }} {{ l.title }}</a>{% if l.rung_url %} · <a class="es-rung" href="{{ l.rung_url }}">Ladder rung R1: {{ l.heading }}</a>{% endif %}</div>{% endfor %}
     </div>{% else %}<span class="text-muted">Nothing missed</span>{% endfor %}</td>

@@ -36,6 +36,17 @@ MODES = {
 }
 PBQ_TYPES = ('sim_pbq', 'order', 'match')      # sim_pbq first: every sitting opens with interactive simulations
 DRILL_QUESTIONS = 10
+VOUCHER_STATUS = {'ready': 'VOUCHER READY', 'borderline': 'BORDERLINE', 'remediate': 'REMEDIATION REQUIRED'}
+# ADA / Section 504 extended-time accommodations an instructor can set per student and class
+ACCOMMODATIONS = {1.0: '1.0× Standard', 1.25: '1.25× Time + 25%', 1.5: '1.5× Time-and-a-half', 2.0: '2.0× Double time'}
+CANDIDATE_RULES = (
+    'The exam clock starts only when you select “I Agree — Start Exam Clock”.',
+    'Work alone. No notes, phones, other browser tabs or outside help; use only the on-screen whiteboard.',
+    'Performance-based questions come first; you may skip them and return before you submit.',
+    'You can flag any question and use the Review Screen before you submit.',
+    'In exam mode the timer cannot be paused and the sitting submits itself at 0:00; answers are auto-saved as you go.',
+    'Scores are simulated (100–900); this is not an official CompTIA exam.',
+)
 AUTOSAVE_FIELDS = ('_pause', '_wb')            # kept in att.domains (JSON) while the sitting is unsubmitted
 GRACE_SECONDS = 30
 BORDERLINE_BAND = 50      # scaled points below the pass bar that still count as "borderline"
@@ -110,6 +121,24 @@ def compose(it, form, i):
     return json.dumps(vals) if any(vals) else None
 
 
+def earned_and_possible(chosen, answers, b):
+    """Points earned / possible with partial credit: a k-part PBQ is worth k points (one per sub-part right);
+    single and multi items are worth 1 point, all or nothing."""
+    earned = possible = 0
+    for i, (iid, _oid) in enumerate(chosen):
+        it = b.get(iid)
+        if it is None:
+            continue
+        got, parts = P.partial(it, answers.get(str(i)))
+        earned += got
+        possible += parts
+    return earned, possible
+
+
+def minutes_for(mode, mult=1.0):
+    return int(round(MODES[mode]['minutes'] * (mult or 1.0)))
+
+
 def drill_form(exam, missed, rng=None, n=DRILL_QUESTIONS):
     """Up to n single/multi items drawn round-robin from the missed objectives (no PBQs)."""
     rng = rng or random.Random()
@@ -164,6 +193,39 @@ def register(app, db, deps):
         badge = db.Column(db.String(12))
         domains = db.Column(db.Text)                             # JSON {domain: [correct, total]}
         timed_out = db.Column(db.Boolean, default=False)
+
+    class ExamSimAccommodation(db.Model):
+        """ADA / Section 504 extended time for one student in one class (Option B pass 5)."""
+        __tablename__ = 'exam_sim_accommodation'
+        id = db.Column(db.Integer, primary_key=True)
+        section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False, index=True)
+        user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+        multiplier = db.Column(db.Float, nullable=False, default=1.0)
+        set_by = db.Column(db.Integer)                           # staff user id (plain int: not personal data)
+        updated_at = db.Column(db.DateTime)
+        __table_args__ = (db.UniqueConstraint('section_id', 'user_id', name='uq_exam_sim_accommodation'),)
+
+    class ExamSimGrade(db.Model):
+        """Gradebook line item: latest Exam-Day Simulator sitting per student and exam, synced by an instructor."""
+        __tablename__ = 'exam_sim_grade'
+        id = db.Column(db.Integer, primary_key=True)
+        section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False, index=True)
+        user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+        exam = db.Column(db.String(4), nullable=False)
+        attempt_id = db.Column(db.Integer)
+        score = db.Column(db.Integer)                            # simulated scaled 100-900
+        pct = db.Column(db.Float)                                # (score - 100) / 8 → 0-100 for gradebook columns
+        status = db.Column(db.String(24))
+        synced_at = db.Column(db.DateTime)
+        __table_args__ = (db.UniqueConstraint('section_id', 'user_id', 'exam', name='uq_exam_sim_grade'),)
+
+    with app.app_context():
+        for t in (ExamSimAccommodation.__table__, ExamSimGrade.__table__):
+            t.create(db.engine, checkfirst=True)
+
+    def multiplier(section_id, user_id):
+        row = ExamSimAccommodation.query.filter_by(section_id=section_id, user_id=user_id).first()
+        return row.multiplier if row and row.multiplier in ACCOMMODATIONS else 1.0
 
     def _naive(dt):
         return dt.replace(tzinfo=None) if dt is not None and dt.tzinfo else dt
@@ -239,10 +301,26 @@ def register(app, db, deps):
         return m if isinstance(m, dict) else {}
 
     def remaining_of(att, now):
-        p = meta(att).get('_pause')
+        m = meta(att)
+        if m.get('_pre') is not None:
+            return int(m['_pre'])
+        p = m.get('_pause')
         if p is not None and not att.strict:
             return int(p)
         return max(0, int((_naive(att.deadline) - now).total_seconds()))
+
+    def begin(att, now):
+        """Start the clock: the candidate agreed (or a direct POST/auto-save arrived before /begin)."""
+        m = meta(att)
+        if m.get('_pre') is None:
+            return False
+        pre = int(m.pop('_pre'))
+        # the stored deadline is provisional (started_at + allowance) until the candidate agrees; a deadline that was
+        # changed by an administrator or a test fixture is respected as-is
+        if abs((_naive(att.deadline) - (_naive(att.started_at) + timedelta(seconds=pre))).total_seconds()) <= 2:
+            att.deadline = now + timedelta(seconds=pre)
+        att.domains = json.dumps(m) if m else None
+        return True
 
     def collect(att, form, chosen, b):
         answers, flags = {}, []
@@ -270,12 +348,14 @@ def register(app, db, deps):
                 continue
             ok = P.grade(it, answers.get(str(i)))
             dom = OBJECTIVES[oid]['domain']
-            d = by_dom.setdefault(dom, {'correct': 0, 'total': 0, 'missed': {}})
+            d = by_dom.setdefault(dom, {'correct': 0, 'total': 0, 'earned': 0, 'possible': 0, 'missed': {}})
             d['total'] += 1
             d['correct'] += int(ok)
+            got, parts = P.partial(it, answers.get(str(i)))
+            d['earned'] += got
+            d['possible'] += parts
             if not ok:
                 d['missed'].setdefault(oid, it['raw'].get('obj'))
-            got, parts = P.partial(it, answers.get(str(i)))
             review.append({'n': i + 1, 'ok': ok, 'parts': parts, 'parts_right': got, 'sim': it['type'] == 'sim_pbq', 'flagged': i in flags, 'answered': str(i) in answers,
                            'text': it['text'], 'lo': label(oid), 'pbq': it['type'] in PBQ_TYPES,
                            'yours': P.display_answer(it, answers.get(str(i))), 'key': P.display_key(it),
@@ -283,11 +363,12 @@ def register(app, db, deps):
         domains = []
         for dom in sorted(by_dom, key=float):
             d = by_dom[dom]
-            pct = round(100 * d['correct'] / d['total']) if d['total'] else 0
+            pct = round(100 * d['earned'] / d['possible']) if d['possible'] else 0     # partial credit on PBQs
             missed = [{'oid': o, 'label': label(o), 'title': OBJECTIVES[o]['title'],
                        'links': remediation(o, cobj, att.section_id)}
                       for o, cobj in sorted(d['missed'].items(), key=lambda kv: sort_key(kv[0]))]
             domains.append({'id': dom, 'name': names[dom], 'pct': pct, 'correct': d['correct'], 'total': d['total'],
+                            'earned': d['earned'], 'possible': d['possible'],
                             'weak': pct < DOMAIN_FLOOR, 'missed': missed})
         return domains, review
 
@@ -297,7 +378,9 @@ def register(app, db, deps):
         sec = student_section(section_id)
         past = (ExamSimAttempt.query.filter_by(user_id=current_user.id, section_id=sec.id)
                 .order_by(ExamSimAttempt.id.desc()).limit(10).all())
+        mult = multiplier(sec.id, current_user.id)
         return render_template('exam_sim/home.html', section=sec, exams=EXAMS, modes=MODES, pass_score=PASS_SCORE,
+                               mult=mult, mult_label=ACCOMMODATIONS.get(mult), minutes_for=minutes_for,
                                default_exam=default_exam(sec), past=past, badges=BADGES, disclaimer=DISCLAIMER,
                                review=REVIEW)
 
@@ -312,9 +395,11 @@ def register(app, db, deps):
             flash('No questions are available for that exam yet.', 'warning')
             return redirect(url_for('exam_sim_home', section_id=sec.id))
         now = _naive(utcnow())
+        mins = minutes_for(mode, multiplier(sec.id, current_user.id))
         att = ExamSimAttempt(user_id=current_user.id, section_id=sec.id, exam=exam, mode=mode,
                              strict=request.form.get('timing') == 'exam', items=json.dumps(chosen), started_at=now,
-                             deadline=now + timedelta(minutes=MODES[mode]['minutes']), total=len(chosen))
+                             deadline=now + timedelta(minutes=mins), total=len(chosen),
+                             domains=json.dumps({'_pre': mins * 60}))     # clock waits for the candidate agreement
         db.session.add(att)
         db.session.commit()
         audit('exam_sim_start', f'{exam}/{mode}/{"exam" if att.strict else "practice"}/{att.id}')
@@ -336,6 +421,7 @@ def register(app, db, deps):
         b = P.bank()
         now = _naive(utcnow())
         if request.method == 'POST':
+            begin(att, now)
             late = att.strict and now > _naive(att.deadline) + timedelta(seconds=GRACE_SECONDS)
             # start from what auto-save already stored (saved before deadline + grace in exam mode)
             answers = json.loads(att.answers or '{}')
@@ -349,7 +435,9 @@ def register(app, db, deps):
             att.submitted_at = now
             att.timed_out = late or request.form.get('timed_out') == '1'
             att.correct = sum(1 for i, (iid, _o) in enumerate(chosen) if iid in b and P.grade(b[iid], answers.get(str(i))))
-            att.score = scaled(att.correct, att.total)
+            earned, possible = earned_and_possible(chosen, answers, b)
+            att.score = scaled(earned, possible)          # multi-part PBQs: one point per sub-part (partial credit)
+            att.domains = None
             domains, _r = summarise(att)
             att.domains = json.dumps({d['id']: [d['correct'], d['total']] for d in domains})
             att.badge = readiness(att.score, att.exam, [d['pct'] for d in domains])
@@ -359,7 +447,10 @@ def register(app, db, deps):
         answers, flags = json.loads(att.answers or '{}'), set(json.loads(att.flags or '[]'))
         questions = [question_view(b[iid], oid, i, answers, flags) for i, (iid, oid) in enumerate(chosen) if iid in b]
         m = meta(att)
+        mult = multiplier(sec.id, att.user_id)
         return render_template('exam_sim/take.html', section=sec, att=att, questions=questions,
+                               pre='_pre' in m, mult=mult, minutes=minutes_for(att.mode, mult),
+                               mult_label=ACCOMMODATIONS.get(mult), rules=CANDIDATE_RULES, bar=PASS_SCORE[att.exam],
                                remaining=remaining_of(att, now), paused='_pause' in m and not att.strict,
                                whiteboard=m.get('_wb', ''), exam=EXAMS[att.exam], mode=MODES[att.mode],
                                n_pbq=sum(1 for q in questions if q['pbq']))
@@ -371,6 +462,8 @@ def register(app, db, deps):
         now = _naive(utcnow())
         if att.submitted_at:
             return {'ok': False, 'error': 'submitted'}, 409
+        if begin(att, now):
+            db.session.commit()
         if att.strict and now > _naive(att.deadline) + timedelta(seconds=GRACE_SECONDS):
             return {'ok': False, 'error': 'time expired'}, 409
         b = P.bank()
@@ -390,12 +483,28 @@ def register(app, db, deps):
         return {'ok': True, 'answered': len(saved), 'flagged': len(flags), 'remaining': remaining_of(att, now)}
 
     @login_required
+    def exam_sim_begin(section_id, attempt_id):
+        sec = student_section(section_id)
+        att = _own(sec.id, attempt_id)
+        if att.submitted_at:
+            return {'ok': False, 'error': 'submitted'}, 409
+        now = _naive(utcnow())
+        started = begin(att, now)
+        db.session.commit()
+        if started:
+            audit('exam_sim_begin', f'{att.exam}/{att.mode}/{att.id}')
+        if request.accept_mimetypes.best == 'application/json' or request.is_json or request.headers.get('X-Requested-With'):
+            return {'ok': True, 'remaining': remaining_of(att, now)}
+        return redirect(url_for('exam_sim_take', section_id=sec.id, attempt_id=att.id))
+
+    @login_required
     def exam_sim_pause(section_id, attempt_id):
         sec = student_section(section_id)
         att = _own(sec.id, attempt_id)
         if att.strict or att.submitted_at:
             abort(403 if att.strict else 409)
         now = _naive(utcnow())
+        begin(att, now)
         m = meta(att)
         action = request.form.get('action') or ('resume' if '_pause' in m else 'pause')
         if action == 'pause' and '_pause' not in m:
@@ -422,9 +531,10 @@ def register(app, db, deps):
             flash('No drill questions are available for those objectives yet.', 'warning')
             return redirect(url_for('exam_sim_result', section_id=sec.id, attempt_id=att.id))
         now = _naive(utcnow())
+        mins = minutes_for('drill', multiplier(sec.id, current_user.id))
         new = ExamSimAttempt(user_id=current_user.id, section_id=sec.id, exam=att.exam, mode='drill', strict=False,
-                             items=json.dumps(chosen), started_at=now,
-                             deadline=now + timedelta(minutes=MODES['drill']['minutes']), total=len(chosen))
+                             items=json.dumps(chosen), started_at=now, deadline=now + timedelta(minutes=mins),
+                             total=len(chosen), domains=json.dumps({'_pre': mins * 60}))
         db.session.add(new)
         db.session.commit()
         audit('exam_sim_drill', f'{att.exam}/{att.id}->{new.id}: {len(chosen)} items')
@@ -432,15 +542,27 @@ def register(app, db, deps):
 
     @login_required
     def exam_sim_result(section_id, attempt_id):
-        sec = student_section(section_id)
-        att = _own(sec.id, attempt_id)
+        if current_user.role in ('instructor', 'admin'):
+            # staff read-only view (linked from "Why this student is struggling")
+            sec = db.get_or_404(ClassSection, section_id)
+            if not can_access(current_user, sec) and current_user.role != 'admin':
+                abort(403)
+            att = db.get_or_404(ExamSimAttempt, attempt_id)
+            if att.section_id != sec.id:
+                abort(404)
+        else:
+            sec = student_section(section_id)
+            att = _own(sec.id, attempt_id)
+        if not att.submitted_at and att.user_id != current_user.id:
+            abort(404)
         if not att.submitted_at:
             return redirect(url_for('exam_sim_take', section_id=sec.id, attempt_id=att.id))
         domains, review = summarise(att)
         codes = [m['label'] for d in domains for m in d['missed']]
-        status = {'ready': 'VOUCHER READY', 'borderline': 'BORDERLINE'}.get(att.badge, 'REMEDIATION REQUIRED')
+        status = VOUCHER_STATUS.get(att.badge, 'REMEDIATION REQUIRED')
         return render_template('exam_sim/result.html', section=sec, att=att, domains=domains, review=review,
-                               candidate=current_user, codes=codes, status=status,
+                               candidate=db.session.get(User, att.user_id), codes=codes, status=status,
+                               staff_view=att.user_id != current_user.id,
                                exam=EXAMS[att.exam], mode=MODES[att.mode], bar=PASS_SCORE[att.exam],
                                badge=BADGES[att.badge or 'remediate'], disclaimer=DISCLAIMER, review_tag=REVIEW)
 
@@ -465,9 +587,117 @@ def register(app, db, deps):
         weak_rows = sorted(({'exam': EXAMS[ex]['short'], 'domain': d, 'name': names.get((ex, d), d), 'n': n}
                             for (ex, d), n in weak.items()), key=lambda x: -x['n'])
         counts = {k: sum(1 for r in latest.values() if r.badge == k) for k in BADGES}
+        students = sorted((u for u in User.query.join(Enrollment, Enrollment.user_id == User.id)
+                           .filter(Enrollment.section_id == sec.id).all()), key=lambda u: (u.last_name or '', u.first_name or ''))
+        acc = {a.user_id: a.multiplier for a in ExamSimAccommodation.query.filter_by(section_id=sec.id).all()}
+        synced = ExamSimGrade.query.filter_by(section_id=sec.id).order_by(ExamSimGrade.synced_at.desc()).first()
         return render_template('exam_sim/instructor.html', section=sec, rows=rows, users=users, latest=latest,
+                               students=students, acc=acc, accommodations=ACCOMMODATIONS, can_grade=can_grade(sec),
+                               last_sync=synced.synced_at if synced else None, minutes_for=minutes_for,
                                exams=EXAMS, modes=MODES, badges=BADGES, counts=counts, weak=weak_rows,
                                pass_score=PASS_SCORE, disclaimer=DISCLAIMER)
+
+    def staff_section(section_id):
+        sec = db.get_or_404(ClassSection, section_id)
+        if current_user.role not in ('instructor', 'admin') or not can_access(current_user, sec):
+            abort(403)
+        return sec
+
+    def can_grade(sec):
+        school = app.extensions.get('ciwt_school')
+        fn = getattr(school, 'can_edit_grades', None) if school else None
+        return True if fn is None else bool(fn(current_user, sec))
+
+    def latest_rows(sec):
+        rows = ExamSimAttempt.query.filter_by(section_id=sec.id).filter(ExamSimAttempt.submitted_at.isnot(None)) \
+            .filter(ExamSimAttempt.mode != 'drill').order_by(ExamSimAttempt.submitted_at.desc()).all()
+        latest = {}
+        for r in rows:
+            latest.setdefault((r.user_id, r.exam), r)
+        return rows, latest
+
+    @login_required
+    def instructor_exam_sim_csv(section_id):
+        import csv
+        import io
+        sec = staff_section(section_id)
+        rows, latest = latest_rows(sec)
+        users = {u.id: u for u in User.query.filter(User.id.in_({r.user_id for r in rows} or {0})).all()}
+        buf = io.StringIO()
+        w = csv.writer(buf)
+        w.writerow(['student', 'email', 'exam', 'exam_code', 'mode', 'timing', 'scaled_score', 'pass_bar', 'status',
+                    'correct', 'total', 'submitted_utc', 'latest', 'time_multiplier'])
+        acc = {a.user_id: a.multiplier for a in ExamSimAccommodation.query.filter_by(section_id=sec.id).all()}
+        for r in rows:
+            u = users.get(r.user_id)
+            w.writerow([u.full_name if u else r.user_id, u.email if u else '', EXAMS[r.exam]['short'], EXAMS[r.exam]['code'],
+                        MODES.get(r.mode, {}).get('name', r.mode), 'exam' if r.strict else 'practice', r.score,
+                        PASS_SCORE[r.exam], VOUCHER_STATUS.get(r.badge, ''), r.correct, r.total,
+                        r.submitted_at.strftime('%Y-%m-%d %H:%M'), 'yes' if latest.get((r.user_id, r.exam)) is r else '',
+                        acc.get(r.user_id, 1.0)])
+        audit('exam_sim_export', f'section {sec.id}: {len(rows)} rows')
+        return app.response_class(buf.getvalue(), mimetype='text/csv', headers={
+            'Content-Disposition': f'attachment; filename=exam-sim-section-{sec.id}.csv'})
+
+    @login_required
+    def instructor_exam_sim_sync(section_id):
+        sec = staff_section(section_id)
+        if not can_grade(sec):
+            abort(403)
+        _rows, latest = latest_rows(sec)
+        now = _naive(utcnow())
+        by_exam = {}
+        for (uid, ex), r in latest.items():
+            g = ExamSimGrade.query.filter_by(section_id=sec.id, user_id=uid, exam=ex).first() or \
+                ExamSimGrade(section_id=sec.id, user_id=uid, exam=ex)
+            g.attempt_id, g.score, g.status, g.synced_at = r.id, r.score, VOUCHER_STATUS.get(r.badge, ''), now
+            g.pct = round(max(0, (r.score or 100) - 100) / 8, 1)
+            db.session.add(g)
+            by_exam.setdefault(ex, {})[uid] = (r.score, f'{VOUCHER_STATUS.get(r.badge, "")} · pass bar {PASS_SCORE[ex]} (simulated)')
+        db.session.commit()
+        msg = f'Synced {len(latest)} latest sitting(s) to the gradebook line items.'
+        lti = app.extensions.get('ciwt_lti')
+        if lti is not None and getattr(lti, 'send_line_scores', None):
+            sent = failed = 0
+            for ex, scores in by_exam.items():
+                s_, f_, _n = lti.send_line_scores(sec, current_user, f'Exam-Day Simulator — {EXAMS[ex]["code"]}',
+                                                  f'novak-exam-sim-{ex}', scores)
+                sent, failed = sent + s_, failed + f_
+            if sent or failed:
+                msg += f' LTI: {sent} score(s) sent, {failed} failed.'
+        audit('exam_sim_sync', f'section {sec.id}: {len(latest)} rows')
+        flash(msg, 'success')
+        return redirect(url_for('instructor_exam_sim', section_id=sec.id))
+
+    @login_required
+    def instructor_exam_sim_accommodation(section_id):
+        sec = staff_section(section_id)
+        if not can_grade(sec):
+            abort(403)
+        try:
+            uid, mult = int(request.form.get('user_id')), float(request.form.get('multiplier'))
+        except (TypeError, ValueError):
+            abort(400)
+        if mult not in ACCOMMODATIONS or not Enrollment.query.filter_by(user_id=uid, section_id=sec.id).first():
+            abort(400)
+        row = ExamSimAccommodation.query.filter_by(section_id=sec.id, user_id=uid).first()
+        if mult == 1.0:
+            if row:
+                db.session.delete(row)
+        else:
+            row = row or ExamSimAccommodation(section_id=sec.id, user_id=uid)
+            row.multiplier, row.set_by, row.updated_at = mult, current_user.id, _naive(utcnow())
+            db.session.add(row)
+        db.session.commit()
+        audit('exam_sim_accommodation', f'section {sec.id} user {uid}: {mult}x')
+        flash(f'Time accommodation saved: {ACCOMMODATIONS[mult]}.', 'success')
+        return redirect(url_for('instructor_exam_sim', section_id=sec.id) + '#esAccommodations')
+
+    app.extensions['ciwt_exam_sim'] = type('ExamSimApi', (), {})()
+    app.extensions['ciwt_exam_sim'].Attempt = ExamSimAttempt
+    app.extensions['ciwt_exam_sim'].Accommodation = ExamSimAccommodation
+    app.extensions['ciwt_exam_sim'].Grade = ExamSimGrade
+    app.extensions['ciwt_exam_sim'].multiplier = multiplier
 
     for rule, ep, fn, methods in (
         ('/student/section/<int:section_id>/exam-sim', 'exam_sim_home', exam_sim_home, ['GET']),
@@ -478,6 +708,11 @@ def register(app, db, deps):
         ('/student/section/<int:section_id>/exam-sim/<int:attempt_id>/pause', 'exam_sim_pause', exam_sim_pause, ['POST']),
         ('/student/section/<int:section_id>/exam-sim/<int:attempt_id>/remediate-drill', 'exam_sim_remediate', exam_sim_remediate, ['POST']),
         ('/instructor/section/<int:section_id>/exam-sim', 'instructor_exam_sim', instructor_exam_sim, ['GET']),
+        ('/instructor/section/<int:section_id>/exam-sim/export.csv', 'instructor_exam_sim_csv', instructor_exam_sim_csv, ['GET']),
+        ('/instructor/section/<int:section_id>/exam-sim/sync-gradebook', 'instructor_exam_sim_sync', instructor_exam_sim_sync, ['POST']),
+        ('/instructor/section/<int:section_id>/exam-sim/accommodation', 'instructor_exam_sim_accommodation',
+         instructor_exam_sim_accommodation, ['POST']),
+        ('/student/section/<int:section_id>/exam-sim/<int:attempt_id>/begin', 'exam_sim_begin', exam_sim_begin, ['POST']),
     ):
         app.add_url_rule(rule, ep, fn, methods=methods)
     return ExamSimAttempt

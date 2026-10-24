@@ -15,7 +15,8 @@
   var strict = root.dataset.strict === '1';
   var left = parseInt(root.dataset.remaining, 10) || 0;
   var clock = document.getElementById('esClock');
-  var paused = root.dataset.paused === '1', submitted = false;
+  var paused = root.dataset.paused === '1' || root.dataset.pre === '1', submitted = false;
+  var pre = root.dataset.pre === '1';
   var qs = Array.prototype.slice.call(document.querySelectorAll('.es-q'));
   var csrf = (form.querySelector('input[name="csrf_token"]') || {}).value || '';
   var saveState = document.getElementById('esSaveState');
@@ -49,7 +50,7 @@
       pause.setAttribute('aria-pressed', paused ? 'true' : 'false');
       pause.textContent = paused ? 'Resume timer' : 'Pause timer';
     }
-    document.getElementById('esPausedNote').classList.toggle('d-none', !paused);
+    document.getElementById('esPausedNote').classList.toggle('d-none', !paused || pre);
     document.getElementById('esQuestions').classList.toggle('es-hidden', paused);
   }
   function tick() {
@@ -76,6 +77,25 @@
         .then(function (r) { return r.json(); })
         .then(function (j) { paused = !!j.paused; left = j.remaining; clock.textContent = fmt(left); showPaused(); })
         .catch(function () { paused = !paused; showPaused(); });
+    });
+  }
+
+  // ------------------------------------------------------------ candidate agreement (clock waits until "I Agree")
+  var beginForm = document.getElementById('esBeginForm');
+  if (beginForm) {
+    beginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      fetch(root.dataset.begin, { method: 'POST', body: new FormData(beginForm), credentials: 'same-origin',
+                                  headers: { 'X-CSRFToken': csrf, 'Accept': 'application/json', 'X-Requested-With': 'fetch' } })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          pre = false; paused = false; left = j.remaining; clock.textContent = fmt(left);
+          document.getElementById('esAgreement').classList.add('d-none');
+          form.classList.remove('es-pre');
+          showPaused();
+          root.scrollIntoView({ block: 'start' });
+        })
+        .catch(function () { beginForm.submit(); });
     });
   }
 

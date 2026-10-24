@@ -50,5 +50,15 @@ def openbadges(pf, issuer_url, verify_url):
                     'badge': {'type': 'BadgeClass', 'name': f"Lab: {lab['title']}", 'issuer': issuer,
                               'criteria': {'narrative': f"Completed with score {lab['score']}%. Process: " + (', '.join(b['label'] for b in lab['badges']) or 'recorded')},
                               'tags': [lab['kind']]}})
-    return {'portfolio': {k: pf[k] for k in ('student', 'generated', 'courses', 'certifications')}, 'assertions': asr,
+    for x in pf.get('exam_sittings', []):
+        if not x['ready']:
+            continue
+        asr.append({'@context': 'https://w3id.org/openbadges/v2', 'type': 'Assertion', 'recipient': rec,
+                    'issuedOn': x['date'] or pf['generated'], 'verification': {'type': 'hosted', 'url': verify_url},
+                    'badge': {'type': 'BadgeClass', 'name': f"VOUCHER READY: {x['name']} ({x['code']}) simulator",
+                              'issuer': issuer, 'tags': [x['code'], 'exam-simulator'],
+                              'criteria': {'narrative': f"Simulated scaled score {x['score']}/900 against a pass bar of {x['bar']} "
+                                                        f"({x['mode']}) with every domain at 60% or better. Simulation only; "
+                                                        'not an official CompTIA result.'}}})
+    return {'portfolio': {k: pf.get(k) for k in ('student', 'generated', 'courses', 'certifications', 'exam_sittings')}, 'assertions': asr,
             'note': 'Unsigned export. Verify at the hosted URL while the student keeps the portfolio shareable.'}

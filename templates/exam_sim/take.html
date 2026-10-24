@@ -3,7 +3,8 @@
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
 {% block content %}
 <div class="es-bar" id="examSim" data-remaining="{{ remaining }}" data-strict="{{ '1' if att.strict else '0' }}" data-total="{{ questions|length }}" data-pbqs="{{ n_pbq }}"
-     data-paused="{{ '1' if paused else '0' }}" data-attempt="{{ att.id }}"
+     data-paused="{{ '1' if paused else '0' }}" data-attempt="{{ att.id }}" data-pre="{{ '1' if pre else '0' }}"
+     data-begin="{{ url_for('exam_sim_begin', section_id=section.id, attempt_id=att.id) }}"
      data-autosave="{{ url_for('exam_sim_autosave', section_id=section.id, attempt_id=att.id) }}"
      data-pause-url="{{ url_for('exam_sim_pause', section_id=section.id, attempt_id=att.id) }}">
   <div><strong>{{ exam.name }} ({{ exam.code }})</strong> · {{ mode.name }} · {{ 'Exam mode' if att.strict else 'Practice mode' }}</div>
@@ -12,10 +13,26 @@
   {% if n_pbq %}<button type="button" class="btn btn-sm btn-outline-gold" id="esSkipPbq">Skip PBQs &amp; return later</button>{% endif %}
   <button type="button" class="btn btn-sm btn-outline-navy" id="esWbToggle" aria-controls="esWhiteboard" aria-expanded="false"><i class="bi bi-pencil-square" aria-hidden="true"></i> Whiteboard / Scratchpad</button>
   {% if not att.strict %}<button type="button" class="btn btn-sm btn-outline-secondary" id="esViewToggle" aria-pressed="false" data-single="Single-question view" data-scroll="All-questions scroll view">All-questions scroll view</button>{% endif %}
+  {% if mult != 1.0 %}<span class="badge text-bg-info" id="esAccBadge">{{ mult }}× time accommodation applied — {{ minutes }} min</span>{% endif %}
   <span class="small text-muted" id="esSaveState" aria-live="polite">Auto-save on</span>
 </div>
+{% if pre %}<section class="card card-body mb-3 es-agreement" id="esAgreement" aria-labelledby="esAgreeH">
+  <h2 class="h5" id="esAgreeH">Candidate Agreement &amp; Exam Instructions</h2>
+  <dl class="es-agree-facts">
+    <dt>Exam</dt><dd>{{ exam.name }} ({{ exam.code }}) · {{ mode.name }}</dd>
+    <dt>Questions</dt><dd>{{ questions|length }} ({{ n_pbq }} performance-based, shown first)</dd>
+    <dt>Time allowed</dt><dd>{{ minutes }} minutes{% if mult != 1.0 %} ({{ mult_label }} accommodation){% endif %} · {{ 'Exam mode: no pause' if att.strict else 'Practice mode: pause allowed' }}</dd>
+    <dt>Passing score</dt><dd>{{ bar }} on the simulated 100–900 scale</dd>
+  </dl>
+  <h3 class="h6">Testing-center rules</h3>
+  <ol class="small">{% for r in rules %}<li>{{ r }}</li>{% endfor %}</ol>
+  <form method="post" action="{{ url_for('exam_sim_begin', section_id=section.id, attempt_id=att.id) }}" id="esBeginForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-navy" type="submit" id="esBegin">I Agree — Start Exam Clock</button>
+  </form>
+</section>{% endif %}
 <div class="es-paused{% if not paused %} d-none{% endif %}" id="esPausedNote" role="status">Timer paused — questions are hidden until you resume.</div>
-<form method="post" id="esForm" data-view="single">
+<form method="post" id="esForm" data-view="single"{% if pre %} class="es-pre"{% endif %}>
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="hidden" name="timed_out" value="0" id="esTimedOut">
   <input type="hidden" name="flags_sent" value="1">

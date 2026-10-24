@@ -48,6 +48,28 @@ def register(app, db, d):
             db.session.add(s)
         return s
 
+    def exam_sittings(user):
+        """Per exam: the best VOUCHER READY sitting, else the latest submitted one (Option B pass 5)."""
+        ESA = d.get('ExamSimAttempt')
+        if ESA is None:
+            return []
+        from curriculum_v2.cert import exam_sim as ES
+        from curriculum_v2.cert.exams import EXAMS
+        rows = ESA.query.filter(ESA.user_id == user.id, ESA.submitted_at.isnot(None)).order_by(ESA.submitted_at.desc()).all()
+        out = []
+        for ex in EXAMS:
+            mine = [r for r in rows if r.exam == ex and r.mode != 'drill']
+            if not mine:
+                continue
+            ready = [r for r in mine if r.badge == 'ready']
+            r = max(ready, key=lambda x: (x.score or 0, x.submitted_at)) if ready else mine[0]
+            out.append({'exam': ex, 'code': EXAMS[ex]['code'], 'name': EXAMS[ex]['name'], 'score': r.score,
+                        'bar': ES.PASS_SCORE[ex], 'ready': r.badge == 'ready',
+                        'status': ES.VOUCHER_STATUS.get(r.badge, 'REMEDIATION REQUIRED'),
+                        'date': str(r.submitted_at)[:10], 'mode': ('Exam mode' if r.strict else 'Practice mode') + ' · '
+                        + ES.MODES.get(r.mode, {}).get('name', r.mode)})
+        return out
+
     def collect(user):
         from mastery import lab_diagnosis as LDX
         courses, states_all, comps = [], {}, []
@@ -84,6 +106,7 @@ def register(app, db, d):
                          'completed': str(row.completed_at)[:10], 'badges': B.lab_badges(ana)})
         return {'student': {'name': f'{user.first_name} {user.last_name}'.strip() if hasattr(user, 'first_name') else user.email},
                 'generated': utcnow().strftime('%Y-%m-%d'), 'courses': courses, 'competencies': comps, 'labs': labs,
+                'exam_sittings': exam_sittings(user),
                 'certifications': B.cert_readiness(states_all)}
 
     def render(user, owner, public=False):
