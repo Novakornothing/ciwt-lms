@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Skills portfolio — {{ pf.student.name }} — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/tutor.css') }}">{% if public %}<meta name="robots" content="noindex, nofollow">{% endif %}{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Skills portfolio — {{ pf.student.name }}</h1>
+  <p class="mb-0">Verified by Novak Learning (CIWT) on {{ pf.generated }}: competencies from the adaptive mastery engine, labs from recorded lab attempts. {% if public %}This is a read-only verification page shared by the student.{% endif %}</p>
+</div>
+{% if owner %}
+<section class="card card-body mb-3 no-print" aria-labelledby="pf-vis">
+  <h2 class="h6" id="pf-vis">Who can see this</h2>
+  <form method="post" action="{{ url_for('portfolio_visibility') }}" class="d-flex flex-wrap gap-2 align-items-center">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-check"><input class="form-check-input" type="radio" name="visibility" id="pf-priv" value="private"{% if not setting or setting.visibility == 'private' %} checked{% endif %}><label class="form-check-label" for="pf-priv">Private (you and your instructor)</label></div>
+    <div class="form-check"><input class="form-check-input" type="radio" name="visibility" id="pf-link" value="link"{% if setting and setting.visibility == 'link' %} checked{% endif %}><label class="form-check-label" for="pf-link">Anyone with the link</label></div>
+    <button class="btn btn-brand btn-sm" type="submit">Save</button>
+    {% if share %}<button class="btn btn-outline-secondary btn-sm" type="submit" name="new_link" value="1">New link (old one stops working)</button>{% endif %}
+  </form>
+  {% if share %}<p class="small mt-2 mb-0">Share link: <a href="{{ share }}">{{ share }}</a></p>{% endif %}
+  <p class="mt-2 mb-0"><a class="btn btn-outline-secondary btn-sm" href="{{ url_for('portfolio_export') }}"><i class="bi bi-download" aria-hidden="true"></i> Download JSON (OpenBadges)</a>
+  <button class="btn btn-outline-secondary btn-sm" type="button" data-print><i class="bi bi-printer" aria-hidden="true"></i> Print / save as PDF</button></p>
+</section>
+{% endif %}
+<div class="pf-grid">
+  <section class="card card-body" aria-labelledby="pf-c"><h2 class="h5" id="pf-c">Courses</h2>
+    {% for c in pf.courses %}<p class="mb-1"><strong>{{ c.code }}</strong> {{ c.title }} — {{ c.mastered }} of {{ c.objectives }} competencies mastered</p>{% else %}<p class="mb-0">No courses yet.</p>{% endfor %}</section>
+  <section class="card card-body" aria-labelledby="pf-x"><h2 class="h5" id="pf-x">Certification domain readiness</h2>
+    {% for e in pf.certifications %}<h3 class="h6 mt-2">{{ e.name }} — {{ e.pct }}%</h3>
+      {% for dm in e.domains %}<div class="small">{{ dm.domain }} {{ dm.name }}: {{ dm.level }} ({{ dm.pct }}%)</div>
+      <div class="pf-bar mb-1" role="img" aria-label="{{ dm.name }} {{ dm.pct }} percent"><span class="pf-w-{{ (dm.pct // 5) * 5 }}"></span></div>{% endfor %}
+    {% else %}<p class="mb-0">No evidence yet.</p>{% endfor %}
+    <p class="small text-body-secondary mt-2 mb-0">Readiness is an estimate from course objectives mapped to exam domains; it does not predict an exam score. Not endorsed by CompTIA.</p></section>
+</div>
+<section class="card card-body mt-3" aria-labelledby="pf-m"><h2 class="h5" id="pf-m">Verified competencies</h2>
+  {% if pf.competencies %}<div class="table-responsive"><table class="table table-sm pf-table"><thead><tr><th scope="col">Objective</th><th scope="col">Competency</th><th scope="col">Mastery</th></tr></thead><tbody>
+  {% for c in pf.competencies %}<tr><td>{{ c.id }}</td><td>{{ c.text }}</td><td>{{ c.pct }}%</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<p class="mb-0">None verified yet. Competencies appear once the mastery engine rates an objective mastered.</p>{% endif %}</section>
+<section class="card card-body mt-3" aria-labelledby="pf-l"><h2 class="h5" id="pf-l">Labs completed</h2>
+  {% if pf.labs %}<div class="table-responsive"><table class="table table-sm pf-table"><thead><tr><th scope="col">Lab</th><th scope="col">Type</th><th scope="col">Score</th><th scope="col">Process</th></tr></thead><tbody>
+  {% for l in pf.labs %}<tr><td>{{ l.title }}<span class="d-block small text-body-secondary">{{ l.completed }}</span></td><td>{{ l.kind }}</td><td>{{ l.score }}%</td>
+  <td>{% for b in l.badges %}<span class="pf-badge"><i class="bi bi-patch-check" aria-hidden="true"></i> {{ b.label }}</span>{% else %}—{% endfor %}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<p class="mb-0">No labs completed yet.</p>{% endif %}</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/portfolio.js') }}" defer></script>{% endblock %}

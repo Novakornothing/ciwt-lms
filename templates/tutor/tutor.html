@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}AI tutor — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/tutor.css') }}">{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">Course tutor</h1>
+  <p class="mb-0">Answers come only from your course: lesson sections, the step-by-step explanations, the glossary and lab guides. Every answer shows where it came from. It will explain concepts, not hand out graded quiz answers.</p>
+</div>
+{% if not sections %}<p>You are not enrolled in a class yet.</p>{% else %}
+{% if not on %}<div class="alert alert-info">Your instructor has turned the AI tutor off for this class.</div>{% endif %}
+<form method="post" action="{{ url_for('tutor_page') }}" class="card card-body">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if sections|length > 1 %}
+  <label class="form-label" for="tutor-sec">Class</label>
+  <select class="form-select mb-2" id="tutor-sec" name="section_id">{% for s in sections %}<option value="{{ s.id }}"{% if s.id == section_id %} selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
+  {% else %}<input type="hidden" name="section_id" value="{{ section_id }}">{% endif %}
+  <label class="form-label" for="tutor-q">Your question</label>
+  <textarea class="form-control mb-2" id="tutor-q" name="q" rows="3" maxlength="500" required placeholder="e.g. Why does a 169.254 address mean there is no DHCP lease?">{{ q }}</textarea>
+  <button class="btn btn-brand" type="submit"{% if not on %} disabled{% endif %}><i class="bi bi-chat-square-text" aria-hidden="true"></i> Ask</button>
+</form>
+{% include "tutor/_answer.html" %}
+{% endif %}
+{% endblock %}

@@ -52,4 +52,5 @@
 <script type="application/json" id="labConfig">{{ cfg|tojson }}</script>
 <script src="{{ url_for('static', filename='js/lab-common.js') }}"></script>
 <script src="{{ url_for('static', filename='js/lab-terminal.js') }}"></script>
+{% with tutor_section_id = tutor_default_section() %}{% include 'tutor/_drawer.html' %}{% endwith %}
 {% endblock %}

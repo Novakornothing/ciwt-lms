@@ -1,0 +1,20 @@
+{# Inline tutor drawer for lesson and lab pages (students only). Needs tutor_section_id. #}
+{% if current_user.is_authenticated and current_user.role == 'student' and tutor_section_id and tutor_drawer_on(tutor_section_id) %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tutor.css') }}">
+<button type="button" class="btn btn-brand tutor-fab no-print" id="tutor-open" aria-controls="tutor-drawer" aria-expanded="false"><i class="bi bi-chat-square-text" aria-hidden="true"></i> Ask the tutor</button>
+<div class="tutor-drawer" id="tutor-drawer" role="dialog" aria-modal="false" aria-labelledby="tutor-drawer-h" hidden
+     data-url="{{ url_for('tutor_api_ask') }}" data-section="{{ tutor_section_id }}">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="h6 mb-0" id="tutor-drawer-h">Course tutor</h2>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="tutor-close">Close</button>
+  </div>
+  <form id="tutor-form">
+    <label class="form-label small" for="tutor-dq">Ask about this lesson or lab</label>
+    <textarea class="form-control mb-2" id="tutor-dq" rows="2" maxlength="500" required></textarea>
+    <button class="btn btn-brand btn-sm" type="submit">Ask</button>
+    <a class="small ms-2" href="{{ url_for('tutor_page', section_id=tutor_section_id) }}">Open full tutor</a>
+  </form>
+  <div id="tutor-out" class="mt-2" aria-live="polite"></div>
+</div>
+<script src="{{ url_for('static', filename='js/tutor.js') }}" defer></script>
+{% endif %}

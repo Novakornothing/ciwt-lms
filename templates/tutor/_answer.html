@@ -1,0 +1,20 @@
+{% if res %}
+<section class="mt-3" aria-live="polite" aria-labelledby="tutor-ans-h">
+  <h2 class="h5" id="tutor-ans-h">{% if res.outcome == 'answered' %}From your course{% else %}The tutor can't answer that{% endif %}</h2>
+  <div class="tutor-answer{% if res.outcome != 'answered' %} tutor-refusal{% endif %}"><p class="mb-0">{{ res.answer }}</p></div>
+  {% if res.cites %}
+  <h3 class="h6 mt-3">Sources</h3>
+  <ol class="tutor-cites">
+  {% for c in res.cites %}
+    <li><span class="tutor-kind text-body-secondary">{% if c.type == 'rung' %}Explanation · {{ c.kind }}{% elif c.type == 'lesson' %}Lesson section{% elif c.type == 'lab' %}Lab guide{% else %}Glossary{% endif %}</span><br>
+      {% if c.url %}<a href="{{ c.url }}">{% endif %}{% if c.label %}{{ c.label }} — {% endif %}{{ c.title }}{% if c.url %}</a>{% endif %}
+      <span class="d-block small">“{{ c.quote|truncate(220) }}”</span></li>
+  {% endfor %}
+  </ol>
+  {% endif %}
+  {% if res.glossary %}
+  <h3 class="h6">Glossary terms used</h3>
+  <dl class="small mb-0">{% for g in res.glossary %}<dt>{{ g.term }}</dt><dd>{{ g.definition }}</dd>{% endfor %}</dl>
+  {% endif %}
+</section>
+{% endif %}

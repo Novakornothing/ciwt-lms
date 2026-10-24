@@ -7131,6 +7131,20 @@ lti_api = lti_mod.register(app, db, dict(
     audit=lambda action, detail='': audit(action, detail),
 ), csrf)
 
+# Priority 3: curriculum-grounded AI tutor + skills portfolio
+import tutor as tutor_mod  # noqa: E402
+import portfolio as portfolio_mod  # noqa: E402
+tutor_api = tutor_mod.register(app, db, dict(
+    Course=Course, Module=Module, Lesson=Lesson, ClassSection=ClassSection, Enrollment=Enrollment, glossary=_MX_GLOSSARY,
+    can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    audit=lambda action, detail='': audit(action, detail),
+))
+portfolio_api = portfolio_mod.register(app, db, dict(
+    User=User, Course=Course, ClassSection=ClassSection, Enrollment=Enrollment, mastery=lambda: mastery_api,
+    lab_api=lab_progress_api, get_lab=get_lab,
+    can_access_section=lambda user, section: instructor_can_access_section(user, section),
+))
+
 # pass 13: first-run experience (instructor "Set up your class" checklist, one-time student introduction)
 import onboarding as onboarding_mod  # noqa: E402
 onboarding_api = onboarding_mod.register(app, db, dict(

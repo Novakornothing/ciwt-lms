@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}AI tutor — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/tutor.css') }}">{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3 mb-1">AI tutor — {{ section.name }}</h1>
+  <p class="mb-0">The tutor answers only from this course's lessons, explanations, glossary and lab guides, cites its sources, and refuses requests for graded answers.</p>
+</div>
+<form method="post" class="card card-body mb-3">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" role="switch" id="tutor-on" name="enabled"{% if on %} checked{% endif %}>
+    <label class="form-check-label" for="tutor-on">AI tutor available to students in this class</label>
+  </div>
+  <button class="btn btn-brand mt-2 align-self-start" type="submit">Save</button>
+</form>
+<div class="pf-grid">
+  <section class="card card-body" aria-labelledby="t-c"><h2 class="h6" id="t-c">Questions by outcome</h2>
+    <ul class="mb-0">{% for k, label in [('answered','Answered'),('cheat','Refused: graded answer request'),('offtopic','Refused: not in the course'),('disabled','Tutor off')] %}<li>{{ label }}: {{ counts.get(k, 0) }}</li>{% endfor %}</ul></section>
+  <section class="card card-body" aria-labelledby="t-t"><h2 class="h6" id="t-t">Common question words</h2>
+    {% if terms %}<p class="mb-0">{% for t, n in terms %}<span class="pf-badge">{{ t }} × {{ n }}</span>{% endfor %}</p>{% else %}<p class="mb-0">No questions yet.</p>{% endif %}</section>
+  <section class="card card-body" aria-labelledby="t-s"><h2 class="h6" id="t-s">Most-cited sections</h2>
+    {% if sections %}<ul class="mb-0">{% for s, n in sections %}<li>{{ s }} ({{ n }})</li>{% endfor %}</ul>{% else %}<p class="mb-0">None yet.</p>{% endif %}</section>
+</div>
+<h2 class="h5 mt-3">Recent questions</h2>
+{% if recent %}<div class="table-responsive"><table class="table table-sm pf-table"><thead><tr><th scope="col">When</th><th scope="col">Question</th><th scope="col">Outcome</th></tr></thead><tbody>
+{% for q in recent %}<tr><td>{{ q.created_at.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ q.question }}</td><td>{{ q.outcome }}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p>No questions yet.</p>{% endif %}
+{% endblock %}
