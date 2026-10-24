@@ -12,7 +12,7 @@ SCENARIOS = [
     {
         "id": "SCN-DNS",
         "review": "Pending SME review",
-        "title": "Ticket SR-5307 — “The intranet is down for everyone”",
+        "title": "Ticket SR-5307 — Intranet DNS Outage",
         "blurb": "Prove it is DNS from a user's Windows 11 PC (simulation), then fix the real resolver and client on two real Linux VMs.",
         "ticket": ("Reported 08:12 by the service desk: since this morning nobody on the 3rd floor can open the intranet or "
                    "external sites by name; the web proxy by IP still works. The intranet moved to a new server last week. "
@@ -21,10 +21,10 @@ SCENARIOS = [
         "course_objectives": ["NO-4.2", "NO-6.1", "IT-13.2"],
         "minutes": 55,
         "stages": [
-            {"id": "scn-dns-evidence", "base": "win-dns-break", "label": "Stage 1 · User's PC (Windows 11 simulation)",
+            {"id": "scn-dns-evidence", "base": "win-dns-break", "label": "Stage 1 · User PC Triage",
              "brief": "Collect the evidence a second-line engineer will ask for, and decide whether this PC is the problem. "
                       "Do not change anything that is not broken."},
-            {"id": "scn-dns-fix", "base": "linux-vm-dns", "label": "Stage 2 · DNS server and test client (2 real Linux VMs)",
+            {"id": "scn-dns-fix", "base": "linux-vm-dns", "label": "Stage 2 · DNS Server Repair",
              "brief": "Your evidence says the client is fine and names do not resolve. Fix name resolution end to end on "
                       "dns-01 and prove it from ws-22: internal names, the moved intranet, mail and internet names."},
         ],
@@ -32,7 +32,7 @@ SCENARIOS = [
     {
         "id": "SCN-LAN2",
         "review": "Pending SME review",
-        "title": "Ticket NET-2207 — “LAN 2 has no network after Friday's change”",
+        "title": "Ticket NET-2207 — LAN 2 Outage",
         "blurb": "Fix a DHCP server and a router on two real Linux VMs, then bring the CFO's Windows laptop back (simulation).",
         "ticket": ("P2, raised Monday 07:55: every PC on LAN 2 shows 'No network' since Friday evening's change CHG-3317 on "
                    "the LAN 2 router. The ERP server (198.51.100.10, behind the core router 10.1.0.1) is unreachable from "
@@ -41,10 +41,10 @@ SCENARIOS = [
         "course_objectives": ["NO-4.1", "NO-6.1", "NO-6.3"],
         "minutes": 60,
         "stages": [
-            {"id": "scn-lan2-fix", "base": "linux-vm-nettrouble", "label": "Stage 1 · LAN 2 router and PC (2 real Linux VMs)",
+            {"id": "scn-lan2-fix", "base": "linux-vm-nettrouble", "label": "Stage 1 · LAN 2 Router & DHCP",
              "brief": "Restore LAN 2: PCs must get a working lease and reach the ERP server. Work one fault at a time and "
                       "verify the path hop by hop."},
-            {"id": "scn-lan2-verify", "base": "win-dhcp-renew", "label": "Stage 2 · CFO's laptop (Windows 11 simulation)",
+            {"id": "scn-lan2-verify", "base": "win-dhcp-renew", "label": "Stage 2 · CFO Laptop Recovery",
              "brief": "The network is fixed, but the CFO's laptop still holds what it got on Friday. Bring it back without a "
                       "reboot, and prove it reaches its gateway. Record the before state first."},
         ],

@@ -282,7 +282,7 @@ ITEMS = [
 
 LABS = {
     'CL-10': {
-        'id': 'CL-10', 'title': 'Endpoint security posture check and incident tabletop', 'chapters': [('ITSUP', 10), ('CLIENT', 3)],
+        'id': 'CL-10', 'title': 'Endpoint Security & Incident Tabletop', 'chapters': [('ITSUP', 10), ('CLIENT', 3)],
         'review': 'Pending SME review',
         'objective': 'Verify the security posture of a Windows 11 lab VM and run a malware and phishing tabletop within the support role.',
         'prerequisites': ['Lessons 10.1–10.4'],

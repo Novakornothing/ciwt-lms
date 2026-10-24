@@ -302,7 +302,7 @@ ITEMS = [
 
 LABS = {
     'CL-13': {
-        'id': 'CL-13', 'title': 'PowerShell evidence and name-resolution repair', 'chapters': [('ITSUP', 13), ('CLIENT', 6)],
+        'id': 'CL-13', 'title': 'PowerShell & DNS Repair', 'chapters': [('ITSUP', 13), ('CLIENT', 6)],
         'review': 'Pending SME review',
         'objective': 'Collect baseline evidence with PowerShell instead of WMIC, then isolate and repair a staged name-resolution fault on a lab VM and verify the fix.',
         'scenario': 'The instructor has added a stale hosts-file entry on a Windows 11 lab VM so that one intranet name resolves to the wrong address.',

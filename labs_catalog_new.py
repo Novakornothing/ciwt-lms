@@ -128,7 +128,7 @@ def subnet_solution(state):
 
 
 NET_SUBNET = _lab(
-    "net-subnet", "Subnetting workbench — calculate, size and validate", "activity",
+    "net-subnet", "Subnetting Workbench", "activity",
     "Per-student subnet values: network, broadcast, host range, mask; size a subnet; spot invalid hosts and APIPA.",
     [
         {"id": "subnet_math", "text": "Work out network, broadcast, host range, usable hosts and mask for your address"},
@@ -224,7 +224,7 @@ CABLE_JOBS = [
 ]
 
 HW_CABLES = _lab(
-    "hw-cables", "Connector and cable identification bench", "activity",
+    "hw-cables", "Cable & Connector Identification", "activity",
     "Identify eight connectors by shape, pick the right cable for six jobs, and choose the right test tool.",
     [
         {"id": "id_connectors", "text": "Match each connector drawing to its name"},
@@ -342,7 +342,7 @@ def _validate_build(p):
 
 
 HW_PC_BUILD = _lab(
-    "hw-pc-build", "Workstation build — pick compatible parts", "activity",
+    "hw-pc-build", "Workstation Component Selection", "activity",
     "Spec a CAD workstation from a parts list: socket, memory type, form factor, power budget, outputs and price.",
     [
         {"id": "build_ok", "text": "Pick a compatible build that meets every requirement and the budget"},
@@ -404,7 +404,7 @@ def _chk_note(got, vals, ans):
 
 
 TICKET_METHOD = _lab(
-    "ticket-method", "Troubleshooting methodology — work a ticket end to end", "activity",
+    "ticket-method", "Troubleshooting Methodology", "activity",
     "Order the six-step method, then use it on a live ticket: question, theory, least-disruptive test, verify, document.",
     [
         {"id": "order_steps", "text": "Put the troubleshooting steps in order"},
@@ -477,7 +477,7 @@ def _win(**extra):
 
 
 WIN_NET_CLI = _lab(
-    "win-net-cli", "Windows CLI — isolate a name-resolution fault", "windows",
+    "win-net-cli", "Windows CLI — DNS Fault Isolation", "windows",
     "Link, IP, gateway, internet by IP, path, then names: prove the primary DNS server is the fault with evidence.",
     [
         {"id": "run_ipconfig", "text": "ipconfig /all — note BOTH DNS servers"},
@@ -565,7 +565,7 @@ def _linux_rules(state, done, ev):
 
 
 LINUX_SHELL = _lab(
-    "linux-shell", "Linux shell — files, permissions and logs", "linux",
+    "linux-shell", "Linux Shell — Files & Permissions", "linux",
     "bash on a support server: identify the host, navigate, create files, fix permissions, run a script, search a log.",
     [
         {"id": "identify", "text": "Identify yourself and the machine (whoami, hostname)"},
@@ -634,7 +634,7 @@ def _print_pre(state, done, cmd):
 
 
 PRINT_TROUBLE = _lab(
-    "print-trouble", "PowerShell — clear a stuck print queue", "windows",
+    "print-trouble", "PowerShell — Print Queue Recovery", "windows",
     "Walk the print path: printer status, network path, queue, the stuck job, spooler, verify, test page.",
     [
         {"id": "ps_shell", "text": "Start PowerShell (powershell)"},
@@ -762,7 +762,7 @@ def _rtr_auto(state, done, cmd, lines):
 
 
 RTR_VLAN_ACL = _lab(
-    "rtr-vlan-acl", "Router — inter-VLAN routing and a guest ACL", "router",
+    "rtr-vlan-acl", "Router — Inter-VLAN Routing & ACL", "router",
     "Router-on-a-stick for VLAN 10 (staff) and 20 (guest), then a standard ACL so guests cannot reach the server LAN.",
     [
         {"id": "enable", "text": "Enter privileged EXEC (enable)"},
@@ -833,7 +833,7 @@ def _sw_auto(state, done, cmd, lines):
 
 
 SW_VLAN_MULTI = _lab(
-    "sw-vlan-multi", "Switch — two VLANs, access ports and a pruned trunk", "switch",
+    "sw-vlan-multi", "Switch — Multi-VLAN & Pruned Trunk", "switch",
     "Create STAFF (10) and GUEST (20), assign access ports, trunk Fa0/1 carrying only 10 and 20, verify, save.",
     [
         {"id": "enable", "text": "Enter privileged EXEC (enable)"},
@@ -873,7 +873,7 @@ def _on(a, k):
 
 
 WIFI_SECURE = _lab(
-    "wifi-secure", "SOHO router — secure the admin page, Wi-Fi and guest network", "activity",
+    "wifi-secure", "SOHO Router & Wi-Fi Hardening", "activity",
     "Harden a small-office router: admin password, firmware, remote management, WPA3, passphrase, WPS, channel, guest isolation.",
     [
         {"id": "harden", "text": "Lock down the router's own management"},
@@ -964,7 +964,7 @@ MALWARE_STEPS = ["Investigate and verify the malware symptoms", "Quarantine the 
                  "Enable System Restore and create a restore point", "Educate the end user"]
 
 SEC_MALWARE = _lab(
-    "sec-malware", "Malware response — the seven-step removal process", "activity",
+    "sec-malware", "Malware Incident Response", "activity",
     "Order the removal steps, then make the in-role decisions: quarantine, restore points, remediation, ransomware escalation.",
     [
         {"id": "order", "text": "Put the malware removal steps in order"},
@@ -1032,7 +1032,7 @@ def _num(want, why):
 
 
 OPS_BACKUP = _lab(
-    "ops-backup", "Backup and recovery — types, restore sets, 3-2-1, RPO/RTO", "activity",
+    "ops-backup", "Backup & Restore Planning", "activity",
     "Match backup types, work out which sets a restore needs, check a plan against 3-2-1, set RPO/RTO and prove it with a test restore.",
     [
         {"id": "types", "text": "Match backup types and snapshots to what they do"},
@@ -1099,7 +1099,7 @@ OPS_BACKUP = _lab(
 # ────────────────────────────────────────────────────────────── virt-vm
 
 VIRT_VM = _lab(
-    "virt-vm", "Virtualization — build a Windows 11 lab VM", "activity",
+    "virt-vm", "Virtualization — VM Provisioning", "activity",
     "Configure a Windows 11 guest (UEFI, Secure Boot, vTPM, CPU/RAM/disk, NAT), then snapshots vs backups and a VT-x fault.",
     [
         {"id": "vm_config", "text": "Configure the VM to meet Windows 11 and the network brief"},
@@ -1163,7 +1163,7 @@ VIRT_VM = _lab(
 # ────────────────────────────────────────────────────────────── mob-mdm
 
 MOB_MDM = _lab(
-    "mob-mdm", "Mobile devices — connectivity and MDM tickets inside policy", "activity",
+    "mob-mdm", "Mobile Device & MDM Triage", "activity",
     "Work three phone tickets: Wi-Fi vs cellular isolation, a compliance block from MDM, and a lost device.",
     [
         {"id": "isolate", "text": "Isolate a mobile connectivity fault"},
@@ -1234,7 +1234,7 @@ AD_RULES = {
 }
 
 WIN_AD_USERS = _lab(
-    "win-ad-users", "Active Directory Users and Computers — onboard, unlock, offboard", "win11gui",
+    "win-ad-users", "Active Directory User Lifecycle", "win11gui",
     "ADUC on a Windows 11 admin workstation: create a user in the right OU, least-privilege group, unlock and reset, disable a leaver.",
     [
         {"id": "open_aduc", "text": "Open Active Directory Users and Computers (Start → search \"dsa\" or \"Active Directory\")"},
@@ -1367,7 +1367,7 @@ def _wlp_pre(state, done, cmd):
 
 
 WIN_LAPTOP_PORTS = _lab(
-    "win-laptop-ports", "Windows CLI — battery health, VM check, MX records and port tests", "windows",
+    "win-laptop-ports", "Windows CLI — Laptop & Port Diagnostics", "windows",
     "A remote laptop dies by lunch and can't send mail: read a battery report, confirm what kind of machine you are on, "
     "find the mail servers and test the SMTP ports.",
     [
@@ -1482,7 +1482,7 @@ def _wifi_pre(state, done, cmd):
 
 
 WIN_WIFI_SURVEY = _lab(
-    "win-wifi-survey", "Windows CLI — Wi-Fi survey on a laptop (signal, band, channel)", "windows",
+    "win-wifi-survey", "Windows CLI — Wi-Fi Site Survey", "windows",
     "A laptop WITH a Wi-Fi adapter (works on any bench, VM or phone): read the interface, survey the access points, "
     "reconnect to the better band and verify.",
     [
@@ -1624,7 +1624,7 @@ def _hv_pre(state, done, cmd):
 
 
 HV_VSWITCH = _lab(
-    "hv-vswitch", "Hyper-V host — isolated virtual switch and checkpoints (PowerShell)", "windows",
+    "hv-vswitch", "Hyper-V Switch & Checkpoints", "windows",
     "On a simulated Hyper-V host: build a Private switch for a lab network, connect two VMs, checkpoint before an update and roll back.",
     [
         {"id": "get_vm", "text": "Get-VM — list the virtual machines"},

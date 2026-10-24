@@ -750,7 +750,7 @@ CLASSROOM_LABS = {
         'rubric': 'lab', 'minutes': 50, 'objectives': ['IT-4.1', 'IT-4.3'],
     },
     'CL-6': {
-        'id': 'CL-6', 'title': 'Build, snapshot and network a virtual machine', 'chapters': [('ITSUP', 6)],
+        'id': 'CL-6', 'title': 'VM Build, Snapshot & Networking', 'chapters': [('ITSUP', 6)],
         'objective': 'Create a VM with appropriate resources, take and revert a snapshot, and compare virtual network modes.',
         'prerequisites': ['Chapter 6 lessons 6.1 and 6.3'],
         'equipment': 'A host PC with virtualisation enabled in firmware (8 GB RAM or more), Hyper-V, VMware Workstation Pro or VirtualBox 7+, and a Linux or Windows 11 ISO.',

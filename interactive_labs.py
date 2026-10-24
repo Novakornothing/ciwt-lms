@@ -89,7 +89,7 @@ LABS = [
     # ── Windows foundation ──────────────────────────────────────────
     _lab(
         "win-ipconfig",
-        "1. Windows 11 VM — Read Network Identity",
+        "1. Windows 11 VM — Network Identity",
         "windows",
         "hostname + ipconfig /all — baseline ticket evidence.",
         [
@@ -103,7 +103,7 @@ LABS = [
     ),
     _lab(
         "win-dns-break",
-        "2. Windows 11 VM — DNS Failure Isolation",
+        "2. Windows 11 VM — DNS Triage",
         "windows",
         "Reuse ping + ipconfig skills; prove name resolution is the fault.",
         [
@@ -121,7 +121,7 @@ LABS = [
     ),
     _lab(
         "win-dhcp-renew",
-        "3. Windows 11 VM — DHCP Release / Renew",
+        "3. Windows 11 VM — DHCP Renew",
         "windows",
         "Reuse ipconfig; practice lease cycle and re-check connectivity.",
         [
@@ -138,7 +138,7 @@ LABS = [
     ),
     _lab(
         "win-full-triage",
-        "4. Windows 11 VM — Full Client Triage",
+        "4. Windows 11 VM — Full Triage",
         "windows",
         "Combine identity, DNS, DHCP, and ping into one ticket workflow.",
         [
@@ -160,7 +160,7 @@ LABS = [
     ),
     _lab(
         "w11-inventory",
-        "5. Windows 11 VM — Inventory the Endpoint",
+        "5. Windows 11 VM — Endpoint Inventory",
         "windows",
         "Treat this as a Windows 11 Education VM. Prove edition, build, user, and hostname.",
         [
@@ -177,7 +177,7 @@ LABS = [
     ),
     _lab(
         "w11-powershell-net",
-        "6. Windows 11 VM — PowerShell Network View",
+        "6. Windows 11 VM — PowerShell Net View",
         "windows",
         "Same VM, modern cmdlets: Get-NetIPConfiguration, Get-NetAdapter, Test-Connection.",
         [
@@ -210,7 +210,7 @@ LABS = [
     ),
     _lab(
         "w11-netsh",
-        "7b. Windows 11 VM — netsh interface view",
+        "7b. Windows 11 VM — netsh Interfaces",
         "windows",
         "netsh is the older admin path. Same facts as ipconfig, different tool.",
         [
@@ -270,7 +270,7 @@ LABS = [
     ),
     _lab(
         "gui-renew",
-        "10. Windows 11 GUI — Renew the Ethernet lease",
+        "10. Windows 11 GUI — Renew DHCP Lease",
         "win11gui",
         "Real lease recycle: Settings → Advanced network settings → More adapter options (ncpa.cpl) → Disable → Enable.",
         [
@@ -372,7 +372,7 @@ LABS = [
     ),
     _lab(
         "sw-vlan-and-trunk",
-        "7. Switch — VLAN + Access + Trunk (capstone)",
+        "7. Switch — VLAN & Trunk Capstone",
         "switch",
         "Combine labs 5–6: create VLAN, access port, and trunk uplink.",
         [
@@ -522,7 +522,7 @@ LABS = [
     ),
     _lab(
         "sw-port-security",
-        "Switch — Port security on an access port",
+        "Switch — Port Security",
         "switch",
         "Limit Fa0/2 to one MAC so a user hub cannot cascade.",
         [
@@ -807,7 +807,7 @@ LABS = [
     ),
     _lab(
         "hw-board",
-        "Block 2 — Identify the board on the bench",
+        "Block 2 — Motherboard Identification",
         "ticket",
         "Name form factor, socket, memory, storage, and POST from the bench card.",
         [

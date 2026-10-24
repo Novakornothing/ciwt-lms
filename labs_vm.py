@@ -57,7 +57,7 @@ def _m(name, label, host, segs=None, mem=80, disk_mb=0):
 # --------------------------------------------------------------------------------------------- lab 1: permissions
 PERMS = {
     "id": "linux-vm-perms",
-    "title": "Real Linux VM — files, ownership, permissions and a support script",
+    "title": "Real Linux VM — Permissions & Scripting",
     "kind": "vm",
     "blurb": "A real Linux machine (BusyBox/Buildroot, kernel 6.8) boots inside your browser. Nothing is simulated: "
              "every command really runs. Graded by inspecting the VM.",
@@ -136,7 +136,7 @@ printf '09:00 INFO service started\n09:05 INFO user login ok\n09:12 ERROR disk q
 """
 SHELL = {
     "id": "linux-vm-shell",
-    "title": "Real Linux VM — shell basics: files, permissions, scripts and logs",
+    "title": "Real Linux VM — Shell & Log Basics",
     "kind": "vm",
     "blurb": "The Linux shell lab on a real machine: the same ticket as the simulator, but every command really runs "
              "in a Linux VM inside your browser, and the grader inspects the VM.",
@@ -235,7 +235,7 @@ crond -c /var/spool/cron/crontabs 2>/dev/null
 """
 SERVICES = {
     "id": "linux-vm-services",
-    "title": "Real Linux VM — services, processes, a filling disk, cron and syslog",
+    "title": "Real Linux VM — Services, Disk & Cron",
     "kind": "vm",
     "blurb": "A real Linux server with real faults: a runaway process filling /tmp and a broken init script. "
              "Find, kill, clean up, repair the service, schedule a job and log the fix — graded inside the VM.",
@@ -325,7 +325,7 @@ echo '10.10.0.99   intranet.ciwt.lab intranet   # old server, decommissioned 202
 """
 NETCLIENT = {
     "id": "linux-vm-netclient",
-    "title": "Real Linux VM — lease, gateway and name resolution on a live network",
+    "title": "Real Linux VM — Live Network Client",
     "kind": "vm",
     "blurb": "A real Linux workstation on a virtual LAN with a real DHCP and DNS server. Diagnose an APIPA address "
              "and a stale hosts entry with ip, udhcpc, nslookup and ping — every packet really flows.",
@@ -401,7 +401,7 @@ _RT_NET = {
 }
 ROUTING = {
     "id": "linux-vm-routing",
-    "title": "Real Linux VMs — route between two networks (two machines, one router)",
+    "title": "Real Linux VMs — Static Routing",
     "kind": "vm",
     "blurb": "Two real Linux VMs on a virtual network: address a PC and a Linux router, turn on IP forwarding and set "
              "the default gateway until the PC reaches a server on the other subnet. Real ARP, TTLs and traceroute.",

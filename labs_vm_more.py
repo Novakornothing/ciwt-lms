@@ -70,7 +70,7 @@ _LOG_SETUP = _prelude("ciwt-web-03") + "mkdir -p /var/log\ncat > /var/log/messag
 _ASK = "/root/SR-5120.txt"
 LOGS = {
     "id": "linux-vm-logs",
-    "title": "Real Linux VM — log investigation: brute force, a breach and a failed backup",
+    "title": "Real Linux VM — Security Log Triage",
     "kind": "vm",
     "blurb": "Three days of real syslog files (one rotated and compressed) on a real Linux server. Use grep, sort, uniq, "
              "wc and zcat to answer the incident questions, preserve the evidence and log your finding.",
@@ -161,7 +161,7 @@ printf '# m h dom mon dow command\n0 2 * * * backup.sh\n*/5 * * * * /usr/local/b
 """
 CRON = {
     "id": "linux-vm-cron",
-    "title": "Real Linux VM — scheduled tasks that never ran (cron)",
+    "title": "Real Linux VM — Cron Troubleshooting",
     "kind": "vm",
     "blurb": "Real crond and real crontabs. Find why nightly jobs never run, fix the schedule and paths, schedule a job "
              "for another user, enable cron at boot and prove a job really ran.",
@@ -235,7 +235,7 @@ chmod 440 /etc/sudoers.d/90-temp
 """
 USERS = {
     "id": "linux-vm-users",
-    "title": "Real Linux VM — accounts, groups and least-privilege sudo for a help-desk team",
+    "title": "Real Linux VM — Users, Groups & Sudo",
     "kind": "vm",
     "blurb": "Real shadow utilities and real sudo 1.9. Onboard two technicians into a group, give the group a shared "
              "setgid folder and only the sudo rights it needs, and offboard a leaver without deleting evidence.",
@@ -321,7 +321,7 @@ start-stop-daemon -S -b -x /usr/bin/socat -- TCP-LISTEN:8080,fork,reuseaddr 'SYS
 """
 PACKAGES = {
     "id": "linux-vm-packages",
-    "title": "Real Linux VM — package and service troubleshooting (apk, init scripts, ports)",
+    "title": "Real Linux VM — Packages & Services",
     "kind": "vm",
     "blurb": "A real Alpine package manager with a signed offline repository. The intranet web service is down: find the "
              "missing package, the disabled repository and the process squatting on the port, then fix and enable it.",
@@ -400,7 +400,7 @@ _FW_WS = _prelude("adm-ws") + _FW_HOSTS + "ip link set eth0 up; ip addr add 10.2
 _IPS = "iptables -S INPUT"
 FIREWALL = {
     "id": "linux-vm-firewall",
-    "title": "Real Linux VMs — host firewall with iptables (default deny, stateful, admin-only SSH)",
+    "title": "Real Linux VMs — iptables Host Firewall",
     "kind": "vm",
     "blurb": "Two real Linux machines on a virtual LAN. Lock down a web server with real netfilter rules: default deny, "
              "stateful return traffic, web for everyone, SSH only from the admin workstation — and prove it from the client.",
@@ -476,7 +476,7 @@ echo 'UUID=0c5e1f2a-7d3b-4e5f-9a1b-2c3d4e5f6a7b /mnt/olddata ext4 defaults 0 2  
 _FDISK = "printf 'n\\np\\n1\\n\\n+32M\\nn\\np\\n2\\n\\n\\nt\\n2\\n82\\nw\\n' | fdisk /dev/sda"
 DISK = {
     "id": "linux-vm-disk",
-    "title": "Real Linux VM — add a data disk: partitions, ext4, mount by UUID, swap and fstab",
+    "title": "Real Linux VM — Disk, Swap & fstab",
     "kind": "vm",
     "blurb": "A real blank 48 MB ATA disk is attached to a real Linux server. Partition it, format it, move the "
              "application data onto it, mount it persistently by UUID, add swap and repair a stale fstab entry.",
@@ -563,7 +563,7 @@ printf '\n# CIWT lab: classic X25519 key exchange - the post-quantum default (sn
 _BATCH = f"-o BatchMode=yes -o ConnectTimeout=30 -o KexAlgorithms={_KEX}"
 SSH = {
     "id": "linux-vm-ssh",
-    "title": "Real Linux VMs — SSH between two machines with keys, then turn passwords off",
+    "title": "Real Linux VMs — SSH Key Hardening",
     "kind": "vm",
     "blurb": "Real OpenSSH 9.7 on two real Linux VMs. Repair a broken sshd config, set up ed25519 key login for a deploy "
              "account, verify the host key, harden the server and copy a release with scp.",
@@ -673,7 +673,7 @@ _ROT = ("rm -rf /tmp/pr && mkdir -p /tmp/pr/src/sub /tmp/pr/dst && echo x > /tmp
         "ls /tmp/pr/dst | grep -q 20240103 && ! ls /tmp/pr/dst | grep -q 20240102")
 SCRIPT = {
     "id": "linux-vm-script",
-    "title": "Real Linux VM — automate it: a backup script with rotation, exit codes and logging",
+    "title": "Real Linux VM — Backup Automation",
     "kind": "vm",
     "blurb": "Write a real POSIX shell script and schedule it. The grader runs your script against test folders inside "
              "the VM — wrong arguments, a missing source, a real archive and rotation — and checks the exit codes.",
@@ -770,7 +770,7 @@ printf 'search corp.example\nnameserver 10.30.0.254\n' > /etc/resolv.conf
 _DR = "drill -Q"
 DNS = {
     "id": "linux-vm-dns",
-    "title": "Real Linux VMs — DNS troubleshooting chain: client, internal resolver, records and forwarding",
+    "title": "Real Linux VMs — DNS Resolver Repair",
     "kind": "vm",
     "blurb": "A real client and a real dnsmasq resolver, with an upstream resolver on the virtual LAN. Follow a name from "
              "the client's resolv.conf to the server's listen address, its zone data and its forwarder until every name resolves.",
@@ -862,7 +862,7 @@ service dnsmasq start >/dev/null 2>&1
 _NT_PC = _prelude("pc-7") + "ip link set eth0 up\n"
 NETTROUBLE = {
     "id": "linux-vm-nettrouble",
-    "title": "Real Linux VMs — multi-VM network troubleshooting: no lease, wrong gateway, broken route",
+    "title": "Real Linux VMs — Multi-Hop Net Triage",
     "kind": "vm",
     "blurb": "A PC with no address, a Linux router running a real DHCP server and a core router one hop beyond. Three "
              "faults on two machines: find each one from the symptoms, fix it and verify the path hop by hop.",

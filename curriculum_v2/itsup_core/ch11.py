@@ -256,7 +256,7 @@ ITEMS = [
 
 LABS = {
     'CL-11': {
-        'id': 'CL-11', 'title': 'Slow PC: resource tools and clean-boot isolation', 'chapters': [('ITSUP', 11), ('CLIENT', 4)],
+        'id': 'CL-11', 'title': 'Slow PC & Clean-Boot Isolation', 'chapters': [('ITSUP', 11), ('CLIENT', 4)],
         'review': 'Pending SME review',
         'objective': 'Find the cause of a staged slowdown with Task Manager, Resource Monitor and a clean boot, and restore the configuration afterwards.',
         'scenario': 'The instructor has added a startup item and a background service to a Windows 11 lab VM that consume CPU or disk after sign-in.',

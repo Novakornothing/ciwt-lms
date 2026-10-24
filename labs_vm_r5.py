@@ -61,7 +61,7 @@ _CODE = "curl -s -m 3 -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/"
 _LINK = "l=$(readlink /etc/init.d/S50timeclock 2>/dev/null); [ \"$l\" = timeclock ] || [ \"$l\" = /etc/init.d/timeclock ]"
 METHOD = {
     "id": "linux-vm-method",
-    "title": "Real Linux VM — troubleshooting methodology: a broken time-clock service, worked from ticket to documentation",
+    "title": "Real Linux VM — Time-Clock Service Repair",
     "kind": "vm",
     "blurb": "A real Linux server whose time-clock web service died after a contractor's tidy-up. Work the full "
              "troubleshooting method: identify (ticket, change log, status, logs), find the fault domain, write and test "

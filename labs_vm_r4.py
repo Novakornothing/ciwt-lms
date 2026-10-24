@@ -57,7 +57,7 @@ sleep 2
 _PID = "ps -o pid,stat,args | grep '[r]eportgen' | grep -v ' Z ' | awk '{print $1}' | head -1"
 PERF = {
     "id": "linux-vm-perf",
-    "title": "Real Linux VM — slow server: find the CPU and memory hogs, keep the payroll job, fix it for good",
+    "title": "Real Linux VM — CPU & Memory Triage",
     "kind": "vm",
     "blurb": "A real Linux server that really is slow: a process spinning at 100% CPU, a forgotten memory hog started at "
              "boot, and a payroll report that must not be killed. Measure, identify, act with the least disruption, "
@@ -165,7 +165,7 @@ cd /root
 _RS_FILE = "/srv/share/finance/budget-2027/"
 RESTORE = {
     "id": "linux-vm-restore",
-    "title": "Real Linux VM — restore a deleted folder from verified backups (checksums, the right version, permissions)",
+    "title": "Real Linux VM — Verified Backup Restore",
     "kind": "vm",
     "blurb": "A user deleted a finance folder on a real Linux file server. Three nightly backups exist and one of them is "
              "corrupt. Verify them, pick the newest good copy, restore only what was lost with its owners and "
@@ -268,7 +268,7 @@ _WEB_ASK = "/root/SR-6340.txt"
 _CODE = "curl -s -m 3 -o /dev/null -w '%{http_code}' http://10.40.0.20/reports/q3.html"
 WEB = {
     "id": "linux-vm-web",
-    "title": "Real Linux VMs — \"the intranet is down\": a web service on localhost only, an HTTP 403 and a safe config change",
+    "title": "Real Linux VMs — Intranet Web Repair",
     "kind": "vm",
     "blurb": "Two real Linux machines: a user's workstation and the intranet web server. Scope the fault from the "
              "client, prove the service itself is healthy, find the wrong listen address, back up the config before you "
@@ -368,7 +368,7 @@ _NS = "iptables -t nat -S POSTROUTING"
 _FS = "iptables -S FORWARD"
 NAT = {
     "id": "linux-vm-nat",
-    "title": "Real Linux VMs — edge router: the NAT rule that never matched, a stateful forward policy and a packet capture",
+    "title": "Real Linux VMs — Edge NAT & Forwarding",
     "kind": "vm",
     "blurb": "Two real Linux machines: a LAN PC and an edge router to a simulated internet that, like the real one, "
              "never answers private addresses. Prove the fault with tcpdump, fix the broken source NAT rule, add a "
@@ -467,7 +467,7 @@ logger -p cron.info -t 'crond[211]' 'USER root pid 2301 cmd wget -q -O- http://2
 _IR_EV = "/root/evidence"
 INCIDENT = {
     "id": "linux-vm-incident",
-    "title": "Real Linux VM — suspected compromise: preserve evidence, then remove the attacker's persistence",
+    "title": "Real Linux VM — Compromise & Persistence",
     "kind": "vm",
     "blurb": "A real Linux web server with a real backdoor: a disguised listener, a cron downloader, a rogue SSH key, a "
              "second root account and a SUID shell. Collect and hash the evidence first, then contain and clean up "
@@ -567,7 +567,7 @@ _V6_G = "ip -6 addr show dev eth0 scope global | awk '/inet6/{print $2}' | cut -
 _V6_R = "ip -6 route | awk '/^default/{print $3}' | head -1"
 IPV6 = {
     "id": "linux-vm-ipv6",
-    "title": "Real Linux VMs — IPv6 on a LAN: link-local, router advertisements, SLAAC and a default route",
+    "title": "Real Linux VMs — IPv6 SLAAC & Routing",
     "kind": "vm",
     "blurb": "Two real Linux machines and real IPv6: a workstation that only has a link-local address and a router "
              "that is not advertising. Read the address types, turn on router advertisements, find why the client "

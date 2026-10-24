@@ -282,7 +282,7 @@ ITEMS = [
 
 LABS = {
     'CL-7': {
-        'id': 'CL-7', 'title': 'Structured troubleshooting drills on staged faults', 'chapters': [('ITSUP', 7)],
+        'id': 'CL-7', 'title': 'Staged-Fault Troubleshooting Drills', 'chapters': [('ITSUP', 7)],
         'review': 'Pending SME review',
         'objective': 'Resolve staged faults with the seven-step method inside a time box, and escalate with a complete package when the fault is outside your domain.',
         'scenario': 'Four drill cards (A–D, lesson 7.4) each describe a user ticket. The instructor stages each fault on a lab VM or desk station before the session.',
