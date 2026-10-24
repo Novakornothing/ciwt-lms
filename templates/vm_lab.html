@@ -22,6 +22,8 @@
         <div class="d-flex flex-wrap gap-2">
           <button type="button" class="btn btn-brand" id="vmBoot"><i class="bi bi-power" aria-hidden="true"></i> {{ 'Start VMs' if multi else 'Start VM' }}</button>
           <button type="button" class="btn btn-outline-navy" id="vmResume" hidden><i class="bi bi-play-circle" aria-hidden="true"></i> Resume saved {{ 'VMs' if multi else 'VM' }}</button>
+          <span class="badge text-bg-navy border align-self-center py-2 px-2" id="vmSnapStatus" title="Clean kernel snapshot cache in IndexedDB — skips cold kernel boot">⚡ Fast VM Snapshot Cache Ready</span>
+          <span class="badge text-bg-success align-self-center py-2 px-2" id="vmBaseCached" hidden title="Clean kernel snapshot cached in IndexedDB — skips cold kernel boot">Instant-Boot Snapshot Cached ⚡</span>
         </div>
         <div class="vm-progress mt-2" id="vmProgress" hidden>
           <div class="progress" role="progressbar" aria-label="VM download and boot" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar" id="vmBar" style="width:0%"></div></div>

@@ -81,20 +81,23 @@
     if (!body) return list;
     var order = 0;
     var heads = Array.prototype.slice.call(body.querySelectorAll('h2,h3,h4'));
-    function mark(node, key, label, kind, ord) {
+    function mark(node, key, label, kind, ord, lsid) {
       node.setAttribute('data-aoi', key); node.setAttribute('data-aoi-label', label);
       node.setAttribute('data-aoi-order', String(ord)); node.setAttribute('data-aoi-kind', kind);
+      if (lsid) node.setAttribute('data-ladder-sid', lsid);
     }
     heads.forEach(function (h, i) {
       var label = (h.textContent || '').replace(/\s+/g, ' ').trim();
       if (!label) return;
       var key = 'h' + i + '-' + slug(label);
       var ord = order++;
-      mark(h, key, label, 'heading', ord);
+      var lbox = h.closest ? h.closest('.ladder[data-ladder-sid]') : null;
+      var lsid = lbox ? lbox.getAttribute('data-ladder-sid') : '';
+      mark(h, key, label, 'heading', ord, lsid);
       var group = [h];
       var n = h.nextElementSibling;
-      while (n && !/^H[2-4]$/.test(n.tagName)) { mark(n, key, label, 'heading', ord); group.push(n); n = n.nextElementSibling; }
-      list.push({ key: key, label: label, order: ord, kind: 'heading', nodes: group });
+      while (n && !/^H[2-4]$/.test(n.tagName)) { mark(n, key, label, 'heading', ord, lsid); group.push(n); n = n.nextElementSibling; }
+      list.push({ key: key, label: label, order: ord, kind: 'heading', ladder_sid: lsid, nodes: group });
       // sub-AOIs for code/tables/figures/callouts inside this block
       group.forEach(function (g) {
         SUB_KINDS.forEach(function (sk) {
@@ -1084,8 +1087,17 @@
     clearTimeout(resizeT);
     resizeT = setTimeout(function () { S.layoutDirty = true; if (S.filter) S.filter.bounds = { w: innerWidth, h: innerHeight }; }, 300);
   });
+  function triggerStruggleNudge(secId, opts) {
+    if (window.CiwtLadder && window.CiwtLadder.triggerStruggleNudge) {
+      return window.CiwtLadder.triggerStruggleNudge(secId, opts);
+    }
+    return Promise.resolve(false);
+  }
   window.HelixRuntime = { state: S, tagAois: tagAois, computeLayout: computeLayout, hitAoi: hitAoi, stop: stopSession,
-    tabId: TAB_ID, recheck: recheck, reconnect: reconnectCamera };
+    tabId: TAB_ID, recheck: recheck, reconnect: reconnectCamera, triggerStruggleNudge: triggerStruggleNudge };
+  window.HelixGaze = Object.assign(window.HelixGaze || {}, {
+    state: S, tagAois: tagAois, hitAoi: hitAoi, triggerStruggleNudge: triggerStruggleNudge
+  });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { boot(false); });
   else boot(false);

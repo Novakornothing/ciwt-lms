@@ -4172,7 +4172,6 @@
     "C-A1-5.4-3"
    ],
    "labs": [
-    "win-laptop-ports",
     "mob-mdm"
    ],
    "lessons": [
@@ -4402,7 +4401,8 @@
     "C-A2-1.2-101"
    ],
    "labs": [
-    "gui-update"
+    "gui-update",
+    "win-ad-users"
    ],
    "lessons": [
     "ITSUP 8.1",
@@ -5055,9 +5055,7 @@
     "C-A2-2.5-4",
     "C-A2-2.5-5"
    ],
-   "labs": [
-    "linux-vm-logs"
-   ],
+   "labs": [],
    "lessons": [
     "ITSUP 10.4",
     "NETOPS 5.3",

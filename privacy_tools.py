@@ -106,6 +106,21 @@ def delete_record(db, user_id):
         values.update({c: v for c, v in SCRUB_ON_NULLIFY.get(name, {}).items() if c in t.c})
         db.session.execute(update(t).where(pk.in_(list(ids))).values(**values))
         anonymised[f'{name}.{col}'] = len(ids)
+    if any(name == 'audit_event' for (name, _col) in nullify):
+        import hashlib
+        from sqlalchemy import text as _sql_text
+        rows = db.session.execute(_sql_text('SELECT id, created_at, user_id, role, action, detail, path, ip, section_id FROM audit_event WHERE hash IS NOT NULL ORDER BY id')).mappings().all()
+        prev = ''
+        for r in rows:
+            ca = r['created_at']
+            if isinstance(ca, str):
+                ca = datetime.fromisoformat(ca)
+            ca_str = ca.replace(microsecond=0).isoformat() if ca else '' 
+            raw = '|'.join(str(x if x is not None else '') for x in (
+                prev, ca_str, r['user_id'], r['role'], r['action'], r['detail'], r['path'], r['ip'], r['section_id']))
+            h = hashlib.sha256(raw.encode()).hexdigest()
+            db.session.execute(_sql_text('UPDATE audit_event SET prev_hash=:p, hash=:h WHERE id=:i'), {'p': prev, 'h': h, 'i': r['id']})
+            prev = h
     deleted = {}
     for t in reversed(db.metadata.sorted_tables):      # children before parents
         ids = doomed.get(t.name)

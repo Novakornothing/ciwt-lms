@@ -227,3 +227,4 @@ body.has-mobile-tabbar .helix-dock { bottom: calc(var(--tabbar-h, 64px) + .75rem
   .hx-cal-help.is-pos { top: 50%; width: 94vw; padding: .85rem .95rem; }
   .hx-pos-video { width: min(220px, 64vw); }
 }
+/* Helix ladder struggle nudge highlight */\n.helix-dock[data-nudge] .helix-pill-btn { border-color: #f0c14b; box-shadow: 0 0 0 4px rgba(240,193,75,.35), var(--shadow-lg); }

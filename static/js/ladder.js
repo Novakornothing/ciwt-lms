@@ -9,7 +9,7 @@
   if (!body) return;
   var tok = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var HELIX_VISITS = 3, HELIX_DWELL_MS = 120000;
+  var HELIX_VISITS = 3, HELIX_DWELL_MS = 22000;
   var offered = {};
 
   function post(url, data) {
@@ -125,39 +125,117 @@
     });
   }
 
+  function nextRungLabel(box) {
+    var shown = box.getAttribute('data-shown') || 'R0';
+    var map = { R0: 'Rung 1: Plain Language', R1: 'Rung 2: Analogy', R2: 'Rung 3: Visual / Step-by-Step', R3: 'Rung 4: Interactive Try-It' };
+    var anotherBtn = box.querySelector('form.ladder-another button');
+    if (anotherBtn) {
+      var m = /\(([^)]+)\)/.exec(anotherBtn.textContent || '');
+      if (m && m[1]) {
+        var nextNum = shown === 'R0' ? 'Rung 1' : (shown === 'R1' ? 'Rung 2' : (shown === 'R2' ? 'Rung 3' : 'Rung 4'));
+        return nextNum + ': ' + m[1];
+      }
+    }
+    return map[shown] || 'Next Rung';
+  }
+
+  function renderHelixNudge(box, stats, force) {
+    var sid = box.getAttribute('data-ladder-sid');
+    var slot = box.querySelector('.ladder-helix');
+    var another = box.querySelector('form.ladder-another');
+    if (!slot || !another) return false;
+    var visits = (stats && stats.visits) || 3;
+    var rLabel = nextRungLabel(box);
+    var dock = document.getElementById('helixDock');
+    if (dock) {
+      dock.setAttribute('data-nudge', sid);
+      setTimeout(function () { if (dock.getAttribute('data-nudge') === sid) dock.removeAttribute('data-nudge'); }, 6000);
+    }
+    slot.innerHTML =
+      '<div class="d-flex align-items-start justify-content-between flex-wrap gap-2">' +
+        '<p class="small mb-2"><i class="bi bi-eye" aria-hidden="true"></i> <strong>Helix noticed you\u2019re re-reading this section</strong> (' +
+          (visits >= HELIX_VISITS ? 'came back to this section ' + visits + ' times' : 'spent a while on this section') +
+          ') \u2014 want a clearer explanation? It is only an offer.</p>' +
+      '</div>' +
+      '<div class="d-flex flex-wrap gap-2 align-items-center">' +
+        '<button type="button" class="btn btn-sm btn-brand" data-hx-yes>' +
+          '<i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>Switch to ' + escapeHtml(rLabel) + ' \u2192' +
+          '<span class="visually-hidden"> (Yes, explain it another way)</span>' +
+        '</button>' +
+        '<button type="button" class="btn btn-sm btn-outline-navy" data-hx-no>Dismiss</button>' +
+      '</div>';
+    slot.hidden = false;
+    slot.querySelector('[data-hx-yes]').addEventListener('click', function () {
+      document.dispatchEvent(new CustomEvent('helix:ladder-nudge-accepted', {
+        detail: { notice: 'ladder_nudge_accepted', secId: sid, rung: rLabel }
+      }));
+      submitForm(box, another, { source: 'helix' });
+    });
+    slot.querySelector('[data-hx-no]').addEventListener('click', function () {
+      slot.hidden = true;
+      slot.innerHTML = '';
+    });
+    return true;
+  }
+
+  function offerForBox(box, stats, skipServerCheck) {
+    if (!box) return Promise.resolve(false);
+    var sid = box.getAttribute('data-ladder-sid');
+    if (!skipServerCheck && offered[sid] && Date.now() - offered[sid] < 90000) return Promise.resolve(false);
+    offered[sid] = Date.now();
+    if (skipServerCheck) {
+      return Promise.resolve(renderHelixNudge(box, stats, true));
+    }
+    var fd = new FormData();
+    fd.set('kind', 'helix_offer');
+    return post(box.getAttribute('data-event-url'), fd).then(function (j) {
+      if (!j || !j.ok) return false;
+      return renderHelixNudge(box, stats, false);
+    }).catch(function () { return false; });
+  }
+
   function helixWatch() {
     var H = window.HelixRuntime;
     if (!H || !H.state || !H.state.sessionId || !H.state.timeline) return;
     var buckets = H.state.timeline.buckets || {};
-    var byLabel = {};
+    var byLabel = {}, bySid = {};
     Object.keys(buckets).forEach(function (k) {
       var b = buckets[k];
       if ((b.aoi_kind || 'heading') !== 'heading') return;
-      var a = byLabel[b.aoi_label] || (byLabel[b.aoi_label] = { visits: 0, dwell: 0 });
-      a.visits += b.visits || 0; a.dwell += b.dwell_ms || 0;
+      var lbl = (b.aoi_label || '').trim();
+      var a = byLabel[lbl] || (byLabel[lbl] = { visits: 0, dwell: 0 });
+      a.visits += b.visits || 0;
+      a.dwell += b.dwell_ms || 0;
+      if (b.ladder_sid) {
+        var s = bySid[b.ladder_sid] || (bySid[b.ladder_sid] = { visits: 0, dwell: 0 });
+        s.visits += b.visits || 0;
+        s.dwell += b.dwell_ms || 0;
+      }
     });
     body.querySelectorAll('.ladder[data-next="1"]').forEach(function (box) {
       var sid = box.getAttribute('data-ladder-sid');
-      if (offered[sid]) return;
-      var a = byLabel[box.getAttribute('data-heading')];
-      if (!a || (a.visits < HELIX_VISITS && a.dwell < HELIX_DWELL_MS)) return;
-      offered[sid] = true;
-      var fd = new FormData(); fd.set('kind', 'helix_offer');
-      post(box.getAttribute('data-event-url'), fd).then(function (j) {
-        if (!j.ok) return;
-        var slot = box.querySelector('.ladder-helix');
-        var another = box.querySelector('form.ladder-another');
-        if (!slot || !another) return;
-        slot.innerHTML = '<p class="small mb-2"><i class="bi bi-eye" aria-hidden="true"></i> Helix (you turned it on) noticed you ' +
-          (a.visits >= HELIX_VISITS ? 'came back to this section ' + a.visits + ' times' : 'spent a while on this section') +
-          '. Would another explanation help? It is only an offer.</p>' +
-          '<button type="button" class="btn btn-sm btn-brand me-2" data-hx-yes>Yes, explain it another way</button>' +
-          '<button type="button" class="btn btn-sm btn-outline-navy" data-hx-no>No thanks</button>';
-        slot.hidden = false;
-        slot.querySelector('[data-hx-yes]').addEventListener('click', function () { submitForm(box, another, { source: 'helix' }); });
-        slot.querySelector('[data-hx-no]').addEventListener('click', function () { slot.hidden = true; slot.innerHTML = ''; });
-      }).catch(function () {});
+      if (offered[sid] && Date.now() - offered[sid] < 90000) return;
+      var a = bySid[sid] || byLabel[(box.getAttribute('data-heading') || '').trim()];
+      if (!a) return;
+      var struggling = (a.visits >= HELIX_VISITS) || (a.dwell >= HELIX_DWELL_MS && a.visits >= 2) || (a.dwell >= 120000);
+      if (!struggling) return;
+      offerForBox(box, a, false);
     });
+  }
+
+  function triggerStruggleNudge(secId, opts) {
+    opts = opts || {};
+    var box = secId
+      ? (document.getElementById('ladder-' + secId) || body.querySelector('.ladder[data-ladder-sid="' + secId + '"]'))
+      : body.querySelector('.ladder[data-next="1"]');
+    if (!box) return Promise.resolve(false);
+    var sid = box.getAttribute('data-ladder-sid');
+    delete offered[sid];
+    var stats = { visits: opts.visits || 3, dwell: opts.dwellMs || 28000 };
+    if (opts.skipServer !== false && (!window.HelixRuntime || !window.HelixRuntime.state || !window.HelixRuntime.state.sessionId)) {
+      return offerForBox(box, stats, true);
+    }
+    return offerForBox(box, stats, !!opts.skipServer);
   }
 
   function init(box) {
@@ -180,6 +258,8 @@
   }
 
   body.querySelectorAll('.ladder').forEach(init);
-  setInterval(helixWatch, 5000);
-  window.CiwtLadder = { swap: swap, init: init };
+  setInterval(helixWatch, 2500);
+  window.CiwtLadder = { swap: swap, init: init, helixWatch: helixWatch, triggerStruggleNudge: triggerStruggleNudge };
+  window.HelixGaze = window.HelixGaze || {};
+  window.HelixGaze.triggerStruggleNudge = triggerStruggleNudge;
 })();

@@ -21,7 +21,7 @@
   var status = $('vmStatus'), bar = $('vmBar'), fb = $('vmFeedback'), perf = $('vmPerf'), titleEl = $('vmTitle');
   var nonce = (cfg.boot && cfg.boot.vm_nonce) || '';
   var DBKEY = cfg.lab_id + ':' + nonce;
-  var raw = false, t0 = 0, started = false, allReady = false, cleanSnap = null;
+  var raw = false, t0 = 0, started = false, allReady = false, cleanSnap = null, baseSavedInSession = {};
   var fabric = null, services = null, MAXLINES = 1500;
 
   /* ---------------------------------------------------------------- machines + their consoles */
@@ -96,12 +96,32 @@
     if (this === active) syncPrompt();
     s.cb && s.cb(s.buf);
   };
+  function baseCacheKey(m) {
+    return 'base_kernel_v1:' + (cfg.assets && cfg.assets.bzimage || 'ciwt-linux.bin') + ':m' + (m.spec.memory_mb || 64) + ':n' + (VMC.net ? 1 : 0) + ':d' + (m.spec.disk_mb || 0);
+  }
+  function markBaseCached() {
+    var b = $('vmBaseCached');
+    if (b) b.hidden = false;
+    var s = $('vmSnapStatus');
+    if (s) { s.textContent = 'Instant-Boot Snapshot Cached ⚡'; s.className = 'badge text-bg-success align-self-center py-2 px-2'; }
+  }
   Machine.prototype.onBooted = function () {
     var self = this;
     this.booted = true;
-    if (this.resumed || !(VMC.setup && VMC.setup[this.name])) { this.ready = true; return checkAllReady(); }
-    setStatus('Preparing the scenario on ' + this.label + '…', 92);
-    this.hidden('.ciwt-setup', VMC.setup[this.name], '.').then(function () { self.ready = true; checkAllReady(); });
+    var finish = function () {
+      if (self.resumed || !(VMC.setup && VMC.setup[self.name])) { self.ready = true; return checkAllReady(); }
+      setStatus('Preparing the scenario on ' + self.label + '…', 92);
+      self.hidden('.ciwt-setup', VMC.setup[self.name], '.').then(function () { self.ready = true; checkAllReady(); });
+    };
+    if (!this.resumed && !this.usedBaseSnap && this.emu && this.emu.save_state && !baseSavedInSession[baseCacheKey(this)]) {
+      var bkey = baseCacheKey(this);
+      baseSavedInSession[bkey] = true;
+      this.emu.save_state().then(function (buf) {
+        idbDo('readwrite', function (s) { return s.put({ v: 1, buf: buf, at: Date.now() }, bkey); }).then(markBaseCached).catch(function () {});
+      }).catch(function () {}).then(finish);
+      return;
+    }
+    finish();
   };
 
   var machines = SPECS.map(function (s) { return new Machine(s); });
@@ -310,6 +330,20 @@
     var libs = loadScript(cfg.assets.lib, function () { return !!window.V86; });
     if (VMC.net) libs = libs.then(function () { return loadScript(cfg.assets.net, function () { return !!window.VMNet; }); });
     libs.then(function () {
+      if (saved) return {};
+      return Promise.all(machines.map(function (m) {
+        return idbDo('readonly', function (s) { return s.get(baseCacheKey(m)); }).catch(function () { return null; });
+      })).then(function (recs) {
+        var map = {};
+        machines.forEach(function (m, i) {
+          var r = recs[i];
+          var buf = r && (r.buf instanceof ArrayBuffer ? r.buf : (r instanceof ArrayBuffer ? r : null));
+          if (buf) map[m.name] = buf.slice(0);
+        });
+        return map;
+      });
+    }).then(function (baseSnaps) {
+      baseSnaps = baseSnaps || {};
       buildNet(saved && saved.net);
       var loaded = {};
       machines.forEach(function (m) {
@@ -321,21 +355,26 @@
         };
         if (VMC.net) opts.net_device = { type: 'ne2k' };
         var st = saved && saved.machines && saved.machines[m.name];
+        var baseSt = !st && baseSnaps[m.name];
         m.resumed = !!st;
+        m.usedBaseSnap = !!baseSt;
+        if (baseSt) markBaseCached();
         if (m.spec.disk_mb) {
           m.disk = (st && saved.disks && saved.disks[m.name]) || new ArrayBuffer(m.spec.disk_mb * 1024 * 1024);
           opts.hda = { buffer: m.disk };
         }
-        if (st) opts.initial_state = { buffer: st }; else opts.bzimage = { url: cfg.assets.bzimage };
+        if (st) opts.initial_state = { buffer: st };
+        else if (baseSt) opts.initial_state = { buffer: baseSt };
+        else opts.bzimage = { url: cfg.assets.bzimage };
         m.emu = new window.V86(opts);
         m.emu.add_listener('download-progress', function (e) {
           if (e.lengthComputable && e.total) { loaded[e.file_name] = [e.loaded, e.total]; var a = 0, b = 0; Object.keys(loaded).forEach(function (k) { a += loaded[k][0]; b += loaded[k][1]; });
             setStatus('Downloading the VM — ' + Math.round(a / 1048576 * 10) / 10 + ' of ' + Math.round(b / 1048576 * 10) / 10 + ' MB', 5 + 70 * a / b); }
         });
-        m.emu.add_listener('emulator-ready', function () { setStatus('Booting Linux' + (MULTI ? ' on ' + machines.length + ' machines' : '') + '…', 80); });
+        m.emu.add_listener('emulator-ready', function () { setStatus((baseSt ? 'Instant-booting cached snapshot' : 'Booting Linux') + (MULTI ? ' on ' + machines.length + ' machines' : '') + '…', 80); });
         m.emu.add_listener('serial0-output-byte', function (b) { m.onByte(b); });
         if (m.port) m.emu.add_listener('net0-send', function (d) { m.port.send(new Uint8Array(d)); });
-        if (st) setTimeout(function () { m.send('\n'); }, 500);
+        if (st || baseSt) setTimeout(function () { m.send('\n'); }, 350);
       });
       window.CIWT_VM = machines[0].emu;
       window.CIWT_VMS = byName;
@@ -472,6 +511,9 @@
     machines.forEach(function (m) { if (m.emu) { m.emu.stop(); m.emu.destroy && m.emu.destroy(); } m.emu = null; m.booted = m.ready = false; m.clearScreen(); });
     $('vmTools').hidden = true; start(null);
   });
+  idbDo('readonly', function (s) { return s.get(baseCacheKey(machines[0])); }).then(function (b) {
+    if (b && (b.buf instanceof ArrayBuffer || b instanceof ArrayBuffer)) markBaseCached();
+  }).catch(function () {});
   idbDo('readonly', function (s) { return s.get(DBKEY); }).then(function (rec) {
     if (!rec || !$('vmResume')) return;
     if (rec instanceof ArrayBuffer) { var o = {}; o[machines[0].name] = rec; rec = { v: 2, machines: o }; }

@@ -7756,6 +7756,17 @@ def _ensure_section_access_table():
 
 _ensure_section_access_table()
 
+if not app.config.get('TESTING') and (
+    os.environ.get('CIWT_ALLOW_REAL_DB') == '1'
+    or os.environ.get('RENDER')
+    or os.environ.get('CIWT_RICH_DEMO') == '1'
+):
+    try:
+        from demo_telemetry import ensure_rich_demo_telemetry
+        ensure_rich_demo_telemetry(app)
+    except Exception as _dt_exc:
+        print('Demo telemetry seed note:', _dt_exc)
+
 
 if __name__ == '__main__':
     _host, _port, _debug, _note = run_settings()

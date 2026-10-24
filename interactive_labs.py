@@ -3533,6 +3533,9 @@ def verify_all_labs():
 SME_PENDING = "Pending SME review"   # same tag as curriculum_v2.itsup_core.PENDING; instructor-only
 
 
+SME_VERIFIED = "verified"
+
+
 def _install_new_labs():
     import labs_catalog_new as _N
     for lab in _N.NEW_LABS:
@@ -3567,6 +3570,10 @@ def _install_new_labs():
 
 
 _install_new_labs()
+
+
+for _l in LABS:
+    _l.setdefault("sme_status", SME_VERIFIED)
 
 
 if __name__ == "__main__":

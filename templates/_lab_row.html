@@ -3,7 +3,7 @@
 {% macro lab_row(lab, sub=None, show_kind=True, prog=None, href=None, sme=None) %}
   <a class="list-group-item list-group-item-action lab-row{{ ' no-kind' if not show_kind }}" href="{{ href or url_for('interactive_lab', lab_id=lab.id) }}">
     {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ {'win11gui': 'GUI', 'activity': 'ACTIVITY', 'classroom': 'CLASSROOM', 'vm': 'REAL VM'}.get(lab.kind, lab.kind|upper) }}</span>{% endif %}
-    <span class="lab-row-main"><span class="lab-row-title">{{ lab.title }}{% if sme %} <span class="lab-sme-tag">{{ sme }}</span>{% endif %}</span>
+    <span class="lab-row-main"><span class="lab-row-title">{{ lab.title }}{% if sme %} <span class="badge text-bg-success ms-1">Verified</span> <span class="lab-sme-tag visually-hidden">{{ sme }}</span>{% endif %}</span>
       {% set s = sub or lab.align or lab.blurb %}{% if s %}<span class="lab-row-sub">{{ s }}</span>{% endif %}</span>
     {% if prog %}
       {% set pct = [prog.best_score or 0, prog.score or 0]|max %}
