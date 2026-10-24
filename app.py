@@ -120,8 +120,15 @@ def real_db_allowed(env=os.environ, as_main=False):
     """Pass 13 DB guard. Importing this module runs init_db() (create_all, migrations, curriculum sync), which
     rewrites the database. Without DATABASE_URL that would be the real ciwt_lms.db, so a script or test that merely
     imports app could change it by accident. Allowed only when DATABASE_URL is set, CIWT_ALLOW_REAL_DB=1 is set
-    (start_lms.sh, Procfile, render.yaml set it), or app.py is run directly as the server (python app.py)."""
-    return bool(env.get('DATABASE_URL')) or env.get('CIWT_ALLOW_REAL_DB') == '1' or as_main
+    (start_lms.sh, Procfile, render.yaml set it), running under gunicorn/Render, or app.py is run directly as the server (python app.py)."""
+    return (
+        bool(env.get('DATABASE_URL'))
+        or env.get('CIWT_ALLOW_REAL_DB') == '1'
+        or bool(env.get('RENDER'))
+        or ('gunicorn' in sys.modules and env is os.environ)
+        or (not os.path.exists(_default_db) and env is os.environ)
+        or as_main
+    )
 
 
 if not real_db_allowed(as_main=(__name__ == '__main__')):
