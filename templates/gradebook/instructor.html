@@ -161,6 +161,7 @@
             {% if it.type == 'test' %}<div class="gb-collinks"><a href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=it.id) }}" title="Section performance">perf</a> · <a href="{{ url_for('test_item_analysis', test_id=it.id) }}" title="Item analysis">items</a></div>{% endif %}
           </th>
           {% endif %}{% endfor %}
+          {% if es_grades %}<th scope="col" class="gb-item" title="Synced Exam-Day Simulator scores (not part of the course grade)">Exam Sim<div class="gb-colstat">synced · /900</div></th>{% endif %}
         </tr>
       </thead>
       <tbody>
@@ -172,6 +173,7 @@
           {% for c in r.cells %}{% if c.item.category != 'quizzes' or show_quizzes %}
           <td class="text-center" data-v="{{ c.score if c.score is not none else -1 }}">{{ score_cell(c, section, staff=True) }}</td>
           {% endif %}{% endfor %}
+          {% if es_grades %}<td class="small text-nowrap gb-examsim">{% for g in es_grades.get(r.user.id, []) %}<div>{{ g.text }}</div>{% else %}—{% endfor %}</td>{% endif %}
         </tr>
         {% else %}
         <tr><td colspan="{{ 3 + gb.columns|length }}"><div class="empty-state"><i class="bi bi-people" aria-hidden="true"></i><p class="mb-0">No students enrolled yet.</p></div></td></tr>

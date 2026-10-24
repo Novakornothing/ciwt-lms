@@ -19,7 +19,7 @@ def _p(prompt, correct, wrong):
 
 SIMS = [
     # ------------------------------------------------------------------ Network+ N10-009
-    dict(id='SIM-N-1', oid='N:2.2', text='Users on PC-B (VLAN 20) cannot reach the file server in VLAN 10, but PC-A '
+    dict(id='SIM-N-1', obj='NO-2.2', oid='N:2.2', text='Users on PC-B (VLAN 20) cannot reach the file server in VLAN 10, but PC-A '
          '(VLAN 10) can. Inspect the switch, then fix the fault.',
          tabs=[_t('Topology', 'topology', nodes=[
              ('PC-A', 'Gi0/2 · VLAN 10 · 10.10.10.21/24 · gateway 10.10.10.1'),
@@ -37,7 +37,7 @@ SIMS = [
                    ['switchport access vlan 20 on Gi0/1', 'switchport trunk native vlan 20', 'no switchport on interface Gi0/1'])],
          explanation='show interfaces trunk lists only VLANs 1,10 as allowed on Gi0/1, so VLAN 20 frames never reach the '
                      'router subinterface. Adding VLAN 20 to the allowed list fixes inter-VLAN routing for PC-B.'),
-    dict(id='SIM-N-2', oid='N:5.5', text='A branch PC (192.168.50.20) cannot browse https://intranet (10.1.1.80). Ping '
+    dict(id='SIM-N-2', obj='NO-9.2', oid='N:5.5', text='A branch PC (192.168.50.20) cannot browse https://intranet (10.1.1.80). Ping '
          'works. Use the router tabs to find and fix the fault.',
          tabs=[_t('R-BR terminal', 'terminal', commands={
              'show ip route': 'Gateway of last resort is 203.0.113.1\nC 192.168.50.0/24 is directly connected, Gi0/1\nS 10.1.1.0/24 [1/0] via 172.16.0.2\nS* 0.0.0.0/0 [1/0] via 203.0.113.1',
@@ -49,7 +49,7 @@ SIMS = [
                 _p('Placement of the new line', 'Before line 30 (deny ip any)', ['After line 30 (deny ip any)', 'Applied outbound on Gi0/0', 'In a new standard access list'])],
          explanation='ICMP and DNS are permitted but HTTPS hits the explicit deny on line 30. A permit for TCP 443 placed '
                      'above the deny (ACLs are processed top-down) fixes it; the routes are fine because ping works.'),
-    dict(id='SIM-N-3', oid='N:1.7', text='A new hire\'s laptop shows 169.254.x.x while every other host on the same '
+    dict(id='SIM-N-3', obj='IT-5.1', oid='N:1.7', text='A new hire\'s laptop shows 169.254.x.x while every other host on the same '
          'subnet works. Inspect the host, then correct its settings.',
          tabs=[_t('Laptop terminal', 'terminal', commands={
              'ipconfig /all': 'Ethernet adapter Ethernet:\n   DHCP Enabled. . . . . . : No\n   IPv4 Address. . . . . . : 192.168.10.300(Duplicate)\n   Subnet Mask . . . . . . : 255.255.255.0\n   Autoconfiguration IPv4 . : 169.254.12.7(Preferred)\n   Default Gateway . . . . : 192.168.1.1',
@@ -63,7 +63,7 @@ SIMS = [
          explanation='The hand-typed address 192.168.10.300 is invalid, so Windows fell back to APIPA, and the gateway '
                      '192.168.1.1 is on a different subnet. Enabling DHCP gets 192.168.10.x with gateway 192.168.10.1.'),
     # ------------------------------------------------------------------ A+ Core 1 220-1201
-    dict(id='SIM-A1-1', oid='A1:2.1', text='Terminate a straight-through patch cable to the T568B standard. Inspect the '
+    dict(id='SIM-A1-1', obj='IT-5.2', oid='A1:2.1', text='Terminate a straight-through patch cable to the T568B standard. Inspect the '
          'pinout card, then choose the colour for each pin.',
          tabs=[_t('Pinout card', 'inspector', text='T568A: 1 W/Grn 2 Grn 3 W/Org 4 Blu 5 W/Blu 6 Org 7 W/Brn 8 Brn\n'
                                                       'Rule: a straight-through cable uses the SAME standard at both ends.'),
@@ -75,7 +75,7 @@ SIMS = [
                 _p('Pin 6', 'Green', ['Orange', 'Blue', 'Brown'])],
          explanation='T568B swaps the orange and green pairs of T568A: 1 W/Org, 2 Org, 3 W/Grn, 6 Grn. The tester shows '
                      'one end was punched as T568A, which made an unintended crossover.'),
-    dict(id='SIM-A1-2', oid='A1:3.4', text='A technician installs an M.2 NVMe SSD and a second RAM kit, but the new SSD '
+    dict(id='SIM-A1-2', obj='IT-3.1', oid='A1:3.4', text='A technician installs an M.2 NVMe SSD and a second RAM kit, but the new SSD '
          'does not appear as a boot option. Inspect the board, then fix the build.',
          tabs=[_t('Board diagram', 'topology', nodes=[
              ('M2_1', 'M.2 slot · PCIe 4.0 x4 · shares lanes with SATA6 when used'),
@@ -88,7 +88,7 @@ SIMS = [
                 _p('UEFI boot order after cloning', 'NVMe Boot Manager first', ['SATA6 Boot Manager first', 'Legacy CSM boot first', 'Network PXE boot first'])],
          explanation='An NVMe drive needs a slot wired for PCIe/NVMe; M2_2 is SATA-only so the drive is never detected. '
                      'M2_1 shares lanes with SATA6, so the old SSD port goes dark: clone first, then boot the NVMe entry.'),
-    dict(id='SIM-A1-3', oid='A1:5.3', text='A laptop shows "Limited" Wi-Fi in a hotel. Run the read-only checks, then '
+    dict(id='SIM-A1-3', obj='IT-3.4', oid='A1:5.3', text='A laptop shows "Limited" Wi-Fi in a hotel. Run the read-only checks, then '
          'pick the fix.',
          tabs=[_t('Laptop terminal', 'terminal', commands={
              'netsh wlan show interfaces': 'State : connected\nSSID : HOTEL-GUEST\nRadio type : 802.11ax\nAuthentication : Open\nSignal : 92%',
@@ -100,7 +100,7 @@ SIMS = [
          explanation='The laptop has a valid lease and strong signal, but DNS returns the gateway for every name: the '
                      'portal is redirecting until the guest signs in. Opening a browser completes it.'),
     # ------------------------------------------------------------------ A+ Core 2 220-1202
-    dict(id='SIM-A2-1', oid='A2:1.6', text='Remote Desktop to PC-FIN07 fails from the help desk. Inspect the services and '
+    dict(id='SIM-A2-1', obj='IT-8.2', oid='A2:1.6', text='Remote Desktop to PC-FIN07 fails from the help desk. Inspect the services and '
          'firewall, then configure the PC.',
          tabs=[_t('PowerShell', 'terminal', commands={
              'Get-Service TermService': 'Status   Name         DisplayName\nStopped  TermService  Remote Desktop Services',
@@ -112,7 +112,7 @@ SIMS = [
                 _p('Port the rule allows', 'TCP 3389', ['TCP 3398', 'UDP 3388', 'TCP 5900'])],
          explanation='Remote Desktop is off (so TermService is stopped) and the inbound rule is disabled. Turning RDP on '
                      'enables the service and, with the Domain-profile rule enabled, TCP 3389 is allowed. NLA can stay on.'),
-    dict(id='SIM-A2-2', oid='A2:3.1', text='A user reports pop-ups and a browser homepage that keeps changing. Inspect '
+    dict(id='SIM-A2-2', obj='IT-11.1', oid='A2:3.1', text='A user reports pop-ups and a browser homepage that keeps changing. Inspect '
          'the PC and order your response like the malware-removal process.',
          tabs=[_t('Task Manager', 'inspector', text='Startup apps:\n  SearchHelperPro  Enabled  High impact\n  OneDrive         Enabled  Low impact\nBrowser extension: "Coupon Wizard" (installed today)'),
                _t('Command prompt', 'terminal', commands={
@@ -125,7 +125,7 @@ SIMS = [
          explanation='CompTIA order: investigate symptoms, quarantine, disable System Restore (Windows), remediate, '
                      'schedule scans, re-enable System Restore and make a restore point, then educate the user. '
                      'SearchHelperPro (PID 6120) and the new extension are the adware.'),
-    dict(id='SIM-A2-3', oid='A2:2.6', text='A shared folder must give the Finance group change access and everyone '
+    dict(id='SIM-A2-3', obj='IT-10.2', oid='A2:2.6', text='A shared folder must give the Finance group change access and everyone '
          'else no access. Inspect the effective permissions, then set them.',
          tabs=[_t('icacls', 'terminal', commands={
              'icacls D:\\Finance': 'D:\\Finance BUILTIN\\Users:(OI)(CI)(RX)\n            CORP\\Finance:(OI)(CI)(RX)\n            BUILTIN\\Administrators:(OI)(CI)(F)',
@@ -139,13 +139,14 @@ SIMS = [
 
 
 def items():
-    """Bank-format items (practice.bank() merges these)."""
+    """Bank-format items (practice.bank() merges these). obj = the CIWT course objective (mapping.CURATED maps it
+    to the exam objective oid), so mastery evidence and ladder remediation land on the exact lesson section."""
     out = []
     for s in SIMS:
         exam = s['oid'].split(':')[0]
-        raw = dict(s, type='sim_pbq', exam=exam, review=REVIEW, bank_id=s['id'], obj='',
+        raw = dict(s, type='sim_pbq', exam=exam, review=REVIEW, bank_id=s['id'],
                    prompts=[p['prompt'] for p in s['parts']])
-        out.append({'id': s['id'], 'source': 'sim', 'obj': '', 'text': s['text'], 'options': [],
+        out.append({'id': s['id'], 'source': 'sim', 'obj': s['obj'], 'text': s['text'], 'options': [],
                     'correct': [p['correct'] for p in s['parts']], 'explanation': s['explanation'],
                     'type': 'sim_pbq', 'cert': [s['oid']], 'raw': raw})
     return out

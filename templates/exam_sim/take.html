@@ -51,6 +51,7 @@
     <span id="esPos" aria-live="polite">Question 1 of {{ questions|length }}</span>
     <button type="button" class="btn btn-sm btn-navy" id="esNext">Next</button>
     <button type="button" class="btn btn-sm btn-outline-gold" id="esReviewBtn">Review Screen</button>
+    <span class="small text-muted es-keys" id="esKeys">Shortcuts: <kbd>←</kbd>/<kbd>→</kbd> Prev/Next · <kbd>1</kbd>–<kbd>4</kbd> Select · <kbd>F</kbd> Flag · <kbd>W</kbd> Whiteboard</span>
   </nav>
   <div id="esQuestions">
   {% for q in questions %}{% set i = q.n %}

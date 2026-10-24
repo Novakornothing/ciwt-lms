@@ -41,6 +41,12 @@
     <div class="progress gb-progress mt-1" role="progressbar" aria-label="Lesson progress" aria-valuenow="{{ row.progress }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar bg-info" style="width:{{ row.progress }}%"></div></div></div>
 </div>
 
+{% if es_grades %}
+<div class="card mb-4" id="gbExamSim">
+  <div class="card-header navy d-flex justify-content-between"><span>Exam-Day Simulator</span><span class="small opacity-75">synced by your instructor · not part of the course grade</span></div>
+  <ul class="list-group list-group-flush">{% for g in es_grades %}<li class="list-group-item d-flex flex-wrap justify-content-between gap-2"><span>{{ g.code }}</span><strong>{{ g.score }}/900 ({{ g.status }})</strong><span class="small text-muted">{{ g.pct }}% · synced {{ g.synced.strftime('%Y-%m-%d') if g.synced else '' }}</span></li>{% endfor %}</ul>
+</div>
+{% endif %}
 {% for key, label in categories %}
 {% set cells = row.cells|selectattr('item.category', 'equalto', key)|list %}
 {% if cells %}

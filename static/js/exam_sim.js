@@ -272,6 +272,27 @@
   refresh();
   show(0);
 
+  // ------------------------------------------------------------ testing-centre keyboard shortcuts
+  document.addEventListener('keydown', function (e) {
+    var t = e.target, tag = (t.tagName || '').toLowerCase();
+    if (e.ctrlKey || e.metaKey || e.altKey || pre || paused) return;
+    if (tag === 'textarea' || tag === 'select' || (tag === 'input' && !/^(radio|checkbox)$/.test(t.type)) || t.isContentEditable) return;
+    var q = order[cur], k = e.key;
+    if (k === 'ArrowRight' || k === 'n' || k === 'N') { e.preventDefault(); go(cur + 1); }
+    else if (k === 'ArrowLeft' || k === 'p' || k === 'P') { e.preventDefault(); go(cur - 1); }
+    else if (k === 'f' || k === 'F') {
+      var fb = q.querySelector('.es-flag-box'); fb.checked = !fb.checked;
+      fb.dispatchEvent(new Event('change', { bubbles: true }));
+    } else if (k === 'w' || k === 'W') { e.preventDefault(); wbToggle.click(); }
+    else if (/^[1-6]$/.test(k)) {
+      var opt = q.querySelectorAll('.es-opt input')[parseInt(k, 10) - 1];
+      if (!opt) return;
+      opt.checked = opt.type === 'radio' ? true : !opt.checked;
+      opt.dispatchEvent(new Event('change', { bubbles: true }));
+      opt.focus();
+    }
+  });
+
   form.addEventListener('submit', function (e) {
     if (submitted) return;
     var un = qs.filter(function (q) { return !answered(q); }).length;

@@ -493,6 +493,25 @@ def register(app, db, deps):
 
     # ---------------------------------------------------------------- instructor
     @login_required
+    def exam_sim_grades(section, uids=None):
+        """Synced Exam-Day Simulator line items (exam_sim_grade) per user: {uid: [{exam, code, score, pct, status, text}]}.
+        Shown beside the weighted course grade; never part of it (Option B pass 6)."""
+        es = app.extensions.get('ciwt_exam_sim')
+        G = getattr(es, 'Grade', None) if es else None
+        if G is None:
+            return {}
+        from curriculum_v2.cert.exams import EXAMS
+        q = G.query.filter_by(section_id=section.id)
+        if uids is not None:
+            q = q.filter(G.user_id.in_(list(uids) or [0]))
+        out = {}
+        for g in q.order_by(G.exam).all():
+            code = EXAMS.get(g.exam, {}).get('code', g.exam)
+            out.setdefault(g.user_id, []).append({'exam': g.exam, 'code': code, 'score': g.score, 'pct': g.pct,
+                                                  'status': g.status, 'synced': g.synced_at,
+                                                  'text': f'{code}: {g.score}/900 ({g.status})'})
+        return out
+
     def instructor_gradebook(section_id):
         section = staff_section(section_id)
         data = compute(section)
@@ -511,7 +530,7 @@ def register(app, db, deps):
                  'first': (page - 1) * per + 1 if rows else 0, 'last': min(page * per, len(rows)),
                  'choices': PER_PAGE_CHOICES}
         return render_template('gradebook/instructor.html', section=section, gb=view, categories=CATEGORIES,
-                               show_quizzes=show_quizzes, pager=pager, full=data)
+                               show_quizzes=show_quizzes, pager=pager, full=data, es_grades=exam_sim_grades(section))
 
     @login_required
     def instructor_gradebook_student(section_id, user_id):
@@ -520,7 +539,8 @@ def register(app, db, deps):
         if not data['rows']:
             abort(404)
         return render_template('gradebook/student_detail.html', section=section, gb=data, row=data['rows'][0],
-                               categories=CATEGORIES, staff=True)
+                               categories=CATEGORIES, staff=True,
+                               es_grades=exam_sim_grades(section, {user_id}).get(user_id, []))
 
     @login_required
     def gradebook_override(section_id):
@@ -697,6 +717,9 @@ def register(app, db, deps):
         head = ['last_name', 'first_name', 'email', 'course_grade', 'letter', 'completion_pct', 'lesson_progress_pct']
         head += [f'{c[1]} avg' for c in CATEGORIES]
         head += [f"{it['title']} ({it['type']} {it['id']})" for it in data['columns']]
+        esg = exam_sim_grades(section)
+        es_exams = sorted({g['code'] for rows in esg.values() for g in rows})
+        head += [f'Exam-Day Simulator {c} (scaled /900, synced)' for c in es_exams]
         wtr.writerow(head)
         for r in data['rows']:
             u = r['user']
@@ -706,6 +729,8 @@ def register(app, db, deps):
             for c in r['cells']:
                 line.append('EX' if c['status'] == 'excused' else 'Exempt (test-out)' if c['status'] == 'exempt' else ('' if c['score'] is None else
                             (f"{c['score']} (late -{c['late_off']:g})" if c['late_off'] else c['score'])))
+            mine = {g['code']: g for g in esg.get(u.id, [])}
+            line += [f"{mine[c]['score']}/900 {mine[c]['pct']:g}% {mine[c]['status']}" if c in mine else '' for c in es_exams]
             wtr.writerow(line)
         wtr.writerow([])
         wtr.writerow(['Class mean', '', '', data['summary']['mean'] or '', '', data['summary']['completion'], ''] +
@@ -743,7 +768,8 @@ def register(app, db, deps):
             c['available'] = (it['type'] == 'quiz') or d.is_content_available(section.id, 'test', it['id'], current_user.id)
         # class context without exposing classmates: only item means
         return render_template('gradebook/student_detail.html', section=section, gb=data, row=row,
-                               categories=CATEGORIES, staff=False)
+                               categories=CATEGORIES, staff=False,
+                               es_grades=exam_sim_grades(section, {current_user.id}).get(current_user.id, []))
 
     for rule, ep, fn, methods in [
         ('/instructor/section/<int:section_id>/gradebook', 'instructor_gradebook', instructor_gradebook, ['GET']),

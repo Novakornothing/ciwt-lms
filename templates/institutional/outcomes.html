@@ -42,6 +42,12 @@
   {% else %}<p class="mb-1">No graded work yet.</p>{% endif %}
   <p class="mb-0 mt-2">Study time logged: {{ rep.time.total_hours }} h across {{ rep.time.students }} students{% if rep.time.median_hours is not none %} (median {{ rep.time.median_hours }} h each){% endif %}.</p></section>
 </div>
+<section class="card card-body mt-3" aria-labelledby="oc-es"><h2 class="h5" id="oc-es">Exam-Day Simulator &amp; Voucher Readiness</h2>
+<div class="table-responsive"><table class="table table-sm mb-0" id="ocExamSim"><thead><tr><th scope="col">Exam</th><th scope="col">Sittings</th><th scope="col">Candidates</th><th scope="col">VOUCHER READY</th><th scope="col">Mean scaled score (latest)</th></tr></thead><tbody>
+{% for x in rep.exam_sim.exams + [rep.exam_sim.overall] %}<tr{% if x.exam == 'all' %} class="fw-semibold"{% endif %}><td>{{ x.name }}{% if x.exam != 'all' %} ({{ x.code }}){% endif %}</td><td>{{ x.attempts }}</td><td>{{ x.candidates }}</td>
+<td>{{ x.voucher_ready }}{% if x.voucher_ready_pct is not none %} ({{ x.voucher_ready_pct }}%){% endif %}</td><td>{{ x.mean_score if x.mean_score is not none else '—' }}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="small text-body-secondary mt-2 mb-0">Simulated scaled scores (CompTIA does not publish its scaling). VOUCHER READY = passing score with every domain at 60% or more in the student's best sitting. Missed-objective drills are excluded.</p></section>
 {% if rep.sections|length > 1 %}
 <section class="card card-body mt-3" aria-labelledby="oc-s"><h2 class="h5" id="oc-s">By class</h2>
 <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th scope="col">Class</th><th scope="col">Students</th><th scope="col">Objectives mastered</th><th scope="col">Mean grade</th></tr></thead><tbody>

@@ -376,3 +376,116 @@ def test_mastery_why_and_portfolio_integration(student, instructor, app, mod):
     j = json.loads(student.get('/portfolio/export.json').get_data(as_text=True))
     assert any(a['badge']['name'].startswith('VOUCHER READY: CompTIA A+ Core 1') for a in j['assertions'])
     assert j['portfolio']['exam_sittings']
+
+
+# ------------------------------------------------------------------ Option B pass 6
+def test_sim_pbqs_map_to_curated_course_objectives():
+    from curriculum_v2.cert.mapping import CURATED
+    assert len(SIM.SIMS) == 9
+    for s in SIM.SIMS:
+        assert s['oid'] in CURATED.get(s['obj'], ()), s['id']
+    for it in SIM.items():
+        assert it['obj'] in CURATED and it['raw']['obj'] == it['obj']
+
+
+def test_sim_pbq_remediation_links_exact_r1_ladder_section(app):
+    from curriculum_v2 import ladder as LD
+    lad = LD.ladder()
+    api = app.extensions['ciwt_exam_sim']
+    hit = 0
+    with app.test_request_context():
+        for s in SIM.SIMS:
+            links = api.remediation(s['oid'], s['obj'], 1)
+            assert links, s['id']
+            for ln in links:
+                if 'rung_url' not in ln:
+                    continue
+                assert 'rung=R1' in ln['rung_url']
+                sid = ln['rung_url'].rsplit('#ladder-', 1)[1]
+                objs = [v.get('obj') for k, v in lad.items() if k[2] == sid]
+                if s['obj'] in objs:
+                    hit += 1
+    assert hit >= 1
+
+
+def test_sim_pbq_answers_record_mastery_on_mapped_objective(student, app, mod):
+    aid = _start(student, 'N', 'max')
+    items, _a = _att(app, mod, aid)
+    sims = [(i, iid) for i, (iid, _o) in enumerate(items) if P.bank()[iid]['type'] == 'sim_pbq']
+    assert sims
+    student.post(f'{BASE}/{aid}', data=_form_for(items, len(items)))
+    uid = _user_id(app, mod, 'student1@lms.local')
+    with app.app_context():
+        st = app.extensions['ciwt_mastery'].engine.student_state(
+            mod.db.session.get(mod.ClassSection, 1), mod.db.session.get(mod.User, uid), log=False)
+    want = {P.bank()[iid]['obj'] for _i, iid in sims}
+    got = {o for o, evs in st['evidence'].items() if any(e.get('kind') == 'exam_sim' for e in evs)}
+    assert want & got
+
+
+def test_gradebook_shows_synced_exam_sim_without_changing_grade(student, instructor, app, mod):
+    before = instructor.get('/instructor/section/1/gradebook.csv').get_data(as_text=True)
+    aid = _start(student, 'A2', 'sprint')
+    items, _a = _att(app, mod, aid)
+    student.post(f'{BASE}/{aid}', data=_form_for(items, 15))
+    instructor.post('/instructor/section/1/exam-sim/sync-gradebook')
+    html = instructor.get('/instructor/section/1/gradebook').get_data(as_text=True)
+    assert 'Exam Sim' in html and '220-1202: 900/900 (VOUCHER READY)' in html
+    csv_after = instructor.get('/instructor/section/1/gradebook.csv').get_data(as_text=True)
+    head = csv_after.splitlines()[0]
+    assert 'Exam-Day Simulator 220-1202' in head and '900/900 100% VOUCHER READY' in csv_after
+    # weighted course grade unchanged: first columns of each row identical
+    strip = lambda t: [ln.split(',')[:4] for ln in t.splitlines()[1:]]
+    assert strip(before) == strip(csv_after)
+    page = student.get('/student/section/1/grades').get_data(as_text=True)
+    assert 'Exam-Day Simulator' in page and '900/900 (VOUCHER READY)' in page
+
+
+def test_outcomes_exam_sim_metrics(student, instructor, admin, app, mod):
+    from institutional import outcomes as OC
+    aid = _start(student, 'A2', 'sprint')
+    items, _a = _att(app, mod, aid)
+    student.post(f'{BASE}/{aid}', data=_form_for(items, 15))
+    with app.app_context():
+        es = OC.exam_sim_summary(app, [1], {_user_id(app, mod, 'student1@lms.local')})
+    a2 = next(x for x in es['exams'] if x['exam'] == 'A2')
+    assert a2['attempts'] >= 1 and a2['candidates'] == 1 and a2['voucher_ready'] == 1
+    assert a2['voucher_ready_pct'] == 100.0 and a2['mean_score'] == 900
+    assert {x['exam'] for x in es['exams']} == {'A1', 'A2', 'N'} and es['overall']['attempts'] >= 1
+    html = instructor.get('/instructor/section/1/outcomes').get_data(as_text=True)
+    assert 'Exam-Day Simulator &amp; Voucher Readiness' in html and 'id="ocExamSim"' in html
+    assert admin.get('/admin/outcomes').status_code == 200
+    body = instructor.get('/instructor/section/1/outcomes?format=csv').get_data(as_text=True)
+    assert 'exam_sim_voucher_ready_pct,220-1202' in body and 'exam_sim_mean_scaled_score' in body
+    j = json.loads(instructor.get('/instructor/section/1/outcomes?format=json').get_data(as_text=True))
+    assert j['exam_sim']['overall']['voucher_ready'] >= 1
+
+
+def test_option_shuffle_deterministic_per_attempt(app):
+    qv = app.extensions['ciwt_exam_sim'].question_view
+    b = P.bank()
+    iid, it = next((k, v) for k, v in b.items() if v['type'] == 'single' and len(v['options']) >= 4)
+    from curriculum_v2.cert.exams import OBJECTIVES
+    oid = next(iter(OBJECTIVES))
+    with app.test_request_context():
+        a1 = qv(it, oid, 0, attempt_id=7)['options']
+        a2 = qv(it, oid, 0, attempt_id=7)['options']
+        orders = {tuple(qv(it, oid, 0, attempt_id=n)['options']) for n in range(1, 30)}
+        base = qv(it, oid, 0)['options']
+    assert a1 == a2 and sorted(a1) == sorted(base) and len(orders) > 1
+
+
+def test_keyboard_shortcut_hint_and_script(student):
+    aid = _start(student, 'N', 'sprint')
+    html = student.get(f'{BASE}/{aid}').get_data(as_text=True)
+    assert 'id="esKeys"' in html and 'Prev/Next' in html and 'Whiteboard' in html
+    js = open('static/js/exam_sim.js').read()
+    assert "'ArrowRight'" in js and "tag === 'textarea'" in js and '[1-6]' in js
+
+
+def test_landing_page_pillars(anon):
+    html = anon.get('/landing').get_data(as_text=True)
+    assert 'What Sets Novak LMS™ Apart' in html
+    for s in ('539 bespoke', '66 labs', 'Diagnose → Fix → Verify', 'VOUCHER READY', '98-card Speed-Drill',
+              'Who Needs Me', 'LTI 1.3 Advantage', 'SAML 2.0', 'WCAG 2.1 AA', 'FERPA', 'novakornothing@gmail.com'):
+        assert s in html, s

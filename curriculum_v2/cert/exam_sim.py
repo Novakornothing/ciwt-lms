@@ -277,8 +277,13 @@ def register(app, db, deps):
             out.append(link)
         return out
 
-    def question_view(it, oid, i, answers=None, flags=()):
+    def question_view(it, oid, i, answers=None, flags=(), attempt_id=None):
         q = P.public_item(it, oid)
+        if attempt_id is not None and it['type'] in ('single', 'multi'):
+            # deterministic per sitting: a retake shows a fresh order, a reload of the same sitting the same one
+            opts = list(q['options'])
+            random.Random(f'{attempt_id}:{i}:{it["id"]}').shuffle(opts)
+            q['options'] = opts
         q.update(n=i, type=it['type'], pbq=it['type'] in PBQ_TYPES, flagged=i in flags,
                  saved=saved_value(it, (answers or {}).get(str(i))))
         if it['type'] == 'order':
@@ -445,7 +450,7 @@ def register(app, db, deps):
             audit('exam_sim_submit', f'{att.exam}/{att.mode}/{att.id}: {att.score} {att.badge}')
             return redirect(url_for('exam_sim_result', section_id=sec.id, attempt_id=att.id))
         answers, flags = json.loads(att.answers or '{}'), set(json.loads(att.flags or '[]'))
-        questions = [question_view(b[iid], oid, i, answers, flags) for i, (iid, oid) in enumerate(chosen) if iid in b]
+        questions = [question_view(b[iid], oid, i, answers, flags, attempt_id=att.id) for i, (iid, oid) in enumerate(chosen) if iid in b]
         m = meta(att)
         mult = multiplier(sec.id, att.user_id)
         return render_template('exam_sim/take.html', section=sec, att=att, questions=questions,
@@ -698,6 +703,8 @@ def register(app, db, deps):
     app.extensions['ciwt_exam_sim'].Accommodation = ExamSimAccommodation
     app.extensions['ciwt_exam_sim'].Grade = ExamSimGrade
     app.extensions['ciwt_exam_sim'].multiplier = multiplier
+    app.extensions['ciwt_exam_sim'].remediation = remediation
+    app.extensions['ciwt_exam_sim'].question_view = question_view
 
     for rule, ep, fn, methods in (
         ('/student/section/<int:section_id>/exam-sim', 'exam_sim_home', exam_sim_home, ['GET']),

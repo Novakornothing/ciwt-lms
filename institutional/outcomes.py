@@ -42,6 +42,33 @@ def _answered(o):
     return o.get('kind') != 'reading' and o.get('correct') is not None
 
 
+def exam_sim_summary(app, sids, students):
+    """Exam-Day Simulator & voucher readiness (Option B pass 6): per exam and overall. Drill sittings excluded.
+    voucher_ready = students whose best sitting reached VOUCHER READY; mean_score = mean of each student's latest."""
+    from curriculum_v2.cert.exams import EXAMS
+    es = app.extensions.get('ciwt_exam_sim')
+    A = getattr(es, 'Attempt', None) if es else None
+    rows = []
+    if A is not None and students:
+        rows = (A.query.filter(A.section_id.in_(sids), A.submitted_at.isnot(None), A.mode != 'drill')
+                .order_by(A.submitted_at).all())
+        rows = [r for r in rows if r.user_id in students]
+
+    def summarise(rs, exam, code, name):
+        latest, ready = {}, set()
+        for r in rs:
+            latest[(r.user_id, r.exam)] = r
+            if r.badge == 'ready':
+                ready.add(r.user_id)
+        cands = {r.user_id for r in rs}
+        scores = [r.score for r in latest.values() if r.score is not None]
+        return {'exam': exam, 'code': code, 'name': name, 'attempts': len(rs), 'candidates': len(cands),
+                'voucher_ready': len(ready), 'voucher_ready_pct': _pct(len(ready), len(cands)),
+                'mean_score': round(sum(scores) / len(scores), 1) if scores else None}
+    per = [summarise([r for r in rows if r.exam == ex], ex, m['code'], m['name']) for ex, m in EXAMS.items()]
+    return {'exams': per, 'overall': summarise(rows, 'all', 'all', 'All exams')}
+
+
 def report(app, db, d, sections):
     from gradebook import histogram
     from mastery import lab_diagnosis as LDX
@@ -168,7 +195,7 @@ def report(app, db, d, sections):
         'demo': bool(demo_users) or helix_demo,
         'mastery': {'pairs': pairs, 'pre_pct': _pct(sum(r['pre'] for r in obj_pairs.values()), pairs),
                     'cur_pct': _pct(sum(r['cur'] for r in obj_pairs.values()), pairs), 'objectives': objectives},
-        'ladder': ladder, 'labs': lab, 'cert': cert,
+        'ladder': ladder, 'labs': lab, 'cert': cert, 'exam_sim': exam_sim_summary(app, sids, students),
         'grades': {'n': len(grades), 'mean': round(sum(grades) / len(grades), 1) if grades else None,
                    'median': round(median(grades), 1) if grades else None, 'histogram': histogram(grades) if grades else []},
         'time': {'students': len(hours), 'total_hours': round(sum(hours), 1),
@@ -204,6 +231,11 @@ def write_csv(rep, w):
     w.writerow(['grade_median', 'all', g['median'], g['n'], ''])
     for h in g['histogram']:
         w.writerow(['grade_band', h['label'], h['n'], g['n'], ''])
+    for x in rep['exam_sim']['exams'] + [rep['exam_sim']['overall']]:
+        w.writerow(['exam_sim_attempts', x['code'], x['attempts'], x['candidates'], x['name']])
+        w.writerow(['exam_sim_voucher_ready_pct', x['code'], x['voucher_ready_pct'], x['candidates'],
+                    f"{x['voucher_ready']} candidates VOUCHER READY (simulated)"])
+        w.writerow(['exam_sim_mean_scaled_score', x['code'], x['mean_score'], x['candidates'], 'latest sitting, 100-900'])
     t = rep['time']
     w.writerow(['study_hours_total', 'all', t['total_hours'], t['students'], 'logged study time'])
     w.writerow(['study_hours_median', 'all', t['median_hours'], t['students'], 'per student'])
@@ -221,7 +253,7 @@ def objective_rows(rep):
 
 
 def to_json(rep):
-    keep = {k: rep[k] for k in ('students', 'demo', 'demo_students', 'mastery', 'ladder', 'labs', 'grades', 'time')}
+    keep = {k: rep[k] for k in ('students', 'demo', 'demo_students', 'mastery', 'ladder', 'labs', 'grades', 'time', 'exam_sim')}
     keep['sections'] = [{**{k: v for k, v in s.items() if k != 'section'}, 'id': s['section'].id, 'name': s['section'].name}
                         for s in rep['sections']]
     keep['status'] = 'Pending SME review (curriculum mapping)'
