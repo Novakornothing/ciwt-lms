@@ -133,7 +133,29 @@ LESSONS = {
         'm-2-is-the-slot-nvme-is-the-protocol': same_as('1-three-common-drives', 'M.2 is the slot, NVMe is the protocol', 'Slot versus protocol again, with list disk.'),
         'when-the-disk-is-the-ticket': same_as('start-here-files-live-on-storage', 'When the disk is the ticket', 'Disk stories versus lost-file stories.'),
         'teach-block-words-that-order-parts': same_as('1-three-common-drives', 'Teach block — words that order parts', 'Ordering by slot, protocol and length.'),
-        'reference-storage-interfaces-and-real-world-speeds': same_as('1-three-common-drives', 'Reference — storage interfaces and real-world speeds', 'Speed table for the same drive kinds.'),
+        'reference-storage-interfaces-and-real-world-speeds': X('Reference — storage interfaces and real-world speeds', 'IT-3.1', S1, [
+            ('Roughly what is the practical ceiling of SATA III?', '≈ 550–600 MB/s', 'About 7 GB/s on a fast board', 'About 14 GB/s with a heatsink',
+             'SATA III signals at 6 Gb/s, which works out to roughly 550–600 MB/s of real data.', M2, M2),
+            ('A PCIe 4.0 ×4 NVMe drive tops out near…', '7 GB/s', '600 MB/s, the same as SATA', '480 Mb/s, like USB 2.0',
+             'Each PCIe generation doubles the per-lane rate; 4.0 ×4 gives about 7 GB/s.', M2, None),
+            ('In the motorway story, what does PCIe 5.0 add?', 'More speed per lane', 'A different car park gate', 'Wider parking bays only',
+             'Newer PCIe generations double the speed of each lane; the slot shape stays M.2.', M2, None),
+            ('An M-key-only stick is usually…', 'NVMe', 'A SATA drive in M.2 form', 'An mSATA card',
+             'B+M keyed sticks are usually SATA; M-key-only sticks are usually NVMe. The board manual decides.', M2, None),
+            ('What keeps an SSD fast over time?', 'TRIM', 'A 7,200 rpm spindle', 'Defragmenting weekly',
+             'SSDs rely on TRIM; spindle speed only applies to hard disks.', M2, None),
+        ],
+            P('The table puts numbers on the drive types. SATA III, used by hard disks and 2.5-inch SSDs, manages about 550 to 600 MB/s in practice. '
+              'NVMe drives on four PCIe lanes are far quicker: around 3.5 GB/s on PCIe 3.0, 7 GB/s on 4.0 and 14 GB/s on 5.0, which often needs a '
+              'heatsink. Hard disks spin at 5,400 or 7,200 rpm; SSDs are rated for total writes (TBW) and use TRIM to stay quick.'),
+            P('Picture roads leaving the same car park gate. The gate is M.2. Behind it, SATA is a single-lane country road with a speed limit. '
+              'NVMe uses four motorway lanes, and every new PCIe generation raises the speed limit on each lane, so a 5.0 motorway is twice as fast '
+              'as 4.0. Cars that go that fast get hot, which is why the newest drives often wear a heatsink like a radiator grille.'),
+            ['Read the stick: B+M key (usually SATA) or M key (usually NVMe)?', 'Check the board manual for what the slot supports.',
+             'Find the PCIe generation of the slot.', 'Expect ≈600 MB/s (SATA), 3.5, 7 or 14 GB/s (NVMe 3.0/4.0/5.0).', 'Note heatsink needs for PCIe 5.0.'],
+            '<p>Sort each interface to its rough real-world ceiling.</p>',
+            sort('Real-world speed', {'Under 1 GB/s': ['SATA III SSD', 'M.2 SATA stick'], '3.5–7 GB/s': ['NVMe PCIe 3.0 ×4', 'NVMe PCIe 4.0 ×4'],
+                                      'About 14 GB/s': ['NVMe PCIe 5.0 ×4']}, 'The slot shape never sets the speed; the protocol and PCIe generation do.'), DISK),
         'storage-devices-interfaces-form-factors-raid-and-removable-m': X('Storage devices: interfaces, form factors, RAID and removable media', 'IT-3.1', S1, [
             ('Can a SATA controller run a SAS drive?', 'No', 'Yes, they use the same connector', 'Only with an NVMe adapter fitted',
              'A SAS controller can run SATA drives, but a SATA controller cannot run SAS drives.', SAS, SAS),
@@ -367,7 +389,29 @@ LESSONS = {
             '<p>Guess first, then reveal.</p>',
             reveal('A dock works on one laptop but not another with the same oval port. Why?', 'The second laptop’s USB-C port is not wired for video (no Alt Mode or Thunderbolt).'), CAB),
         'display-path-after-post-ok': same_as('1-isolation-order', 'Display path after POST OK', 'The same display order after POST.'),
-        'reference-usb-thunderbolt-and-display-links-current-names': same_as('2-connectors', 'Reference — USB, Thunderbolt and display links (current names)', 'Speed names for the same connectors.'),
+        'reference-usb-thunderbolt-and-display-links-current-names': X('Reference — USB, Thunderbolt and display links (current names)', 'IT-3.4', S4, [
+            ('“USB 3.2 Gen 2” is sold to customers as…', 'USB 10Gbps', 'USB 40Gbps on a USB4 port', 'Hi-Speed USB at 480 Mb/s',
+             'USB-IF’s customer name states the speed: USB 3.2 Gen 2 is USB 10Gbps.', USBC, USBC),
+            ('Thunderbolt 5 is built on…', 'USB4 Version 2.0', 'USB 2.0 Hi-Speed signalling', 'HDMI 2.1 signalling',
+             'Thunderbolt 5 uses USB4 Version 2.0: 80 Gb/s, up to 120 Gb/s for displays.', USBC, None),
+            ('In the chain story, what sets the maximum resolution?', 'The slowest link', 'The newest device', 'The longest cable',
+             'Port, adapter, cable and monitor input: the weakest one sets the limit.', BOARD, None),
+            ('Up to how much power can USB PD 3.1 EPR deliver?', '240 W', '60 W with any cable', '15 W only',
+             'Extended Power Range reaches 240 W with a 240 W-rated cable.', USBC, None),
+            ('DisplayPort 2.1 (UHBR20) carries up to…', '80 Gb/s', '48 Gb/s, the HDMI 2.1 limit', '10 Gb/s',
+             'DP 2.1 UHBR20 is 80 Gb/s; HDMI 2.1 tops out at 48 Gb/s.', USBC, None),
+        ],
+            P('USB names now state speed: USB 5Gbps, 10Gbps, 20Gbps, 40Gbps (USB4) and 80Gbps (USB4 Version 2.0). Thunderbolt 4 runs at 40 Gb/s and '
+              'Thunderbolt 5 at 80 Gb/s, with up to 120 Gb/s for screens. USB-C is only the plug: one port may offer all of that, plus DisplayPort '
+              'video and up to 240 W of charging, or only some of it. HDMI 2.1 carries up to 48 Gb/s and DisplayPort 2.1 up to 80 Gb/s.'),
+            P('Think of a chain of hoses from a tap to a sprinkler. A wide tap does not help if one section of hose in the middle is thin: the '
+              'thinnest piece decides how much water arrives. A laptop port, an adapter, a cable and a monitor input are those hose sections. The '
+              'resolution and refresh you get are set by whichever piece is slowest, which is why a cheap adapter can cap an expensive monitor.'),
+            ['Read the port icon and the laptop spec sheet.', 'Check the cable rating (speed and watts).', 'Check any adapter or dock.',
+             'Check the monitor input version.', 'The slowest link sets the result.'],
+            '<p>Sort each name to its speed.</p>',
+            sort('Name to speed', {'5–10 Gb/s': ['USB 5Gbps', 'USB 10Gbps'], '40 Gb/s': ['USB4 (40Gbps)', 'Thunderbolt 4'],
+                                   '80 Gb/s': ['USB4 Version 2.0', 'Thunderbolt 5']}, 'USB-C is the plug; the name tells the speed.'), CAB),
         'display-technologies-and-display-video-and-projector-trouble': X('Display technologies and display, video and projector troubleshooting', 'IT-3.4', S4, [
             ('Which panel needs no backlight?', 'OLED', 'IPS LCD panel', 'Mini-LED LCD panel',
              'OLED pixels emit their own light; every LCD, including Mini-LED, needs a backlight.', OLED, OLED),
@@ -463,10 +507,10 @@ LESSONS = {
 }
 
 STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladder_check.py --stamp)
-    '3.1': {'start-here-files-live-on-storage': 'd6190754eef1', '1-three-common-drives': '8926fd53517f', '2-detect-before-you-image': '7ad3452f5760', 'storage-devices-interfaces-form-factors-raid-and-removable-m': '2920ec52200f'},
+    '3.1': {'start-here-files-live-on-storage': 'd6190754eef1', '1-three-common-drives': '8926fd53517f', '2-detect-before-you-image': '7ad3452f5760', 'reference-storage-interfaces-and-real-world-speeds': '42c556ffd97f', 'storage-devices-interfaces-form-factors-raid-and-removable-m': '2920ec52200f'},
     '3.2': {'backup-versus-raid-from-zero': 'e2afcd557c51', '1-levels-you-must-not-mix-up': '7d9ff8162cf3', '2-ticket-habit': 'd288aff74874', 'storage-and-raid-symptoms': '8c96f7d6a3e1'},
     '3.3': {'1-sealed-unit': 'ebbf8cae0fcd', '2-symptoms-that-look-like-a-dead-board': '53bd3d7cdefc', 'choosing-and-installing-a-power-supply': 'f8b24cfc5910'},
-    '3.4': {'1-isolation-order': '6084fa0bebbf', '2-connectors': '94f425612149', 'display-technologies-and-display-video-and-projector-trouble': '5ecec34ee03c', 'cable-types-and-connectors': '486bff68ed2f'},
+    '3.4': {'1-isolation-order': '6084fa0bebbf', '2-connectors': '94f425612149', 'reference-usb-thunderbolt-and-display-links-current-names': 'd263a6edc9a1', 'display-technologies-and-display-video-and-projector-trouble': '5ecec34ee03c', 'cable-types-and-connectors': '486bff68ed2f'},
     '3.5': {'worked-order': '19f9fb478a0a', 'pass-bar': '494d40203198'},
 }
 

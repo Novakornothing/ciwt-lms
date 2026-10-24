@@ -192,7 +192,30 @@ LESSONS = {
             sort('Allowed?', {'Allowed': ['Read the profile', 'Open a rule request', 'Use the approved app'], 'Not allowed': ['Turn the profile off', 'Disable to test']},
                  'The firewall stays on.'), ('w11-firewall', 'Read the firewall profile and rules; change nothing without a request.')),
         'ports-are-doors-on-a-host': same_as('what-a-port-is-if-you-have-never-heard-it', 'Ports are doors on a host', 'Ping versus the service door.'),
-        'reference-port-numbers-technicians-use': same_as('1-ports-you-will-actually-say', 'Reference — port numbers technicians use', 'The full port table.'),
+        'reference-port-numbers-technicians-use': X('Reference — port numbers technicians use', 'IT-5.2', S2, [
+            ('Which port carries SMB file sharing?', '445', '3389, the Remote Desktop port', '389, the LDAP directory port',
+             'SMB uses TCP 445; RDP is 3389 and LDAP 389.', PM, PM),
+            ('IMAP over TLS uses…', '993', '110 for plain POP3', '25 for server relay',
+             'IMAP is 143 and IMAP over TLS 993; POP3 is 110/995.', PM, None),
+            ('In the apartment story, why use a high source port?', 'Temporary return door', 'It is faster', 'It is required by DNS',
+             'Clients pick a temporary high port so replies find their way back.', PP, None),
+            ('Which pair is cleartext and best avoided?', 'Telnet 23 and FTP 21', 'SSH 22 and HTTPS 443', 'LDAPS 636 and IMAPS 993',
+             'Telnet and FTP send passwords in clear; prefer SSH and SFTP.', PM, None),
+            ('Ping works but the app does not. What next?', 'Test the port', 'Replace the NIC', 'Reinstall the OS',
+             'A firewall rule or stopped service shows up exactly like this; test the port itself.', PP, None),
+        ],
+            P('The reference table lists the ports a technician meets. 20/21 FTP and 23 Telnet send passwords in clear, so prefer 22 for SSH and '
+              'SFTP. 25 relays mail between servers, 587 takes mail from clients, 110/995 are POP3 and 143/993 IMAP. 53 is DNS, 67/68 DHCP, 123 '
+              'NTP, 161/162 SNMP, 389/636 LDAP, 443 HTTPS, 445 SMB and 3389 Remote Desktop. Ports below 1024 are well-known; clients reply from a '
+              'temporary high port.'),
+            P('Think of a large apartment block. Well-known ports are the numbered service doors on the ground floor: the post room, the laundry, '
+              'the bike store. When a resident sends something out, they give a temporary flat number for the reply, used once and then forgotten. '
+              'If the post room door is locked, ringing the main bell still works, which is why ping can succeed while the service itself fails.'),
+            ['Name the service the user cannot reach.', 'Look up its port and protocol.', 'Prefer the encrypted variant.',
+             'Test that port with Test-NetConnection.', 'Write port, result and owner.'],
+            '<p>Sort each port to its service.</p>',
+            sort('Port to service', {'Mail': ['25', '587', '993'], 'Files': ['445'], 'Remote admin': ['22', '3389'], 'Directory': ['389', '636']},
+                 'Learn the encrypted variants alongside the clear ones.'), NET),
     },
     '5.3': {
         'core-content': same_as('1-order', 'Core content', 'The isolation order and why it is fixed.'),
@@ -384,7 +407,7 @@ LESSONS = {
 
 STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladder_check.py --stamp)
     '5.1': {'start-here-what-a-network-is': '368d593c9638', '1-what-you-must-be-able-to-point-to': '3106e130ebac', 'private-ranges-you-will-see': '49d8eadeab42'},
-    '5.2': {'what-a-port-is-if-you-have-never-heard-it': '6e1922533272', '1-ports-you-will-actually-say': '0f17ff210612', '2-firewall': '5cc1012db1f5'},
+    '5.2': {'what-a-port-is-if-you-have-never-heard-it': '6e1922533272', '1-ports-you-will-actually-say': '0f17ff210612', '2-firewall': '5cc1012db1f5', 'reference-port-numbers-technicians-use': 'e877126ecdc8'},
     '5.3': {'1-order': 'f2d4197428ee', 'what-each-failed-ping-means': '4af263203d52', 'networking-hardware-and-networking-tools': '4a95f469079a'},
     '5.4': {'1-client-first': 'd58919f7a781', '2-ap-changes-are-changes': '222a98236469', 'reference-wi-fi-generations-and-soho-security-baseline': '294ea9f270b7'},
     '5.5': {'note-bar': 'ada78b75b5c9', 'full-triage-lab': 'fec3c7f966a8'},
