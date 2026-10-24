@@ -60,9 +60,12 @@ def main(out):
     w('A key at least 15% longer than the longest distractor (a test-wise cue). Chapter checks first, then the ladder quick checks.\n')
     chk = [q for name, p in pools.items() if ' check ' in name for q in p if (q.get('type') or 'single') == 'single']
     flagged = sorted((q for q in chk if ratio(q) >= 1.15), key=ratio, reverse=True)
-    w('| Item | Key/longest distractor | File | Key |\n|---|---|---|---|')
-    for q in flagged:
-        w(f'| {q.get("bank_id")} | {ratio(q):.2f}× | `{where(q.get("text") or "")}` | {q["correct"]} |')
+    if flagged:
+        w('| Item | Key/longest distractor | File | Key |\n|---|---|---|---|')
+        for q in flagged:
+            w(f'| {q.get("bank_id")} | {ratio(q):.2f}× | `{where(q.get("text") or "")}` | {q["correct"]} |')
+    else:
+        w('- **Chapter checks: 0 flagged** (NQ1.5 and NQ4.5 balanced in round 7).')
     lc = []
     for (course, label, sid), raw in LD.ladder().items():
         if raw.get('type') != 'section':
@@ -73,10 +76,13 @@ def main(out):
                 if c.get('correct') in (c.get('options') or []) and ratio(c) >= 1.4:
                     lc.append((ratio(c), course, label, sid, c))
     lc.sort(key=lambda x: -x[0])
-    w(f'\nLadder quick checks (not graded) with a key ≥ 1.4× the longest distractor: {len(lc)} in total. Top 15:\n')
-    w('| Check id | Ratio | Section | Key |\n|---|---|---|---|')
-    for r, course, label, sid, c in lc[:15]:
-        w(f'| `{c["id"]}` | {r:.2f}× | {course} {label} `{sid}` | {c["correct"]} |')
+    if lc:
+        w(f'\nLadder quick checks (not graded) with a key ≥ 1.4× the longest distractor: {len(lc)} in total. Top 15:\n')
+        w('| Check id | Ratio | Section | Key |\n|---|---|---|---|')
+        for r, course, label, sid, c in lc[:15]:
+            w(f'| `{c["id"]}` | {r:.2f}× | {course} {label} `{sid}` | {c["correct"]} |')
+    else:
+        w('- **Ladder quick checks (key ≥ 1.4× longest distractor): 0 flagged** (all 169 long-key checks balanced in round 7).')
     w('\n## Priority 3: templated NETOPS practice/capstone ladders and SAME_AS reuse\n')
     gen = sorted(k for k, v in LD.ladder().items() if k[0] == 'NETOPS' and k[2] in GEN_SECTIONS and v.get('type') == 'section')
     w(f'- **{len(gen)} NETOPS sections built by `curriculum_v2/ladder/netops/_gen.py`** (`ops()` / `cap()` from a compact lesson record). '
