@@ -304,6 +304,7 @@ def register_ladder(app, db, ctx):
             'step_no': ([x for x in LP.RUNGS if x in allowed or x in st['tried']].index(shown) + 1) if shown != 'R0' and shown in LP.RUNGS else 0,
             'step_total': len([x for x in LP.RUNGS if x in allowed or x in st['tried']]),
             'style': STYLE.get(shown, ''),
+            'next_style': next((STYLE[r] for r in LP.RUNGS if r in allowed and r not in st['tried']), None),
         }
 
     def clicked(user_id, section_id):

@@ -37,18 +37,22 @@ Open **Setup** (`/instructor/section/<id>/setup`). It is one page with seven are
 **Instructor, daily:** open **Who needs me** (`/instructor/section/<id>/mastery/today`). If a student needs an accommodation, use **Grant section gate bypass**.
 
 ## 5. Mid-week: read "Why this student is struggling"
-The class page and Who needs me show one card per struggling student. Each card has:
-- **Ladder:** sections they ran out of explanations on or keep missing, plus **What finally clicked** (for example "Best style: Analogy (resolved 4/5 struggles)").
-- **Lab flags:** habits such as "Changed config before diagnosing". Each flag links to the attempt's process analysis.
-  - On the analysis page, every flagged mistake has a button: **Open <lesson> · <section> in <style> →**.
-  - The button opens that section directly on the recommended explanation.
-- **Helix:**
-  - With consent: low attention, long dwell or uncalibrated sessions.
-  - Without consent: "Helix: not opted in".
-- **Next action:**
-  - **Open prefilled message**: a draft only, nothing is sent until you press send.
-  - **Preview the rung that works for them.**
-  - **Grant section gate bypass.**
+The class page and Who needs me show one card per struggling student, readable in under 10 seconds. Each card has four labelled rows:
+- **Where stuck:** sections they ran out of explanations on or keep missing (or, failing that, a lab habit).
+- **What clicked:** a badge such as "✓ Best style: Analogy (R2)", plus how many struggles it resolved.
+- **Signals:** one-line tags, e.g. `Lab: Changed config before diagnosing` (links to the attempt's process analysis, where each mistake has an **Open <lesson> · <section> in <style> →** button) and `Helix: Not opted in` (or attention notes when the student consented).
+- **Next action:** **Draft message** (a draft only; nothing is sent until you press send), **Open R2 preview** (the rung that works for them) and **Grant gate bypass**.
+
+When no one is struggling the card says so, and the class ladder page says "nothing to show yet" for What finally clicked.
+
+### What students see
+- "X of Y sections verified" at the top and bottom of every lesson, with a **What to do next** line.
+- Under each section: **Check understanding** and **Explain it another way (style)**; after a pass, a **Next section ↓** chip.
+- At the end of the chapter: **Continue to Adaptive Check →** and **Continue to Lab →**, so there is no dead end.
+
+### Support
+- Contact & Support (`contact@novakornothing.com`, configurable with `NOVAK_CONTACT_EMAIL`) is in every page footer, on `/contact` (with an instructor and student FAQ) and on each section's Setup page.
+- novakornothing.com shows the hero, a privacy note, an FAQ and a contact section (preview at `/landing` or `/?landing=1`).
 
 ## 6. End of term: pull the outcomes report
 - **Outcomes** (`/instructor/section/<id>/outcomes`) lists one row per course objective with:

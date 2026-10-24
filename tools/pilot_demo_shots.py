@@ -98,8 +98,8 @@ with sync_playwright() as pw:
         shot(p, '#ladderGate', f'{tmp}/d{w}.png')
         composite(b, [(f'{tmp}/a{w}.png', 'Before: the original explanation (R0) with its quick check'),
                       (f'{tmp}/b{w}.png', 'Two misses: the section swaps in place to R2 Analogy — badge + R0→R4 pill show where they are'),
-                      (f'{tmp}/c{w}.png', 'Pass: the section is verified and a one-tap “Continue” chip appears'),
-                      (f'{tmp}/d{w}.png', 'The comprehension gate counts it: “X of Y sections verified”, the next section unlocks')],
+                      (f'{tmp}/c{w}.png', 'Pass: the section is verified and a one-tap “Next section ↓” chip appears'),
+                      (f'{tmp}/d{w}.png', 'The gate counts it (“X of Y sections verified”, top and bottom) and says what to do next')],
                   os.path.join(a.out, name), 'Adaptive difference: the explanation changes for this student, in place', stacked=(w == 390))
         c.close()
     # lab flags for student1: change before diagnosing, then repeat without change
@@ -125,9 +125,14 @@ with sync_playwright() as pw:
     shot(p, 'section[aria-labelledby=whyH]', f'{tmp}/g.png')
     p.goto(B + '/instructor/section/1/ladder', wait_until='networkidle')
     shot(p, '.page-hero', f'{tmp}/h.png')
-    composite(b, [(f'{tmp}/g.png', 'Why this student is struggling: ladder + lab flags + Helix (consent-aware) + one next action'),
+    composite(b, [(f'{tmp}/g.png', 'Why this student is struggling: Where stuck · What clicked badge · Lab/Helix tags · one-click next actions'),
                   (f'{tmp}/h.png', 'What finally clicked for the class (explanation style that resolved struggles)')],
               os.path.join(a.out, '03-why-student-is-struggling-1280.png'), 'Instructor view: why a student struggles, and what works')
+    c.close()
+    c = b.new_context(viewport={'width': 1280, 'height': 800}); p = c.new_page()
+    p.goto(B + '/landing', wait_until='networkidle')
+    p.evaluate("document.querySelectorAll('details').forEach((d, i) => { if (i < 2) d.open = true })")
+    p.screenshot(path=os.path.join(a.out, '05-novakornothing-landing-privacy-faq-1280.png'), full_page=True)
     c.close()
     b.close()
     for f in os.listdir(tmp):

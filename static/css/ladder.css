@@ -126,3 +126,9 @@
 a.why-pill:hover{text-decoration:underline}
 .clicked-badge{display:inline-flex;gap:.35rem;align-items:center;border:2px solid #198754;border-radius:999px;padding:.2rem .7rem;font-weight:700}
 .lpa-cta{white-space:normal;text-align:left}
+.ladder-topstatus{display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:baseline;border:1px solid var(--bs-border-color);border-radius:.5rem;padding:.45rem .75rem;margin:0 0 1rem}
+.ladder-topcount{font-weight:700}
+.why-grid{display:grid;grid-template-columns:7.5rem 1fr;gap:.3rem .75rem;margin:0}
+.why-grid dt{font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;font-weight:700;padding-top:.15rem}
+.why-grid dd{margin:0;display:flex;flex-wrap:wrap;gap:.3rem;align-items:center}
+@media (max-width:575.98px){.why-grid{grid-template-columns:1fr}.why-grid dt{padding-top:.4rem}}

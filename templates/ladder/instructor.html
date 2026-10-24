@@ -14,7 +14,8 @@
   <h1 class="h3 mb-1">Explanations: what students needed explained another way</h1>
   {% set cc = class_clicked(section.id) %}{% if cc and cc[1] %}{% set top = cc[0]|sort(attribute='n', reverse=True)|first %}
   <p class="mb-2"><span class="clicked-badge"><i class="bi bi-lightbulb" aria-hidden="true"></i> What finally clicked for this class: {{ top.style }} ({{ top.n }}/{{ cc[1] }} resolved struggles)</span></p>
-  <div class="why-pills mb-2">{% for r in cc[0] %}{% if r.n %}<span class="why-pill">{{ r.rung }} {{ r.style }}: {{ r.n }} ({{ r.pct }}%)</span>{% endif %}{% endfor %}</div>{% endif %}
+  <div class="why-pills mb-2">{% for r in cc[0] %}{% if r.n %}<span class="why-pill">{{ r.rung }} {{ r.style }}: {{ r.n }} ({{ r.pct }}%)</span>{% endif %}{% endfor %}</div>
+  {% else %}<p class="mb-2 small">What finally clicked: nothing to show yet. It fills in once a student resolves a section with an alternative explanation.</p>{% endif %}
   <p class="mb-0">After each lesson section students get a quick check (not graded). A miss, or “I don't get it”, replaces that section, for that student only, with the next explanation: more simply, an analogy, a picture or trace, then something to try. Grades are never changed. All alternative explanations are <strong>Pending SME review</strong>.</p>
 </div>
 {% if demo %}<div class="mb-3">{{ demo_ribbon(true) }} <span class="small mx-muted">Some of this activity comes from the demo accounts (@lms.local), not real students.</span></div>{% endif %}

@@ -3,19 +3,74 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Novak or Nothing</title>
+  <title>Novak or Nothing — Novak Learning</title>
+  <meta name="description" content="Novak Learning: IT support and networking courses that re-explain each idea until it clicks. Privacy-first, FERPA-aligned.">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/navy-n-256.png') }}">
   <style>
-    :root { color-scheme: dark; }
+    :root { color-scheme: dark; --fg: #e8edf5; --muted: #b9c3d3; --gold: #f2c14e; --line: #2a3446; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
-    body {
-      min-height: 100vh;
-      min-height: 100dvh;
-      background: #000 url("{{ url_for('static', filename='img/navy-n-512.webp') }}") center / contain no-repeat;
-    }
+    body { background: #000; color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .hero { min-height: 100vh; min-height: 100dvh; background: #000 url("{{ url_for('static', filename='img/navy-n-512.webp') }}") center / contain no-repeat; position: relative; }
+    .hero a.more { position: absolute; left: 50%; bottom: 1.25rem; transform: translateX(-50%); color: var(--fg); text-decoration: none;
+      border: 1px solid var(--line); border-radius: 999px; padding: .5rem 1rem; background: rgba(0,0,0,.6); font-weight: 600; }
+    a { color: var(--gold); }
+    a:focus-visible, summary:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+    main { max-width: 60rem; margin: 0 auto; padding: 3rem 1.25rem 2rem; }
+    h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.2; margin-bottom: .5rem; }
+    h2 { font-size: 1.3rem; margin: 2.5rem 0 .75rem; color: var(--gold); }
+    p, li { color: var(--muted); }
+    .lede { font-size: 1.1rem; color: var(--fg); }
+    ul.plain { list-style: none; display: grid; gap: .6rem; }
+    ul.plain li { border-left: 3px solid var(--gold); padding-left: .75rem; }
+    details { border: 1px solid var(--line); border-radius: .6rem; padding: .75rem 1rem; margin-bottom: .6rem; background: #0a0f18; }
+    summary { cursor: pointer; font-weight: 600; color: var(--fg); }
+    details p { margin-top: .5rem; }
+    .cta { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+    .btn { display: inline-block; padding: .65rem 1.1rem; border-radius: .5rem; font-weight: 700; text-decoration: none; }
+    .btn-gold { background: var(--gold); color: #000; }
+    .btn-line { border: 1px solid var(--gold); color: var(--gold); }
+    footer { border-top: 1px solid var(--line); text-align: center; padding: 1.25rem; font-size: .9rem; color: var(--muted); }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    html { scroll-behavior: smooth; }
   </style>
 </head>
-<body></body>
+<body>
+  <header class="hero" role="banner" aria-label="Novak or Nothing">
+    <a class="more" href="#about">Novak Learning · Privacy · FAQ · Contact ↓</a>
+  </header>
+  <main id="about">
+    <h1>Novak Learning</h1>
+    <p class="lede">IT support and networking courses that check understanding section by section, and explain an idea another way, right there, when it does not click.</p>
+
+    <section aria-labelledby="privacyH">
+      <h2 id="privacyH">Privacy note</h2>
+      <ul class="plain">
+        <li><strong>Minimal data, FERPA-aligned.</strong> We keep only what a course needs: your account, your work and your progress. No advertising, no selling of data.</li>
+        <li><strong>Helix is optional and stays on your device.</strong> The per-session webcam attention feature is opt-in, runs 100% locally in the browser, and no video or images ever leave the device. Saying no never affects grades.</li>
+        <li><strong>Your record is yours.</strong> Students can download their education record or request a correction or deletion at any time at <a href="/my-data">/my-data</a>.</li>
+        <li><strong>Every sensitive action is logged.</strong> Grade changes, exports, deletions and permission changes go to a tamper-evident (hash-chained) audit log.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="faqH">
+      <h2 id="faqH">FAQ</h2>
+      <details><summary>What is Novak Learning?</summary><p>An LMS with IT Support and Networking courses, hands-on labs (including an in-browser Linux VM) and certification practice, built for colleges and training commands.</p></details>
+      <details><summary>How does the in-lesson explanation ladder work?</summary><p>Each lesson section ends with a short, ungraded check. A miss swaps that section, for that student only, to the next explanation: plain language, an analogy, a visual walk-through, then something to try. The next section unlocks once the check is passed or every explanation has been tried.</p></details>
+      <details><summary>How does Helix attention tracking protect student privacy?</summary><p>It is opt-in per session with explicit consent, runs entirely in the browser and sends only summary numbers (such as time on a section), never video or images. Students can switch it off at any time.</p></details>
+      <details><summary>How do colleges or training commands run a pilot?</summary><p>We set up a section, you enroll students by join code, CSV or LTI 1.3 (Canvas, Moodle, Blackboard, Brightspace), and at term end you export an outcomes report mapped to course and CompTIA objectives. Email us to start.</p></details>
+      <details><summary>How do students or instructors get support?</summary><p>Email <a href="mailto:{{ novak_contact_email }}">{{ novak_contact_email }}</a>. Signed-in users also find a Contact &amp; FAQ page in the LMS footer.</p></details>
+    </section>
+
+    <section aria-labelledby="contactH">
+      <h2 id="contactH">Contact</h2>
+      <p>For pilot inquiries, support questions or general contact:</p>
+      <div class="cta">
+        <a class="btn btn-gold" href="mailto:{{ novak_contact_email }}?subject=Novak%20Learning%20inquiry">{{ novak_contact_email }}</a>
+        <a class="btn btn-line" href="/login">Sign in to the LMS</a>
+      </div>
+    </section>
+  </main>
+  <footer>Novak or Nothing · novakornothing.com · <a href="mailto:{{ novak_contact_email }}">{{ novak_contact_email }}</a></footer>
+</body>
 </html>

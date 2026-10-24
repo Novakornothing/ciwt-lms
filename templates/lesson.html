@@ -109,6 +109,9 @@
       </div>
       <div class="card-body module-content" id="lessonBody">
         {% if ladder_html %}<p class="ladder-intro small"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Each section ends with a quick check (not graded). If a section does not click, it is explained another way, right here, just for you. <a href="{{ url_for('ladder_profile', section_id=section_id) }}">What helps you learn</a></p>
+        {% if ladder_gate and ladder_gate.on and not ladder_gate.exempt %}<p class="ladder-topstatus" data-gate-top>
+          <span class="ladder-topcount"><i class="bi bi-check2-square" aria-hidden="true"></i> <span data-gate-top-count>{{ ladder_gate.done }} of {{ ladder_gate.total }}</span> sections verified</span>
+          <span class="small">What to do next: answer the quick check under each section. Locked sections open as you go. <a href="#ladderGate">See what is left</a></span></p>{% endif %}
         {{ ladder_html | safe }}{% else %}{{ lesson.content | render_lesson | safe }}{% endif %}
         {% include '_lesson_labs.html' %}
         {% if mastery_quick is defined %}{% include 'mastery/_quickcheck.html' %}{% endif %}
@@ -127,10 +130,11 @@
       <a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('next', url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=next_l.id), next_id=next_l.id) }}">
         Next lesson →
       </a>
-      {% elif lesson_labs %}
-      <a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('lab', '#chapter-lab') }}">Do the lab for this lesson</a>
-      {% elif quizzes %}
-      <a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('quiz', url_for('take_quiz', section_id=section_id, quiz_id=quizzes[0].id), quiz_id=quizzes[0].id) }}">Take the chapter quiz</a>
+      {% elif quizzes or lesson_labs %}
+      <span class="d-flex flex-wrap gap-2">
+      {% if quizzes %}<a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('quiz', url_for('take_quiz', section_id=section_id, quiz_id=quizzes[0].id), quiz_id=quizzes[0].id) }}">Continue to Adaptive Check →</a>{% endif %}
+      {% if lesson_labs %}<a class="btn {{ 'btn-outline-navy' if quizzes else 'btn-brand' }}" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('lab', '#chapter-lab') }}">Continue to Lab →</a>{% endif %}
+      </span>
       {% else %}
       <a class="btn btn-brand" href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">Back to chapter</a>
       {% endif %}

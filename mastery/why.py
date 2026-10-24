@@ -14,10 +14,10 @@ def _model(db, name):
 def helix_signals(db, user_id, section_id):
     Consent, Sess = _model(db, 'HelixConsent'), _model(db, 'HelixGazeSession')
     if not Consent or not Consent.query.filter_by(user_id=user_id, revoked_at=None).first():
-        return {'consented': False, 'pills': ['Helix: not opted in'], 'text': None}
+        return {'consented': False, 'pills': ['Helix: Not opted in'], 'text': None}
     rows = Sess.query.filter_by(user_id=user_id, section_id=section_id).all() if Sess else []
     if not rows:
-        return {'consented': True, 'pills': ['Helix: opted in, no sessions yet'], 'text': None}
+        return {'consented': True, 'pills': ['Helix: Opted in, no sessions yet'], 'text': None}
     low = sum(1 for s in rows if (s.total_ms or 0) > 60000 and (s.attentive_ms or 0) < 0.5 * (s.total_ms or 1))
     long = sum(1 for s in rows if (s.total_ms or 0) > 20 * 60000)
     uncal = sum(1 for s in rows if (s.mode or 'gaze') == 'gaze' and not (s.calibration_points or 0))
@@ -77,16 +77,22 @@ def why(app, db, section, user):
     subject = f'Let us go through “{focus[0]["heading"]}” together' if focus else ('Let us go through your recent labs together' if flags else 'Let us go through this week together')
     body = f'Hi {user.first_name or ""},\n\n' + (f'I noticed “{focus[0]["heading"]}” has been tricky. ' if focus else '') + \
         'Could we spend ten minutes on it together? Reply with a time that suits you.\n'
-    actions.append({'kind': 'message', 'text': 'Open prefilled message', 'url': url_for('messages_new', to=user.id, subject=subject, body=body)})
+    actions.append({'kind': 'message', 'text': 'Draft message', 'url': url_for('messages_new', to=user.id, subject=subject, body=body)})
     if focus:
         anchor = f'#pv-{focus[0]["sid"]}'
-        actions.append({'kind': 'preview', 'text': f'Preview the {style or "alternative"} rung that works for them' if style else 'Preview the explanations they saw',
+        actions.append({'kind': 'preview', 'text': f'Open {c["best"]} preview' if c['best'] and c['best'] != 'R0' else 'Open explanations preview',
                         'url': url_for('ladder_preview', section_id=section.id, label=focus[0]['label']) + anchor})
         les = _lesson_id(app, db, section, focus[0]['label'])
         if les:
-            actions.append({'kind': 'bypass', 'text': 'Grant section gate bypass', 'form': True, 'lesson_id': les,
+            actions.append({'kind': 'bypass', 'text': 'Grant gate bypass', 'form': True, 'lesson_id': les,
                             'url': url_for('ladder_settings', section_id=section.id)})
-    return {'user': user, 'sentence': sentence, 'pills': pills, 'flags': flags[:4], 'clicked': c, 'helix': hx,
+    stuck = [{'text': f'{s["label"]} · {s["heading"]}', 'detail': (f'every explanation tried ({s["misses"]} misses)' if s['exhausted']
+                                                                       else f'{s["misses"]} misses, still open')} for s in (exhausted + repeated)[:3]]
+    stuck += [{'text': f'Lab {f["lab_id"]}', 'detail': f['label'], 'url': f['url']} for f in flags[:1]] if not stuck else []
+    best_badge = f'✓ Best style: {style} ({c["best"]})' if style else None
+    return {'user': user, 'sentence': sentence, 'stuck': stuck, 'best_badge': best_badge,
+            'lab_tags': [{'text': f'Lab: {k} ×{n}' if n > 1 else f'Lab: {k}', 'url': next(f['url'] for f in flags if f['label'] == k)}
+                         for k, n in fcount.most_common(2)], 'pills': pills, 'flags': flags[:4], 'clicked': c, 'helix': hx,
             'actions': actions, 'severity': len(exhausted) * 3 + len(repeated) * 2 + sum(fcount.values())}
 
 

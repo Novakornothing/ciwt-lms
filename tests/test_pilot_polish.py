@@ -18,7 +18,7 @@ def test_swap_badge_pill_and_continue_chip(student, mod, app, lesson11):
         right = _ans(cid2, True)
     j = student.post(f'/student/section/{s}/ladder/{l}/{SID}/answer', data={'check_id': cid2, 'answer': right},
                      headers={'X-Requested-With': 'fetch'}).get_json()
-    assert f'data-continue="{SID}"' in j['html'] and 'Continue to next section' in j['html'] and 'ls-resolved' in j['html']
+    assert f'data-continue="{SID}"' in j['html'] and 'Next section' in j['html'] and 'ls-resolved' in j['html']
     page = student.get(f'/student/module/{s}/{m}/lesson/{l}').get_data(as_text=True)
     assert 'js/ladder_gate.js' in page
 
@@ -56,6 +56,6 @@ def test_what_clicked_and_why_struggling(student2, instructor, mod, app, lesson1
     assert 'What finally clicked' in h and 'Clicked on R1' in h
     assert 'What finally clicked for this class' in instructor.get(f'/instructor/section/{s}/ladder').get_data(as_text=True)
     h = instructor.get(f'/instructor/section/{s}').get_data(as_text=True)
-    assert 'Why these students are struggling' in h and 'Open prefilled message' in h
-    assert 'Helix: not opted in' in h or 'Helix:' in h
+    assert 'Why these students are struggling' in h and 'Draft message' in h and 'Where stuck' in h
+    assert 'Helix:' in h
     _reset(mod, app, 'student2@lms.local')

@@ -8,5 +8,8 @@
       <div class="small">{{ state }}</div></div>
     <a class="btn btn-sm btn-outline-navy" href="{{ url }}">{{ link }}<span class="visually-hidden"> — {{ title }}</span></a></li>{% endfor %}
 </ol>
+<section class="card mb-3" aria-labelledby="setupContact"><div class="card-body d-flex flex-wrap gap-2 justify-content-between align-items-center">
+  <div><h2 class="h6 mb-1" id="setupContact">Pilot support</h2><p class="small mb-0">Questions about setup, the pilot or a student issue? Email <a href="mailto:{{ novak_contact_email }}?subject=Pilot%20support%3A%20{{ section.name|urlencode }}">{{ novak_contact_email }}</a>.</p></div>
+  <a class="btn btn-sm btn-outline-navy" href="{{ url_for('contact_page') }}">Contact &amp; FAQ</a></div></section>
 <p class="small"><a href="{{ url_for('accessibility') }}">Accessibility statement (WCAG 2.1 AA)</a> · <a href="{{ url_for('sections_hub') }}">All sections</a></p>
 {% endblock %}

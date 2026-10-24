@@ -237,7 +237,7 @@ def test_instructor_controls(student, instructor, mod, app, lesson11):
     r = instructor.post(f'/instructor/section/{s}/ladder/settings', data={'form': 'class', 'enabled': 'on', 'max_rung': '4'})
     assert r.status_code == 303
     assert 'Quick check · not graded' not in student.get(url).get_data(as_text=True)     # micro-checks off
-    assert "explain it another way" in student.get(url).get_data(as_text=True)
+    assert "explain it another way" in student.get(url).get_data(as_text=True).lower()
     instructor.post(f'/instructor/section/{s}/ladder/settings', data={'form': 'override', 'label': '1.1', 'sid': SID, 'value': 'off'})
     assert f'id="ladder-{SID}"' not in student.get(url).get_data(as_text=True)
     assert student.post(f'/student/section/{s}/ladder/{l}/{SID}/another').status_code == 404

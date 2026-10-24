@@ -19,11 +19,11 @@
       var lesson = nextLessonLink();
       if (nxt && !allDone) {
         chip.href = '#' + nxt.id;
-        chip.textContent = 'Continue to next section ↓';
+        chip.textContent = 'Next section ↓';
       } else if (allDone && lesson) {
         chip.href = lesson.getAttribute('href');
-        chip.textContent = 'All sections verified — ' + lesson.textContent.trim().replace(/\s+/g, ' ').replace(/^Next lesson/, 'Continue to next lesson');
-        if (!/→$/.test(chip.textContent)) chip.textContent += ' →';
+        var t = lesson.textContent.trim().replace(/\s+/g, ' ').replace(/^Next lesson/, 'Continue to next lesson');
+        chip.textContent = 'All sections verified — ' + t + (/→$/.test(t) ? '' : ' →');
       } else if (nxt) {
         chip.href = '#' + nxt.id;
       }
@@ -47,6 +47,8 @@
   function render(g) {
     allDone = !g.blocked;
     box.querySelector('[data-gate-count]').textContent = g.done + ' of ' + g.total;
+    var top = document.querySelector('[data-gate-top-count]');
+    if (top) top.textContent = g.done + ' of ' + g.total;
     var bar = box.querySelector('[role="progressbar"]');
     bar.setAttribute('aria-valuenow', g.done);
     bar.firstElementChild.className = 'pf-w-' + Math.floor((100 * g.done / (g.total || 1)) / 5) * 5;
@@ -57,7 +59,8 @@
       a.href = '#ladder-sec-' + p.sid; a.textContent = p.heading; li.appendChild(a); list.appendChild(li);
     });
     box.querySelector('[data-gate-msg]').textContent = g.blocked
-      ? "Answer each section's quick check (not graded) to move on. Still to do:" : 'All sections verified. You can move on.';
+      ? 'What to do next: answer the quick check (not graded) in each section below. If one does not click, press “Explain it another way”. Still to do:'
+      : 'All sections verified. Use the button below to move on.';
     box.classList.toggle('is-done', !g.blocked);
     var sids = anchors().map(function (a) { return a.id.replace('ladder-sec-', ''); });
     var firstIdx = g.first ? sids.indexOf(g.first) : -1;

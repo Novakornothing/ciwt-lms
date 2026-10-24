@@ -41,18 +41,18 @@
         </div>
         {% endfor %}
       </fieldset>
-      <button type="submit" class="btn btn-sm btn-brand ladder-submit">Check</button>
+      <button type="submit" class="btn btn-sm btn-brand ladder-submit">Check understanding</button>
     </form>
     {% elif st.resolved and st.resolved == L.shown %}
     <p class="ladder-ok small mb-2"><i class="bi bi-check2-circle" aria-hidden="true"></i> You got the check on this section{% if L.shown != 'R0' %} with this explanation{% endif %}.</p>
-    <a class="ladder-continue" data-continue="{{ L.sid }}" href="#ladderGate">Continue to next section <span aria-hidden="true">↓</span></a>
+    <a class="ladder-continue" data-continue="{{ L.sid }}" href="#ladderGate">Next section <span aria-hidden="true">↓</span></a>
     {% endif %}
     <div class="ladder-tools">
       {% if L.next_available %}
       <form class="ladder-another" method="post" action="{{ L.url_another }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="source" value="button">
-        <button type="submit" class="btn btn-sm btn-outline-navy"><i class="bi bi-lightbulb" aria-hidden="true"></i> I don't get it: explain it another way<span class="visually-hidden"> ({{ L.heading }})</span></button>
+        <button type="submit" class="btn btn-sm btn-outline-navy"><i class="bi bi-lightbulb" aria-hidden="true"></i> Explain it another way{% if L.next_style %} ({{ L.next_style }}){% endif %}<span class="visually-hidden"> ({{ L.heading }})</span></button>
       </form>
       {% endif %}
       {% if v %}

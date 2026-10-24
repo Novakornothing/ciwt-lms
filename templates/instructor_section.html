@@ -34,10 +34,10 @@
     </div>
   </div>
 </div>
-{% set _why = why_section(section, 3) %}{% if _why %}
+{% set _why = why_section(section, 3) %}{% if _why is not none %}
 <section class="card mb-3" aria-labelledby="whyH"><div class="card-header d-flex justify-content-between flex-wrap gap-2"><h2 class="h6 mb-0" id="whyH">Why these students are struggling</h2>
   <a class="small" href="{{ url_for('mastery_today', section_id=section.id) }}">All in Who needs me →</a></div>
-  <div class="card-body pt-1">{% for w in _why %}{% include 'mastery/_why.html' %}{% endfor %}</div></section>{% endif %}
+  <div class="card-body pt-1">{% for w in _why %}{% include 'mastery/_why.html' %}{% else %}<p class="mb-0">No students are struggling right now. Cards appear here when someone runs out of explanations, keeps missing a section or shows a lab habit to work on.</p>{% endfor %}</div></section>{% endif %}
 
 {% include "_setup_checklist.html" %}
 

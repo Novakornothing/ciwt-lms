@@ -1499,6 +1499,26 @@ def compute_item_analysis(test_id, section_id=None, section_ids=None,
 
 # ==================== ROUTES ====================
 
+NOVAK_CONTACT_EMAIL = os.environ.get("NOVAK_CONTACT_EMAIL", "contact@novakornothing.com")
+
+
+@app.context_processor
+def _contact_ctx():
+    return {'novak_contact_email': NOVAK_CONTACT_EMAIL}
+
+
+@app.route('/help')
+@app.route('/contact')
+def contact_page():
+    return render_template('contact.html')
+
+
+@app.route('/landing')
+def landing_preview():
+    """Preview of the novakornothing.com marketing page from any host."""
+    return render_template('landing.html')
+
+
 def _lms_host():
     """Apex/www of novakornothing.com = marketing page. Render and ciwt = LMS."""
     host = (request.host or "").split(":")[0].lower()
@@ -1509,7 +1529,7 @@ def _lms_host():
 
 @app.route('/')
 def index():
-    if not _lms_host():
+    if not _lms_host() or request.args.get('landing') == '1':
         return render_template('landing.html')
     if current_user.is_authenticated:
         if current_user.role == 'admin':
