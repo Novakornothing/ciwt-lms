@@ -459,8 +459,15 @@ def register(app, db, d):
 
     # ------------------------------------------------------------------ outcomes
     def _csv(rep, name):
+        if request.args.get('format') == 'json':
+            return app.response_class(json.dumps(OUT.to_json(rep), default=str, indent=1), mimetype='application/json',
+                                      headers={'Content-Disposition': f'attachment; filename={name}.json'})
         buf = io.StringIO()
-        OUT.write_csv(rep, csv.writer(buf))
+        w = csv.writer(buf)
+        OUT.write_csv(rep, w)              # summary metrics first (stable header), then one row per course objective
+        w.writerow([])
+        w.writerow(OUT.OBJ_COLS)
+        w.writerows(OUT.objective_rows(rep))
         return Response(buf.getvalue(), mimetype='text/csv', headers={'Content-Disposition': f'attachment; filename={name}.csv'})
 
     def section_outcomes(section_id):
@@ -470,7 +477,7 @@ def register(app, db, d):
         if not d['can_access_section'](current_user, section):
             abort(403)
         rep = OUT.report(app, db, d, [section])
-        if request.args.get('format') == 'csv':
+        if request.args.get('format') in ('csv', 'json'):
             return _csv(rep, f'outcomes-section-{section.id}')
         return render_template('institutional/outcomes.html', rep=rep, section=section, scope_label=section.name, sel=None)
 
@@ -484,7 +491,7 @@ def register(app, db, d):
         if sel:
             sections = [s for s in sections if tid(s) == sel]
         rep = OUT.report(app, db, d, sections)
-        if request.args.get('format') == 'csv':
+        if request.args.get('format') in ('csv', 'json'):
             return _csv(rep, 'outcomes-institution')
         label = tenant_of(current_user).name if not platform else (
             db.session.get(Institution, sel).name if sel and db.session.get(Institution, sel) else 'All institutions')

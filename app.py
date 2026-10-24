@@ -533,6 +533,9 @@ class AuditEvent(db.Model):
     detail = db.Column(db.String(400))
     path = db.Column(db.String(200))
     ip = db.Column(db.String(64))
+    section_id = db.Column(db.Integer, index=True)       # school-ready: hash-chained, section-scoped audit trail
+    prev_hash = db.Column(db.String(64))
+    hash = db.Column(db.String(64))
     user = db.relationship('User')
 
 
@@ -764,6 +767,14 @@ def _tenant_scope(query, model, user):
 
 
 def instructor_can_access_section(user, section):
+    if _owner_access(user, section):
+        return True
+    school = app.extensions.get('ciwt_school')     # TA / observer / co-lead added on the roster page
+    return bool(school and user and section and getattr(user, 'role', None) in ('instructor', 'admin') and _tenant_ok(user, section)
+                and school.SectionStaff.query.filter_by(section_id=section.id, user_id=user.id).first())
+
+
+def _owner_access(user, section):
     if not user or not section:
         return False
     if not _tenant_ok(user, section):
@@ -1518,6 +1529,7 @@ def audit(action, detail=''):
             detail=(detail or '')[:400],
             path=(request.path or '')[:200],
             ip=(request.headers.get('X-Forwarded-For') or request.remote_addr or '')[:64],
+            section_id=(request.view_args or {}).get('section_id') if request else None,
         )
         db.session.add(ev)
         db.session.commit()
@@ -5349,6 +5361,8 @@ ADMIN_TABS = [
     ('admin_privacy', 'Privacy', 'bi-shield-lock'),
     ('admin_institutions', 'Institutions', 'bi-building'),
     ('admin_outcomes', 'Outcomes', 'bi-graph-up-arrow'),
+    ('admin_ferpa', 'FERPA', 'bi-shield-check'),
+    ('admin_audit_log', 'Audit log', 'bi-journal-text'),
 ]
 
 
@@ -7079,6 +7093,7 @@ def _ensure_gold_path_releases():
 def init_db():
     db.create_all()
     institutional_api.ensure_schema()   # tenant columns + default institution before any User query
+    school_api.ensure_schema()          # audit_event chain columns before any audit row is written
     _ensure_schema()
     helix_pkg.ensure_schema(db)
     gradebook_mod.ensure_schema(db)
@@ -7092,6 +7107,7 @@ def init_db():
         # skills midterm/final were not synced. Run the same content syncs as an existing database.
         _sync_content()
         institutional_api.ensure_schema()   # seeding recreates tables: re-assert the default institution
+        school_api.ensure_schema()
         return
     try:
         live = (HelixGazeSession.query
@@ -7227,6 +7243,15 @@ onboarding_api = onboarding_mod.register(app, db, dict(
     ClassSection=ClassSection, Module=Module, ContentRelease=ContentRelease, HelixSectionSetting=HelixSectionSetting,
     mastery_settings=lambda section_id: mastery_api.engine.settings(section_id),
     can_access_section=lambda user, section: instructor_can_access_section(user, section),
+))
+
+from institutional import school_ready as school_mod  # noqa: E402  (school-ready pass: roles, sections hub, FERPA, audit chain)
+school_api = school_mod.register(app, db, dict(
+    User=User, ClassSection=ClassSection, Enrollment=Enrollment, AuditEvent=AuditEvent, ContentRelease=ContentRelease,
+    Course=Course, TimeLog=TimeLog, get_lab=get_lab, audit=audit, owner_access=lambda u, s: _owner_access(u, s),
+    accessible_sections=lambda u: instructor_accessible_sections(u),
+    same_tenant=lambda u, o: institutional_api.same_tenant(u, o),
+    setup_checklist=lambda s, u: onboarding_api['setup_checklist'](s, u),
 ))
 
 

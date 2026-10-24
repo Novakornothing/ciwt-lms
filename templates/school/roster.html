@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Roster — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero"><h1 class="h3 mb-1">Roster — {{ section.name }}</h1>
+  <p class="mb-0">Join code <strong class="font-monospace" id="joinCode">{{ code }}</strong> · students enter it at <a href="{{ url_for('join_section') }}">{{ url_for('join_section', _external=True) }}</a>. Your role: {{ ROLES[role] }}.</p></div>
+<div class="row g-3">
+<div class="col-lg-7">
+<section class="card mb-3" aria-labelledby="rsStu"><div class="card-header"><h2 class="h6 mb-0" id="rsStu">Students ({{ students|length }})</h2></div>
+  {% if students %}<ul class="list-group list-group-flush">{% for u in students %}<li class="list-group-item d-flex flex-wrap gap-2 align-items-center justify-content-between">
+    <span>{{ u.full_name }} <span class="small mx-muted">{{ u.email }}</span></span>
+    {% if role == 'lead' %}<div class="d-flex flex-wrap gap-1">
+      {% if siblings %}<form method="post" class="d-flex gap-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="transfer"><input type="hidden" name="user_id" value="{{ u.id }}">
+        <label class="visually-hidden" for="tr{{ u.id }}">Move {{ u.full_name }} to</label>
+        <select class="form-select form-select-sm" id="tr{{ u.id }}" name="to">{% for s in siblings %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select>
+        <button class="btn btn-sm btn-outline-secondary" type="submit">Move</button></form>{% endif %}
+      <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="drop"><input type="hidden" name="user_id" value="{{ u.id }}">
+        <button class="btn btn-sm btn-outline-danger" type="submit">Drop<span class="visually-hidden"> {{ u.full_name }}</span></button></form>
+    </div>{% endif %}</li>{% endfor %}</ul>{% else %}<div class="card-body">No students yet. Share the join code or import a CSV.</div>{% endif %}
+</section>
+</div>
+<div class="col-lg-5">
+{% if role == 'lead' %}
+<section class="card mb-3" aria-labelledby="rsImp"><div class="card-header"><h2 class="h6 mb-0" id="rsImp">Bulk import (CSV)</h2></div>
+  <form class="card-body" method="post" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="import">
+    <p class="small">Columns: <code>username/email, full_name, role</code>. Role is student, ta, observer or lead. Missing accounts are created; they sign in with SSO or a password reset.</p>
+    <label class="form-label small" for="rsFile">CSV file</label><input class="form-control form-control-sm mb-2" type="file" id="rsFile" name="file" accept=".csv,text/csv">
+    <label class="form-label small" for="rsCsv">…or paste rows</label><textarea class="form-control form-control-sm mb-2" id="rsCsv" name="csv" rows="3"></textarea>
+    <button class="btn btn-sm btn-brand" type="submit">Import</button></form>
+</section>
+<section class="card mb-3" aria-labelledby="rsCode"><div class="card-header"><h2 class="h6 mb-0" id="rsCode">Join code</h2></div>
+  <form class="card-body" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="regen">
+    <p class="small">Regenerate if the code was shared too widely. The old code stops working.</p><button class="btn btn-sm btn-outline-secondary" type="submit">Regenerate join code</button></form>
+</section>
+{% endif %}
+<section class="card mb-3" id="staff" aria-labelledby="rsStaff"><div class="card-header"><h2 class="h6 mb-0" id="rsStaff">Staff roles</h2></div>
+  <div class="card-body">
+    <p class="small mb-2">Lead: everything. TA: grade and view analytics; cannot change LTI, privacy, roster or delete the class. Observer: read-only.</p>
+    {% if staff %}<ul class="small">{% for r, u in staff %}<li>{{ u.full_name if u else '?' }} — {{ ROLES[r.role] }}</li>{% endfor %}</ul>{% endif %}
+    {% if role == 'lead' %}<form method="post" class="row g-2 align-items-end"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="staff">
+      <div class="col-sm-6"><label class="form-label small mb-0" for="stE">Instructor email</label><input class="form-control form-control-sm" type="email" id="stE" name="email" required></div>
+      <div class="col-sm-4"><label class="form-label small mb-0" for="stR">Role</label><select class="form-select form-select-sm" id="stR" name="role">{% for k, v in ROLES.items() %}<option value="{{ k }}"{% if k == 'ta' %} selected{% endif %}>{{ v }}</option>{% endfor %}<option value="">Remove</option></select></div>
+      <div class="col-sm-2"><button class="btn btn-sm btn-brand w-100" type="submit">Save</button></div></form>{% endif %}
+  </div>
+</section>
+</div></div>
+{% endblock %}

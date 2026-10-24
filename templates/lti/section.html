@@ -39,8 +39,27 @@
 </div>
 <p class="small mx-muted">Scores come from this class’s gradebook (late penalties, overrides and excused cells included; excused and missing cells are not sent) and from best live-lab scores. Nothing is sent until you press the button. Roster sync adds and links students; it never removes anyone here.</p>
 {% endif %}
-<section class="card mb-4" aria-labelledby="logH"><div class="card-header"><h2 class="h6 mb-0" id="logH">Recent syncs</h2></div>
-  {% if logs %}<ul class="list-group list-group-flush">{% for g in logs %}<li class="list-group-item small"><strong>{{ 'Scores' if g.kind == 'scores' else 'Roster' }}</strong> · {{ g.at.strftime('%d %b %Y %H:%M') }} · {{ g.ok }} {{ 'sent' if g.kind == 'scores' else 'enrolled' }}, {{ g.failed }} failed, {{ g.skipped }} {{ 'with no score yet' if g.kind == 'scores' else 'inactive' }}
-    {% if g.detail %}<pre class="small mb-0 mt-1" style="white-space:pre-wrap;overflow-wrap:anywhere">{{ g.detail }}</pre>{% endif %}</li>{% endfor %}</ul>
-  {% else %}<div class="card-body small">None yet.</div>{% endif %}</section>
+<section class="card mb-4" aria-labelledby="ltiSetH"><div class="card-header"><h2 class="h6 mb-0" id="ltiSetH">Roster and grade policy</h2></div>
+  <form class="card-body" method="post" action="{{ url_for('instructor_lti_settings', section_id=section.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ltiDrop" name="remove_dropped"{% if cfg.remove_dropped %} checked{% endif %}>
+      <label class="form-check-label" for="ltiDrop">Roster sync removes students the LMS no longer lists</label>
+      <div class="form-text">Only LMS-linked students, only after a complete roster read. Their grades and history are kept.</div></div>
+    <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ltiAuto" name="auto_passback"{% if cfg.auto_passback %} checked{% endif %}>
+      <label class="form-check-label" for="ltiAuto">Send a student's score to the LMS as soon as they finish a quiz, test or lab</label></div>
+    <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" role="switch" id="ltiEx" name="exempt_full"{% if cfg.exempt_full %} checked{% endif %}>
+      <label class="form-check-label" for="ltiEx">Tested-out (exempt) items count as 100 in the LMS</label>
+      <div class="form-text">Off: exempt items are not sent, so the LMS shows no score for them.</div></div>
+    <button class="btn btn-sm btn-brand" type="submit">Save policy</button>
+  </form>
+</section>
+
+<section class="card mb-4" aria-labelledby="logH"><div class="card-header"><h2 class="h6 mb-0" id="logH">Sync history</h2></div>
+  {% if logs %}<div class="table-responsive"><table class="table table-sm mb-0 table-stack">
+    <caption class="visually-hidden">Recent roster and score syncs</caption>
+    <thead><tr><th scope="col">When (UTC)</th><th scope="col">Kind</th><th scope="col">OK</th><th scope="col">Failed</th><th scope="col">Skipped</th><th scope="col">Detail</th></tr></thead>
+    <tbody>{% for g in logs %}<tr><td data-label="When">{{ g.at.strftime('%d %b %Y %H:%M') }}</td><td data-label="Kind">{{ {'scores': 'Scores', 'auto-scores': 'Scores (auto)', 'roster': 'Roster'}.get(g.kind, g.kind) }}</td>
+      <td data-label="OK">{{ g.ok }}</td><td data-label="Failed">{{ g.failed }}</td><td data-label="Skipped">{{ g.skipped }}</td><td data-label="Detail" class="small">{{ (g.detail or '').split('\n')[0] }}</td></tr>{% endfor %}</tbody>
+  </table></div>{% else %}<div class="card-body small">No syncs yet.</div>{% endif %}
+</section>
 {% endblock %}

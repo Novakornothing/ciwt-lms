@@ -125,7 +125,15 @@ def define_models(db):
         skipped = db.Column(db.Integer, default=0)
         detail = db.Column(db.Text)
 
-    _cache['m'] = SimpleNamespace(LtiPlatform=LtiPlatform, LtiLogin=LtiLogin, LtiUserLink=LtiUserLink,
+    class LtiSectionSetting(db.Model):
+        """Per-class LTI policy (school-ready pass). Defaults keep the original behaviour: nobody removed, manual passback."""
+        __tablename__ = 'lti_section_setting'
+        section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), primary_key=True)
+        remove_dropped = db.Column(db.Boolean, default=False)   # NRPS: un-enroll linked students the LMS no longer lists
+        auto_passback = db.Column(db.Boolean, default=False)    # send a student's score when they finish a quiz/test/lab
+        exempt_full = db.Column(db.Boolean, default=False)      # tested-out (exempt) items: send 100 instead of skipping
+
+    _cache['m'] = SimpleNamespace(LtiSectionSetting=LtiSectionSetting, LtiPlatform=LtiPlatform, LtiLogin=LtiLogin, LtiUserLink=LtiUserLink,
                                   LtiContext=LtiContext, LtiResourceLink=LtiResourceLink, LtiDeepLink=LtiDeepLink,
                                   LtiSyncLog=LtiSyncLog)
     return _cache['m']

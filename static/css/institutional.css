@@ -10,3 +10,4 @@
 .oc-num{font-size:2rem;font-weight:700;line-height:1.1}
 .sso-picker{border-top:1px solid var(--bs-border-color);padding-top:1rem;margin-top:1rem}
 @media print{.oc-grid,.oc-kpis{display:block}.oc-grid .card,.oc-kpis .card{break-inside:avoid;margin-bottom:.5rem}}
+@media print{.oc-objs{font-size:9pt}.oc-objs th,.oc-objs td{padding:.15rem .3rem}.oc-objs tr{break-inside:avoid}.no-print,.navbar,footer,.staff-rail,.tabbar{display:none!important}}

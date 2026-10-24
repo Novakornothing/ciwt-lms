@@ -504,6 +504,7 @@ def register(app, db, deps, csrf):
         kind, ident = parse_target(target)
         out = {}
         if kind in ('quiz', 'test', 'course'):
+            exempt = scores_for.exempt = set()
             gb = app.extensions['ciwt_gradebook'].compute(section)
             for r in gb['rows']:
                 if r['user'].id not in user_ids:
@@ -513,6 +514,8 @@ def register(app, db, deps, csrf):
                     continue
                 cell = next((c for c in r['cells'] if c['item']['type'] == kind and c['item']['id'] == ident), None)
                 out[r['user'].id] = cell['score'] if cell and cell['status'] in ('scored', 'override') else None
+                if cell and cell['status'] == 'exempt':
+                    exempt.add(r['user'].id)
         elif kind == 'lab':
             for uid in user_ids:
                 row = d.LabProgress.query.filter_by(user_id=uid, lab_id=ident).first()
@@ -544,8 +547,15 @@ def register(app, db, deps, csrf):
             r.lineitem_url = (cr.json() or {}).get('id')
         return r.lineitem_url
 
-    def send_scores(section, actor):
+    def section_setting(section_id):
+        return db.session.get(m.LtiSectionSetting, section_id) or m.LtiSectionSetting(
+            section_id=section_id, remove_dropped=False, auto_passback=False, exempt_full=False)
+
+    def send_scores(section, actor, user_ids=None, auto=False):
         ctxs = m.LtiContext.query.filter_by(section_id=section.id).all()
+        if auto and not ctxs:
+            return None
+        cfg = section_setting(section.id)
         sent = failed = skipped = 0
         lines = []
         for c in ctxs:
@@ -554,7 +564,8 @@ def register(app, db, deps, csrf):
                 lines.append(f'{c.title or c.context_id}: the LMS did not grant the score scope.')
                 continue
             enrolled = {e.user_id for e in d.Enrollment.query.filter_by(section_id=section.id)}
-            links = {l.user_id: l for l in m.LtiUserLink.query.filter_by(platform_id=p.id) if l.user_id in enrolled}
+            links = {l.user_id: l for l in m.LtiUserLink.query.filter_by(platform_id=p.id)
+                     if l.user_id in enrolled and (user_ids is None or l.user_id in user_ids)}
             for r in m.LtiResourceLink.query.filter_by(context_pk=c.id).order_by(m.LtiResourceLink.id).all():
                 kind, _ = parse_target(r.target)
                 if kind not in GRADED:
@@ -565,14 +576,17 @@ def register(app, db, deps, csrf):
                         lines.append(f'{r.title or r.target}: no gradebook column in the LMS.')
                         continue
                     tok = access_token(p, [core.SCOPE['score']])
+                    scores_for.exempt = set()
                     scores = scores_for(section, r.target, set(links))
                     for uid, link in sorted(links.items()):
-                        sc = scores.get(uid)
+                        sc, note = scores.get(uid), None
+                        if sc is None and uid in scores_for.exempt and cfg.exempt_full:
+                            sc, note = 100, 'Exempt: tested out with a mastery check'
                         if sc is None:
                             skipped += 1
                             continue
                         res = http()('POST', core.scores_url(li), {'Authorization': f'Bearer {tok}', 'Content-Type': core.MT_SCORE},
-                                     json.dumps(core.score_payload(link.sub, sc)))
+                                     json.dumps(core.score_payload(link.sub, sc, comment=note) if note else core.score_payload(link.sub, sc)))
                         if res.ok:
                             sent += 1
                         else:
@@ -582,7 +596,7 @@ def register(app, db, deps, csrf):
                     failed += 1
                     lines.append(f'{r.title or r.target}: {e}')
         log = m.LtiSyncLog(platform_id=ctxs[0].platform_id if ctxs else None, context_pk=ctxs[0].id if ctxs else None,
-                           kind='scores', actor_id=actor.id, ok=sent, failed=failed, skipped=skipped, detail='\n'.join(lines)[:4000])
+                           kind='auto-scores' if auto else 'scores', actor_id=actor.id, ok=sent, failed=failed, skipped=skipped, detail='\n'.join(lines)[:4000])
         db.session.add(log)
         db.session.commit()
         d.audit('lti_scores', f'section {section.id}: {sent} sent, {failed} failed, {skipped} with no score yet')
@@ -590,12 +604,14 @@ def register(app, db, deps, csrf):
 
     def sync_roster(section, actor):
         ctxs = [c for c in m.LtiContext.query.filter_by(section_id=section.id).all() if c.memberships_url]
-        added = linked = staff = inactive = failed = 0
+        added = linked = staff = inactive = failed = removed = 0
         lines = []
+        cfg = section_setting(section.id)
         for c in ctxs:
             p = db.session.get(m.LtiPlatform, c.platform_id)
             if not p or not p.active:
                 continue
+            active, complete = set(), False
             try:
                 tok = access_token(p, [core.SCOPE['nrps']])
                 url, pages = c.memberships_url, 0
@@ -623,16 +639,27 @@ def register(app, db, deps, csrf):
                             linked += 1
                         if core.is_staff(mem.get('roles')):
                             staff += 1
-                        elif ensure_enrolled(user, section):
-                            added += 1
+                        else:
+                            active.add(user.id)
+                            added += 1 if ensure_enrolled(user, section) else 0
                     url = core.parse_link_next(r.headers.get('link'))
+                complete = not url
             except (core.LtiError, ValueError, OSError) as e:
                 failed += 1
                 lines.append(f'{c.title or c.context_id}: {e}')
+            if cfg.remove_dropped and complete:   # only after a full, successful roster read
+                linked_here = {l.user_id for l in m.LtiUserLink.query.filter_by(platform_id=p.id)}
+                for e in d.Enrollment.query.filter_by(section_id=section.id).all():
+                    u = db.session.get(d.User, e.user_id)
+                    if u and u.role == 'student' and e.user_id in linked_here and e.user_id not in active:
+                        db.session.delete(e)   # grades, attempts and lab history stay on the student record
+                        removed += 1
         if not ctxs:
             lines.append('No connected LMS course offered a roster (Names and Role Provisioning) service.')
         lines.insert(0, f'{added} enrolled, {linked} newly linked, {staff} staff (not enrolled), '
-                        f'{inactive} inactive in the LMS (left as they are here; nobody is removed).')
+                        + (f'{inactive} inactive or dropped in the LMS, {removed} removed from this class '
+                           '(their records are kept).' if cfg.remove_dropped else
+                           f'{inactive} inactive in the LMS (left as they are here; nobody is removed).'))
         log = m.LtiSyncLog(platform_id=ctxs[0].platform_id if ctxs else None, context_pk=ctxs[0].id if ctxs else None,
                            kind='roster', actor_id=actor.id, ok=added, failed=failed, skipped=inactive, detail='\n'.join(lines)[:4000])
         db.session.add(log)
@@ -659,8 +686,8 @@ def register(app, db, deps, csrf):
         enrolled = {e.user_id for e in d.Enrollment.query.filter_by(section_id=s.id)}
         n_linked = m.LtiUserLink.query.filter(m.LtiUserLink.user_id.in_(enrolled)).count() if enrolled else 0
         logs = (m.LtiSyncLog.query.filter(m.LtiSyncLog.context_pk.in_([c.id for c in ctxs]))
-                .order_by(m.LtiSyncLog.at.desc()).limit(10).all()) if ctxs else []
-        return render_template('lti/section.html', section=s, rows=rows, logs=logs, n_linked=n_linked,
+                .order_by(m.LtiSyncLog.at.desc()).limit(25).all()) if ctxs else []
+        return render_template('lti/section.html', section=s, rows=rows, logs=logs, cfg=section_setting(s.id), n_linked=n_linked,
                                n_enrolled=len(enrolled), scope=core.SCOPE, parse_target=parse_target, graded=GRADED)
 
     @login_required
@@ -749,7 +776,41 @@ def register(app, db, deps, csrf):
         return render_template('lti/admin_edit.html', p=p, kind=kind, kinds=KINDS, preset=preset, errs=errs,
                                form=request.form if request.method == 'POST' else None, urls=tool_urls())
 
+    @login_required
+    def instructor_lti_settings(section_id):
+        s = staff_section(section_id)
+        cfg = db.session.get(m.LtiSectionSetting, s.id) or m.LtiSectionSetting(section_id=s.id)
+        for k in ('remove_dropped', 'auto_passback', 'exempt_full'):
+            setattr(cfg, k, request.form.get(k) == 'on')
+        db.session.add(cfg)
+        db.session.commit()
+        d.audit('lti_settings', f'section {s.id}: remove_dropped={cfg.remove_dropped} auto={cfg.auto_passback} '
+                                f'exempt_full={cfg.exempt_full}')
+        flash('LMS settings saved.', 'success')
+        return redirect(url_for('instructor_lti', section_id=s.id), code=303)
+
+    AUTO_EPS = ('take_quiz', 'take_test')
+
+    @app.after_request
+    def _lti_auto_passback(resp):
+        """Auto-passback: after a student submits a quiz, test or lab, send just their scores (opt-in per class)."""
+        ep = request.endpoint or ''
+        if (request.method != 'POST' or resp.status_code >= 400 or not current_user.is_authenticated
+                or current_user.role != 'student' or not (ep in AUTO_EPS or 'lab' in ep)):
+            return resp
+        try:
+            sid = (request.view_args or {}).get('section_id')
+            sids = [sid] if sid else [e.section_id for e in d.Enrollment.query.filter_by(user_id=current_user.id)]
+            for cfg in m.LtiSectionSetting.query.filter(m.LtiSectionSetting.section_id.in_(sids or [0]),
+                                                        m.LtiSectionSetting.auto_passback.is_(True)).all():
+                send_scores(db.session.get(d.ClassSection, cfg.section_id), current_user, {current_user.id}, auto=True)
+        except Exception as exc:   # passback must never break a submission
+            db.session.rollback()
+            print('lti auto-passback:', exc)
+        return resp
+
     rules = [
+        ('/instructor/section/<int:section_id>/lti/settings', 'instructor_lti_settings', instructor_lti_settings, ['POST']),
         ('/lti/login', 'lti_login', lti_login, ['GET', 'POST']),
         ('/lti/launch', 'lti_launch', lti_launch, ['GET', 'POST']),
         ('/lti/jwks', 'lti_jwks', lti_jwks, ['GET']),
@@ -767,6 +828,7 @@ def register(app, db, deps, csrf):
     for rule, ep, fn, methods in rules:
         app.add_url_rule(rule, ep, fn, methods=methods)
     api = SimpleNamespace(models=m, keys=K, core=core, state=state, send_scores=send_scores, sync_roster=sync_roster,
-                          jwks_cache=jwks_cache, token_cache=token_cache, catalog=catalog, scores_for=scores_for)
+                          jwks_cache=jwks_cache, token_cache=token_cache, catalog=catalog, scores_for=scores_for,
+                          section_setting=section_setting)
     app.extensions['ciwt_lti'] = api
     return api

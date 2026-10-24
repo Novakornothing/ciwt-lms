@@ -6,6 +6,7 @@
 {% else %}<div class="page-hero"><h1 class="h3 mb-1">Outcomes — {{ scope_label }}</h1><p class="mb-0">Measured from this class's recorded activity.</p></div>{% endif %}
 <div class="d-flex flex-wrap gap-2 mb-3 no-print">
   <a class="btn btn-outline-secondary btn-sm" href="?{% if sel %}institution={{ sel }}&amp;{% endif %}format=csv"><i class="bi bi-download" aria-hidden="true"></i> Download CSV</a>
+  <a class="btn btn-outline-secondary btn-sm" href="?{% if sel %}institution={{ sel }}&amp;{% endif %}format=json"><i class="bi bi-download" aria-hidden="true"></i> Download JSON</a>
   <button class="btn btn-outline-secondary btn-sm" type="button" data-print><i class="bi bi-printer" aria-hidden="true"></i> Print report</button>
   {% if institutions %}<form method="get" class="d-flex gap-2"><label class="visually-hidden" for="oc-inst">Institution</label>
     <select class="form-select form-select-sm" id="oc-inst" name="institution"><option value="">All institutions</option>{% for i in institutions %}<option value="{{ i.id }}"{% if sel == i.id %} selected{% endif %}>{{ i.name }}</option>{% endfor %}</select>
@@ -47,8 +48,9 @@
 {% for r in rep.sections %}<tr><td>{{ r.section.name }}</td><td>{{ r.students }}</td><td>{{ r.mastered_pct if r.mastered_pct is not none else '—' }}{% if r.mastered_pct is not none %}% of {{ r.pairs }}{% endif %}</td><td>{{ r.mean_grade if r.mean_grade is not none else '—' }}</td></tr>{% endfor %}
 </tbody></table></div></section>{% endif %}
 <section class="card card-body mt-3" aria-labelledby="oc-o"><h2 class="h5" id="oc-o">Objective mastery, first attempt vs now</h2>
-{% if rep.mastery.objectives %}<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th scope="col">Objective</th><th scope="col">Pairs</th><th scope="col">Right first time</th><th scope="col">Mastered now</th></tr></thead><tbody>
-{% for o in rep.mastery.objectives %}<tr><td><strong>{{ o.id }}</strong> {{ o.text }}</td><td>{{ o.pairs }}</td><td>{{ o.pre_pct }}%</td><td>{{ o.cur_pct }}%</td></tr>{% endfor %}
+{% if rep.mastery.objectives %}<div class="table-responsive"><table class="table table-sm mb-0 table-stack oc-objs"><caption class="visually-hidden">Per-objective outcomes</caption><thead><tr><th scope="col">Course objective</th><th scope="col">Cert objective</th><th scope="col">Students</th><th scope="col">Initial → current mastery</th><th scope="col">Ladder resolution (R0 R1 R2 R3 R4 · Exhausted)</th><th scope="col">Lab process</th><th scope="col">Attempts</th></tr></thead><tbody>
+{% for o in rep.mastery.objectives %}<tr><td data-label="Objective"><strong>{{ o.id }}</strong> {{ o.text }}</td><td data-label="Cert">{% for c in o.cert %}<span class="d-block small" title="{{ c.title }}">{{ c.label }}</span>{% else %}—{% endfor %}</td><td data-label="Students">{{ o.pairs }}</td><td data-label="Mastery">{{ o.pre_pct }}% → {{ o.cur_pct }}%</td>
+  <td data-label="Ladder">{{ o.rungs.R0 }} {{ o.rungs.R1 }} {{ o.rungs.R2 }} {{ o.rungs.R3 }} {{ o.rungs.R4 }} · {{ o.rungs.EX }}</td><td data-label="Lab process">{{ o.lab_pct ~ '%' if o.lab_pct is not none else '—' }}{% if o.lab_n %} <span class="small text-body-secondary">({{ o.lab_n }})</span>{% endif %}</td><td data-label="Attempts">{{ o.attempts }}</td></tr>{% endfor %}
 </tbody></table></div>{% else %}<p class="mb-0">No answered checks yet.</p>{% endif %}
 <p class="small text-body-secondary mt-2 mb-0">"Right first time" = the student's first answered item on the objective was correct. "Mastered now" = the adaptive engine's current status. Generated {{ now_str if now_str else '' }}.</p></section>
 {% endblock %}

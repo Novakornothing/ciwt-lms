@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Accessibility — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero"><h1 class="h3 mb-1">Accessibility statement</h1><p class="mb-0">We aim to meet WCAG 2.1 level AA. Status: internal audit, pending SME review.</p></div>
+<div class="row g-3"><div class="col-lg-8">
+<section class="card mb-3" aria-labelledby="a11yS"><div class="card-header"><h2 class="h6 mb-0" id="a11yS">What works today</h2></div>
+<ul class="list-group list-group-flush">
+  <li class="list-group-item"><strong>Keyboard:</strong> every control works with Tab, Enter and Space; focus is always visible; a skip link jumps to the main content. In the VM terminal press Esc, then Tab, to leave.</li>
+  <li class="list-group-item"><strong>Screen readers:</strong> pages use landmarks and ordered headings. When a quick check brings a new explanation, it replaces the section and is announced (ARIA live region); focus moves to it. The “sections verified” banner is announced too.</li>
+  <li class="list-group-item"><strong>Contrast:</strong> light and dark themes meet AA contrast. Switch theme from the account menu.</li>
+  <li class="list-group-item"><strong>Reduced motion:</strong> we honour your system “reduce motion” setting.</li>
+  <li class="list-group-item"><strong>Text-to-speech and captions:</strong> lessons are text, so read-aloud works; figures have text descriptions; nothing autoplays.</li>
+  <li class="list-group-item"><strong>Helix webcam attention:</strong> optional, with consent. Saying no never affects grades or access, and the same review offers are available without a camera.</li>
+  <li class="list-group-item"><strong>VM labs:</strong> typed commands only, readable terminal output, untimed.</li>
+  <li class="list-group-item"><strong>Zoom:</strong> pages reflow to phone width and 400% zoom.</li>
+</ul></section>
+</div><div class="col-lg-4">
+<section class="card mb-3" aria-labelledby="a11yH"><div class="card-header"><h2 class="h6 mb-0" id="a11yH">Need an accommodation?</h2></div>
+  <div class="card-body small">Tell your instructor. They can exempt you from the section-check gate, extend time or turn Helix off. Report any barrier to your instructor or site administrator.</div></section>
+<p class="small">Instructors: the full conformance notes are in <code>docs/ACCESSIBILITY_WCAG21_AA.md</code>.</p>
+</div></div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Privacy — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero"><h1 class="h3 mb-1">Student privacy — {{ section.name }}</h1><p class="mb-0">Export a student's record for a FERPA request, or file a correction/deletion request with your records administrator. Lead instructors only.</p></div>
+{% if students %}<div class="table-responsive"><table class="table table-sm table-stack"><caption class="visually-hidden">Students and privacy actions</caption>
+  <thead><tr><th scope="col">Student</th><th scope="col">Export</th><th scope="col">File a request</th></tr></thead>
+  <tbody>{% for u in students %}<tr><th scope="row" data-label="Student">{{ u.full_name }}</th>
+    <td data-label="Export"><a href="?user_id={{ u.id }}&amp;format=json">JSON</a> · <a href="?user_id={{ u.id }}&amp;format=zip">ZIP</a></td>
+    <td data-label="Request"><form method="post" class="d-flex gap-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="user_id" value="{{ u.id }}">
+      <label class="visually-hidden" for="pk{{ u.id }}">Request type for {{ u.full_name }}</label><select class="form-select form-select-sm" id="pk{{ u.id }}" name="kind"><option value="correct">Correction</option><option value="delete">Deletion</option><option value="export">Certified export</option></select>
+      <button class="btn btn-sm btn-outline-secondary" type="submit">File</button></form></td></tr>{% endfor %}</tbody></table></div>{% else %}<p>No students.</p>{% endif %}
+{% if reqs %}<h2 class="h6">Requests for this class</h2><ul class="small">{% for r in reqs %}<li>{{ r.created_at.strftime('%d %b %Y') }} · user {{ r.user_id }} · {{ r.kind }} · {{ r.status }}</li>{% endfor %}</ul>{% endif %}
+{% endblock %}

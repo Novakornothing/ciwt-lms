@@ -10,7 +10,24 @@ Definitions (also shown on the report):
 from collections import Counter, defaultdict
 from statistics import median
 
+from curriculum_v2 import ladder as LD
+from curriculum_v2.cert import exams as EX
 from curriculum_v2.objectives import OBJECTIVES
+
+_CERT = {}
+
+
+def cert_map(obj):
+    """Official exam objectives (A+ 220-1201/1202, Network+ N10-009) aligned to a course objective, via the cert item bank."""
+    if not _CERT:
+        from curriculum_v2.cert.items import CERT_ITEMS
+        _CERT['_'] = set()
+        for it in CERT_ITEMS:
+            for c in it.get('cert') or []:
+                if it.get('obj') and c in EX.OBJECTIVES:
+                    _CERT.setdefault(it['obj'], set()).add(c)
+    return [{'id': c, 'label': f"{EX.EXAMS[c.split(':')[0]]['code']} {c.split(':')[1]}",
+             'title': EX.OBJECTIVES[c]['title']} for c in sorted(_CERT.get(obj, ()), key=EX.sort_key)]
 from portfolio import build as PB
 
 RUNGS = [('R0', 'Original explanation'), ('R1', 'Plain language'), ('R2', 'Analogy'), ('R3', 'Visual'), ('R4', 'Try it')]
@@ -35,7 +52,7 @@ def report(app, db, d, sections):
     LS = define_ladder_models(db).LadderState
     Enrollment, User, TimeLog = d['Enrollment'], d['User'], d['TimeLog']
 
-    obj_pairs = defaultdict(lambda: {'pairs': 0, 'pre': 0, 'cur': 0})
+    obj_pairs = defaultdict(lambda: {'pairs': 0, 'pre': 0, 'cur': 0, 'attempts': 0, 'lab_n': 0, 'lab_ok': 0})
     p_by_obj = defaultdict(list)
     students, demo_users, section_rows, grades = set(), set(), [], []
     for section in sections:
@@ -59,6 +76,10 @@ def report(app, db, d, sections):
                 row['pairs'] += 1
                 row['pre'] += 1 if obs[0].get('correct') else 0
                 row['cur'] += 1 if mastered else 0
+                row['attempts'] += len(obs)
+                labs_obs = [o for o in obs if o.get('kind') == 'lab']
+                row['lab_n'] += len(labs_obs)
+                row['lab_ok'] += sum(1 for o in labs_obs if o.get('correct'))
                 p_by_obj[obj].append(est.get('p', 0))
                 pairs_here += 1
                 mastered_here += 1 if mastered else 0
@@ -76,9 +97,13 @@ def report(app, db, d, sections):
     sids = [s.id for s in sections] or [0]
     struggles = resolved = exhausted = 0
     by_rung = Counter()
+    obj_rungs = defaultdict(Counter)
     for row in LS.query.filter(LS.section_id.in_(sids)).all():
         if row.user_id not in students:
             continue
+        ent = LD.entry(row.course, row.label, row.sid) or {}
+        if ent.get('obj') and (row.resolved or row.exhausted_at):
+            obj_rungs[ent['obj']][row.resolved or 'EX'] += 1
         if (row.misses or 0) > 0 or (row.current or 'R0') != 'R0' or (row.tried_json or '').count('R') > 1:
             struggles += 1
             if row.resolved:
@@ -132,7 +157,10 @@ def report(app, db, d, sections):
         db.session.rollback()
 
     objectives = sorted(({'id': o, 'text': OBJECTIVES.get(o, {}).get('text', o), 'pairs': r['pairs'],
-                          'pre_pct': _pct(r['pre'], r['pairs']), 'cur_pct': _pct(r['cur'], r['pairs'])}
+                          'pre_pct': _pct(r['pre'], r['pairs']), 'cur_pct': _pct(r['cur'], r['pairs']),
+                          'cert': cert_map(o), 'attempts': r['attempts'], 'lab_n': r['lab_n'],
+                          'lab_pct': _pct(r['lab_ok'], r['lab_n']),
+                          'rungs': {k: obj_rungs[o].get(k, 0) for k in ('R0', 'R1', 'R2', 'R3', 'R4', 'EX')}}
                          for o, r in obj_pairs.items()), key=lambda x: x['id'])
     pairs = sum(r['pairs'] for r in obj_pairs.values())
     return {
@@ -158,6 +186,7 @@ def write_csv(rep, w):
     for o in m['objectives']:
         w.writerow(['objective_right_first_time_pct', o['id'], o['pre_pct'], o['pairs'], o['text']])
         w.writerow(['objective_mastered_now_pct', o['id'], o['cur_pct'], o['pairs'], o['text']])
+
     L = rep['ladder']
     w.writerow(['ladder_struggles_resolved_pct', 'all', L['resolved_pct'], L['struggles'], ''])
     for r in L['rungs']:
@@ -178,3 +207,22 @@ def write_csv(rep, w):
     t = rep['time']
     w.writerow(['study_hours_total', 'all', t['total_hours'], t['students'], 'logged study time'])
     w.writerow(['study_hours_median', 'all', t['median_hours'], t['students'], 'per student'])
+
+
+OBJ_COLS = ['course_objective_id', 'course_objective', 'cert_objectives', 'students', 'initial_mastery_pct',
+            'current_mastery_pct', 'R0', 'R1', 'R2', 'R3', 'R4', 'exhausted', 'lab_process_pct', 'lab_attempts', 'attempts']
+
+
+def objective_rows(rep):
+    """One row per course objective (the school-ready per-objective export)."""
+    for o in rep['mastery']['objectives']:
+        yield [o['id'], o['text'], '; '.join(c['label'] for c in o['cert']), o['pairs'], o['pre_pct'], o['cur_pct'],
+               *[o['rungs'][k] for k in ('R0', 'R1', 'R2', 'R3', 'R4', 'EX')], o['lab_pct'], o['lab_n'], o['attempts']]
+
+
+def to_json(rep):
+    keep = {k: rep[k] for k in ('students', 'demo', 'demo_students', 'mastery', 'ladder', 'labs', 'grades', 'time')}
+    keep['sections'] = [{**{k: v for k, v in s.items() if k != 'section'}, 'id': s['section'].id, 'name': s['section'].name}
+                        for s in rep['sections']]
+    keep['status'] = 'Pending SME review (curriculum mapping)'
+    return keep

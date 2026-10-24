@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Audit log — {{ site_name }}{% endblock %}
+{% block content %}
+{% with title='Audit log', lede='Grade changes, roster, LTI syncs, exports, deletions, SSO logins and permission changes. Each event is hash-chained to the previous one.' %}{% include '_admin_nav.html' %}{% endwith %}
+<p>Chain: {% if chain.ok %}<span class="badge text-bg-success">intact</span>{% else %}<span class="badge text-bg-danger">broken at event {{ chain.broken_at }}</span>{% endif %} · {{ chain.checked }} chained{% if chain.legacy %} · {{ chain.legacy }} older events recorded before chaining{% endif %}</p>
+<form method="get" class="row g-2 align-items-end mb-3" role="search">
+  <div class="col-6 col-md-3"><label class="form-label small mb-0" for="alA">Action contains</label><input class="form-control form-control-sm" id="alA" name="action" value="{{ f.get('action', '') }}"></div>
+  <div class="col-6 col-md-2"><label class="form-label small mb-0" for="alU">Actor id</label><input class="form-control form-control-sm" id="alU" name="user_id" inputmode="numeric" value="{{ f.get('user_id', '') }}"></div>
+  <div class="col-6 col-md-2"><label class="form-label small mb-0" for="alS">Section id</label><input class="form-control form-control-sm" id="alS" name="section_id" inputmode="numeric" value="{{ f.get('section_id', '') }}"></div>
+  <div class="col-6 col-md-2"><label class="form-label small mb-0" for="alF">Since</label><input class="form-control form-control-sm" type="date" id="alF" name="since" value="{{ f.get('since', '') }}"></div>
+  <div class="col-6 col-md-2"><label class="form-label small mb-0" for="alT">Until</label><input class="form-control form-control-sm" type="date" id="alT" name="until" value="{{ f.get('until', '') }}"></div>
+  <div class="col-6 col-md-1"><button class="btn btn-sm btn-brand w-100" type="submit">Filter</button></div>
+</form>
+<p><a class="btn btn-sm btn-outline-secondary" href="?{{ request.query_string.decode() }}{{ '&' if request.query_string }}format=csv"><i class="bi bi-download" aria-hidden="true"></i> CSV</a></p>
+<div class="table-responsive"><table class="table table-sm table-stack small"><caption class="visually-hidden">Audit events, newest first</caption>
+  <thead><tr><th scope="col">UTC</th><th scope="col">Actor</th><th scope="col">Action</th><th scope="col">Detail</th><th scope="col">IP</th><th scope="col">Section</th><th scope="col">Hash</th></tr></thead>
+  <tbody>{% for e in rows %}<tr><td data-label="UTC">{{ e.created_at.strftime('%Y-%m-%d %H:%M:%S') if e.created_at }}</td><td data-label="Actor">{{ e.user_id or '—' }} {{ e.role or '' }}</td><td data-label="Action">{{ e.action }}</td><td data-label="Detail">{{ e.detail }}</td><td data-label="IP">{{ e.ip }}</td><td data-label="Section">{{ e.section_id or '' }}</td><td data-label="Hash" class="font-monospace">{{ (e.hash or 'legacy')[:10] }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

@@ -18,7 +18,8 @@
             <p class="small mb-1"><strong>Now:</strong> {{ it.state }}</p>
             <p class="small mx-muted mb-2">{{ it.help }}</p>
             <div class="d-flex flex-wrap gap-2">
-              <a class="btn btn-sm btn-outline-navy" href="{{ it.url }}">{{ it.link }}<span class="visually-hidden"> for {{ it.title|lower }}</span></a>
+              <a class="btn btn-sm btn-outline-navy" href="{{ it.url }}">{{ it.link }}<span class="visually-hidden"> for {{ it.title|lower }}</span></a>{% if it.extra_url %}
+              <a class="btn btn-sm btn-link" href="{{ it.extra_url }}">{{ it.extra_link }}</a>{% endif %}
               {% if not it.done %}
               <form method="post" action="{{ url_for('onboarding_setup', section_id=section.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="item" value="{{ it.key }}">

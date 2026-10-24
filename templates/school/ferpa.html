@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}FERPA requests — {{ site_name }}{% endblock %}
+{% block content %}
+{% with title='FERPA requests', lede='Student export, correction and deletion requests. Every action is written to the tamper-evident audit log.' %}{% include '_admin_nav.html' %}{% endwith %}
+<p class="small">Audit chain: {% if chain.ok %}<span class="badge text-bg-success">intact</span>{% else %}<span class="badge text-bg-danger">broken at event {{ chain.broken_at }}</span>{% endif %} · {{ chain.checked }} chained events. For a direct record lookup use <a href="{{ url_for('admin_privacy') }}">Data &amp; privacy</a>.</p>
+{% if rows %}<div class="table-responsive"><table class="table table-sm table-stack">
+  <caption class="visually-hidden">Data requests</caption>
+  <thead><tr><th scope="col">Filed</th><th scope="col">Student</th><th scope="col">Request</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+  <tbody>{% for r, u in rows %}<tr>
+    <td data-label="Filed">{{ r.created_at.strftime('%d %b %Y') }}</td>
+    <td data-label="Student">{{ u.full_name }}<br><span class="small">{{ u.email }}</span> · <a href="?user_id={{ u.id }}&amp;format=zip">export</a></td>
+    <td data-label="Request">{{ r.kind }}{% if r.note %}<br><span class="small">{{ r.note }}</span>{% endif %}</td>
+    <td data-label="Status">{{ r.status }}{% if r.outcome %}<br><span class="small">{{ r.outcome }}</span>{% endif %}</td>
+    <td data-label="Action">{% if r.status == 'open' %}<form method="post" class="d-flex flex-wrap gap-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="request_id" value="{{ r.id }}">
+      {% if r.kind == 'delete' %}<label class="visually-hidden" for="cf{{ r.id }}">Type the email to confirm</label><input class="form-control form-control-sm" id="cf{{ r.id }}" name="confirm" placeholder="type email to confirm">
+      <button class="btn btn-sm btn-outline-danger" name="action" value="anonymize" type="submit">Anonymize</button>
+      <button class="btn btn-sm btn-danger" name="action" value="delete" type="submit">Delete activity + anonymize</button>{% endif %}
+      <button class="btn btn-sm btn-outline-secondary" name="action" value="done" type="submit">Mark done</button>
+      <button class="btn btn-sm btn-outline-secondary" name="action" value="deny" type="submit">Deny</button></form>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>{% else %}<p>No requests.</p>{% endif %}
+{% endblock %}

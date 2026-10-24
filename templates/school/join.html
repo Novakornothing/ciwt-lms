@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Join a class — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero"><h1 class="h3 mb-1">Join a class</h1><p class="mb-0">Enter the code your instructor gave you.</p></div>
+<form method="post" class="card card-body col-md-6"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label class="form-label" for="jc">Join code</label><input class="form-control mb-2 font-monospace" id="jc" name="code" autocomplete="off" required maxlength="12">
+  <button class="btn btn-brand" type="submit">Join</button></form>
+{% endblock %}

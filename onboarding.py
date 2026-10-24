@@ -86,6 +86,12 @@ def register(app, db, deps):
              'help': 'If your college uses Canvas, Moodle, Blackboard or Brightspace, LTI 1.3 can launch lessons and send '
                      'scores back. Skip this if you use this site on its own.', 'url': url_for('instructor_lti', section_id=section.id),
              'link': 'LMS connection', 'optional': True},
+            {'key': 'a11y', 'title': 'Accessibility, privacy and the full setup page',
+             'state': 'WCAG 2.1 AA statement · FERPA tools · staff roles',
+             'help': 'Share the accessibility statement with students who use assistive technology, and review roster, staff '
+                     'roles, LTI and privacy on one page.', 'url': url_for('section_setup', section_id=section.id),
+             'link': 'Section setup page', 'optional': True, 'auto': True, 'extra_url': url_for('accessibility'),
+             'extra_link': 'Accessibility statement'},
         ]
         for it in items:
             it['done'] = f"setup:{it['key']}" in done or bool(it.get('auto'))
