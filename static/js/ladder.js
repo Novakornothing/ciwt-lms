@@ -24,6 +24,7 @@
     var fresh = tmp.firstElementChild;
     function put() {
       box.replaceWith(fresh);
+      document.dispatchEvent(new CustomEvent('ladder:updated'));
       if (!reduce) { fresh.classList.add('ladder-entering'); setTimeout(function () { fresh.classList.remove('ladder-entering'); }, 400); }
       init(fresh);
       if (moveFocus) {

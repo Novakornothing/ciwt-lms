@@ -1,0 +1,10 @@
+{# Comprehension gate banner (above the bottom buttons). Needs _gate (mastery/ladder.py gate()), section_id, lesson. #}
+<section class="ladder-gate{% if not _gate.blocked %} is-done{% endif %}" id="ladderGate" aria-labelledby="ladderGateH"
+         data-gate-url="{{ url_for('ladder_gate', section_id=section_id, lesson_id=lesson.id) }}">
+  <h2 class="h6 mb-1" id="ladderGateH"><i class="bi bi-check2-square" aria-hidden="true"></i>
+    Comprehension check: <span data-gate-count>{{ _gate.done }} of {{ _gate.total }}</span> sections verified</h2>
+  <div class="ladder-gate-bar" role="progressbar" aria-label="Sections verified" aria-valuemin="0" aria-valuemax="{{ _gate.total }}"
+       aria-valuenow="{{ _gate.done }}"><span class="pf-w-{{ ((100 * _gate.done // (_gate.total or 1)) // 5) * 5 }}"></span></div>
+  <p class="small mb-1" data-gate-msg aria-live="polite">{% if _gate.blocked %}Answer each section's quick check (not graded) to move on. Still to do:{% else %}All sections verified. You can move on.{% endif %}</p>
+  <ul class="ladder-gate-list small mb-0" data-gate-list>{% for p in _gate.pending %}<li><a href="#ladder-sec-{{ p.sid }}">{{ p.heading }}</a></li>{% endfor %}</ul>
+</section>

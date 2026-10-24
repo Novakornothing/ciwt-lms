@@ -32,6 +32,12 @@
           <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ladAf" name="adapt_first"{% if cfg.adapt_first %} checked{% endif %}>
             <label class="form-check-label" for="ladAf">Adapt the first presentation</label>
             <div class="form-text">Off (default): every student sees the original first. On: a student with a clear pattern (see the rule on their page) sees their best kind of explanation first, with “See the original” one tap away.</div></div>
+          <input type="hidden" name="gate_form" value="1">
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ladGate" name="require_check_to_advance"{% if cfg.require_check %} checked{% endif %}>
+            <label class="form-check-label" for="ladGate">Comprehension gate: verify each section before moving on</label>
+            <div class="form-text">On (default): “Next lesson” waits until every section's quick check is answered correctly, or every explanation was tried (then you are flagged in Who needs me, and the student can continue). Never graded.</div></div>
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ladGateQ" name="gate_quiz_on_ladder"{% if cfg.gate_quiz %} checked{% endif %}>
+            <label class="form-check-label" for="ladGateQ">Strict: the chapter quiz also waits for the section checks</label></div>
           <div class="mb-3"><label class="form-label" for="ladMax">Explanations before the instructor is flagged</label>
             <select class="form-select form-select-sm" id="ladMax" name="max_rung">{% for n in [1, 2, 3, 4] %}
               <option value="{{ n }}"{% if cfg.max_rung == n %} selected{% endif %}>{{ n }} ({{ ['more simply', '+ analogy', '+ picture or trace', '+ try it'][n - 1] }})</option>{% endfor %}</select></div>
@@ -110,6 +116,27 @@
     </form>
     {% if cfg.overrides %}<ul class="small mt-2 mb-0">{% for k, o in cfg.overrides|dictsort %}<li>{{ k.replace('|', ' · ') }}: {{ 'off' if o.off else 'at most ' ~ o.max }}</li>{% endfor %}</ul>{% endif %}
     {% endif %}
+  </div>
+</section>
+
+<section class="card mb-4" aria-labelledby="ladByH">
+  <div class="card-header"><h2 class="h6 mb-0" id="ladByH">Comprehension gate exemptions</h2></div>
+  <div class="card-body">
+    <p class="small">Let one student move on without the section checks (for example an accommodation, or a student who already showed mastery). Their quick checks still appear; only the lock is lifted.</p>
+    {% if gate_students %}
+    <form method="post" action="{{ url_for('ladder_settings', section_id=section.id) }}" class="row g-2 align-items-end">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="form" value="bypass">
+      <div class="col-md-5"><label class="form-label small mb-0" for="byU">Student</label>
+        <select class="form-select form-select-sm" id="byU" name="user_id">{% for u in gate_students %}<option value="{{ u.id }}">{{ u.full_name or u.email }}</option>{% endfor %}</select></div>
+      <div class="col-md-5"><label class="form-label small mb-0" for="byL">Lesson</label>
+        <select class="form-select form-select-sm" id="byL" name="lesson_id"><option value="">All lessons</option>{% for l in gate_lessons %}<option value="{{ l.id }}">{{ l.title }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><button class="btn btn-sm btn-brand w-100" type="submit">Exempt</button></div>
+    </form>{% endif %}
+    {% if bypasses %}<ul class="small mt-2 mb-0">{% for b in bypasses %}<li>{{ b.who }}: {{ b.lesson }}
+      <form method="post" action="{{ url_for('ladder_settings', section_id=section.id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="form" value="bypass"><input type="hidden" name="action" value="remove">
+        <input type="hidden" name="user_id" value="{{ b.user_id }}"><input type="hidden" name="lesson_id" value="{{ b.lesson_id or '' }}">
+        <button class="btn btn-link btn-sm p-0 align-baseline" type="submit">Remove<span class="visually-hidden"> exemption for {{ b.who }}</span></button></form></li>{% endfor %}</ul>{% endif %}
   </div>
 </section>
 {% endblock %}

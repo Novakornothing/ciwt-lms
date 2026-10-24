@@ -51,6 +51,8 @@ def define_ladder_models(db):
         max_rung = db.Column(db.Integer, default=4)
         micro_checks = db.Column(db.Boolean, default=True)
         adapt_first = db.Column(db.Boolean, default=False)
+        require_check_to_advance = db.Column(db.Boolean, default=True)   # comprehension gate (default on)
+        gate_quiz_on_ladder = db.Column(db.Boolean, default=False)       # strict: chapter quiz waits for the gate too
         overrides_json = db.Column(db.Text, default='{}')     # {"label|sid": {"off": true} | {"max": 2}}
         updated_at = db.Column(db.DateTime, default=utcnow)
         updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -95,6 +97,16 @@ def define_ladder_models(db):
         from_rung = db.Column(db.String(4))                  # request: the rung the student was on
         created_at = db.Column(db.DateTime, default=utcnow, index=True)
 
+    class LadderBypass(db.Model):
+        """Instructor exemption from the comprehension gate: one student, one lesson (lesson_id NULL = every lesson)."""
+        __tablename__ = 'ladder_bypass'
+        id = db.Column(db.Integer, primary_key=True)
+        section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), nullable=False, index=True)
+        user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+        lesson_id = db.Column(db.Integer)
+        created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+        created_at = db.Column(db.DateTime, default=utcnow)
+
     class LadderProfileReset(db.Model):
         """The student reset "What helps you learn": evidence before reset_at is ignored."""
         __tablename__ = 'ladder_profile_reset'
@@ -104,8 +116,23 @@ def define_ladder_models(db):
 
     from types import SimpleNamespace
     _cache['m'] = SimpleNamespace(LadderSetting=LadderSetting, LadderState=LadderState, LadderEvent=LadderEvent,
-                                  LadderProfileReset=LadderProfileReset)
+                                  LadderProfileReset=LadderProfileReset, LadderBypass=LadderBypass)
     return _cache['m']
+
+
+def ensure_ladder_schema(db):
+    """Idempotent: gate columns on ladder_setting for databases created before the comprehension gate."""
+    from sqlalchemy import inspect, text
+    insp = inspect(db.engine)
+    if 'ladder_setting' in insp.get_table_names():
+        cols = {c['name'] for c in insp.get_columns('ladder_setting')}
+        with db.engine.begin() as conn:
+            if 'require_check_to_advance' not in cols:
+                conn.execute(text('ALTER TABLE ladder_setting ADD COLUMN require_check_to_advance BOOLEAN DEFAULT 1'))
+                conn.execute(text('UPDATE ladder_setting SET require_check_to_advance = 1'))
+            if 'gate_quiz_on_ladder' not in cols:
+                conn.execute(text('ALTER TABLE ladder_setting ADD COLUMN gate_quiz_on_ladder BOOLEAN DEFAULT 0'))
+                conn.execute(text('UPDATE ladder_setting SET gate_quiz_on_ladder = 0'))
 
 
 def _h(s):
@@ -133,9 +160,10 @@ def register_ladder(app, db, ctx):
         s = m.LadderSetting.query.filter_by(section_id=section_id).first()
         if not s:
             return {'enabled': True, 'max_rung': LP.DEFAULT_MAX_RUNG, 'micro_checks': True, 'adapt_first': False,
-                    'overrides': {}, 'row': None}
+                    'require_check': True, 'gate_quiz': False, 'overrides': {}, 'row': None}
         return {'enabled': bool(s.enabled), 'max_rung': int(s.max_rung or 0), 'micro_checks': bool(s.micro_checks),
-                'adapt_first': bool(s.adapt_first), 'overrides': _loads(s.overrides_json, {}), 'row': s}
+                'adapt_first': bool(s.adapt_first), 'overrides': _loads(s.overrides_json, {}), 'row': s,
+                'require_check': s.require_check_to_advance is not False, 'gate_quiz': bool(s.gate_quiz_on_ladder)}
 
     def course_code(section):
         c = getattr(section, 'course', None) or db.session.get(d.Course, section.course_id)
@@ -276,6 +304,52 @@ def register_ladder(app, db, ctx):
     def lesson_entries(course, label):
         return {k[2]: v for k, v in LD.ladder().items() if k[0] == course and k[1] == label}
 
+    # ------------------------------------------------------------------ comprehension gate
+    def bypassed(user_id, section_id, lesson_id):
+        return m.LadderBypass.query.filter(m.LadderBypass.section_id == section_id, m.LadderBypass.user_id == user_id,
+                                           db.or_(m.LadderBypass.lesson_id.is_(None), m.LadderBypass.lesson_id == lesson_id)).first() is not None
+
+    def gate(user, section, lesson):
+        """Which laddered sections of this lesson the student still has to verify. A section counts as verified when
+        its quick check was answered correctly (resolved) or every explanation was tried (exhausted: the student is
+        never trapped, and the instructor sees them in Who needs me)."""
+        out = {'on': False, 'total': 0, 'done': 0, 'pending': [], 'first': None, 'exempt': False, 'blocked': False}
+        if not section or getattr(user, 'role', None) != 'student':
+            return out
+        cfg = settings(section.id)
+        if not (cfg['enabled'] and cfg['micro_checks'] and cfg['require_check']):
+            return out
+        course, label = course_code(section), label_of(lesson)
+        if not lesson_entries(course, label):
+            return out
+        rows = {r.sid: r for r in m.LadderState.query.filter_by(user_id=user.id, section_id=section.id, course=course,
+                                                                 label=label).all()}
+        for sec in LSEC.sections(LSEC.student_html(lesson.content or '')):
+            ent = LD.entry(course, label, sec['sid'])
+            if not ent or cfg['overrides'].get(f'{label}|{sec["sid"]}', {}).get('off'):
+                continue
+            r = rows.get(sec['sid'])
+            out['total'] += 1
+            if r and (r.resolved or r.exhausted_at):
+                out['done'] += 1
+            else:
+                out['pending'].append({'sid': sec['sid'], 'heading': (LD.ladder().get((course, label, sec['sid'])) or {}).get('heading') or sec['sid']})
+        out['on'] = out['total'] > 0
+        out['first'] = out['pending'][0]['sid'] if out['pending'] else None
+        out['exempt'] = out['on'] and bypassed(user.id, section.id, lesson.id)
+        out['blocked'] = out['on'] and bool(out['pending']) and not out['exempt']
+        return out
+
+    def module_gate(user, section, module_id):
+        """Strict quiz lock: first lesson in the chapter that still blocks (None = free to take the quiz)."""
+        if not section or getattr(user, 'role', None) != 'student' or not settings(section.id)['gate_quiz']:
+            return None
+        for les in d.Lesson.query.filter_by(module_id=module_id).order_by(d.Lesson.order).all():
+            g = gate(user, section, les)
+            if g['blocked']:
+                return les, g
+        return None
+
     def render_lesson(user, section, module, lesson, html_filter=None):
         """Lesson HTML with every laddered section wrapped for this student, or None (ladder off / no content)."""
         if not section or user.role != 'student':
@@ -293,6 +367,9 @@ def register_ladder(app, db, ctx):
                                                                  label=label).all()}
         prof = None
         out, pos, n = [], 0, 0
+        g = gate(user, section, lesson)
+        lock_after = g['first'] if g['blocked'] else None
+        locked = False
         for sec in secs:
             ent = LD.entry(course, label, sec['sid'])
             if not ent or not allowed_for(cfg, label, sec['sid']) and not cfg['micro_checks']:
@@ -308,7 +385,13 @@ def register_ladder(app, db, ctx):
             want = request.args.get('ladder_original') == sec['sid']
             c = section_ctx(user, section, lesson, sec, ent, st, cfg, show_rung='R0' if want else None)
             out.append(src[pos:sec['start']])
+            out.append(f'<span class="ladder-anchor" id="ladder-sec-{sec["sid"]}"></span>')
+            if locked:
+                out.append(f'<div class="ladder-lock" data-lock-sid="{sec["sid"]}" role="note"><i class="bi bi-lock" aria-hidden="true"></i> '
+                           'Complete the quick check above to unlock this section.</div>')
             out.append(render_section(c))
+            if lock_after and sec['sid'] == lock_after:
+                locked = True
             pos = sec['end']
             n += 1
         if not n:
@@ -599,7 +682,7 @@ def register_ladder(app, db, ctx):
         return render_template('ladder/instructor.html', section=section, cfg=cfg, a=a, rows=rows, chapters=chapters,
                                chapter=ch, secs=course_sections(section), queue=review_queue(section),
                                P=LP, LABEL=LS.LABEL, demo=a['demo'], REWRITE_MIN=REWRITE_MIN,
-                               REWRITE_SHARE=REWRITE_SHARE)
+                               REWRITE_SHARE=REWRITE_SHARE, **_bypass_ctx(section))
 
     @login_required
     def ladder_settings(section_id):
@@ -609,7 +692,19 @@ def register_ladder(app, db, ctx):
             s = m.LadderSetting(section_id=section.id, overrides_json='{}')
             db.session.add(s)
         f = request.form
-        if f.get('form') == 'override':
+        if f.get('form') == 'bypass':
+            uid, lid = f.get('user_id', type=int), f.get('lesson_id', type=int)
+            if not uid or not d.Enrollment.query.filter_by(user_id=uid, section_id=section.id).first():
+                abort(400)
+            q = m.LadderBypass.query.filter_by(section_id=section.id, user_id=uid, lesson_id=lid)
+            if f.get('action') == 'remove':
+                q.delete()
+                msg = 'Exemption removed: the comprehension gate applies to this student again.'
+            else:
+                if not q.first():
+                    db.session.add(m.LadderBypass(section_id=section.id, user_id=uid, lesson_id=lid, created_by=current_user.id))
+                msg = 'Exemption saved: this student can move on without the section checks.'
+        elif f.get('form') == 'override':
             ov = _loads(s.overrides_json, {})
             key = f'{f.get("label", "")}|{f.get("sid", "")}'
             if (f.get('label'), f.get('sid')) not in {(x['label'], x['sid']) for x in course_sections(section)}:
@@ -627,6 +722,9 @@ def register_ladder(app, db, ctx):
             s.enabled = f.get('enabled') == 'on'
             s.micro_checks = f.get('micro_checks') == 'on'
             s.adapt_first = f.get('adapt_first') == 'on'
+            if 'gate_form' in f:      # the comprehension-gate switches are on the same card
+                s.require_check_to_advance = f.get('require_check_to_advance') == 'on'
+                s.gate_quiz_on_ladder = f.get('gate_quiz_on_ladder') == 'on'
             mr = f.get('max_rung', type=int)
             s.max_rung = mr if mr in (1, 2, 3, 4) else 4
             msg = 'Explanation ladder settings saved. Grades are never affected by these settings.'
@@ -740,7 +838,63 @@ def register_ladder(app, db, ctx):
                                        'exhausted': st['exhausted']})
         return out
 
+    def _bypass_ctx(section):
+        studs = (d.User.query.join(d.Enrollment, d.Enrollment.user_id == d.User.id)
+                 .filter(d.Enrollment.section_id == section.id, d.User.role == 'student').order_by(d.User.email).all())
+        names = {u.id: u.full_name or u.email for u in studs}
+        lessons = (d.Lesson.query.join(d.Module, d.Module.id == d.Lesson.module_id)
+                   .filter(d.Module.course_id == section.course_id).order_by(d.Module.order, d.Lesson.order).all())
+        ltitle = {l.id: l.title for l in lessons}
+        byp = [{'user_id': b.user_id, 'lesson_id': b.lesson_id, 'who': names.get(b.user_id, '?'),
+                'lesson': ltitle.get(b.lesson_id, 'All lessons') if b.lesson_id else 'All lessons'}
+               for b in m.LadderBypass.query.filter_by(section_id=section.id).all()]
+        return {'gate_students': studs, 'gate_lessons': lessons, 'bypasses': byp}
+
+    def _gate_target(section_id, lesson_id):
+        section = ctx.enrolled_section(section_id)
+        lesson = db.get_or_404(d.Lesson, lesson_id)
+        if not d.is_content_available(section_id, 'module', lesson.module_id, current_user.id):
+            abort(403)
+        return section, lesson
+
+    @login_required
+    def ladder_gate(section_id, lesson_id):
+        """Live gate status for the lesson page (progress banner + section locks)."""
+        section, lesson = _gate_target(section_id, lesson_id)
+        g = gate(current_user, section, lesson)
+        return jsonify({k: g[k] for k in ('on', 'total', 'done', 'pending', 'first', 'exempt', 'blocked')})
+
+    @login_required
+    def lesson_advance(section_id, lesson_id):
+        """Bottom-of-lesson button. Server-side comprehension gate: a student moves on only when every laddered section
+        is verified (resolved or exhausted), unless the instructor turned the gate off or exempted them."""
+        lesson = db.get_or_404(d.Lesson, lesson_id)
+        here = url_for('view_lesson', section_id=section_id, module_id=lesson.module_id, lesson_id=lesson.id)
+        to = request.args.get('to', 'next')
+        if to == 'quiz':
+            target = url_for('take_quiz', section_id=section_id, quiz_id=request.args.get('quiz_id', type=int) or abort(400))
+        elif to == 'lab':
+            target = here + '#chapter-lab'
+        elif to == 'module':
+            target = url_for('view_module', section_id=section_id, module_id=lesson.module_id)
+        else:
+            nxt = d.Lesson.query.filter_by(id=request.args.get('next_id', type=int), module_id=lesson.module_id).first_or_404()
+            target = url_for('view_lesson', section_id=section_id, module_id=lesson.module_id, lesson_id=nxt.id)
+        if current_user.role != 'student':
+            return redirect(target)
+        section, lesson = _gate_target(section_id, lesson_id)
+        g = gate(current_user, section, lesson)
+        if g['blocked']:
+            left = len(g['pending'])
+            flash(f'Almost there: {left} section{"s" if left != 1 else ""} in this lesson still need{"s" if left == 1 else ""} '
+                  f'its quick check. Start with “{g["pending"][0]["heading"]}”. If a section does not click, press '
+                  '“I don\'t get it” for another explanation.', 'info')
+            return redirect(here + f'#ladder-sec-{g["first"]}', code=303)
+        return redirect(target, code=303)
+
     for rule, ep, fn, methods in [
+        ('/student/section/<int:section_id>/ladder/<int:lesson_id>/gate', 'ladder_gate', ladder_gate, ['GET']),
+        ('/student/section/<int:section_id>/lesson/<int:lesson_id>/advance', 'lesson_advance', lesson_advance, ['GET']),
         ('/student/section/<int:section_id>/ladder/<int:lesson_id>/<sid>/answer', 'ladder_answer', ladder_answer, ['POST']),
         ('/student/section/<int:section_id>/ladder/<int:lesson_id>/<sid>/another', 'ladder_another', ladder_another, ['POST']),
         ('/student/section/<int:section_id>/ladder/<int:lesson_id>/<sid>/show/<rung>', 'ladder_show', ladder_show, ['POST']),
@@ -755,6 +909,7 @@ def register_ladder(app, db, ctx):
 
     from types import SimpleNamespace
     return SimpleNamespace(models=m, settings=settings, render_lesson=render_lesson, profile=profile_of,
+                           gate=gate, module_gate=module_gate, bypassed=bypassed,
                            needs_me_reasons=needs_me_reasons, class_exhausted=class_exhausted,
                            for_objectives=for_objectives, analytics=analytics)
 

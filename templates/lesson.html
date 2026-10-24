@@ -114,6 +114,9 @@
         {% if mastery_quick is defined %}{% include 'mastery/_quickcheck.html' %}{% endif %}
       </div>
     </div>
+    {% set _gate = ladder_gate if ladder_gate and ladder_gate.on and not ladder_gate.exempt else None %}
+    {% if _gate %}{% include 'ladder/_gate.html' %}{% endif %}
+    {% macro adv(to, label) %}{% if _gate %}{{ url_for('lesson_advance', section_id=section_id, lesson_id=lesson.id, to=to, **kwargs) }}{% else %}{{ label }}{% endif %}{% endmacro %}
     <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
       {% if prev_l %}
       <a class="btn btn-outline-navy lesson-prev" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=prev_l.id) }}">
@@ -121,13 +124,13 @@
       </a>
       {% else %}<span></span>{% endif %}
       {% if next_l %}
-      <a class="btn btn-brand" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=next_l.id) }}">
+      <a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('next', url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=next_l.id), next_id=next_l.id) }}">
         Next lesson →
       </a>
       {% elif lesson_labs %}
-      <a class="btn btn-brand" href="#chapter-lab">Do the lab for this lesson</a>
+      <a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('lab', '#chapter-lab') }}">Do the lab for this lesson</a>
       {% elif quizzes %}
-      <a class="btn btn-brand" href="{{ url_for('take_quiz', section_id=section_id, quiz_id=quizzes[0].id) }}">Take the chapter quiz</a>
+      <a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('quiz', url_for('take_quiz', section_id=section_id, quiz_id=quizzes[0].id), quiz_id=quizzes[0].id) }}">Take the chapter quiz</a>
       {% else %}
       <a class="btn btn-brand" href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">Back to chapter</a>
       {% endif %}
@@ -365,6 +368,7 @@
 {% endif %}
 {% if mastery_quick %}<script src="{{ url_for('static', filename='js/mastery-lesson.js') }}" defer></script>{% endif %}
 {% if ladder_html %}<script src="{{ url_for('static', filename='js/ladder.js') }}" defer></script>{% endif %}
+{% if ladder_gate and ladder_gate.on and not ladder_gate.exempt %}<script src="{{ url_for('static', filename='js/ladder_gate.js') }}" defer></script>{% endif %}
 <script>
 /* narration bar: the native player only appears once audio is playing; options fold away on phones */
 (function () {

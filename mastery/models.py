@@ -108,6 +108,8 @@ def define_models(db):
 def ensure_schema(db):
     """Columns added after first install (SQLite-friendly, idempotent)."""
     from sqlalchemy import inspect, text
+    from .ladder import ensure_ladder_schema
+    ensure_ladder_schema(db)
     insp = inspect(db.engine)
     if 'mastery_setting' in insp.get_table_names():
         cols = {c['name'] for c in insp.get_columns('mastery_setting')}

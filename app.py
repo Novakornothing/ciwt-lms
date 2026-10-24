@@ -3035,14 +3035,15 @@ def view_lesson(section_id, module_id, lesson_id):
             return redirect(mastery_review_url, code=303)
         try:   # pass 19: explanation ladder, per student (None = ladder off for the class or no ladder for this lesson)
             ladder_html = mastery_api.ladder.render_lesson(current_user, section, module, lesson)
+            ladder_gate = mastery_api.ladder.gate(current_user, section, lesson) if ladder_html else None
         except Exception as exc:
             db.session.rollback()
-            ladder_html = None
+            ladder_html = ladder_gate = None
             print('ladder render:', exc)
     else:
-        ladder_html = None
+        ladder_html = ladder_gate = None
     return render_template(
-        'lesson.html', module=module, lesson=lesson, lessons=lessons, ladder_html=ladder_html,
+        'lesson.html', module=module, lesson=lesson, lessons=lessons, ladder_html=ladder_html, ladder_gate=ladder_gate,
         mastery_gate=mastery_gate, mastery_review_url=mastery_review_url, mastery_quick=mastery_quick,
         prev_l=prev_l, next_l=next_l, section_id=section_id, quizzes=quizzes,
         chapter_labs=chapter_labs,
@@ -3065,6 +3066,19 @@ def take_quiz(section_id, quiz_id):
     if current_user.role not in ('admin', 'instructor') and not is_content_available(section_id, 'module', module.id, current_user.id):
         flash('This quiz is not currently available.', 'warning')
         return redirect(url_for('student_section', section_id=section_id))
+    if current_user.role == 'student':   # optional strict lock: the chapter quiz waits for the comprehension gate
+        try:
+            hold = mastery_api.ladder.module_gate(current_user, db.session.get(ClassSection, section_id), module.id)
+        except Exception as exc:
+            db.session.rollback()
+            hold = None
+            print('quiz gate:', exc)
+        if hold:
+            les, g = hold
+            flash(f'Your instructor asks you to finish the section checks first: “{g["pending"][0]["heading"]}” in '
+                  f'{les.title} is next.', 'info')
+            return redirect(url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=les.id)
+                            + f'#ladder-sec-{g["first"]}', code=303)
     questions = json.loads(quiz.questions)
     if request.method == 'POST':
         answers = {str(i): request.form.get(f'q{i}') for i in range(len(questions))}
