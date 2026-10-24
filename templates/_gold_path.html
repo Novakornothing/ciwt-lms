@@ -1,10 +1,10 @@
 {% if gold_path and gold_path.steps %}
 {% set done_gp = gold_path.steps|selectattr('done')|list|length %}
 <style>
-  .gold-path ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+  .gold-path ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
   .gold-path .gp-step {
     display: flex; gap: .75rem; align-items: flex-start;
-    padding: .55rem .75rem; border: 1px solid var(--line, #31405a); border-radius: 10px;
+    padding: .5rem .75rem; border: 1px solid var(--line, #31405a); border-radius: 10px;
   }
   .gold-path .gp-n {
     flex: 0 0 1.6rem; height: 1.6rem; border-radius: 999px;
@@ -21,18 +21,18 @@
     <span><i class="bi bi-compass me-1" aria-hidden="true"></i> Continue where you left off — {{ gold_path.section.name }}</span>
     <span class="small">{{ 'Path complete' if gold_path.complete else (done_gp ~ ' of ' ~ (gold_path.steps|length) ~ ' Ch. 1 steps done') }}</span>
   </div>
-  <div class="card-body py-3">
-    {% if mastery_path is defined and mastery_path and mastery_path.steps %}<div class="mb-2">{% include 'mastery/_path.html' %}</div>{% endif %}
+  <div class="card-body py-2 px-3">
+    {% if mastery_path is defined and mastery_path and mastery_path.steps %}<div class="mb-1">{% include 'mastery/_path.html' %}</div>{% endif %}
     {% if gold_path.next and not hide_path_cta and not (mastery_path is defined and mastery_path and mastery_path.steps) %}
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
       <div>
         <div class="fw-semibold">{{ gold_path.next.title }}</div>
         <div class="small text-muted">{{ gold_path.next.detail }}</div>
       </div>
-      <a class="btn btn-brand" href="{{ gold_path.next.url }}">Continue — {{ gold_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+      <a class="btn btn-sm btn-brand" href="{{ gold_path.next.url }}">Continue — {{ gold_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
     </div>
     {% endif %}
-    <details class="gp-checklist-disclosure mt-1">
+    <details class="gp-checklist-disclosure">
       <summary class="small fw-semibold u-pointer">Chapter 1 step-by-step checklist ({{ done_gp }}/{{ gold_path.steps|length }} completed)</summary>
       <div class="pt-2">
         <p class="small text-muted mb-2">Lesson, then its lab, then the practice quiz. The graded test unlocks when your instructor opens it.</p>
@@ -59,6 +59,6 @@
 {% elif mastery_path is defined and mastery_path and mastery_path.steps %}
 <div class="card mb-3">
   <div class="card-header navy py-2">Continue where you left off</div>
-  <div class="card-body py-3">{% include 'mastery/_path.html' %}</div>
+  <div class="card-body py-2 px-3">{% include 'mastery/_path.html' %}</div>
 </div>
 {% endif %}

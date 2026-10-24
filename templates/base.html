@@ -115,31 +115,31 @@
       </div>
     </nav>
     {% if current_user.is_authenticated and current_user.role in ('instructor', 'admin') and (current_user.role == 'instructor' or acting_role == 'instructor') %}
-    <div class="teach-topbar py-2">
+    <div class="teach-topbar py-1">
       <div class="container-fluid px-3 px-md-4 d-flex flex-wrap align-items-center gap-2">
-        <button type="button" class="btn btn-sm btn-outline-navy teach-toggle" id="teachToggle" aria-expanded="false" aria-controls="teachControls">
+        <button type="button" class="btn btn-sm btn-outline-navy teach-toggle py-0 px-2" id="teachToggle" aria-expanded="false" aria-controls="teachControls">
           <i class="bi bi-stopwatch" aria-hidden="true"></i> Teaching timer <span class="fw-bold" id="teachClockMini">00:00</span>
         </button>
         <div class="teach-controls d-flex flex-wrap align-items-center gap-2" id="teachControls">
-        <span class="fw-bold me-1 teach-label">Teaching timer</span>
+        <span class="fw-semibold small me-1 teach-label"><i class="bi bi-stopwatch" aria-hidden="true"></i> Teaching timer</span>
         <label class="visually-hidden" for="teachSection">Class for teaching timer</label>
-        <select id="teachSection" class="form-select form-select-sm w-auto u-minw-12">
+        <select id="teachSection" class="form-select form-select-sm w-auto py-0 u-minw-12">
           <option value="">Class…</option>
           {% for s in staff_nav_sections %}
           <option value="{{ s.id }}" {% if section is defined and section.id == s.id %}selected{% endif %}>{{ s.name }}</option>
           {% endfor %}
         </select>
         <label class="visually-hidden" for="breakMins">Break reminder</label>
-        <select id="breakMins" class="form-select form-select-sm w-auto">
+        <select id="breakMins" class="form-select form-select-sm w-auto py-0">
           <option value="50" selected>50m</option>
           <option value="10">10m break</option>
           <option value="45">45m</option>
           <option value="75">75m</option>
           <option value="90">90m</option>
         </select>
-        <span id="teachClock" class="fw-bold fs-5 px-2">00:00</span>
-        <button type="button" class="btn btn-sm btn-brand" id="teachStart">Start</button>
-        <button type="button" class="btn btn-sm btn-outline-navy" id="teachStop">Stop</button>
+        <span id="teachClock" class="fw-bold px-1">00:00</span>
+        <button type="button" class="btn btn-sm btn-brand py-0 px-2" id="teachStart">Start</button>
+        <button type="button" class="btn btn-sm btn-outline-navy py-0 px-2" id="teachStop">Stop</button>
         <span id="teachStatus" class="small text-muted" role="status">Stopped</span>
         </div>
       </div>

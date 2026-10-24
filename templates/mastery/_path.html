@@ -2,28 +2,48 @@
 {% from "mastery/_macros.html" import why, icon_for with context %}
 {% if mastery_path and mastery_path.steps %}
 {% set mp_sid = mastery_section_id if mastery_section_id is defined else (gold_path.section.id if gold_path else none) %}
+{% set more_steps = mastery_path.steps[1:] %}
 <section class="mx-path" aria-labelledby="mxPathH">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
     <h2 class="h6 mb-0 mx-path-h" id="mxPathH"><i class="bi bi-signpost-split" aria-hidden="true"></i> Recommended next for you</h2>
-    {% if mastery_path.demo %}<span class="mx-demo-note small">Based partly on demo seed data</span>{% endif %}
+    <div class="d-flex align-items-center gap-2 small">
+      {% if mp_sid %}<a href="{{ url_for('mastery_student', section_id=mp_sid) }}">My mastery by objective</a>{% endif %}
+      {% if mastery_path.demo %}<span class="mx-demo-note small">Based partly on demo seed data</span>{% endif %}
+    </div>
   </div>
   {% if not mastery_path.enabled %}<p class="small mb-2 mx-muted">Your instructor turned adaptive recommendations off for this class; anything they asked for still shows here.</p>{% endif %}
+  {% set s = mastery_path.steps[0] %}
   <ol class="mx-steps">
-    {% for s in mastery_path.steps %}
-    <li class="mx-step mx-step-{{ s.kind }}{% if loop.first %} current{% endif %}{% if s.required %} mx-step-req{% endif %}">
+    <li class="mx-step mx-step-{{ s.kind }} current{% if s.required %} mx-step-req{% endif %}">
       <span class="mx-step-icon" aria-hidden="true"><i class="bi {{ icon_for(s.kind) }}"></i></span>
       <div class="mx-step-body">
         <div class="mx-step-title">{{ s.title }}{% if s.required %} <span class="mx-badge mx-badge-req">Required</span>{% elif s.optional %} <span class="mx-badge">Optional</span>{% elif s.kind in ('review', 'alt_review', 'misconception') %} <span class="mx-badge">Inserted before your next lesson</span>{% endif %}</div>
         <div class="mx-step-detail">{{ s.detail }}</div>
         {% if s.why %}{{ why(s.why, section_id=mp_sid) }}{% endif %}
       </div>
-      <a class="btn btn-sm {{ 'btn-brand' if loop.first else 'btn-outline-navy' }} mx-step-go" href="{{ s.url }}">{{ 'Start' if s.kind != 'lesson' else 'Open' }}<span class="visually-hidden">: {{ s.title }}</span></a>
+      <a class="btn btn-sm btn-brand mx-step-go" href="{{ s.url }}">{{ 'Start' if s.kind != 'lesson' else 'Open' }}<span class="visually-hidden">: {{ s.title }}</span></a>
     </li>
-    {% endfor %}
   </ol>
+  {% if more_steps %}
+  <details class="mx-more-steps mt-2 small">
+    <summary class="fw-semibold u-pointer">Show {{ more_steps|length }} more recommended review step{{ 's' if more_steps|length != 1 }} ▾</summary>
+    <ol class="mx-steps mt-2" start="2">
+      {% for s in more_steps %}
+      <li class="mx-step mx-step-{{ s.kind }}{% if s.required %} mx-step-req{% endif %}">
+        <span class="mx-step-icon" aria-hidden="true"><i class="bi {{ icon_for(s.kind) }}"></i></span>
+        <div class="mx-step-body">
+          <div class="mx-step-title">{{ s.title }}{% if s.required %} <span class="mx-badge mx-badge-req">Required</span>{% elif s.optional %} <span class="mx-badge">Optional</span>{% elif s.kind in ('review', 'alt_review', 'misconception') %} <span class="mx-badge">Inserted before your next lesson</span>{% endif %}</div>
+          <div class="mx-step-detail">{{ s.detail }}</div>
+          {% if s.why %}{{ why(s.why, section_id=mp_sid) }}{% endif %}
+        </div>
+        <a class="btn btn-sm btn-outline-navy mx-step-go" href="{{ s.url }}">{{ 'Start' if s.kind != 'lesson' else 'Open' }}<span class="visually-hidden">: {{ s.title }}</span></a>
+      </li>
+      {% endfor %}
+    </ol>
+  </details>
+  {% endif %}
   {% if mastery_path.stuck %}
   <p class="small mt-2 mb-0">You have done two reviews on {{ mastery_path.stuck|length }} objective{{ 's' if mastery_path.stuck|length > 1 }}. That is normal for hard topics; your instructor can see it too. <a href="{{ url_for('messages_new') }}">Message your instructor</a></p>
   {% endif %}
-  {% if mp_sid %}<p class="small mt-2 mb-0"><a href="{{ url_for('mastery_student', section_id=mp_sid) }}">My mastery by objective</a></p>{% endif %}
 </section>
 {% endif %}

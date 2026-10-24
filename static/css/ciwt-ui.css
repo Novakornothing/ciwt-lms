@@ -1055,3 +1055,52 @@ details.action-more-menu[open] > summary::after { transform: rotate(180deg); }
   .action-more-panel { position: static; width: 100%; margin-top: .35rem; box-shadow: none; }
   .ladder-intro, .ladder-topstatus { font-size: .82rem !important; padding: .45rem .65rem !important; margin-bottom: .5rem !important; }
 }
+
+/* ---- Pass 16 v2: Ultra-clean above-the-fold spacing on Student Section, Lesson, Home, and Instructor Section ---- */
+.lesson-hero { padding: .6rem 1rem !important; border-radius: 12px !important; }
+.lesson-hero h1, .lesson-hero .h4 { font-size: 1.15rem; line-height: 1.25; }
+.lesson-meta-strip { display: flex; flex-wrap: wrap; gap: .15rem .75rem; align-items: center; justify-content: space-between; padding: .28rem .65rem; border: 1px solid var(--surface-3); border-radius: 8px; background: var(--info-bg); }
+.lesson-meta-strip .ladder-topstatus { border: 0 !important; padding: 0 !important; margin: 0 !important; font-size: .8rem; background: transparent !important; }
+.lesson-meta-strip .ladder-topstatus a, .lesson-meta-strip .ladder-intro a { color: #0a4c6b; font-weight: 600; }
+[data-theme="dark"] .lesson-meta-strip .ladder-topstatus a, [data-theme="dark"] .lesson-meta-strip .ladder-intro a { color: #9fdcff; }
+.lesson-meta-strip .ladder-intro { border: 0 !important; padding: 0 !important; margin: 0 !important; font-size: .8rem; background: transparent !important; }
+.mx-path .mx-step { padding: .45rem .65rem; gap: .15rem .6rem; }
+.mx-path .mx-step .mx-why { margin-top: .25rem; }
+.mx-path .mx-step .mx-why > summary { min-height: 32px; padding: .2rem .55rem; font-size: .82rem; }
+.mx-more-steps > summary { list-style: none; display: inline-flex; align-items: center; gap: .3rem; color: #0a58ca; padding: .15rem 0; }
+.mx-more-steps > summary::-webkit-details-marker { display: none; }
+[data-theme="dark"] .mx-more-steps > summary { color: #7adcff; }
+@media (max-width: 575.98px) {
+  .lesson-hero { padding: .45rem .7rem !important; }
+  .lesson-hero .u-eyebrow { font-size: .64rem; margin-bottom: 0 !important; }
+  .lesson-hero .h4 { font-size: .98rem; }
+  .lesson-hero .lesson-hero-links { font-size: .72rem; margin-top: .1rem !important; }
+  .lesson-hero .btn-sm { min-height: 32px; padding: .15rem .45rem; font-size: .75rem; }
+  .narrate-bar.card-header { padding: .25rem .6rem !important; gap: .25rem !important; }
+  .narrate-bar.card-header .btn-sm { min-height: 30px; font-size: .74rem; padding: .1rem .4rem !important; }
+  .lesson-meta-strip { gap: .15rem .5rem; padding: .22rem .5rem; }
+  .lesson-meta-strip .ladder-topstatus, .lesson-meta-strip .ladder-intro { font-size: .73rem !important; padding: 0 !important; line-height: 1.2; }
+  .lesson-hero .lesson-hero-btns .btn { flex: 0 0 auto !important; }
+  .class-head { gap: .35rem; margin-bottom: .45rem !important; }
+  .class-head h1.h3 { font-size: 1.05rem; margin-bottom: .05rem !important; }
+  .class-head p.text-muted { font-size: .74rem; }
+  .class-progress { margin-top: .2rem; font-size: .74rem; }
+  .class-head-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem; width: 100%; }
+  .class-head-actions .btn, .class-head-actions summary.btn { min-height: 34px; padding: .2rem .4rem; font-size: .76rem; width: 100%; }
+  .class-head-actions details.action-more-menu { grid-column: 1 / -1; }
+  details.intro-card > summary { min-height: 34px !important; padding: .3rem .65rem !important; }
+  details.intro-card #introH { font-size: .82rem; }
+  details.intro-card #introH span { display: none; }
+  .gold-path { margin-bottom: .5rem !important; }
+  .gold-path .card-header { padding: .3rem .65rem !important; font-size: .8rem; }
+  .gold-path .card-body { padding: .4rem .6rem !important; }
+  .mx-path .mx-path-h { font-size: .84rem; }
+  .mx-path .mx-demo-note { display: none; }
+  .mx-path .mx-step { grid-template-columns: 1.8rem 1fr auto; padding: .35rem .5rem; gap: .15rem .45rem; align-items: center; }
+  .mx-path .mx-step-icon { width: 1.8rem; height: 1.8rem; font-size: .95rem; }
+  .mx-path .mx-step-title { font-size: .82rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .mx-path .mx-step-detail { font-size: .72rem; }
+  .mx-path .mx-step > .mx-step-go { grid-column: 3; justify-self: end; min-height: 32px; padding: .15rem .5rem; font-size: .76rem; }
+  .mx-path .mx-step .mx-why > summary { min-height: 26px; padding: .1rem .4rem; font-size: .74rem; }
+  .gp-checklist-disclosure > summary { min-height: 26px; font-size: .75rem; }
+}
