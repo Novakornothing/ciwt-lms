@@ -117,6 +117,7 @@ _default_db = os.path.join(_base, 'ciwt_lms.db')
 
 
 def real_db_allowed(env=os.environ, as_main=False):
+    import sys
     """Pass 13 DB guard. Importing this module runs init_db() (create_all, migrations, curriculum sync), which
     rewrites the database. Without DATABASE_URL that would be the real ciwt_lms.db, so a script or test that merely
     imports app could change it by accident. Allowed only when DATABASE_URL is set, CIWT_ALLOW_REAL_DB=1 is set
