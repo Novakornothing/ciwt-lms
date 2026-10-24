@@ -197,10 +197,26 @@
   });
 
   // ------------------------------------------------------------ option strikethrough (eliminator)
-  function strike(opt) {
-    var on = opt.classList.toggle('es-struck');
+  // strike-outs survive a reload: kept per sitting in sessionStorage, keyed by question number + option text
+  // (option text, not position, so the per-sitting shuffle can never point a strike at the wrong option)
+  var strikeKey = 'esStrike:' + root.dataset.attempt, struck = {};
+  try { struck = JSON.parse(sessionStorage.getItem(strikeKey) || '{}') || {}; } catch (e) { struck = {}; }
+  function optKey(opt) {
+    var inp = opt.querySelector('input'); return inp ? inp.name + '|' + inp.value : null;
+  }
+  function setStruck(opt, on) {
+    opt.classList.toggle('es-struck', on);
     var b = opt.querySelector('.es-strike');
     if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  Array.prototype.forEach.call(form.querySelectorAll('.es-opt'), function (opt) {
+    var k = optKey(opt); if (k && struck[k]) setStruck(opt, true);
+  });
+  function strike(opt) {
+    var on = !opt.classList.contains('es-struck'), k = optKey(opt);
+    setStruck(opt, on);
+    if (k) { if (on) struck[k] = 1; else delete struck[k]; }
+    try { sessionStorage.setItem(strikeKey, JSON.stringify(struck)); } catch (e) { /* private mode */ }
   }
   form.addEventListener('click', function (e) {
     var b = e.target.closest('.es-strike');

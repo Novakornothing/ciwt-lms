@@ -668,6 +668,8 @@ def register(app, db, deps):
         if not can_grade(sec):
             abort(403)
         _rows, latest = latest_rows(sec)
+        enrolled = {e.user_id for e in Enrollment.query.filter_by(section_id=sec.id).all()}
+        latest = {k: r for k, r in latest.items() if k[0] in enrolled}     # dropped students are not synced
         now = _naive(utcnow())
         by_exam = {}
         for (uid, ex), r in latest.items():

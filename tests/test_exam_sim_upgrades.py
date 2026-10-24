@@ -558,3 +558,33 @@ def test_speed_drill_keyboard_and_live_regions(student):
     js = open('static/js/speed_drill.js').read()
     assert "if (!running) return;      // the Blitz clock" in js and "'keydown'" in js
     assert 'speed-drill' in student.get('/student/section/1').get_data(as_text=True)
+
+
+# ------------------------------------------------------------------ pre-push fixes
+def test_sync_skips_students_no_longer_enrolled(student, instructor, app, mod):
+    aid = _start(student, 'N', 'sprint')
+    items, _a = _att(app, mod, aid)
+    student.post(f'{BASE}/{aid}', data=_form_for(items, 15))
+    uid = _user_id(app, mod, 'student1@lms.local')
+    G = app.extensions['ciwt_exam_sim'].Grade
+    with app.app_context():
+        e = mod.Enrollment.query.filter_by(section_id=1, user_id=uid).first()
+        G.query.filter_by(section_id=1, user_id=uid).delete()
+        mod.db.session.delete(e)
+        mod.db.session.commit()
+    try:
+        instructor.post('/instructor/section/1/exam-sim/sync-gradebook')
+        with app.app_context():
+            assert G.query.filter_by(section_id=1, user_id=uid).count() == 0
+    finally:
+        with app.app_context():
+            mod.db.session.add(mod.Enrollment(section_id=1, user_id=uid))
+            mod.db.session.commit()
+
+
+def test_strikeouts_persist_by_option_text_and_hint_matches_keys(student):
+    js = open('static/js/exam_sim.js').read()
+    assert "'esStrike:' + root.dataset.attempt" in js and "inp.name + '|' + inp.value" in js
+    aid = _start(student, 'N', 'sprint')
+    html = student.get(f'{BASE}/{aid}').get_data(as_text=True)
+    assert '<kbd>1</kbd>–<kbd>6</kbd> Select' in html

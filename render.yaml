@@ -6,10 +6,10 @@ services:
     runtime: python
     plan: starter                 # any paid instance type; disks require a paid plan
     region: virginia
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && bash tools/fetch_v86.sh
     startCommand: >-
       mkdir -p /var/data/ciwt/instance /var/data/ciwt/backups &&
-      ([ -f /var/data/ciwt/ciwt_lms.db ] || cp ciwt_lms.db /var/data/ciwt/ciwt_lms.db) &&
+      ([ -f /var/data/ciwt/ciwt_lms.db ] || [ ! -f ciwt_lms.db ] || cp ciwt_lms.db /var/data/ciwt/ciwt_lms.db) &&
       gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120
     healthCheckPath: /healthz
     disk:

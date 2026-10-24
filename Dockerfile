@@ -9,10 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     CIWT_SQLITE_WAL=1 \
     PORT=8000
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client curl ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
+RUN bash tools/fetch_v86.sh     # in-browser VM emulator files (gitignored, pinned + sha256-checked)
 RUN useradd --system --uid 10001 --home /app ciwt && mkdir -p /var/data/ciwt && chown -R ciwt /var/data/ciwt /app
 USER ciwt
 VOLUME ["/var/data/ciwt"]
