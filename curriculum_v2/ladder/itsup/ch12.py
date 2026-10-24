@@ -22,6 +22,16 @@ OSI = 'Open Source Initiative — The Open Source Definition and approved licens
 CISA_BK = 'CISA — “Back Up Business Data” (3-2-1 rule, test restores)'
 
 MISCONCEPTIONS = {
+    'MC-L-IT12-CUSTODY-HANDOVER': {
+        'obj': 'IT-12.2', 'label': 'Treating found evidence as something to copy, reuse or tidy rather than preserve and hand over',
+        'fix': 'Stop, report and preserve: evidence is imaged through a write blocker, hashed, and signed for at every hand-over '
+               '(chain of custody) so its integrity can be proven.',
+        'terms': ['chain of custody', 'evidence', 'write blocker', 'hash'], 'source': L122 + '; ' + FORENS, 'review': 'Pending SME review'},
+    'MC-L-IT12-EVIDENCE-TERMS': {
+        'obj': 'IT-12.2', 'label': 'Mixing up chain of custody, order of volatility and data retention',
+        'fix': 'Chain of custody records who held the evidence and when; order of volatility decides what to collect first; '
+               'retention is how long records are kept.',
+        'terms': ['chain of custody', 'order of volatility', 'retention'], 'source': L122 + '; ' + FORENS, 'review': 'Pending SME review'},
     'MC-L-IT12-QUICK-NOT-CHANGE': {
         'obj': 'IT-12.1', 'label': 'Thinking a change that takes two minutes does not need the change process',
         'fix': 'Duration does not decide it: firmware, DNS, an image or an AP password is a change however quick it is.',
@@ -50,7 +60,7 @@ ACCNEED, HOLDPD = 'MC-R5-IT12-ACCESS-NEED', 'MC-R5-IT12-HOLD-PERSONAL-DATA'
 SAMEPROT, ASKLATE, UNTESTED, OVERSIZE = 'MC-IT12-ALL-SAME-PROTECTION', 'MC-IT12-BACKUP-ASK-LATE', 'MC-R3-IT12-BACKUP-UNTESTED', 'MC-R3-IT12-OVERSIZED-RESTORE'
 BTYPES, C321, RPO = 'MC-C-IT12-BACKUP-TYPES', 'MC-R4-IT12-321-COUNTS', 'MC-R5-IT12-RPO'
 ASSETD, KBC, RUNBK = 'MC-R5-IT12-ASSET-DISPOSAL', 'MC-R5-IT12-KB-CONTENT', 'MC-R5-IT12-RUNBOOK'
-CUSTODY, VOLAT = 'MC-R5-IT10-CUSTODY', 'MC-IT10-VOLATILITY-ORDER'
+CUSTODY, VOLAT = 'MC-L-IT12-CUSTODY-HANDOVER', 'MC-L-IT12-EVIDENCE-TERMS'
 QUICK, UNDO, AITRUST, AIDATA, DOMAIN = ('MC-L-IT12-QUICK-NOT-CHANGE', 'MC-L-IT12-UNDO-AFTER', 'MC-L-IT12-AI-TRUST',
                                         'MC-L-IT12-PUBLIC-AI-DATA', 'MC-L-IT12-DOMAIN-LATER')
 
@@ -499,7 +509,7 @@ Never put personal data into a public tool.</p>''',
                   L122 + '; ' + NISTAI,
                   [check('Why might a public AI tool be wrong for a customer spreadsheet?',
                          'It may keep prompts and is not approved for that data',
-                         ['Public tools cannot open spreadsheets at all', 'Customer data makes the AI answer too slowly'],
+                         ['Public tools cannot open spreadsheet files at all', 'Customer data makes the AI answer too slowly'],
                          'Depending on the provider’s terms, prompts may be retained or used for training, and the organisation has '
                          'not approved the tool for personal data. Use the approved enterprise assistant.', mc=[AIDATA, AIDATA])]),
             analogy('''<p>Think of a very confident new intern.</p>
@@ -568,7 +578,7 @@ warranty terms, just as a personal licence does at work.</p>''',
                            'Chain of custody',
                            ['Order of volatility', 'Data retention'],
                            'Chain of custody records who held the evidence, when and why, from collection onward. Order of volatility '
-                           'is about what to collect first; retention is how long records are kept.', mc=[CUSTODY, VOLAT])]),
+                           'is about what to collect first; retention is how long records are kept.', mc=[VOLAT, VOLAT])]),
             visual(_FIND + '''
 <ol class="ladder-trace">
 <li>Recovering files, a technician sees images that appear to be prohibited content.</li>
@@ -702,7 +712,7 @@ version and the permissions.</p>''',
                   L123,
                   [check('A user deleted one folder this afternoon. Which recovery is in proportion?',
                          'Restore that folder from the latest good backup',
-                         ['Rebuild the whole RAID array from parity', 'Bare-metal restore of the entire server'],
+                         ['Rebuild the whole RAID array from parity data', 'Bare-metal restore of the entire server'],
                          'One deleted folder needs one targeted restore. A RAID rebuild cannot bring back a deletion, and a bare-metal '
                          'restore would roll back everyone else’s work.', mc=[OVERSIZE, OVERSIZE])],
                   widget=sort('What protects against what?',
@@ -717,7 +727,7 @@ version and the permissions.</p>''',
             'Core content', 'IT-12.4',
             [check('What changes in the old PC’s asset record at the end of the replacement capstone?',
                    'Status becomes disposed, with the sanitisation reference',
-                   ['The record is deleted because the PC is gone', 'Nothing changes until the next yearly audit'],
+                   ['The record is deleted, because the PC no longer exists', 'Nothing changes until the next yearly asset audit'],
                    'Asset records track a device through disposal: status “disposed”, the date and the sanitisation record '
                    'reference. Deleting the record loses the evidence that the data was destroyed.', mc=[ASSETD, ASSETD])],
             plain('''<p>Good notes turn one person’s fix into the whole team’s knowledge. Three kinds matter.</p>
@@ -759,7 +769,7 @@ it was thrown out (the asset register) stops the same pan being “found” twic
                   L124,
                   [check('What makes a runbook usable by another technician?',
                          'Prerequisites, numbered steps, expected results and rollback',
-                         ['A summary paragraph and the author’s name', 'A list of every ticket the author has closed'],
+                         ['A summary paragraph, the author’s name and the review date', 'A list of every ticket the author closed with it'],
                          'Runbooks need purpose, prerequisites and permissions, numbered steps, expected results, rollback and a '
                          'contact. A summary or authorship details do not let someone else run it.', mc=[RUNBK, RUNBK])],
                   widget=sort('Which document holds it?',
@@ -855,7 +865,7 @@ you to read the story, say the domain, and only then reach for the tools.</p>'''
                    L124 + ' (the drill’s two stories, as a scored trace)',
                    [check('A student opens a DNS lab for the tenant mail story. Why is that the miss?',
                           'Good ipconfig and a tenant-wide outage point to SaaS',
-                          ['DNS labs are only for the hardware story', 'The student should have rebooted first'],
+                          ['DNS labs only apply to the hardware story', 'The student should have rebooted the user’s PC first'],
                           'The evidence already shows the client network works and everyone is affected, so the domain is the cloud '
                           'service. A DNS lab chases a domain the evidence ruled out.', mc=[DOMAIN, None])]),
             tryit('''<p>Pick the domain for each story before you reveal the answer — that is the drill.</p>''',

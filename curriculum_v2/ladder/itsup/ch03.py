@@ -72,9 +72,7 @@ LESSONS = {
             ('Windows will not start and firmware shows no disk. Which story?', 'Disk story', 'Lost-file story only', 'Printer driver story',
              'No disk in firmware means the OS cannot load; that is a storage fault.', LOST, None),
         ],
-            P('Every document, photo and even Windows itself is a file, and files sit on a drive when the computer is off. Memory forgets '
-              'everything at shutdown, so if the drive with Windows is missing or broken the machine cannot start, however good the processor is. '
-              'But a person saying they lost a document usually means it was deleted or saved elsewhere, not that the drive failed.'),
+            P('Every document, photo and even Windows itself is a file. Files sit on a drive when the computer is off. Memory forgets everything at shutdown. So if the Windows drive is missing or broken, the machine cannot start. A good processor does not help. But “I lost a document” usually means it was deleted or saved elsewhere. It rarely means the drive failed.'),
             P('Picture a library. The shelves hold every book overnight; that is storage. The reading desk is where you spread books out while '
               'you work, and it is cleared at closing time; that is RAM. If the shelves collapse, nobody can borrow anything. But if one reader '
               'cannot find a book, you first check whether it was returned to the wrong shelf or thrown away, not rebuild the shelving.'),
@@ -120,9 +118,7 @@ LESSONS = {
             ('Which step comes last?', 'Imaging', 'Checking the firmware disk list', 'Reading list disk handles',
              'Imaging comes only after every detection step agrees.', IMG, None),
         ],
-            P('Before you put an image on a drive, prove three times that the computer can see it. First the setup screen, then Windows About or '
-              'Disk Management, then the list disk command with its numbered handles. If the setup screen does not show the new stick, stop: push '
-              'it back in, look at the notch and try the other slot. Writing to a drive you have not confirmed is how the wrong one gets erased.'),
+            P('Before you put an image on a drive, prove three times that the computer can see it. Check the setup screen first. Then check Windows About or Disk Management. Then run list disk and read its numbered handles. If the setup screen does not show the new stick, stop. Push it back in, look at the notch and try the other slot. Writing to a drive you have not confirmed is how the wrong one gets erased.'),
             P('A courier checks the house number, the street and the postcode before leaving a parcel. If any one does not match, the van does not '
               'unload; the driver rings the office. Imaging is a delivery that cannot be taken back. Firmware, Windows and list disk are the three '
               'parts of the address. When they all agree on which drive is which, you deliver. When one is missing, you call it in.'),
@@ -287,9 +283,8 @@ LESSONS = {
             ('First step before removing the PSU?', 'Unplug and wait', 'Remove the board screws', 'Pull the 24-pin while running',
              'Unplug from the wall and wait before touching cables.', OPEN, None),
         ],
-            P('The power supply turns wall current into the low voltages the parts use, and its capacitors can stay charged after you unplug it. So '
-              'in this course it is a sealed part: you never open it. Unplug at the wall, wait, then unplug the cables from the board. Fit a tested '
-              'unit with at least the same wattage and the same plugs, and send the old one for recycling the way the shop says.'),
+            P('The power supply turns wall current into the low voltages the parts use. Its capacitors can stay charged after you unplug it. So '
+              'in this course it is a sealed part: you never open it. Unplug at the wall, wait, then unplug the cables from the board. Fit a tested unit with at least the same wattage and plugs. Recycle the old one the way the shop says.'),
             P('Think of the sealed meter box on the side of a house. If it fails you do not prise the lid off with a screwdriver: the power company '
               'swaps the whole box for one that works. A desktop power supply is the same kind of box. It goes in whole and comes out whole, and '
               'nothing about the job needs a peek inside, because what is inside can hurt you even after the plug is out.'),
@@ -332,8 +327,7 @@ LESSONS = {
             ('A server has two hot-swappable PSUs. They are…', 'Redundant', 'Modular cables', 'Auto-ranging only',
              'Redundant supplies can each run the server alone and be swapped live.', EFF, None),
         ],
-            P('To pick a power supply, check it accepts your mains voltage (most are auto-ranging, old ones have a switch), that it has the plugs '
-              'you need (24-pin, CPU EPS, PCIe for graphics, SATA power), and that its wattage covers the parts with room to spare. The 80 PLUS badge '
+            P('To pick a power supply, first check it accepts your mains voltage. Most are auto-ranging; old ones have a switch. Next check the plugs: 24-pin, CPU EPS, PCIe for graphics and SATA power. Then check the wattage covers the parts with room to spare. The 80 PLUS badge '
               'only rates efficiency. Modular units let you fit just the cables you use, and servers may run two redundant supplies.'),
             P('Choosing a supply is like booking a caterer. You check they work in your country, bring the right dishes for every guest, and can '
               'feed more people than you invited in case extras turn up. A gold star for a tidy kitchen tells you how little food they waste, not '
@@ -370,7 +364,7 @@ LESSONS = {
         '2-connectors': X('2. Connectors', 'IT-3.4', S4, [
             ('A monitor stays dark on a laptop USB-C port. Possible cause?', 'Port lacks video', 'USB-C never carries video', 'The laptop needs a new board',
              'Only ports wired for DisplayPort Alt Mode or Thunderbolt carry video.', USBC, USBC),
-            ('Which carry video and audio?', 'HDMI and DisplayPort', 'SATA and Molex', 'RJ45 and RJ11',
+            ('Which carry video and audio?', 'HDMI and DisplayPort', 'SATA and Molex', 'RJ45 and RJ11 jacks',
              'HDMI and DisplayPort carry both picture and sound.', USBC, None),
             ('In the tap story, why does the cable matter?', 'It limits the flow', 'Cables are only decoration', 'Every cable is identical',
              'A charge-only or USB 2.0 cable blocks video even on a good port.', USBC, None),
@@ -485,16 +479,14 @@ LESSONS = {
              'A colleague must know whether to reseat, swap or stop.', VAGUE, VAGUE),
             ('Which action fails the capstone?', 'Cleaning a disk', 'Reseating RAM', 'Swapping a cable',
              'Destructive disk commands and opening a PSU are out of bounds.', VAGUE, None),
-            ('In the recipe story, what makes it usable?', 'Steps someone can follow', 'A nice photo', 'A long title',
+            ('In the recipe story, what makes it usable?', 'Steps someone can follow', 'A photo of the dish', 'A list of ingredients',
              'A note, like a recipe, must let someone else repeat it.', VAGUE, None),
             ('Reseat RAM, swap PSU, reimage in one hour. Problem?', 'Unknown fix', 'Too slow', 'Nothing wrong',
              'Three changes at once hide which one worked.', SHOT, None),
             ('The note should read like…', 'Ticket B from 1.3', 'A sales brochure', 'A chat message',
              'The capstone note follows the Ticket B shape.', VAGUE, None),
         ],
-            P('The capstone is judged by whether another technician could pick up your note and know exactly what to do next: reseat memory, swap a '
-              'cable, or stop and call facilities. You must not have wiped a disk or opened a power supply. And if you changed several things in '
-              'one go, the note cannot say what worked, so it fails even if the computer now behaves.'),
+            P('The capstone asks one question. Could another technician read your note and know exactly what to do next? That might be reseat memory, swap a cable, or stop and call facilities. You must not have wiped a disk or opened a power supply. Did you change several things in one go? Then the note cannot say what worked. It fails even if the computer now behaves.'),
             P('A recipe passes if a stranger can cook the dish from it. “Add stuff and bake until done” fails, however good your own cake was. A '
               'recipe that says how much flour, what temperature and how long, and what to check before taking it out, passes. Your note is the '
               'recipe for this ticket: each step, what happened, and what to try next.'),

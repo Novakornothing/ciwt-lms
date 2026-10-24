@@ -114,8 +114,8 @@ goes). Some were set up by the manager (<strong>static</strong>). Others are lea
 other companies (<strong>BGP</strong>). If two sources offer the same bin, the sorter believes the source it trusts more.</p>''',
                     L.format('3.1') + ' (postcode analogy written for this rung); ' + RT,
                     [check('In the depot story, two sources both offer the same “SW1” bin. How does a Cisco router choose between them?',
-                           'Lower administrative distance first, then lower metric', ['Whichever route it learned most recently',
-                            'The dynamic one, because it adapts to failures'],
+                           'Lower administrative distance first, then lower metric', ['Whichever route it learned most recently wins',
+                            'The dynamic one, because it adapts to link failures'],
                            'Same prefix means the router prefers the more trusted source (connected 0, static 1, OSPF 110), then '
                            'the better metric. Being dynamic or recent does not win on its own.', mc=[AD, AD])]),
             visual(svg(560, 150, 'Longest-prefix match: 10.20.30.9 matches 10.0.0.0/8, 10.20.0.0/16 and 10.20.30.0/24; the /24 wins',
@@ -135,7 +135,7 @@ other companies (<strong>BGP</strong>). If two sources offer the same bin, the s
                           'trace that stops for good shows a break.', mc=[STARS, STARS])]),
             tryit('<p>Read the routing table on the lab router and say which route each test address will use.</p>', L.format('3.1') + '; RFC 1812',
                   [check('What do VRRP and HSRP give hosts?', 'A shared virtual gateway that survives a router failure',
-                         ['More bandwidth by bonding two uplinks together', 'Loop prevention between two access switches'],
+                         ['More bandwidth by bonding the two router uplinks', 'Loop prevention between two access switches'],
                          'First-hop redundancy lets two routers share a virtual gateway IP so the standby takes over. Bonding '
                          'links is aggregation, and loop prevention is Spanning Tree.', mc=[FHRP, FHRP])],
                   widget=reveal('Routes: 10.0.0.0/8 via A, 10.20.0.0/16 via B, 0.0.0.0/0 via ISP. Where do 10.20.7.1, 10.9.9.9 and 8.8.8.8 go?',
@@ -148,7 +148,7 @@ other companies (<strong>BGP</strong>). If two sources offer the same bin, the s
             'Core content', 'NO-3.2',
             [check('Your edge router’s WAN interface is up but cannot ping the provider gateway. What do you do first?',
                    'Prove your side to the demarc, then ticket with that evidence', ['Open the ISP ticket at once and wait for their reply',
-                    'Swap the edge router for a spare and see if it helps'],
+                    'Swap the edge router for a spare and see if it comes up'],
                    'The lesson says to check your interface errors, addressing and cabling up to the demarc first. A bare ticket '
                    'wastes time, and swapping hardware skips the evidence.', mc=[DEM, THIN])],
             plain('''<p>A WAN joins your site to the Internet or to other sites.</p>
@@ -406,7 +406,7 @@ _DATA = {
         status='The office internet is down because of the provider’s line. We have raised a ticket with full evidence; next update at 08:30.',
         neg='“Router WAN interface up” shows our side is ready.',
         par='rebooting the modem, router and firewall together.',
-        good=['Modem online light amber, 07:50', 'Circuit ID ABC123 noted'], bad=['Rebooted everything', 'Called ISP, no details'],
+        good=['Modem online light amber, 07:50', 'Circuit ID ABC123 noted'], bad=['Rebooted modem and router, fine now', 'Called ISP, they will look into it'],
         plist=[('Check modem lights', 'online green', 'amber or off'),
                ('Ping WAN gateway', 'replies', 'no reply'),
                ('Check router WAN interface', 'up with traffic', 'down or no traffic'),

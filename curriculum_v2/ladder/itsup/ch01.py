@@ -154,7 +154,7 @@ perfect and still nothing gets done. That is why a technician asks which part of
             'What software is', 'IT-1.1',
             [check('A new label printer is plugged in, but Windows cannot use it. Which kind of software is most likely missing?',
                    'The driver that lets the operating system talk to that printer',
-                   ['A new operating system, because Windows cannot print', 'A new application, such as a different web browser'],
+                   ['A new operating system, because Windows cannot print', 'A newer application version, such as the latest Office build'],
                    'A driver is the small program that teaches the operating system one device. Windows already prints '
                    'to other printers, so replacing the OS is wrong, and an application does not make a device work.',
                    mc=[BLOB, DRV])],
@@ -1006,7 +1006,7 @@ be fine” and drives off, and the floor is wet by dinner.</p>
     }),
     'impact-is-a-count-plus-a-consequence': lad('Impact is a count plus a consequence', 'IT-1.1', L11, {
         'r0': C('Which impact statement meets the bar?', '“14 in Bldg 3 cannot badge; turnover in 20 min”',
-                ['“Huge problem, users are very angry”', '“High impact, please treat as urgent”'],
+                ['“Huge problem, users are very angry”', '“High impact for many users, please treat as urgent”'],
                 'Impact is a number of people plus what happens to them and when. Adjectives and “urgent” cannot be compared or checked.', [LOUD, LOUD]),
         'p': '''<p>Impact has two parts, and you need both.</p>
 <p><strong>The count</strong>: how many people cannot do the outcome, and where. <strong>The consequence</strong>: what that stops, and by when.</p>
@@ -1021,7 +1021,7 @@ there” are not ranked by volume. The dispatcher writes: how many people, what 
 building win, even though the voice was calm.</p>
 <p>Your impact line is that dispatch note. It lets the queue sort itself fairly.</p>''',
         'ac': C('Why does the calm caller in the story get the faster response?', 'More people and a bigger consequence',
-                ['They phoned first', 'They used polite language'],
+                ['They phoned the service desk first', 'They stayed calm and used polite language'],
                 'Priority follows count plus consequence. Order of calls and manners do not change who is at risk.', [FIFO, LOUD]),
         'v': svg(560, 150, 'Impact equals count plus consequence',
                  box(20, 40, 150, 60, 'Count', '14 users, Bldg 3') + text(195, 75, '+', 20, 'middle', True) +
@@ -1033,7 +1033,7 @@ building win, even though the voice was calm.</p>
                 'It names a place but not how many people or what stops. The caller’s details are useful but are not impact.', [SCOPE, None]),
         't': '<p>Add a count and a consequence to each weak impact line.</p>',
         'tc': C('Which line is a complete impact statement?', '“3 at front desk cannot print; patients waiting”',
-                ['“Front desk printer down, urgent!!”', '“Printer is broken, very bad situation”'],
+                ['“Front desk printer down, urgent!!”', '“Front desk printer broken; please come quickly”'],
                 'It has a count (3), where (front desk), and a consequence (patients waiting). The others are adjectives.', [LOUD, LOUD]),
         'w': reveal('Fix: “Wi-Fi down in the training room, big problem.”',
                     'Example: “22 trainees in Room 4 cannot join Wi-Fi; class assessment at 1000 cannot start.”'),
@@ -1074,17 +1074,11 @@ P1 = {
     '3. Body and path': '<p>Your back and feet get hurt more often than your fingers in this job. Squat down instead of folding over, hug the box to your '
         'chest, and turn with your feet rather than your waist. Heavy cabinets and big battery boxes always need a helper. Look at the floor before carrying '
         'anything, protect your eyes when snipping plastic ties, and wear proper closed shoes.</p>',
-    'Why the wall unplug matters': '<p>Think of three habits. One: the little switch on the back only tells the box to stop; the plug in the socket is what '
-        'really cuts it off, and parts inside can stay charged for a while, so pull the plug and pause. Two: the wrist band only works touching skin. '
-        'Three: if anything is bulging, smells burnt or gave someone a jolt, you step back and call for help instead of repairing.</p>',
-    'Lift, path, and the bench': '<p>Before you carry a computer anywhere, plan the trip. Look at the floor for cables and bags, decide if you need a helper, '
-        'and know which plug is the power one. Put the computer down only on the solid work table, never a seat on wheels, and keep empty packaging '
-        'underneath on the ground so the table stays clear.</p>',
-    'When safety is the ticket': '<p>Sometimes there is nothing to repair yet, because the danger itself is the problem. If someone got a jolt, something '
-        'smells scorched, or a device is too hot to touch while people keep using it, tell everyone to stop using it and call for help. In the lab that '
-        'means picking incident, choosing many if several people are affected, saying yes to escalate, and mentioning the heat in your note.</p>',
-    'Lift and path': '<p>Quick rule for moving gear: if you cannot describe your route before you pick it up, put it down and plan. Check the floor, find and '
-        'pull the power plug, grab a helper for big awkward cases, and set things on the solid table, never a chair that rolls. Corners and screen edges '
+    'Why the wall unplug matters': '<p>Think of three habits. One: the little switch on the back only tells the box to stop. The plug in the socket is what really cuts the power. Parts inside can stay charged for a while, so pull the plug and pause. Two: the wrist band only works touching skin. '
+        'Three: if anything is bulging, smells burnt or gave someone a jolt, step back. Call for help instead of repairing.</p>',
+    'Lift, path, and the bench': '<p>Before you carry a computer anywhere, plan the trip. Look at the floor for cables and bags. Decide if you need a helper. Know which plug is the power one. Put the computer down only on the solid work table, never a seat on wheels. Keep empty packaging on the ground so the table stays clear.</p>',
+    'When safety is the ticket': '<p>Sometimes there is nothing to repair yet, because the danger itself is the problem. Maybe someone got a jolt, something smells scorched, or a device is too hot to touch. Tell everyone to stop using it. Then call for help. In the lab, pick incident. Choose many if several people are affected. Say yes to escalate, and mention the heat in your note.</p>',
+    'Lift and path': '<p>Quick rule for moving gear: describe your route before you pick it up. If you cannot, put it down and plan. Check the floor. Find and pull the power plug. Grab a helper for big awkward cases. Set things on the solid table, never a chair that rolls. Corners and screen edges '
         'bite shins and fingers.</p>',
     '1. Anatomy of a usable ticket': '<p>A helpful ticket answers the questions the next person would ask you if they could. Who is stuck, and where? What '
         'were they trying to get done? What exactly did the screen say? When did it go wrong, and did anything change just before? What did you try, and '
@@ -1107,12 +1101,8 @@ P1 = {
     '1. Talk to the outcome': '<p>People want to know what this means for them, not how the network works. Skip the acronyms. Tell them what is not '
         'working, what you are doing about it, and your backup plan. During a long outage, keep checking in at times you promised, because hearing nothing '
         'makes people think nobody cares.</p>',
-    '2. Privacy on a real floor': '<p>Treat everything you see on someone’s computer as private. Keep phone conversations about tickets out of busy '
-        'hallways, close personal windows before you share or capture a screen, trim pictures down to the error, keep secrets out of writing, and only ever '
-        'test using your own login. When connected remotely, tell the person what is visible to you.</p>',
-    '3. Saying no': '<p>Part of the job is turning down requests that break the rules, like giving someone access to a folder with no sign-off, or '
-        'switching off protection so a game runs. Turning it down is not the end of helping: point them to the person who can approve it, or a safer '
-        'option. If they get angry, pass it to your supervisor rather than giving in.</p>',
+    '2. Privacy on a real floor': '<p>Treat everything you see on someone’s computer as private. Keep phone calls about tickets out of busy hallways. Close personal windows before you share or capture a screen. Crop pictures down to the error. Keep secrets out of writing. Only ever test with your own login. When connected remotely, tell the person what is visible to you.</p>',
+    '3. Saying no': '<p>Part of the job is turning down requests that break the rules. Examples: folder access with no sign-off, or switching off protection so a game runs. Saying no is not the end of helping. Point them to the person who can approve it, or to a safer option. If they get angry, pass it to your supervisor rather than giving in.</p>',
     '4. What goes in the ticket': '<p>Picture an auditor, your boss and the customer all reading your note. Keep it to what happened, when, what you '
         'checked, what you altered and what the person can now do. Leave out secrets, insults and complaints about colleagues. Tricky decisions go to a '
         'supervisor first; afterwards add one plain line about what was decided.</p>',
@@ -1131,8 +1121,7 @@ P1 = {
     'Pass bar': '<p>To finish this block you have to do the practice card yourself without being told the answers. Your written note needs to mention the '
         'warmth and say who should take over, and you must keep the device closed. Do that, and the next chapter adds names of computer parts to the same '
         'careful habits.</p>',
-    'How the live lab is scored': '<p>The lab checks each decision you type. It wants you to look at the card first, call it an incident, say many people '
-        'are hit, choose to pass it on, and write a note that mentions heat but keeps the box closed, before you hand it in. Calling it a simple repair, '
+    'How the live lab is scored': '<p>The lab checks each decision you type. Look at the card first. Call it an incident. Say many people are hit. Choose to pass it on. Write a note that mentions heat but keeps the box closed. Then hand it in. Calling it a simple repair, '
         'saying only one person, or prying it open marks you down.</p>',
     'Hour plan for 1.5': '<p>In this final session the class reads the practice card together and spots the key clues before typing. Then each person '
         'works through the lab while the teacher watches the big decisions. Anyone whose attempt bounces explains why and tries again. A ten-question '
@@ -1149,7 +1138,7 @@ LESSONS['1.1'].update({
     'desk-set-classify-these-out-loud': X('Desk set — classify these out loud', 'IT-1.1', L11, [
         ('A new hire cannot open the budget share on day one; the next desk can. Which label fits?', 'Request', 'Incident', 'Change',
          'Nothing broke: the person never had access, so it is a request for something new, not a failure of something that worked.', REQ, CHG),
-        ('What three things do you say out loud for every desk-set line?', 'Label, impact, keep-or-escalate', 'Label, hostname, password', 'Name, mood, fix time',
+        ('What three things do you say out loud for every desk-set line?', 'Label, impact, keep-or-escalate', 'Label, hostname, password', 'Name, mood, estimated fix time',
          'The drill trains the three intake decisions: what kind of work, how many and what stops, and whether you keep it.', HANDS, SEC),
         ('In the referee story, why does arguing the close calls matter more than the answer key?', 'The reasoning is the skill', 'Matching the secret key exactly', 'Referees never agree',
          'The key is a starting point; the point of the drill is defending a label with impact facts, like a referee explaining a call.', FIFO, REQ),
@@ -1202,7 +1191,7 @@ LESSONS['1.1'].update({
         order('Order an account change', ['Hear the request', 'Run the identity script', 'Decide: complete or not', 'Act or refuse', 'Write how you verified'],
               'Identity always comes before the change, and the note records the method, not the secret.')),
     'handoff-that-survives-0200': X('Handoff that survives 0200', 'IT-1.1', L11, [
-        ('Which handoff lets the night shift continue without calling you?', 'Outcome, scope, tests, changes, next', '“VPN broken, please fix”', '“Tried stuff, still bad”',
+        ('Which handoff lets the night shift continue without calling you?', 'Outcome, scope, tests, changes, next', '“VPN still broken, user unhappy, please fix”', '“Tried a few things, still failing for user”',
          'Five lines carry the work: what they cannot do, how many and where, tests with results, what you changed, and the next step.', 'MC-L-IT1-HANDOFF-NUMBER', VAGUE),
         ('Why must the handoff list what you already changed?', 'So nobody undoes or repeats it', 'To prove how hard you worked all shift', 'It is optional detail',
          'The next technician needs to know the current state; unknown changes lead to repeated work or to undoing a fix by accident.', CHGU, None),
@@ -1283,7 +1272,7 @@ LESSONS.setdefault('1.2', {}).update({
     '2-esd-without-mythology': X('2. ESD without mythology', 'IT-1.2', L12, [
         ('Can ESD damage a chip even if you feel nothing?', 'Yes, below what you can feel', 'No, you always feel a damaging one', 'Only in wet weather',
          'Damaging discharges are often far below the level a person notices, and dry air makes them more likely, not less.', ESDF, None),
-        ('Which order is right before unbagging memory?', 'Mat grounded, strap on, then unbag', 'Unbag, then find the strap', 'Strap on the box, then unbag',
+        ('Which order is right before unbagging memory?', 'Mat grounded, strap on, then unbag', 'Unbag, then clip on the wrist strap', 'Strap clipped to the box, then unbag',
          'Ground the mat, put the strap on skin and clip it, and only then take parts out of their antistatic bags.', ESDO, ESDF),
         ('In the boat-fuelling story, why ground the nozzle first?', 'So charge drains before fuel flows', 'To keep the fuel cool while pumping', 'To measure the fuel',
          'Grounding first gives static a safe path before the risky moment, just as the strap does for a board before you touch it.', ESDO, None),
@@ -1408,7 +1397,7 @@ LESSONS['1.2'].update({
          'Practising with your body makes the order automatic under stress, which is the point of each hour-plan block.', PLANB, None),
         ('Which block practises the stop sentence?', 'Shock, heat and smell stories', 'Lift and path, two-person tower', 'Pointing at the tower',
          'The 40–60 block tells shock, heat and smell stories, labels them incident and practises saying stop.', SAFE, PLANB),
-        ('The last block maps heat on a reader to ticket-intake. What must you not do?', 'Open the reader', 'Name the heat', 'Escalate',
+        ('The last block maps heat on a reader to ticket-intake. What must you not do?', 'Open the reader', 'Name the heat', 'Escalate to facilities',
          'The note names the heat and says the panel was not opened; opening a hot access-control device is out of scope.', HANDS, None),
     ],
         '<p>The 90-minute plan for 1.2 is hands-on. First you stand at a tower and point to the wall cord, the PSU switch, the strap jack and the mat ground. '
@@ -1477,11 +1466,10 @@ LESSONS['1.2'].update({
          'A swollen battery is like a bulging jar under pressure; prying it can cause fire or burns.', OPSU, PPE),
         ('In the trace, a swollen battery sends you where?', 'Stop; it is Chapter 4', 'Pry it out now', 'Puncture to release gas',
          'Swollen batteries are handled in Chapter 4 with proper procedure; in this room you stop and do not pry.', OPSU, None),
-        ('Which of these may you open in this course?', 'The PC side panel', 'The PSU case', 'A CRT shell',
+        ('Which of these may you open in this course?', 'The PC side panel', 'The PSU housing', 'A CRT monitor shell',
          'Side panels are opened with the safe order; PSUs and CRTs are sealed high-voltage items you replace or leave alone.', OPSU, None),
     ],
-        '<p>Some things stay closed. The power supply is a sealed unit you replace; you never go inside to “check a capacitor.” An old CRT monitor in a closet '
-        'is not a toy for practice, because it can hold a dangerous charge. A swollen battery belongs to Chapter 4: stop and do not pry it in this room.</p>',
+        '<p>Some things stay closed. The power supply is a sealed unit you replace. You never go inside to “check a capacitor.” An old CRT monitor in a closet is not a toy for practice. It can hold a dangerous charge. A swollen battery belongs to Chapter 4: stop and do not pry it in this room.</p>',
         '<p>If a jar of preserves in the cupboard has a bulging lid, you do not stab it with a knife to see what happens. The bulge means pressure inside, '
         'and opening it carelessly can spray you. You bin it the safe way. A swollen battery, a CRT and a power supply are bulging jars: the danger is '
         'inside and invisible. Your job is to recognise them and call for the right handling, not to satisfy curiosity.</p>',
@@ -1522,7 +1510,7 @@ LESSONS['1.2'].update({
          'Calling the path out loud makes sure it is clear and known before the heavy piece moves.', LIFT, None),
         ('Trace step 1 is “clear the floor.” What does that remove?', 'Trip hazards', 'Static charge', 'The ticket',
          'Cables, boxes and loose tiles cause trips when you cannot see your feet.', LIFT, ESDF),
-        ('When is a two-person lift needed?', 'An awkward full tower', 'Any keyboard', 'Never',
+        ('When is a two-person lift needed?', 'An awkward full tower', 'Any boxed keyboard', 'A boxed 24-inch monitor',
          'Awkward or heavy loads need a team so nobody twists or drops it.', LIFT, None),
     ],
         '<p>This is the short version for the hour. Clear the floor first. Know where the wall cord is. Use two people for an awkward full tower. Never rest '
@@ -1564,7 +1552,7 @@ LESSONS['1.2'].update({
 
 LESSONS.setdefault('1.3', {}).update({
     'why-writing-is-part-of-the-repair': X('Why writing is part of the repair', 'IT-1.3', L13, [
-        ('You fixed the PC but wrote nothing. What happens next?', 'The next person repeats or undoes it', 'Nothing; it is fixed for good', 'The user writes it up for you',
+        ('You fixed the PC but wrote nothing. What happens next?', 'The next person repeats or undoes it', 'Nothing; it is fixed for good', 'The user writes the ticket up for you',
          'Without notes the shop has no memory, so the next technician starts over or makes it worse.', VAGUE, 'MC-IT1-CLOSE-EARLY'),
         ('How does a 24-hour shop keep working across shifts?', 'Through the written record', 'Through one expert on call', 'Through memory and luck',
          'Shifts change; only the ticket carries what was done from one person to the next.', VAGUE, None),
@@ -1616,7 +1604,7 @@ LESSONS.setdefault('1.3', {}).update({
          'Labelling uncertainty lets people decide well; a guess written as a fact misleads.', VNOTE, None),
         ('In the trace, what happens if a guess is unlabelled?', 'The next tech trusts it as fact', 'Nothing changes; people re-test everything', 'The ticket closes',
          'Unlabelled guesses steer the next person down the wrong path.', VNOTE, None),
-        ('How should you write a hunch about the DC?', '“Guess: DC auth issue (untested)”', '“Cause: DC failure”', '“DC is broken”',
+        ('How should you write a hunch about the DC?', '“Guess: DC auth issue (untested)”', '“Cause: DC auth failure”', '“Root cause: DC authentication down”',
          'Marking it as a guess and untested keeps facts and ideas apart.', VNOTE, None),
     ],
         '<p>A fact is something you saw or measured, such as “Outlook shows a password prompt in a loop after the weekend patch window.” A guess is what you '
@@ -1636,7 +1624,7 @@ LESSONS.setdefault('1.3', {}).update({
          'It introduces something new that can affect others, so it is a change and follows the change process.', CHG, CHGU),
         ('Policy says no production DNS after 1500. A user asks at 1510. You…', 'Use the change process', 'Just add the record since it is quick', 'Add it and note later',
          'Policy and the change process apply even for quick changes; “just adding” is how outages start.', CHGU, CHG),
-        ('In the painting story, why is repainting a change?', 'It needs timing, warning and a way back', 'It uses paint and brushes', 'It is slow',
+        ('In the painting story, why is repainting a change?', 'It needs timing, warning and a way back', 'It changes how the room looks', 'It costs more than a quick clean-up',
          'Changes affect others and need planning and rollback, unlike swapping a bulb back to normal.', CHG, None),
         ('In the trace, reseating RAM is labelled…', 'Repair', 'Change', 'Incident',
          'Reseating returns a known-good state, so it is a repair, though it still gets notes.', CHG, None),
@@ -1664,7 +1652,7 @@ LESSONS.setdefault('1.3', {}).update({
          'A note must carry information; a one-word note is a postcard that only says hi.', VAGUE, None),
         ('In the trace, submit fails. What next?', 'Show ticket, fill missing fields', 'Submit again unchanged until it passes', 'Delete the note',
          'Failed submits mean a field is missing; show the ticket and fill classify, impact or escalate.', VAGUE, None),
-        ('Which note passes the bar?', '“Cannot send since 0700; loop; escalate”', '“Outlook bad”', '“Done”',
+        ('Which note passes the bar?', '“Cannot send since 0700; loop; escalate”', '“Outlook broken; user upset”', '“Restarted Outlook; works; closed ticket”',
          'It has the outcome, an observation and a next step; the others do not.', VAGUE, None),
     ],
         '<p>The lab will not accept a one-word note. Your note must have three parts: the outcome, one thing you observed, and a next step. For example: '
@@ -1686,7 +1674,7 @@ LESSONS.setdefault('1.3', {}).update({
          'Detail lets a stranger follow the route, like Ticket B’s evidence.', VAGUE, None),
         ('In the trace, adding a DNS record is a…', 'Change', 'Repair', 'Test',
          'It introduces something new, so it uses the change process.', CHG, CHGU),
-        ('Which line belongs in Ticket B?', '“Error 809; gateway ping fails”', '“VPN bad”', '“User annoyed”',
+        ('Which line belongs in Ticket B?', '“Error 809; gateway ping fails”', '“VPN broken for user”', '“VPN fails; user will retry later”',
          'Ticket B lists errors and test results.', VAGUE, None),
     ],
         '<p>Ticket A says “VPN broken.” The next shift learns nothing. Ticket B says: client version, error 809, local network ping works, gateway ping fails, '
@@ -1706,7 +1694,7 @@ LESSONS.setdefault('1.3', {}).update({
          'Every test becomes a pair until the habit is automatic.', VNOTE, PLANB),
         ('In the music-scales story, why repeat scales?', 'Repetition builds habit', 'Scales are fun to play', 'Teachers insist',
          'Repeating the pattern makes it automatic, like action → result drills.', PLANB, None),
-        ('What does the trace end with?', 'One full Ticket B, peer scored', 'A quiz on DNS and DHCP', 'Free time',
+        ('What does the trace end with?', 'One full Ticket B, peer scored', 'A short quiz on DNS and DHCP', 'A peer chat about tickets',
          'Each trainee writes one complete Ticket B and peers score it.', PLANB, None),
         ('Which block covers when the change process applies?', 'Repair vs change', 'Ticket A vs Ticket B', 'Peer scoring',
          'The 45–70 block uses four shop examples to decide repair or change.', CHG, None),
@@ -1744,13 +1732,13 @@ LESSONS.setdefault('1.3', {}).update({
         sort('Ticket A or B?', {'Ticket B': ['PC214, Bldg 2', 'Gateway ping 0/4', 'Next: messaging team'], 'Ticket A': ['VPN broken', 'Looks bad']},
              'Ticket B lines carry specifics; Ticket A lines are slogans.')),
     'action-result-until-it-is-boring': X('Action → result until it is boring', 'IT-1.3', L13, [
-        ('Rewrite “Checked Outlook.” Which is right?', '“Cached mode off → still loops”', '“Outlook checked, fine”', '“Looked at Outlook”',
+        ('Rewrite “Checked Outlook.” Which is right?', '“Cached mode off → still loops”', '“Outlook checked, looks fine”', '“Looked at Outlook”',
          'The right line names the action and what happened.', VNOTE, None),
-        ('Which ipconfig line is a proper result?', '“169.254.27.8, no DHCP server”', '“IP looks weird”', '“Ran ipconfig”',
+        ('Which ipconfig line is a proper result?', '“169.254.27.8, no DHCP server”', '“IP address looks weird”', '“Ran ipconfig, IP address is wrong”',
          'It records the exact address and what it means, not a feeling.', VNOTE, None),
         ('In the lab-notebook story, why write every reading?', 'Others must check it', 'To fill pages', 'Teachers count pages',
          'Scientists log action and reading so others can verify; tickets need the same.', VNOTE, None),
-        ('The trace says do ten. Why?', 'Until the habit is automatic', 'To pass time', 'Ten is required by law',
+        ('The trace says do ten. Why?', 'Until the habit is automatic', 'To fill the lab period', 'Ten is the weekly ticket quota',
          'Repetition until boring makes action → result the default.', PLANB, None),
         ('Which is wrong?', '“Looks fine.”', '“Ping 10.20.30.1 — 0/4 timeout.”', '“Cached mode off — still loops.”',
          '“Looks fine” has no action or measured result.', VNOTE, None),
@@ -1771,9 +1759,9 @@ LESSONS.setdefault('1.3', {}).update({
          'It returns a known-good state; you still document it and do not open the old unit.', CHG, OPSU),
         ('In the house story, why is a new wall different from a new bulb?', 'It alters shared structure', 'It costs more money to do', 'It is louder',
          'Changing structure affects others and needs approval, unlike restoring a part.', CHG, None),
-        ('In the trace, turning Secure Boot off temporarily is…', 'A change that must go back', 'A repair', 'Nothing to record',
+        ('In the trace, turning Secure Boot off temporarily is…', 'A change that must go back', 'A repair that stays', 'A setting not worth noting',
          'It alters security state and must be reverted, so it is a change.', CHG, CHGU),
-        ('Changing an AP admin password is a change because…', 'It is shared infrastructure', 'It is quick to do', 'It is a repair',
+        ('Changing an AP admin password is a change because…', 'It is shared infrastructure', 'It is quick and easy to do', 'It fixes a security issue',
          'Shared infrastructure changes affect others and need the process.', CHGU, None),
     ],
         '<p>Here are shop examples. Reseating RAM after a memory beep is a repair: it returns a known-good seat. Replacing a failed power supply with the same '
@@ -1880,7 +1868,7 @@ LESSONS.setdefault('1.4', {}).update({
         '<p>Write one refusal with an alternative.</p>',
         reveal('Refuse: “Just give me admin rights for this install.”', '“I can’t grant admin from here. I can install the approved version for you now, or open a request to your manager.”')),
     '4-what-goes-in-the-ticket': X('4. What goes in the ticket', 'IT-1.4', L14, [
-        ('Which belongs in the ticket?', 'Facts, times, tests, changes', 'Jokes about the user', 'The user’s raw password',
+        ('Which belongs in the ticket?', 'Facts, times, tests, changes', 'Opinions about the user’s attitude', 'The user’s password',
          'Tickets hold facts and status, never jokes or secrets.', ARGUE, SEC),
         ('Where do judgment calls go first?', 'To a lead, then a short line', 'Straight into a long rant', 'Nowhere; keep them to yourself',
          'Leads make the judgment; the ticket gets a factual line.', ARGUE, None),
@@ -1911,7 +1899,7 @@ LESSONS.setdefault('1.4', {}).update({
          'Each audience gets the information in its own form.', JARG, None),
         ('In the trace, the lead gets…', 'A judgment call, short', 'A full novel of every step', 'The user’s password',
          'The lead needs a decision request, not every detail.', JARG, SEC),
-        ('Which refusal sentence is complete?', '“I cannot reset that; here is the path”', '“No.” and then hang up quickly', '“Maybe later if you call back”',
+        ('Which refusal sentence is complete?', '“I cannot reset that; here is the path”', '“No, that is not our job.”', '“Maybe later, if you call back tomorrow”',
          'It refuses and offers the approved route.', ARGUE, URG),
     ],
         '<p>You talk to different people in different ways. The user needs the outcome, the time and what you need from them; not DHCP or APIPA. The ticket '
@@ -1924,7 +1912,7 @@ LESSONS.setdefault('1.4', {}).update({
         '<p>Write the same update for the user and for the ticket.</p>',
         reveal('Mail send fails from an account lock. User line and ticket line?', 'User: “You can’t send mail yet; the messaging team is unlocking your account, update by 1400.” Ticket: “Send fails 0x800CCC0F; account locked per AD; escalated to messaging 1320.”')),
     'hour-plan-for-1-4': X('Hour plan for 1.4', 'IT-1.4', L14, [
-        ('What is the first drill in 1.4?', 'Say the user line, write the ticket line', 'Open a PC and reseat the RAM', 'Read the policy manual silently',
+        ('What is the first drill in 1.4?', 'Say the user line, write the ticket line', 'Open a PC case and reseat the RAM sticks', 'Read the policy manual first',
          'The two-audience drill comes first to separate the channels.', PLANB, None),
         ('In the 20–40 block, the partner plays…', 'The loud caller', 'The lead technician', 'The help-desk manager',
          'Practising refusal against a loud caller builds calm under pressure.', ARGUE, PLANB),
@@ -2109,7 +2097,7 @@ LESSONS.setdefault('1.5', {}).update({
          'The class names the key facts before typing commands.', 'MC-IT1-TEST-BEFORE-INTAKE', HANDS),
         ('What does the instructor watch in 15–45?', 'Classify and impact', 'Typing speed only', 'Font choice in notes',
          'Classify and impact are the key judgment points.', PLANB, None),
-        ('In the flight-sim story, why repeat a failed landing?', 'To fix the reason and redo clean', 'Simulators are free to use', 'Pilots like landing',
+        ('In the flight-sim story, why repeat a failed landing?', 'To fix the reason and redo clean', 'Simulator time is free to use', 'To log more landings',
          'Failed submits are explained, then rerun clean.', PLANB, None),
         ('In the trace, where do chapter-check misses go?', 'Back to the matching section', 'To a new tool or a new lab', 'Nowhere; move on',
          'Misses send you back to the section that teaches it.', PLANB, None),
@@ -2127,13 +2115,13 @@ LESSONS.setdefault('1.5', {}).update({
         '<p>Order the 1.5 blocks.</p>',
         order('Hour plan 1.5', ['Read the card', 'Run ticket-intake', 'Explain and rerun failures', 'Chapter 1 check'], 'Read, do, fix, check.')),
     'the-card-line-by-line': X('The card, line by line', 'IT-1.3', L15S, [
-        ('Why is this card not break-fix?', 'Many users plus heat on access control', 'Because it happened after lunch', 'Because the reader is old',
+        ('Why is this card not break-fix?', 'Many users plus heat on access control', 'Because it happened after lunch', 'Because the reader is old hardware',
          'One broken cable is break-fix; many users plus heat is an incident.', REQ, SCOPE2),
         ('Which note fails?', 'Password in the note', 'Warm reader, panel closed', 'Facilities named as next',
          'Secrets in notes fail, as do empty notes or opening the reader.', SEC, None),
         ('In the crime-scene story, why not touch the evidence?', 'Specialists need it as found', 'It is dirty and unsafe to handle', 'It might be lost',
          'You leave the warm reader for facilities, like a scene for investigators.', HANDS, None),
-        ('In the trace, escalate yes goes to…', 'Facilities / access control / safety', 'You with a screwdriver', 'The user’s IT friend',
+        ('In the trace, escalate yes goes to…', 'Facilities / access control / safety', 'You, with a screwdriver', 'The user’s line manager, by email',
          'Escalate to the teams that own heat and access control.', HANDS, None),
         ('Which command reads before you type?', 'show ticket', 'submit', 'escalate yes',
          'show ticket reads the card first.', 'MC-IT1-TEST-BEFORE-INTAKE', None),

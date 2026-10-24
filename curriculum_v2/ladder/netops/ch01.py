@@ -238,106 +238,6 @@ and pitched a tent on the verge.</p>
         'incident-application': skip('Incident application', 'activity', _ACT),
         'standard-of-work': skip('Standard of work', 'reference', _STD),
         'practice-standard-for-this-lesson': skip('Practice standard for this lesson', 'activity', _PRA),
-        'memory-as-a-system-not-a-stick': section(
-            'Memory as a system, not a stick', 'NO-1.2',
-            [check('A workstation needs a replacement memory module. Which record lets you order the right one?',
-                   'The exact kit part number in the asset record', ['“8 GB RAM, two sticks” written in the asset record', 'The PC’s IP address and hostname from the ticket'],
-                   'Capacity alone does not say generation, speed, ECC or registered type, so the lesson asks for the exact '
-                   'part number. The IP address says nothing about memory.', mc=[RAMSZ, None])],
-            plain('''<p>Memory is more than a size in GB.</p>
-<ul><li>The <strong>generation</strong> (such as DDR4 or DDR5) must match the board.</li>
-<li><strong>Speed</strong> and how the slots are filled (<strong>channels</strong>) change performance.</li>
-<li>Server and workstation boards may need <strong>ECC</strong> or <strong>registered</strong> modules.</li>
-<li>One module may work but run slower. A mixed set may not start, or may crash.</li></ul>
-<p>To test a fault, reseat the modules, try a known-good one, and test one slot at a time. Write down the exact part number.</p>''',
-                  L.format('1.2') + '; ' + JEDEC,
-                  [check('A PC will not start after a new module was added. What is the lesson’s first kind of test?',
-                         'Reseat, then try a known-good module one slot at a time', ['Buy a larger module of any type and fit it instead',
-                          'Replace the motherboard straight away to be safe'],
-                         'Reseating and testing known-good modules in single slots isolates a bad module or slot cheaply. Buying '
-                         'bigger memory ignores compatibility, and a board swap skips isolation.', mc=[RAMSZ, None])]),
-            analogy('''<p>Think of memory modules as rowers in a team boat.</p>
-<p>One strong rower can move the boat, but slowly: that is one module in a board built for two channels. Rowers must also fit the
-boat’s seats and rhythm: a DDR5 module will not even fit a DDR4 seat, and rowers pulling at different speeds make the boat lurch,
-which is the instability mixed kits cause. Some boats, like server boards, only take a special kind of rower (ECC or registered).</p>
-<p>When the boat will not move, the coach swaps one rower at a time to find the problem, which is what testing slots one by one does.</p>''',
-                    L.format('1.2') + ' (rowing analogy written for this rung); ' + JEDEC,
-                    [check('In the rowing picture, “one strong rower in a two-seat boat” means what?',
-                           'One module on a dual-channel board: it works but runs slower',
-                           ['A failed module that stops the PC from starting at all', 'An ECC module fitted to a desktop board by mistake'],
-                           'The boat still moves, so the PC still works; it just loses dual-channel speed. A failed module would '
-                           'stop it, and ECC is a different compatibility point.', mc=[RAMSZ, None])]),
-            visual('''<ol class="ladder-trace"><li>Read the board’s memory spec: generation, maximum speed, ECC or not, registered or unbuffered.</li>
-<li>Read the installed modules’ labels and part numbers.</li>
-<li>Check the slot plan in the manual: which slots make a channel pair.</li>
-<li>For a no-POST or random crash: reseat all modules.</li>
-<li>Still failing: one known-good module in the first slot, then move it slot by slot.</li>
-<li>Record the exact part numbers in the asset record.</li></ol>''',
-                   L.format('1.2') + '; ' + JEDEC,
-                   [check('At step 5, the known-good module works in every slot but the original module fails in all of them. What does that show?',
-                          'The original module is faulty', ['One of the slots is faulty', 'The board needs ECC memory'],
-                          'The good module passing in every slot clears the slots, and the original failing everywhere isolates it. '
-                          'A bad slot would fail with the good module too.', mc=[RAMSZ, None])]),
-            tryit('<p>Sort these facts into what must match the board and what only changes performance.</p>',
-                  L.format('1.2') + '; ' + JEDEC,
-                  [check('Which detail must match the board for a module to work at all?', 'Its generation, such as DDR5',
-                         ['Its colour of heat spreader', 'Its capacity being the same as the old module'],
-                         'Generations are keyed differently and are not interchangeable. Heat-spreader colour is cosmetic, and '
-                         'capacity can usually differ.', mc=[RAMSZ, RAMSZ])],
-                  widget=sort('Must match, or affects performance?',
-                              {'Must match the board': ['Generation (DDR4 vs DDR5)', 'ECC or registered when the board requires it'],
-                               'Affects performance': ['Filling both channels', 'Module speed within the board’s range']},
-                              'Notice that a size in GB appears in neither list on its own.'))),
-        'client-addressing-in-the-real-world': section(
-            'Client addressing in the real world', 'NO-1.2',
-            [check('A PC can print to a local printer but cannot reach any website, by name or by IP. Which setting is most likely missing?',
-                   'The default gateway', ['The DNS server address', 'The subnet mask'],
-                   'Local traffic works, so address and mask are usable; nothing leaves the subnet, which is the gateway’s job. '
-                   'A missing DNS server would still let websites load by IP.', mc=[MISS, MISS])],
-            plain('''<p>A PC needs four settings to work normally on IPv4.</p>
-<ul><li><strong>Address</strong>: who it is. Without one, nothing works.</li>
-<li><strong>Mask</strong>: which other addresses are local.</li>
-<li><strong>Gateway</strong>: the way off the local network. Without it, only local things work.</li>
-<li><strong>DNS</strong>: turns names into addresses. Without it, names fail but IP addresses work.</li></ul>
-<p>Private ranges are normal inside a company. A 169.254 address means DHCP failed. Do not type a random address to “fix” it. Find out why DHCP failed.</p>''',
-                  L.format('1.2') + '; ' + ADDR,
-                  [check('Which symptom matches a missing DNS server, with everything else correct?',
-                         'Websites open by IP address but not by name', ['Only devices on the same subnet answer', 'Nothing answers at all, even the gateway'],
-                         'DNS only turns names into addresses, so IP access still works. Local-only access points to the gateway, '
-                         'and no replies at all to the address or link.', mc=[MISS, MISS])]),
-            analogy('''<p>Think of a new employee’s first day.</p>
-<p>The <strong>address</strong> is their desk number: without it, nobody can find them. The <strong>mask</strong> is the floor plan that says
-which desks are on their own floor. The <strong>gateway</strong> is the lift: without it they can talk to their floor but cannot reach
-any other. <strong>DNS</strong> is the staff directory: without it they can still visit room 4.12 if they know the number, but “the
-finance office” means nothing.</p>
-<p>A 169.254 address is like sitting at a desk you picked yourself because reception was closed. Picking someone else’s desk
-(a random static address) just causes a collision; the fix is to find out why reception (DHCP) did not answer.</p>''',
-                    L.format('1.2') + ' (first-day analogy written for this rung); RFC 3927',
-                    [check('In the first-day story, the employee can reach “room 4.12” but not “the finance office”. Which setting is missing?',
-                           'DNS', ['The gateway', 'The address'],
-                           'Reaching a room by number but not by name is names failing while addresses work, which is DNS. A '
-                           'missing gateway would stop every other floor, number or name.', mc=[MISS, MISS])]),
-            visual('''<ol class="ladder-trace"><li>Run <code>ipconfig /all</code> (Windows) or <code>ip addr</code> and <code>ip route</code> (Linux).</li>
-<li>Is the address 169.254.x.x? Then DHCP failed: check link, VLAN and DHCP. Stop.</li>
-<li>Is there a default gateway? If not: only local traffic can work.</li>
-<li>Is the mask right for the VLAN? A wrong mask makes some local hosts look remote.</li>
-<li>Are DNS servers listed? If not: names will fail while IPs work.</li>
-<li>Say the next test out loud before you change anything.</li></ol>''',
-                   L.format('1.2'),
-                   [check('At step 2 the address is 169.254.33.8. A colleague suggests typing 10.1.1.50 in. Why does the trace stop you?',
-                          'DHCP failed; a guessed static address may collide', ['APIPA addresses only need a reboot to fix themselves',
-                           'A 169.254 address is a valid company lease'],
-                          'APIPA means no lease, so the fix is the DHCP path (link, VLAN, server). A random static address hides '
-                          'the fault and may duplicate another device’s address.', mc=[RSTATIC, PRIV])]),
-            tryit('<p>Read the host settings in the lab VM and predict the user’s complaint before you test it.</p>',
-                  L.format('1.2'),
-                  [check('A PC has address, mask and DNS but no gateway. What will the user say?',
-                         '“I can reach the printer but not the internet”', ['“Websites work when I type the IP, but not by name”', '“Nothing works at all, not even the printer”'],
-                         'Without a gateway only local traffic works, so the local printer answers and the internet does not. '
-                         'Names-only failure is DNS, and total failure is no address or link.', mc=[MISS, MISS])],
-                  widget=reveal('A PC shows 192.168.5.40/24, gateway blank, DNS 192.168.5.10. What works and what fails?',
-                                'Local hosts on 192.168.5.0/24 work (including the DNS server, so local names resolve); anything off the subnet fails.'),
-                  lab={'id': 'win-ipconfig', 'note': 'Read address, mask, gateway and DNS from ipconfig /all and say which piece each symptom needs.'})),
         'beyond-the-quiz': skip('Beyond the quiz', 'activity', _BEY),
     },
     '1.3': {
@@ -414,7 +314,7 @@ sentence, and that is fine for live news, where a late sentence is useless anywa
 }
 STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladder_check.py --stamp)
     '1.1': {'core-content': '1974c29db0b7', 'layer-thinking-for-tickets': 'eed1f095dd51'},
-    '1.2': {'core-content': '11475a8149fc', 'incident-application': 'd3f24e070d61', 'standard-of-work': 'c8a9116f574c', 'practice-standard-for-this-lesson': 'ea51d9d63881', 'memory-as-a-system-not-a-stick': '784c1675e7f7', 'client-addressing-in-the-real-world': 'be040c5e9ac0', 'beyond-the-quiz': 'ed140bc59f9f'},
+    '1.2': {'core-content': '11475a8149fc', 'incident-application': 'd3f24e070d61', 'standard-of-work': 'c8a9116f574c', 'practice-standard-for-this-lesson': 'ea51d9d63881', 'beyond-the-quiz': 'ed140bc59f9f'},
     '1.3': {'core-content': '290ed663d569', 'incident-application': '5c779c531190', 'standard-of-work': 'c8a9116f574c', 'practice-standard-for-this-lesson': '46f22310809f', 'beyond-the-quiz': '350902015d6b'},
     '1.4': {'the-scenario': '2564c7ec3e2c', 'your-turn-scaffolded-checklist': '743d0fd008ce', 'common-beginner-mistakes': '570dfc754ca2', 'check-your-understanding': 'cdda2cb3f068'},
 }

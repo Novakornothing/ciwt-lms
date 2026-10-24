@@ -140,4 +140,18 @@ def install(app, db):
         why_struggling=safe(lambda section, user: why(app, db, section, user)),
         why_section=safe(section_list),
         ladder_clicked=safe(lambda uid, sid: lad().clicked(uid, sid)),
-        class_clicked=safe(lambda sid: lad().class_clicked(sid)))
+        class_clicked=safe(lambda sid: lad().class_clicked(sid)),
+        helix_optins=safe(helix_optins_for(db)))
+
+
+def helix_optins_for(db):
+    def count(section):
+        Consent, Enr, User = _model(db, 'HelixConsent'), _model(db, 'Enrollment'), _model(db, 'User')
+        if not Consent:
+            return 0
+        ids = [u.id for u in User.query.join(Enr, Enr.user_id == User.id)
+               .filter(Enr.section_id == section.id, User.role == 'student').all()]
+        if not ids:
+            return 0
+        return len({c.user_id for c in Consent.query.filter(Consent.user_id.in_(ids), Consent.revoked_at.is_(None)).all()})
+    return count

@@ -61,9 +61,7 @@ LESSONS = {
             ('Which label do you read on the laptop?', 'The chassis input rating', 'The screen size sticker on the lid', 'The keyboard layout',
              'The chassis label says what power it expects.', BRICK, None),
         ],
-            P('Every laptop expects a power adapter of a certain wattage, and a weaker brick does not just charge slower: the laptop cuts its own '
-              'speed to stay within the power it gets. Users then report a slow computer and blame Windows. Before touching software, read the '
-              'wattage on the adapter and the rating printed on the laptop, and write both numbers on the ticket.'),
+            P('Every laptop expects a power adapter of a certain wattage. A weaker brick does not just charge slower. The laptop cuts its own speed to stay within the power it gets. Users then report a slow computer and blame Windows. Before touching software, read the wattage on the adapter and on the laptop label. Write both numbers on the ticket.'),
             P('Think of filling a paddling pool and running a sprinkler from one garden tap. With a thin hose, water trickles in, the pool takes all '
               'afternoon, and the sprinkler barely turns. Nothing is broken; the hose is simply too narrow for what you asked of it. Fit the right '
               'hose and both work properly. A laptop on a small brick is that thin hose.'),
@@ -82,9 +80,7 @@ LESSONS = {
             ('A sealed battery replacement goes to…', 'Shop procedure or depot', 'Any student with a screwdriver set', 'The user at home',
              'Sealed packs are a shop or vendor-depot job.', SWELL, None),
         ],
-            P('Some laptop parts sit behind a small door or base plate, and the service guide shows how to change them: usually the SSD, sometimes '
-              'memory. Batteries fixed inside follow the shop’s process or go to the maker’s depot. A battery that has swollen is a safety stop: '
-              'do not press on it, do not charge it, and never throw it away with ordinary rubbish.'),
+            P('Some laptop parts sit behind a small door or base plate. The service guide shows how to change them. Usually that is the SSD, sometimes memory. Batteries fixed inside follow the shop’s process or go to the maker’s depot. A swollen battery is a safety stop. Do not press on it or charge it. Never throw it away with ordinary rubbish.'),
             P('A swollen battery is like an over-inflated balloon with something flammable inside. Squeezing it to fit the case back together is the '
               'worst idea, and leaving it on charge pumps more air in. You set it down somewhere safe, label it so nobody else picks it up, and hand '
               'it to whoever is trained to dispose of it.'),
@@ -173,9 +169,7 @@ LESSONS = {
             ('The Windows gui-accounts question is the same:', 'Whose account is it?', 'How fast does it run today?', 'What colour is it?',
              'Always ask whose account or enrollment you are touching.', MDM, None),
         ],
-            P('Work phones are often enrolled in device management, which lets the organisation lock or wipe them and decide which apps may be '
-              'installed. That control belongs to the owner of the enrollment, not to whoever is holding the phone. If a user needs an app that is '
-              'blocked, raise a request with that owner rather than removing the profile or resetting the phone.'),
+            P('Work phones are often enrolled in device management. It lets the organisation lock or wipe them. It also decides which apps may be installed. That control belongs to the owner of the enrollment, not to whoever is holding the phone. Does a user need a blocked app? Raise a request with that owner. Do not remove the profile or reset the phone.'),
             P('A company car comes with the company’s rules: approved fuel card, tracker fitted, no roof box without permission. A driver who wants a '
               'tow bar does not bolt one on in the car park; they ask the fleet manager. Removing the tracker to fit one would be worse. The managed '
               'phone is that company car, and the enrollment owner is the fleet manager.'),
@@ -242,9 +236,7 @@ LESSONS = {
             ('Which item names the queue?', 'Queue name', 'Desk number', 'Printer colour',
              'The queue name tells which shared printer path.', VP, None),
         ],
-            P('A useful print note answers five things: who can and cannot print, from which computer, the exact error message, the name of the '
-              'queue, and whether the printer’s screen is working. “Printer broken” says none of that and forces the next person to start again, '
-              'which is the weak Ticket A pattern from Chapter 1.'),
+            P('A useful print note answers five things. Who can and cannot print? From which computer? What is the exact error message? What is the queue called? Is the printer’s screen working? “Printer broken” says none of that. The next person must start again. That is the weak Ticket A pattern from Chapter 1.'),
             P('A doctor gets nowhere with “I feel bad.” She needs where it hurts, since when, and what makes it worse. A patient who says “sharp pain '
               'in the left knee since Tuesday, worse on stairs” is examined and treated much faster. A printer note works the same way: the more '
               'exact the symptoms, the quicker someone else can help.'),
@@ -281,18 +273,16 @@ LESSONS = {
         'portable-intake': X('Portable intake', 'IT-4.1', S4, [
             ('Laptop bulging and warm when off. Classify as…', 'Safety stop', 'Slow performance', 'Software issue',
              'A swollen battery is a safety stop with a do-not-charge tag.', ASK, SWELL),
-            ('Floor 2 cannot print. Owner of the change?', 'Print server or network owner', 'The first user’s manager', 'The laptop vendor',
+            ('Floor 2 cannot print. Owner of the change?', 'Print server or network owner', 'The first user’s manager', 'The laptop vendor’s support line',
              'Shared device, many users: the print or network owner.', ASK, None),
             ('In the relay story, what must the baton carry?', 'What to do next', 'Who ran fastest', 'The weather',
              'A note must let the next person continue without asking.', ASK, None),
             ('Phone lost work mail after an update. First evidence?', 'Compliance message', 'Battery health percentage', 'Screen size',
              'A managed device: check compliance and whether cellular works.', ASK, None),
-            ('The intake order is…', 'Classify, impact, escalate, note', 'Fix, then note', 'Note, then classify',
+            ('The intake order is…', 'Classify, impact, escalate, note', 'Fix, test, then write a note', 'Note, escalate, then classify',
              'The Chapter 1 intake structure.', ASK, None),
         ],
-            P('Portable tickets use the same intake routine as Chapter 1: decide what kind of problem it is, how many people it hits, who owns the '
-              'change, and write a note. The note must tell the next technician whether to stop for a battery, chase a driver or account policy, '
-              'or work the printer panel, without having to ask you anything.'),
+            P('Portable tickets use the same intake routine as Chapter 1. Decide what kind of problem it is. Count how many people it hits. Name who owns the change. Then write a note. The note tells the next technician what to do without asking you. Stop for a battery? Chase a driver or account policy? Work the printer panel?'),
             P('In a relay race the runner hands over the baton and keeps running nowhere; the next runner must be able to go immediately. If the '
               'baton were a note saying “sort it out,” they would stand still. Your ticket note is the baton, and it must carry exactly what the next '
               'person needs to keep running.'),

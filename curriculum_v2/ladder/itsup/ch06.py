@@ -169,12 +169,10 @@ LESSONS = {
              'Test environments can be reset to a known state.', SB, None),
             ('A Windows VM on a Mac is for…', 'Cross-platform work', 'A faster Mac boot time', 'Backups',
              'Run software for another OS.', CD, None),
-            ('An old app on an old OS in an isolated VM is…', 'Legacy support', 'A sandbox', 'SaaS',
+            ('An old app on an old OS in an isolated VM is…', 'Legacy support', 'Sandbox testing', 'Cloud migration',
              'Legacy software kept running safely.', CD, None),
         ],
-            P('People run virtual machines for a few clear reasons: a sandbox for opening a doubtful file, test and development setups that can be '
-              'reset from a snapshot, keeping an old business program alive on an old system away from the network, and running another platform’s '
-              'software, such as Windows on a Mac. To run them, the processor’s virtualization feature must be switched on in firmware, with enough RAM.'),
+            P('People run virtual machines for a few clear reasons. A sandbox lets you open a doubtful file safely. Test and development setups can be reset from a snapshot. An old business program can stay alive on an old system, away from the network. You can run another platform’s software, such as Windows on a Mac. To run them, switch on the processor’s virtualization feature in firmware. You also need enough RAM.'),
             P('A test kitchen lets cooks try risky recipes without ruining the restaurant. Make a mess and it is wiped back to clean. An old family '
               'recipe that needs an ancient oven gets its own corner where it cannot disturb anything. A virtual machine is that test kitchen: '
               'separate, resettable, and safe to experiment in.'),
@@ -189,11 +187,11 @@ LESSONS = {
              'Internal switches reach the host and other VMs only.', VS, VS),
             ('Guest gets 169.254 on a private switch. Why?', 'No DHCP there', 'DNS is broken', 'The NIC is faulty',
              'Private switches have no DHCP server; the APIPA is expected.', VS, None),
-            ('In the office-phone story, what is a private switch?', 'Room-only intercom', 'Outside line', 'Mobile phone',
+            ('In the office-phone story, what is a private switch?', 'Room-only intercom', 'An outside line', 'A shared mobile phone',
              'It only connects VMs on that switch.', VS, None),
             ('Which switch lets a VM act like a normal LAN PC?', 'External', 'Private', 'Internal',
              'External bridges to the physical network.', VS, None),
-            ('Default Switch on Windows 11 uses…', 'NAT on the host', 'A LAN lease', 'No network',
+            ('Default Switch on Windows 11 uses…', 'NAT on the host', 'A bridged LAN port', 'A VLAN trunk',
              'It works outward, but LAN devices cannot connect in.', VS, None),
         ],
             P('A virtual machine’s network card plugs into a virtual switch on the host, and the switch type decides what it can reach. External joins '
@@ -218,7 +216,7 @@ LESSONS = {
             ('Reverting needs…', 'A ticket', 'Nothing', 'A reboot only',
              'Revert only with a ticket.', SK, None),
         ],
-            P('Take a snapshot just before a change you can name, revert to it only with a ticket, and delete or merge it once the change is done. A '
+            P('Take a snapshot just before a change you can name. Revert to it only with a ticket. Delete or merge it once the change is done. A '
               'snapshot lives right next to the running disks, so it is not a copy kept somewhere safe. Old snapshot chains keep growing, fill the '
               'shared storage and make every virtual machine on it slower.'),
             P('A snapshot is a bookmark in a book you are still writing. It lets you flip back to page 40 if the next chapter goes badly. But it is '
@@ -236,15 +234,14 @@ LESSONS = {
              'Name and RAM the guest sees come first.', GF, GF),
             ('“Snapshot chain on host?” should be…', 'Labelled a guess', 'Written as a confirmed fact', 'Left out',
              'Host ideas you cannot see are guesses.', GF, None),
-            ('In the weather story, why label a forecast?', 'It is not certain', 'It is long', 'It is boring',
+            ('In the weather story, why label a forecast?', 'It is not certain', 'It may be long', 'It is from a model',
              'Facts and guesses must be told apart.', GF, None),
-            ('May you delete a host snapshot?', 'Not if not yours', 'Yes, always', 'Yes, if old',
+            ('May you delete a host snapshot?', 'Not if not yours', 'Yes, any time', 'Yes, if it is old',
              'You do not delete snapshots you do not own.', SK, None),
             ('Host RAM pressure is evidence you…', 'Ask for', 'Collect yourself', 'Ignore',
              'Host evidence comes from the host owner.', HO, None),
         ],
-            P('A slow virtual machine note starts with what you saw yourself in the guest: its name, the memory it sees, disk space and errors. '
-              'Anything about the host, like a long snapshot chain, goes in clearly marked as a guess for the host owner to check. You never delete a '
+            P('A slow virtual machine note starts with what you saw in the guest. Give its name, the memory it sees, disk space and errors. Anything about the host goes in marked as a guess. A long snapshot chain is one example. The host owner checks it. You never delete a '
               'snapshot that belongs to someone else.'),
             P('A weather report says what the thermometer reads now, and separately says “rain likely tomorrow.” Nobody confuses the two, because the '
               'forecast is labelled. Your note works the same way: measured guest facts, then clearly marked guesses about the host for the person who '

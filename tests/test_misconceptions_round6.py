@@ -109,16 +109,11 @@ def test_round5_leftovers_tagged_this_round_were_on_the_round5_list():
     assert tagged_bank == set(R6.NEWLY_TAGGED_BANK)
 
 
-def test_x_it_11_3_3_key_and_options_unchanged_stem_and_rationale_tightened():
+def test_x_it_11_3_3_resolved_in_round7():
     q = next(x for x in EXPANSION if x['bank_id'] == 'X-IT-11.3.3')
     assert q['correct'] == 'When there is no tested backup of the user’s data'
-    assert sorted(q['options']) == sorted(['When there is no tested backup of the user’s data',
-                                           'When the device is already on the standard image',
-                                           'When the fault has a known, documented vendor fix',
-                                           'When the user agrees to a time after 16:00'])
-    assert 'no documented fix exists' in q['text']          # the stem now rules the vendor-fix option out
-    assert 'would also favour repair' not in q['explanation']
-    assert 'stem rules that out' in q['explanation']
+    assert 'When the fault has a known, documented vendor fix' not in q['options']
+    assert 'no documented fix exists' in q['text'] and 'wrong next step' in q['text']
     assert q['review'] == 'Pending SME review'
 
 

@@ -108,7 +108,7 @@ VLAN versus putting a port in it. A good teacher then checks: is the student in 
 router).</p>''',
                     L.format('9.2') + ' (classroom analogy written for this rung); ' + SW,
                     [check('In the classroom story, the student is in room 20 but has room 30’s timetable. What is the network equivalent?',
-                           'Right VLAN, but an address in the wrong subnet', ['The port is shut down', 'The VLAN does not exist on the switch'],
+                           'Right VLAN, but an address in the wrong subnet', ['Right subnet, but the port is in the wrong VLAN', 'The VLAN does not exist on the switch'],
                            'The port and VLAN are right, but the PC’s address does not match that VLAN’s subnet, so check its DHCP or '
                            'static settings. A shut port or missing VLAN would fail earlier checks.', mc=[CIP, VCO])]),
             visual(svg(560, 120, 'Switch with VLAN 20 holding PC-A and VLAN 30 holding a printer; broadcasts stay inside each VLAN',
@@ -290,7 +290,7 @@ intranet</strong>).</p>''',
         'check': section(
             'Check', 'NO-9.2',
             [check('After saving, which two commands should both show the new hostname?', 'show running-config and show startup-config',
-                   ['show version and show clock', 'show ip route and show vlan brief'],
+                   ['show version and show hostname', 'show ip interface brief and show version'],
                    'running-config is the live configuration and startup-config is what loads at boot; both should match after a '
                    'save. The other commands do not show the hostname setting.', mc=[SAVE, WSHOW])],
             plain('''<p>Saving copies your live settings so they load again after a restart.</p>

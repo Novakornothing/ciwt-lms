@@ -50,6 +50,6 @@ def test_outside_sample_dispute_is_recorded_and_the_item_left_as_is():
     from curriculum_v2 import misconceptions_round5 as R5
     q = next(x for x in EXPANSION if x['bank_id'] == 'X-IT-11.3.3')
     assert q['correct'] == 'When there is no tested backup of the user’s data'
-    assert 'When the fault has a known, documented vendor fix' in q['options']
+    assert 'When the fault has a known, documented vendor fix' not in q['options']   # resolved in content round 7
     assert 'X-IT-11.3.3' in R5.UNTAGGED
     assert 'X-IT-11.3.3' in (ROOT / 'docs/readiness/SPOT_CHECK_ROUND5.md').read_text()

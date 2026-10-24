@@ -6,6 +6,17 @@
   <h1 class="h3 mb-1">What this training site stores and sends</h1>
   <p class="mb-0">A plain summary for students and staff. Your organisation’s own records policy still applies.</p>
 </div>
+<section class="card mb-3" aria-labelledby="privSummaryH"><div class="card-body">
+  <h2 class="h5" id="privSummaryH">{{ brand_mark }} privacy in plain words</h2>
+  <ul class="mb-2">
+    <li><strong>What we collect:</strong> your account (name, email, role, classes) and your learning progress: lessons, section checks, quizzes, tests and labs. Helix attention metrics are collected only if you consent.</li>
+    <li><strong>Helix is opt-in, every session.</strong> The camera is processed locally in your browser; video and images never leave your device. Only summary numbers are sent, and saying no never affects grades.</li>
+    <li><strong>Never sold.</strong> Student data is never sold or shared with third-party advertisers.</li>
+    <li><strong>Built with FERPA in mind:</strong> role-based access (students see their own records; staff only their classes), each institution’s data kept separate, self-service export and deletion requests at <a href="{{ url_for('my_data') }}">/my-data</a>, and a tamper-evident audit log of sensitive actions.</li>
+    <li><strong>Questions?</strong> Email <a href="mailto:{{ novak_contact_email }}">{{ novak_contact_email }}</a> or see <a href="{{ url_for('contact_page') }}">Contact &amp; help</a>.</li>
+  </ul>
+  <p class="small mb-0">The details below describe exactly what this server stores and sends.</p>
+</div></section>
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card mb-3"><div class="card-body">

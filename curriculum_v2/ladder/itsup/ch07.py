@@ -504,9 +504,7 @@ LESSONS['7.1'].update({
         ('Where does “reimage” sit in the method?', 'An expensive last move', 'The first thing to try', 'Part of every ticket',
          'Reimaging destroys evidence and time; it is not a method, it is a last resort.', TOOLFIRST, FIXFIRST),
     ],
-        _P('Without a fixed way of working, beginners change lots of things at once and then cannot say which one helped. The method is short: '
-           'say what is broken and for how many people, choose the cheapest test that could prove your idea wrong, change one thing, check whether '
-           'the problem is gone, and write it down. Wiping and reinstalling is not a method; it is a costly final step.'),
+        _P('Without a fixed way of working, beginners change lots of things at once and then cannot say which one helped. The method is short. Say what is broken and for how many people. Choose the cheapest test that could prove your idea wrong. Change one thing. Check whether the problem is gone. Write it down. Wiping and reinstalling is not a method; it is a costly final step.'),
         _P('A cook whose soup tastes flat could throw in salt, lemon, pepper and herbs all at once. It might taste better, but next time they will '
            'not know which ingredient fixed it, and if it is now too salty they cannot tell what to take out. A careful cook adds one thing, tastes, '
            'and notes it. Troubleshooting is tasting the soup. One change, one taste, one note.'),
@@ -519,7 +517,7 @@ LESSONS['7.1'].update({
          'Scope (one versus many) decides where the fault can be.', DSCOPE, TOOLFIRST),
         ('Why does the block spend forty minutes on one sentence?', 'Practice beats a slide', 'The sentence is very long', 'There is nothing else to teach',
          'Walking the process on a real sentence builds the habit far better than memorising seven words.', ORDER, None),
-        ('In the driving-lesson story, why drive real streets?', 'Practice beats reading rules', 'Roads are empty at noon', 'Cars need running in',
+        ('In the driving-lesson story, why drive real streets?', 'Practice beats reading rules', 'Roads are quieter at noon', 'The car needs running in',
          'Doing the process on live examples makes it stick.', ORDER, None),
         ('After the cheap test, what comes next in the trace?', 'One change', 'Three changes together', 'Close the ticket',
          'One change keeps cause and effect clear.', MANY, CLOSED),
@@ -538,13 +536,13 @@ LESSONS['7.1'].update({
 })
 LESSONS['7.4'].update({
     'two-drills': _X('Two drills', 'IT-7.4', L74, [
-        ('A PC gives a memory beep. Where does the work stay?', 'In POST, at the hardware', 'In Windows settings', 'In the DNS server',
+        ('A PC gives a memory beep. Where does the work stay?', 'In POST, at the hardware', 'In Windows Device Manager', 'In the network adapter',
          'A beep at power-on happens before the OS, so the fault domain is hardware.', CROSS, CROSS),
         ('Names fail after the IP path works. Which drill?', 'win-dns-break or full triage', 'The hw-board memory drill', 'A diskpart exercise',
          'Name failure after IP works is a name-resolution fault.', CROSS, CROSS),
-        ('In the fire-and-flood story, why different crews?', 'Each fault has its own domain', 'Crews take turns', 'Flood crews are cheaper',
+        ('In the fire-and-flood story, why different crews?', 'Each fault has its own domain', 'Each crew takes a turn', 'Flood crews cost less to send',
          'Matching the drill to the fault domain avoids wrong-domain fixes.', CROSS, None),
-        ('Why does diskpart on a SaaS outage fail on purpose?', 'It is a wrong-domain, destructive fix', 'diskpart is too slow', 'SaaS has no disks',
+        ('Why does diskpart on a SaaS outage fail on purpose?', 'It is a wrong-domain, destructive fix', 'diskpart cannot reach the cloud', 'SaaS disks need tenant admin rights',
          'A tenant outage is not a disk problem; wiping a disk is destructive and wrong-domain.', CROSS, TOOLFIRST),
         ('Which pair is matched correctly?', 'MEM beep → hw-board', 'MEM beep → win-dns-break', 'Name fail → hw-board',
          'Beeps go to hardware; name failures go to DNS drills.', CROSS, None),

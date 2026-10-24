@@ -508,7 +508,7 @@ _DATA = {
         status='The fault is fixed and the user has confirmed it works. The ticket records the cause and what was ruled out.',
         neg='“DHCP lease normal” is a ruled-out cause worth writing.',
         par='closing the ticket and also making an extra tidy-up change.',
-        good=['User confirmed app works 12:00', 'Ruled out: cable, DHCP, DNS'], bad=['Fixed, closing', 'Green lights so done'],
+        good=['User confirmed app works 12:00', 'Ruled out: cable, DHCP, DNS'], bad=['Fixed the app, closing ticket', 'Switch lights green, so done'],
         plist=[('User verifies', 'works for them', 'still failing'),
                ('Check the evidence', 'matches fix', 'mismatch'),
                ('Write root cause', 'specific', 'vague'),

@@ -158,7 +158,7 @@ trend. And if every clock on the ward shows a different time, nobody can work ou
 <li>Change default passwords. Turn off unused services and ports. Keep firmware patched.</li>
 <li>Save and back up the config after each approved change.</li></ul>''',
                   L.format('5.2') + '; ' + MGMT,
-                  [check('Which AAA protocol can authorise individual CLI commands?', 'TACACS+', ['RADIUS', 'SNMPv3'],
+                  [check('Which AAA protocol can authorise individual CLI commands?', 'TACACS+', ['RADIUS', 'Kerberos'],
                          'TACACS+ separates authentication, authorisation and accounting and can authorise each command. RADIUS is '
                          'mainly for network access, and SNMPv3 is a monitoring protocol.', mc=[AAA, SNMPV])]),
             analogy('''<p>Think of the keys to a bank vault.</p>
@@ -383,7 +383,7 @@ public arrivals hall kept apart (<strong>DMZ</strong>). The departures board blo
 scanner looks inside your luggage (<strong>content filtering</strong>).</p>
 <p>A list of “allowed suitcase colours” is <strong>MAC filtering</strong>: anyone can buy a suitcase in the right colour.</p>''',
                     L.format('5.3') + ' (airport analogy written for this rung); ' + DEF,
-                    [check('In the airport story, what is the bag scanner?', 'Content filtering', ['URL filtering', 'MAC filtering'],
+                    [check('In the airport story, what is the bag scanner?', 'Content filtering', ['URL filtering', 'Packet filtering'],
                            'The scanner inspects what is carried, which is content filtering. The departures board blocks destinations '
                            '(URL filtering), and suitcase colours stand for MAC filtering.', mc=[URLC, MACF])]),
             visual('''<ol class="ladder-trace"><li>A public meeting-room wall port connects straight to the staff VLAN.</li>
@@ -486,7 +486,7 @@ _DATA = {
         status='A lab computer was isolated after a security alert. We are tightening the network separation; finance is unaffected so far.',
         neg='“Finance VLAN cannot reach lab, 16:06” narrows the gap to one direction.',
         par='reimaging the PC, changing ACLs and resetting passwords at once.',
-        good=['ACL lab→finance permit any', 'Lab PC isolated 16:00'], bad=['Fixed the ACL quietly', 'Did everything at once'],
+        good=['ACL lab→finance permit any', 'Lab PC isolated 16:00'], bad=['Fixed the finance ACL quietly', 'Did everything at once'],
         plist=[('Isolate the host', 'off the network', 'still connected'),
                ('Map paths', 'drawn', 'path unknown'),
                ('Read ACLs', 'match design', 'permit any found'),

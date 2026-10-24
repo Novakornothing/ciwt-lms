@@ -11,5 +11,6 @@ from .authoring import finalise
 
 _MODS = [importlib.import_module(f'{_pkg.__name__}.{m.name}')
          for m in sorted(pkgutil.iter_modules(_pkg.__path__), key=lambda m: m.name) if m.name.startswith(('s', 'i'))]
-CERT_ITEMS = finalise([q for m in _MODS for q in m.ITEMS])
+from .sources_round7 import apply as _cite
+CERT_ITEMS = _cite(finalise([q for m in _MODS for q in m.ITEMS]))
 BY_ID = {q['bank_id']: q for q in CERT_ITEMS}

@@ -626,10 +626,24 @@ def register_ladder(app, db, ctx):
                                cfg=settings(section.id), staff=True, student=student)
 
     # ------------------------------------------------------------------ instructor
-    def analytics(section):
+    def scope_sections(section):
+        """Every section teaching the same course that the current user may see (admin: the whole tenant)."""
+        out = []
+        for s in d.ClassSection.query.filter_by(course_id=section.course_id).order_by(d.ClassSection.id).all():
+            if s.id == section.id:
+                out.append(s)
+            elif current_user.role == 'admin':
+                if getattr(s, 'institution_id', None) == getattr(section, 'institution_id', None):
+                    out.append(s)
+            elif d.can_access_section(current_user, s):
+                out.append(s)
+        return out
+
+    def analytics(section, ids=None):
         course = course_code(section)
-        states = m.LadderState.query.filter_by(section_id=section.id, course=course).all()
-        evs = m.LadderEvent.query.filter_by(section_id=section.id, course=course).all()
+        ids = list(ids or [section.id])
+        states = m.LadderState.query.filter(m.LadderState.section_id.in_(ids), m.LadderState.course == course).all()
+        evs = m.LadderEvent.query.filter(m.LadderEvent.section_id.in_(ids), m.LadderEvent.course == course).all()
         users = {u.id: u for u in d.User.query.filter(d.User.id.in_({s.user_id for s in states} or {0})).all()}
         per = defaultdict(lambda: {'students': set(), 'escalated': set(), 'exhausted': set(), 'requests': 0,
                                    'misses': 0, 'resolved': defaultdict(int), 'mcs': defaultdict(int)})
@@ -712,7 +726,15 @@ def register_ladder(app, db, ctx):
     def ladder_class(section_id):
         section = ctx.staff_section(section_id)
         cfg = settings(section.id)
-        a = analytics(section)
+        scope = 'course' if request.args.get('scope') == 'course' else 'section'
+        peers = scope_sections(section)
+        a = analytics(section, [s.id for s in peers] if scope == 'course' else None)
+        a_here = a if scope == 'section' else analytics(section)
+        a['scope'] = scope
+        a['scope_info'] = {'here_students': a_here['students'], 'n_sections': len(peers),
+                           'course_name': getattr(getattr(section, 'course', None), 'title', None) or a['course']}
+        if scope == 'course':
+            a['scope_info']['course_students'] = a['students']
         chapters = sorted({r['chapter'] for r in a['rows']})
         ch = request.args.get('chapter', type=int)
         rows = [r for r in a['rows'] if not ch or r['chapter'] == ch]
@@ -721,6 +743,8 @@ def register_ladder(app, db, ctx):
             from io import StringIO
             buf = StringIO()
             w = csv.writer(buf)
+            if scope == 'course':
+                w.writerow([f'scope: all {len(peers)} {a["course"]} sections (curriculum average)'])
             w.writerow(['lesson', 'section', 'students', 'needed another way', 'rate %', 'saw every explanation',
                         'first answers on original', 'original miss %', 'original may need rewriting', 'requests',
                         'resolved by', 'top mix-ups', 'includes demo accounts'])
@@ -732,7 +756,7 @@ def register_ladder(app, db, ctx):
                             '; '.join(f'{lbl} ({n})' for lbl, n in r['top_mc']), 'yes' if a['demo'] else 'no'])
             from flask import Response
             return Response(buf.getvalue(), mimetype='text/csv', headers={
-                'Content-Disposition': f'attachment; filename=explanations-section-{section.id}.csv'})
+                'Content-Disposition': f'attachment; filename=explanations-{"course" if scope == "course" else "section"}-{section.id}.csv'})
         return render_template('ladder/instructor.html', section=section, cfg=cfg, a=a, rows=rows, chapters=chapters,
                                chapter=ch, secs=course_sections(section), queue=review_queue(section),
                                P=LP, LABEL=LS.LABEL, demo=a['demo'], REWRITE_MIN=REWRITE_MIN,

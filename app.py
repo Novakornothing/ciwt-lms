@@ -1504,7 +1504,7 @@ NOVAK_CONTACT_EMAIL = os.environ.get("NOVAK_CONTACT_EMAIL", "novakornothing@gmai
 
 @app.context_processor
 def _contact_ctx():
-    return {'novak_contact_email': NOVAK_CONTACT_EMAIL}
+    return {'novak_contact_email': NOVAK_CONTACT_EMAIL, 'brand_mark': 'Novak LMS™', 'copyright_year': 2026}
 
 
 @app.route('/help')

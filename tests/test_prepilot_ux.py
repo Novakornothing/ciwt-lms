@@ -21,7 +21,7 @@ def test_landing_host_privacy_faq_contact(app):
 def test_contact_page_footer_and_setup_card(anon, instructor, mod, app, lesson11):
     h = anon.get('/contact').get_data(as_text=True)
     assert MAIL in h and 'Instructors' in h and 'Students' in h
-    assert 'Contact &amp; Support:' in h and 'href="/contact"' in h          # footer
+    assert '© 2026 Novak LMS™' in h and 'Contact: <a href="mailto:' in h and 'href="/contact"' in h   # footer
     s = lesson11[0]
     h = instructor.get(f'/instructor/section/{s}/setup').get_data(as_text=True)
     assert 'Pilot support' in h and MAIL in h
@@ -55,3 +55,39 @@ def test_gate_progression_lesson_to_check_and_lab(student, mod, app, lesson11):
     h = student.get(f'/student/module/{s}/{m}/lesson/{last}').get_data(as_text=True)
     assert 'Continue to Adaptive Check' in h or 'Continue to Lab' in h
     _reset(mod, app, 'student1@lms.local')
+
+
+def test_ladder_scope_course_and_csv(instructor, mod, app, lesson11):
+    s = lesson11[0]
+    h = instructor.get(f'/instructor/section/{s}/ladder').get_data(as_text=True)
+    assert 'Scope:' in h and 'This class (' in h and 'scope=course' in h
+    h = instructor.get(f'/instructor/section/{s}/ladder?scope=course').get_data(as_text=True)
+    assert 'Curriculum average' in h and 'aria-current="page">All ' in h
+    r = instructor.get(f'/instructor/section/{s}/ladder?scope=course&format=csv')
+    assert r.status_code == 200 and r.mimetype == 'text/csv'
+    assert 'explanations-course-' in r.headers['Content-Disposition']
+    assert r.get_data(as_text=True).startswith('scope: all ')
+
+
+def test_who_needs_me_empty_state_and_helix_note(instructor, mod, app):
+    with app.app_context():
+        sec = mod.ClassSection(name='Empty pilot class', course_id=mod.Course.query.first().id,
+                               instructor_id=mod.User.query.filter_by(email='instructor@lms.local').first().id)
+        mod.db.session.add(sec); mod.db.session.commit(); sid = sec.id
+    h = instructor.get(f'/instructor/section/{sid}/who-needs-me').get_data(as_text=True)
+    assert 'No students are struggling in this class right now.' in h
+    assert 'Helix attention signals: 0 students opted in for this section' in h
+    with app.app_context():
+        mod.db.session.delete(mod.db.session.get(mod.ClassSection, sid)); mod.db.session.commit()
+
+
+def test_privacy_page_and_brand_footer(app, anon, student):
+    for c, kw in ((app.test_client(), {'base_url': 'http://novakornothing.com'}), (anon, {}), (student, {})):
+        h = c.get('/privacy', **kw).get_data(as_text=True)
+        assert 'never sold or shared with third-party advertisers' in h and 'never leave your device' in h
+        assert 'FERPA' in h and '/my-data' in h and 'tamper-evident' in h and MAIL in h
+        assert '© 2026 Novak LMS™' in h and 'href="/privacy"' in h
+    h = app.test_client().get('/', base_url='http://novakornothing.com').get_data(as_text=True)
+    assert '© 2026 Novak LMS™' in h and 'href="/privacy"' in h and MAIL in h and 'href="/contact"' in h
+    h = student.get('/contact').get_data(as_text=True)
+    assert '© 2026 Novak LMS™' in h and 'Novak LMS™</span>' in h and MAIL in h

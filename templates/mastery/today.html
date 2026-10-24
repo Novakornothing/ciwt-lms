@@ -53,7 +53,13 @@
   {% endfor %}
 </ol>
 {% else %}
-<div class="card mb-3"><div class="card-body">Nobody is stuck, waiting on a review or showing a repeated mix-up today.</div></div>
+<div class="card mb-3" data-empty-state="who-needs-me"><div class="card-body">
+  <p class="h6 mb-1"><i class="bi bi-emoji-smile" aria-hidden="true"></i> No students are struggling in this class right now.</p>
+  <p class="mb-0">Nobody is stuck, waiting on a review or showing a repeated mix-up today. Cards appear here as soon as someone misses a section check, tries every explanation or shows a lab habit to work on.</p>
+</div></div>
+{% endif %}
+{% set hx = helix_optins(section) %}{% if hx == 0 %}
+<p class="small mb-3" data-helix-note>Helix attention signals: 0 students opted in for this section — struggling cards use ladder checks and lab process logs.</p>
 {% endif %}
 
 {% if inactive %}

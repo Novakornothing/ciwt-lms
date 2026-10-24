@@ -18,6 +18,13 @@
   {% else %}<p class="mb-2 small">What finally clicked: nothing to show yet. It fills in once a student resolves a section with an alternative explanation.</p>{% endif %}
   <p class="mb-0">After each lesson section students get a quick check (not graded). A miss, or “I don't get it”, replaces that section, for that student only, with the next explanation: more simply, an analogy, a picture or trace, then something to try. Grades are never changed. All alternative explanations are <strong>Pending SME review</strong>.</p>
 </div>
+{% set si = a.scope_info %}
+<nav class="mb-3 d-flex flex-wrap gap-2 align-items-center" aria-label="Analytics scope">
+  <span class="small fw-bold">Scope:</span>
+  <a class="btn btn-sm {{ 'btn-navy' if a.scope == 'section' else 'btn-outline-navy' }}" href="{{ url_for(request.endpoint, section_id=section.id) }}"{% if a.scope == 'section' %} aria-current="page"{% endif %}>This class ({{ si.here_students }} student{{ 's' if si.here_students != 1 }})</a>
+  <a class="btn btn-sm {{ 'btn-navy' if a.scope == 'course' else 'btn-outline-navy' }}" href="{{ url_for(request.endpoint, section_id=section.id, scope='course') }}"{% if a.scope == 'course' %} aria-current="page"{% endif %}>All {{ a.course }} sections ({{ si.n_sections }} section{{ 's' if si.n_sections != 1 }}{% if si.course_students is defined %}, {{ si.course_students }} students{% endif %})</a>
+  {% if a.scope == 'course' %}<span class="small">Curriculum average: original miss rates, escalation, “may need rewriting” flags and rung resolution across every {{ a.course }} section you can see.</span>{% endif %}
+</nav>
 {% if demo %}<div class="mb-3">{{ demo_ribbon(true) }} <span class="small mx-muted">Some of this activity comes from the demo accounts (@lms.local), not real students.</span></div>{% endif %}
 
 <div class="row g-4 mb-4">
@@ -65,7 +72,7 @@
 
 <section class="card mb-4" aria-labelledby="ladEscH">
   <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2"><h2 class="h6 mb-0" id="ladEscH">Sections students most often needed explained another way</h2>
-    <a class="btn btn-sm btn-outline-light" href="{{ url_for('ladder_class', section_id=section.id, chapter=chapter, format='csv') }}"><i class="bi bi-download" aria-hidden="true"></i> CSV</a></div>
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('ladder_class', section_id=section.id, chapter=chapter, scope=('course' if a.scope == 'course' else None), format='csv') }}"><i class="bi bi-download" aria-hidden="true"></i> CSV</a></div>
   {% if chapters|length > 1 %}
   <form method="get" class="card-body pb-0 d-flex flex-wrap gap-2 align-items-end">
     <div><label class="form-label small mb-0" for="ladCh">Chapter</label>

@@ -481,6 +481,7 @@ def register_features(app, db, ctx):
         ('/student/section/<int:section_id>/quickcheck/<int:check_id>/dismiss', 'mastery_quickcheck_dismiss', mastery_quickcheck_dismiss, ['POST']),
         ('/student/section/<int:section_id>/plan', 'mastery_plan', mastery_plan, ['GET', 'POST']),
         ('/instructor/section/<int:section_id>/mastery/today', 'mastery_today', mastery_today, ['GET']),
+        ('/instructor/section/<int:section_id>/who-needs-me', 'mastery_who_needs_me', mastery_today, ['GET']),
         ('/instructor/section/<int:section_id>/mastery/checkin', 'mastery_checkin', mastery_checkin, ['POST']),
     ]:
         app.add_url_rule(rule, ep, fn, methods=methods)

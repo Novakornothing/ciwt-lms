@@ -29,8 +29,8 @@ NETOPS_CHECKS = {
         c('A host shows fe80::1c2b:3aff:fe4d:1 on its interface. What kind of address is it?',
           ['Global unicast', 'Unique local', 'Link-local', 'Multicast'], 'Link-local', 'NO-1.2',
           'fe80::/10 is link-local; every IPv6 interface has one, and it is never routed.'),
-        c('Which service uses TCP 443 by default?', ['SSH', 'HTTPS', 'RDP', 'DNS'], 'HTTPS', 'NO-1.3',
-          'HTTPS is TCP 443 (HTTP/3 uses UDP 443). SSH is 22, RDP is 3389, DNS is 53.'),
+        c('Which service uses TCP 443 by default?', ['LDAPS', 'HTTPS', 'IMAPS', 'SMTPS'], 'HTTPS', 'NO-1.3',
+          'HTTPS is TCP 443 (HTTP/3 uses UDP 443; RFC 9110). The other TLS services have their own ports: LDAPS 636, IMAPS 993 and SMTPS 465 (RFC 8314).'),  # round 7: parallel TLS distractors (no length cue). Pending SME review
         c('Why does DNS normally use UDP for queries?', ['Queries are small and a lost one is simply retried', 'UDP encrypts the query', 'TCP cannot carry names', 'UDP guarantees ordered delivery'],
           'Queries are small and a lost one is simply retried', 'NO-1.3', 'One request and one reply fit in single datagrams; the client retries on loss. Large responses and zone transfers use TCP.'),
         c('Which port and transport does SNMP polling use by default?', ['UDP 161', 'TCP 161', 'UDP 514', 'TCP 22'], 'UDP 161', 'NO-1.3',
@@ -99,8 +99,8 @@ NETOPS_CHECKS = {
           'Cached records that have not reached their TTL', 'NO-4.2', 'Resolvers and clients cache answers for the record’s TTL; lower the TTL before planned changes.'),
         # spot-check round 2 (Oct 18): PTR and SRV records also carry a name in their data, so "points one name to
         # another name" did not single out CNAME; the stem now asks for an alias (RFC 1035 3.3.1, RFC 2782). Pending SME review
-        c('Which DNS record type makes one name an alias for another name?', ['CNAME', 'PTR', 'AAAA', 'SRV'], 'CNAME', 'NO-4.2',
-          'A CNAME makes a name an alias for another (canonical) name. PTR and SRV records also hold a name, but a PTR maps an address (its reverse-lookup name) to a host name and an SRV gives the host and port for a service; AAAA maps a name to an IPv6 address.'),
+        c('Which DNS record type makes one name an alias for another name?', ['CNAME', 'PTR', 'DNSKEY', 'SRV'], 'CNAME', 'NO-4.2',
+          'A CNAME makes a name an alias for another (canonical) name. PTR and SRV records also hold a name, but a PTR maps an address (its reverse-lookup name) to a host name and an SRV gives the host and port for a service; DNSKEY holds a zone’s DNSSEC public key (RFC 4034).'),
         c('Many inside hosts share one public IPv4 address using different source ports. What is this called?',
           ['Port address translation (PAT)', 'Static one-to-one NAT', 'Inbound port forwarding', 'Split-horizon DNS'],
           'Port address translation (PAT)', 'NO-4.3', 'PAT tracks each inside flow by source port so many hosts share one address.'),

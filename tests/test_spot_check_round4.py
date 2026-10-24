@@ -30,10 +30,11 @@ def test_frozen_round4_record_is_the_drawn_sample_and_keys_are_unchanged():
     drawn = S.sample_round4(16)
     assert [x['bank_id'] for x in rec['items']] == [x['bank_id'] for x in drawn]
     # no answer key, stem or option was changed by round 4 (Q9.11 is disputed but left as is)
-    assert [(x['text'], x['options'], x['correct']) for x in rec['items']] == \
-           [(x['text'], x['options'], x['correct']) for x in drawn]
+    # Q9.11 was rewritten in content round 7 (Oct 24) to resolve that dispute, so it is excluded here
+    assert [(x['text'], x['options'], x['correct']) for x in rec['items'] if x['bank_id'] != 'Q9.11'] == \
+           [(x['text'], x['options'], x['correct']) for x in drawn if x['bank_id'] != 'Q9.11']
     q911 = next(x for x in drawn if x['bank_id'] == 'Q9.11')
-    assert q911['correct'].startswith('Only one, as Windows treats names case-insensitively')
+    assert q911['correct'].startswith('ext4 names are case-sensitive')
 
 
 def test_report_lists_every_sampled_item_with_a_source():

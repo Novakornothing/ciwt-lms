@@ -50,6 +50,14 @@ When no one is struggling the card says so, and the class ladder page says "noth
 - Under each section: **Check understanding** and **Explain it another way (style)**; after a pass, a **Next section ↓** chip.
 - At the end of the chapter: **Continue to Adaptive Check →** and **Continue to Lab →**, so there is no dead end.
 
+### Curriculum-wide view
+- **Explanations** (`/instructor/section/<id>/ladder`) has a **Scope** toggle: **This class (X students)** or **All <COURSE> sections (Y sections, Z students)** (`?scope=course`). The course view averages original-explanation miss rates, escalation rates, "original may need rewriting" flags and rung resolution across every section of that course you can see (admins: the whole institution). The CSV export follows the toggle (`?scope=course&format=csv`).
+- **Who needs me** (`/instructor/section/<id>/who-needs-me`, same as Mastery → Today) shows an encouraging empty state when nobody is struggling, and the line "Helix attention signals: 0 students opted in for this section — struggling cards use ladder checks and lab process logs." when no student has opted in.
+
+### Branding, privacy and legal notices
+- Header brand: **Novak LMS™**. Footer on every LMS page and on novakornothing.com: **© 2026 Novak LMS™ · Privacy · Contact: novakornothing@gmail.com** (Privacy → `/privacy`, the address is a mailto link, plus a Contact & help link to `/contact`).
+- `/privacy` is public (no sign-in) and starts with a plain-language summary: what is collected (account; lesson, check, quiz, test and lab progress; Helix metrics only with consent), Helix is opt-in per session and video never leaves the device, data is never sold or shared with advertisers, FERPA-minded design (role-based access, institutional isolation, `/my-data` export and deletion requests, tamper-evident audit log), and the contact address. No terms of service or patent claims.
+
 ### Support
 - Contact & Support (`novakornothing@gmail.com`, configurable with `NOVAK_CONTACT_EMAIL`) is in every page footer, on `/contact` (with an instructor and student FAQ) and on each section's Setup page.
 - novakornothing.com shows the hero, a privacy note, an FAQ and a contact section (preview at `/landing` or `/?landing=1`).

@@ -55,7 +55,7 @@
           <span class="brand-logo-wrap">
             <span class="logo-live" aria-hidden="true"></span>
           </span>
-          <span><span class="brand-title-line">{{ site_name }}</span><span class="brand-sub">{{ site_tagline }}</span></span>
+          <span><span class="brand-title-line">{{ brand_mark }}</span><span class="brand-sub">{{ site_tagline }}</span></span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Account, search and settings">
           {% if current_user.is_authenticated %}<i class="bi bi-person-circle text-white fs-4" aria-hidden="true"></i>{% else %}<span class="navbar-toggler-icon"></span>{% endif %}
@@ -187,8 +187,8 @@
   {% endif %}
   <footer class="py-3">
     <div class="container-fluid px-3 px-md-4 d-flex justify-content-between flex-wrap gap-2">
-      <span>{{ site_name }} · {{ site_tagline }}</span>
-      <span>Original curriculum — not a vendor exam product · <a href="{{ url_for('privacy_page') }}">Privacy</a> · <a href="{{ url_for('accessibility') }}">Accessibility</a> · Contact &amp; Support: <a href="mailto:{{ novak_contact_email }}">{{ novak_contact_email }}</a> (<a href="{{ url_for('contact_page') }}">help</a>){% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
+      <span>© {{ copyright_year }} {{ brand_mark }} · <a href="{{ url_for('privacy_page') }}">Privacy</a> · Contact: <a href="mailto:{{ novak_contact_email }}">{{ novak_contact_email }}</a> · <a href="{{ url_for('contact_page') }}">Contact &amp; help</a></span>
+      <span>{{ site_name }} · original curriculum, not a vendor exam product · <a href="{{ url_for('accessibility') }}">Accessibility</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
     </div>
   </footer>
   <script src="{{ url_for('static', filename='vendor/bootstrap/5.3.3/bootstrap.bundle.min.js') }}"></script>

@@ -113,9 +113,7 @@ LESSONS = {
             ('Which private range is the largest?', '10.0.0.0/8', '192.168.0.0/16', '172.16.0.0/12',
              'A /8 is far larger than /12 or /16.', APR, None),
         ],
-            P('Three blocks of addresses are reserved for use inside organisations and homes: everything starting 10, the range 172.16 to 172.31, '
-              'and everything starting 192.168. Addresses starting 169.254 are not one of them; they mean the computer gave itself a number because '
-              'no server answered. A staff laptop showing a public address where it should be behind NAT is an addressing problem.'),
+            P('Three blocks of addresses are kept for use inside organisations and homes. One is everything starting 10. One is 172.16 to 172.31. One is everything starting 192.168. Addresses starting 169.254 are not private ranges. They mean the computer gave itself a number because no server answered. A staff laptop showing a public address where it should be behind NAT is an addressing problem.'),
             P('An office phone system gives every desk a short extension number. Those numbers only work inside the building; to ring out, calls go '
               'through the switchboard. Private ranges are extensions, and NAT is the switchboard. A phone with no extension at all, just a scribbled '
               'number someone made up, is the 169.254 case: it cannot ring anyone properly.'),
@@ -178,7 +176,7 @@ LESSONS = {
              'Turning the profile off opens every door, not just one.', FW, None),
             ('Disabling the firewall to test is…', 'A hole, not a test', 'Standard practice in every shop', 'Required first',
              'In this course it is never a test.', FW, None),
-            ('Where is approved software found?', 'The approved app source (1.4)', 'Any download site', 'A USB stick from home',
+            ('Where is approved software found?', 'The approved app source (1.4)', 'The vendor’s download page', 'A trusted USB stick from home',
              'Use the approved source from lesson 1.4.', FW, None),
         ],
             P('When something is blocked, first look at which firewall profile is active. Never switch the profile off to make a game launcher or any '
@@ -231,8 +229,7 @@ LESSONS = {
             ('nslookup belongs…', 'After the IP tests', 'Before the link check', 'Instead of ipconfig',
              'Names only after IP reachability is proven.', SL, None),
         ],
-            P('Connectivity checks go in a fixed order because each one relies on the last: link light or Wi-Fi join, a real address from ipconfig, '
-              'a reply from the gateway, a reply from a known remote address, the name lookup, and finally the service port. Stop at the first one '
+            P('Connectivity checks go in a fixed order, because each one relies on the last. First the link light or Wi-Fi join. Then a real address from ipconfig. Then a reply from the gateway. Then a reply from a known remote address. Then the name lookup. Last, the service port. Stop at the first one '
               'that fails; that is the layer to fix. Flushing names on a computer with no real address skips layers.'),
             P('Climbing a ladder, you put your foot on each rung in turn. Skipping three rungs to reach the top usually ends with a fall, and you '
               'learn nothing about which rung was broken. Network tests are rungs: if the second one is missing, testing the fifth tells you '
@@ -269,11 +266,11 @@ LESSONS = {
              'Switches forward by MAC within the LAN; routers move between networks.', HW, HW),
             ('Where does fibre from the provider end?', 'ONT', 'Patch panel', 'Access point',
              'The optical network terminal terminates fibre.', HW, None),
-            ('In the town story, what is the router?', 'The bridge to the next town', 'The local post office', 'A house',
+            ('In the town story, what is the router?', 'The bridge to the next town', 'The town’s local post office', 'The main street in town',
              'The router connects networks like a bridge connects towns.', HW, None),
             ('A managed switch adds…', 'VLANs and monitoring', 'Wi-Fi radios on every port', 'DOCSIS',
              'Managed switches add VLANs, port security and remote management.', HW, None),
-            ('Bridges Wi-Fi clients onto the wired LAN:', 'Access point', 'Firewall', 'Modem',
+            ('Bridges Wi-Fi clients onto the wired LAN:', 'Access point', 'Edge router', 'Network switch',
              'An AP joins wireless clients to the wired network.', HW, None),
         ],
             P('Learn what each box does. A cable modem, DSL modem or fibre ONT ends the provider’s line. A router passes traffic between networks and, '
@@ -323,8 +320,7 @@ LESSONS = {
              'Firmware is a change like any other.', APC, None),
         ],
             P('An access point that many people share is not yours to tweak casually. Its admin password, guest network and firmware all affect '
-              'everyone who connects. Changing any of them goes through the change process: say what you set, when, and how to put it back, so '
-              'nobody is left wondering why their devices dropped off.'),
+              'everyone who connects. Changing any of them goes through the change process. Say what you set, when, and how to put it back. Then nobody wonders why their devices dropped off.'),
             P('In a shared office kitchen, you do not quietly reset the fridge temperature or move the microwave because it suits you. Everyone uses '
               'it, and if things go wrong, they need to know what changed and how to put it back. A shared access point is that kitchen: change it '
               'openly, write it up, and leave a way to undo it.'),
@@ -338,7 +334,7 @@ LESSONS = {
              'Default admin credentials are the biggest hole; hiding SSID does little.', HS, HS),
             ('Wi-Fi 6E adds which band?', '6 GHz', '900 MHz', '60 GHz',
              'Wi-Fi 6E is 802.11ax extended into 6 GHz.', HS, None),
-            ('In the house-lock story, what is hiding the SSID?', 'Removing the house number', 'Changing the lock', 'Fitting an alarm',
+            ('In the house-lock story, what is hiding the SSID?', 'Removing the house number', 'Changing the front-door lock', 'Fitting a burglar alarm',
              'The house is still there; it just has no number.', HS, None),
             ('Should WPS stay on?', 'No', 'Yes, always', 'Only on 6 GHz',
              'The WPS PIN method can be brute-forced.', HS, None),
@@ -370,8 +366,7 @@ LESSONS = {
             ('Who changes a DNS zone?', 'Its owner', 'The first tech', 'The user',
              'Shared equipment changes belong to their owners.', TS, None),
         ],
-            P('A passing network note has one short line per test: the device, the ipconfig result, the gateway ping, the remote IP ping, the name '
-              'lookup with the server that answered, what you tried and what happened. It stops at the layer that failed and names who owns the fix, '
+            P('A passing network note has one short line per test. Name the device. Give the ipconfig result. Give the gateway ping and the remote IP ping. Give the name lookup and the server that answered. Say what you tried and what happened. It stops at the layer that failed and names who owns the fix, '
               'such as the DNS owner. “The internet is down” is the complaint, never the diagnosis.'),
             P('A science lab report lists each experiment and what it showed, so anyone can repeat it and reach the same answer. “It didn’t work” '
               'earns no marks. The network note is a lab report: each test, each result, the conclusion, and who should act on it. Anyone reading it should be able to rerun your steps.'),
@@ -385,7 +380,7 @@ LESSONS = {
              'The habit is the order; skipping it fails even if the box recovers.', TS, TS),
             ('What does the lab want in the note?', 'Action → result', 'Only the final state', 'A screenshot',
              'Identity, IP tests, name tests, action and result.', TS, None),
-            ('In the driving-test story, why fail despite arriving?', 'Skipped the checks', 'Car too slow', 'Wrong colour',
+            ('In the driving-test story, why fail despite arriving?', 'Skipped the checks', 'Drove too slowly', 'Parked badly',
              'Arriving safely does not excuse skipping mirrors.', TS, None),
             ('The firewall during the lab…', 'Stays on', 'Goes off', 'Is uninstalled',
              'Firewall stays on throughout.', FW, None),

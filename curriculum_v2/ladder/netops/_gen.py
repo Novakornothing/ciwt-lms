@@ -92,7 +92,7 @@ def ops(code, obj, title, src, d):
               ['Pilots forget how to fly', 'Airlines like extra paperwork'],
               'Checklists make the routine reliable under pressure.', [m('CHECKLIST'), m('CHECKLIST')]),
             C(f'What is the first step of the worked list?', pl[0][0],
-              [pl[-1][0] + ' first', 'Write the closing note'],
+              [pl[-1][0] + ' first', 'Write the closing ticket note'],
               'Good checklists start with cheap, broad checks and narrow down.', [m('CHECKLIST'), m('CHECKLIST')]),
             C('What should you do after running the list in the lab?', 'Note steps to change',
               ['Throw the list away', 'Memorise it word for word'],
@@ -106,16 +106,16 @@ def ops(code, obj, title, src, d):
                 f'For {title}, think of {an} ({ab}) and ask what each piece needs upstream and what stops downstream when it fails.</p>'),
         'chk': [
             C(f'What does {title} need upstream?', d['up'].rstrip('.'),
-              ['Nothing; it works on its own', 'Only a faster computer'],
+              [d['down'].rstrip('.'), 'Nothing upstream; it is self-contained on each device'],
               'Knowing the upstream dependency explains why failures elsewhere show up here.', [m('RECALL'), m('RECALL')]),
             C('Which is a common beginner mistake here?', d['mist'][0],
-              ['Writing passed tests in the ticket', 'Explaining in plain words'],
+              ['Writing passed tests into the ticket notes', 'Explaining the impact to users in plain words'],
               'The lesson lists the mistakes new technicians make most often.', [m('RECALL'), m('JARGON')]),
             C('In the mechanic story, why think in chains?', 'Failures cascade',
               ['Parts have long names', 'Cars are all identical'],
               'One upstream failure makes everything after it look broken.', [m('RECALL'), m('RECALL')]),
             C('Which check separates the three causes?', disc.rstrip('.'),
-              ['Restart and hope it clears', 'Ask the user to wait longer'],
+              ['Restart the affected devices and see if the fault clears', 'Escalate at once and ask the user to wait longer'],
               'A discriminating check gives a different result for each cause.', [m('RECALL'), m('ESCALATE')]),
             C('How do you explain this to a user?', 'Plain words, next step, when',
               ['Technical terms so they trust you', 'Tell them it is their fault'],
@@ -151,8 +151,9 @@ def cap(code, obj, src, d):
         ('What proves the ticket is done?', 'User verification', 'Green lights on one switch', 'A quiet helpdesk queue',
          'The fix is done when the affected user confirms it works.', m('STATUS')),
     ],
-        P(f'The capstone gives you one realistic ticket: {d["scen"]} {d["why"]} You work it like a real shift: scope first, then tests in order, '
-          f'one change at a time, a calm status update and a check with the user at the end.'),
+        P(f'The capstone gives you one realistic ticket. {d["scen"]} {d["why"]} Work it like a real shift. Scope it first. '
+          f'Run the tests in order, starting with “{st[0].lower()}.” Make one change at a time. Send a calm status update. '
+          f'Check with the user at the end.'),
         P(f'Think of {d["an"]}: {d["ab"]}. Nobody arriving at that scene starts by changing things at random. They look at how big the '
           f'problem is, decide what to check first, and tell people what is happening. The capstone ticket asks you to show exactly that '
           f'behaviour, step by step, with notes someone else could follow.'),
@@ -166,58 +167,60 @@ def cap(code, obj, src, d):
          'The scaffold lists exactly what a reviewer looks for.', m('CHECKLIST')),
         ('In the form story, why not skip a box?', 'Gaps hide problems', 'Forms are too long', 'Boxes are optional',
          'An empty box looks the same as a check you forgot.', m('CHECKLIST')),
-        ('Which item comes last in the scaffold?', it[-1], it[0] + ' (repeat it)', 'Nothing; stop early',
+        ('Which item comes last in the scaffold?', it[-1], it[0] + ', then close the ticket', 'Stop at the first passed test and close',
          'The checklist ends with the evidence or verification the reviewer needs.', m('CHECKLIST')),
         ('Where do you fill the checklist in?', 'Paper or ticket notes', 'Only in your head', 'On the user’s screen',
          'Write it down, on paper or in the ticket.', m('CHECKLIST')),
     ],
-        P(f'The checklist is the shape of a good answer to this capstone. Fill in every line, on paper or in the ticket notes, and do not skip any: '
-          + '; '.join(it) + '. A line you cannot fill in is itself a finding; write what stopped you.'),
+        P('The checklist is the shape of a good answer to this capstone. Fill in every line, on paper or in the ticket notes. '
+          'Do not skip any. The lines are: ' + '; '.join(it) + '. A line you cannot fill in is itself a finding. Write what stopped you.'),
         P('A pre-flight form has a box for every check. A pilot who leaves one blank has not proved the check was done, even if it was. An '
           'inspector reading the form cannot tell a skipped check from a forgotten one. Your checklist is that form: every box filled, even '
-          'when the answer is “not reachable” or “no access, escalated.”'),
+          f'when the answer is “not reachable” or “no access, escalated.” On the {d["title"]} ticket, the box a tired technician '
+          f'is most tempted to leave blank is “{it[-1]}”; it is also the one the reviewer reads first.'),
         it + ['Read it back: could a colleague act on it?'],
         '<p>Sort each line into whether it belongs on the checklist.</p>',
         sort('On the checklist?', {'Belongs': it[:3], 'Does not belong': ['Reboot everything first', 'Guess the cause']},
              'Every line asks for evidence, not action.'))
     bm = X('Common beginner mistakes', [
-        ('Which is a common beginner mistake here?', mi[0][0], 'Recording each test with its result', 'Checking scope before acting',
+        ('Which is a common beginner mistake here?', mi[0][0], 'Recording each test and its result in the ticket notes', 'Checking the scope of impact before acting',
          'The capstone lists the mistakes new technicians make most often.', m('PARALLEL')),
-        ('What fixes that mistake?', mi[0][1], 'Doing the same thing faster', 'Asking the user to restart',
+        ('What fixes that mistake?', mi[0][1], 'Doing the same steps faster under pressure', 'Asking the user to restart and retest',
          'Each mistake has a habit that prevents it.', m('PARALLEL')),
         ('In the story, what is the mistake like?', 'Acting before looking', 'Writing too many notes', 'Being too calm',
          'Beginners act before gathering evidence.', m('RECALL')),
         ('What is the second mistake listed?', mi[1][0], 'Writing passed tests down', 'Telling users the next update time',
          'Both mistakes skip evidence or verification.', m('ESCALATE')),
-        ('What prevents the second mistake?', mi[1][1], 'Hoping it does not happen', 'Working faster',
+        ('What prevents the second mistake?', mi[1][1], 'Repeating the same fix more carefully next time', 'Escalating sooner without collecting evidence',
          'The fix is a habit you can check on every ticket.', m('RECALL')),
     ],
         P(f'Two mistakes catch beginners on this capstone. First: {mi[0][0].lower()}; instead, {mi[0][1].lower()}. Second: {mi[1][0].lower()}; '
           f'instead, {mi[1][1].lower()}. Both come from acting before the evidence is in, and both are easy to spot in a ticket review.'),
         P('A new driver who hears a noise and immediately pulls over, jumps out and starts unscrewing the wheel has acted before looking. An '
           'experienced driver listens, checks the mirrors, notes when the noise happens and then decides. The capstone mistakes are the first '
-          'driver’s habits; the fixes are the second driver’s.'),
+          f'driver’s habits; the fixes are the second driver’s. On the {d["title"]} ticket, the first driver’s move is '
+          f'“{mi[0][0].lower()}”; the second driver’s is “{mi[0][1].lower()}”.'),
         [f'Mistake: {a} → Habit: {b}' for a, b in mi] + ['Check your own ticket for both before you submit it.'],
         '<p>Sort each habit.</p>',
         sort('Mistake or habit?', {'Mistake': [mi[0][0], mi[1][0]], 'Habit': [mi[0][1], mi[1][1]]}, 'Every mistake has a matching habit.'))
     cu = X('Check your understanding', [
         ('How long should your explanation to a peer take?', 'Under two minutes', 'As long as it takes, an hour or more', 'No explanation; just the ticket number',
          'A short, ordered explanation proves you understood the ticket.', m('JARGON')),
-        ('What four things does it cover?', 'Symptom, checks, cause, verify', 'Only the fix you applied', 'Your opinion of the user',
+        ('What four things does it cover?', 'Symptom, checks, cause, verify', 'Symptom, fix, ticket number, time', 'Cause, fix, user name, close time',
          'Symptom, first three checks, what proved the cause, how you verified.', m('RECALL')),
         ('In the story, why explain it aloud?', 'Gaps show up', 'Peers enjoy it', 'It saves typing',
          'Explaining aloud exposes the steps you cannot justify.', m('RECALL')),
-        ('If you cannot explain it, what do you do?', 'Re-run the demo steps', 'Move on anyway', 'Guess the answer',
+        ('If you cannot explain it, what do you do?', 'Re-run the demo steps', 'Move on and revisit it later', 'Read the summary once more',
          'Repeat the live demonstration before moving on.', m('RECALL')),
         (f'For this capstone, what proved the fix?', 'User verification', 'A green light alone', 'No complaints yet',
          'The affected user confirming it works is the proof.', m('STATUS')),
     ],
-        P(f'To check you really understood the {d["title"]} capstone, explain it to a classmate in under two minutes: the symptom, your first three '
-          f'checks ({st[0].lower()}, {st[1].lower()}, {st[2].lower()}), what proved the cause, and how you confirmed it was fixed. If you stumble, '
-          'go back and repeat the live demonstration before moving on.'),
+        P(f'To check you understood the {d["title"]} capstone, explain it to a classmate. Take under two minutes. Name the symptom. '
+          f'List your first three checks: {st[0].lower()}; {st[1].lower()}; {st[2].lower()}. Say what proved the cause. '
+          'Say how you confirmed the fix. If you stumble, repeat the live demonstration before moving on.'),
         P('Teachers say you only know something when you can teach it. Telling a friend the plot of a film quickly shows which parts you missed: '
           'you reach a scene and realise you do not know why the character did that. Explaining the ticket aloud works the same way and shows '
-          'which step you cannot yet justify.'),
+          f'which step you cannot yet justify. For {d["title"]}, the test is simple: can you say why “{st[0]}” comes before “{st[1]}”?'),
         ['Symptom.', 'First three checks.', 'What proved the cause.', 'How you verified the fix.', 'Under two minutes.'],
         '<p>Guess first, then reveal.</p>',
         reveal('What is the one line that proves this ticket is finished?', 'The affected user confirmed the service works, and that confirmation is written in the ticket.'))

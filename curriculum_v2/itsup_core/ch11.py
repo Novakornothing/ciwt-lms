@@ -240,9 +240,9 @@ ITEMS = [
     item('IT-11.3', 2, 'Which step must come first in a rebuild plan?',
          'Back up the user’s data and test the backup', ['Download the newest drivers for the device model', 'Book a meeting room for the change review', 'Order a replacement drive in case it fails'],
          'Data protection comes first; a backup is only trusted once a restore has been tested.'),
-    item('IT-11.3', 3, 'Repair is past its time box, no documented fix exists for the fault and a rebuild would be quicker. When is a rebuild still a poor choice?',
-         'When there is no tested backup of the user’s data', ['When the device is already on the standard image', 'When the fault has a known, documented vendor fix', 'When the user agrees to a time after 16:00'],
-         'The course’s rebuild row says to avoid a rebuild when there is no tested backup: rebuilding would risk permanent loss of the user’s data, so back up and test a restore first. A documented fix would point to targeted repair, but the stem rules that out; being on the standard image and agreeing a time after 16:00 make a rebuild easier, not worse.'),  # content round 6: stem + rationale tightened (key and options unchanged), Pending SME review
+    item('IT-11.3', 3, 'Repair is past its time box and no documented fix exists, so a rebuild looks quicker. When is a rebuild still the wrong next step?',
+         'When there is no tested backup of the user’s data', ['When the device is already on the standard image', 'When a spare device on the standard image is ready', 'When the user agrees to a time after 16:00'],
+         'A rebuild wipes the disk, so without a tested backup it risks permanent loss of the user’s data: back up and test a restore first. Being on the standard image, having a ready spare and an agreed time after 16:00 all make a rebuild easier, not worse.'),  # content round 7 (Oct 24): removed the "documented vendor fix" distractor, which was a second defensible answer. Pending SME review
     item('IT-11.4', 1, 'Logon sits on “Applying user settings” for five minutes. Which evidence helps most?',
          'GroupPolicy Operational log and gpresult /h', ['The firmware event log and the boot order list', 'The printer queue and the spooler status', 'The Wi-Fi channel and the signal strength'],
          'User-policy delays (scripts, drive maps) show in the GroupPolicy Operational log and the gpresult report.'),

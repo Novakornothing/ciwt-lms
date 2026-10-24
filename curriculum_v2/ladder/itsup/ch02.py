@@ -127,9 +127,7 @@ LESSONS = {
             ('What holds an M.2 stick in place?', 'A screw at the end', 'A SATA latch and clip', 'A 24-pin clip',
              'M.2 sits in a short slot and is held by a screw at its end.', BS, None),
         ],
-            P('Learn to point at these: the 24-pin ATX plug that powers the board; the 4 or 8-pin EPS plug near the CPU (without it, no POST or '
-              'instant off); the RAM slots, colour-paired for channels; the M.2 slot, a short stick with a screw at the end; SATA, an L-shaped '
-              'data plug with separate power; and the front-panel header, where wrong pins make a good PC seem dead.'),
+            P('Learn to point at these. The 24-pin ATX plug powers the board. The 4 or 8-pin EPS plug sits near the CPU. Without it, there is no POST or the PC turns off at once. The RAM slots are colour-paired for channels. The M.2 slot takes a short stick with a screw at the end. SATA is an L-shaped data plug with separate power. On the front-panel header, wrong pins make a good PC seem dead.'),
             P('In a house, the lights, the oven and the boiler each need their own feed from the fuse board. If the oven circuit is off, the cooker '
               'is dead even though the lights work, and an electrician checks the fuse before replacing the oven. PC connectors are those circuits. '
               'Missing CPU power or a front-panel plug on the wrong pins makes a perfectly good machine look broken.'),
@@ -269,9 +267,7 @@ LESSONS = {
             ('No cooler at all leads to…', 'Throttling or shutdown', 'Better performance under load', 'Quieter running',
              'Without a cooler the CPU overheats.', FAN, None),
         ],
-            P('A CPU without a working cooler will slow itself down or shut off. Check the backplate, a thin even layer of paste, and that the fan '
-              'or pump is plugged into CPU_FAN so firmware can see its speed. A “good” CPU that turns off after ten minutes often has its fan on a '
-              'system-fan header and reads zero RPM.'),
+            P('A CPU without a working cooler will slow itself down or shut off. Check the backplate and a thin, even layer of paste. Plug the fan or pump into CPU_FAN so firmware can see its speed. A “good” CPU that turns off after ten minutes often has its fan on the wrong header. Firmware then reads zero RPM.'),
             P('A car engine has a radiator and coolant. Run it with the hose disconnected and it overheats and cuts out, even though the engine '
               'itself is fine. Mechanics check the cooling system before replacing an engine. The CPU cooler is the radiator, the paste is the coolant '
               'seal, and CPU_FAN is the temperature gauge on the dashboard. Zero on the gauge means check the wiring first.'),
@@ -290,9 +286,7 @@ LESSONS = {
             ('Cooler RPM matters because…', 'Overheating slows the CPU', 'RPM sets the CPU clock speed directly', 'It changes the socket',
              'Without cooling the CPU throttles, which looks like poor performance.', FAN, None),
         ],
-            P('In this course, judging CPU performance is simple: know which part it is, check that firmware lists it, and check that the cooler '
-              'fan is spinning at a sensible speed. If firmware does not show the CPU, the board probably does not support it yet; that is a '
-              'support-list or firmware-version problem, not a slow chip.'),
+            P('In this course, judging CPU performance is simple. Know which part it is. Check that firmware lists it. Check that the cooler fan spins at a sensible speed. If firmware does not show the CPU, the board may not support it yet. That is a support-list or firmware-version problem, not a slow chip.'),
             P('At a conference, a speaker with no badge is stopped at the door. It is not that they are a poor speaker; their name simply is not on '
               'the list yet. Someone must update the list. A CPU that firmware does not recognise is that speaker. Talk of slow chips is a myth here: '
               'check the support list and firmware version, then check the cooling.'),
@@ -460,9 +454,9 @@ LESSONS = {
              'Codes differ by vendor; use the card for this lab.', POST, None),
             ('In the Morse-code story, why carry the right chart?', 'Codes differ by sender', 'Charts look more official', 'Morse is easy',
              'Beep codes depend on the vendor; read the right chart.', POST, None),
-            ('One short beep means what here?', 'POST OK; check display', 'Memory failed', 'No power',
+            ('One short beep means what here?', 'POST OK; check display', 'Memory test failed', 'PSU not delivering power',
              'One short beep is POST OK; look at display and cables next.', POST, None),
-            ('No beep and no fan suggests…', 'Power or board', 'Memory only', 'A DNS fault',
+            ('No beep and no fan suggests…', 'Power or board', 'A RAM fault only', 'A DNS fault',
              'Nothing at all means power or board.', POST, None),
         ],
             P('Each manufacturer has its own beep codes, so use this course’s card for the lab. One short beep: POST passed, check the display. '
@@ -481,15 +475,15 @@ LESSONS = {
              'Name the interface, not the brand: M.2 NVMe is storage nvme.', BS, BS),
             ('A 2.5 in drive in a SATA tray is?', 'storage sata', 'storage nvme', 'storage usb',
              'The SATA interface gives storage sata.', BS, None),
-            ('In the road-type story, what do you name?', 'The road, not the car', 'The car brand', 'The driver',
+            ('In the road-type story, what do you name?', 'The road, not the car', 'The car’s make and model', 'The driver’s name',
              'You name the interface (road), not the brand (car).', BS, None),
             ('In the trace, what decides the word?', 'The interface', 'The capacity', 'The colour',
              'Interface decides: NVMe or SATA.', BS, None),
-            ('Why not write the brand?', 'The card asks for interface', 'Brands are secret', 'Brands are too long',
+            ('Why not write the brand?', 'The card asks for interface', 'Brands change often', 'Brands are too long to type',
              'The lab wants the interface word.', BS, None),
         ],
             P('For the bench card, name the storage by how it connects, not who made it. An M.2 stick in the short slot is “storage nvme.” A 2.5-inch '
-              'drive in a SATA tray is “storage sata.” The brand and capacity can go in the note, but the card wants the connection word.'),
+              'drive in a SATA tray is “storage sata.” The brand and capacity can go in the note. The card wants the connection word.'),
             P('If someone asks how you got to work, “a Ford” is not the answer they want; “the motorway” or “the back roads” is. The road decides '
               'how fast and how you get there. Storage interfaces are roads: NVMe is the motorway straight to the CPU, SATA the older A-road. The '
               'brand on the drive is just the car.'),
@@ -502,20 +496,19 @@ LESSONS = {
     },
     '2.6': {
         '1-about-is-the-polite-inventory': X('1. About is the polite inventory', 'IT-2.4', S6, [
-            ('Where is the polite inventory with the user watching?', 'Settings → System → About', 'diskpart clean', 'The registry editor',
+            ('Where is the polite inventory with the user watching?', 'Settings → System → About', 'diskpart list disk', 'The registry editor (regedit)',
              'About shows name, edition, processor and RAM without risk.', WIPE, None),
-            ('About RAM disagrees with the DIMM count. Next?', 'Check seating and firmware', 'Reimage the PC', 'Ignore it',
+            ('About RAM disagrees with the DIMM count. Next?', 'Check seating and firmware', 'Reimage the PC first', 'Order a replacement DIMM',
              'A mismatch is a seating or firmware problem; go back to 2.4.', POST, WIPE),
-            ('In the hotel-check-in story, why read the booking first?', 'Confirm facts before acting', 'It is polite', 'Receptionists are slow',
+            ('In the hotel-check-in story, why read the booking first?', 'Confirm facts before acting', 'It is the polite thing', 'Guests expect a short wait',
              'About confirms facts before you change anything.', WIPE, None),
-            ('Trace step 3 compares About RAM with…', 'The sticks on the board', 'The monitor size', 'The Wi-Fi name',
+            ('Trace step 3 compares About RAM with…', 'The sticks on the board', 'The monitor resolution', 'The Wi-Fi adapter list',
              'Reconcile OS-reported RAM with installed DIMMs.', POST, None),
-            ('Which facts does About show?', 'Name, edition, CPU, RAM', 'Passwords and keys', 'Browser history',
+            ('Which facts does About show?', 'Name, edition, CPU, RAM', 'Saved passwords, keys', 'Browser history',
              'About lists device name, edition, processor and RAM.', SHOT, None),
         ],
             P('Settings → System → About is the inventory you can do while the user watches. It shows the device name, Windows edition, processor '
-              'and how much RAM Windows sees. If that RAM figure does not match the sticks on the board, it is a seating or firmware problem: go back '
-              'to lesson 2.4 and do not reimage yet.'),
+              'and how much RAM Windows sees. Does that RAM figure disagree with the sticks on the board? Then it is a seating or firmware problem. Go back to lesson 2.4. Do not reimage yet.'),
             P('At a hotel desk the receptionist first reads your booking aloud: name, dates, room type. If the booking says one night and you '
               'expected three, you sort that out before handing over a key. About is the booking read-back. If the RAM it reports does not match what '
               'is physically fitted, that is the mismatch to resolve before anything else.'),
@@ -527,11 +520,11 @@ LESSONS = {
              'whoami shows the signed-in account; hostname shows the PC name.', SHOT, None),
             ('What goes in the ticket from systeminfo?', 'The few lines that answer it', 'Twenty pages of output', 'A screenshot of all of it',
              'Pull the four lines that answer the question.', SHOT, SHOT),
-            ('In the ID-card story, why check name and photo?', 'They answer who and what', 'Cards look official', 'It is required daily',
+            ('In the ID-card story, why check name and photo?', 'They show who and what', 'Cards look official', 'It is a rule at every desk',
              'hostname and whoami answer which PC and which account.', SHOT, None),
             ('In the trace, how do you page systeminfo?', 'Pipe to more', 'Print it all', 'Email it',
              'systeminfo | more lets you read it page by page.', SHOT, None),
-            ('hostname shows…', 'The name on the wire', 'The user account', 'The Windows build',
+            ('hostname shows…', 'The name on the wire', 'The signed-in user account', 'The Windows build',
              'hostname gives the computer’s network name.', SHOT, None),
         ],
             P('Three commands tell you who and what. hostname gives the computer’s network name. whoami gives the account you are really using. '
@@ -547,9 +540,9 @@ LESSONS = {
         '3-list-disk-before-any-wipe': X('3. List disk before any wipe', 'IT-2.4', S6, [
             ('Which diskpart command is allowed in Block 2?', 'list disk', 'clean', 'convert gpt',
              'Only list disk; clean and convert are not Block 2 commands.', WIPE, WIPE),
-            ('What do size and GPT/MBR tell you?', 'Which disk handle is which', 'The CPU speed', 'The RAM channel',
+            ('What do size and GPT/MBR tell you?', 'Which disk handle is which', 'The CPU speed and cores', 'The RAM channel layout',
              'They identify the disk before anyone touches it.', WIPE, None),
-            ('In the surgery-marker story, why mark the limb first?', 'To avoid the wrong one', 'It looks neat', 'Doctors like ink',
+            ('In the surgery-marker story, why mark the limb first?', 'To avoid the wrong one', 'It looks more neat', 'It saves surgery time',
              'list disk marks which disk is which before any action.', WIPE, None),
             ('In the trace, after listing you…', 'Exit', 'Clean Disk 0', 'Convert to MBR',
              'If the lab only asks to list, you list and exit.', WIPE, None),
@@ -565,15 +558,15 @@ LESSONS = {
             '<p>Order the safe diskpart steps.</p>',
             order('Safe diskpart', ['Open diskpart', 'list disk', 'Note size and layout', 'exit'], 'List only; never clean.'), ('win-hostname', 'Inventory the guest; list disks only.')),
         '4-note-that-ties-block-1-to-block-2': X('4. Note that ties Block 1 to Block 2', 'IT-2.4', S6, [
-            ('Which line belongs in the inventory note?', '“RAM 16 GB matches two DDR5”', '“PC looks fine”', '“Wiped Disk 1”',
+            ('Which line belongs in the inventory note?', '“RAM 16 GB matches two DDR5”', '“PC looks fine, RAM OK”', '“Wiped Disk 1 to check speed”',
              'The note reconciles OS RAM with installed sticks.', SHOT, WIPE),
             ('What does the note say about wiping?', 'No wipe', 'Wiped both disks', 'Wipe next week',
              'This block never wipes; it states “no wipe.”', WIPE, WIPE),
-            ('In the handover story, why list stock and next steps?', 'The next shift continues', 'Lists are tidy', 'Managers count words',
+            ('In the handover story, why list stock and next steps?', 'The next shift continues', 'Lists look tidy', 'Managers want more detail',
              'The note lets the next person act without guessing.', SHOT, None),
-            ('What is the next step in the example?', 'Image Disk 0 after backup', 'Clean Disk 1 now', 'Replace the RAM',
+            ('What is the next step in the example?', 'Image Disk 0 after backup', 'Clean Disk 1 right now', 'Replace both DIMMs',
              'Next: image only Disk 0 after backup confirmation.', WIPE, None),
-            ('The note ties Block 1 to Block 2 by…', 'Ticket habits plus hardware facts', 'Using longer words', 'Adding photos',
+            ('The note ties Block 1 to Block 2 by…', 'Ticket habits plus hardware facts', 'Using more technical words', 'Adding photos of the open case',
              'Block 1 ticket discipline meets Block 2 inventory facts.', SHOT, None),
         ],
             P('Your note should read like a short report a stranger could act on. Say which computer and which Windows it runs. Say whether the '
