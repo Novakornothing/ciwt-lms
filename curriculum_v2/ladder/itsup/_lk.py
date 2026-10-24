@@ -7,7 +7,7 @@ from curriculum_v2.ladder.netops._kit import C, lad, ol
 
 
 def Q(q, k, w1, w2, why, m1, m2=None):
-    if len(why.split()) < 10:
+    if len(why.split()) < 14:
         why += ' The other options skip the habit this section teaches.'
     return C(q, k, [w1, w2], why, [m1, m2])
 
@@ -26,3 +26,9 @@ def X(h, obj, src, qs, p, a, v, t, w, lab):
 
 def P(*paras):
     return ''.join(f'<p>{x}</p>' for x in paras)
+
+
+def M(prefix, src, rows):
+    """Misconception dict: rows = {code: (obj, label, fix, [terms])} -> {prefix+code: {...}}."""
+    return {prefix + k: {'obj': o, 'label': lab, 'fix': fix, 'terms': t, 'source': src, 'review': 'Pending SME review'}
+            for k, (o, lab, fix, t) in rows.items()}
