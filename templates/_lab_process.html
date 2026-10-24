@@ -16,8 +16,8 @@
       <li class="mb-2" data-pattern="{{ p.id }}"><span class="badge text-bg-warning">{{ p.label }}</span>
         <div class="small">{{ p.evidence|join(' ') }}</div>
         <div class="small text-muted"><strong>Tip:</strong> {{ p.tip }}</div>
-        {% if p.ref %}<div class="small">Learn it: {% if p.ref.url %}<a href="{{ p.ref.url }}" class="lpa-ref">{{ p.ref.title }} — “{{ p.ref.concept }}”</a>{% else %}{{ p.ref.title }} — “{{ p.ref.concept }}”{% endif %}
-          <span class="text-muted">(open the “{{ p.ref.rung_name }}” explanation)</span></div>{% endif %}</li>{% endfor %}</ul>{% endif %}
+        {% if p.ref %}<div class="mt-1">{% if p.ref.url %}<a href="{{ p.ref.url }}" class="btn btn-sm btn-brand lpa-ref lpa-cta"><i class="bi bi-lightbulb" aria-hidden="true"></i> Open {{ p.ref.title }} · {{ p.ref.heading }} in {{ p.ref.style }} →</a>
+          <span class="d-block small text-muted">Learn it: re-teaches “{{ p.ref.concept }}” with the {{ p.ref.rung_name or p.ref.style }} explanation.</span>{% else %}<span class="small">Learn it: {{ p.ref.title }} — “{{ p.ref.concept }}” ({{ p.ref.style }})</span>{% endif %}</div>{% endif %}</li>{% endfor %}</ul>{% endif %}
     {% if ana.strengths %}<h3 class="h6">What went well</h3><ul class="small lpa-good">{% for p in ana.strengths %}<li data-pattern="{{ p.id }}"><strong>{{ p.label }}.</strong> {{ p.evidence|join(' ') }}</li>{% endfor %}</ul>{% endif %}
     {% if not ana.patterns %}<p class="small text-muted">No pattern stands out yet{{ ' — keep going' if not ana.summary.completed }}.</p>{% endif %}
     {% if ana.timeline %}<details class="mt-2"{% if staff %} open{% endif %}><summary class="small">Step-by-step timeline ({{ ana.timeline|length }} steps)</summary>

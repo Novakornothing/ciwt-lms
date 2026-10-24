@@ -18,6 +18,8 @@ PAGES = [('instructor', '/instructor/sections', 'hub'), ('instructor', '/instruc
          ('instructor', '/instructor/section/1/privacy', 'privacy'), ('instructor', '/instructor/section/1/lti', 'lti'),
          ('instructor', '/instructor/section/1/ladder', 'ladder-settings'),
          ('student', '/my-data', 'my-data'), ('student', '/join', 'join'), ('student', 'LESSON', 'lesson-gate'),
+         ('instructor', '/instructor/section/1', 'class-why'), ('instructor', '/instructor/section/1/mastery/today', 'who-needs-me'),
+         ('student', '/labs/win-dns-break/analysis', 'lab-analysis'),
          ('admin', '/admin/ferpa', 'ferpa'), ('admin', '/admin/audit-log', 'audit-log'), ('admin', '/accessibility', 'accessibility')]
 fails, n = [], 0
 with sync_playwright() as pw:

@@ -7245,6 +7245,8 @@ onboarding_api = onboarding_mod.register(app, db, dict(
     can_access_section=lambda user, section: instructor_can_access_section(user, section),
 ))
 
+from mastery import why as why_mod  # noqa: E402  (pilot pass: "Why this student is struggling" + "What finally clicked")
+why_mod.install(app, db)
 from institutional import school_ready as school_mod  # noqa: E402  (school-ready pass: roles, sections hub, FERPA, audit chain)
 school_api = school_mod.register(app, db, dict(
     User=User, ClassSection=ClassSection, Enrollment=Enrollment, AuditEvent=AuditEvent, ContentRelease=ContentRelease,

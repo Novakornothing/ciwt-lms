@@ -24,7 +24,7 @@
     var fresh = tmp.firstElementChild;
     function put() {
       box.replaceWith(fresh);
-      document.dispatchEvent(new CustomEvent('ladder:updated'));
+      document.dispatchEvent(new CustomEvent('ladder:updated', { detail: { sid: fresh.getAttribute('data-ladder-sid') } }));
       if (!reduce) { fresh.classList.add('ladder-entering'); setTimeout(function () { fresh.classList.remove('ladder-entering'); }, 400); }
       init(fresh);
       if (moveFocus) {

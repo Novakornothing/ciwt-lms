@@ -182,8 +182,13 @@ def register(app, db, deps):
             if hit and hit[0]:
                 les, mod, sec = hit
                 ref['title'] = les.title
+                from curriculum_v2 import ladder as _LD
+                from mastery.ladder import STYLE as _STYLE
+                ref['heading'] = (_LD.ladder().get((ref['course'], ref['label'], ref['sid'])) or {}).get('heading') or ref['concept']
+                ref['style'] = _STYLE.get(ref.get('rung') or '', 'another way')
                 if sec is not None:
-                    ref['url'] = url_for('view_lesson', section_id=sec.id, module_id=mod.id, lesson_id=les.id) + f"#ladder-{ref['sid']}"
+                    ref['url'] = (url_for('lesson_shortcut', section_id=sec.id, lesson_id=les.id, rung=ref.get('rung') or 'R1',
+                                          sid=ref['sid']) + f"#ladder-sec-{ref['sid']}")
         return res
 
     def lab_analysis_for(user_id, lab_id, section=None):
@@ -827,6 +832,6 @@ def register(app, db, deps):
             return progress_map(u.id)
         return {'lab_progress_for': lab_progress_for}
 
-    api = SimpleNamespace(LabProgress=LP, LabEvent=LE, events_for=events_for, process_summary=process_summary, log=log, lab_scores=lab_scores, lab_signature=lab_signature, progress_map=progress_map)
+    api = SimpleNamespace(LabProgress=LP, LabEvent=LE, events_for=events_for, lab_analysis_for=lab_analysis_for, process_summary=process_summary, log=log, lab_scores=lab_scores, lab_signature=lab_signature, progress_map=progress_map)
     app.extensions['ciwt_lab_progress'] = api
     return api

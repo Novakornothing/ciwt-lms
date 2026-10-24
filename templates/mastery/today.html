@@ -28,6 +28,7 @@
       </div>
       <ul class="mb-2 mx-reasons">{% for r in p.reasons %}<li><span class="mx-badge">{{ {'stuck': 'Stuck', 'misconception': 'Mix-up', 'ladder': 'Every explanation tried', 'missed_review': 'Review waiting', 'drop': 'Drop', 'lab': 'Lab', 'inactive': 'Inactive'}[r.kind] }}</span> {{ r.text }}{% if r.kind == 'lab' and r.url %} <a class="small" href="{{ r.url }}">Process analysis</a>{% endif %}{% if r.ladder %}
         <span class="d-block small mt-1"><a href="{{ r.ladder.message_url }}">Draft a message about this section<span class="visually-hidden"> to {{ p.user.full_name }}</span></a> · <a href="{{ r.ladder.detail_url }}">What helps {{ p.user.first_name }} learn</a> · <a href="{{ r.ladder.preview_url }}">Read the explanations they saw</a></span>{% endif %}</li>{% endfor %}</ul>
+      {% set w = why_struggling(section, p.user) %}{% if w %}{% include 'mastery/_why.html' %}{% endif %}
       <div class="d-flex flex-wrap gap-2 align-items-end">
         <a class="btn btn-sm btn-brand" href="{{ url_for('messages_new', to=p.user.id) }}"><i class="bi bi-envelope" aria-hidden="true"></i> Message<span class="visually-hidden"> {{ p.user.full_name }}</span></a>
         {% if p.top_obj %}

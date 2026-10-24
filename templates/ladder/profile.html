@@ -15,6 +15,9 @@
 <div class="page-hero">
   <div class="eyebrow">Explanation ladder</div>
   <h1 class="h3 mb-1">What helps {{ student.full_name if staff else 'you' }} learn</h1>
+  {% if staff %}{% set ck = ladder_clicked(student.id, section.id) %}{% if ck and ck.struggles %}
+  <div class="clicked-box mt-2"><span class="clicked-badge"><i class="bi bi-lightbulb" aria-hidden="true"></i> What finally clicked: {{ ck.best_text or 'not resolved yet' }}</span>
+    <div class="why-pills mt-2">{% for s in ck.sections %}<span class="why-pill">{{ s.label }} · {{ s.heading }}: {{ s.text }}</span>{% endfor %}</div></div>{% endif %}{% endif %}
   <p class="mb-0">When a section does not click, the course explains it another way: more simply, with an analogy, as a picture or step-by-step trace, or as something to try. This page shows which of those has helped{% if not staff %} you{% endif %}. Nothing here affects grades.</p>
 </div>
 

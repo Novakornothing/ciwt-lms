@@ -34,6 +34,8 @@ REWRITE_SHARE = 0.5      # ... and at least half of them wrong on the original's
 HOW = {'R1': 'said more simply', 'R2': 'as an analogy', 'R3': 'as a picture or step by step', 'R4': 'as something to try'}
 
 
+STYLE = {'R0': 'Original', 'R1': 'Plain language', 'R2': 'Analogy', 'R3': 'Visual / step by step', 'R4': 'Try it'}
+
 def utcnow():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
@@ -296,7 +298,43 @@ def register_ladder(app, db, ctx):
             'lesson_url': url_for('view_lesson', section_id=section.id, module_id=lesson.module_id,
                                   lesson_id=lesson.id) + f'#ladder-{sid}',
             'course': course, 'label': label,
+            'steps': [{'rung': r, 'short': STYLE[r], 'state': ('resolved' if st['resolved'] == r else 'current' if r == shown
+                                                                else 'tried' if r in st['tried'] else 'todo')}
+                      for r in ['R0'] + [x for x in LP.RUNGS if x in allowed or x in st['tried']]],
+            'step_no': ([x for x in LP.RUNGS if x in allowed or x in st['tried']].index(shown) + 1) if shown != 'R0' and shown in LP.RUNGS else 0,
+            'step_total': len([x for x in LP.RUNGS if x in allowed or x in st['tried']]),
+            'style': STYLE.get(shown, ''),
         }
+
+    def clicked(user_id, section_id):
+        """'What finally clicked' for one student: struggles (a miss or a request) and the explanation that resolved each."""
+        rows = m.LadderState.query.filter_by(user_id=user_id, section_id=section_id).all()
+        secs, by = [], {}
+        for r in rows:
+            tried = _loads(r.tried_json, ['R0'])
+            if not ((r.misses or 0) or (r.requests or 0) or len(tried) > 1):
+                continue
+            head = (LD.ladder().get((r.course, r.label, r.sid)) or {}).get('heading') or r.sid
+            if r.resolved:
+                by[r.resolved] = by.get(r.resolved, 0) + 1
+            secs.append({'label': r.label, 'sid': r.sid, 'heading': head, 'rung': r.resolved, 'misses': r.misses or 0,
+                         'exhausted': bool(r.exhausted_at), 'style': STYLE.get(r.resolved or '', ''),
+                         'text': (f"Clicked on {r.resolved}: {STYLE[r.resolved]} after {r.misses or 0} miss{'es' if (r.misses or 0) != 1 else ''}"
+                                  if r.resolved else 'Every explanation tried, still open' if r.exhausted_at else 'Still working on it')})
+        best = max(by, key=lambda k: (by[k], k != 'R0'), default=None)
+        return {'struggles': len(secs), 'resolved': sum(by.values()), 'by': by, 'best': best,
+                'best_text': (f'Best style: {STYLE[best]} (resolved {by[best]}/{len(secs)} struggles)' if best else None),
+                'sections': sorted(secs, key=lambda s: (_lkey(s['label']), s['sid']))}
+
+    def class_clicked(section_id):
+        rows = m.LadderState.query.filter(m.LadderState.section_id == section_id, m.LadderState.resolved.isnot(None)).all()
+        by = {}
+        for r in rows:
+            if (r.misses or 0) or (r.requests or 0) or len(_loads(r.tried_json, ['R0'])) > 1:
+                by[r.resolved] = by.get(r.resolved, 0) + 1
+        tot = sum(by.values())
+        return [{'rung': k, 'style': STYLE[k], 'n': by.get(k, 0), 'pct': round(100 * by.get(k, 0) / tot) if tot else 0}
+                for k in ['R0'] + list(LP.RUNGS)], tot
 
     def render_section(c):
         return render_template('ladder/_section.html', L=c)
@@ -367,6 +405,20 @@ def register_ladder(app, db, ctx):
                                                                  label=label).all()}
         prof = None
         out, pos, n = [], 0, 0
+        deep_sid, deep_rung = request.args.get('sid'), request.args.get('rung')
+        if deep_sid and deep_rung in LP.RUNGS and deep_sid in raw and deep_rung in allowed_for(cfg, label, deep_sid):
+            # lab re-teach link: open that section straight on the recommended explanation (counts as a request)
+            if prof is None:
+                prof = profile_of(user.id)
+            row = ensure_row(user, section, course, label, deep_sid, lesson.id, cfg, prof)
+            st0 = as_state(row)
+            if not st0['resolved'] and deep_rung not in st0['tried']:
+                st0['tried'].append(deep_rung)
+                st0['current'] = deep_rung
+                save_state(row, st0)
+                log(user.id, section.id, course, label, deep_sid, 'request', from_rung=st0['tried'][-2], rung=deep_rung)
+            db.session.commit()
+            rows[deep_sid] = row
         g = gate(user, section, lesson)
         lock_after = g['first'] if g['blocked'] else None
         locked = False
@@ -383,7 +435,8 @@ def register_ladder(app, db, ctx):
                     prof = profile_of(user.id)
                 st = LP.start(allowed_for(cfg, label, sec['sid']), prof['best'], cfg['adapt_first'])
             want = request.args.get('ladder_original') == sec['sid']
-            c = section_ctx(user, section, lesson, sec, ent, st, cfg, show_rung='R0' if want else None)
+            deep = deep_rung if deep_sid == sec['sid'] and deep_rung in (st['tried'] or []) else None
+            c = section_ctx(user, section, lesson, sec, ent, st, cfg, show_rung='R0' if want else deep)
             out.append(src[pos:sec['start']])
             out.append(f'<span class="ladder-anchor" id="ladder-sec-{sec["sid"]}"></span>')
             if locked:
@@ -850,6 +903,13 @@ def register_ladder(app, db, ctx):
                for b in m.LadderBypass.query.filter_by(section_id=section.id).all()]
         return {'gate_students': studs, 'gate_lessons': lessons, 'bypasses': byp}
 
+    @login_required
+    def lesson_shortcut(section_id, lesson_id):
+        """Short deep link (lab re-teach buttons): /student/section/<s>/lesson/<l>?rung=R2&sid=<slug>#ladder-sec-<slug>."""
+        lesson = db.get_or_404(d.Lesson, lesson_id)
+        q = {k: v for k, v in request.args.items() if k in ('rung', 'sid')}
+        return redirect(url_for('view_lesson', section_id=section_id, module_id=lesson.module_id, lesson_id=lesson.id, **q))
+
     def _gate_target(section_id, lesson_id):
         section = ctx.enrolled_section(section_id)
         lesson = db.get_or_404(d.Lesson, lesson_id)
@@ -894,6 +954,7 @@ def register_ladder(app, db, ctx):
 
     for rule, ep, fn, methods in [
         ('/student/section/<int:section_id>/ladder/<int:lesson_id>/gate', 'ladder_gate', ladder_gate, ['GET']),
+        ('/student/section/<int:section_id>/lesson/<int:lesson_id>', 'lesson_shortcut', lesson_shortcut, ['GET']),
         ('/student/section/<int:section_id>/lesson/<int:lesson_id>/advance', 'lesson_advance', lesson_advance, ['GET']),
         ('/student/section/<int:section_id>/ladder/<int:lesson_id>/<sid>/answer', 'ladder_answer', ladder_answer, ['POST']),
         ('/student/section/<int:section_id>/ladder/<int:lesson_id>/<sid>/another', 'ladder_another', ladder_another, ['POST']),
@@ -909,7 +970,8 @@ def register_ladder(app, db, ctx):
 
     from types import SimpleNamespace
     return SimpleNamespace(models=m, settings=settings, render_lesson=render_lesson, profile=profile_of,
-                           gate=gate, module_gate=module_gate, bypassed=bypassed,
+                           gate=gate, module_gate=module_gate, bypassed=bypassed, clicked=clicked,
+                           class_clicked=class_clicked, STYLE=STYLE,
                            needs_me_reasons=needs_me_reasons, class_exhausted=class_exhausted,
                            for_objectives=for_objectives, analytics=analytics)
 

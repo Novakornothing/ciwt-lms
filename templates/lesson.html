@@ -368,7 +368,7 @@
 {% endif %}
 {% if mastery_quick %}<script src="{{ url_for('static', filename='js/mastery-lesson.js') }}" defer></script>{% endif %}
 {% if ladder_html %}<script src="{{ url_for('static', filename='js/ladder.js') }}" defer></script>{% endif %}
-{% if ladder_gate and ladder_gate.on and not ladder_gate.exempt %}<script src="{{ url_for('static', filename='js/ladder_gate.js') }}" defer></script>{% endif %}
+{% if ladder_html %}<script src="{{ url_for('static', filename='js/ladder_gate.js') }}" defer></script>{% endif %}
 <script>
 /* narration bar: the native player only appears once audio is playing; options fold away on phones */
 (function () {

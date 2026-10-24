@@ -15,6 +15,7 @@
     <div>
       <div class="eyebrow">Evidence breakdown</div>
       <h1 class="h3 mb-1">{{ u.full_name }}</h1>
+      {% set w = why_struggling(section, u) %}{% if w and w.clicked.best_text %}<span class="clicked-badge"><i class="bi bi-lightbulb" aria-hidden="true"></i> What finally clicked: {{ w.clicked.best_text }}</span>{% endif %}
       <p class="mb-0">Helix: {{ {'ok': 'current consent (advisory only)', 'no_consent': 'no current consent — not used', 'disabled': 'off for this class — not used', 'unavailable': 'not available'}[st.helix_status] }} · {{ st.decision.actions|length }} active action{{ 's' if st.decision.actions|length != 1 }}{% if st.sources.stale %} · {{ st.sources.stale }} older answer{{ 's' if st.sources.stale != 1 }} not used (the question was reworded after it was answered){% endif %}</p>
     </div>
     <button type="button" class="btn btn-sm btn-brand" data-bs-toggle="modal" data-bs-target="#mxOverride" data-mx-user="{{ u.id }}" data-mx-name="{{ u.full_name }}" data-mx-target="CH-{{ chapters[0] }}" data-mx-state="">New override</button>

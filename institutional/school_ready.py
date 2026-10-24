@@ -6,6 +6,7 @@ import io
 import json
 import secrets
 import string
+import time as _time
 import zipfile
 from datetime import datetime, timezone
 
@@ -13,7 +14,6 @@ from flask import Response, abort, flash, redirect, render_template, request, ur
 from flask_login import current_user, login_required
 from sqlalchemy import event, inspect, text
 
-from . import outcomes as OUT
 
 ROLES = {'lead': 'Lead instructor', 'ta': 'Teaching assistant', 'observer': 'Observer (read-only)'}
 TA_DENY = ('lti', 'privacy', 'roster', 'setup', 'clone', 'delete', 'ferpa', 'staff', 'reassign')
@@ -265,12 +265,39 @@ def register(app, db, d):
         return (User.query.join(Enrollment, Enrollment.user_id == User.id)
                 .filter(Enrollment.section_id == section.id, User.role == 'student').order_by(User.last_name).all())
 
-    def section_stats(section):
-        rep = OUT.report(app, db, d, [section])
-        row = rep['sections'][0] if rep['sections'] else {}
-        return {'section': section, 'students': row.get('students', 0), 'mastery': row.get('mastered_pct'),
-                'resolved': rep['ladder']['resolved_pct'], 'struggles': rep['ladder']['struggles'] - rep['ladder']['resolved'],
-                'exhausted': rep['ladder']['exhausted'], 'grade': row.get('mean_grade')}
+    _stats_cache = {}
+
+    def section_stats(section, deadline=None):
+        """Hub comparison row: cheap ladder counts from the state table; mastery % via the engine, cached for 2 minutes."""
+        LS = app.extensions['ciwt_mastery'].ladder.models.LadderState
+        uids = [u.id for u in students_of(section)]
+        struggles = resolved = exhausted = 0
+        for r in LS.query.filter(LS.section_id == section.id, LS.user_id.in_(uids or [0])).all():
+            if (r.misses or 0) or (r.requests or 0) or (r.tried_json or '').count('R') > 1:
+                struggles += 1
+                resolved += 1 if r.resolved else 0
+                exhausted += 1 if (r.exhausted_at and not r.resolved) else 0
+        hit = _stats_cache.get(section.id)
+        stale = not hit or (utcnow() - hit[0]).total_seconds() > 600
+        if stale and deadline and _time.monotonic() > deadline:   # page budget used: show cached or "pending"
+            hit = hit or (utcnow(), 'pending')
+        elif stale:
+            eng = app.extensions['ciwt_mastery'].engine
+            pairs = mastered = 0
+            for uid in uids:
+                try:
+                    st = eng.student_state(section, db.session.get(User, uid), log=False)
+                except Exception:
+                    db.session.rollback()
+                    continue
+                for obj, est in st['states'].items():
+                    if st['evidence'].get(obj):
+                        pairs += 1
+                        mastered += est.get('status') == 'mastered'
+            hit = _stats_cache[section.id] = (utcnow(), round(100 * mastered / pairs) if pairs else None)
+        return {'section': section, 'students': len(uids), 'mastery': hit[1],
+                'resolved': round(100 * resolved / struggles) if struggles else None,
+                'struggles': struggles - resolved, 'exhausted': exhausted}
 
     @login_required
     def sections_hub():
@@ -278,8 +305,9 @@ def register(app, db, d):
             abort(403)
         secs = my_sections(current_user)
         by_course = {}
+        deadline = _time.monotonic() + 0.8      # mastery % is the costly column; fill the rest on the next visit
         for s in secs:
-            by_course.setdefault(s.course_id, []).append(section_stats(s))
+            by_course.setdefault(s.course_id, []).append(section_stats(s, deadline))
         courses = {c.id: c for c in d['Course'].query.filter(d['Course'].id.in_(list(by_course) or [0])).all()}
         roles = {s.id: staff_role(current_user, s) for s in secs}
         return render_template('school/hub.html', groups=[(courses.get(c), rows) for c, rows in by_course.items()],

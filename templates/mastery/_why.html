@@ -1,0 +1,15 @@
+{# "Why this student is struggling" card. Needs w (mastery/why.py why()) and section. #}
+<div class="why-card" data-why-user="{{ w.user.id }}">
+  <p class="why-sentence mb-1"><strong>Why {{ w.user.first_name or w.user.full_name }} is struggling:</strong> {{ w.sentence }}</p>
+  <div class="why-pills">
+    {% for t in w.pills.ladder %}<span class="why-pill why-ladder"><i class="bi bi-layers" aria-hidden="true"></i> {{ t }}</span>{% endfor %}
+    {% for f in w.flags %}<a class="why-pill why-lab" href="{{ f.url }}"><i class="bi bi-terminal" aria-hidden="true"></i> {{ f.label }} · {{ f.lab_id }}</a>{% endfor %}
+    {% for t in w.pills.helix %}<span class="why-pill why-helix"><i class="bi bi-eye" aria-hidden="true"></i> {{ t }}</span>{% endfor %}
+  </div>
+  <div class="d-flex flex-wrap gap-2 mt-2">{% for a in w.actions %}
+    {% if a.form %}<form method="post" action="{{ a.url }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="form" value="bypass">
+      <input type="hidden" name="user_id" value="{{ w.user.id }}"><input type="hidden" name="lesson_id" value="{{ a.lesson_id }}">
+      <button class="btn btn-sm btn-outline-secondary" type="submit">{{ a.text }}<span class="visually-hidden"> for {{ w.user.full_name }}</span></button></form>
+    {% else %}<a class="btn btn-sm {{ 'btn-brand' if loop.first else 'btn-outline-navy' }}" href="{{ a.url }}">{{ a.text }}<span class="visually-hidden"> — {{ w.user.full_name }}</span></a>{% endif %}
+  {% endfor %}</div>
+</div>

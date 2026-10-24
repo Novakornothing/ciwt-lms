@@ -6,7 +6,7 @@
      data-event-url="{{ L.url_event }}" data-next="{{ 1 if L.next_available else 0 }}">
   {% if v %}
   <section class="sublesson ladder-rung" aria-labelledby="lh-{{ L.sid }}">
-    <p class="ladder-label" tabindex="-1"{% if L.feedback and not L.feedback.ok %} aria-describedby="lf-{{ L.sid }}"{% endif %}><span class="ladder-badge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ v.label }}</span>
+    <p class="ladder-label" tabindex="-1"{% if L.feedback and not L.feedback.ok %} aria-describedby="lf-{{ L.sid }}"{% endif %}><span class="ladder-badge ladder-swapbadge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Swapped to {{ L.shown }}: {{ L.style }}{% if L.step_no %} — step {{ L.step_no }} of {{ L.step_total }}{% endif %}</span>
       <span class="ladder-review">{{ L.review }}</span></p>
     {% if L.feedback and not L.feedback.ok %}<p class="ladder-feedback is-miss" id="lf-{{ L.sid }}">{{ L.feedback.text }}</p>{% endif %}
     <h3 id="lh-{{ L.sid }}">{{ L.heading }}</h3>
@@ -18,6 +18,9 @@
   <template class="ladder-original-tpl">{{ L.orig_html|safe }}</template>
   {% else %}
   {{ L.orig_html|safe }}
+  {% endif %}
+  {% if L.steps|length > 1 and (v or st.tried|length > 1 or st.resolved) %}
+  <ol class="ladder-steps" aria-label="Explanations for {{ L.heading }}">{% for s in L.steps %}<li class="ls-{{ s.state }}"{% if s.state == 'current' %} aria-current="step"{% endif %} title="{{ s.short }}">{{ s.rung }}<span class="visually-hidden"> {{ s.short }}{{ ' (worked)' if s.state == 'resolved' else ' (seen)' if s.state == 'tried' else '' }}</span></li>{% endfor %}</ol>
   {% endif %}
   <div class="ladder-panel">
     {%- set fb_here = L.feedback and (L.feedback.ok or not v) %}
@@ -42,6 +45,7 @@
     </form>
     {% elif st.resolved and st.resolved == L.shown %}
     <p class="ladder-ok small mb-2"><i class="bi bi-check2-circle" aria-hidden="true"></i> You got the check on this section{% if L.shown != 'R0' %} with this explanation{% endif %}.</p>
+    <a class="ladder-continue" data-continue="{{ L.sid }}" href="#ladderGate">Continue to next section <span aria-hidden="true">↓</span></a>
     {% endif %}
     <div class="ladder-tools">
       {% if L.next_available %}
