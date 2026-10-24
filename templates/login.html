@@ -27,7 +27,8 @@
         </div>
         <button type="submit" class="btn btn-brand btn-lg w-100">Sign in</button>
       </form>
-      <p class="small mt-3 mb-0 text-muted">Your account decides where you land, whichever option you picked.</p>
+      <p class="small mt-3 mb-2 text-muted">Your account decides where you land, whichever option you picked.</p>
+      <div class="d-flex justify-content-between flex-wrap gap-2 small pt-2 border-top"><span>New here? <a href="{{ url_for('register_account') }}"><strong>Create an account</strong></a></span><span><a href="{{ url_for('demo_guide') }}"><strong>1-Click Live Demo</strong></a></span></div>
       {% set _sso = sso_institutions() %}{% if _sso %}
       <form method="get" action="{{ url_for('sso_start') }}" class="sso-picker" aria-labelledby="ssoH">
         <h2 class="h6" id="ssoH">Sign in with your campus ID</h2>

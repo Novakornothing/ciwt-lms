@@ -91,3 +91,42 @@ def test_privacy_page_and_brand_footer(app, anon, student):
     assert '© 2026 Novak LMS™' in h and 'href="/privacy"' in h and MAIL in h and 'href="/contact"' in h
     h = student.get('/contact').get_data(as_text=True)
     assert '© 2026 Novak LMS™' in h and 'Novak LMS™</span>' in h and MAIL in h
+
+
+def test_register_and_demo_enter(app, mod):
+    c = app.test_client()
+    # 1. Landing page has NOVAK LMS™, Eye Tracking, OPs, Demo, Create Account, FAQ, and Legal & Privacy note
+    h = c.get("/landing").get_data(as_text=True)
+    for expected in ("NOVAK LMS™", "Eye Tracking", "OPs", "Demo", "Create Account", "FAQ", "Legal Information &amp; Privacy note"):
+        assert expected in h, f"Missing {expected} in /landing"
+
+    # 2. 1-click demo enter for student, instructor, admin
+    for role, target in (("student", "/student"), ("instructor", "/instructor"), ("admin", "/admin")):
+        r = c.get(f"/demo/enter/{role}", follow_redirects=False)
+        assert r.status_code in (302, 303)
+        c.get("/logout")
+
+    # 3. Self-service account creation (/register)
+    r_get = c.get("/register")
+    assert r_get.status_code == 200 and "Create your" in r_get.get_data(as_text=True)
+    r_post = c.post("/register", data={
+        "first_name": "Taylor",
+        "last_name": "Sailor",
+        "email": "taylor.sailor.new@lms.local",
+        "password": "StrongPassword123!",
+        "confirm_password": "StrongPassword123!",
+        "role": "student",
+        "enroll_demo": "1",
+    }, follow_redirects=True)
+    assert r_post.status_code == 200
+    body = r_post.get_data(as_text=True)
+    assert "Welcome to Novak LMS™, Taylor!" in body
+    with app.app_context():
+        u = mod.User.query.filter_by(email="taylor.sailor.new@lms.local").first()
+        assert u is not None and u.role == "student"
+        enrolls = mod.Enrollment.query.filter_by(user_id=u.id).all()
+        assert len(enrolls) >= 1
+        for e in enrolls:
+            mod.db.session.delete(e)
+        mod.db.session.delete(u)
+        mod.db.session.commit()

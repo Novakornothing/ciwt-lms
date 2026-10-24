@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Create an account — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <div class="card login-card">
+    <div class="card-body p-4">
+      <h1 class="h4 mb-1">Create your {{ site_name }} account</h1>
+      <p class="small mb-3 text-muted">Start learning immediately with adaptive 4-rung explanations, 66 interactive labs, and the Exam-Day Readiness Simulator.</p>
+      <form method="post" action="{{ url_for('register_account') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-2 mb-3">
+          <div class="col-sm-6">
+            <label class="form-label" for="regFirst">First name</label>
+            <input id="regFirst" type="text" name="first_name" class="form-control{% if errors.get('first_name') %} is-invalid{% endif %}" required autocomplete="given-name" value="{{ form.get('first_name', '') }}">
+            {% if errors.get('first_name') %}<div class="invalid-feedback">{{ errors['first_name'] }}</div>{% endif %}
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label" for="regLast">Last name</label>
+            <input id="regLast" type="text" name="last_name" class="form-control{% if errors.get('last_name') %} is-invalid{% endif %}" required autocomplete="family-name" value="{{ form.get('last_name', '') }}">
+            {% if errors.get('last_name') %}<div class="invalid-feedback">{{ errors['last_name'] }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="regEmail">Email address</label>
+          <input id="regEmail" type="email" name="email" class="form-control{% if errors.get('email') %} is-invalid{% endif %}" required autocomplete="email" inputmode="email" value="{{ form.get('email', '') }}">
+          {% if errors.get('email') %}<div class="invalid-feedback">{{ errors['email'] }}</div>{% endif %}
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-sm-6">
+            <label class="form-label" for="regPassword">Password <span class="text-muted small">(8+ chars)</span></label>
+            <input id="regPassword" type="password" name="password" class="form-control{% if errors.get('password') %} is-invalid{% endif %}" required minlength="8" autocomplete="new-password">
+            {% if errors.get('password') %}<div class="invalid-feedback">{{ errors['password'] }}</div>{% endif %}
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label" for="regConfirm">Confirm password</label>
+            <input id="regConfirm" type="password" name="confirm_password" class="form-control{% if errors.get('confirm_password') %} is-invalid{% endif %}" required minlength="8" autocomplete="new-password">
+            {% if errors.get('confirm_password') %}<div class="invalid-feedback">{{ errors['confirm_password'] }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-sm-6">
+            <label class="form-label" for="regRole">I am joining as</label>
+            <select id="regRole" name="role" class="form-select">
+              <option value="student"{% if form.get('role', 'student') == 'student' %} selected{% endif %}>Student (Learn)</option>
+              <option value="instructor"{% if form.get('role') == 'instructor' %} selected{% endif %}>Instructor (Teach)</option>
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label" for="regJoinCode">Class join code <span class="text-muted small">(optional)</span></label>
+            <input id="regJoinCode" type="text" name="join_code" class="form-control{% if errors.get('join_code') %} is-invalid{% endif %}" placeholder="Leave blank for demo class" value="{{ form.get('join_code', '') }}">
+            {% if errors.get('join_code') %}<div class="invalid-feedback">{{ errors['join_code'] }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="regEnrollDemo" name="enroll_demo" value="1"{% if form.get('enroll_demo', '1') != '0' %} checked{% endif %}>
+          <label class="form-check-label small" for="regEnrollDemo">
+            Automatically enroll me in the flagship IT Support &amp; Networking cohort if I don't have a join code yet
+          </label>
+        </div>
+        <button type="submit" class="btn btn-brand btn-lg w-100">Create account &amp; enter Novak LMS™</button>
+      </form>
+      <hr class="my-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 small">
+        <span>Already have an account? <a href="{{ url_for('login') }}"><strong>Sign in</strong></a></span>
+        <span>Just exploring? <a href="{{ url_for('demo_guide') }}"><strong>Launch 1-click Demo</strong></a></span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

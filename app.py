@@ -1602,6 +1602,98 @@ def login():
     return render_template('login.html', hint=hint, entry_roles=ENTRY_ROLES)
 
 
+@app.route('/register', methods=['GET', 'POST'])
+def register_account():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    errors = {}
+    form_data = {
+        'first_name': (request.values.get('first_name') or '').strip(),
+        'last_name': (request.values.get('last_name') or '').strip(),
+        'email': (request.values.get('email') or '').strip().lower(),
+        'role': (request.values.get('role') or 'student').strip().lower(),
+        'join_code': (request.values.get('join_code') or '').strip().upper(),
+        'enroll_demo': request.values.get('enroll_demo', '1'),
+    }
+    if form_data['role'] not in ('student', 'instructor'):
+        form_data['role'] = 'student'
+    if request.method == 'POST':
+        pw = request.form.get('password') or ''
+        pw2 = request.form.get('confirm_password', pw)
+        if not form_data['first_name']:
+            errors['first_name'] = 'Enter your first name.'
+        if not form_data['last_name']:
+            errors['last_name'] = 'Enter your last name.'
+        if not form_data['email'] or '@' not in form_data['email']:
+            errors['email'] = 'Enter a valid email address.'
+        elif User.query.filter_by(email=form_data['email']).first():
+            errors['email'] = 'An account with that email already exists. Try signing in.'
+        if len(pw) < 8:
+            errors['password'] = 'Use at least 8 characters.'
+        elif pw != pw2:
+            errors['confirm_password'] = 'Passwords do not match.'
+        sec_to_join = None
+        if form_data['join_code']:
+            try:
+                sid = db.session.execute(
+                    db.text('SELECT section_id FROM section_join_code WHERE code = :c'),
+                    {'c': form_data['join_code']}
+                ).scalar()
+                if sid:
+                    sec_to_join = db.session.get(ClassSection, int(sid))
+            except Exception:
+                db.session.rollback()
+            if not sec_to_join:
+                errors['join_code'] = 'That class join code was not found. Leave it blank to join the demo section.'
+        if not errors:
+            user = User(
+                email=form_data['email'],
+                first_name=form_data['first_name'][:80],
+                last_name=form_data['last_name'][:80],
+                role=form_data['role'],
+            )
+            user.set_password(pw)
+            db.session.add(user)
+            db.session.flush()
+            if user.role == 'student':
+                target_sec = sec_to_join
+                if not target_sec and form_data['enroll_demo'] != '0':
+                    target_sec = ClassSection.query.order_by(ClassSection.id).first()
+                if target_sec and not Enrollment.query.filter_by(user_id=user.id, section_id=target_sec.id).first():
+                    db.session.add(Enrollment(user_id=user.id, section_id=target_sec.id))
+            db.session.commit()
+            login_user(user)
+            audit('register', f'{user.email} ({user.role})')
+            flash(f'Welcome to Novak LMS™, {user.first_name}! Your account is ready.', 'success')
+            return redirect(url_for('index'))
+    return render_template('register.html', errors=errors, form=form_data), (400 if errors else 200)
+
+
+@app.route('/demo/enter/<role>', methods=['GET', 'POST'])
+def demo_enter(role):
+    demo_map = {
+        'student': 'student1@lms.local',
+        'learn': 'student1@lms.local',
+        'instructor': 'instructor@lms.local',
+        'teach': 'instructor@lms.local',
+        'admin': 'admin@lms.local',
+    }
+    email = demo_map.get((role or '').strip().lower())
+    if not email:
+        return redirect(url_for('demo_guide'))
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        flash('Demo account is not available on this server.', 'warning')
+        return redirect(url_for('login'))
+    login_user(user)
+    audit('demo_enter', f'{user.email} ({user.role})')
+    flash(f'Signed in to the {user.role.title()} demo as {user.full_name} ({user.email}).', 'success')
+    nxt = (request.args.get('next') or '').strip()
+    if nxt.startswith('/') and not nxt.startswith('//'):
+        return redirect(nxt)
+    return redirect(url_for('index'))
+
+
 @app.route('/account', methods=['GET', 'POST'])
 @login_required
 def account():

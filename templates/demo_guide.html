@@ -1,52 +1,93 @@
 {% extends "base.html" %}
-{% block title %}Demo guide — {{ site_name }}{% endblock %}
+{% block title %}Interactive Demo — {{ site_name }}{% endblock %}
 {% block content %}
 <div class="page-hero">
-  <h1 class="h3 mb-1">Demo walkthrough</h1>
-  <p class="mb-0">10-minute path for Navy / contractor briefings · Proprietary training prototype</p>
+  <h1 class="h3 mb-1">Novak LMS™ Interactive Demo</h1>
+  <p class="mb-0">1-click instant sign-in for Student, Instructor, and Administrator workflows — no typing required.</p>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100 border-primary">
+      <div class="card-header navy d-flex justify-content-between align-items-center">
+        <span><strong>1. Student Experience</strong></span>
+        <span class="badge text-bg-light">Learn</span>
+      </div>
+      <div class="card-body d-flex flex-column">
+        <p class="small text-muted mb-3">Experience the 4-rung in-lesson explanation ladder (539 bespoke sections), in-browser Linux VM + Windows 11/Cisco IOS labs, 90-question Exam-Day Simulator, and 98-card Speed-Drill.</p>
+        <div class="d-grid gap-2 mt-auto">
+          <a href="{{ url_for('demo_enter', role='student') }}" class="btn btn-brand">Launch Student Dashboard →</a>
+          <a href="{{ url_for('demo_enter', role='student', next='/student/module/1/1/lesson/1') }}" class="btn btn-sm btn-outline-navy">Jump to 4-Rung Adaptive Lesson</a>
+          <a href="{{ url_for('demo_enter', role='student', next='/student/section/1/exam-sim') }}" class="btn btn-sm btn-outline-navy">Jump to Exam-Day Simulator &amp; PBQs</a>
+          <a href="{{ url_for('demo_enter', role='student', next='/student/section/1/speed-drill') }}" class="btn btn-sm btn-outline-navy">Jump to 60s Port/Acronym Speed-Drill</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header navy d-flex justify-content-between align-items-center">
+        <span><strong>2. Instructor Co-Pilot</strong></span>
+        <span class="badge text-bg-light">Teach</span>
+      </div>
+      <div class="card-body d-flex flex-column">
+        <p class="small text-muted mb-3">See "Who Needs Me" in 10 seconds, Helix webcam attention signals, full Gradebook with Exam-Sim score sync, and per-student ADA 1.25×–2.0× time accommodations.</p>
+        <div class="d-grid gap-2 mt-auto">
+          <a href="{{ url_for('demo_enter', role='instructor') }}" class="btn btn-brand">Launch Instructor Co-Pilot →</a>
+          <a href="{{ url_for('demo_enter', role='instructor', next='/instructor/section/1/who-needs-me') }}" class="btn btn-sm btn-outline-navy">Jump to "Who Needs Me" Briefing</a>
+          <a href="{{ url_for('demo_enter', role='instructor', next='/instructor/section/1/attention') }}" class="btn btn-sm btn-outline-navy">Jump to Helix Attention Dashboard</a>
+          <a href="{{ url_for('demo_enter', role='instructor', next='/instructor/section/1/exam-sim') }}" class="btn btn-sm btn-outline-navy">Jump to Exam-Sim &amp; ADA Accommodations</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header navy d-flex justify-content-between align-items-center">
+        <span><strong>3. Command / Admin</strong></span>
+        <span class="badge text-bg-light">Admin</span>
+      </div>
+      <div class="card-body d-flex flex-column">
+        <p class="small text-muted mb-3">Inspect Institutional Outcomes &amp; Voucher-Readiness metrics, Training Quality Indicator (TQI) packets, LTI 1.3 / Campus SSO, and the tamper-evident FERPA audit chain.</p>
+        <div class="d-grid gap-2 mt-auto">
+          <a href="{{ url_for('demo_enter', role='admin') }}" class="btn btn-brand">Launch Admin Command →</a>
+          <a href="{{ url_for('demo_enter', role='admin', next='/admin/outcomes') }}" class="btn btn-sm btn-outline-navy">Jump to Institutional Outcomes Report</a>
+          <a href="{{ url_for('demo_enter', role='admin', next='/admin/tqi') }}" class="btn btn-sm btn-outline-navy">Jump to TQI Command Board</a>
+          <a href="{{ url_for('demo_enter', role='admin', next='/admin/institutions') }}" class="btn btn-sm btn-outline-navy">Jump to Multi-Tenant &amp; LTI 1.3</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="card mb-4">
-  <div class="card-header navy">Accounts</div>
+  <div class="card-header navy">Manual Demo Credentials</div>
   <div class="card-body">
     <table class="table table-sm mb-0">
-      <thead><tr><th>Role</th><th>Email</th><th>Password</th></tr></thead>
+      <thead><tr><th>Role</th><th>Email</th><th>Password</th><th>Quick Launch</th></tr></thead>
       <tbody>
-        <tr><td>Admin</td><td><code>admin@lms.local</code></td><td><code>admin123</code></td></tr>
-        <tr><td>Instructor</td><td><code>instructor@lms.local</code></td><td><code>teach123</code></td></tr>
-        <tr><td>Student</td><td><code>student1@lms.local</code></td><td><code>student123</code></td></tr>
+        <tr><td>Student</td><td><code>student1@lms.local</code></td><td><code>student123</code></td><td><a href="{{ url_for('demo_enter', role='student') }}">Enter as Student</a></td></tr>
+        <tr><td>Instructor</td><td><code>instructor@lms.local</code></td><td><code>teach123</code></td><td><a href="{{ url_for('demo_enter', role='instructor') }}">Enter as Instructor</a></td></tr>
+        <tr><td>Admin</td><td><code>admin@lms.local</code></td><td><code>admin123</code></td><td><a href="{{ url_for('demo_enter', role='admin') }}">Enter as Admin</a></td></tr>
       </tbody>
     </table>
   </div>
 </div>
 
 <div class="card mb-4">
-  <div class="card-header navy">Suggested click path</div>
+  <div class="card-header navy">Suggested 10-minute briefing walkthrough</div>
   <ol class="list-group list-group-numbered list-group-flush">
-    <li class="list-group-item">Log in as <strong>admin</strong> → open Score hub / Test analytics → show class heat maps and alternative effectiveness.</li>
-    <li class="list-group-item">Admin → Teaching time → filter by instructor / class.</li>
-    <li class="list-group-item">Log in as <strong>instructor</strong> → open a class → expand broad categories → student attempts (item detail).</li>
-    <li class="list-group-item">Instructor → activate a quiz or test for whole class or selected students.</li>
-    <li class="list-group-item">Log in as <strong>student</strong> → open curriculum lessons → take a progress check → take a knowledge test (one question at a time).</li>
-    <li class="list-group-item">On a lesson: Helix dock → allow camera → click 9 marks → read. Then instructor → class → Attention signal (not a score).</li>
-    <li class="list-group-item">Optional: Binary game, tickets on curriculum, instructor inbox.</li>
+    <li class="list-group-item"><strong>Adaptive 4-Rung Explanation Ladder:</strong> Launch the Student demo → open Lesson 1.1 → click <em>Explain it another way</em> to swap in place through Plain Language (R1), Real-World Analogy (R2), Visual Diagram (R3), and Interactive Try-It (R4).</li>
+    <li class="list-group-item"><strong>Real-VM &amp; Stateful Simulation Labs:</strong> Open the Labs hub to run the in-browser Linux VM (<code>v86</code>), stateful Windows 11 PowerShell/CMD &amp; Cisco IOS CLI labs, Packet-Flow Visualizer, and SVG Hardware Bench.</li>
+    <li class="list-group-item"><strong>Exam-Day Readiness Simulator &amp; Speed-Drill:</strong> Start a CompTIA 220-1201, 220-1202, or N10-009 sitting with Candidate Agreement, interactive multi-part PBQs, Digital Whiteboard, Option Strikethrough, Printable Score Report, and 1-Click Missed-Objectives Drill.</li>
+    <li class="list-group-item"><strong>Helix Eye-Tracking &amp; Instructor Co-Pilot:</strong> Enable the opt-in Helix dock on a lesson, then switch to Instructor → Attention Dashboard &amp; "Who Needs Me" briefing.</li>
+    <li class="list-group-item"><strong>Institutional Outcomes &amp; TQI:</strong> Switch to Admin → Outcomes Report to view Voucher-Readiness metrics, CSV/JSON exports, and TQI critiques.</li>
   </ol>
 </div>
 
-<div class="card mb-4">
-  <div class="card-header navy">How to run (Mac)</div>
-  <div class="card-body">
-<pre class="mb-2 p-3 rounded" style="background:var(--surface-3);color:var(--ink);overflow:auto">cd ~/Downloads
-unzip -o ciwt-lms.zip
-cd comptia-lms
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-PORT=5050 python app.py</pre>
-    <p class="small text-muted mb-0">Open <code>http://127.0.0.1:5050</code>. For a peer on another network, use a Cloudflare quick tunnel to that port. For production-style runs use gunicorn (see Gaps &amp; ops).</p>
-  </div>
+<div class="d-flex flex-wrap gap-2">
+  <a href="{{ url_for('register_account') }}" class="btn btn-brand">Create your own account</a>
+  <a href="{{ url_for('login') }}" class="btn btn-outline-navy">Back to sign in</a>
+  <a href="https://novakornothing.com" class="btn btn-outline-navy">Back to novakornothing.com</a>
 </div>
-
-<a href="{{ url_for('login') }}" class="btn btn-brand">Back to sign in</a>
-<a href="{{ url_for('gaps') }}" class="btn btn-outline-navy ms-2">Gaps &amp; roadmap</a>
 {% endblock %}
