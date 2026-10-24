@@ -2,7 +2,7 @@
 # deploy/restart, which would lose grades, mastery and lab history. Do not deploy production on the free plan.
 services:
   - type: web
-    name: ciwt-lms
+    name: novak-lms
     runtime: python
     plan: starter                 # any paid instance type; disks require a paid plan
     region: virginia
