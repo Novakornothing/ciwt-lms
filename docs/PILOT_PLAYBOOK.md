@@ -51,7 +51,7 @@ When no one is struggling the card says so, and the class ladder page says "noth
 - At the end of the chapter: **Continue to Adaptive Check →** and **Continue to Lab →**, so there is no dead end.
 
 ### Support
-- Contact & Support (`contact@novakornothing.com`, configurable with `NOVAK_CONTACT_EMAIL`) is in every page footer, on `/contact` (with an instructor and student FAQ) and on each section's Setup page.
+- Contact & Support (`novakornothing@gmail.com`, configurable with `NOVAK_CONTACT_EMAIL`) is in every page footer, on `/contact` (with an instructor and student FAQ) and on each section's Setup page.
 - novakornothing.com shows the hero, a privacy note, an FAQ and a contact section (preview at `/landing` or `/?landing=1`).
 
 ## 6. End of term: pull the outcomes report

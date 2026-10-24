@@ -3,7 +3,7 @@ import re
 
 from tests.test_ladder_engine import _ans, _check_ids, _reset, lesson11  # noqa: F401
 
-MAIL = 'mailto:contact@novakornothing.com'
+MAIL = 'mailto:novakornothing@gmail.com'
 
 
 def test_landing_host_privacy_faq_contact(app):

@@ -1499,7 +1499,7 @@ def compute_item_analysis(test_id, section_id=None, section_ids=None,
 
 # ==================== ROUTES ====================
 
-NOVAK_CONTACT_EMAIL = os.environ.get("NOVAK_CONTACT_EMAIL", "contact@novakornothing.com")
+NOVAK_CONTACT_EMAIL = os.environ.get("NOVAK_CONTACT_EMAIL", "novakornothing@gmail.com")
 
 
 @app.context_processor
