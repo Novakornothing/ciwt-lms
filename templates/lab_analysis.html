@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}My process — {{ lab.title }}{% endblock %}
+{% block content %}
+<nav class="small mb-2"><a href="{{ url_for('interactive_lab', lab_id=lab.id) }}">← Back to {{ lab.title }}</a></nav>
+<h1 class="h4">How you worked: {{ lab.title }}</h1>
+{% if ana %}{% set staff = False %}{% include '_lab_process.html' %}{% else %}<p>No actions recorded for this lab yet. Start the lab and come back any time, during or after an attempt.</p>{% endif %}
+{% endblock %}

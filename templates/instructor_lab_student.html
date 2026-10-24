@@ -41,6 +41,7 @@
     {% endif %}
   </div>
   <div class="col-12 col-lg-8">
+    {% set staff = True %}{% include '_lab_process.html' %}
     {% if attempts %}
     <h2 class="h6 section-label">Process (per attempt)</h2>
     <div class="table-responsive mb-3"><table class="table table-sm align-middle lab-process">

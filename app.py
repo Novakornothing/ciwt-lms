@@ -2424,6 +2424,7 @@ import lab_progress as lab_progress_mod  # noqa: E402
 import lab_runtime  # noqa: E402
 lab_progress_api = lab_progress_mod.register(app, db, dict(
     User=User, ClassSection=ClassSection, Enrollment=Enrollment, Module=Module, LabCompletion=LabCompletion,
+    Course=Course, Lesson=Lesson,
     instructor_can_access_section=lambda user, section: instructor_can_access_section(user, section),
     record_completion=lambda lab_id, done, section_id=None, test_id=None: _record_lab_completion(lab_id, done, section_id, test_id),
     audit=lambda action, detail='': audit(action, detail),

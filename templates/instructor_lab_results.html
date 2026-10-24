@@ -21,6 +21,7 @@
 {% if not table %}
 <div class="card"><div class="empty-state"><i class="bi bi-people" aria-hidden="true"></i><p class="mb-0">No students are enrolled in this class yet.</p></div></div>
 {% else %}
+{% include '_lab_class_process.html' %}
 <h2 class="h6 section-label">By lab</h2>
 <div class="table-responsive mb-4">
   <table class="table table-sm align-middle lab-col-table">

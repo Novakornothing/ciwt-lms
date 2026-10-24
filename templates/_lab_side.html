@@ -18,6 +18,7 @@
       </div>
       <div class="lab-hint" id="hintBox" hidden></div>
       <p class="small text-muted mt-2 mb-0">Hints are two levels per objective (a nudge, then the exact action) and are recorded for your instructor. Undo reverts your last change; objectives you earned stay earned.</p>
+      <p class="small mt-2 mb-0"><a href="{{ url_for('interactive_lab_analysis', lab_id=lab.id) }}" class="lpa-link" target="_blank" rel="noopener"><i class="bi bi-graph-up" aria-hidden="true"></i> My process analysis</a> — a timeline of what you did and where it went wrong, any time during or after the lab.</p>
       {% block lab_help %}{% endblock %}
       {% if help_html %}<div class="lab-help small mt-3">{{ help_html|safe }}</div>{% endif %}
     </div>

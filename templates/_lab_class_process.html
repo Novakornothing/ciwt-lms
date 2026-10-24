@@ -1,0 +1,14 @@
+{# Class-level Dynamic Lab Process summary (pass 20). Needs `cls` from lab_diagnosis.class_summary. #}
+{% if cls and cls.students %}
+<section class="card mb-3 lab-class-process" aria-labelledby="lcpHead">
+  <div class="card-header navy"><h2 class="h6 mb-0" id="lcpHead">Class lab process: common wrong turns{{ ' — ' ~ cls_title if cls_title }}</h2></div>
+  <div class="card-body small">
+    <p class="mb-2">{{ cls.students }} student attempt(s) analysed (latest attempt each).</p>
+    {% if cls.patterns %}<table class="table table-sm"><caption class="visually-hidden">Process patterns across the class</caption><thead><tr><th scope="col">Pattern</th><th scope="col">Students</th><th scope="col">Teach it with</th></tr></thead><tbody>
+      {% for p in cls.patterns %}<tr data-pattern="{{ p.id }}"><th scope="row">{{ p.label }}{% if p.strength %} <span class="badge text-bg-success">strength</span>{% endif %}</th><td>{{ p.count }} ({{ p.share }}%)</td>
+        <td>{% if p.ref %}{% if p.ref.url %}<a href="{{ p.ref.url }}">{{ p.ref.title }}</a>{% else %}{{ p.ref.title }}{% endif %} — {{ p.ref.concept }}{% endif %}</td></tr>{% endfor %}</tbody></table>{% endif %}
+    {% if cls.wrong_turns %}<p class="mb-1"><strong>Most common rejected commands:</strong></p><ul class="lcp-wrong">{% for w in cls.wrong_turns %}<li><code>{{ w.action }}</code> × {{ w.count }}</li>{% endfor %}</ul>{% endif %}
+    {% if cls.openings %}<p class="mb-0"><strong>How students opened:</strong> {% for o in cls.openings %}{{ o.label }} ({{ o.count }}){{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
+  </div>
+</section>
+{% endif %}

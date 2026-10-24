@@ -566,10 +566,11 @@ def register(app, db, deps):
         out = []
         for lab_id, evs in (src(user.id, section.id) or {}).items():
             lab = ldef(lab_id)
-            res = lab_diagnosis.diagnose(evs, lab=lab)
+            res = lab_diagnosis.analyze(evs, lab=lab)
             out.append({'lab_id': lab_id, 'title': (lab or {}).get('title') or lab_id, 'attempt': res['attempt'],
                         'patterns': res['patterns'], 'summary': res['summary'],
-                        'concerns': [p for p in res['patterns'] if p['id'] != 'efficient'],
+                        'concerns': res['concerns'], 'strengths': res['strengths'], 'timeline': res['timeline'],
+                        'sequence': res['sequence'], 'phases': res['phases'], 'minutes': res['minutes'],
                         'struggling': lab_diagnosis.struggling(res),
                         'last_at': max((getattr(e, 'at', None) for e in evs if getattr(e, 'at', None)), default=None)})
         out.sort(key=lambda r: (not r['struggling'], -(r['last_at'].timestamp() if r['last_at'] else 0)))

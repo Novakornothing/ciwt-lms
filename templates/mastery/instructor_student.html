@@ -86,9 +86,10 @@
       {% if r.patterns %}
       <ul class="mx-labdx-list mb-0 mt-2">
         {% for p in r.patterns %}
-        <li><span class="mx-badge{{ ' mx-badge-req' if p.id != 'efficient' }}">{{ p.label }}</span>
+        <li><span class="mx-badge{{ ' mx-badge-req' if not p.strength }}">{{ p.label }}</span>
           <div class="small">{{ p.evidence|join(' ') }}</div>
-          <div class="small mx-muted"><strong>Coaching tip:</strong> {{ p.tip }}</div></li>
+          <div class="small mx-muted"><strong>Coaching tip:</strong> {{ p.tip }}</div>
+          {% if p.ref %}<div class="small">Reteach: {{ p.ref.course }} {{ p.ref.label }} — “{{ p.ref.concept }}” ({{ p.ref.rung }})</div>{% endif %}</li>
         {% endfor %}
       </ul>
       {% else %}<p class="small mb-0 mt-1 mx-muted">No pattern stands out in this attempt.</p>{% endif %}

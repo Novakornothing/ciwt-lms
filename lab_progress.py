@@ -145,6 +145,93 @@ def register(app, db, deps):
             q = q.filter_by(attempt=attempt)
         return q.order_by(LE.attempt, LE.seq).all()
 
+
+    # ------------------------------------------------------------------ pass 20: dynamic lab process analysis
+    from mastery import lab_diagnosis as LD
+    RUNG_NAME = {'R1': 'Simpler words', 'R2': 'Different analogy', 'R3': 'Visual walk-through', 'R4': 'Try it'}
+
+    def lesson_links(res, section=None, user_id=None):
+        """Resolve each pattern's lesson ref to a title and (when the student can open it) a lesson URL + ladder anchor."""
+        C, L = getattr(d, 'Course', None), getattr(d, 'Lesson', None)
+        cache = {}
+        for p in (res or {}).get('patterns', []):
+            ref = p.get('ref')
+            if not ref:
+                continue
+            ref.setdefault('rung_name', RUNG_NAME.get(ref['rung'], ref['rung']))
+            ref.setdefault('title', f"{ref['course']} lesson {ref['label']}")
+            if not (C and L):
+                continue
+            key = (ref['course'], ref['label'])
+            if key not in cache:
+                cache[key] = None
+                try:
+                    from curriculum_v2.ladder.sections import lesson_label
+                    course = C.query.filter_by(code=ref['course']).first()
+                    mod = course and d.Module.query.filter_by(course_id=course.id, order=int(ref['label'].split('.')[0])).first()
+                    les = mod and next((x for x in L.query.filter_by(module_id=mod.id).all() if lesson_label(x.title) == ref['label']), None)
+                    sec = section if (section is not None and course and section.course_id == course.id) else None
+                    if les and sec is None and user_id and course:
+                        en = (d.Enrollment.query.join(d.ClassSection, d.ClassSection.id == d.Enrollment.section_id)
+                              .filter(d.Enrollment.user_id == user_id, d.ClassSection.course_id == course.id).first())
+                        sec = en and db.session.get(d.ClassSection, en.section_id)
+                    cache[key] = (les, mod, sec)
+                except Exception:
+                    cache[key] = None
+            hit = cache[key]
+            if hit and hit[0]:
+                les, mod, sec = hit
+                ref['title'] = les.title
+                if sec is not None:
+                    ref['url'] = url_for('view_lesson', section_id=sec.id, module_id=mod.id, lesson_id=les.id) + f"#ladder-{ref['sid']}"
+        return res
+
+    def lab_analysis_for(user_id, lab_id, section=None):
+        """Analysis of the student's latest attempt at one lab (None when nothing was recorded)."""
+        lab = RT.get_lab(lab_id) or RT.classroom_lab(lab_id)
+        latest = max([e.attempt for e in LE.query.filter_by(user_id=user_id, lab_id=lab_id).with_entities(LE.attempt).all()] or [0])
+        if not latest:
+            return None
+        evs = events_for(user_id, lab_id, latest)
+        if not evs:
+            return None
+        ldef = {'id': lab_id, 'objectives': [{'id': o['id'], 'text': o.get('text', o['id'])} for o in (lab or {}).get('objectives') or []]}
+        return lesson_links(LD.analyze(evs, lab=ldef), section, user_id)
+
+    def class_lab_analysis(section, lab_ids, uids, limit=20000):
+        """Class roll-up from one query: latest attempt per (student, lab)."""
+        if not uids or not lab_ids:
+            return LD.class_summary([])
+        rows = (LE.query.filter(LE.user_id.in_(uids), LE.lab_id.in_(lab_ids))
+                .order_by(LE.user_id, LE.lab_id, LE.attempt, LE.seq).limit(limit).all())
+        groups = {}
+        for e in rows:
+            g = groups.setdefault((e.user_id, e.lab_id), {'attempt': 0, 'evs': []})
+            if e.attempt > g['attempt']:
+                g['attempt'], g['evs'] = e.attempt, []
+            g['evs'].append(e)
+        anas = []
+        for (_, lid), g in groups.items():
+            lab = RT.get_lab(lid) or {}
+            ldef = {'id': lid, 'objectives': [{'id': o['id'], 'text': o.get('text', o['id'])} for o in lab.get('objectives') or []]}
+            anas.append(LD.analyze(g['evs'], lab=ldef))
+        return lesson_links(LD.class_summary(anas), section)
+
+    @login_required
+    def interactive_lab_analysis(lab_id):
+        """The student's own Dynamic Lab Process Analysis (during or after an attempt)."""
+        lab = lab_or_404(lab_id)
+        section = None
+        try:
+            sid = int(session.get('lab_section_id') or 0)
+            section = sid and db.session.get(d.ClassSection, sid) or None
+        except (TypeError, ValueError):
+            section = None
+        ana = lab_analysis_for(current_user.id, lab_id, section)
+        if request.args.get('format') == 'json':
+            return jsonify({k: ana[k] for k in ('attempt', 'summary', 'sequence', 'phases', 'minutes', 'concerns', 'strengths')} if ana else {})
+        return render_template('lab_analysis.html', lab=lab, ana=ana)
+
     # ------------------------------------------------------------------ persistence helpers
     def get_row(lab_id, create=True, user_id=None):
         uid = user_id or current_user.id
@@ -569,7 +656,10 @@ def register(app, db, deps):
         section = staff_section(section_id)
         labs, table, col = results_data(section)
         focus = request.args.get('lab') or ''
-        return render_template('instructor_lab_results.html', section=section, labs=labs, table=table, col=col,
+        lab_ids = [focus] if focus else [l['id'] for l in labs if l.get('kind') != 'classroom']
+        cls = class_lab_analysis(section, lab_ids, [t['user'].id for t in table])
+        cls_title = next((l['title'] for l in labs if l['id'] == focus), '') if focus else 'all labs'
+        return render_template('instructor_lab_results.html', section=section, labs=labs, table=table, col=col, cls=cls, cls_title=cls_title,
                                focus=focus, rubric=RT.lab_rubric(), classroom=[l for l in labs if l['kind'] == 'classroom'])
 
     @login_required
@@ -598,7 +688,8 @@ def register(app, db, deps):
             abort(404)
         row = LP.query.filter_by(user_id=user_id, lab_id=lab_id).first()
         evs = events_for(user_id, lab_id)
-        return render_template('instructor_lab_student.html', section=section, student=u, lab=lab, row=row,
+        ana = lab_analysis_for(user_id, lab_id, section)
+        return render_template('instructor_lab_student.html', section=section, student=u, lab=lab, row=row, ana=ana,
                                attempts=process_summary(evs), events=evs[-400:],
                                done=_j(row.done_json, []) if row else [], transcript=_j(row.transcript_json, []) if row else [],
                                rubric=RT.lab_rubric(), levels=_j(row.rubric_json, []) if row else [])
@@ -706,6 +797,7 @@ def register(app, db, deps):
         ('/labs/classroom/<cl_id>', 'classroom_lab', classroom_lab, ['GET']),
         ('/labs/scenario/<sid>', 'scenario_lab', scenario_lab, ['GET']),
         ('/labs/<lab_id>', 'interactive_lab', interactive_lab, ['GET']),
+        ('/labs/<lab_id>/analysis', 'interactive_lab_analysis', interactive_lab_analysis, ['GET']),
         ('/labs/<lab_id>/state', 'interactive_lab_state', interactive_lab_state, ['GET']),
         ('/labs/<lab_id>/cmd', 'interactive_lab_cmd', interactive_lab_cmd, ['POST']),
         ('/labs/<lab_id>/event', 'interactive_lab_event', interactive_lab_event, ['POST']),

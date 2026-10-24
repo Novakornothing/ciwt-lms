@@ -1,0 +1,29 @@
+{# Dynamic Lab Process Analysis (pass 20). Needs `ana` (lab_diagnosis.analyze + lesson links); `staff` true on instructor views. #}
+{% if ana %}
+<section class="card mb-3 lab-process-analysis" aria-labelledby="lpaHead">
+  <div class="card-header navy d-flex justify-content-between flex-wrap gap-2">
+    <h2 class="h6 mb-0" id="lpaHead">Dynamic Lab Process Analysis</h2>
+    <span class="small">attempt {{ ana.attempt or 1 }} · {{ ana.summary.actions }} actions · {{ ana.summary.rejected }} rejected · {{ ana.summary.hints }} hints · {{ ana.minutes }} min{{ ' · completed' if ana.summary.completed }}</span>
+  </div>
+  <div class="card-body">
+    {% if ana.sequence %}<p class="small mb-2"><strong>{{ 'How they worked' if staff else 'How you worked' }}:</strong>
+      {% for ph in ana.sequence %}<span class="badge lpa-{{ ph }} text-bg-light">{{ {'diagnose':'Look','change':'Change','verify':'Check'}[ph] }}</span>{% if not loop.last %} → {% endif %}{% endfor %}</p>{% endif %}
+    <div class="table-responsive"><table class="table table-sm small mb-3 lpa-phases"><caption class="visually-hidden">Time per phase</caption>
+      <thead><tr><th scope="col">Phase</th><th scope="col">Steps</th><th scope="col">Time</th></tr></thead>
+      <tbody>{% for k in ['diagnose', 'change', 'verify', 'rejected', 'hint'] %}{% set t = ana.phases[k] %}{% if t.n %}<tr><th scope="row">{{ {'diagnose':'Looked / diagnosed','change':'Changed something','verify':'Checked the result','rejected':'Rejected / not recognised','hint':'Hints'}[k] }}</th><td>{{ t.n }}</td><td>{{ (t.seconds // 60) }}m {{ t.seconds % 60 }}s</td></tr>{% endif %}{% endfor %}</tbody></table></div>
+    {% if ana.concerns %}<h3 class="h6">{{ 'Why they struggled' if staff else 'Where it went wrong' }}</h3>
+    <ul class="lpa-why list-unstyled">{% for p in ana.concerns %}
+      <li class="mb-2" data-pattern="{{ p.id }}"><span class="badge text-bg-warning">{{ p.label }}</span>
+        <div class="small">{{ p.evidence|join(' ') }}</div>
+        <div class="small text-muted"><strong>Tip:</strong> {{ p.tip }}</div>
+        {% if p.ref %}<div class="small">Learn it: {% if p.ref.url %}<a href="{{ p.ref.url }}" class="lpa-ref">{{ p.ref.title }} — “{{ p.ref.concept }}”</a>{% else %}{{ p.ref.title }} — “{{ p.ref.concept }}”{% endif %}
+          <span class="text-muted">(open the “{{ p.ref.rung_name }}” explanation)</span></div>{% endif %}</li>{% endfor %}</ul>{% endif %}
+    {% if ana.strengths %}<h3 class="h6">What went well</h3><ul class="small lpa-good">{% for p in ana.strengths %}<li data-pattern="{{ p.id }}"><strong>{{ p.label }}.</strong> {{ p.evidence|join(' ') }}</li>{% endfor %}</ul>{% endif %}
+    {% if not ana.patterns %}<p class="small text-muted">No pattern stands out yet{{ ' — keep going' if not ana.summary.completed }}.</p>{% endif %}
+    {% if ana.timeline %}<details class="mt-2"{% if staff %} open{% endif %}><summary class="small">Step-by-step timeline ({{ ana.timeline|length }} steps)</summary>
+      <ol class="small lpa-timeline mt-2">{% for s in ana.timeline[-200:] %}<li value="{{ s.seq }}"><span class="badge lpa-{{ s.phase }} text-bg-light">{{ s.phase_label }}</span>
+        <code>{{ s.action|truncate(80) }}</code>{% if s.outcome and s.outcome != 'ok' %} <span class="badge text-bg-light">{{ s.outcome }}</span>{% endif %}{% if s.newly %} <span class="badge text-bg-success">+{{ s.newly|join(', ') }}</span>{% endif %}{% if s.dt %} <span class="text-muted">+{{ s.dt }}s</span>{% endif %}</li>{% endfor %}</ol></details>{% endif %}
+    <p class="small text-muted mb-0 mt-2">Built from the lab's own event log with fixed rules. It describes process habits, not ability, and never changes a score. Pending SME review.</p>
+  </div>
+</section>
+{% endif %}

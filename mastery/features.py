@@ -380,7 +380,11 @@ def register_features(app, db, ctx):
                 if r['struggling']:
                     out.append({'kind': 'lab', 'obj': None, 'when': r['last_at'], 'lab': r,
                                 'text': f"Lab “{r['title']}” (attempt {r['attempt']}): "
-                                        + ', '.join(p['label'].lower() for p in r['concerns'])})
+                                        + ', '.join(p['label'].lower() for p in r['concerns'])
+                                        + next((f" — reteach “{p['ref']['concept']}” ({p['ref']['course']} {p['ref']['label']}, "
+                                                f"{p['ref']['rung']})" for p in r['concerns'] if p.get('ref')), ''),
+                                'url': url_for('instructor_lab_student', section_id=st['section'].id, user_id=user.id,
+                                               lab_id=r['lab_id'])})
         lad = getattr(ctx, 'ladder', None)
         if lad:
             out.extend(lad.needs_me_reasons(user, st['section']))   # pass 19: every explanation tried, still missing
