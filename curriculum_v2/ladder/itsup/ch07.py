@@ -1,11 +1,12 @@
 """Explanation ladder — ITSUP chapter 7 (Troubleshooting Methodology). Pending SME review.
 
-Author B (labs branch, pass 19). Every concept section of lessons 7.1-7.4 is laddered, restated with same_as, or
+Author B (labs branch, pass 19). Every concept section of lessons 7.1-7.4 is laddered (Option B pass 2 replaced every same_as with a bespoke ladder, _p2cNN.py), or
 skipped with a reason. Rungs re-explain what the lesson teaches; they add no new course rules. The method follows
 the CompTIA A+ best-practice troubleshooting methodology the lesson is built on; escalation and problem records
 follow ITIL 4 incident and problem management.
 """
-from curriculum_v2.ladder.schema import (analogy, check, order, plain, reveal, same_as, section, skip, sort,
+from curriculum_v2.ladder.itsup._p2c07 import SECS as _P2
+from curriculum_v2.ladder.schema import (analogy, check, order, plain, reveal, section, skip, sort,
                                          tryit, visual)
 
 SCHEMA = 1
@@ -208,8 +209,8 @@ records every action, so you can see whether you changed anything before a test 
                                'Nothing is changed until a test has pointed at a cause, and the job ends with the user’s own check and the notes.'),
                   lab={'id': 'ticket-method', 'note': 'Work the ticket end to end; the lab scores the order of your steps.'})),
 
-        '1-the-order': same_as('core-content', '1. The order', 'The same seven-step order, as a short list.'),
-        'the-seven-words': same_as('core-content', 'The seven words', 'The same method restated in seven words.'),
+        '1-the-order': _P2[('7.1', '1-the-order')],
+        'the-seven-words': _P2[('7.1', 'the-seven-words')],
 
         'cheap-tests-first': section(
             'Cheap tests first', 'IT-7.1',
@@ -340,10 +341,8 @@ first job is to say which domain you are in.</p>''',
                               'The scope and the symptom name the domain; the domain then names the tool and the owner.'),
                   lab={'id': 'win-full-triage', 'note': 'Decide the domain from the first evidence before you change anything.'})),
 
-        '1-domains-you-already-know': same_as('core-content', '1. Domains you already know',
-                                              'The same fault-domain list as a quick table.'),
-        'fault-domains-you-already-know': same_as('core-content', 'Fault domains you already know',
-                                                  'The same domains restated in one line each.'),
+        '1-domains-you-already-know': _P2[('7.2', '1-domains-you-already-know')],
+        'fault-domains-you-already-know': _P2[('7.2', 'fault-domains-you-already-know')],
     },
 
     '7.3': {
@@ -412,7 +411,7 @@ lesson’s version.</p>''',
                                 'the user’s VPN certificate or group.'),
                   lab={'id': 'ticket-method', 'note': 'Finish a ticket with a verification line and a closure note.'})),
 
-        'handoff': same_as('core-content', 'Handoff', 'The same handoff rule from the core section, in three lines.'),
+        'handoff': _P2[('7.3', 'handoff')],
     },
 
     '7.4': {

@@ -1,10 +1,11 @@
 """Explanation ladder — ITSUP chapter 4 (Laptops, Mobile and MDM, Printers, Portable Intake). Pending SME review.
 
 Distinct concept sections are laddered; core-content and repeated sections that restate a core section of the same
-lesson use same_as.
+lesson use same_as. Option B pass 2: those sections now have bespoke ladders (_p2cNN.py).
 """
 from curriculum_v2.ladder.itsup._lk import M, P, X
-from curriculum_v2.ladder.schema import order, reveal, same_as, sort
+from curriculum_v2.ladder.itsup._p2c04 import SECS as _P2
+from curriculum_v2.ladder.schema import order, reveal, sort
 
 SCHEMA = 1
 COURSE = 'ITSUP'
@@ -47,8 +48,8 @@ INT = ('ticket-intake', 'Classify, count impact, name the owner, then write a no
 
 LESSONS = {
     '4.1': {
-        'start-here-a-laptop-is-still-a-computer': same_as('2-what-you-may-open', 'Start here — a laptop is still a computer', 'Laptop parts, batteries and what you may open.'),
-        'core-content': same_as('fru-identity-and-batteries', 'Core content', 'Which parts are FRUs and how to order by service tag.'),
+        'start-here-a-laptop-is-still-a-computer': _P2[('4.1', 'start-here-a-laptop-is-still-a-computer')],
+        'core-content': _P2[('4.1', 'core-content')],
         '1-power-first': X('1. Power first', 'IT-4.1', S1, [
             ('A 65 W brick on a 130 W laptop. Symptom?', 'Slow, throttled PC', 'Faster charging than usual', 'No effect at all on speed',
              'Too little power makes the laptop charge slowly and throttle, which looks like a slow CPU.', BRICK, BRICK),
@@ -134,7 +135,7 @@ LESSONS = {
                            'Cable': ['USB-C dock', 'Lightning charger']}, 'NFC is the shortest link.'), LAP),
     },
     '4.2': {
-        'core-content': same_as('1-three-radios', 'Core content', 'Which path is failing, in a full table.'),
+        'core-content': _P2[('4.2', 'core-content')],
         '1-three-radios': X('1. Three radios', 'IT-4.2', S2, [
             ('Mail works on cellular, fails on building Wi-Fi. Suspect?', 'The Wi-Fi path', 'The phone hardware itself', 'The mail app needs reinstalling',
              'The device and account work; the building path does not.', PB, PB),
@@ -177,7 +178,7 @@ LESSONS = {
             '<p>Put the MDM request in order.</p>',
             order('Blocked app', ['Confirm the device is managed', 'Find the enrollment owner', 'Write what the user needs', 'Open the request'],
                   'Nobody sidesteps the policy.'), MOB),
-        'radios-and-mdm': same_as('2-mdm', 'Radios and MDM', 'Path testing plus who owns the managed phone.'),
+        'radios-and-mdm': _P2[('4.2', 'radios-and-mdm')],
         'troubleshooting-mobile-os-app-and-mobile-security-issues': X('Troubleshooting mobile OS, app and mobile-security issues', 'IT-4.2', S2, [
             ('An app keeps crashing. Which step comes last?', 'Delete and reinstall', 'Close and reopen it', 'Restart the device',
              'Reinstalling can delete app data, so it comes after the safe steps.', REI, REI),
@@ -201,7 +202,7 @@ LESSONS = {
             order('Crashing app', ['Close and reopen', 'Restart the device', 'Update app and OS', 'Delete and reinstall'], 'Data-losing steps come last.'), MOB),
     },
     '4.3': {
-        'core-content': same_as('1-the-path', 'Core content', 'The print path with scope in depth.'),
+        'core-content': _P2[('4.3', 'core-content')],
         '1-the-path': X('1. The path', 'IT-4.3', S3, [
             ('Whole floor cannot print. Start at…', 'Device and print server', 'The first user’s Word settings', 'Reinstalling one PC’s driver',
              'Many users point at the shared end of the path.', FPC, FPC),
@@ -244,7 +245,7 @@ LESSONS = {
             '<p>Sort each line.</p>',
             sort('Useful or not?', {'Useful': ['Queue FL2-MFP', 'Error: offline', 'Panel shows jam'], 'Not useful': ['Printer broken', 'User annoyed']},
                  'Facts beat feelings.'), PRN),
-        'print-path': same_as('1-the-path', 'Print path', 'The same print path and scope rule.'),
+        'print-path': _P2[('4.3', 'print-path')],
         'printer-configuration-maintenance-and-print-defect-diagnosis': X('Printer configuration, maintenance and print-defect diagnosis', 'IT-4.3', S3, [
             ('Pages come out full of random symbols. Check…', 'Driver language', 'The toner level first', 'The paper tray size setting',
              'A driver for the wrong language (PCL vs PostScript) prints garbage.', PCL, PCL),
@@ -269,7 +270,7 @@ LESSONS = {
                  'Language mismatches cause garbage.'), PRN),
     },
     '4.4': {
-        'core-content': same_as('portable-intake', 'Core content', 'Three portable tickets worked through intake.'),
+        'core-content': _P2[('4.4', 'core-content')],
         'portable-intake': X('Portable intake', 'IT-4.1', S4, [
             ('Laptop bulging and warm when off. Classify as…', 'Safety stop', 'Slow performance', 'Software issue',
              'A swollen battery is a safety stop with a do-not-charge tag.', ASK, SWELL),

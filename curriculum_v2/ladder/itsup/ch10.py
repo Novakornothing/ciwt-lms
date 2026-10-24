@@ -1,10 +1,11 @@
 """Explanation ladder — ITSUP chapter 10 (Endpoint Security). Pending SME review.
 
-Author B (labs branch, pass 19). Every concept section of lessons 10.1-10.4 is laddered, restated with same_as, or
+Author B (labs branch, pass 19). Every concept section of lessons 10.1-10.4 is laddered (Option B pass 2 replaced every same_as with a bespoke ladder, _p2cNN.py), or
 skipped with a reason. CLIENT chapter 3 holds the same lessons and reuses this ladder (curriculum_v2/ladder/client/ch03.py).
 No rung asks a student to handle live malware: try-its use the course's graded labs and simulators.
 """
-from curriculum_v2.ladder.schema import (analogy, check, order, plain, reveal, same_as, section, skip, sort,
+from curriculum_v2.ladder.itsup._p2c10 import SECS as _P2
+from curriculum_v2.ladder.schema import (analogy, check, order, plain, reveal, section, skip, sort,
                                          tryit, visual)
 
 SCHEMA = 1
@@ -206,7 +207,7 @@ you reveal it.</p>''',
                                'Low or moderate (can be relayed)': ['SMS code', 'Authenticator app code', 'Push with number matching']},
                               'Only methods bound to the real site defeat a look-alike sign-in page.'))),
 
-        'daily-controls': same_as('core-content', 'Daily controls', 'The same daily controls as a checklist.'),
+        'daily-controls': _P2[('10.1', 'daily-controls')],
         'reference-authentication-and-passwords-current-guidance': skip(
             'Reference — authentication and passwords (current guidance)', 'reference', 'A reference summary of NIST SP 800-63B-4 password rules.'),
 
@@ -326,8 +327,8 @@ process, with Defender kept on throughout.</p>''',
                                'Contain and preserve first; remediation decisions belong to the security team.'),
                   lab={'id': 'sec-malware', 'note': 'Work the INC ticket through the seven-step removal process with Defender on.'})),
 
-        'malware-is-an-incident': same_as('core-content', 'Malware is an incident', 'The same contain-and-hand-off rule restated.'),
-        'containment-without-heroics': same_as('core-content', 'Containment without heroics', 'The same isolate, document, hand off rule.'),
+        'malware-is-an-incident': _P2[('10.2', 'malware-is-an-incident')],
+        'containment-without-heroics': _P2[('10.2', 'containment-without-heroics')],
         'teach-block-phish-and-malware-as-tickets': skip(
             'Teach block — phish and malware as tickets', 'plan', 'An instructor’s teaching plan for the session.'),
 
@@ -508,7 +509,7 @@ contents once you have predicted them.</p>''',
                                'Destroy': ['Drive with research health data that cannot be purged']},
                               'Where the media is going and how sensitive the data is decide the method.'))),
 
-        'hygiene': same_as('core-content', 'Hygiene', 'The same hygiene rules in two lines.'),
+        'hygiene': _P2[('10.3', 'hygiene')],
 
         'workstation-security-options-and-hardening': section(
             'Workstation security options and hardening', 'IT-10.3',
@@ -631,7 +632,7 @@ change anything, then remove the attacker’s persistence and hand over a report
                                'Power-off destroys the first half, which is why “don’t switch it off” is so often the instruction.'),
                   lab={'id': 'linux-vm-incident', 'note': 'Preserve evidence before any change, then remove persistence; the probe checks both.'})),
 
-        'phish-follow-up': same_as('core-content', 'Phish follow-up', 'The same two outcomes, not opened and password typed.'),
+        'phish-follow-up': _P2[('10.4', 'phish-follow-up')],
 
         'social-engineering-attacks-threats-and-vulnerabilities': section(
             'Social engineering attacks, threats and vulnerabilities', 'IT-10.4',

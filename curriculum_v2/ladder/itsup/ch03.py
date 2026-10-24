@@ -1,10 +1,11 @@
 """Explanation ladder — ITSUP chapter 3 (Storage, RAID, Power, Display, Capstone). Pending SME review.
 
 Distinct concept sections are laddered; depth, reference and teach-block sections that restate a core section of the
-same lesson use same_as.
+same lesson use same_as. Option B pass 2: those sections now have bespoke ladders (_p2cNN.py).
 """
 from curriculum_v2.ladder.itsup._lk import M, P, X
-from curriculum_v2.ladder.schema import order, reveal, same_as, sort
+from curriculum_v2.ladder.itsup._p2c03 import SECS as _P2
+from curriculum_v2.ladder.schema import order, reveal, sort
 
 SCHEMA = 1
 COURSE = 'ITSUP'
@@ -81,8 +82,8 @@ LESSONS = {
             '<p>Sort each ticket into the right story.</p>',
             sort('Which story?', {'Disk story': ['No boot device found', 'Disk shows Unknown', 'Drive clicks'],
                                   'Lost-file story': ['Report missing from Desktop', 'Saved to wrong folder']}, 'Only one column needs hardware.'), DISK),
-        'hdd-ssd-nvme-without-the-brochure': same_as('1-three-common-drives', 'HDD, SSD, NVMe without the brochure', 'The same three drive kinds in plain words.'),
-        'core-content': same_as('1-three-common-drives', 'Core content', 'Form factor, interface and media: the same drive comparison in depth.'),
+        'hdd-ssd-nvme-without-the-brochure': _P2[('3.1', 'hdd-ssd-nvme-without-the-brochure')],
+        'core-content': _P2[('3.1', 'core-content')],
         '1-three-common-drives': X('1. Three common drives', 'IT-3.1', S1, [
             ('Which drive has moving parts?', 'HDD', 'A SATA SSD in a laptop tray', 'An NVMe stick in an M.2 slot',
              'Only the hard disk spins platters and moves a head; SSDs are chips.', M2, None),
@@ -126,9 +127,9 @@ LESSONS = {
             '<p>Put the detection steps in order.</p>',
             order('Before imaging', ['Firmware sees the disk', 'Windows sees the disk', 'list disk handle written down', 'Image the disk'],
                   'Nothing destructive happens until all three agree.'), DISK),
-        'm-2-is-the-slot-nvme-is-the-protocol': same_as('1-three-common-drives', 'M.2 is the slot, NVMe is the protocol', 'Slot versus protocol again, with list disk.'),
-        'when-the-disk-is-the-ticket': same_as('start-here-files-live-on-storage', 'When the disk is the ticket', 'Disk stories versus lost-file stories.'),
-        'teach-block-words-that-order-parts': same_as('1-three-common-drives', 'Teach block — words that order parts', 'Ordering by slot, protocol and length.'),
+        'm-2-is-the-slot-nvme-is-the-protocol': _P2[('3.1', 'm-2-is-the-slot-nvme-is-the-protocol')],
+        'when-the-disk-is-the-ticket': _P2[('3.1', 'when-the-disk-is-the-ticket')],
+        'teach-block-words-that-order-parts': _P2[('3.1', 'teach-block-words-that-order-parts')],
         'reference-storage-interfaces-and-real-world-speeds': X('Reference — storage interfaces and real-world speeds', 'IT-3.1', S1, [
             ('Roughly what is the practical ceiling of SATA III?', '≈ 550–600 MB/s', 'About 7 GB/s on a fast board', 'About 14 GB/s with a heatsink',
              'SATA III signals at 6 Gb/s, which works out to roughly 550–600 MB/s of real data.', M2, M2),
@@ -198,7 +199,7 @@ LESSONS = {
             '<p>Sort each event by what saves you.</p>',
             sort('What saves you?', {'RAID (redundancy)': ['One disk in a mirror dies', 'One disk in RAID 5 fails'],
                                      'Backup only': ['User deletes a folder', 'Ransomware encrypts the share', 'Office fire']}, 'RAID only covers a dead disk.'), BACK),
-        'core-content': same_as('1-levels-you-must-not-mix-up', 'Core content', 'RAID levels with capacity numbers and the 3-2-1 backup rule.'),
+        'core-content': _P2[('3.2', 'core-content')],
         '1-levels-you-must-not-mix-up': X('1. Levels you must not mix up', 'IT-3.2', S2, [
             ('One disk dies in RAID 0. Result?', 'Volume lost', 'Still up; replace and rebuild', 'Still up but slower for a while',
              'RAID 0 has no redundancy; one failure loses the whole stripe.', R0, R0),
@@ -243,9 +244,9 @@ LESSONS = {
             '<p>Put the degraded-array response in order.</p>',
             order('Degraded array', ['Record array and slot', 'Confirm backup age', 'Open the incident', 'Replace failed disk', 'Watch the rebuild'],
                   'Nothing else is pulled while it rebuilds.'), BACK),
-        'raid-is-not-backup': same_as('backup-versus-raid-from-zero', 'RAID is not backup', 'RAID survives a dead disk, not a delete.'),
-        'rebuild-tax': same_as('2-ticket-habit', 'Rebuild tax', 'Why a degraded RAID 5 is slow and at risk.'),
-        'teach-block-raid-stories': same_as('backup-versus-raid-from-zero', 'Teach block — RAID stories', 'Three tickets that separate RAID from backup.'),
+        'raid-is-not-backup': _P2[('3.2', 'raid-is-not-backup')],
+        'rebuild-tax': _P2[('3.2', 'rebuild-tax')],
+        'teach-block-raid-stories': _P2[('3.2', 'teach-block-raid-stories')],
         'storage-and-raid-symptoms': X('Storage and RAID symptoms', 'IT-3.2', S2, [
             ('A hard disk starts clicking. First step?', 'Back up now', 'Run a long defrag to fix it', 'Keep using it to see if it stops',
              'Clicking is mechanical failure in progress; every hour risks the data.', INIT, None),
@@ -270,7 +271,7 @@ LESSONS = {
                   'Data first, parts last.'), BACK),
     },
     '3.3': {
-        'core-content': same_as('choosing-and-installing-a-power-supply', 'Core content', 'Connectors, sizing and mains protection in depth.'),
+        'core-content': _P2[('3.3', 'core-content')],
         '1-sealed-unit': X('1. Sealed unit', 'IT-3.3', S3, [
             ('Why do we never open a PSU?', 'Stored charge', 'The screws are too small', 'It voids the case warranty',
              'Capacitors can hold dangerous charge after unplugging; the PSU is replaced whole.', OPEN, OPEN),
@@ -314,7 +315,7 @@ LESSONS = {
             '<p>Sort each symptom to its likely cause.</p>',
             sort('Symptom to cause', {'Power path': ['No fan, no LED', 'Dead after a move'], 'PSU capacity': ['Off under load', 'Off in games only'],
                                       'Stop now': ['Burn smell', 'Hot outlet']}, 'Some symptoms are not repairs at all.'), BUILD),
-        'power-isolation': same_as('2-symptoms-that-look-like-a-dead-board', 'Power isolation', 'Wall, switch, 24-pin, 8-pin, then PSU.'),
+        'power-isolation': _P2[('3.3', 'power-isolation')],
         'choosing-and-installing-a-power-supply': X('Choosing and installing a power supply', 'IT-3.3', S3, [
             ('What does an 80 PLUS badge tell you?', 'Efficiency', 'Maximum wattage the unit gives', 'How many cables it has',
              '80 PLUS certifies efficiency at set loads, not capacity.', EFF, EFF),
@@ -338,7 +339,7 @@ LESSONS = {
                                'Build': ['Modular cables', 'Redundant pair']}, 'Efficiency and capacity are different questions.'), BUILD),
     },
     '3.4': {
-        'core-content': same_as('2-connectors', 'Core content', 'USB-C capabilities and the display isolation order in depth.'),
+        'core-content': _P2[('3.4', 'core-content')],
         '1-isolation-order': X('1. Isolation order', 'IT-3.4', S4, [
             ('The board shows MEM and the screen is dark. Start display checks?', 'No, memory first', 'Yes, swap the monitor now', 'Yes, reinstall the GPU driver',
              'POST has not finished; a dark panel during MEM is still a memory problem.', EARLY, EARLY),
@@ -382,7 +383,7 @@ LESSONS = {
             ['Which port? Look for the icon.', 'Is the cable rated for video?', 'Swap the adapter.', 'Try HDMI or DisplayPort directly.', 'Then suspect the laptop.'],
             '<p>Guess first, then reveal.</p>',
             reveal('A dock works on one laptop but not another with the same oval port. Why?', 'The second laptop’s USB-C port is not wired for video (no Alt Mode or Thunderbolt).'), CAB),
-        'display-path-after-post-ok': same_as('1-isolation-order', 'Display path after POST OK', 'The same display order after POST.'),
+        'display-path-after-post-ok': _P2[('3.4', 'display-path-after-post-ok')],
         'reference-usb-thunderbolt-and-display-links-current-names': X('Reference — USB, Thunderbolt and display links (current names)', 'IT-3.4', S4, [
             ('“USB 3.2 Gen 2” is sold to customers as…', 'USB 10Gbps', 'USB 40Gbps on a USB4 port', 'Hi-Speed USB at 480 Mb/s',
              'USB-IF’s customer name states the speed: USB 3.2 Gen 2 is USB 10Gbps.', USBC, USBC),
@@ -452,7 +453,7 @@ LESSONS = {
                                   'Above ceiling': ['Plenum jacket']}, 'Speed, distance and location all matter.'), CAB),
     },
     '3.5': {
-        'core-content': same_as('worked-order', 'Core content', 'One domain at a time, with the full worked note.'),
+        'core-content': _P2[('3.5', 'core-content')],
         'worked-order': X('Worked order', 'IT-3.3', S5, [
             ('An unstable PC: what comes first?', 'Safety', 'Reimage Windows', 'Order a new PSU',
              'Smell, heat, swelling or shock reports stop everything.', SHOT, SHOT),
@@ -494,7 +495,7 @@ LESSONS = {
             '<p>Sort each note line.</p>',
             sort('Pass or fail?', {'Passes': ['Reseated DIMM A2, 3 cold boots OK', 'Next: load test 10 min'],
                                    'Fails': ['Fixed it', 'Swapped RAM, PSU and reimaged']}, 'Specific and single beats vague and many.'), TRI),
-        'unstable-workstation-capstone': same_as('pass-bar', 'Unstable workstation capstone', 'One domain, one change, one written result.'),
+        'unstable-workstation-capstone': _P2[('3.5', 'unstable-workstation-capstone')],
     },
 }
 

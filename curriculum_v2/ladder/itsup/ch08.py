@@ -1,10 +1,11 @@
 """Explanation ladder — ITSUP chapter 8 (Windows Installation & Client Configuration). Pending SME review.
 
-Author B (labs branch, pass 19). Every concept section of lessons 8.1-8.4 is laddered, restated with same_as, or
+Author B (labs branch, pass 19). Every concept section of lessons 8.1-8.4 is laddered (Option B pass 2 replaced every same_as with a bespoke ladder, _p2cNN.py), or
 skipped with a reason. CLIENT chapter 1 holds the same lessons and reuses this ladder (curriculum_v2/ladder/client/ch01.py).
 Facts are checked against Microsoft's documentation as named in each rung's source.
 """
-from curriculum_v2.ladder.schema import (analogy, check, order, plain, reveal, same_as, section, skip, sort,
+from curriculum_v2.ladder.itsup._p2c08 import SECS as _P2
+from curriculum_v2.ladder.schema import (analogy, check, order, plain, reveal, section, skip, sort,
                                          tryit, visual)
 
 SCHEMA = 1
@@ -201,8 +202,8 @@ predict which option fits the leaver’s laptop before you reveal it.</p>''',
                                 'Restore to an earlier restore point', 'Reset this PC'],
                                'Each step keeps less of the user’s setup; a clean install sits outside this ladder as a rebuild.'))),
 
-        '1-choose-with-evidence': same_as('core-content', '1. Choose with evidence', 'The same in-place-or-clean choice in three lines.'),
-        'clean-versus-in-place': same_as('core-content', 'Clean versus in-place', 'The same comparison of clean and in-place installs.'),
+        '1-choose-with-evidence': _P2[('8.1', '1-choose-with-evidence')],
+        'clean-versus-in-place': _P2[('8.1', 'clean-versus-in-place')],
         'teach-block-install-is-a-change': skip('Teach block — install is a change', 'plan', 'An instructor teaching block; the idea is laddered in the core section.'),
         'reference-windows-11-requirements-and-servicing-checked-oct': skip(
             'Reference — Windows 11 requirements and servicing (checked Oct 2026)', 'reference',
@@ -339,10 +340,8 @@ account and the adapter. Before you run each command, say which baseline field i
                               'Both views describe the same PC; collecting both catches mistakes either one alone would miss.'),
                   lab={'id': 'w11-inventory', 'note': 'Inventory the endpoint and write the baseline fields as you go.'})),
 
-        'baseline-is-a-description': same_as('core-content', 'Baseline is a description', 'The same baseline idea in two lines.'),
-        'what-pending-update-does-to-a-ticket': same_as(
-            'core-content', 'What pending update does to a ticket',
-            'Update state is one of the baseline fields laddered in the core section; this restates how it reads in a ticket.'),
+        'baseline-is-a-description': _P2[('8.2', 'baseline-is-a-description')],
+        'what-pending-update-does-to-a-ticket': _P2[('8.2', 'what-pending-update-does-to-a-ticket')],
 
         'installing-applications-to-requirements': section(
             'Installing applications to requirements', 'IT-8.2',
@@ -588,7 +587,7 @@ the Windows Update GUI lab.</p>''',
                               'The evidence names the domain; the domain names the least disruptive next step.'),
                   lab={'id': 'gui-update', 'note': 'Read Windows Update and its history; note the KB number and result.'})),
 
-        'failed-update-capstone': same_as('core-content', 'Failed update capstone', 'The same capstone as a checklist.'),
+        'failed-update-capstone': _P2[('8.4', 'failed-update-capstone')],
     },
 }
 

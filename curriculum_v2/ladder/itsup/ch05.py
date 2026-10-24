@@ -1,10 +1,11 @@
 """Explanation ladder — ITSUP chapter 5 (Addressing, Ports, Isolation, SOHO Wireless, Triage). Pending SME review.
 
 Distinct concept sections are laddered; core, reference and teach-block sections that restate a core section of the
-same lesson use same_as.
+same lesson use same_as. Option B pass 2: those sections now have bespoke ladders (_p2cNN.py).
 """
 from curriculum_v2.ladder.itsup._lk import M, P, X
-from curriculum_v2.ladder.schema import order, reveal, same_as, sort
+from curriculum_v2.ladder.itsup._p2c05 import SECS as _P2
+from curriculum_v2.ladder.schema import order, reveal, sort
 
 SCHEMA = 1
 COURSE = 'ITSUP'
@@ -76,8 +77,8 @@ LESSONS = {
             '<p>Sort each item.</p>',
             sort('Home or work?', {'Home': ['Small router with Wi-Fi', 'One box does everything'], 'Work': ['Managed switches', 'Access points owned by the shop']},
                  'The idea is the same; the owner differs.'), IPC),
-        'address-door-name-said-slowly': same_as('1-what-you-must-be-able-to-point-to', 'Address, door, name — said slowly', 'The same four fields in plain words.'),
-        'core-content': same_as('1-what-you-must-be-able-to-point-to', 'Core content', 'Prefix length and mask in depth.'),
+        'address-door-name-said-slowly': _P2[('5.1', 'address-door-name-said-slowly')],
+        'core-content': _P2[('5.1', 'core-content')],
         '1-what-you-must-be-able-to-point-to': X('1. What you must be able to point to', 'IT-5.1', S1, [
             ('ipconfig shows 169.254.10.4. What do you do?', 'Renew or check link', 'Flush the DNS cache and retry', 'Teach the user how DNS works',
              'APIPA means no lease; DNS is the wrong lecture here.', APD, APD),
@@ -100,7 +101,7 @@ LESSONS = {
             '<p>Sort each field to its meaning.</p>',
             sort('Field meanings', {'Who am I': ['IPv4 address'], 'How big': ['Subnet mask', '/24 prefix'], 'Way out': ['Default gateway'],
                                     'Names': ['DNS servers']}, 'Four lines answer most first questions.'), IPC),
-        'address-door-name': same_as('1-what-you-must-be-able-to-point-to', 'Address, door, name', 'The four fields again, with APIPA.'),
+        'address-door-name': _P2[('5.1', 'address-door-name')],
         'private-ranges-you-will-see': X('Private ranges you will see', 'IT-5.1', S1, [
             ('Which is a private range?', '172.16.0.0/12', '169.254.0.0/16 link-local', '8.8.8.0/24 public DNS',
              '10/8, 172.16/12 and 192.168/16 are private; 169.254 is APIPA.', APR, APR),
@@ -121,7 +122,7 @@ LESSONS = {
             '<p>Sort each address.</p>',
             sort('Address type', {'Private': ['10.20.30.47', '192.168.1.20', '172.20.5.9'], 'APIPA': ['169.254.10.4'], 'Public': ['8.8.8.8']},
                  '169.254 is never a planned range.'), IPC),
-        'teach-block-four-lines-on-the-board': same_as('1-what-you-must-be-able-to-point-to', 'Teach block — four lines on the board', 'Mark the four fields, then APIPA.'),
+        'teach-block-four-lines-on-the-board': _P2[('5.1', 'teach-block-four-lines-on-the-board')],
     },
     '5.2': {
         'what-a-port-is-if-you-have-never-heard-it': X('What a port is if you have never heard it', 'IT-5.2', S2, [
@@ -145,7 +146,7 @@ LESSONS = {
             ['Ping the address: building there?', 'Name the service.', 'Find its port.', 'Test that port.', 'Write which door is closed.'],
             '<p>Guess first, then reveal.</p>',
             reveal('Ping to the file server works, but the shared drive is gone. What do you test?', 'TCP 445 (SMB) with Test-NetConnection fileserver -Port 445.'), NET),
-        'core-content': same_as('what-a-port-is-if-you-have-never-heard-it', 'Core content', 'Ports as service promises, with tests.'),
+        'core-content': _P2[('5.2', 'core-content')],
         '1-ports-you-will-actually-say': X('1. Ports you will actually say', 'IT-5.2', S2, [
             ('Remote Desktop uses…', '3389', '443, the HTTPS port', '53, the DNS port',
              'RDP is 3389 and should be treated as sensitive.', PM, PM),
@@ -189,7 +190,7 @@ LESSONS = {
             '<p>Sort each action.</p>',
             sort('Allowed?', {'Allowed': ['Read the profile', 'Open a rule request', 'Use the approved app'], 'Not allowed': ['Turn the profile off', 'Disable to test']},
                  'The firewall stays on.'), ('w11-firewall', 'Read the firewall profile and rules; change nothing without a request.')),
-        'ports-are-doors-on-a-host': same_as('what-a-port-is-if-you-have-never-heard-it', 'Ports are doors on a host', 'Ping versus the service door.'),
+        'ports-are-doors-on-a-host': _P2[('5.2', 'ports-are-doors-on-a-host')],
         'reference-port-numbers-technicians-use': X('Reference — port numbers technicians use', 'IT-5.2', S2, [
             ('Which port carries SMB file sharing?', '445', '3389, the Remote Desktop port', '389, the LDAP directory port',
              'SMB uses TCP 445; RDP is 3389 and LDAP 389.', PM, PM),
@@ -216,7 +217,7 @@ LESSONS = {
                  'Learn the encrypted variants alongside the clear ones.'), NET),
     },
     '5.3': {
-        'core-content': same_as('1-order', 'Core content', 'The isolation order and why it is fixed.'),
+        'core-content': _P2[('5.3', 'core-content')],
         '1-order': X('1. Order', 'IT-5.3', S3, [
             ('The PC has 169.254. You flush DNS. Problem?', 'Skipped a layer', 'Nothing, that is correct', 'You should reinstall instead',
              'No lease yet; name tests mean nothing until the IP tests pass.', SL, SL),
@@ -237,7 +238,7 @@ LESSONS = {
             ['Link.', 'Lease.', 'Ping gateway.', 'Ping remote IP.', 'Resolve name, then test port.'],
             '<p>Put the isolation steps in order.</p>',
             order('Isolation order', ['Link', 'Lease', 'Ping gateway', 'Ping remote IP', 'Resolve name', 'Test port'], 'Stop at the first failure.'), DNSB),
-        'isolation-order': same_as('1-order', 'Isolation order', 'The same order with identity first.'),
+        'isolation-order': _P2[('5.3', 'isolation-order')],
         'what-each-failed-ping-means': X('What each failed ping means', 'IT-5.3', S3, [
             ('Gateway ping works, 8.8.8.8 fails. Where?', 'Upstream or NAT', 'The local DNS server', 'The PC’s own network card',
              'The LAN is fine; the problem is beyond the gateway.', PR, PR),
@@ -260,7 +261,7 @@ LESSONS = {
             '<p>Sort each result to its layer.</p>',
             sort('Failing layer', {'Lease or link': ['Gateway fails, 169.254'], 'Local LAN': ['Gateway fails, good IP'], 'Upstream': ['8.8.8.8 fails, gateway OK'],
                                    'DNS': ['Name fails, IP works', 'NXDOMAIN from server']}, 'Each failure names a layer.'), DNSB),
-        'teach-block-isolation-table-until-boring': same_as('what-each-failed-ping-means', 'Teach block — isolation table until boring', 'Drill the four failed-ping stories.'),
+        'teach-block-isolation-table-until-boring': _P2[('5.3', 'teach-block-isolation-table-until-boring')],
         'networking-hardware-and-networking-tools': X('Networking hardware and networking tools', 'IT-5.3', S3, [
             ('Which device forwards frames inside the LAN by MAC?', 'Switch', 'Router between networks', 'Cable modem on coax',
              'Switches forward by MAC within the LAN; routers move between networks.', HW, HW),
@@ -285,7 +286,7 @@ LESSONS = {
                                  'Wireless': ['Access point']}, 'Each box has one main job.'), DNSB),
     },
     '5.4': {
-        'core-content': same_as('reference-wi-fi-generations-and-soho-security-baseline', 'Core content', 'The SOHO baseline in order of impact.'),
+        'core-content': _P2[('5.4', 'core-content')],
         '1-client-first': X('1. Client first', 'IT-5.4', S4, [
             ('“The internet is down” on one laptop. Check first?', 'Airplane mode and SSID', 'Reboot the office router', 'Call the internet provider',
              'Wrong SSID or airplane mode looks like an outage.', WS, WS),
@@ -328,7 +329,7 @@ LESSONS = {
             '<p>Sort each item.</p>',
             sort('Change or not?', {'Change process': ['Admin password', 'Guest network', 'Firmware update'], 'Read-only': ['View status page', 'Read client list']},
                  'Reading is free; changing is a change.'), WIFI),
-        'soho-wireless': same_as('2-ap-changes-are-changes', 'SOHO wireless', 'Shared AP changes and the hidden-SSID myth.'),
+        'soho-wireless': _P2[('5.4', 'soho-wireless')],
         'reference-wi-fi-generations-and-soho-security-baseline': X('Reference — Wi-Fi generations and SOHO security baseline', 'IT-5.4', S4, [
             ('Which helps security most on a small router?', 'Change admin password', 'Hide the network name SSID', 'Turn on MAC filtering for all',
              'Default admin credentials are the biggest hole; hiding SSID does little.', HS, HS),
@@ -353,7 +354,7 @@ LESSONS = {
                  'Hiding is not locking.'), WIFI),
     },
     '5.5': {
-        'core-content': same_as('note-bar', 'Core content', 'One line per test, ending at the failing layer.'),
+        'core-content': _P2[('5.5', 'core-content')],
         'note-bar': X('Note bar', 'IT-5.3', S5, [
             ('Which note line names the failing layer?', 'nslookup NXDOMAIN', 'User says internet down', 'Rebooted, seems fine now',
              'The failing test, with the server that answered, is the key line.', TS, TS),
@@ -374,7 +375,7 @@ LESSONS = {
             '<p>Sort each note line.</p>',
             sort('Note quality', {'Evidence': ['ping gw 4/4', 'nslookup NXDOMAIN from 10.20.30.10', 'ipconfig 10.20.30.47/24'],
                                   'Not evidence': ['Internet is down', 'Seems OK now']}, 'Facts with sources pass.'), TRI),
-        'pass-bar': same_as('full-triage-lab', 'Pass bar', 'Submit the triage lab with the firewall on.'),
+        'pass-bar': _P2[('5.5', 'pass-bar')],
         'full-triage-lab': X('Full triage lab', 'IT-5.3', S5, [
             ('You skip ping-IP and flush DNS; the box works. Pass?', 'No', 'Yes, it works now', 'Yes, if you were quick',
              'The habit is the order; skipping it fails even if the box recovers.', TS, TS),
@@ -396,7 +397,7 @@ LESSONS = {
             ['Identity.', 'IP tests.', 'Name tests.', 'Action and result.', 'Firewall still on.'],
             '<p>Put the lab steps in order.</p>',
             order('Full triage', ['Record identity', 'Run IP tests', 'Run name tests', 'Write action and result'], 'The order is the grade.'), TRI),
-        'teach-block-full-triage-as-a-period': same_as('full-triage-lab', 'Teach block — full triage as a period', 'Every trainee completes the lab with a note.'),
+        'teach-block-full-triage-as-a-period': _P2[('5.5', 'teach-block-full-triage-as-a-period')],
     },
 }
 

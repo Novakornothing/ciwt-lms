@@ -1,10 +1,11 @@
 """Explanation ladder — ITSUP chapter 9 (Linux, macOS & Cross-Platform Support). Pending SME review.
 
-Author B (labs branch, pass 19). Every concept section of lessons 9.1-9.4 is laddered, restated with same_as, or
+Author B (labs branch, pass 19). Every concept section of lessons 9.1-9.4 is laddered (Option B pass 2 replaced every same_as with a bespoke ladder, _p2cNN.py), or
 skipped with a reason. CLIENT chapter 2 holds the same lessons and reuses this ladder (curriculum_v2/ladder/client/ch02.py).
 Where a real Linux VM lab exercises the idea, the try-it rung links to it.
 """
-from curriculum_v2.ladder.schema import (analogy, check, order, plain, reveal, same_as, section, skip, sort,
+from curriculum_v2.ladder.itsup._p2c09 import SECS as _P2
+from curriculum_v2.ladder.schema import (analogy, check, order, plain, reveal, section, skip, sort,
                                          tryit, visual)
 
 SCHEMA = 1
@@ -201,8 +202,8 @@ file modes and owners it finds in the VM.</p>''',
                                 '<code>ip route</code> — the line that starts “default via”. It only reads, so it is safe on a box you do not know.'),
                   lab={'id': 'linux-vm-perms', 'note': 'Set and read real file modes and owners in the VM; the probe checks the result.'})),
 
-        '1-map-to-what-you-already-type': same_as('core-content', '1. Map to what you already type', 'The same Windows-to-Linux command map as a table.'),
-        'linux-inventory-cousins': same_as('core-content', 'Linux inventory cousins', 'The same read-first habit restated.'),
+        '1-map-to-what-you-already-type': _P2[('9.1', '1-map-to-what-you-already-type')],
+        'linux-inventory-cousins': _P2[('9.1', 'linux-inventory-cousins')],
         'reference-linux-commands-a-support-technician-uses': skip(
             'Reference — Linux commands a support technician uses', 'reference', 'A lookup table of commands and their Windows cousins.'),
 
@@ -329,7 +330,7 @@ macOS version before you reveal it.</p>''',
                                'Console': ['Read crash reports', 'Read system logs']},
                               'Same jobs as Windows, different names: Task Manager, chkdsk and Event Viewer.'))),
 
-        'a-mac-is-still-a-portable': same_as('core-content', 'A Mac is still a portable', 'The same Mac basics restated as reminders.'),
+        'a-mac-is-still-a-portable': _P2[('9.2', 'a-mac-is-still-a-portable')],
 
         'macos-features-and-tools': section(
             'macOS features and tools', 'IT-9.2',
@@ -451,7 +452,7 @@ directory lab — group membership is what usually grants access.</p>''',
                               'One comparison with a user who has access usually decides it.'),
                   lab={'id': 'win-ad-users', 'note': 'Add a new starter to the right group; group membership grants the share.'})),
 
-        'shares-and-accounts': same_as('core-content', 'Shares and accounts', 'The same entitlement rule in three lines.'),
+        'shares-and-accounts': _P2[('9.3', 'shares-and-accounts')],
 
         'remote-access-technologies-and-their-security': section(
             'Remote access technologies and their security', 'IT-9.3',
@@ -584,7 +585,7 @@ which is how one file seems to vanish on a Windows PC.</p>''',
                               'Each looks like a fault, but each has a cause you can explain to the user without a repair.'),
                   lab={'id': 'linux-vm-ssh', 'note': 'Copy release-1.4.txt between the two VMs with scp after key login works.'})),
 
-        'mixed-environment-note': same_as('core-content', 'Mixed environment note', 'The same mixed-environment intake rules.'),
+        'mixed-environment-note': _P2[('9.4', 'mixed-environment-note')],
     },
 }
 

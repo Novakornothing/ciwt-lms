@@ -1,10 +1,11 @@
 """Explanation ladder — ITSUP chapter 6 (Virtual Machines, Cloud Models, Snapshots and vSwitches, Slow VM). Pending SME review.
 
 Distinct concept sections are laddered; core, teach-block and repeated sections that restate a core section of the
-same lesson use same_as.
+same lesson use same_as. Option B pass 2: those sections now have bespoke ladders (_p2cNN.py).
 """
 from curriculum_v2.ladder.itsup._lk import M, P, X
-from curriculum_v2.ladder.schema import order, reveal, same_as, sort
+from curriculum_v2.ladder.itsup._p2c06 import SECS as _P2
+from curriculum_v2.ladder.schema import order, reveal, sort
 
 SCHEMA = 1
 COURSE = 'ITSUP'
@@ -67,7 +68,7 @@ LESSONS = {
             '<p>Sort each item.</p>',
             sort('Guest or host?', {'Guest': ['Computer name', 'RAM the guest sees', 'ipconfig in the VM'], 'Host': ['Datastore space', 'Physical NIC', 'Cluster']},
                  'Start with what you own.'), ABOUT),
-        'core-content': same_as('2-type-1-vs-type-2-only-what-you-need', 'Core content', 'Hypervisor types and Hyper-V in depth.'),
+        'core-content': _P2[('6.1', 'core-content')],
         '1-two-machines-in-one-ticket': X('1. Two machines in one ticket', 'IT-6.1', S1, [
             ('“My VM is slow” and the guest looks fine. Next?', 'Ask the host owner', 'Tune the host settings yourself', 'Reinstall the guest operating system',
              'A healthy guest points at host pressure, which someone else owns.', HO, HO),
@@ -111,11 +112,11 @@ LESSONS = {
             ['On the metal or in an app?', 'Name the type.', 'Find the host owner.', 'May you touch it?', 'Write it on the ticket.'],
             '<p>Sort each product.</p>',
             sort('Hypervisor type', {'Type 1': ['VMware ESXi', 'KVM', 'Hyper-V'], 'Type 2': ['VirtualBox', 'VMware Workstation']}, 'Hyper-V is type 1 even on a desktop.'), VM),
-        'host-versus-guest': same_as('1-two-machines-in-one-ticket', 'Host versus guest', 'Guest first; many failing guests point at the host.'),
-        'teach-block-you-may-already-be-a-guest': same_as('1-two-machines-in-one-ticket', 'Teach block — you may already be a guest', 'Name the guest, then ask who owns the host.'),
+        'host-versus-guest': _P2[('6.1', 'host-versus-guest')],
+        'teach-block-you-may-already-be-a-guest': _P2[('6.1', 'teach-block-you-may-already-be-a-guest')],
     },
     '6.2': {
-        'core-content': same_as('1-what-you-can-touch', 'Core content', 'Cloud definition and the shared-responsibility table.'),
+        'core-content': _P2[('6.2', 'core-content')],
         '1-what-you-can-touch': X('1. What you can touch', 'IT-6.2', S2, [
             ('In IaaS, who patches the guest OS?', 'You', 'The cloud provider always does', 'Nobody needs to patch it',
              'IaaS hands you the guest OS; Chapters 2–5 apply inside it.', IO, IO),
@@ -159,7 +160,7 @@ LESSONS = {
             ['Tenant name.', 'Error text.', 'Do others fail?', 'Yes: tenant owner.', 'No: user account or client.'],
             '<p>Put the cloud ticket steps in order.</p>',
             order('Cloud ticket', ['Write tenant name', 'Copy error text', 'Check other users', 'Escalate to owner'], 'Scope before any change.'), VM),
-        'what-you-may-touch': same_as('1-what-you-can-touch', 'What you may touch', 'SaaS, IaaS and PaaS boundaries again.'),
+        'what-you-may-touch': _P2[('6.2', 'what-you-may-touch')],
         'virtualization-use-cases-cloud-models-and-cloud-productivity': X('Virtualization use cases, cloud models and cloud productivity administration', 'IT-6.2', S2, [
             ('Opening a suspicious file safely uses a…', 'Sandbox VM', 'Shared network drive', 'Second user account on the PC',
              'A sandbox VM isolates the file from the real machine.', CD, None),
@@ -225,10 +226,10 @@ LESSONS = {
             ['Name the change.', 'Take the snapshot.', 'Make the change.', 'Revert only with a ticket.', 'Delete or consolidate.'],
             '<p>Put the snapshot steps in order.</p>',
             order('Snapshot life', ['Name the change', 'Take snapshot', 'Make the change', 'Delete or consolidate'], 'Snapshots are short-lived.'), VSW),
-        'snapshots-and-virtual-cables': same_as('1-snapshots', 'Snapshots and virtual cables', 'Snapshots as bookmarks, plus vNIC checks.'),
+        'snapshots-and-virtual-cables': _P2[('6.3', 'snapshots-and-virtual-cables')],
     },
     '6.4': {
-        'core-content': same_as('slow-vm-note', 'Core content', 'Guest evidence versus host questions in a full table.'),
+        'core-content': _P2[('6.4', 'core-content')],
         'slow-vm-note': X('Slow VM note', 'IT-6.3', S4, [
             ('What goes first in a slow VM note?', 'Guest facts', 'A guess about the host', 'The fix you plan to try',
              'Name and RAM the guest sees come first.', GF, GF),
