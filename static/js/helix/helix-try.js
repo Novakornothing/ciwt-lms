@@ -1,12 +1,20 @@
 /* Try Helix: local-only gaze playground (no uploads). Also the end-to-end test harness hook:
-   window.HelixTry exposes live state for tools/helix_e2e.py. */
+   window.HelixTry exposes live state for tools/helix_e2e.py and tools/helix_mp_e2e.py. */
 (function () {
   'use strict';
-  var E = window.HelixEngine, Calib = window.HelixCalib, Core = window.HelixCore, Model = window.HelixModel, CFG = window.HELIX_ENGINE;
+  var E = window.HelixEngine, Calib = window.HelixCalib, Core = window.HelixCore, Model = window.HelixModel, CFG = window.HELIX_ENGINE || {};
   var $ = function (id) { return document.getElementById(id); };
-  var T = window.HelixTry = { engine: null, preds: 0, frames: 0, lastPred: null, score: null, history: [], trailPts: [], error: null };
-  var showDot = true, filt = null, drift = new Model.DriftTracker({ window: 7 });
+  var T = window.HelixTry = { engine: null, preds: 0, frames: 0, lastPred: null, score: null, history: [], trailPts: [], error: null, targetTest: null };
+  var showDot = true, filt = null, drift = new Model.DriftTracker({ window: 7 }), playBlocked = false, targetRunning = false;
   var dot = $('helixGazeDot'), trail = $('hxTryTrail'), tiles = Array.prototype.slice.call(document.querySelectorAll('.hx-try-tile'));
+
+  var qsInit = new URLSearchParams(location.search);
+  if ($('hxTryHiRes')) {
+    $('hxTryHiRes').checked = qsInit.get('crop') !== '0' && qsInit.get('hires') !== '0';
+  }
+  if ($('hxTryQuick') && qsInit.get('quick') === '1') {
+    $('hxTryQuick').checked = true;
+  }
 
   function state(t) { $('hxTryState').textContent = t; }
   function hud() {
@@ -88,9 +96,16 @@
       : '<p class="mb-0">No gaze estimates during the check \u2014 the camera could not see your eyes.</p>';
   }
 
+  function enableControls(on) {
+    ['hxTryRecal', 'hxTryTargetBtn', 'hxTryDot', 'hxTryStop'].forEach(function (id) {
+      var b = $(id); if (b) b.disabled = !on;
+    });
+  }
+
   function calibrate(quick) {
+    var useQuick = quick != null ? quick : !!($('hxTryQuick') && $('hxTryQuick').checked);
     state('Calibrating\u2026');
-    return Calib.run(T.engine, { quick: quick, skipPositioning: quick, minAccuracy: 0, goLabel: 'Start tracking', allowPassive: false, onValidated: showResult })
+    return Calib.run(T.engine, { quick: useQuick, skipPositioning: !!quick, minAccuracy: 0, goLabel: 'Start tracking', allowPassive: false, onValidated: showResult })
       .then(function (r) {
         if (r.action === 'cancel') { state(T.engine.ready() ? 'Tracking (calibration cancelled)' : 'Calibration cancelled'); return; }
         filt = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
@@ -99,23 +114,107 @@
   }
 
   function start() {
+    if (playBlocked && T.engine && T.engine.resumePlayback) {
+      playBlocked = false;
+      $('hxTryStart').disabled = true;
+      $('hxTryStart').innerHTML = '<i class="bi bi-camera-video" aria-hidden="true"></i> Start camera &amp; calibrate';
+      T.engine.resumePlayback().then(function () {
+        filt = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
+        T.engine.on(onFrame);
+        enableControls(true);
+        return calibrate(false);
+      }).catch(function (err) {
+        T.error = String(err && err.message || err);
+        state('Could not resume: ' + T.error); $('hxTryStart').disabled = false;
+      });
+      return;
+    }
+    var qs = new URLSearchParams(location.search);
+    var qc = qs.get('crop');
+    var hiToggle = $('hxTryHiRes');
+    var wantHi = qs.get('hires') === '0' ? false : (hiToggle ? hiToggle.checked : true);
+    var cropMode = qc === '0' ? false : qc === 'view' ? 'view' : (hiToggle && !hiToggle.checked ? 'view' : true);
+    CFG.hiRes = wantHi;
+    // Open camera synchronously inside the user tap/click gesture before awaiting MediaPipe WASM load
+    if (E && E.prefetchCamera) {
+      try { E.prefetchCamera(E.isMobile && E.isMobile()); } catch (e) {}
+    }
     $('hxTryStart').disabled = true; state('Loading gaze engine\u2026');
     var prefer = $('hxTryEngine').value;
-    var qd = new URLSearchParams(location.search).get('delegate');
-    // eye-crop HUD: computed for display only; ?crop=1 also feeds the crop features to the model (experimental)
-    var qc = new URLSearchParams(location.search).get('crop');
-    E.create(Object.assign({ prefer: prefer, delegate: qd === 'CPU' ? 'CPU' : null, crop: qc === '1' ? true : qc === '0' ? false : 'view' }, CFG)).then(function (engine) {
+    var qd = qs.get('delegate');
+    E.create(Object.assign({ prefer: prefer, delegate: qd === 'CPU' ? 'CPU' : null, crop: cropMode }, CFG)).then(function (engine) {
       T.engine = engine; engine.keepCrops = true; state('Waiting for camera permission\u2026');
       return engine.start();
     }).then(function (engine) {
       filt = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
       engine.on(onFrame);
-      ['hxTryRecal', 'hxTryDot', 'hxTryStop'].forEach(function (id) { $(id).disabled = false; });
+      enableControls(true);
       return calibrate(false);
     }).catch(function (err) {
+      if (err && err.code === 'play_blocked' && T.engine && T.engine.resumePlayback) {
+        playBlocked = true;
+        state('Tap "Resume camera" to allow video playback');
+        $('hxTryStart').textContent = 'Resume camera';
+        $('hxTryStart').disabled = false;
+        return;
+      }
       T.error = String(err && err.message || err);
       state('Could not start: ' + T.error); $('hxTryStart').disabled = false;
     });
+  }
+
+  /* Interactive 5-tile live target verification test */
+  function runTargetTest() {
+    if (!T.engine || !T.engine.ready() || targetRunning) return;
+    targetRunning = true;
+    var btn = $('hxTryTargetBtn'), out = $('hxTryTargetOut');
+    if (btn) btn.disabled = true;
+    var seq = [4, 0, 2, 6, 8], idx = 0, hits = 0, dists = [];
+    out.hidden = false;
+    out.textContent = 'Live target test: look at each highlighted gold tile (1 of ' + seq.length + ')\u2026';
+    state('Live target test running\u2026');
+
+    function stepTile() {
+      tiles.forEach(function (t) { t.classList.remove('target-cue'); var c = t.querySelector('.hx-tile-cue'); if (c) c.textContent = ''; });
+      if (idx >= seq.length) {
+        targetRunning = false;
+        if (btn) btn.disabled = false;
+        dists.sort(function (a, b) { return a - b; });
+        var med = dists.length ? Math.round(dists[dists.length >> 1]) : null;
+        T.targetTest = { hits: hits, total: seq.length, medianPx: med };
+        out.innerHTML = '<strong>Live target test complete:</strong> hit <strong>' + hits + ' / ' + seq.length + ' tiles</strong>' +
+          (med != null ? ' · median gaze offset <strong>' + med + ' px</strong> from tile centre.' : ' (no gaze samples received).');
+        state('Tracking \u2014 target test ' + hits + '/' + seq.length + ' tiles');
+        return;
+      }
+      var ti = seq[idx], tile = tiles[ti];
+      tile.classList.add('target-cue');
+      var cue = tile.querySelector('.hx-tile-cue');
+      if (cue) cue.textContent = 'Look here';
+      out.textContent = 'Look at tile ' + (ti + 1) + ' (' + (idx + 1) + ' of ' + seq.length + ')\u2026';
+      var tStart = Date.now() + 350, tileSamples = [];
+      var lis = T.engine.on(function (ev) {
+        if (!ev.pred || Date.now() < tStart || !T.lastPred) return;
+        tileSamples.push({ x: T.lastPred.x, y: T.lastPred.y });
+      });
+      setTimeout(function () {
+        T.engine.off(lis);
+        var r = tile.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        if (tileSamples.length) {
+          var sx = 0, sy = 0, inside = 0;
+          tileSamples.forEach(function (p) {
+            sx += p.x; sy += p.y;
+            if (p.x >= r.left - 18 && p.x <= r.right + 18 && p.y >= r.top - 18 && p.y <= r.bottom + 18) inside++;
+          });
+          var mx = sx / tileSamples.length, my = sy / tileSamples.length;
+          dists.push(Math.hypot(mx - cx, my - cy));
+          if (inside >= Math.max(1, Math.floor(tileSamples.length * 0.35)) || ( mx >= r.left - 24 && mx <= r.right + 24 && my >= r.top - 24 && my <= r.bottom + 24 )) hits++;
+        }
+        idx++;
+        stepTile();
+      }, 1550);
+    }
+    stepTile();
   }
 
   function drawDrift() {
@@ -149,15 +248,27 @@
     else { state('Rotated to ' + k + ': quick 5-point calibration'); setTimeout(function () { calibrate(true); }, 400); }
   });
 
+  if ($('hxTryHiRes')) {
+    $('hxTryHiRes').addEventListener('change', function () {
+      CFG.hiRes = this.checked;
+      if (T.engine && T.engine.opts) {
+        T.engine.opts.crop = this.checked ? true : 'view';
+        T.engine.cropDisabled = false;
+      }
+    });
+  }
+
   $('hxTryStart').addEventListener('click', start);
   $('hxTryRecal').addEventListener('click', function () { calibrate(false); });
+  if ($('hxTryTargetBtn')) $('hxTryTargetBtn').addEventListener('click', runTargetTest);
   $('hxTryDot').addEventListener('click', function () {
     showDot = !showDot; this.setAttribute('aria-pressed', String(showDot)); this.textContent = showDot ? 'Hide gaze dot' : 'Show gaze dot';
     if (!showDot) dot.style.display = 'none'; drawTrail();
   });
   $('hxTryStop').addEventListener('click', function () {
     if (T.engine) T.engine.stop(); T.engine = null; dot.style.display = 'none';
+    playBlocked = false; targetRunning = false;
     state('Camera stopped'); $('hxTryStart').disabled = false;
-    ['hxTryRecal', 'hxTryDot', 'hxTryStop'].forEach(function (id) { $(id).disabled = true; });
+    enableControls(false);
   });
 })();

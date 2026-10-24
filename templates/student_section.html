@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{{ section.name }} — {{ site_name }}{% endblock %}
 {% block content %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
+<nav aria-label="breadcrumb" class="mb-2">
+  <ol class="breadcrumb mb-0">
     <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}">My classes</a></li>
     <li class="breadcrumb-item active">{{ section.name }}</li>
   </ol>
 </nav>
-<div class="class-head mb-4">
+<div class="class-head mb-3">
   <div class="class-head-main">
     <h1 class="h3 mb-1">{{ section.name }}</h1>
     <p class="text-muted mb-0">{{ section.course.title }}{% if section.instructor %} · Instructor {{ section.instructor.full_name }}{% endif %}</p>
@@ -19,58 +19,36 @@
     {% endif %}
   </div>
   <div class="class-head-actions">
-{% if section.course and section.course.code in ('ITSUP', 'APLUS', 'NETOPS', 'NETPLUS', 'CLIENT') %}
-    <a class="btn btn-outline-navy" href="{{ url_for('section_material', section_id=section.id, kind='syllabus') }}"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Syllabus</a>
-    {% endif %}
-    <a class="btn btn-outline-navy" href="{{ url_for('student_section_grades', section_id=section.id) }}"><i class="bi bi-journal-check" aria-hidden="true"></i> My grades</a>
-    {% if current_user.role == 'student' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_student', section_id=section.id) }}"><i class="bi bi-signpost-split" aria-hidden="true"></i> My mastery</a> <a class="btn btn-outline-navy" href="{{ url_for('ladder_profile', section_id=section.id) }}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> What helps you learn</a>
-    <a class="btn btn-outline-navy" href="{{ url_for('mastery_plan', section_id=section.id) }}"><i class="bi bi-book" aria-hidden="true"></i> My plan</a>{% endif %}
     <a class="btn btn-brand" href="{{ url_for('course_labs', section_id=section.id) }}"><i class="bi bi-terminal" aria-hidden="true"></i> All labs</a>
     <a class="btn btn-outline-navy" href="{{ url_for('exam_sim_home', section_id=section.id) }}"><i class="bi bi-stopwatch" aria-hidden="true"></i> Exam-Day Simulator</a>
     <a class="btn btn-outline-navy" href="{{ url_for('speed_drill', section_id=section.id) }}"><i class="bi bi-lightning-charge" aria-hidden="true"></i> Speed-Drill</a>
+    <a class="btn btn-outline-navy" href="{{ url_for('student_section_grades', section_id=section.id) }}"><i class="bi bi-journal-check" aria-hidden="true"></i> My grades</a>
+    <details class="action-more-menu">
+      <summary class="btn btn-outline-navy"><i class="bi bi-sliders" aria-hidden="true"></i> Course tools &amp; info</summary>
+      <div class="action-more-panel">
+        {% if section.course and section.course.code in ('ITSUP', 'APLUS', 'NETOPS', 'NETPLUS', 'CLIENT') %}
+        <a class="action-more-item" href="{{ url_for('section_material', section_id=section.id, kind='syllabus') }}"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Syllabus</a>
+        {% endif %}
+        {% if current_user.role == 'student' %}
+        <a class="action-more-item" href="{{ url_for('mastery_student', section_id=section.id) }}"><i class="bi bi-signpost-split" aria-hidden="true"></i> My mastery</a>
+        <a class="action-more-item" href="{{ url_for('ladder_profile', section_id=section.id) }}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> What helps you learn</a>
+        <a class="action-more-item" href="{{ url_for('mastery_plan', section_id=section.id) }}"><i class="bi bi-book" aria-hidden="true"></i> My plan</a>
+        {% endif %}
+      </div>
+    </details>
   </div>
 </div>
 {% include "_student_intro.html" %}
 
 {% include '_gold_path.html' %}
 
-<div class="card mb-4 border-navy">
-  <div class="card-header navy d-flex justify-content-between align-items-center">
-    <span>Skills midterm and final</span>
-    <span class="d-flex gap-2">
-    {% if section.course and section.course.code in ('ITSUP', 'APLUS', 'NETOPS', 'NETPLUS', 'CLIENT') %}<a class="btn btn-sm btn-outline-light" href="{{ url_for('section_material', section_id=section.id, kind='rubrics') }}#skills">How stations are scored</a>{% endif %}
-    <a class="btn btn-sm btn-outline-light" href="{{ url_for('skills_board', section_id=section.id) }}">Score board</a>
-    </span>
-  </div>
-  <div class="list-group list-group-flush">
-    {% for item in skills_tests %}
-    <div class="list-group-item d-flex justify-content-between align-items-center gap-2">
-      <div class="min-w-0">
-        <strong>{{ item.test.title }}</strong>
-        <div class="small text-muted">{{ item.test.time_limit_minutes }} min · pass {{ item.test.passing_score }}%</div>
-        {% if item.attempts %}
-        <div class="small">Last score {{ '%.0f'|format(item.attempts[0].score) }}%</div>
-        {% endif %}
-      </div>
-      {% if item.available or current_user.role != 'student' %}
-      <a class="btn btn-sm btn-brand" href="{{ url_for('take_test', section_id=section.id, test_id=item.test.id) }}">Open exam</a>
-      {% else %}
-      <span class="badge badge-closed">Closed</span>
-      {% endif %}
-    </div>
-    {% else %}
-    <div class="list-group-item empty-state empty-state-sm">
-      <i class="bi bi-clipboard-check" aria-hidden="true"></i>
-      <p class="mb-0">No skills exams are set up for this class yet. Your instructor will announce them.</p>
-    </div>
-    {% endfor %}
-  </div>
-</div>
-
-<div class="row g-4">
+<div class="row g-4 mb-4">
   <div class="col-lg-7">
     <div class="card">
-      <div class="card-header">Chapters</div>
+      <div class="card-header navy d-flex justify-content-between align-items-center">
+        <span>Chapters</span>
+        <span class="small fw-normal">{{ modules|selectattr('available')|list|length }} of {{ modules|length }} unlocked</span>
+      </div>
       <div class="list-group list-group-flush">
         {% for item in modules %}
         <div class="list-group-item">
@@ -105,7 +83,7 @@
     </div>
   </div>
   <div class="col-lg-5">
-    <div class="card">
+    <div class="card mb-3">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>Knowledge tests <span class="fw-normal">(graded)</span></span>
       </div>
@@ -150,10 +128,43 @@
         {% endfor %}
       </div>
     </div>
+
+    <div class="card border-navy">
+      <div class="card-header navy d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>Skills midterm and final</span>
+        <span class="d-flex gap-2">
+        {% if section.course and section.course.code in ('ITSUP', 'APLUS', 'NETOPS', 'NETPLUS', 'CLIENT') %}<a class="btn btn-sm btn-outline-light" href="{{ url_for('section_material', section_id=section.id, kind='rubrics') }}#skills">How stations are scored</a>{% endif %}
+        <a class="btn btn-sm btn-outline-light" href="{{ url_for('skills_board', section_id=section.id) }}">Score board</a>
+        </span>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for item in skills_tests %}
+        <div class="list-group-item d-flex justify-content-between align-items-center gap-2">
+          <div class="min-w-0">
+            <strong>{{ item.test.title }}</strong>
+            <div class="small text-muted">{{ item.test.time_limit_minutes }} min · pass {{ item.test.passing_score }}%</div>
+            {% if item.attempts %}
+            <div class="small">Last score {{ '%.0f'|format(item.attempts[0].score) }}%</div>
+            {% endif %}
+          </div>
+          {% if item.available or current_user.role != 'student' %}
+          <a class="btn btn-sm btn-brand" href="{{ url_for('take_test', section_id=section.id, test_id=item.test.id) }}">Open exam</a>
+          {% else %}
+          <span class="badge badge-closed">Closed</span>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="list-group-item empty-state empty-state-sm">
+          <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+          <p class="mb-0">No skills exams are set up for this class yet. Your instructor will announce them.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
 </div>
 
-<details class="card mt-4 card-disclosure" id="tqi"{% if request.args.get('critique') %} open{% endif %}>
+<details class="card mt-3 card-disclosure" id="tqi"{% if request.args.get('critique') %} open{% endif %}>
   <summary class="card-header navy"><span>End-of-course critique</span><span class="small fw-normal">{{ 'Saved · edit' if my_eoc else 'Anonymous · 2 min' }}</span></summary>
   <div class="card-body">
     <p class="small text-muted mb-3">Anonymous after you save. Ratings are not a grade. Staff see counts and comments, not your name.</p>

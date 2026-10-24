@@ -1,39 +1,56 @@
 {% extends "base.html" %}
 {% block title %}Try Helix eye tracking — {{ site_name }}{% endblock %}
 {% block content %}
-<nav aria-label="breadcrumb"><ol class="breadcrumb">
+<nav aria-label="breadcrumb" class="mb-2"><ol class="breadcrumb mb-0">
   <li class="breadcrumb-item"><a href="{{ url_for('helix.policy') }}">Helix</a></li>
   <li class="breadcrumb-item active" aria-current="page">Try it</li></ol></nav>
 
 <section class="hx-try-hero mb-3">
-  <p class="eyebrow mb-1">Helix · eye-tracking playground</p>
-  <h1 class="h3 mb-1">See camera gaze tracking working on this device</h1>
-  <p class="mb-0">Everything runs in this browser. <strong>Nothing is uploaded or saved</strong>: no video, no gaze data. Close the tab to stop.</p>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <p class="eyebrow mb-1">Helix · 478-landmark iris &amp; 3D head-pose gaze bench</p>
+      <h1 class="h3 mb-1">See camera gaze tracking working on this device</h1>
+      <p class="mb-0 small opacity-90">Everything runs locally in this browser. <strong>Nothing is uploaded or saved</strong>: no video, no gaze data. Close the tab to stop.</p>
+    </div>
+    <span class="badge text-bg-dark border border-secondary px-2 py-1">100% On-Device · Zero Uploads</span>
+  </div>
 </section>
 
 <div class="row g-3">
   <div class="col-lg-8">
     <div class="card h-100">
       <div class="card-header navy d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <span>Gaze targets</span>
+        <span>Gaze target bench (3×3 AOI grid)</span>
         <span class="small opacity-75" id="hxTryState" role="status" aria-live="polite">Not started</span>
       </div>
-      <div class="card-body">
-        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+      <div class="card-body hx-try-body">
+        <div class="d-flex flex-wrap gap-2 mb-2 align-items-center hx-try-controls">
           <button type="button" class="btn btn-brand" id="hxTryStart"><i class="bi bi-camera-video" aria-hidden="true"></i> Start camera &amp; calibrate</button>
           <button type="button" class="btn btn-outline-navy" id="hxTryRecal" disabled><i class="bi bi-bullseye" aria-hidden="true"></i> Recalibrate</button>
+          <button type="button" class="btn btn-outline-navy" id="hxTryTargetBtn" disabled><i class="bi bi-crosshair" aria-hidden="true"></i> Live target test</button>
           <button type="button" class="btn btn-outline-navy" id="hxTryDot" aria-pressed="true" disabled>Hide gaze dot</button>
           <button type="button" class="btn btn-outline-secondary" id="hxTryStop" disabled>Stop camera</button>
-          <label class="small ms-auto d-flex align-items-center gap-1" for="hxTryEngine">Engine
+        </div>
+        <div class="d-flex flex-wrap gap-3 mb-2 align-items-center small hx-try-opts">
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="hxTryHiRes" checked>
+            <label class="form-check-label" for="hxTryHiRes">1080p + Eye-Crop pupil stage</label>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="hxTryQuick">
+            <label class="form-check-label" for="hxTryQuick">Quick 5-dot calibration</label>
+          </div>
+          <label class="ms-lg-auto d-flex align-items-center gap-1 mb-0" for="hxTryEngine">Engine
             <select id="hxTryEngine" class="form-select form-select-sm w-auto">
               <option value="auto" {{ 'selected' if engine == 'auto' }}>Auto (MediaPipe, WebGazer fallback)</option>
               <option value="mediapipe" {{ 'selected' if engine == 'mediapipe' }}>MediaPipe only</option>
               <option value="webgazer" {{ 'selected' if engine == 'webgazer' }}>WebGazer only</option>
             </select></label>
         </div>
-        <p class="small text-muted mb-2">Look at a tile: it lights up where Helix thinks you are looking. <strong>Clicking or tapping a tile while looking at it teaches Helix</strong> (implicit calibration); the chart below shows how far off the estimate was at each click.</p>
+        <p class="small text-muted mb-2 hx-try-hint">Look at a tile: it lights up where Helix estimates your gaze. <strong>Tap or click any tile while looking at it</strong> to feed an online implicit sample, or run <strong>Live target test</strong> to score 5 tiles in sequence.</p>
+        <div id="hxTryTargetOut" class="alert alert-info py-2 px-3 small mb-2" role="status" aria-live="polite" hidden></div>
         <div class="hx-try-grid" id="hxTryGrid" aria-label="Gaze target tiles">
-          {% for i in range(9) %}<button type="button" class="hx-try-tile" data-tile="{{ i }}"><span>{{ i + 1 }}</span></button>{% endfor %}
+          {% for i in range(9) %}<button type="button" class="hx-try-tile" data-tile="{{ i }}"><span>{{ i + 1 }}</span><small class="hx-tile-cue" aria-hidden="true"></small></button>{% endfor %}
         </div>
         <h2 class="h6 mt-3 mb-1">Implicit-sample error over time</h2>
         <svg id="hxTryDrift" class="hx-try-drift" viewBox="0 0 300 70" preserveAspectRatio="none" role="img" aria-label="Error at each click, in pixels"></svg>
@@ -46,7 +63,7 @@
       <div class="card-body" id="hxTryResult"><p class="text-muted mb-0">Calibrate to measure the error on this device.</p></div>
     </div>
     <div class="card">
-      <div class="card-header navy">Live diagnostics</div>
+      <div class="card-header navy">Live diagnostics &amp; eye crops</div>
       <div class="card-body p-0"><dl class="hx-hud" id="hxTryHud"><dt>Engine</dt><dd>—</dd></dl></div>
       <div class="px-3 pb-2" id="hxTryCropsWrap" hidden>
         <h2 class="h6 mb-1">Eye crops (full camera resolution)</h2>

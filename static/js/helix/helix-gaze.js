@@ -595,7 +595,10 @@
     if (!Engine || !Calib) return Promise.reject(new Error('gaze engine missing'));
     status('Loading gaze engine…');
     var qs = new URLSearchParams(location.search);
-    var opts = Object.assign({ prefer: qs.get('engine') || CFG.enginePrefer || 'auto', delegate: qs.get('delegate') === 'CPU' ? 'CPU' : null }, window.HELIX_ENGINE || {});
+    var qc = qs.get('crop');
+    var defaultCrop = qc === '0' ? false : qc === 'view' ? 'view' : (device() === 'desktop' ? true : false);
+    if (window.HELIX_ENGINE && window.HELIX_ENGINE.hiRes == null && device() === 'desktop' && !/[?&]hires=0\b/.test(location.search)) window.HELIX_ENGINE.hiRes = true;
+    var opts = Object.assign({ prefer: qs.get('engine') || CFG.enginePrefer || 'auto', delegate: qs.get('delegate') === 'CPU' ? 'CPU' : null, crop: defaultCrop }, window.HELIX_ENGINE || {});
     return Engine.create(opts).then(function (engine) {
       S.engine = engine;
       status('Waiting for camera permission…');

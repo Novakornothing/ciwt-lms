@@ -36,9 +36,10 @@
 
   function runRound() {
     $('hxStudyStart').disabled = true; state('Assigning round ' + (round + 1) + '\u2026');
+    if (E && E.prefetchCamera && device() === 'mobile') { try { E.prefetchCamera(true); } catch (e) {} }
     var arm;
     return nextArm().then(function (a) {
-      if (!a.ok || a.done) { finish(); return null; }
+      if (!a.ok || a.done) { if (E && E.releasePrefetch) E.releasePrefetch(); finish(); return null; }
       arm = a; stopEngine();
       ENG.hiRes = !!a.hires;                      // read by the engine when the camera starts
       state('Starting camera (' + label(a) + ')\u2026');

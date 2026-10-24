@@ -49,33 +49,47 @@
         (canFollow(engine) && opts.lockMethod ? '<p class="small mb-2">This round uses <strong>' + (opts.method === 'follow' ? 'follow the dot' : 'dots') + '</strong> (assigned by the study so methods stay balanced).</p>' : '') +
         (canFollow(engine) && !opts.lockMethod ? '<fieldset class="hx-method mb-2"><legend class="small mb-1">How would you like to calibrate?</legend>' +
           '<label class="hx-method-opt"><input type="radio" name="hxMethod" value="follow"' + (opts.method === 'follow' ? ' checked' : '') + '> <span><strong>Follow a moving dot</strong><small>about 15 s, no clicking</small></span></label>' +
-          '<label class="hx-method-opt"><input type="radio" name="hxMethod" value="dots"' + (opts.method !== 'follow' ? ' checked' : '') + '> <span><strong>Tap ' + (opts.quick ? 5 : 9) + ' dots</strong><small>about 15 s, most reliable</small></span></label></fieldset>' : '') +
+          '<label class="hx-method-opt"><input type="radio" name="hxMethod" value="dots"' + (opts.method !== 'follow' && !opts.quick ? ' checked' : '') + '> <span><strong>Tap ' + (opts.quick ? 5 : 9) + ' dots</strong><small>about 15 s, most reliable</small></span></label>' +
+          (!opts.quick ? '<label class="hx-method-opt"><input type="radio" name="hxMethod" value="quick5"> <span><strong>Quick 5-dot</strong><small>about 8 s, fast mobile setup</small></span></label>' : '') +
+          '</fieldset>' : '') +
         '<div class="d-flex flex-wrap gap-2 justify-content-center"><button type="button" class="btn btn-brand" id="hxPosGo" disabled>Start calibration</button>' +
         '<button type="button" class="btn btn-outline-light" id="hxPosSkip" hidden>Continue anyway</button>' +
         '<button type="button" class="btn btn-link text-reset" id="hxPosCancel">Cancel</button></div>', 'is-pos');
       var box = h.querySelector('.hx-pos-video');
       engine.video.classList.add('hx-video-mirror'); box.insertBefore(engine.video, box.firstChild);
       var go = h.querySelector('#hxPosGo'), skip = h.querySelector('#hxPosSkip'), list = h.querySelector('#hxPosChecks');
-      var okSince = 0, t0 = Date.now(), done = false, askedExposure = false;
+      var okSince = 0, badTicks = 0, t0 = Date.now(), done = false, askedExposure = false;
       var timer = setInterval(function () {
         var g = engine.guidance();
         list.innerHTML = g.checks.map(function (c) {
           return '<li class="' + (c.ok ? 'ok' : 'bad') + '"><i class="bi ' + (c.ok ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill') + '" aria-hidden="true"></i> ' + esc(c.label) + (c.ok || !c.hint ? '' : ' <span class="hx-pos-hint">' + esc(c.hint) + '</span>') + '</li>';
         }).join('');
-        box.classList.toggle('good', g.ok);
-        if (g.ok) { if (!okSince) okSince = Date.now(); } else okSince = 0;
+        var mobileGood = false;
+        if (engine.mobile && g.checks && g.checks.length > 1) {
+          var byKey = {}; g.checks.forEach(function (c) { byKey[c.key] = c.ok; });
+          var coreOk = byKey.eyes !== false && byKey.centre !== false;
+          var extraOk = (byKey.distance ? 1 : 0) + ((byKey.facing && byKey.level !== false) ? 1 : 0) + (byKey.light !== false ? 1 : 0);
+          mobileGood = coreOk && extraOk >= 2;
+        }
+        var isGood = g.ok || mobileGood;
+        box.classList.toggle('good', isGood);
+        if (isGood) { badTicks = 0; if (!okSince) okSince = Date.now(); } else if (++badTicks >= 2) { okSince = 0; }
         var wasDisabled = go.disabled;
-        go.disabled = !(okSince && Date.now() - okSince > 700);
+        go.disabled = !(okSince && Date.now() - okSince > 400);
         if (wasDisabled && !go.disabled) go.textContent = 'Looks good \u2014 start calibration';
         var dark = g.checks.some(function (c) { return c.key === 'light' && !c.ok; });
         if (dark && !askedExposure && engine.exposureHint) { askedExposure = true; engine.exposureHint(); }
         var passed = g.checks.filter(function (c) { return c.ok; }).length;
         progress(ov, 0.15 * passed / Math.max(1, g.checks.length), 'Getting into position');
-        if (Date.now() - t0 > 5000) skip.hidden = false;
-      }, 250);
+        if (Date.now() - t0 > 1500) skip.hidden = false;
+      }, 200);
       function finish(v) {
         if (done) return; done = true; clearInterval(timer);
-        var m = h.querySelector('input[name="hxMethod"]:checked'); if (m) opts.method = m.value;
+        var m = h.querySelector('input[name="hxMethod"]:checked');
+        if (m) {
+          if (m.value === 'quick5') { opts.method = 'dots'; opts.quick = true; }
+          else opts.method = m.value;
+        }
         resolve(v);
       }
       go.addEventListener('click', function () { finish('ok'); });
@@ -298,6 +312,7 @@
       ov.querySelectorAll('.hx-val-target,.hx-val-est,.hx-val-line').forEach(function (n) { n.remove(); });
       return (opts.skipPositioning || attempt > 1 ? Promise.resolve('ok') : position(ov, engine, opts)).then(function (r) {
         if (r === 'cancel') return { action: 'cancel' };
+        points = opts.quick ? QUICK : FULL;
         engine.resetCalibration();
         var tCal = Date.now(), mode = canFollow(engine) && opts.method === 'follow' ? 'follow' : 'dots';
         var step2 = mode === 'follow'

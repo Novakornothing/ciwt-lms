@@ -8,7 +8,11 @@
   background: var(--bs-body-bg, #fff); color: var(--bs-body-color, #212529); border: 1px solid var(--bs-border-color, #ccd);
   border-radius: .75rem .75rem 0 0; box-shadow: 0 -4px 24px rgba(0,0,0,.25); padding: 1rem; }
 .tutor-drawer[hidden] { display: none; }
-.tutor-fab { position: fixed; right: 1rem; bottom: 1rem; z-index: 1050; min-height: 44px; }
+.tutor-fab { position: fixed; right: 7.5rem; bottom: max(.75rem, env(safe-area-inset-bottom)); z-index: 1050; min-height: 44px; border-radius: 999px; padding: .45rem .95rem; box-shadow: 0 6px 20px rgba(0,0,0,.22); }
+body.has-mobile-tabbar .tutor-fab { bottom: calc(var(--tabbar-h, 64px) + .75rem); }
+@media (max-width: 767.98px) {
+  body.has-mobile-tabbar .tutor-drawer { bottom: var(--tabbar-h, 64px); }
+}
 .pf-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
 .pf-badge { display: inline-block; margin: .15rem .25rem .15rem 0; padding: .2rem .55rem; border-radius: 1rem; font-size: .8rem;
   background: var(--bs-success-bg-subtle, #d1e7dd); color: var(--bs-success-text-emphasis, #0a3622); }

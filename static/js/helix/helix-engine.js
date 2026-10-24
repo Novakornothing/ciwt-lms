@@ -18,14 +18,13 @@
   /* Pass 5 (opt-in): 1080p on desktops with enough cores (the eye-crop stage then gets ~1 camera px per
      crop px; at 720p it upsamples). Falls back to 720p at runtime if the frame budget is missed (_resCheck). */
   function hiResCapable(mobile) {
-    // opt-in (window.HELIX_ENGINE.hiRes, ?hires=1, or an admin-set desktop default): on the two proxy
-    // subjects with a 1080p source it helped follow-the-dot (2/2 people, 16/20 sequences) but not 9-point
-    // (13/22); proxies are not real webcams, so 720p stays the default until study data says otherwise
     var cfg = typeof window !== 'undefined' && window.HELIX_ENGINE || {};
-    var asked = cfg.hiRes || (typeof location !== 'undefined' && /[?&]hires=1\b/.test(location.search));
+    var qs = typeof location !== 'undefined' ? (location.search || '') : '';
+    if (/[?&]hires=0\b/.test(qs) || cfg.hiRes === false) return false;
+    var asked = cfg.hiRes || /[?&]hires=1\b/.test(qs);
     if (!asked || mobile || typeof navigator === 'undefined') return false;
     var cores = navigator.hardwareConcurrency || 4, mem = navigator.deviceMemory;
-    return cores >= 8 && !(mem && mem < 4);
+    return cores >= 4 && !(mem && mem < 4);
   }
   function cameraConstraints(mobile, hi) {
     if (hi) return { audio: false, video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30, max: 30 } } };
@@ -98,7 +97,7 @@
     this.poseWin = [];
     this.recent = [];              // last ~1 s of features, for implicit samples
     this.collect = null;           // active calibration collection
-    this.maxFps = this.mobile ? 15 : 30; this.minFps = 6; this.fps = this.maxFps;
+    this.maxFps = this.mobile ? 24 : 30; this.minFps = 6; this.fps = this.maxFps;
     this.inferEma = 0; this.frames = 0; this.faceFrames = 0; this.fpsWin = [];
     this.paused = false; this.running = false; this.lastFeat = null; this.delegate = null;
     this.brightness = null; this.quality = { brightness: null, contrast: null, glare: null, faces: 0 };
@@ -238,7 +237,7 @@
     var self = this;
     if (!navigator.getBattery) return;
     navigator.getBattery().then(function (b) {
-      var upd = function () { var base = self.mobile ? 15 : 30; if (self.thermal.hot) base = Math.max(self.minFps, Math.round(base * 0.6)); self.lowBattery = !b.charging && b.level < 0.25; self.maxFps = self.lowBattery ? Math.min(10, base) : base; if (self.fps > self.maxFps) self.fps = self.maxFps; };
+      var upd = function () { var base = self.mobile ? 24 : 30; if (self.thermal.hot) base = Math.max(self.minFps, Math.round(base * 0.6)); self.lowBattery = !b.charging && b.level < 0.25; self.maxFps = self.lowBattery ? Math.min(10, base) : base; if (self.fps > self.maxFps) self.fps = self.maxFps; };
       upd(); b.addEventListener('levelchange', upd); b.addEventListener('chargingchange', upd);
     }).catch(function () {});
   };
@@ -287,8 +286,8 @@
     this.inferEma = this.inferEma ? this.inferEma * 0.9 + infer * 0.1 : infer;
     // thermal/battery friendly: frame budget adapts to how long inference takes on this device
     var budget = 1000 / this.fps;
-    if (this.inferEma > budget * 0.7 && this.fps > this.minFps) this.fps = Math.max(this.minFps, this.fps - 2);
-    else if (this.inferEma < budget * 0.35 && this.fps < this.maxFps) this.fps = Math.min(this.maxFps, this.fps + 1);
+    if ((this.inferEma > budget * 0.7 || (this.mobile && this.inferEma > 22 && this.fps > 15)) && this.fps > this.minFps) this.fps = Math.max(this.minFps, this.fps - 2);
+    else if (this.inferEma < (this.mobile ? Math.min(22, budget * 0.45) : budget * 0.35) && this.fps < this.maxFps) this.fps = Math.min(this.maxFps, this.fps + 1);
     this.frames++;
     this.fpsWin.push(t); while (this.fpsWin.length && t - this.fpsWin[0] > 2000) this.fpsWin.shift();
     this._thermalCheck(t);

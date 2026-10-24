@@ -366,7 +366,7 @@
     var resid = rows.map(function (r) { var g = ridgePredict(geo, r.f); return { f: r.f, x: r.x - g.x, y: r.y - g.y, w: r.w }; });
     // pass 5: with eye-crop features present, add them to stage 2 and choose lambda by grouped CV
     // (accepted by the warp A/B: -0.36 deg mean over 55 sequences, p=0.03; without crops CV alone was neutral)
-    var hasCrop = !this.eyeIdx && rows.some(function (r) { return r.f.length > 23 && fin(r.f[23]); });
+    var hasCrop = !this.eyeIdx && rows.filter(function (r) { return r.f.length > 23 && (fin(r.f[23]) || fin(r.f[25])); }).length >= 6;
     var eidx = this.eyeIdx || (hasCrop ? EYE_IDX.concat(CROP_IDX) : EYE_IDX);
     var sel = this.lambdaSel || (hasCrop ? 'cv' : 'gcv'), cv = sel === 'cv' ? cvLambda(resid, eidx, LAMBDAS_CV, cvGroups(rows)) : null;   // folds by calibration target, not residual
     var eye = ridgeFit(resid, eidx, cv ? [cv.lambda] : LAMBDAS);
@@ -521,20 +521,22 @@
     var checks = [];
     if (!feat) return { ok: false, checks: [{ key: 'face', ok: false, label: 'Face not found', hint: 'Look at the screen with your whole face in the camera view.' }] };
     var deg = function (r) { return r * 180 / Math.PI; };
-    var dist = feat.distanceCm, lo = mobile ? 20 : 33, hi = mobile ? 55 : 85;
+    var dist = feat.distanceCm, lo = mobile ? 18 : 33, hi = mobile ? 62 : 85;
     checks.push(dist == null ? { key: 'distance', ok: true, label: 'Distance unknown' } :
       dist < lo ? { key: 'distance', ok: false, label: 'Too close (~' + Math.round(dist) + ' cm)', hint: 'Move back a little.' } :
       dist > hi ? { key: 'distance', ok: false, label: 'Too far (~' + Math.round(dist) + ' cm)', hint: mobile ? 'Hold the phone a bit closer.' : 'Move a little closer to the screen.' } :
       { key: 'distance', ok: true, label: 'Distance ~' + Math.round(dist) + ' cm' });
     var cx = feat.face.x, cy = feat.face.y;
-    var centred = Math.abs(cx - 0.5) < 0.2 && Math.abs(cy - 0.5) < 0.25;
+    var tolX = mobile ? 0.24 : 0.2, tolY = mobile ? 0.28 : 0.25;
+    var centred = Math.abs(cx - 0.5) < tolX && Math.abs(cy - 0.5) < tolY;
     checks.push({ key: 'centre', ok: centred, label: centred ? 'Face centred' : 'Off centre',
-      hint: Math.abs(cx - 0.5) >= 0.2 ? 'Move so your face is in the middle of the preview.' : (cy < 0.5 ? (mobile ? 'Tilt the phone up slightly.' : 'Lower the camera or sit up.') : (mobile ? 'Tilt the phone down slightly.' : 'Raise the screen or sit lower.')) });
+      hint: Math.abs(cx - 0.5) >= tolX ? 'Move so your face is in the middle of the preview.' : (cy < 0.5 ? (mobile ? 'Tilt the phone up slightly.' : 'Lower the camera or sit up.') : (mobile ? 'Tilt the phone down slightly.' : 'Raise the screen or sit lower.')) });
     var yaw = deg(feat.pose.yaw), pitch = deg(feat.pose.pitch), roll = deg(feat.pose.roll);
-    var facing = Math.abs(yaw) < 15 && Math.abs(pitch) < 18;
+    var maxYaw = mobile ? 18 : 15, maxPitch = mobile ? 24 : 18;
+    var facing = Math.abs(yaw) < maxYaw && Math.abs(pitch) < maxPitch;
     checks.push({ key: 'facing', ok: facing, label: facing ? 'Facing the screen' : 'Turn to face the screen',
-      hint: Math.abs(yaw) >= 15 ? 'Turn your head toward the screen.' : 'Level your chin.' });
-    var level = Math.abs(roll) < 10;
+      hint: Math.abs(yaw) >= maxYaw ? 'Turn your head toward the screen.' : 'Level your chin.' });
+    var level = Math.abs(roll) < (mobile ? 14 : 10);
     checks.push({ key: 'level', ok: level, label: level ? 'Head level' : 'Head tilted', hint: 'Straighten your head.' });
     checks.push({ key: 'eyes', ok: !feat.blink, label: feat.blink ? 'Eyes not visible' : 'Eyes visible', hint: 'Open your eyes, remove glare (tilt glasses).' });
     var q = opts.quality || {}, br = q.brightness != null ? q.brightness : opts.brightness;

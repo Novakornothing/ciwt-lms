@@ -1,9 +1,11 @@
-{# pass 13: one-time introduction to the adaptive path and daily review (student class page) #}
+{# pass 13 + pass 16 UX simplification: collapsible 1-line introduction to the adaptive path (student class page) #}
 {% set intro = onboarding_student_intro(section, current_user) %}
 {% if intro %}
-<section class="card mb-4 intro-card" aria-labelledby="introH">
-  <div class="card-body">
-    <h2 class="h5 mb-2" id="introH"><i class="bi bi-signpost-split" aria-hidden="true"></i> How your path works</h2>
+<details class="card mb-3 card-disclosure intro-card">
+  <summary class="card-header py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2 class="h6 mb-0 d-inline" id="introH"><i class="bi bi-signpost-split me-1" aria-hidden="true"></i> How your path works <span class="fw-normal small text-muted ms-1">— 4-rung explanation ladder, labs &amp; mastery (click to expand)</span></h2>
+  </summary>
+  <div class="card-body pt-2 pb-3">
     <ul class="intro-list mb-3">
       <li><strong>One next step.</strong> “Recommended next for you” on this page always shows what to do now: a lesson, a short review or a check.</li>
       {% if intro.adaptive %}<li><strong>Short reviews when you need them.</strong> If your answers show an objective is shaky, a five-minute review is added. You can skip it unless your instructor made it required.</li>{% endif %}
@@ -14,11 +16,11 @@
     <div class="d-flex flex-wrap gap-2">
       <form method="post" action="{{ url_for('onboarding_student_intro') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ request.path }}">
-        <button class="btn btn-brand" type="submit">Got it</button>
+        <button class="btn btn-sm btn-brand" type="submit">Got it — hide tip</button>
       </form>
-      <a class="btn btn-outline-navy" href="{{ intro.mastery_url }}">See my mastery</a>
-      <a class="btn btn-outline-navy" href="{{ intro.plan_url }}">Set my plan</a>
+      <a class="btn btn-sm btn-outline-navy" href="{{ intro.mastery_url }}">See my mastery</a>
+      <a class="btn btn-sm btn-outline-navy" href="{{ intro.plan_url }}">Set my plan</a>
     </div>
   </div>
-</section>
+</details>
 {% endif %}

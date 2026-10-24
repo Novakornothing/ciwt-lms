@@ -1023,3 +1023,35 @@ html[data-theme="dark"] .chip-scroll a.chip-link[aria-current] .chip-count { col
 /* pass 9: Bootstrap's pink code colour is 4.2:1 on the pale worked-example/scenario panels; darken it in light theme
    (dark theme keeps its own !important code colour) */
 .core-content code, .live-demo code { color: #a1145a; }   /* pass 10: also the pale live-demo boxes (lesson 5.1) */
+
+/* ---- Pass 16: Simplified Course Hub Action Menus & Collapsible disclosures ---- */
+details.action-more-menu { position: relative; display: inline-block; }
+details.action-more-menu > summary { list-style: none; cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: .35rem; }
+details.action-more-menu > summary::-webkit-details-marker { display: none; }
+details.action-more-menu > summary::after { content: "\F282"; font-family: "bootstrap-icons"; font-size: .75em; transition: transform .15s ease; }
+details.action-more-menu[open] > summary::after { transform: rotate(180deg); }
+.action-more-panel {
+  position: absolute; right: 0; top: calc(100% + .35rem); z-index: 1050;
+  min-width: 14rem; padding: .4rem; border-radius: 12px;
+  background: var(--surface, #fff); color: var(--ink, #0a1424);
+  border: 1px solid var(--surface-4, #c9d6e8); box-shadow: 0 12px 32px rgba(6, 13, 24, .22);
+  display: flex; flex-direction: column; gap: .15rem;
+}
+[data-theme="dark"] .action-more-panel { background: #0f1d32; border-color: #2a3f5c; color: #eef4fb; box-shadow: 0 12px 32px rgba(0, 0, 0, .55); }
+.action-more-item {
+  display: flex; align-items: center; gap: .55rem; padding: .5rem .75rem; min-height: 40px;
+  border-radius: 8px; color: var(--ink, #0a1424) !important; text-decoration: none !important;
+  font-size: .88rem; font-weight: 600; transition: background .12s ease;
+}
+[data-theme="dark"] .action-more-item { color: #eef4fb !important; }
+.action-more-item:hover, .action-more-item:focus-visible { background: color-mix(in srgb, var(--accent, #3ec7ff) 14%, var(--surface, #fff)); }
+.gp-checklist-disclosure > summary { list-style: none; display: inline-flex; align-items: center; gap: .35rem; color: var(--ink-secondary); min-height: 36px; }
+.gp-checklist-disclosure > summary::-webkit-details-marker { display: none; }
+.gp-checklist-disclosure > summary::before { content: "\F285"; font-family: "bootstrap-icons"; font-size: .75em; transition: transform .15s ease; }
+.gp-checklist-disclosure[open] > summary::before { transform: rotate(90deg); }
+@media (max-width: 575.98px) {
+  details.action-more-menu { flex: 1 1 100%; }
+  details.action-more-menu > summary { width: 100%; justify-content: center; }
+  .action-more-panel { position: static; width: 100%; margin-top: .35rem; box-shadow: none; }
+  .ladder-intro, .ladder-topstatus { font-size: .82rem !important; padding: .45rem .65rem !important; margin-bottom: .5rem !important; }
+}

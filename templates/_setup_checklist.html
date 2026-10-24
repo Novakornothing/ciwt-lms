@@ -1,11 +1,11 @@
-{# pass 13: first-run "Set up your class" checklist (instructor class page). Nothing here changes a setting. #}
+{# pass 13 + pass 16 UX simplification: collapsible "Set up your class" checklist (instructor class page). Nothing here changes a setting. #}
 {% set setup = onboarding_setup_checklist(section, current_user) %}
 {% if setup %}
-<section class="card mb-3 setup-card" id="setup" aria-labelledby="setupH">
-  <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <h2 class="h6 mb-0" id="setupH">Set up your class</h2>
+<details class="card mb-3 card-disclosure setup-card" id="setup"{% if request.args.get('setup') %} open{% endif %}>
+  <summary class="card-header navy py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2 class="h6 mb-0 d-inline" id="setupH"><i class="bi bi-sliders me-1" aria-hidden="true"></i> Set up your class <span class="fw-normal small opacity-75 ms-1">— Class setup &amp; LTI checklist (pacing, Helix, syllabus, LMS link)</span></h2>
     <span class="small" id="setupProgress">{{ setup.done }} of {{ setup.total }} reviewed</span>
-  </div>
+  </summary>
   <div class="card-body">
     <p class="small mb-2">{% if setup.complete %}Everything has been reviewed. You can hide this list; the settings stay as they are.{% else %}Review each setting once before students start. The defaults are already sensible, so “Looks right” is a fine answer.{% endif %}</p>
     <ol class="list-unstyled mb-3 setup-list">
@@ -37,5 +37,5 @@
       <button class="btn btn-sm btn-link px-0" type="submit">Hide this checklist for this class</button>
     </form>
   </div>
-</section>
+</details>
 {% endif %}
