@@ -97,6 +97,16 @@ def main(out):
         nl = sum(len(LD.rung_checks(LD.entry(*k), r) or []) for k, v in LD.ladder().items() if v.get('type') == 'section'
                  for r in ('R0', 'R1', 'R2', 'R3', 'R4'))
         w(f'- **Ladder quick checks (key ≥ 1.15× longest distractor): 0 flagged** across {nl} checks.')
+    from curriculum_v2.cert import sim_pbq as SIMQ, speed_drill as SDQ
+    sim_bad = [f'{x["id"]} {p["prompt"]}' for x in SIMQ.SIMS for p in x['parts']
+               if len(p['correct']) >= 1.15 * max(len(o) for o in p['options'] if o != p['correct'])]
+    sd_bad = SDQ.balance_violations()
+    nparts = sum(len(x['parts']) for x in SIMQ.SIMS)
+    w(f'- **Exam-simulator simulation PBQ parts: {len(sim_bad)} flagged** across {len(SIMQ.SIMS)} sim PBQs / {nparts} parts'
+      + (': ' + ', '.join(sim_bad) if sim_bad else '.'))
+    w(f'- **Speed-Drill Blitz choices: {len(sd_bad)} flagged** across {len(SDQ.CARDS)} cards'
+      + (': ' + ', '.join(sd_bad) if sd_bad else '.'))
+    flagged = list(flagged) + sim_bad + sd_bad
     w('\n## Priority 3: templated NETOPS practice/capstone ladders and SAME_AS reuse\n')
     lad = LD.ladder()
     bespoke_note = 'Option B pass 3'

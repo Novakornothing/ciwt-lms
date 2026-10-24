@@ -4,7 +4,7 @@ Everything is on the local `refinement` branch (Option B pass 3; see `git log -1
 never opened for writing; its sha256 is still `47fabc92dafe16cf128b34e90c8235d61d02bc735738a83b8a6172fb93597939`.
 All new curriculum-facing content is tagged **Pending SME review**.
 
-## Option B features (passes 1–3, Pending SME review)
+## Option B features (passes 1–4, Pending SME review)
 
 | Feature | Where | Notes |
 |---|---|---|
@@ -14,6 +14,11 @@ All new curriculum-facing content is tagged **Pending SME review**.
 | Packet / Frame Walk | 49 network labs (e.g. `/labs/sw-vlan-access`) | ARP, ICMP, DNS and HTTPS walks hop by hop over the live topology; while the fault is present the walk stops at the failing hop. JSON at `/labs/<lab>/packet-flow?type=…`. |
 | SVG hardware / cable bench | `hw-board`, `hw-pc-build` (board mode) and `hw-cables` (cable mode) | Drag-free SVG bench: board components and T568A/T568B straight, crossover and split-pair wiring. No inline styles. |
 | Bespoke explanation ladders | All 539 sections (ITSUP 296, NETOPS 154, CLIENT 89) | Every section has its own R1 plain / R2 analogy (with analogy map and "Where the analogy breaks") / R3 SVG visual (`aria-label`) / R4 widget + lab rung, with balanced quick checks tagged to same-chapter misconceptions. 0 `same_as`, 0 templated NETOPS sections. |
+| Exam simulator pass 4 (testing-centre realism) | `/student/section/<id>/exam-sim` | Three lengths: Official 90 questions / 90 min / 5 PBQs (`max`), Standard 45 / 90 min / 4 PBQs, Sprint 15 / 20 min / 2 PBQs. One-question-at-a-time view by default (Previous / Next / Question X of N / Review Screen; practice mode can switch to the scroll view, exam mode cannot). Server auto-save (`POST …/exam-sim/<attempt>/autosave`, debounced on every change and navigation) restores answers, flags and the whiteboard on refresh or another device. Practice pause is server-side (`POST …/pause`): remaining seconds are frozen and the deadline moves forward on resume. In exam mode a late submit grades the answers auto-saved before deadline + 30 s instead of zeroing them. |
+| Interactive simulation PBQs | 9 `sim_pbq` items (3 each for 220-1201, 220-1202, N10-009) in `curriculum_v2/cert/sim_pbq.py` | Open every sitting. Tabs: read-only diagnostic terminal (`show vlan brief`, `show ip route`, `show access-lists`, `ipconfig /all`, `Get-Service`, `icacls` …), clickable topology / board diagram, config inspector; then 3–4 remediation sub-fields. All-or-nothing for the score, "n/m parts right" in feedback. |
+| Whiteboard and eliminator | Exam-sim take page | "Whiteboard / Scratchpad" side drawer (auto-saved and kept in sessionStorage) with "Insert CIDR / Binary Grid" (128…1 and /24–/30 table). Strike-out button on every single/multi option, also Alt+Click or right-click. |
+| Candidate Score Report + missed-objective drill | Exam-sim result page | Printable report (name, section, exam code and version, date/time, mode, simulated scaled score, pass bar, VOUCHER READY / BORDERLINE / REMEDIATION REQUIRED, domain bars, missed objective codes). "Drill My Missed Objectives Now (10 questions)" (`POST …/remediate-drill`) starts a 10-question practice sitting from the missed objectives (weakest domain if nothing was missed). |
+| Speed-Drill | `/student/section/<id>/speed-drill` (linked from the section page, simulator home and results) | 98 cards: ports & protocols, IEEE/Wi-Fi/cable/hardware specs, Windows/Linux/IOS commands, acronyms and security/cloud concepts, filterable by exam and category. 60-second Blitz (4 balanced options, streak, instant feedback, retry queue) and Flip-Card study (Got it / Review again), recorded per user (Leitner boxes) in `speed_drill_stat`. |
 
 ## Verification (run against a DB copy, never the real `ciwt_lms.db`)
 
@@ -23,7 +28,7 @@ cp ciwt_lms.db /tmp/ob3.db
 DATABASE_URL=sqlite:////tmp/ob3.db ./venv/bin/python tools/curriculum_readiness.py /tmp/ob3_readiness   # 29/29
 DATABASE_URL=sqlite:////tmp/ob3.db ./venv/bin/python tools/sme_priority_review.py                     # 0 / 0 / 0 / 0
 DATABASE_URL=sqlite:////tmp/ob3.db ./venv/bin/python -m pytest -q tests/test_option_b_pass1.py \
-  tests/test_option_b_pass2.py tests/test_option_b_pass3.py tests/test_prepilot_ux.py \
+  tests/test_option_b_pass2.py tests/test_option_b_pass3.py tests/test_exam_sim_upgrades.py tests/test_prepilot_ux.py \
   tests/test_ladder_content.py tests/test_ladder_engine.py
 ```
 

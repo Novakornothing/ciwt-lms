@@ -46,7 +46,10 @@ def bank():
     """{item_id: item} for every bank item (keys included — server side only)."""
     if 'bank' not in _cache:
         from .mapping import bank_items
+        from .sim_pbq import items as sim_items
         _cache['bank'] = {it['id']: it for it in bank_items()}
+        # Option B pass 4: interactive simulation PBQs (exam simulator only; not in the alignment pools)
+        _cache['bank'].update({it['id']: it for it in sim_items()})
     return _cache['bank']
 
 
@@ -162,6 +165,19 @@ def grade(it, submitted):
     return [str(v) for v in val] == [str(v) for v in it['correct']]
 
 
+def partial(it, submitted):
+    """(parts right, parts) for a typed item (sim_pbq / match / order); (int(correct), 1) for single and multi."""
+    if it['type'] in ('single', 'multi'):
+        return int(grade(it, submitted)), 1
+    try:
+        val = json.loads(submitted) if submitted else []
+    except ValueError:
+        val = []
+    key = [str(c) for c in it['correct']]
+    val = [str(v) for v in val] if isinstance(val, list) else []
+    return sum(1 for k, v in zip(key, val) if k == v), len(key)
+
+
 def display_answer(it, submitted):
     if submitted in (None, ''):
         return '—'
@@ -171,7 +187,7 @@ def display_answer(it, submitted):
         val = json.loads(submitted)
     except ValueError:
         return '—'
-    if it['type'] == 'match':
+    if it['type'] in ('match', 'sim_pbq'):
         prompts = it['raw'].get('prompts') or []
         return '; '.join(f'{p} → {v or "—"}' for p, v in zip(prompts, val))
     if it['type'] == 'order':
@@ -181,7 +197,7 @@ def display_answer(it, submitted):
 
 def display_key(it):
     c = it['correct']
-    if it['type'] == 'match':
+    if it['type'] in ('match', 'sim_pbq'):
         return '; '.join(f'{p} → {v}' for p, v in zip(it['raw'].get('prompts') or [], c))
     if it['type'] == 'order':
         return ' → '.join(map(str, c))

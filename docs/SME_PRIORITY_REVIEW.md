@@ -30,6 +30,8 @@ A key at least 15% longer than the longest distractor (a test-wise cue). Every o
 
 - **Item pools: 0 flagged** across 28 pools / 501 single-answer items (Option B pass 3 lengthened one distractor on the 106 question-bank and supplement items that were over the line).
 - **Ladder quick checks (key ≥ 1.15× longest distractor): 0 flagged** across 2703 checks.
+- **Exam-simulator simulation PBQ parts: 0 flagged** across 9 sim PBQs / 29 parts.
+- **Speed-Drill Blitz choices: 0 flagged** across 98 cards.
 
 ## Priority 3: templated NETOPS practice/capstone ladders and SAME_AS reuse
 

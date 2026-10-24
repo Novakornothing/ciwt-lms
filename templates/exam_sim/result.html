@@ -7,6 +7,31 @@
   <li class="breadcrumb-item"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Exam-Day Simulator</a></li>
   <li class="breadcrumb-item active" aria-current="page">Results</li></ol></nav>
 <h1 class="h3">{{ exam.name }} ({{ exam.code }}) — {{ mode.name }}</h1>
+<section class="card card-body mb-3 es-report" id="esReport" aria-labelledby="esReportH">
+  <h2 class="h5" id="esReportH">Candidate Score Report</h2>
+  <dl>
+    <dt>Candidate Name</dt><dd>{{ candidate.first_name }} {{ candidate.last_name }}</dd>
+    <dt>Section</dt><dd>{{ section.name }}</dd>
+    <dt>Exam Code &amp; Version</dt><dd>{{ exam.code }} ({{ exam.version }})</dd>
+    <dt>Date/Time</dt><dd>{{ att.submitted_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd>
+    <dt>Mode</dt><dd>{{ 'Exam mode' if att.strict else 'Practice mode' }} · {{ mode.name }}</dd>
+    <dt>Simulated Scaled Score</dt><dd><strong>{{ att.score }}</strong> (100–900)</dd>
+    <dt>Pass Bar</dt><dd>{{ bar }}</dd>
+    <dt>Voucher Readiness Status</dt><dd class="es-status es-badge-{{ att.badge }}" id="esStatus">{{ status }}</dd>
+  </dl>
+  <h3 class="h6">Domain performance</h3>
+  {% for d in domains %}<div class="es-dombar"><span>{{ d.id }} {{ d.name }}</span><meter min="0" max="100" low="{{ 60 }}" optimum="100" value="{{ d.pct }}" aria-label="{{ d.name }} {{ d.pct }}%">{{ d.pct }}%</meter><span>{{ d.pct }}%</span></div>{% endfor %}
+  <p class="small mt-2 mb-1"><strong>Objectives with missed items:</strong> {% if codes %}{{ codes|join(', ') }}{% else %}none{% endif %}</p>
+  <p class="small text-muted mb-2">Simulated report for voucher planning only — not an official CompTIA score report. {{ review_tag }}.</p>
+  <div class="d-flex flex-wrap gap-2 no-print">
+    <button type="button" class="btn btn-outline-navy" id="esPrint"><i class="bi bi-printer" aria-hidden="true"></i> Print / Save Candidate Score Report</button>
+    <form method="post" action="{{ url_for('exam_sim_remediate', section_id=section.id, attempt_id=att.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-navy" type="submit" id="esDrill"><i class="bi bi-bullseye" aria-hidden="true"></i> Drill My Missed Objectives Now (10 questions)</button>
+    </form>
+    <a class="btn btn-outline-secondary" href="{{ url_for('speed_drill', section_id=section.id, exam=att.exam) }}">Speed-Drill</a>
+  </div>
+</section>
 <div class="card card-body mb-3 es-score">
   <div class="es-scaled"><span class="display-6" id="esScore">{{ att.score }}</span> <span class="text-muted">/ 900 simulated scaled score · pass bar {{ bar }}</span></div>
   <div class="mt-2"><span class="es-badge es-badge-{{ att.badge }}" id="esBadge">{{ badge }}</span></div>
@@ -24,8 +49,9 @@
 <h2 class="h5">Question review</h2>
 <ol class="es-review">{% for r in review %}<li class="{{ 'es-ok' if r.ok else 'es-bad' }}">
   <div>{% if r.pbq %}<span class="badge text-bg-warning">PBQ</span> {% endif %}{% if r.flagged %}<span class="badge text-bg-info">Flagged</span> {% endif %}{% if not r.answered %}<span class="badge text-bg-secondary">Unanswered</span> {% endif %}{{ r.text }} <span class="small text-muted">{{ r.lo }}</span></div>
-  <div class="small">Your answer: {{ r.yours }} · Key: {{ r.key }}</div>
+  <div class="small">Your answer: {{ r.yours }} · Key: {{ r.key }}{% if r.parts > 1 %} · <strong>{{ r.parts_right }}/{{ r.parts }} parts right</strong>{% endif %}</div>
   {% if r.why %}<div class="small text-muted">{{ r.why }}</div>{% endif %}
 </li>{% endfor %}</ol>
 <p class="small text-muted">{{ disclaimer }} The scaled score is a simulation (100 + 800 × fraction correct); CompTIA does not publish its scaling. {{ review_tag }}.</p>
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/exam_sim.js') }}" defer></script>{% endblock %}

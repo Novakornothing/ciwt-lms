@@ -2,36 +2,85 @@
 {% block title %}{{ exam.short }} simulator — {{ site_name }}{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
 {% block content %}
-<div class="es-bar" id="examSim" data-remaining="{{ remaining }}" data-strict="{{ '1' if att.strict else '0' }}" data-total="{{ questions|length }}" data-pbqs="{{ n_pbq }}">
+<div class="es-bar" id="examSim" data-remaining="{{ remaining }}" data-strict="{{ '1' if att.strict else '0' }}" data-total="{{ questions|length }}" data-pbqs="{{ n_pbq }}"
+     data-paused="{{ '1' if paused else '0' }}" data-attempt="{{ att.id }}"
+     data-autosave="{{ url_for('exam_sim_autosave', section_id=section.id, attempt_id=att.id) }}"
+     data-pause-url="{{ url_for('exam_sim_pause', section_id=section.id, attempt_id=att.id) }}">
   <div><strong>{{ exam.name }} ({{ exam.code }})</strong> · {{ mode.name }} · {{ 'Exam mode' if att.strict else 'Practice mode' }}</div>
   <div class="es-timer" role="timer" aria-live="off"><i class="bi bi-clock" aria-hidden="true"></i> <span id="esClock">--:--</span></div>
-  {% if not att.strict %}<button type="button" class="btn btn-sm btn-outline-navy" id="esPause" aria-pressed="false">Pause timer</button>{% endif %}
+  {% if not att.strict %}<button type="button" class="btn btn-sm btn-outline-navy" id="esPause" aria-pressed="{{ 'true' if paused else 'false' }}">{{ 'Resume timer' if paused else 'Pause timer' }}</button>{% endif %}
   {% if n_pbq %}<button type="button" class="btn btn-sm btn-outline-gold" id="esSkipPbq">Skip PBQs &amp; return later</button>{% endif %}
+  <button type="button" class="btn btn-sm btn-outline-navy" id="esWbToggle" aria-controls="esWhiteboard" aria-expanded="false"><i class="bi bi-pencil-square" aria-hidden="true"></i> Whiteboard / Scratchpad</button>
+  {% if not att.strict %}<button type="button" class="btn btn-sm btn-outline-secondary" id="esViewToggle" aria-pressed="false" data-single="Single-question view" data-scroll="All-questions scroll view">All-questions scroll view</button>{% endif %}
+  <span class="small text-muted" id="esSaveState" aria-live="polite">Auto-save on</span>
 </div>
-<div class="es-paused d-none" id="esPausedNote" role="status">Timer paused — questions are hidden until you resume.</div>
-<form method="post" id="esForm">
+<div class="es-paused{% if not paused %} d-none{% endif %}" id="esPausedNote" role="status">Timer paused — questions are hidden until you resume.</div>
+<form method="post" id="esForm" data-view="single">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="hidden" name="timed_out" value="0" id="esTimedOut">
+  <input type="hidden" name="flags_sent" value="1">
+  <aside class="card card-body mb-3 es-wb d-none" id="esWhiteboard" aria-label="Whiteboard and scratchpad">
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+      <h2 class="h6 mb-0">Whiteboard / Scratchpad</h2>
+      <button type="button" class="btn btn-sm btn-outline-navy" id="esCidr">Insert CIDR / Binary Grid</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="esWbClear">Clear</button>
+    </div>
+    <label class="visually-hidden" for="esWbText">Scratch notes</label>
+    <textarea class="form-control es-wb-text" name="whiteboard" id="esWbText" rows="16" spellcheck="false">{{ whiteboard }}</textarea>
+    <p class="small text-muted mb-0">Saved with your sitting; not graded.</p>
+  </aside>
+  <nav class="es-nav" id="esNav" aria-label="Question navigation">
+    <button type="button" class="btn btn-sm btn-outline-navy" id="esPrev">Previous</button>
+    <span id="esPos" aria-live="polite">Question 1 of {{ questions|length }}</span>
+    <button type="button" class="btn btn-sm btn-navy" id="esNext">Next</button>
+    <button type="button" class="btn btn-sm btn-outline-gold" id="esReviewBtn">Review Screen</button>
+  </nav>
   <div id="esQuestions">
   {% for q in questions %}{% set i = q.n %}
-  <section class="card card-body mb-3 es-q{% if q.pbq %} es-pbq{% endif %}" id="esq{{ i }}" data-n="{{ i }}" aria-labelledby="esqh{{ i }}">
+  <section class="card card-body mb-3 es-q{% if q.pbq %} es-pbq{% endif %}" id="esq{{ i }}" data-n="{{ i }}" data-pos="{{ loop.index }}" aria-labelledby="esqh{{ i }}">
     <div class="d-flex justify-content-between align-items-start gap-2">
-      <h2 class="h6 mb-2" id="esqh{{ i }}">Question {{ loop.index }}{% if q.pbq %} <span class="badge text-bg-warning">PBQ</span>{% endif %} <span class="small text-muted">{{ q.lo }}</span></h2>
-      <label class="es-flag"><input type="checkbox" name="flag{{ i }}" value="1" class="es-flag-box"> <i class="bi bi-flag" aria-hidden="true"></i> Flag for review</label>
+      <h2 class="h6 mb-2" id="esqh{{ i }}">Question {{ loop.index }}{% if q.pbq %} <span class="badge text-bg-warning">PBQ</span>{% endif %}{% if q.type == 'sim_pbq' %} <span class="badge text-bg-info">Simulation</span>{% endif %} <span class="small text-muted">{{ q.lo }}</span></h2>
+      <label class="es-flag"><input type="checkbox" name="flag{{ i }}" value="1" class="es-flag-box"{% if q.flagged %} checked{% endif %}> <i class="bi bi-flag" aria-hidden="true"></i> Flag for review</label>
     </div>
     <p>{{ q.text }}</p>
-    {% if q.type == 'single' %}
-      {% for o in q.options %}<div class="form-check"><input class="form-check-input" type="radio" name="q{{ i }}" id="q{{ i }}o{{ loop.index }}" value="{{ o }}"><label class="form-check-label" for="q{{ i }}o{{ loop.index }}">{{ o }}</label></div>{% endfor %}
-    {% elif q.type == 'multi' %}
-      <p class="small text-muted">Choose {{ q.choose }}.</p>
-      {% for o in q.options %}<div class="form-check"><input class="form-check-input" type="checkbox" name="q{{ i }}" id="q{{ i }}o{{ loop.index }}" value="{{ o }}"><label class="form-check-label" for="q{{ i }}o{{ loop.index }}">{{ o }}</label></div>{% endfor %}
+    {% if q.type in ('single', 'multi') %}
+      {% if q.type == 'multi' %}<p class="small text-muted">Choose {{ q.choose }}.</p>{% endif %}
+      {% for o in q.options %}<div class="form-check es-opt"><input class="form-check-input" type="{{ 'radio' if q.type == 'single' else 'checkbox' }}" name="q{{ i }}" id="q{{ i }}o{{ loop.index }}" value="{{ o }}"{% if (q.type == 'single' and q.saved == o) or (q.type == 'multi' and q.saved and o in q.saved) %} checked{% endif %}><label class="form-check-label" for="q{{ i }}o{{ loop.index }}">{{ o }}</label>
+        <button type="button" class="es-strike" aria-pressed="false" aria-label="Eliminate option {{ loop.index }}" title="Strike out (or Alt+Click / right-click the option)"><i class="bi bi-slash-circle" aria-hidden="true"></i></button></div>{% endfor %}
     {% elif q.type == 'order' %}
       <p class="small text-muted">Pick the step for each position.</p>
       {% for k in range(q.slots) %}<div class="es-row"><label for="q{{ i }}_{{ k }}">Step {{ k + 1 }}</label>
-        <select class="form-select form-select-sm" name="q{{ i }}_{{ k }}" id="q{{ i }}_{{ k }}"><option value="">—</option>{% for o in q.options %}<option>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
+        <select class="form-select form-select-sm" name="q{{ i }}_{{ k }}" id="q{{ i }}_{{ k }}"><option value="">—</option>{% for o in q.options %}<option{% if q.saved and q.saved[k] == o %} selected{% endif %}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
+    {% elif q.type == 'sim_pbq' %}
+      <div class="es-sim" data-n="{{ i }}">
+        <div class="es-tabs" role="tablist" aria-label="Simulation tools">
+          {% for t in q.tabs %}<button type="button" role="tab" class="es-tab{% if loop.first %} active{% endif %}" id="q{{ i }}t{{ loop.index }}" aria-controls="q{{ i }}p{{ loop.index }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ t.name }}</button>{% endfor %}
+        </div>
+        {% for t in q.tabs %}<div class="es-panel{% if not loop.first %} d-none{% endif %}" role="tabpanel" id="q{{ i }}p{{ loop.index }}" aria-labelledby="q{{ i }}t{{ loop.index }}">
+          {% if t.kind == 'terminal' %}
+            <div class="es-term" data-prompt="{{ t.name }}">
+              <div class="es-cmds">{% for c in t.commands %}<button type="button" class="btn btn-sm btn-outline-secondary es-cmd" data-cmd="{{ c }}">{{ c }}</button>{% endfor %}</div>
+              <label class="visually-hidden" for="q{{ i }}c{{ loop.index }}">Read-only command</label>
+              <input class="form-control form-control-sm es-cmd-in" id="q{{ i }}c{{ loop.index }}" placeholder="Type a read-only command and press Enter" autocomplete="off">
+              <pre class="es-out" aria-live="polite">Read-only diagnostic terminal. Choose or type a command.</pre>
+              {% for c, out in t.commands.items() %}<template data-cmd="{{ c }}">{{ out }}</template>{% endfor %}
+            </div>
+          {% elif t.kind == 'topology' %}
+            <div class="es-topo">{% for name, detail in t.nodes %}<button type="button" class="es-node" data-detail="{{ detail }}">{{ name }}</button>{% endfor %}</div>
+            <p class="es-node-detail small" aria-live="polite">Select a node to inspect it.</p>
+          {% else %}
+            <pre class="es-out">{{ t.text }}</pre>
+          {% endif %}
+        </div>{% endfor %}
+        <div class="es-parts">
+          {% for p in q.parts %}{% set k = loop.index0 %}<div class="es-row"><label for="q{{ i }}_{{ loop.index0 }}">{{ p.prompt }}</label>
+            <select class="form-select form-select-sm" name="q{{ i }}_{{ loop.index0 }}" id="q{{ i }}_{{ loop.index0 }}"><option value="">—</option>{% for o in p.options %}<option{% if q.saved and q.saved[k] is defined and q.saved[k] == o %} selected{% endif %}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
+        </div>
+        <p class="small text-muted mb-0">Simulation · every part must be right for credit; feedback shows parts right. {{ q.review }}.</p>
+      </div>
     {% else %}
-      {% for p in q.prompts %}<div class="es-row"><label for="q{{ i }}_{{ loop.index0 }}">{{ p }}</label>
-        <select class="form-select form-select-sm" name="q{{ i }}_{{ loop.index0 }}" id="q{{ i }}_{{ loop.index0 }}"><option value="">—</option>{% for o in q.options %}<option>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
+      {% for p in q.prompts %}{% set k = loop.index0 %}<div class="es-row"><label for="q{{ i }}_{{ k }}">{{ p }}</label>
+        <select class="form-select form-select-sm" name="q{{ i }}_{{ k }}" id="q{{ i }}_{{ k }}"><option value="">—</option>{% for o in q.options %}<option{% if q.saved and q.saved[k] is defined and q.saved[k] == o %} selected{% endif %}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
     {% endif %}
   </section>
   {% endfor %}
@@ -40,7 +89,7 @@
     <h2 class="h5" id="esReviewH">Review before you submit</h2>
     <p class="small mb-2"><span class="es-key es-answered"></span> Answered <span class="es-key es-unanswered"></span> Unanswered <span class="es-key es-flagged"></span> Flagged</p>
     <p id="esCounts" class="small" aria-live="polite"></p>
-    <ol class="es-grid" id="esGrid">{% for q in questions %}<li><a href="#esq{{ q.n }}" class="es-cell es-unanswered" data-n="{{ q.n }}">{{ loop.index }}{% if q.pbq %}*{% endif %}</a></li>{% endfor %}</ol>
+    <ol class="es-grid" id="esGrid">{% for q in questions %}<li><a href="#esq{{ q.n }}" class="es-cell es-unanswered" data-n="{{ q.n }}" data-pos="{{ loop.index }}">{{ loop.index }}{% if q.pbq %}*{% endif %}</a></li>{% endfor %}</ol>
     <p class="small text-muted">* performance-based question</p>
     <button class="btn btn-navy" type="submit" id="esSubmit">Submit exam</button>
   </section>

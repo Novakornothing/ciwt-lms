@@ -7209,6 +7209,10 @@ ExamSimAttempt = cert_exam_sim.register(app, db, dict(
     audit=lambda action, detail='': audit(action, detail),
 ))
 
+# Option B pass 4: rapid-fire port / protocol / acronym / command speed-drill with spaced repetition
+from curriculum_v2.cert import speed_drill as cert_speed_drill  # noqa: E402
+SpeedDrillStat = cert_speed_drill.register(app, db, dict(ClassSection=ClassSection, Enrollment=Enrollment, utcnow=utcnow))
+
 # pass 11: adaptive mastery engine (per-objective BKT estimates, inserted reviews, test-out, overrides)
 import mastery as mastery_mod  # noqa: E402
 from interactive_labs import LESSON_LABS as _MX_LESSON_LABS, get_lab as _mx_get_lab  # noqa: E402

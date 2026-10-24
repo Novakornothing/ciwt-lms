@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Speed-Drill — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+  <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Exam-Day Simulator</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Speed-Drill</li></ol></nav>
+<h1 class="h3">Port, Protocol, Acronym &amp; Command Speed-Drill</h1>
+<p class="small text-muted">High-yield rapid recall for 220-1201, 220-1202 and N10-009. Cards you miss come back sooner (spaced repetition). {{ review }}.</p>
+<form method="get" class="d-flex flex-wrap gap-2 align-items-end mb-3" id="sdFilter">
+  <div><label class="form-label small mb-0" for="sdExam">Exam</label>
+    <select class="form-select form-select-sm" name="exam" id="sdExam"><option value="">All exams</option>{% for k, code in exams.items() %}<option value="{{ k }}"{% if exam == k %} selected{% endif %}>{{ code }}</option>{% endfor %}</select></div>
+  <div><label class="form-label small mb-0" for="sdCat">Category</label>
+    <select class="form-select form-select-sm" name="cat" id="sdCat"><option value="">All categories</option>{% for k, n in categories.items() %}<option value="{{ k }}"{% if cat == k %} selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+  <button class="btn btn-sm btn-outline-navy" type="submit">Filter</button>
+</form>
+<div class="sd-stats small mb-3" id="sdStats"><span>{{ cards|length }} cards in this deck</span><span>Seen {{ seen }}/{{ total }}</span><span>Known (box 4-5): {{ known }}</span><span>Best streak: {{ best }}</span></div>
+<div class="btn-group mb-3" role="group" aria-label="Drill mode">
+  <button type="button" class="btn btn-navy" id="sdModeBlitz" aria-pressed="true">60-Second Timed Blitz</button>
+  <button type="button" class="btn btn-outline-navy" id="sdModeFlip" aria-pressed="false">Flip-Card Study Mode</button>
+</div>
+<section class="card card-body mb-3" id="speedDrill" data-seconds="{{ seconds }}" data-record="{{ url_for('speed_drill_record', section_id=section.id) }}" aria-live="polite">
+  <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+    <span class="small text-muted" id="sdCatLbl">—</span>
+    <span class="sd-stats"><span>Time <strong id="sdClock">{{ seconds }}</strong>s</span><span>Streak <strong id="sdStreak">0</strong></span><span>Score <strong id="sdScore">0</strong></span><span>Retry queue <strong id="sdRetry">0</strong></span></span>
+  </div>
+  <div class="sd-card card card-body mb-3" id="sdFront">Press Start to begin.</div>
+  <div class="sd-choices" id="sdChoices"></div>
+  <div class="d-none" id="sdFlip">
+    <div class="sd-card card card-body mb-2 d-none" id="sdBack"></div>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-outline-navy" id="sdShow">Show answer</button>
+      <button type="button" class="btn btn-success" id="sdGot">Got it</button>
+      <button type="button" class="btn btn-outline-danger" id="sdAgain">Review again</button>
+    </div>
+  </div>
+  <p class="small mt-2 mb-0" id="sdFeedback"></p>
+  <div class="mt-2"><button type="button" class="btn btn-gold" id="sdStart">Start</button></div>
+</section>
+<script type="application/json" id="sdData">{{ cards|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/speed_drill.js') }}" defer></script>{% endblock %}
