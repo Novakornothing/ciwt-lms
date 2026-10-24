@@ -83,3 +83,29 @@
 .domain-bar > span.db-95 { width: 95%; }
 .domain-bar > span.db-100 { width: 100%; }
 .pbq-step > .q-key { width: 2rem; height: 2rem; min-width: 2rem; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+
+/* Exam-Day Readiness Simulator (Option B pass 1) */
+.es-bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center;
+  justify-content: space-between; background: #fff; border-bottom: 2px solid #c9a227; padding: .5rem 0; margin-bottom: 1rem; }
+.es-timer { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.15rem; }
+.es-bar.es-low .es-timer { color: #b42318; }
+.es-hidden { visibility: hidden; }
+.es-paused { padding: .5rem .75rem; background: #fff8e1; border: 1px solid #c9a227; border-radius: .25rem; margin-bottom: 1rem; }
+.es-flag { font-size: .875rem; white-space: nowrap; cursor: pointer; }
+.es-q.es-is-flagged { border-left: 4px solid #0b7285; }
+.es-row { display: grid; grid-template-columns: minmax(8rem, 1fr) 2fr; gap: .5rem; align-items: center; margin-bottom: .35rem; }
+.es-grid { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .35rem; }
+.es-cell, .es-key { display: inline-block; min-width: 2.25rem; text-align: center; padding: .25rem; border-radius: .25rem;
+  border: 2px solid transparent; text-decoration: none; }
+.es-key { min-width: 1rem; height: 1rem; padding: 0; vertical-align: middle; }
+.es-answered { background: #d3f9d8; color: #1b4332; }
+.es-unanswered { background: #f1f3f5; color: #343a40; border-color: #adb5bd; }
+.es-flagged { border-color: #0b7285; box-shadow: inset 0 0 0 2px #0b7285; }
+.es-badge { display: inline-block; padding: .35rem .75rem; border-radius: 1rem; font-weight: 700; }
+.es-badge-ready { background: #d3f9d8; color: #1b4332; }
+.es-badge-borderline { background: #fff3bf; color: #5c3c00; }
+.es-badge-remediate { background: #ffe3e3; color: #7d1a1a; }
+.es-review li { margin-bottom: .6rem; }
+.es-review .es-bad { border-left: 3px solid #b42318; padding-left: .5rem; }
+.es-review .es-ok { border-left: 3px solid #2b8a3e; padding-left: .5rem; }
+.es-miss { margin-bottom: .35rem; }

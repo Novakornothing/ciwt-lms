@@ -43,7 +43,8 @@ HINT_SHARE = 0.5
 EFFICIENT_SLACK = 3       # completed within objectives*2 + slack actions
 
 VERIFY_RE = re.compile(
-    r'^\s*(show|ping|tracert|traceroute|ipconfig|ifconfig|ip\s+(a|addr|route|r)\b|nslookup|dig|get-|test-|'
+    r'^\s*(show|ping|tracert|traceroute|ipconfig|ifconfig|ip\s+(a|addr|route|r)\b|nslookup|dig|get-|test-|resolve-dnsname|tnc\b|'
+    r'netsh\s.*\bshow\b|help\s*$|\?|do\s+show|'
     r'gpresult|whoami|systeminfo|netstat|arp|route\s+print|display|cat|ls|dir|type|status|verify|'
     r'pathping|curl|wget|hostname|getmac|net\s+(user|share|use|localgroup)|sc\s+query|tasklist|'
     r'manage-bde\s+-status|bcdedit|chkdsk\s*$|'
@@ -207,7 +208,7 @@ def struggling(result):
 # Lesson references are resolved to URLs by the caller (lab_progress.lesson_links). Pending SME review.
 CHANGE_RE = re.compile(
     r'^\s*(sudo\s+)?(ip\s+(-\d\s+)?(addr|address|a|route|r|link|l)\s+(add|del|delete|set|change|replace|flush)\b|'
-    r'ifconfig\s+\S+\s+(\d|up|down)|route\s+(add|del|delete|change)\b|netsh\s|set-|new-|remove-|enable-|disable-|restart-|'
+    r'ifconfig\s+\S+\s+(\d|up|down)|route\s+(add|del|delete|change)\b|netsh\s(?!.*\bshow\b)|set-|new-|remove-|enable-|disable-|restart-|'
     r'ipconfig\s+/(release|renew|flushdns|registerdns)|resolvectl\s+(flush|dns|domain)|systemd-resolve\s+--flush|'
     r'(service|rc-service)\s+\S+\s+(start|stop|restart)|systemctl\s+(start|stop|restart|enable|disable|reload)|'
     r'chmod|chown|chgrp|useradd|usermod|userdel|groupadd|passwd|apk\s+(add|del)|apt(-get)?\s+(install|remove)|'

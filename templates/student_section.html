@@ -26,6 +26,7 @@
     {% if current_user.role == 'student' %}<a class="btn btn-outline-navy" href="{{ url_for('mastery_student', section_id=section.id) }}"><i class="bi bi-signpost-split" aria-hidden="true"></i> My mastery</a> <a class="btn btn-outline-navy" href="{{ url_for('ladder_profile', section_id=section.id) }}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> What helps you learn</a>
     <a class="btn btn-outline-navy" href="{{ url_for('mastery_plan', section_id=section.id) }}"><i class="bi bi-book" aria-hidden="true"></i> My plan</a>{% endif %}
     <a class="btn btn-brand" href="{{ url_for('course_labs', section_id=section.id) }}"><i class="bi bi-terminal" aria-hidden="true"></i> All labs</a>
+    <a class="btn btn-outline-navy" href="{{ url_for('exam_sim_home', section_id=section.id) }}"><i class="bi bi-stopwatch" aria-hidden="true"></i> Exam-Day Simulator</a>
   </div>
 </div>
 {% include "_student_intro.html" %}

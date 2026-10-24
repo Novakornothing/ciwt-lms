@@ -871,6 +871,8 @@ _SW_BY_MODE = {
         ("configure", "terminal"),
         *_COMMON_SHOW_SW,
         ("ping", "*"), ("traceroute", "*"),
+        ("show", "ip", "route"), ("show", "access-lists"), ("show", "ip", "access-lists"),
+        ("show", "arp"), ("show", "cdp", "neighbors"),
         ("copy", "running-config", "startup-config"),
         ("write", "memory"), ("write",),
         ("help",), ("?",), ("clear",),
@@ -932,6 +934,7 @@ _RTR_BY_MODE = {
         ("show", "interfaces"), ("show", "version"),
         ("show", "arp"), ("show", "clock"),
         ("show", "access-lists"), ("show", "ip", "access-lists"),
+        ("show", "cdp", "neighbors"),
         ("show", "ip", "interface"),
         ("ping", "*"), ("traceroute", "*"),
         ("copy", "running-config", "startup-config"),
@@ -3440,11 +3443,25 @@ def run_command(lab_id, state, done, command):
         else:
             lines, state, done = run_ticket(cmd, state, done)
     elif lab["kind"] == "windows":
-        lines, state, done = run_windows(cmd, state, done)
-    elif lab["kind"] == "switch":
-        lines, state, done = run_switch(cmd, state, done)
+        import stateful_sim as SS
+        fb = SS.windows(cmd, state)
+        if fb is not None:
+            lines = fb
+        else:
+            lines, state, done = run_windows(cmd, state, done)
     else:
-        lines, state, done = run_router(cmd, state, done)
+        import stateful_sim as SS
+        fb = SS.ios(lab["kind"], cmd, state, done)
+        if fb is not None:
+            lines = fb
+        elif lab["kind"] == "switch":
+            lines, state, done = run_switch(cmd, state, done)
+            if cmd.lower() in ("copy running-config startup-config", "write memory", "write"):
+                snap = deepcopy(state)
+                snap["mode"] = "priv"
+                state["startup_cfg"], _s, _d = run_switch("show running-config", snap, [])
+        else:
+            lines, state, done = run_router(cmd, state, done)
 
     complete = _complete(lab, done)
     return {

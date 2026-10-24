@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.short }} simulator — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
+{% block content %}
+<div class="es-bar" id="examSim" data-remaining="{{ remaining }}" data-strict="{{ '1' if att.strict else '0' }}" data-total="{{ questions|length }}" data-pbqs="{{ n_pbq }}">
+  <div><strong>{{ exam.name }} ({{ exam.code }})</strong> · {{ mode.name }} · {{ 'Exam mode' if att.strict else 'Practice mode' }}</div>
+  <div class="es-timer" role="timer" aria-live="off"><i class="bi bi-clock" aria-hidden="true"></i> <span id="esClock">--:--</span></div>
+  {% if not att.strict %}<button type="button" class="btn btn-sm btn-outline-navy" id="esPause" aria-pressed="false">Pause timer</button>{% endif %}
+  {% if n_pbq %}<button type="button" class="btn btn-sm btn-outline-gold" id="esSkipPbq">Skip PBQs &amp; return later</button>{% endif %}
+</div>
+<div class="es-paused d-none" id="esPausedNote" role="status">Timer paused — questions are hidden until you resume.</div>
+<form method="post" id="esForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="timed_out" value="0" id="esTimedOut">
+  <div id="esQuestions">
+  {% for q in questions %}{% set i = q.n %}
+  <section class="card card-body mb-3 es-q{% if q.pbq %} es-pbq{% endif %}" id="esq{{ i }}" data-n="{{ i }}" aria-labelledby="esqh{{ i }}">
+    <div class="d-flex justify-content-between align-items-start gap-2">
+      <h2 class="h6 mb-2" id="esqh{{ i }}">Question {{ loop.index }}{% if q.pbq %} <span class="badge text-bg-warning">PBQ</span>{% endif %} <span class="small text-muted">{{ q.lo }}</span></h2>
+      <label class="es-flag"><input type="checkbox" name="flag{{ i }}" value="1" class="es-flag-box"> <i class="bi bi-flag" aria-hidden="true"></i> Flag for review</label>
+    </div>
+    <p>{{ q.text }}</p>
+    {% if q.type == 'single' %}
+      {% for o in q.options %}<div class="form-check"><input class="form-check-input" type="radio" name="q{{ i }}" id="q{{ i }}o{{ loop.index }}" value="{{ o }}"><label class="form-check-label" for="q{{ i }}o{{ loop.index }}">{{ o }}</label></div>{% endfor %}
+    {% elif q.type == 'multi' %}
+      <p class="small text-muted">Choose {{ q.choose }}.</p>
+      {% for o in q.options %}<div class="form-check"><input class="form-check-input" type="checkbox" name="q{{ i }}" id="q{{ i }}o{{ loop.index }}" value="{{ o }}"><label class="form-check-label" for="q{{ i }}o{{ loop.index }}">{{ o }}</label></div>{% endfor %}
+    {% elif q.type == 'order' %}
+      <p class="small text-muted">Pick the step for each position.</p>
+      {% for k in range(q.slots) %}<div class="es-row"><label for="q{{ i }}_{{ k }}">Step {{ k + 1 }}</label>
+        <select class="form-select form-select-sm" name="q{{ i }}_{{ k }}" id="q{{ i }}_{{ k }}"><option value="">—</option>{% for o in q.options %}<option>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
+    {% else %}
+      {% for p in q.prompts %}<div class="es-row"><label for="q{{ i }}_{{ loop.index0 }}">{{ p }}</label>
+        <select class="form-select form-select-sm" name="q{{ i }}_{{ loop.index0 }}" id="q{{ i }}_{{ loop.index0 }}"><option value="">—</option>{% for o in q.options %}<option>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
+    {% endif %}
+  </section>
+  {% endfor %}
+  </div>
+  <section class="card card-body mb-3" id="esReview" aria-labelledby="esReviewH">
+    <h2 class="h5" id="esReviewH">Review before you submit</h2>
+    <p class="small mb-2"><span class="es-key es-answered"></span> Answered <span class="es-key es-unanswered"></span> Unanswered <span class="es-key es-flagged"></span> Flagged</p>
+    <p id="esCounts" class="small" aria-live="polite"></p>
+    <ol class="es-grid" id="esGrid">{% for q in questions %}<li><a href="#esq{{ q.n }}" class="es-cell es-unanswered" data-n="{{ q.n }}">{{ loop.index }}{% if q.pbq %}*{% endif %}</a></li>{% endfor %}</ol>
+    <p class="small text-muted">* performance-based question</p>
+    <button class="btn btn-navy" type="submit" id="esSubmit">Submit exam</button>
+  </section>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/exam_sim.js') }}" defer></script>{% endblock %}

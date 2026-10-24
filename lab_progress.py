@@ -96,6 +96,8 @@ def _j(text, default):
 def register(app, db, deps):
     """deps: User, ClassSection, Enrollment, Module, LabCompletion, instructor_can_access_section,
     record_completion(lab_id, done, section_id, test_id), audit(action, detail)."""
+    import stateful_sim as _SS
+    app.jinja_env.globals.update(sim_packet_flow=_SS.has_packet_flow, sim_hw_ids=_SS.HW_IDS)
     m = define_models(db)
     LP = m.LabProgress
     LE = m.LabEvent
@@ -421,6 +423,18 @@ def register(app, db, deps):
                  ' | '.join(str(x) for x in out_lines[:3])) if command.strip() else None)
         return jsonify(payload_for(row, lab, state, done, {'lines': result.get('lines') or [], 'clear': bool(result.get('clear')),
                                                            'newly': [o for o in done if o not in before['done']]}))
+
+    @login_required
+    def interactive_lab_packet_flow(lab_id):
+        """Packet / frame walk evaluated against the student's live lab state (stateful_sim.packet_flow)."""
+        import stateful_sim as SS
+        lab, err = lab_or_json_404(lab_id)
+        if err:
+            return err
+        if not SS.has_packet_flow(lab):
+            return jsonify({'error': 'No packet walk for this lab'}), 404
+        state, done = load(get_row(lab_id))
+        return jsonify(SS.packet_flow(lab, state, done, request.args.get('type', 'icmp')))
 
     @login_required
     def interactive_lab_event(lab_id):
@@ -806,6 +820,7 @@ def register(app, db, deps):
         ('/labs/<lab_id>/state', 'interactive_lab_state', interactive_lab_state, ['GET']),
         ('/labs/<lab_id>/cmd', 'interactive_lab_cmd', interactive_lab_cmd, ['POST']),
         ('/labs/<lab_id>/event', 'interactive_lab_event', interactive_lab_event, ['POST']),
+        ('/labs/<lab_id>/packet-flow', 'interactive_lab_packet_flow', interactive_lab_packet_flow, ['GET']),
         ('/labs/<lab_id>/check', 'interactive_lab_check', interactive_lab_check, ['POST']),
         ('/labs/<lab_id>/hint', 'interactive_lab_hint', interactive_lab_hint, ['POST']),
         ('/labs/<lab_id>/undo', 'interactive_lab_undo', interactive_lab_undo, ['POST']),

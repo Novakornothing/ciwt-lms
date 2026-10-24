@@ -7201,6 +7201,14 @@ PracticeAttempt = cert_practice.register(app, db, dict(
     audit=lambda action, detail='': audit(action, detail),
 ))
 
+# Option B pass 1: Exam-Day Readiness Simulator (timed full/sprint sittings, PBQs first, scaled score, readiness badge)
+from curriculum_v2.cert import exam_sim as cert_exam_sim  # noqa: E402
+ExamSimAttempt = cert_exam_sim.register(app, db, dict(
+    User=User, Course=Course, Module=Module, Lesson=Lesson, ClassSection=ClassSection, Enrollment=Enrollment,
+    utcnow=utcnow, can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    audit=lambda action, detail='': audit(action, detail),
+))
+
 # pass 11: adaptive mastery engine (per-objective BKT estimates, inserted reviews, test-out, overrides)
 import mastery as mastery_mod  # noqa: E402
 from interactive_labs import LESSON_LABS as _MX_LESSON_LABS, get_lab as _mx_get_lab  # noqa: E402

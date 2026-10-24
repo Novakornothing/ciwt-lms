@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.short }} simulator results — {{ site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+  <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Exam-Day Simulator</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Results</li></ol></nav>
+<h1 class="h3">{{ exam.name }} ({{ exam.code }}) — {{ mode.name }}</h1>
+<div class="card card-body mb-3 es-score">
+  <div class="es-scaled"><span class="display-6" id="esScore">{{ att.score }}</span> <span class="text-muted">/ 900 simulated scaled score · pass bar {{ bar }}</span></div>
+  <div class="mt-2"><span class="es-badge es-badge-{{ att.badge }}" id="esBadge">{{ badge }}</span></div>
+  <p class="small mt-2 mb-0">{{ att.correct }} of {{ att.total }} correct{% if att.timed_out %} · time ran out{% endif %}{% if att.strict %} · exam mode{% else %} · practice mode{% endif %}.</p>
+</div>
+<h2 class="h5">By domain</h2>
+<table class="table table-sm"><thead><tr><th>Domain</th><th>Score</th><th>Missed objectives → where to review</th></tr></thead><tbody>
+{% for d in domains %}<tr class="{% if d.weak %}table-warning{% endif %}">
+  <td>{{ d.id }} {{ d.name }}{% if d.weak %} <span class="badge text-bg-warning">review</span>{% endif %}</td>
+  <td>{{ d.pct }}% ({{ d.correct }}/{{ d.total }})</td>
+  <td>{% for m in d.missed %}<div class="es-miss"><strong>{{ m.label }}</strong> {{ m.title }}
+      {% for l in m.links %}<div class="small">Lesson <a href="{{ l.lesson_url }}">{{ l.ref }} {{ l.title }}</a>{% if l.rung_url %} · <a class="es-rung" href="{{ l.rung_url }}">Ladder rung R1: {{ l.heading }}</a>{% endif %}</div>{% endfor %}
+    </div>{% else %}<span class="text-muted">Nothing missed</span>{% endfor %}</td>
+</tr>{% endfor %}</tbody></table>
+<h2 class="h5">Question review</h2>
+<ol class="es-review">{% for r in review %}<li class="{{ 'es-ok' if r.ok else 'es-bad' }}">
+  <div>{% if r.pbq %}<span class="badge text-bg-warning">PBQ</span> {% endif %}{% if r.flagged %}<span class="badge text-bg-info">Flagged</span> {% endif %}{% if not r.answered %}<span class="badge text-bg-secondary">Unanswered</span> {% endif %}{{ r.text }} <span class="small text-muted">{{ r.lo }}</span></div>
+  <div class="small">Your answer: {{ r.yours }} · Key: {{ r.key }}</div>
+  {% if r.why %}<div class="small text-muted">{{ r.why }}</div>{% endif %}
+</li>{% endfor %}</ol>
+<p class="small text-muted">{{ disclaimer }} The scaled score is a simulation (100 + 800 × fraction correct); CompTIA does not publish its scaling. {{ review_tag }}.</p>
+{% endblock %}

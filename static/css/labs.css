@@ -316,3 +316,22 @@ html:not([data-theme="dark"]) .scn-resolved { color: #08603f; }
 .term-note .term-note-x { position: absolute; top: .2rem; right: .25rem; min-width: 40px; min-height: 40px; border: 0; background: transparent; color: #dbe9fb; font-size: 1.2rem; }
 .term-note .term-note-x:focus-visible { outline: 2px solid #3ec7ff; }
 .tkey-hint { color: #ffe08a; }
+/* Option B pass 1: packet walk + hardware / cable bench */
+.pf-svg,.hwb-svg{width:100%;height:auto;display:block}
+.pf-node{fill:var(--bs-body-bg,#fff);stroke:currentColor;stroke-width:1.5}
+.pf-label{font-size:10px;fill:currentColor}
+.pf-link{stroke:#8a94a6;stroke-width:3;stroke-dasharray:4 3}
+.pf-ok{stroke:#1a7f37;stroke-dasharray:none}
+.pf-bad,.pf-cut{stroke:#b42318}
+.pf-dot-ok{fill:#1a7f37}.pf-dot-bad{fill:#b42318}
+.pf-hops{padding-left:1.1rem}
+.pf-bad-text,.hwb-bad{color:#b42318;font-weight:600}
+[data-theme=dark] .pf-bad-text,[data-theme=dark] .hwb-bad{color:#ff8a80}
+.hwb-board{fill:#0f3d2e;stroke:#0a2a20}
+.hwb-slot rect{fill:#c9d1d9;stroke:#2b3440;cursor:pointer}
+.hwb-slot:focus rect,.hwb-slot:hover rect{stroke:#f2c14e;stroke-width:2}
+.hwb-filled rect{fill:#7ee2a8}
+.hwb-slot-label{font-size:7px;fill:#fff}
+.hwb-ends{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.5rem}
+.hwb-end{border:1px solid var(--bs-border-color,#ccd);border-radius:.4rem;padding:.4rem}
+.hwb-pin{display:grid;grid-template-columns:3.2rem 1fr;align-items:center;gap:.3rem;margin-bottom:.15rem}
