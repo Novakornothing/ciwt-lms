@@ -7136,6 +7136,20 @@ def init_db():
         _sync_content()
         institutional_api.ensure_schema()   # seeding recreates tables: re-assert the default institution
         school_api.ensure_schema()
+        _ensure_schema()
+        helix_pkg.ensure_schema(db)
+        gradebook_mod.ensure_schema(db)
+        _mastery_schema(db)
+        if os.environ.get('RENDER'):
+            try:
+                section = ClassSection.query.filter(ClassSection.name.ilike('%Section A%')).first()
+                students = User.query.filter_by(role='student').order_by(User.id).limit(8).all()
+                if section and students:
+                    _seed_helix_demo(section, students)
+                if TqiCritique.query.count() == 0:
+                    _seed_tqi_demo()
+            except Exception as e:
+                print('Render demo seed note:', e)
         return
     try:
         live = (HelixGazeSession.query

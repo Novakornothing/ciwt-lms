@@ -492,7 +492,6 @@ def register(app, db, deps):
                 'summary': summary, 'dues': dues}
 
     # ---------------------------------------------------------------- instructor
-    @login_required
     def exam_sim_grades(section, uids=None):
         """Synced Exam-Day Simulator line items (exam_sim_grade) per user: {uid: [{exam, code, score, pct, status, text}]}.
         Shown beside the weighted course grade; never part of it (Option B pass 6)."""
@@ -512,6 +511,7 @@ def register(app, db, deps):
                                                   'text': f'{code}: {g.score}/900 ({g.status})'})
         return out
 
+    @login_required
     def instructor_gradebook(section_id):
         section = staff_section(section_id)
         data = compute(section)
