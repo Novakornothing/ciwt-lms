@@ -10,56 +10,15 @@ _FIG = figure(
     'the phone and repeat from the second step.',
     'If pairing fails: “forget” the device and start again from pairing mode — it is the accessory side that most often times out.', cols=5)
 
-HTML = f'''
-<h4>Accessories and connectivity (Core 1 1.2)</h4>
-<ul>
-<li><strong>Wired connectors:</strong> <strong>USB-C</strong> (reversible; now standard on most phones, tablets and laptops,
-including iPhone from iPhone 15); <strong>Lightning</strong> (Apple’s earlier connector); <strong>micro-USB</strong> and
-<strong>mini-USB</strong> on older or low-cost devices.</li>
-<li><strong>Wireless:</strong> <strong>Bluetooth</strong> for headsets, speakers, keyboards and styluses;
-<strong>NFC</strong> (near-field communication) for tap-to-pay and pairing at a range of a few centimetres;
-<strong>hotspot / tethering</strong> to share the phone’s cellular data over Wi-Fi, USB or Bluetooth.</li>
-<li><strong>Accessories:</strong> stylus, headsets, speakers, webcam, trackpad or drawing pad; a <strong>docking station</strong>
-adds ports, charging and often display outputs through one cable, while a <strong>port replicator</strong> simply duplicates
-the laptop’s ports.</li>
-</ul>
-{_FIG}
-<h4>Network connectivity and application support (Core 1 1.3)</h4>
-<ul>
-<li><strong>Cellular (4G/LTE, 5G)</strong> and <strong>SIM / eSIM</strong> — an eSIM is a downloadable carrier profile rather
-than a physical card; transferring it to a new phone is done through the carrier or the phone’s setup assistant.</li>
-<li><strong>Hotspot</strong> and <strong>data caps</strong> — tethering counts against the plan; a user who runs out of data mid-month
-may have left a hotspot or large sync running.</li>
-<li><strong>Location services / GPS</strong> — needed by maps and some business apps; permission is set per app.</li>
-<li><strong>MDM</strong> (mobile device management) enrols corporate and <strong>BYOD</strong> devices so the organisation can
-push <strong>corporate applications</strong>, Wi-Fi and mail profiles, and enforce <strong>policies</strong> such as a passcode,
-encryption and OS version; on BYOD the work data is usually kept in a separate managed container or profile.</li>
-<li><strong>Synchronization</strong> of mail, calendar and contacts — usually from the organisation’s cloud mail service;
-missing calendar items are often a sync account turned off on the phone.</li>
-</ul>
-<h4>Mobile hardware symptoms (Core 1 5.4)</h4>
-<table class="ref-table"><thead><tr><th scope="col">Symptom</th><th scope="col">First action</th></tr></thead><tbody>
-<tr><td><strong>Swollen battery</strong> (case bulging, screen lifting)</td><td>Stop using and do not charge it; do not puncture or press it; replace the battery and recycle it through a battery collection point, never household waste.</td></tr>
-<tr><td>Poor battery health, short battery life</td><td>Check battery health and per-app battery usage before replacing.</td></tr>
-<tr><td>Improper charging</td><td>Try a known-good cable and charger; inspect the charging port for lint or damage.</td></tr>
-<tr><td>Liquid damage</td><td>Power off, do not charge, dry and refer for repair; check liquid-contact indicators.</td></tr>
-<tr><td>Overheating</td><td>Remove from heat and case; check for a runaway app; stop charging until cool.</td></tr>
-<tr><td>Broken screen, digitizer issues, ghost touches or cursor drift</td><td>Clean the screen and remove the protector; restart; recalibrate if the OS offers it; replace the screen/digitizer assembly if it persists.</td></tr>
-<tr><td>Stylus does not work</td><td>Charge or replace its battery, re-pair it, and check it is supported by that model.</td></tr>
-<tr><td>Poor or no connectivity, unable to install apps, degraded performance, malware</td><td>See Core 2 3.2–3.3 in lesson 4.2: radios and network settings, storage, OS version, and security symptoms.</td></tr>
-</tbody></table>
-{worked('a tablet that will not charge', '''<ol>
+HTML = ('\n<h4>Accessories and connectivity (Core 1 1.2)</h4>\n<ul>\n<li><strong>Wired connectors:</strong> <strong>USB-C</strong> (reversible; now standard on most phones, tablets and laptops,\nincluding iPhone from iPhone 15); <strong>Lightning</strong> (Apple’s earlier connector); <strong>micro-USB</strong> and\n<strong>mini-USB</strong> on older or low-cost devices.</li>\n<li><strong>Wireless:</strong> <strong>Bluetooth</strong> for headsets, speakers, keyboards and styluses;\n<strong>NFC</strong> (near-field communication) for tap-to-pay and pairing at a range of a few centimetres;\n<strong>hotspot / tethering</strong> to share the phone’s cellular data over Wi-Fi, USB or Bluetooth.</li>\n<li><strong>Accessories:</strong> stylus, headsets, speakers, webcam, trackpad or drawing pad; a <strong>docking station</strong>\nadds ports, charging and often display outputs through one cable, while a <strong>port replicator</strong> simply duplicates\nthe laptop’s ports.</li>\n</ul>\n' + str(_FIG) + '\n<h4>Network connectivity and application support (Core 1 1.3)</h4>\n<ul>\n<li><strong>Cellular (4G/LTE, 5G)</strong> and <strong>SIM / eSIM</strong> — an eSIM is a downloadable carrier profile rather\nthan a physical card; transferring it to a new phone is done through the carrier or the phone’s setup assistant.</li>\n<li><strong>Hotspot</strong> and <strong>data caps</strong> — tethering counts against the plan; a user who runs out of data mid-month\nmay have left a hotspot or large sync running.</li>\n<li><strong>Location services / GPS</strong> — needed by maps and some business apps; permission is set per app.</li>\n<li><strong>MDM</strong> (mobile device management) enrols corporate and <strong>BYOD</strong> devices so the organisation can\npush <strong>corporate applications</strong>, Wi-Fi and mail profiles, and enforce <strong>policies</strong> such as a passcode,\nencryption and OS version; on BYOD the work data is usually kept in a separate managed container or profile.</li>\n<li><strong>Synchronization</strong> of mail, calendar and contacts — usually from the organisation’s cloud mail service;\nmissing calendar items are often a sync account turned off on the phone.</li>\n</ul>\n<h4>Mobile hardware symptoms (Core 1 5.4)</h4>\n<table class="ref-table"><thead><tr><th scope="col">Symptom</th><th scope="col">First action</th></tr></thead><tbody>\n<tr><td><strong>Swollen battery</strong> (case bulging, screen lifting)</td><td>Stop using and do not charge it; do not puncture or press it; replace the battery and recycle it through a battery collection point, never household waste.</td></tr>\n<tr><td>Poor battery health, short battery life</td><td>Check battery health and per-app battery usage before replacing.</td></tr>\n<tr><td>Improper charging</td><td>Try a known-good cable and charger; inspect the charging port for lint or damage.</td></tr>\n<tr><td>Liquid damage</td><td>Power off, do not charge, dry and refer for repair; check liquid-contact indicators.</td></tr>\n<tr><td>Overheating</td><td>Remove from heat and case; check for a runaway app; stop charging until cool.</td></tr>\n<tr><td>Broken screen, digitizer issues, ghost touches or cursor drift</td><td>Clean the screen and remove the protector; restart; recalibrate if the OS offers it; replace the screen/digitizer assembly if it persists.</td></tr>\n<tr><td>Stylus does not work</td><td>Charge or replace its battery, re-pair it, and check it is supported by that model.</td></tr>\n<tr><td>Poor or no connectivity, unable to install apps, degraded performance, malware</td><td>See Core 2 3.2–3.3 in lesson 4.2: radios and network settings, storage, OS version, and security symptoms.</td></tr>\n</tbody></table>\n' + str(worked('a tablet that will not charge', '''<ol>
 <li>Tablet shows no charging icon. Known-good USB-C cable and charger: still nothing.</li>
 <li>Torch into the port: compacted lint. Power off, remove it carefully with a non-conductive tool.</li>
-<li>Reconnect: charging resumes. Note it on the ticket and suggest a case with a port cover.</li></ol>''')}
-{scenario('the bulging phone', '''<p>A user hands in a phone whose screen has lifted on one side. That is a swollen lithium-ion battery. You do not
+<li>Reconnect: charging resumes. Note it on the ticket and suggest a case with a port cover.</li></ol>''')) + '\n' + str(scenario('the bulging phone', '''<p>A user hands in a phone whose screen has lifted on one side. That is a swollen lithium-ion battery. You do not
 power it on to “check”, do not charge it and do not press the screen down. You place it in a fire-safe container away from
 combustibles, log it, and follow the shop’s battery-handling procedure: the battery is replaced by a trained technician and
-the old one goes to battery recycling, not the bin.</p>''')}
-{cfu(('Docking station or port replicator — which typically adds charging and display outputs through one cable?', 'A docking station.'),
+the old one goes to battery recycling, not the bin.</p>''')) + '\n' + str(cfu(('Docking station or port replicator — which typically adds charging and display outputs through one cable?', 'A docking station.'),
      ('What is an eSIM?', 'A downloadable carrier profile stored in the phone, used instead of a physical SIM card.'),
-     ('A phone’s screen is lifting at the edge. What do you do first?', 'Stop using and charging it — it is a swollen battery; handle and dispose of it as hazardous.'))}
-'''
+     ('A phone’s screen is lifting at the edge. What do you do first?', 'Stop using and charging it — it is a swollen battery; handle and dispose of it as hazardous.'))) + '\n')
 
 SUPPLEMENTS = [{
     'course': 'ITSUP', 'chapter': 4, 'lesson': 1, 'id': 'cert-mobile-hw',

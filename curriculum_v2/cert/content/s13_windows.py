@@ -11,72 +11,34 @@ _FIG = figure(
     'disk itself is failing, restore from backup.',
     'Most “no OS” tickets are firmware settings or a removable drive left in — check before repairing boot files.', cols=5)
 
-HTML_31 = f'''
-<p>Lessons 11.1–11.4 cover the main Windows symptom patterns (BSOD, slow performance, crashes, slow profile loads and
-time drift). Core 2 3.1 adds several symptoms that each have a quick first check.</p>
-<table class="ref-table"><thead><tr><th scope="col">Symptom</th><th scope="col">First checks</th></tr></thead><tbody>
-<tr><td><strong>No OS found</strong> / “no bootable device”</td><td>A USB stick or disc left in first in the boot order; the drive is not detected in firmware; the boot mode (UEFI vs legacy CSM) changed; then Startup Repair and bootrec in WinRE.</td></tr>
-<tr><td><strong>Frequent shutdowns</strong></td><td>Event Viewer System log: Event ID 41 (Kernel-Power) means Windows did not shut down cleanly — often power or heat, not software. Check temperatures, fans and dust, the PSU, and the power plan.</td></tr>
-<tr><td><strong>Services not starting</strong></td><td><code>services.msc</code>: start type, the log-on account (an expired service-account password is common) and dependencies; System log events from the Service Control Manager.</td></tr>
-<tr><td><strong>USB controller resource warnings</strong></td><td>“Not enough USB controller resources”: too many devices or hubs on one controller. Move devices to ports on a different controller (for example rear ports) or remove an unpowered hub.</td></tr>
-<tr><td><strong>System instability</strong> (random freezes, restarts, errors)</td><td>Recent driver or update (roll back); hardware tests — memory diagnostic, drive health, temperatures; <code>sfc /scannow</code> after <code>DISM /RestoreHealth</code> for system-file corruption.</td></tr>
-<tr><td><strong>Low memory warnings</strong></td><td>Task Manager: which process grows over time (a memory leak) versus genuinely too little RAM for the workload.</td></tr>
-</tbody></table>
-{_FIG}
-{worked('a PC that switches itself off', '''<ol>
+HTML_31 = ('\n<p>Lessons 11.1–11.4 cover the main Windows symptom patterns (BSOD, slow performance, crashes, slow profile loads and\ntime drift). Core 2 3.1 adds several symptoms that each have a quick first check.</p>\n<table class="ref-table"><thead><tr><th scope="col">Symptom</th><th scope="col">First checks</th></tr></thead><tbody>\n<tr><td><strong>No OS found</strong> / “no bootable device”</td><td>A USB stick or disc left in first in the boot order; the drive is not detected in firmware; the boot mode (UEFI vs legacy CSM) changed; then Startup Repair and bootrec in WinRE.</td></tr>\n<tr><td><strong>Frequent shutdowns</strong></td><td>Event Viewer System log: Event ID 41 (Kernel-Power) means Windows did not shut down cleanly — often power or heat, not software. Check temperatures, fans and dust, the PSU, and the power plan.</td></tr>\n<tr><td><strong>Services not starting</strong></td><td><code>services.msc</code>: start type, the log-on account (an expired service-account password is common) and dependencies; System log events from the Service Control Manager.</td></tr>\n<tr><td><strong>USB controller resource warnings</strong></td><td>“Not enough USB controller resources”: too many devices or hubs on one controller. Move devices to ports on a different controller (for example rear ports) or remove an unpowered hub.</td></tr>\n<tr><td><strong>System instability</strong> (random freezes, restarts, errors)</td><td>Recent driver or update (roll back); hardware tests — memory diagnostic, drive health, temperatures; <code>sfc /scannow</code> after <code>DISM /RestoreHealth</code> for system-file corruption.</td></tr>\n<tr><td><strong>Low memory warnings</strong></td><td>Task Manager: which process grows over time (a memory leak) versus genuinely too little RAM for the workload.</td></tr>\n</tbody></table>\n' + str(_FIG) + '\n' + str(worked('a PC that switches itself off', '''<ol>
 <li>Users report a PC that “just turns off” two or three times a day. No BSOD is shown.</li>
 <li>Event Viewer → System: Event ID 41 (Kernel-Power) at each time, with no BugCheck code — power was lost, not a crash.</li>
 <li>Hardware monitor: CPU reaches 100 °C under load; the heatsink fins are packed with dust.</li>
 <li>Clean the cooler and case filters (power off, unplugged, ESD precautions); temperatures under load drop to 70 °C.</li>
-<li>Monitor for a week; no further shutdowns. Document the cause and add the site to the cleaning schedule.</li></ol>''')}
-{scenario('the service that would not stay started', '''<p>A backup service on a file server stops every night. The System log in Event Viewer shows Service Control
+<li>Monitor for a week; no further shutdowns. Document the cause and add the site to the cleaning schedule.</li></ol>''')) + '\n' + str(scenario('the service that would not stay started', '''<p>A backup service on a file server stops every night. The System log in Event Viewer shows Service Control
 Manager errors saying the service could not log on. The account the service runs as had its password changed under the
 password policy, but the service still holds the old one. The fix is to update the credentials on the service’s
-<strong>Log On</strong> tab in Services (or move it to a managed service account) and then start it and watch the next run.</p>''')}
-{cfu(('A PC says “No operating system found” the morning after a USB installer was used. What do you check first?', 'Remove the USB stick or fix the boot order — the PC may be trying to boot from it.'),
+<strong>Log On</strong> tab in Services (or move it to a managed service account) and then start it and watch the next run.</p>''')) + '\n' + str(cfu(('A PC says “No operating system found” the morning after a USB installer was used. What do you check first?', 'Remove the USB stick or fix the boot order — the PC may be trying to boot from it.'),
      ('What does Event ID 41 (Kernel-Power) tell you?', 'Windows restarted without a clean shutdown — often power or overheating.'),
-     ('A service will not start after a password change policy. What is a likely cause?', 'The service’s log-on account password expired or changed.'))}
-'''
+     ('A service will not start after a password change policy. What is a likely cause?', 'The service’s log-on account password expired or changed.'))) + '\n')
 
-HTML_110 = f'''
-<p>Before installing an application, check its <strong>system requirements</strong> against the PC — Core 2 1.10 lists
-them explicitly:</p>
-<ul>
-<li><strong>32-bit vs. 64-bit</strong> — 64-bit Windows runs most 32-bit applications (through WOW64), but a 64-bit application
-cannot run on 32-bit Windows, and 32-bit drivers cannot load on 64-bit Windows.</li>
-<li><strong>Graphics</strong> — whether a <strong>dedicated</strong> (discrete) graphics card is required or <strong>integrated</strong>
-graphics are enough, and the <strong>VRAM</strong> required (CAD, video and games often specify it).</li>
-<li><strong>RAM</strong>, <strong>CPU</strong> (generation, core count, instruction-set support) and <strong>storage</strong> (free space for the
-install and its data).</li>
-<li><strong>External hardware tokens</strong> — some licensed software needs a USB licence dongle or a security key present.</li>
-<li><strong>Application-to-OS compatibility</strong> — supported Windows versions and editions; check the vendor’s list.</li>
-</ul>
-<p><strong>Distribution methods:</strong> physical media vs. a <strong>mountable ISO</strong> file (double-click in Windows to mount
-it as a drive), a <strong>downloadable package</strong> (<code>.exe</code>, <code>.msi</code>, or a package manager), or
-<strong>image deployment</strong> (the app is built into the organisation’s standard image).</p>
-<p><strong>Impact considerations:</strong> the <strong>device</strong> (performance, conflicts, security software), the
-<strong>network</strong> (bandwidth for installs and updates, firewall rules the app needs), <strong>operation</strong> (support
-load, training, licensing) and the <strong>business</strong> (cost, compliance, downtime during rollout).</p>
-{figure('fig-c-appreq', 'Checking an application before installing it',
+HTML_110 = ('\n<p>Before installing an application, check its <strong>system requirements</strong> against the PC — Core 2 1.10 lists\nthem explicitly:</p>\n<ul>\n<li><strong>32-bit vs. 64-bit</strong> — 64-bit Windows runs most 32-bit applications (through WOW64), but a 64-bit application\ncannot run on 32-bit Windows, and 32-bit drivers cannot load on 64-bit Windows.</li>\n<li><strong>Graphics</strong> — whether a <strong>dedicated</strong> (discrete) graphics card is required or <strong>integrated</strong>\ngraphics are enough, and the <strong>VRAM</strong> required (CAD, video and games often specify it).</li>\n<li><strong>RAM</strong>, <strong>CPU</strong> (generation, core count, instruction-set support) and <strong>storage</strong> (free space for the\ninstall and its data).</li>\n<li><strong>External hardware tokens</strong> — some licensed software needs a USB licence dongle or a security key present.</li>\n<li><strong>Application-to-OS compatibility</strong> — supported Windows versions and editions; check the vendor’s list.</li>\n</ul>\n<p><strong>Distribution methods:</strong> physical media vs. a <strong>mountable ISO</strong> file (double-click in Windows to mount\nit as a drive), a <strong>downloadable package</strong> (<code>.exe</code>, <code>.msi</code>, or a package manager), or\n<strong>image deployment</strong> (the app is built into the organisation’s standard image).</p>\n<p><strong>Impact considerations:</strong> the <strong>device</strong> (performance, conflicts, security software), the\n<strong>network</strong> (bandwidth for installs and updates, firewall rules the app needs), <strong>operation</strong> (support\nload, training, licensing) and the <strong>business</strong> (cost, compliance, downtime during rollout).</p>\n' + str(figure('fig-c-appreq', 'Checking an application before installing it',
     ['Vendor\nrequirements', 'Compare with\nthe device', 'Choose the\ndistribution', 'Impact review', 'Install and\nrecord'],
     'Five boxes in a chain. First, read the vendor requirements: 32- or 64-bit, CPU, RAM, storage, graphics and VRAM, hardware '
     'tokens and supported OS versions. Second, compare them with the device. Third, pick the distribution method: physical '
     'media, a mountable ISO, a downloadable package or image deployment. Fourth, review the impact on the device, the network, '
     'operations and the business. Fifth, install and record what was checked on the ticket.',
-    'Requirements are checked before installation, not after it fails.', cols=5)}
-{worked('the CAD install that will not start', '''<ol>
+    'Requirements are checked before installation, not after it fails.', cols=5)) + '\n' + str(worked('the CAD install that will not start', '''<ol>
 <li>Engineering wants a CAD package on a new hire’s laptop. Vendor requirements: 64-bit Windows 11, 16 GB RAM, dedicated GPU with 4 GB VRAM.</li>
 <li>Laptop: 64-bit Windows 11, 16 GB RAM, but integrated graphics only (System Information / Task Manager → GPU).</li>
 <li>The install would succeed but performance would fail the requirement. Raise it with the manager: approve a laptop with a dedicated GPU, or a VDI/workstation option.</li>
-<li>Record the decision on the ticket — requirements were checked <em>before</em> installation.</li></ol>''')}
-{scenario('the licence that stayed behind', '''<p>A surveyor’s new laptop installs a licensed measurement package without errors, but the program opens
+<li>Record the decision on the ticket — requirements were checked <em>before</em> installation.</li></ol>''')) + '\n' + str(scenario('the licence that stayed behind', '''<p>A surveyor’s new laptop installs a licensed measurement package without errors, but the program opens
 with “No licence found”. The vendor’s requirements list a USB hardware licence key, which is still plugged into the old PC.
 Moving the key fixes it. The lesson for the next install: external hardware tokens are part of the requirements check, and
-the ticket should record where the token is.</p>''')}
-{cfu(('Can a 64-bit application run on 32-bit Windows?', 'No — 64-bit Windows can run most 32-bit apps, not the reverse.'),
+the ticket should record where the token is.</p>''')) + '\n' + str(cfu(('Can a 64-bit application run on 32-bit Windows?', 'No — 64-bit Windows can run most 32-bit apps, not the reverse.'),
      ('How do you use an application delivered as an ISO file without burning a disc?', 'Mount the ISO (double-click in Windows) and run the installer from the virtual drive.'),
-     ('Name the four impact areas Core 2 1.10 lists for a new application.', 'Device, network, operation and business.'))}
-'''
+     ('Name the four impact areas Core 2 1.10 lists for a new application.', 'Device, network, operation and business.'))) + '\n')
 
 SUPPLEMENTS = [
     {'course': 'ITSUP', 'chapter': 11, 'lesson': 1, 'id': 'cert-win-issues', 'title': 'More Windows symptoms: no OS found, shutdowns, services, USB resources',

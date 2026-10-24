@@ -10,40 +10,15 @@ _FIG = figure(
     'relies on the output. Fifth, record or disclose the AI use where policy requires it.',
     'Policy and data checks come before the prompt; verification comes before anyone relies on the answer.', cols=5)
 
-HTML = f'''
-<p>AI assistants now appear inside operating systems, office suites, browsers and ticketing tools (<strong>application
-integration</strong>). Core 2 4.10 asks technicians to understand the policy, the limitations and the difference between
-public and private tools — because users will ask the help desk about all three.</p>
-<h4>Policy</h4>
-<p>An <strong>appropriate-use policy</strong> for AI says which tools are approved, what data may be entered, and when AI use
-must be disclosed. <strong>Plagiarism</strong> is part of it: presenting AI-generated text or code as your own original work,
-or reproducing copyrighted material it outputs, can breach academic, employment or licensing rules.</p>
-<h4>Limitations</h4>
-<ul>
-<li><strong>Hallucinations</strong> — the model produces fluent, confident content that is false (NIST AI 600-1 calls this
-“confabulation”), including commands, citations or settings that do not exist.</li>
-<li><strong>Accuracy</strong> — output can be out of date or wrong for your version; verify against vendor documentation.</li>
-<li><strong>Bias</strong> — models reflect patterns in their training data and can produce unfair or skewed results.</li>
-</ul>
-<h4>Private vs. public</h4>
-<p>A <strong>public</strong> AI service is open to anyone; depending on the provider’s terms, prompts may be retained or used to
-improve the service. A <strong>private</strong> or enterprise deployment is contracted or hosted for the organisation, with
-controls on where data is stored and who can see it. Three questions decide which to use: <strong>data security</strong>
-(who can access what you enter), <strong>data source</strong> (what the model was trained on, or which internal documents it
-can search), and <strong>data privacy</strong> (personal data must not go into a tool the organisation has not approved for it).</p>
-{_FIG}
-{worked('checking an AI-suggested fix', '''<ol>
+HTML = ('\n<p>AI assistants now appear inside operating systems, office suites, browsers and ticketing tools (<strong>application\nintegration</strong>). Core 2 4.10 asks technicians to understand the policy, the limitations and the difference between\npublic and private tools — because users will ask the help desk about all three.</p>\n<h4>Policy</h4>\n<p>An <strong>appropriate-use policy</strong> for AI says which tools are approved, what data may be entered, and when AI use\nmust be disclosed. <strong>Plagiarism</strong> is part of it: presenting AI-generated text or code as your own original work,\nor reproducing copyrighted material it outputs, can breach academic, employment or licensing rules.</p>\n<h4>Limitations</h4>\n<ul>\n<li><strong>Hallucinations</strong> — the model produces fluent, confident content that is false (NIST AI 600-1 calls this\n“confabulation”), including commands, citations or settings that do not exist.</li>\n<li><strong>Accuracy</strong> — output can be out of date or wrong for your version; verify against vendor documentation.</li>\n<li><strong>Bias</strong> — models reflect patterns in their training data and can produce unfair or skewed results.</li>\n</ul>\n<h4>Private vs. public</h4>\n<p>A <strong>public</strong> AI service is open to anyone; depending on the provider’s terms, prompts may be retained or used to\nimprove the service. A <strong>private</strong> or enterprise deployment is contracted or hosted for the organisation, with\ncontrols on where data is stored and who can see it. Three questions decide which to use: <strong>data security</strong>\n(who can access what you enter), <strong>data source</strong> (what the model was trained on, or which internal documents it\ncan search), and <strong>data privacy</strong> (personal data must not go into a tool the organisation has not approved for it).</p>\n' + str(_FIG) + '\n' + str(worked('checking an AI-suggested fix', '''<ol>
 <li>An AI assistant suggests a PowerShell command to “reset the Windows Update cache”.</li>
 <li>Before running it, look the cmdlet up in Microsoft Learn: one parameter it used does not exist — a hallucination.</li>
-<li>Use the documented procedure instead, and note on the ticket that the AI suggestion was checked and not used.</li></ol>''')}
-{scenario('the customer list', '''<p>A sales user asks why the public chatbot she uses at home is blocked at work; she wants to paste a customer
+<li>Use the documented procedure instead, and note on the ticket that the AI suggestion was checked and not used.</li></ol>''')) + '\n' + str(scenario('the customer list', '''<p>A sales user asks why the public chatbot she uses at home is blocked at work; she wants to paste a customer
 spreadsheet in and ask for a summary. You explain that the spreadsheet holds personal data, and that the public tool is not
 approved for it under the AI use policy. You point her to the organisation’s approved enterprise assistant, which is
-configured to keep data within the company’s tenant, and remind her to check the summary before sending it on.</p>''')}
-{cfu(('What is an AI hallucination?', 'Confident, fluent output that is false — for example a command or citation that does not exist.'),
+configured to keep data within the company’s tenant, and remind her to check the summary before sending it on.</p>''')) + '\n' + str(cfu(('What is an AI hallucination?', 'Confident, fluent output that is false — for example a command or citation that does not exist.'),
      ('Why might a public AI tool be unsuitable for customer data?', 'Depending on the provider’s terms, prompts may be retained or used for training, and the tool is not approved for personal data.'),
-     ('Name the three Core 2 4.10 limitations.', 'Bias, hallucinations and accuracy.'))}
-'''
+     ('Name the three Core 2 4.10 limitations.', 'Bias, hallucinations and accuracy.'))) + '\n')
 
 SUPPLEMENTS = [{
     'course': 'ITSUP', 'chapter': 12, 'lesson': 2, 'id': 'cert-ai',

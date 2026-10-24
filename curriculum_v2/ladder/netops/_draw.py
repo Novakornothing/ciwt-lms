@@ -30,5 +30,5 @@ def arrow(x1, y1, x2, y2, label=''):
 
 
 def text(x, y, s, size=12, anchor='middle', bold=False):
-    return (f'<text x="{x}" y="{y}" text-anchor="{anchor}" fill="currentColor" font-size="{size}"'
-            f'{" font-weight=\"700\"" if bold else ""}>{s}</text>')
+    w = ' font-weight="700"' if bold else ''
+    return f'<text x="{x}" y="{y}" text-anchor="{anchor}" fill="currentColor" font-size="{size}"{w}>{s}</text>'

@@ -11,50 +11,16 @@ _FIG = figure(
     'hot site.',
     'RPO looks backwards from the disaster (data loss); RTO looks forwards (downtime).', cols=5)
 
-HTML = f'''
-<h4>Physical installations (Network+ 2.4)</h4>
-<ul>
-<li><strong>MDF</strong> (main distribution frame) — where the provider lines, core switching and servers are;
-<strong>IDF</strong> (intermediate distribution frame) — a wiring closet serving one floor or area, linked back to the MDF.</li>
-<li><strong>Racks</strong> are 19 inches wide and measured in rack units (1U = 1.75 in). Match the equipment’s
-<strong>port-side exhaust or intake</strong> airflow to the room’s hot-aisle / cold-aisle layout, or devices recirculate hot air.</li>
-<li><strong>Cabling</strong> — copper terminates on a <strong>patch panel</strong>, fibre on a <strong>fibre distribution panel</strong>;
-racks and cabinets should be <strong>lockable</strong>.</li>
-<li><strong>Power</strong> — a <strong>UPS</strong> bridges outages and conditions power; a <strong>PDU</strong> distributes it to the
-equipment in a rack. Check the <strong>power load</strong> against the UPS and circuit rating, and the <strong>voltage</strong>
-the equipment expects.</li>
-<li><strong>Environment</strong> — <strong>temperature</strong> (ASHRAE’s recommended inlet range is 18–27 °C),
-<strong>humidity</strong> (too dry risks static, too damp risks condensation) and <strong>fire suppression</strong> suited to
-electronics (clean-agent systems rather than water where possible).</li>
-</ul>
-<h4>Disaster recovery (Network+ 3.3)</h4>
-<p>NIST SP 800-34 defines the planning terms. <strong>RPO</strong> (recovery point objective) — how much data, in time,
-can be lost. <strong>RTO</strong> (recovery time objective) — how long the service may be down. <strong>MTTR</strong>
-(mean time to repair) — average time to fix a failed component. <strong>MTBF</strong> (mean time between failures) — average
-operating time between failures of a repairable component.</p>
-{_FIG}
-<ul>
-<li><strong>Sites:</strong> a <strong>cold site</strong> has space and power only (slowest, cheapest); a <strong>warm
-site</strong> has hardware and connectivity but needs current data restored; a <strong>hot site</strong> runs in parallel with
-near-current data (fastest, most expensive).</li>
-<li><strong>High-availability approaches:</strong> <strong>active-active</strong> — both systems carry load, and either can
-take all of it; <strong>active-passive</strong> — a standby takes over when the active system fails.</li>
-<li><strong>Testing:</strong> <strong>tabletop exercises</strong> walk the team through a scenario on paper; <strong>validation
-tests</strong> actually fail over or restore to prove the plan works.</li>
-</ul>
-{worked('choosing a recovery site', '''<ol>
+HTML = ('\n<h4>Physical installations (Network+ 2.4)</h4>\n<ul>\n<li><strong>MDF</strong> (main distribution frame) — where the provider lines, core switching and servers are;\n<strong>IDF</strong> (intermediate distribution frame) — a wiring closet serving one floor or area, linked back to the MDF.</li>\n<li><strong>Racks</strong> are 19 inches wide and measured in rack units (1U = 1.75 in). Match the equipment’s\n<strong>port-side exhaust or intake</strong> airflow to the room’s hot-aisle / cold-aisle layout, or devices recirculate hot air.</li>\n<li><strong>Cabling</strong> — copper terminates on a <strong>patch panel</strong>, fibre on a <strong>fibre distribution panel</strong>;\nracks and cabinets should be <strong>lockable</strong>.</li>\n<li><strong>Power</strong> — a <strong>UPS</strong> bridges outages and conditions power; a <strong>PDU</strong> distributes it to the\nequipment in a rack. Check the <strong>power load</strong> against the UPS and circuit rating, and the <strong>voltage</strong>\nthe equipment expects.</li>\n<li><strong>Environment</strong> — <strong>temperature</strong> (ASHRAE’s recommended inlet range is 18–27 °C),\n<strong>humidity</strong> (too dry risks static, too damp risks condensation) and <strong>fire suppression</strong> suited to\nelectronics (clean-agent systems rather than water where possible).</li>\n</ul>\n<h4>Disaster recovery (Network+ 3.3)</h4>\n<p>NIST SP 800-34 defines the planning terms. <strong>RPO</strong> (recovery point objective) — how much data, in time,\ncan be lost. <strong>RTO</strong> (recovery time objective) — how long the service may be down. <strong>MTTR</strong>\n(mean time to repair) — average time to fix a failed component. <strong>MTBF</strong> (mean time between failures) — average\noperating time between failures of a repairable component.</p>\n' + str(_FIG) + '\n<ul>\n<li><strong>Sites:</strong> a <strong>cold site</strong> has space and power only (slowest, cheapest); a <strong>warm\nsite</strong> has hardware and connectivity but needs current data restored; a <strong>hot site</strong> runs in parallel with\nnear-current data (fastest, most expensive).</li>\n<li><strong>High-availability approaches:</strong> <strong>active-active</strong> — both systems carry load, and either can\ntake all of it; <strong>active-passive</strong> — a standby takes over when the active system fails.</li>\n<li><strong>Testing:</strong> <strong>tabletop exercises</strong> walk the team through a scenario on paper; <strong>validation\ntests</strong> actually fail over or restore to prove the plan works.</li>\n</ul>\n' + str(worked('choosing a recovery site', '''<ol>
 <li>The order system’s business owner sets RPO = 15 minutes and RTO = 1 hour.</li>
 <li>Nightly backups give a 24-hour RPO — not enough. Database replication to a second site is needed.</li>
 <li>A cold site could take days to equip — fails the RTO. A warm site with replicated data and pre-built servers can meet one hour.</li>
-<li>Prove it with a validation test (planned failover) twice a year, and a tabletop exercise for the people involved.</li></ol>''')}
-{scenario('the hot closet', '''<p>An IDF switch reboots every afternoon in summer. The closet has no ventilation, the switch’s fans blow into the
+<li>Prove it with a validation test (planned failover) twice a year, and a tabletop exercise for the people involved.</li></ol>''')) + '\n' + str(scenario('the hot closet', '''<p>An IDF switch reboots every afternoon in summer. The closet has no ventilation, the switch’s fans blow into the
 back of a shelf, and the UPS display shows 92 % load. You log the temperature, re-mount the switch so its exhaust matches the
 airflow, request ventilation for the closet, and move non-essential load off the UPS. The reboots stop; the change and the
-readings go in the documentation.</p>''')}
-{cfu(('What is the difference between RPO and RTO?', 'RPO is the acceptable data loss (time since the last good copy); RTO is the acceptable downtime.'),
+readings go in the documentation.</p>''')) + '\n' + str(cfu(('What is the difference between RPO and RTO?', 'RPO is the acceptable data loss (time since the last good copy); RTO is the acceptable downtime.'),
      ('Which site type has hardware and network but needs current data restored?', 'A warm site.'),
-     ('What does a PDU do that a UPS does not?', 'It distributes power to the equipment in a rack; the UPS provides battery backup.'))}
-'''
+     ('What does a PDU do that a UPS does not?', 'It distributes power to the equipment in a rack; the UPS provides battery backup.'))) + '\n')
 
 SUPPLEMENTS = [{
     'course': 'NETOPS', 'chapter': 6, 'lesson': 3, 'id': 'cert-phys-dr',

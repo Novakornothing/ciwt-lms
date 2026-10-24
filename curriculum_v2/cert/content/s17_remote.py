@@ -10,31 +10,16 @@ _FIG = figure(
     'record it on the ticket.',
     'Remote access is a powerful door into the network: approved tools, authenticated users, consent and a log.', cols=5)
 
-HTML = f'''
-<table class="ref-table"><thead><tr><th scope="col">Method</th><th scope="col">What it is</th><th scope="col">Security considerations</th></tr></thead><tbody>
-<tr><td><strong>RDP</strong></td><td>Windows Remote Desktop (TCP 3389): full desktop session</td><td>Never expose 3389 directly to the internet; use a VPN or Remote Desktop Gateway, Network Level Authentication and MFA.</td></tr>
-<tr><td><strong>VPN</strong></td><td>Encrypted tunnel into the network, used <em>with</em> other tools</td><td>MFA; keep the VPN appliance patched — it faces the internet.</td></tr>
-<tr><td><strong>VNC</strong></td><td>Cross-platform screen sharing using the RFB protocol (RFC 6143)</td><td>Authentication is often weak and traffic may be unencrypted — tunnel it over SSH or a VPN.</td></tr>
-<tr><td><strong>SSH</strong></td><td>Encrypted command-line access (TCP 22), mainly Linux, macOS and network devices</td><td>Key-based authentication, disable password login and direct root login where possible.</td></tr>
-<tr><td><strong>RMM</strong></td><td>Remote monitoring and management platform used by IT teams and MSPs</td><td>A compromise reaches every managed device; CISA has warned of attackers abusing legitimate RMM tools. MFA, least privilege, approved tools only.</td></tr>
-<tr><td><strong>SPICE</strong></td><td>Remote display protocol for virtual machines (commonly with KVM/QEMU)</td><td>Restrict to the management network; enable TLS.</td></tr>
-<tr><td><strong>WinRM</strong></td><td>Windows Remote Management for PowerShell remoting (HTTP 5985, HTTPS 5986)</td><td>Use HTTPS or a domain-authenticated session; restrict who can connect.</td></tr>
-<tr><td><strong>Third-party tools</strong></td><td>Screen-sharing and videoconferencing apps, file-transfer software, desktop-management software</td><td>Only the organisation’s approved tools — attackers use the same apps in tech-support scams.</td></tr>
-</tbody></table>
-{_FIG}
-{worked('choosing the tool', '''<ol>
+HTML = ('\n<table class="ref-table"><thead><tr><th scope="col">Method</th><th scope="col">What it is</th><th scope="col">Security considerations</th></tr></thead><tbody>\n<tr><td><strong>RDP</strong></td><td>Windows Remote Desktop (TCP 3389): full desktop session</td><td>Never expose 3389 directly to the internet; use a VPN or Remote Desktop Gateway, Network Level Authentication and MFA.</td></tr>\n<tr><td><strong>VPN</strong></td><td>Encrypted tunnel into the network, used <em>with</em> other tools</td><td>MFA; keep the VPN appliance patched — it faces the internet.</td></tr>\n<tr><td><strong>VNC</strong></td><td>Cross-platform screen sharing using the RFB protocol (RFC 6143)</td><td>Authentication is often weak and traffic may be unencrypted — tunnel it over SSH or a VPN.</td></tr>\n<tr><td><strong>SSH</strong></td><td>Encrypted command-line access (TCP 22), mainly Linux, macOS and network devices</td><td>Key-based authentication, disable password login and direct root login where possible.</td></tr>\n<tr><td><strong>RMM</strong></td><td>Remote monitoring and management platform used by IT teams and MSPs</td><td>A compromise reaches every managed device; CISA has warned of attackers abusing legitimate RMM tools. MFA, least privilege, approved tools only.</td></tr>\n<tr><td><strong>SPICE</strong></td><td>Remote display protocol for virtual machines (commonly with KVM/QEMU)</td><td>Restrict to the management network; enable TLS.</td></tr>\n<tr><td><strong>WinRM</strong></td><td>Windows Remote Management for PowerShell remoting (HTTP 5985, HTTPS 5986)</td><td>Use HTTPS or a domain-authenticated session; restrict who can connect.</td></tr>\n<tr><td><strong>Third-party tools</strong></td><td>Screen-sharing and videoconferencing apps, file-transfer software, desktop-management software</td><td>Only the organisation’s approved tools — attackers use the same apps in tech-support scams.</td></tr>\n</tbody></table>\n' + str(_FIG) + '\n' + str(worked('choosing the tool', '''<ol>
 <li>A user at home cannot open a line-of-business app; you need to see her screen. She is on the company VPN.</li>
 <li>Use the approved screen-sharing tool, which asks her to accept the session — consent is built in.</li>
 <li>Later that day you must restart a service on 30 servers: PowerShell remoting over WinRM from the admin workstation, not 30 RDP sessions.</li>
-<li>A Linux web server needs a config check: SSH with your key, through the jump host.</li></ol>''')}
-{scenario('the unexpected caller', '''<p>A user says “Microsoft support” phoned and asked her to install a screen-sharing app so they could fix a virus.
+<li>A Linux web server needs a config check: SSH with your key, through the jump host.</li></ol>''')) + '\n' + str(scenario('the unexpected caller', '''<p>A user says “Microsoft support” phoned and asked her to install a screen-sharing app so they could fix a virus.
 Microsoft does not make unsolicited support calls. Treat it as a tech-support scam: disconnect the PC from the network if the
 app was installed and a session took place, remove the app, scan, reset any passwords typed during the session from a clean
-device, and report it to security.</p>''')}
-{cfu(('Why should RDP not be published directly to the internet?', 'It is heavily targeted; put it behind a VPN or Remote Desktop Gateway with NLA and MFA.'),
+device, and report it to security.</p>''')) + '\n' + str(cfu(('Why should RDP not be published directly to the internet?', 'It is heavily targeted; put it behind a VPN or Remote Desktop Gateway with NLA and MFA.'),
      ('Which remote method suits running the same PowerShell command on many Windows servers?', 'WinRM (PowerShell remoting).'),
-     ('Why is VNC usually tunnelled over SSH or a VPN?', 'Its authentication and encryption are often weak.'))}
-'''
+     ('Why is VNC usually tunnelled over SSH or a VPN?', 'Its authentication and encryption are often weak.'))) + '\n')
 
 SUPPLEMENTS = [{
     'course': 'ITSUP', 'chapter': 9, 'lesson': 3, 'id': 'cert-remote', 'title': 'Remote access technologies and their security',

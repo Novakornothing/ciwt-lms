@@ -11,39 +11,17 @@ _FIG_CHG = figure(
     'process is updated.',
     'No approval without a tested rollback; no closure without user acceptance.', cols=3)
 
-HTML_CHG = f'''
-<p>A+ Core 2 4.2 asks you to apply change management (ITIL 4 calls this <em>change enablement</em>; NIST SP 800-128 covers it as
-configuration change control).</p>
-<ul>
-<li><strong>Documented business processes</strong> — the written procedure the change follows and the process it may alter.</li>
-<li><strong>Request form</strong> — states the <strong>purpose</strong> (why), the <strong>scope</strong> (what is and is not included), the
-<strong>change type</strong>, and the <strong>date and time</strong>.</li>
-<li><strong>Change types</strong> — <em>standard</em> (pre-approved, low risk, routine), <em>normal</em> (assessed and approved by the change
-authority or board) and <em>emergency</em> (urgent, expedited approval, documented afterwards).</li>
-<li><strong>Maintenance window</strong> — the agreed time when changes may be made; a <strong>change freeze</strong> is a period
-(for example year-end) when only emergency changes are allowed.</li>
-<li><strong>Risk analysis</strong> — <strong>affected systems</strong>, <strong>impact</strong> and a <strong>risk level</strong>.</li>
-<li><strong>Sandbox testing</strong> — try the change in an isolated test environment first.</li>
-<li><strong>Backup plan</strong> (protect the data first) and <strong>rollback plan</strong> (how to return to the last known-good state if it fails).</li>
-<li><strong>Change board approvals</strong> — the change advisory board (CAB) or change authority approves normal changes.</li>
-<li><strong>Responsible staff member</strong> — one named implementer and owner; <strong>peer review</strong> checks the work.</li>
-<li><strong>End-user acceptance</strong> — the users confirm the change works before it is closed.</li>
-</ul>
-{_FIG_CHG}
-{worked('a firmware update on the office firewall', '''<ol>
+HTML_CHG = ('\n<p>A+ Core 2 4.2 asks you to apply change management (ITIL 4 calls this <em>change enablement</em>; NIST SP 800-128 covers it as\nconfiguration change control).</p>\n<ul>\n<li><strong>Documented business processes</strong> — the written procedure the change follows and the process it may alter.</li>\n<li><strong>Request form</strong> — states the <strong>purpose</strong> (why), the <strong>scope</strong> (what is and is not included), the\n<strong>change type</strong>, and the <strong>date and time</strong>.</li>\n<li><strong>Change types</strong> — <em>standard</em> (pre-approved, low risk, routine), <em>normal</em> (assessed and approved by the change\nauthority or board) and <em>emergency</em> (urgent, expedited approval, documented afterwards).</li>\n<li><strong>Maintenance window</strong> — the agreed time when changes may be made; a <strong>change freeze</strong> is a period\n(for example year-end) when only emergency changes are allowed.</li>\n<li><strong>Risk analysis</strong> — <strong>affected systems</strong>, <strong>impact</strong> and a <strong>risk level</strong>.</li>\n<li><strong>Sandbox testing</strong> — try the change in an isolated test environment first.</li>\n<li><strong>Backup plan</strong> (protect the data first) and <strong>rollback plan</strong> (how to return to the last known-good state if it fails).</li>\n<li><strong>Change board approvals</strong> — the change advisory board (CAB) or change authority approves normal changes.</li>\n<li><strong>Responsible staff member</strong> — one named implementer and owner; <strong>peer review</strong> checks the work.</li>\n<li><strong>End-user acceptance</strong> — the users confirm the change works before it is closed.</li>\n</ul>\n' + str(_FIG_CHG) + '\n' + str(worked('a firmware update on the office firewall', '''<ol>
 <li>Request: purpose (fixes a published vulnerability), scope (one firewall, no rule changes), type normal, window Saturday 06:00–08:00.</li>
 <li>Risk: internet and VPN for all 40 staff are affected; risk medium.</li>
 <li>Plan: test the firmware on the lab firewall (sandbox); back up the running configuration; rollback = reload the previous image and config.</li>
 <li>CAB approves on Thursday. A named technician implements; a colleague peer-reviews the config backup and the steps.</li>
-<li>After the update, staff at two sites confirm VPN and web access (end-user acceptance); the change record is closed.</li></ol>''')}
-{scenario('the Friday-afternoon change', '''<p>A technician pushes a new Group Policy on Friday afternoon without a request or test. Printing breaks in three
+<li>After the update, staff at two sites confirm VPN and web access (end-user acceptance); the change record is closed.</li></ol>''')) + '\n' + str(scenario('the Friday-afternoon change', '''<p>A technician pushes a new Group Policy on Friday afternoon without a request or test. Printing breaks in three
 offices and nobody knows what changed. Because there is no rollback plan, it takes hours to work out the old settings. The team
 now requires a request form with scope and risk, testing in a sandbox OU, a rollback plan, CAB approval and a maintenance window
-for every normal change, with standard changes listed and pre-approved.</p>''')}
-{cfu(('What is the difference between a standard and a normal change?', 'A standard change is pre-approved and routine; a normal change is assessed and approved by the change board.'),
+for every normal change, with standard changes listed and pre-approved.</p>''')) + '\n' + str(cfu(('What is the difference between a standard and a normal change?', 'A standard change is pre-approved and routine; a normal change is assessed and approved by the change board.'),
      ('What is a rollback plan?', 'The tested steps to return to the last known-good state if the change fails.'),
-     ('When is a change closed?', 'After implementation, end-user acceptance and documentation.'))}
-'''
+     ('When is a change closed?', 'After implementation, end-user acceptance and documentation.'))) + '\n')
 
 _FIG_SAFE = figure(
     'fig-c-safety', 'Safety before, during and after the job',
@@ -55,38 +33,16 @@ _FIG_SAFE = figure(
     'OSHA rules on workplace safety.',
     'Protect yourself first, then the equipment.', cols=3)
 
-HTML_SAFE = f'''
-<p>A+ Core 2 4.4 asks you to use common safety procedures.</p>
-<ul>
-<li><strong>Disconnect power</strong> — shut down and unplug before opening a device; never open a power supply or a monitor’s
-high-voltage section (replace the unit instead).</li>
-<li><strong>ESD straps and ESD mats</strong> — a wrist strap with a built-in resistor connected to a grounded mat keeps you and the parts at the
-same potential (ANSI/ESD S20.20). <strong>Antistatic bags</strong> store and carry components; hold boards by the edges.</li>
-<li><strong>Equipment grounding</strong> — use grounded outlets and never remove the ground pin from a plug.</li>
-<li><strong>Personal protection</strong> — <strong>safety goggles</strong> when using compressed air, cutting cable or working with batteries;
-an <strong>air filter mask</strong> for toner and heavy dust.</li>
-<li><strong>Cable management</strong> — route cables under covers or along walls so nobody trips; keep walkways clear.</li>
-<li><strong>Lifting techniques</strong> — plan the lift, bend at the knees with a straight back, keep the load close and do not twist; use a
-team lift or a cart for heavy loads. The NIOSH lifting equation starts from 23 kg (51 lb) as the most anyone should lift under ideal
-conditions, and less for awkward lifts.</li>
-<li><strong>Fire safety</strong> — in the U.S. (NFPA 10) class A is ordinary combustibles, B flammable liquids, C energised electrical equipment,
-D metals and K cooking oils. Use a CO<sub>2</sub> or clean-agent extinguisher on electrical fires, never water. Know the exits.</li>
-<li><strong>Government regulations</strong> — follow workplace safety law (OSHA in the U.S.) and local rules; they override convenience.</li>
-</ul>
-{_FIG_SAFE}
-{worked('replacing a failed laser printer fuser', '''<ol>
+HTML_SAFE = ('\n<p>A+ Core 2 4.4 asks you to use common safety procedures.</p>\n<ul>\n<li><strong>Disconnect power</strong> — shut down and unplug before opening a device; never open a power supply or a monitor’s\nhigh-voltage section (replace the unit instead).</li>\n<li><strong>ESD straps and ESD mats</strong> — a wrist strap with a built-in resistor connected to a grounded mat keeps you and the parts at the\nsame potential (ANSI/ESD S20.20). <strong>Antistatic bags</strong> store and carry components; hold boards by the edges.</li>\n<li><strong>Equipment grounding</strong> — use grounded outlets and never remove the ground pin from a plug.</li>\n<li><strong>Personal protection</strong> — <strong>safety goggles</strong> when using compressed air, cutting cable or working with batteries;\nan <strong>air filter mask</strong> for toner and heavy dust.</li>\n<li><strong>Cable management</strong> — route cables under covers or along walls so nobody trips; keep walkways clear.</li>\n<li><strong>Lifting techniques</strong> — plan the lift, bend at the knees with a straight back, keep the load close and do not twist; use a\nteam lift or a cart for heavy loads. The NIOSH lifting equation starts from 23 kg (51 lb) as the most anyone should lift under ideal\nconditions, and less for awkward lifts.</li>\n<li><strong>Fire safety</strong> — in the U.S. (NFPA 10) class A is ordinary combustibles, B flammable liquids, C energised electrical equipment,\nD metals and K cooking oils. Use a CO<sub>2</sub> or clean-agent extinguisher on electrical fires, never water. Know the exits.</li>\n<li><strong>Government regulations</strong> — follow workplace safety law (OSHA in the U.S.) and local rules; they override convenience.</li>\n</ul>\n' + str(_FIG_SAFE) + '\n' + str(worked('replacing a failed laser printer fuser', '''<ol>
 <li>Turn the printer off, unplug it and let the fuser cool; it runs at about 200 °C.</li>
 <li>Wear an air filter mask and gloves because loose toner is inside; use a toner vacuum, not compressed air.</li>
 <li>The printer weighs 30 kg: two people lift it onto the bench with bent knees and the load held close.</li>
-<li>Fit the new fuser, route the power cable away from the walkway, test print, and record the job.</li></ol>''')}
-{scenario('smoke from a power strip', '''<p>A user reports smoke from a power strip under a desk. The technician does not reach in. They switch off power at the
+<li>Fit the new fuser, route the power cable away from the walkway, test print, and record the job.</li></ol>''')) + '\n' + str(scenario('smoke from a power strip', '''<p>A user reports smoke from a power strip under a desk. The technician does not reach in. They switch off power at the
 breaker if it is safe to do so, move people away, and if flames appear use a CO<sub>2</sub> (class C in the U.S.) extinguisher — never
 water on live electrical equipment. Afterwards the strip is replaced, the daisy-chained strips are removed, and the incident is
-reported under the site’s safety policy.</p>''')}
-{cfu(('Which extinguisher type is used on an electrical fire?', 'CO2 or clean agent (class C in the U.S.); never water.'),
+reported under the site’s safety policy.</p>''')) + '\n' + str(cfu(('Which extinguisher type is used on an electrical fire?', 'CO2 or clean agent (class C in the U.S.); never water.'),
      ('Why should you never open a power supply?', 'Its capacitors can hold a dangerous charge even when it is unplugged.'),
-     ('When should you wear an air filter mask?', 'When cleaning toner or heavy dust.'))}
-'''
+     ('When should you wear an air filter mask?', 'When cleaning toner or heavy dust.'))) + '\n')
 
 SUPPLEMENTS = [
     {'course': 'ITSUP', 'chapter': 12, 'lesson': 1, 'id': 'cert-change-mgmt', 'title': 'Change management procedures',

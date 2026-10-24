@@ -10,49 +10,16 @@ _FIG = figure(
     'to the wall jacks. At the far end are the PCs’ network interface cards and PoE-powered access points.',
     'Know which box ends the provider’s line (modem or ONT) and which box routes (the router).', cols=5)
 
-HTML = f'''
-<h4>Networking hardware (Core 1 2.5)</h4>
-<ul>
-<li><strong>Cable modem</strong> (DOCSIS over coax), <strong>DSL modem</strong> (over telephone wiring) and <strong>ONT</strong>
-(optical network terminal, where fibre ends) terminate the provider’s line.</li>
-<li><strong>Router</strong> — moves traffic between networks (LAN and internet); a SOHO router usually also does NAT, DHCP,
-firewall and Wi-Fi. <strong>Firewall</strong> — filters traffic by rules.</li>
-<li><strong>Switch</strong> — forwards frames within the LAN by MAC address. An <strong>unmanaged</strong> switch is plug-and-play;
-a <strong>managed</strong> switch adds VLANs, port security, monitoring and remote management.</li>
-<li><strong>Access point</strong> — bridges Wi-Fi clients onto the wired LAN.</li>
-<li><strong>Patch panel</strong> — the termination point for the building’s horizontal cabling; short patch cords connect it to the switch.</li>
-<li><strong>Power over Ethernet (PoE)</strong> — power over the data cable for APs, phones and cameras, from a PoE switch or a
-<strong>PoE injector</strong> placed between a non-PoE switch and the device. Standards (power at the source):
-<strong>802.3af</strong> up to 15.4 W, <strong>802.3at</strong> (PoE+) up to 30 W, <strong>802.3bt</strong> up to 60 W (Type 3)
-or 90 W (Type 4). The switch’s total PoE budget is a separate limit.</li>
-<li><strong>NIC</strong> — the network interface card; its <strong>MAC address</strong> is a 48-bit hardware address (the first 24
-bits identify the manufacturer).</li>
-</ul>
-{_FIG}
-<h4>Networking tools (Core 1 2.8)</h4>
-<table class="ref-table"><thead><tr><th scope="col">Tool</th><th scope="col">Use</th></tr></thead><tbody>
-<tr><td>Cable stripper</td><td>Removes the outer jacket without nicking the pairs.</td></tr>
-<tr><td>Crimper</td><td>Fixes an RJ45 (or RJ11) connector onto the cable end.</td></tr>
-<tr><td>Punchdown tool</td><td>Seats wires into a patch panel or keystone jack (110 or Krone block) and trims them.</td></tr>
-<tr><td>Cable tester</td><td>Checks continuity and the wire map (opens, shorts, crossed or split pairs).</td></tr>
-<tr><td>Toner probe</td><td>The tone generator on one end, the probe finds that cable in a bundle or at the patch panel.</td></tr>
-<tr><td>Loopback plug</td><td>Loops a port’s transmit to receive to test the port or NIC itself.</td></tr>
-<tr><td>Wi-Fi analyzer</td><td>Shows networks, channels and signal strength to find interference and coverage gaps.</td></tr>
-<tr><td>Network tap</td><td>Inline device that copies traffic to a monitoring tool without interrupting the link.</td></tr>
-</tbody></table>
-{worked('terminating and testing a new drop', '''<ol>
+HTML = ('\n<h4>Networking hardware (Core 1 2.5)</h4>\n<ul>\n<li><strong>Cable modem</strong> (DOCSIS over coax), <strong>DSL modem</strong> (over telephone wiring) and <strong>ONT</strong>\n(optical network terminal, where fibre ends) terminate the provider’s line.</li>\n<li><strong>Router</strong> — moves traffic between networks (LAN and internet); a SOHO router usually also does NAT, DHCP,\nfirewall and Wi-Fi. <strong>Firewall</strong> — filters traffic by rules.</li>\n<li><strong>Switch</strong> — forwards frames within the LAN by MAC address. An <strong>unmanaged</strong> switch is plug-and-play;\na <strong>managed</strong> switch adds VLANs, port security, monitoring and remote management.</li>\n<li><strong>Access point</strong> — bridges Wi-Fi clients onto the wired LAN.</li>\n<li><strong>Patch panel</strong> — the termination point for the building’s horizontal cabling; short patch cords connect it to the switch.</li>\n<li><strong>Power over Ethernet (PoE)</strong> — power over the data cable for APs, phones and cameras, from a PoE switch or a\n<strong>PoE injector</strong> placed between a non-PoE switch and the device. Standards (power at the source):\n<strong>802.3af</strong> up to 15.4 W, <strong>802.3at</strong> (PoE+) up to 30 W, <strong>802.3bt</strong> up to 60 W (Type 3)\nor 90 W (Type 4). The switch’s total PoE budget is a separate limit.</li>\n<li><strong>NIC</strong> — the network interface card; its <strong>MAC address</strong> is a 48-bit hardware address (the first 24\nbits identify the manufacturer).</li>\n</ul>\n' + str(_FIG) + '\n<h4>Networking tools (Core 1 2.8)</h4>\n<table class="ref-table"><thead><tr><th scope="col">Tool</th><th scope="col">Use</th></tr></thead><tbody>\n<tr><td>Cable stripper</td><td>Removes the outer jacket without nicking the pairs.</td></tr>\n<tr><td>Crimper</td><td>Fixes an RJ45 (or RJ11) connector onto the cable end.</td></tr>\n<tr><td>Punchdown tool</td><td>Seats wires into a patch panel or keystone jack (110 or Krone block) and trims them.</td></tr>\n<tr><td>Cable tester</td><td>Checks continuity and the wire map (opens, shorts, crossed or split pairs).</td></tr>\n<tr><td>Toner probe</td><td>The tone generator on one end, the probe finds that cable in a bundle or at the patch panel.</td></tr>\n<tr><td>Loopback plug</td><td>Loops a port’s transmit to receive to test the port or NIC itself.</td></tr>\n<tr><td>Wi-Fi analyzer</td><td>Shows networks, channels and signal strength to find interference and coverage gaps.</td></tr>\n<tr><td>Network tap</td><td>Inline device that copies traffic to a monitoring tool without interrupting the link.</td></tr>\n</tbody></table>\n' + str(worked('terminating and testing a new drop', '''<ol>
 <li>Strip the jacket, untwist only as much as needed, and punch the pairs down on the patch panel in T568B order.</li>
 <li>At the wall end, terminate the keystone the same way (both ends must use the same standard for a straight-through link).</li>
 <li>Cable tester across the run: the wire map shows pins 3 and 6 open. Re-punch the green pair at the jack; retest — all eight pins pass.</li>
-<li>Patch the port to the switch, connect a laptop, confirm link and an address, label both ends.</li></ol>''')}
-{scenario('the AP that will not power up', '''<p>A new Wi-Fi 6E access point stays dark on a desk switch. The switch is unmanaged and has no PoE. You add a PoE
+<li>Patch the port to the switch, connect a laptop, confirm link and an address, label both ends.</li></ol>''')) + '\n' + str(scenario('the AP that will not power up', '''<p>A new Wi-Fi 6E access point stays dark on a desk switch. The switch is unmanaged and has no PoE. You add a PoE
 injector rated for the AP’s requirement (the datasheet says 802.3at), connecting switch → injector “data in” → injector
 “PoE out” → AP. It boots. You note that the next switch purchase should be a managed PoE switch with enough budget for all
-APs and phones.</p>''')}
-{cfu(('Which device terminates a fibre-to-the-premises line?', 'An ONT (optical network terminal).'),
+APs and phones.</p>''')) + '\n' + str(cfu(('Which device terminates a fibre-to-the-premises line?', 'An ONT (optical network terminal).'),
      ('What does a loopback plug test?', 'The port or NIC itself — transmit is looped back to receive.'),
-     ('An AP needs 25 W. Which is the lowest PoE standard that supplies it?', '802.3at (PoE+), up to 30 W at the source.'))}
-'''
+     ('An AP needs 25 W. Which is the lowest PoE standard that supplies it?', '802.3at (PoE+), up to 30 W at the source.'))) + '\n')
 
 SUPPLEMENTS = [{
     'course': 'ITSUP', 'chapter': 5, 'lesson': 3, 'id': 'cert-net-hw',

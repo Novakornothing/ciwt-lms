@@ -11,93 +11,31 @@ _FIG = figure(
     'the page suggests leaking toner or a failing drum or toner cartridge.',
     'Measure the gap between repeating defects and compare with the roller sizes in the service manual.', cols=5)
 
-HTML_PRINT = f'''
-<h4>Deploying and configuring printers and MFDs (Core 1 3.7)</h4>
-<ul>
-<li><strong>Drivers and page-description languages:</strong> <strong>PCL</strong> (Printer Command Language) is fast and widely
-supported for office printing; <strong>PostScript</strong> is device-independent and preferred for graphics and publishing.
-A driver for the wrong language produces <strong>garbled print</strong> — pages of symbols.</li>
-<li><strong>Connectivity and sharing:</strong> USB, Ethernet or wireless; shared from a PC or through a <strong>print server</strong>;
-keep printer firmware current.</li>
-<li><strong>Configuration settings:</strong> <strong>duplex</strong> (two-sided), <strong>orientation</strong>, <strong>tray settings</strong>
-(paper size and type per tray) and <strong>quality</strong> (resolution in dpi, draft or best).</li>
-<li><strong>Security:</strong> <strong>user authentication / badging</strong> at the device, <strong>audit logs</strong> of who printed what,
-and <strong>secured prints</strong> (the job is held until the user releases it with a PIN or badge, so confidential pages are not
-left in the tray).</li>
-<li><strong>Network scan services:</strong> scan to email, to a network folder (SMB) or to cloud storage; the document feeder
-(<strong>ADF</strong>) handles multi-page stacks, the <strong>flatbed</strong> handles books and fragile originals.</li>
-</ul>
-<h4>Maintenance (Core 1 3.8)</h4>
-<ul>
-<li><strong>Laser:</strong> replace the toner; apply the <strong>maintenance kit</strong> (typically fuser and rollers) at the page
-count the vendor specifies and reset the counter; <strong>calibrate</strong>; clean with a toner-safe vacuum, never ordinary
-compressed air indoors on loose toner.</li>
-<li><strong>Thermal:</strong> replace the heat-sensitive paper roll; clean the <strong>heating element</strong> (isopropyl alcohol on
-the vendor-approved swab); remove debris.</li>
-<li><strong>Impact (dot matrix):</strong> replace the <strong>ribbon</strong>, the print head and multipart paper as needed.</li>
-<li><strong>Inkjet:</strong> clean and align the printhead (built-in utility), replace cartridges, calibrate.</li>
-</ul>
-{_FIG}
-<h4>Printer symptoms (Core 1 5.6)</h4>
-<table class="ref-table"><thead><tr><th scope="col">Symptom</th><th scope="col">Usual cause</th></tr></thead><tbody>
-<tr><td>Lines down the page; speckling</td><td>Drum scratch or debris; leaking toner cartridge; on inkjets, clogged nozzles</td></tr>
-<tr><td>Garbled print</td><td>Wrong driver or PCL/PostScript mismatch; corrupted job in the queue</td></tr>
-<tr><td>Faded prints</td><td>Low toner; economy mode; on laser, a worn drum</td></tr>
-<tr><td>Double / echo images</td><td>Drum not cleaned between rotations; fuser problems</td></tr>
-<tr><td>Paper jams, paper not feeding, multipage misfeed</td><td>Worn pickup rollers or separation pad, wrong paper weight, damp paper, overfilled tray</td></tr>
-<tr><td>Grinding noise</td><td>Worn gears or a failing fuser drive; stop and inspect</td></tr>
-<tr><td>Finishing issues</td><td>Stapler or hole-punch unit out of staples, jammed, or not installed in the driver</td></tr>
-<tr><td>Incorrect page orientation</td><td>Application or driver orientation setting</td></tr>
-<tr><td>Tray not recognised</td><td>Tray not installed in the driver’s device settings, or a misseated tray</td></tr>
-<tr><td>Multiple prints pending, frozen queue</td><td>Stuck job: clear the queue and restart the Print Spooler service</td></tr>
-<tr><td>Connectivity issues</td><td>Printer IP changed (use a reservation), offline status, Wi-Fi drop</td></tr>
-</tbody></table>
-{worked('pages of random symbols', '''<ol>
+HTML_PRINT = ('\n<h4>Deploying and configuring printers and MFDs (Core 1 3.7)</h4>\n<ul>\n<li><strong>Drivers and page-description languages:</strong> <strong>PCL</strong> (Printer Command Language) is fast and widely\nsupported for office printing; <strong>PostScript</strong> is device-independent and preferred for graphics and publishing.\nA driver for the wrong language produces <strong>garbled print</strong> — pages of symbols.</li>\n<li><strong>Connectivity and sharing:</strong> USB, Ethernet or wireless; shared from a PC or through a <strong>print server</strong>;\nkeep printer firmware current.</li>\n<li><strong>Configuration settings:</strong> <strong>duplex</strong> (two-sided), <strong>orientation</strong>, <strong>tray settings</strong>\n(paper size and type per tray) and <strong>quality</strong> (resolution in dpi, draft or best).</li>\n<li><strong>Security:</strong> <strong>user authentication / badging</strong> at the device, <strong>audit logs</strong> of who printed what,\nand <strong>secured prints</strong> (the job is held until the user releases it with a PIN or badge, so confidential pages are not\nleft in the tray).</li>\n<li><strong>Network scan services:</strong> scan to email, to a network folder (SMB) or to cloud storage; the document feeder\n(<strong>ADF</strong>) handles multi-page stacks, the <strong>flatbed</strong> handles books and fragile originals.</li>\n</ul>\n<h4>Maintenance (Core 1 3.8)</h4>\n<ul>\n<li><strong>Laser:</strong> replace the toner; apply the <strong>maintenance kit</strong> (typically fuser and rollers) at the page\ncount the vendor specifies and reset the counter; <strong>calibrate</strong>; clean with a toner-safe vacuum, never ordinary\ncompressed air indoors on loose toner.</li>\n<li><strong>Thermal:</strong> replace the heat-sensitive paper roll; clean the <strong>heating element</strong> (isopropyl alcohol on\nthe vendor-approved swab); remove debris.</li>\n<li><strong>Impact (dot matrix):</strong> replace the <strong>ribbon</strong>, the print head and multipart paper as needed.</li>\n<li><strong>Inkjet:</strong> clean and align the printhead (built-in utility), replace cartridges, calibrate.</li>\n</ul>\n' + str(_FIG) + '\n<h4>Printer symptoms (Core 1 5.6)</h4>\n<table class="ref-table"><thead><tr><th scope="col">Symptom</th><th scope="col">Usual cause</th></tr></thead><tbody>\n<tr><td>Lines down the page; speckling</td><td>Drum scratch or debris; leaking toner cartridge; on inkjets, clogged nozzles</td></tr>\n<tr><td>Garbled print</td><td>Wrong driver or PCL/PostScript mismatch; corrupted job in the queue</td></tr>\n<tr><td>Faded prints</td><td>Low toner; economy mode; on laser, a worn drum</td></tr>\n<tr><td>Double / echo images</td><td>Drum not cleaned between rotations; fuser problems</td></tr>\n<tr><td>Paper jams, paper not feeding, multipage misfeed</td><td>Worn pickup rollers or separation pad, wrong paper weight, damp paper, overfilled tray</td></tr>\n<tr><td>Grinding noise</td><td>Worn gears or a failing fuser drive; stop and inspect</td></tr>\n<tr><td>Finishing issues</td><td>Stapler or hole-punch unit out of staples, jammed, or not installed in the driver</td></tr>\n<tr><td>Incorrect page orientation</td><td>Application or driver orientation setting</td></tr>\n<tr><td>Tray not recognised</td><td>Tray not installed in the driver’s device settings, or a misseated tray</td></tr>\n<tr><td>Multiple prints pending, frozen queue</td><td>Stuck job: clear the queue and restart the Print Spooler service</td></tr>\n<tr><td>Connectivity issues</td><td>Printer IP changed (use a reservation), offline status, Wi-Fi drop</td></tr>\n</tbody></table>\n' + str(worked('pages of random symbols', '''<ol>
 <li>A new MFD prints pages of symbols for one user; others print normally.</li>
 <li>The user’s PC has a PostScript driver installed by hand; the shared queue uses PCL. The data and the printer’s language do not match.</li>
-<li>Remove the manual driver, connect to the shared queue from the print server, delete the stuck jobs and print a test page.</li></ol>''')}
-{scenario('the payslips in the tray', '''<p>HR prints payslips to the shared multifunction printer, and on two occasions someone else picked them up
+<li>Remove the manual driver, connect to the shared queue from the print server, delete the stuck jobs and print a test page.</li></ol>''')) + '\n' + str(scenario('the payslips in the tray', '''<p>HR prints payslips to the shared multifunction printer, and on two occasions someone else picked them up
 from the output tray. The fix is secured print release: jobs are held on the device until the owner authenticates with a PIN
-or badge. HR is also given its own print queue so the setting can be enforced for that department.</p>''')}
-{cfu(('Why can the wrong driver produce garbled print?', 'The driver speaks a different page-description language (PCL vs PostScript) from the one the printer expects.'),
+or badge. HR is also given its own print queue so the setting can be enforced for that department.</p>''')) + '\n' + str(cfu(('Why can the wrong driver produce garbled print?', 'The driver speaks a different page-description language (PCL vs PostScript) from the one the printer expects.'),
      ('What does a secured print (PIN release) prevent?', 'Confidential pages being left in the output tray — the job prints only when the user is there.'),
-     ('Which consumable does an impact printer use instead of toner or ink?', 'A ribbon.'))}
-'''
+     ('Which consumable does an impact printer use instead of toner or ink?', 'A ribbon.'))) + '\n')
 
-HTML_STORAGE = f'''
-<h4>Storage symptoms (Core 1 5.2)</h4>
-<ul>
-<li><strong>Grinding or clicking</strong> from a hard drive is mechanical failure in progress: stop non-essential use and back up
-<em>first</em>; every extra hour of running risks the data.</li>
-<li><strong>Extended read/write times</strong> and <strong>low IOPS</strong> — a nearly full or failing drive, an HDD instead of an SSD
-for the workload, a failing cable, or a RAID array rebuilding.</li>
-<li><strong>S.M.A.R.T. failure</strong> warnings and Windows “storage device” health warnings — replace the drive after backing up.</li>
-<li><strong>Array missing</strong> — the RAID controller or its configuration is not seen: check the controller in firmware, cables,
-and whether a drive failed; do <em>not</em> initialise or recreate the array, which can destroy the data.</li>
-<li><strong>Drive not recognised / boot failures / BSOD on access</strong> — check power and data cables, firmware detection and the
-storage-controller mode (AHCI vs RAID/VMD) before replacing.</li>
-<li><strong>Status LEDs</strong> on drive bays — an amber or flashing LED usually marks the failed member; check the vendor’s legend.</li>
-</ul>
-{figure('fig-c-storagetriage', 'Triage for a storage symptom',
+HTML_STORAGE = ('\n<h4>Storage symptoms (Core 1 5.2)</h4>\n<ul>\n<li><strong>Grinding or clicking</strong> from a hard drive is mechanical failure in progress: stop non-essential use and back up\n<em>first</em>; every extra hour of running risks the data.</li>\n<li><strong>Extended read/write times</strong> and <strong>low IOPS</strong> — a nearly full or failing drive, an HDD instead of an SSD\nfor the workload, a failing cable, or a RAID array rebuilding.</li>\n<li><strong>S.M.A.R.T. failure</strong> warnings and Windows “storage device” health warnings — replace the drive after backing up.</li>\n<li><strong>Array missing</strong> — the RAID controller or its configuration is not seen: check the controller in firmware, cables,\nand whether a drive failed; do <em>not</em> initialise or recreate the array, which can destroy the data.</li>\n<li><strong>Drive not recognised / boot failures / BSOD on access</strong> — check power and data cables, firmware detection and the\nstorage-controller mode (AHCI vs RAID/VMD) before replacing.</li>\n<li><strong>Status LEDs</strong> on drive bays — an amber or flashing LED usually marks the failed member; check the vendor’s legend.</li>\n</ul>\n' + str(figure('fig-c-storagetriage', 'Triage for a storage symptom',
     ['Symptom:\nnoise, S.M.A.R.T., slow', 'Protect the data:\nback up first', 'Check cables and\nfirmware detection', 'Check controller\nmode and array', 'Replace, then\nrestore or rebuild'],
     'Five boxes in a chain. A storage symptom — grinding or clicking, a S.M.A.R.T. warning, slow reads and writes or a missing '
     'array — comes first. Second, protect the data by backing it up before anything else. Third, check power and data cables '
     'and whether the firmware detects the drive. Fourth, check the storage-controller mode and the RAID array status without '
     'initialising anything. Fifth, replace the failed part, then restore from backup or let the array rebuild.',
-    'Back up before you troubleshoot a failing drive; never initialise an array you are diagnosing.', cols=5)}
-{worked('a degraded mirror', '''<ol>
+    'Back up before you troubleshoot a failing drive; never initialise an array you are diagnosing.', cols=5)) + '\n' + str(worked('a degraded mirror', '''<ol>
 <li>A small server with RAID 1 shows an amber LED on one bay, and the controller reports the array as degraded.</li>
 <li>The data is still readable from the other member, so confirm a current backup first.</li>
 <li>Identify the failed drive from the controller and the bay LED; check the vendor’s LED legend.</li>
 <li>Replace it with a drive of the same or larger capacity and the same interface.</li>
-<li>Start or confirm the rebuild, watch it complete, and record the drive serial numbers on the ticket.</li></ol>''')}
-{scenario('no boot device after a firmware update', '''<p>After a firmware (BIOS/UEFI) update, a desktop reports that no boot device was found, although the SSD
+<li>Start or confirm the rebuild, watch it complete, and record the drive serial numbers on the ticket.</li></ol>''')) + '\n' + str(scenario('no boot device after a firmware update', '''<p>After a firmware (BIOS/UEFI) update, a desktop reports that no boot device was found, although the SSD
 appears in the firmware’s storage list. The update had reset the storage-controller mode to a different setting from the one
 Windows was installed with. Putting the setting back lets Windows boot. Replacing the drive would have wasted a part and the
-user’s time.</p>''')}
-{cfu(('A hard drive starts clicking. What is the first priority?', 'Back up the data immediately, then replace the drive.'),
-     ('The RAID controller reports “array missing”. What must you avoid?', 'Initialising or recreating the array before investigating — it can destroy the data.'))}
-'''
+user’s time.</p>''')) + '\n' + str(cfu(('A hard drive starts clicking. What is the first priority?', 'Back up the data immediately, then replace the drive.'),
+     ('The RAID controller reports “array missing”. What must you avoid?', 'Initialising or recreating the array before investigating — it can destroy the data.'))) + '\n')
 
 SUPPLEMENTS = [
     {'course': 'ITSUP', 'chapter': 4, 'lesson': 3, 'id': 'cert-printers', 'title': 'Printer configuration, maintenance and print-defect diagnosis',

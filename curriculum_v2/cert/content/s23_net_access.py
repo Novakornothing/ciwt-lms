@@ -11,41 +11,17 @@ _FIG_VPN = figure(
     'through the VPN so company security controls inspect it.',
     'Pick the VPN type by who connects, and the tunnel mode by how much traffic the company needs to see.', cols=5)
 
-HTML_ACCESS = f'''
-<p>Network+ 3.5 compares ways to reach and manage a network.</p>
-<h4>VPNs</h4>
-<ul>
-<li><strong>Site-to-site</strong> — permanent tunnel between two sites’ gateways (IPsec; NIST SP 800-77 Rev. 1).</li>
-<li><strong>Client-to-site</strong> (remote access) — a VPN client on each user device.</li>
-<li><strong>Clientless</strong> — a TLS (SSL VPN) portal reached in a browser, for selected web apps (NIST SP 800-113).</li>
-<li><strong>Split tunnel vs. full tunnel</strong> — split sends only company-bound traffic through the VPN (less load, but internet traffic
-bypasses company filtering); full sends everything through it (more control, more bandwidth at the head office).</li>
-</ul>
-<h4>Connection and management methods</h4>
-<ul>
-<li><strong>SSH</strong> — encrypted command-line management (TCP 22); replaces Telnet.</li>
-<li><strong>GUI</strong> — a device’s web interface (HTTPS only).</li>
-<li><strong>API</strong> — programmatic access for automation and monitoring tools.</li>
-<li><strong>Console</strong> — a direct serial or USB console cable to the device; works when the network does not.</li>
-<li><strong>Jump box / jump host</strong> — a hardened server that administrators connect to first, and the only host allowed to reach management interfaces.</li>
-<li><strong>In-band vs. out-of-band</strong> — in-band management uses the production network; out-of-band uses a separate path
-(a management network, console server or cellular modem) so devices can be fixed when the production network is down.</li>
-</ul>
-{_FIG_VPN}
-{worked('remote access for a new branch', '''<ol>
+HTML_ACCESS = ('\n<p>Network+ 3.5 compares ways to reach and manage a network.</p>\n<h4>VPNs</h4>\n<ul>\n<li><strong>Site-to-site</strong> — permanent tunnel between two sites’ gateways (IPsec; NIST SP 800-77 Rev. 1).</li>\n<li><strong>Client-to-site</strong> (remote access) — a VPN client on each user device.</li>\n<li><strong>Clientless</strong> — a TLS (SSL VPN) portal reached in a browser, for selected web apps (NIST SP 800-113).</li>\n<li><strong>Split tunnel vs. full tunnel</strong> — split sends only company-bound traffic through the VPN (less load, but internet traffic\nbypasses company filtering); full sends everything through it (more control, more bandwidth at the head office).</li>\n</ul>\n<h4>Connection and management methods</h4>\n<ul>\n<li><strong>SSH</strong> — encrypted command-line management (TCP 22); replaces Telnet.</li>\n<li><strong>GUI</strong> — a device’s web interface (HTTPS only).</li>\n<li><strong>API</strong> — programmatic access for automation and monitoring tools.</li>\n<li><strong>Console</strong> — a direct serial or USB console cable to the device; works when the network does not.</li>\n<li><strong>Jump box / jump host</strong> — a hardened server that administrators connect to first, and the only host allowed to reach management interfaces.</li>\n<li><strong>In-band vs. out-of-band</strong> — in-band management uses the production network; out-of-band uses a separate path\n(a management network, console server or cellular modem) so devices can be fixed when the production network is down.</li>\n</ul>\n' + str(_FIG_VPN) + '\n' + str(worked('remote access for a new branch', '''<ol>
 <li>The branch needs printers and file servers at head office all day: a site-to-site IPsec VPN between the two firewalls.</li>
 <li>Field staff need the same servers from hotels: client-to-site VPN with MFA.</li>
 <li>Contractors need only the ticketing web app: clientless portal access, no client on their own devices.</li>
 <li>Policy requires web filtering on company laptops everywhere, so the client VPN uses a full tunnel.</li>
-<li>Switches at the branch are managed over SSH from the jump host, with a console server on a cellular link for out-of-band access.</li></ol>''')}
-{scenario('the switch nobody could reach', '''<p>A configuration change on a core switch blocks the management VLAN, and every SSH session drops. Because
+<li>Switches at the branch are managed over SSH from the jump host, with a console server on a cellular link for out-of-band access.</li></ol>''')) + '\n' + str(scenario('the switch nobody could reach', '''<p>A configuration change on a core switch blocks the management VLAN, and every SSH session drops. Because
 management was in-band only, a technician has to drive to the site and connect a console cable. After the fix, the team adds an
 out-of-band console server reachable over a separate link and moves all management through a jump host, so the next mistake can
-be undone remotely and every session is logged.</p>''')}
-{cfu(('What is the difference between a split tunnel and a full tunnel?', 'Split sends only company traffic through the VPN; full sends all traffic through it.'),
+be undone remotely and every session is logged.</p>''')) + '\n' + str(cfu(('What is the difference between a split tunnel and a full tunnel?', 'Split sends only company traffic through the VPN; full sends all traffic through it.'),
      ('When is out-of-band management needed?', 'When the production network is down or misconfigured, so in-band access is lost.'),
-     ('Which VPN type needs no installed client?', 'A clientless (browser-based TLS) VPN.'))}
-'''
+     ('Which VPN type needs no installed client?', 'A clientless (browser-based TLS) VPN.'))) + '\n')
 
 _FIG_DEF = figure(
     'fig-c-netdef', 'Network defences from the port outwards',
@@ -56,35 +32,17 @@ _FIG_DEF = figure(
     'sites and file types. Throughout, change default passwords and manage and rotate keys.',
     'Each layer limits who joins, what they can reach, and what they can fetch.', cols=5)
 
-HTML_DEF = f'''
-<p>Network+ 4.3 asks you to apply network security features and defences.</p>
-<ul>
-<li><strong>Device hardening</strong> — disable unused ports and services; change default passwords; manage and rotate keys
-(SSH keys, Wi-Fi pre-shared keys, certificates — NIST SP 800-57 covers key management).</li>
-<li><strong>Network access control (NAC)</strong> — checks a device’s identity and posture before it joins.</li>
-<li><strong>Port security</strong> — limits the MAC addresses allowed on a switch port.</li>
-<li><strong>802.1X</strong> — port-based authentication through a RADIUS server (IEEE 802.1X-2020).</li>
-<li><strong>MAC filtering</strong> — an allow-list of MAC addresses. Weak on its own: MAC addresses are easy to spoof.</li>
-<li><strong>Access control lists (ACLs)</strong> — permit or deny traffic by address, protocol and port.</li>
-<li><strong>URL filtering</strong> — allow or block sites by address or category. <strong>Content filtering</strong> — inspects what is fetched, such as file types or malware.</li>
-<li><strong>Trusted vs. untrusted zones</strong> — firewall policy between internal, guest and internet zones, and a
-<strong>screened subnet</strong> (DMZ) for servers the internet must reach (NIST SP 800-41 Rev. 1).</li>
-</ul>
-{_FIG_DEF}
-{worked('locking down a conference-room port', '''<ol>
+HTML_DEF = ('\n<p>Network+ 4.3 asks you to apply network security features and defences.</p>\n<ul>\n<li><strong>Device hardening</strong> — disable unused ports and services; change default passwords; manage and rotate keys\n(SSH keys, Wi-Fi pre-shared keys, certificates — NIST SP 800-57 covers key management).</li>\n<li><strong>Network access control (NAC)</strong> — checks a device’s identity and posture before it joins.</li>\n<li><strong>Port security</strong> — limits the MAC addresses allowed on a switch port.</li>\n<li><strong>802.1X</strong> — port-based authentication through a RADIUS server (IEEE 802.1X-2020).</li>\n<li><strong>MAC filtering</strong> — an allow-list of MAC addresses. Weak on its own: MAC addresses are easy to spoof.</li>\n<li><strong>Access control lists (ACLs)</strong> — permit or deny traffic by address, protocol and port.</li>\n<li><strong>URL filtering</strong> — allow or block sites by address or category. <strong>Content filtering</strong> — inspects what is fetched, such as file types or malware.</li>\n<li><strong>Trusted vs. untrusted zones</strong> — firewall policy between internal, guest and internet zones, and a\n<strong>screened subnet</strong> (DMZ) for servers the internet must reach (NIST SP 800-41 Rev. 1).</li>\n</ul>\n' + str(_FIG_DEF) + '\n' + str(worked('locking down a conference-room port', '''<ol>
 <li>A wall port in a public meeting room connects straight to the staff VLAN.</li>
 <li>Enable 802.1X on the port: company laptops authenticate with certificates; anything else is placed in the guest VLAN.</li>
 <li>Add port security limiting the port to two MAC addresses (a phone and a PC), with violations logged.</li>
 <li>ACL on the guest VLAN: internet only, no internal subnets.</li>
-<li>Disable the unused ports in the room, and record the change.</li></ol>''')}
-{scenario('the Wi-Fi key everyone knew', '''<p>A small company’s Wi-Fi uses one pre-shared key, unchanged for years and known to former staff. MAC filtering was
+<li>Disable the unused ports in the room, and record the change.</li></ol>''')) + '\n' + str(scenario('the Wi-Fi key everyone knew', '''<p>A small company’s Wi-Fi uses one pre-shared key, unchanged for years and known to former staff. MAC filtering was
 added as a “fix”, but a visitor joined by copying an allowed MAC address. The company moves staff to WPA3-Enterprise with 802.1X,
 puts visitors on a separate guest network, rotates the remaining keys on a schedule, and keeps the key change in the
-off-boarding checklist.</p>''')}
-{cfu(('Why is MAC filtering weak on its own?', 'MAC addresses can be spoofed easily.'),
+off-boarding checklist.</p>''')) + '\n' + str(cfu(('Why is MAC filtering weak on its own?', 'MAC addresses can be spoofed easily.'),
      ('What is the difference between URL filtering and content filtering?', 'URL filtering blocks by site or category; content filtering inspects what is fetched, such as file types or malware.'),
-     ('Where should an internet-facing web server sit?', 'In a screened subnet (DMZ), separated from the internal network.'))}
-'''
+     ('Where should an internet-facing web server sit?', 'In a screened subnet (DMZ), separated from the internal network.'))) + '\n')
 
 SUPPLEMENTS = [
     {'course': 'NETOPS', 'chapter': 5, 'lesson': 2, 'id': 'cert-net-access', 'title': 'VPN types and network management access',

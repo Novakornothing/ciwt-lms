@@ -11,47 +11,15 @@ _FIG_IR = figure(
     'collecting the most volatile data first. Every hand-over is logged in the chain of custody, and the incident is documented.',
     'Stop, report, preserve, record. The technician who found it is a witness, not the investigator.', cols=4)
 
-HTML_POL = f'''
-<p>A+ Core 2 4.6 covers how to handle prohibited content and incidents, and why licensing, regulated data and policies matter.</p>
-<h4>Incident response basics</h4>
-<ul>
-<li><strong>Inform management and, through them, law enforcement</strong> when the policy or law requires it.</li>
-<li><strong>Chain of custody</strong> — a record of who held the evidence, when and why, from collection to court; a gap can make evidence unusable.</li>
-<li><strong>Copy of drive</strong> — preserve <em>data integrity</em> by imaging through a write blocker and recording a hash of the original and the copy (NIST SP 800-86).</li>
-<li><strong>Order of volatility</strong> — collect what disappears first: CPU registers and cache, then memory, routing and process tables,
-then temporary files, then disk, then remote logs and archives (RFC 3227).</li>
-<li><strong>Documentation of the incident</strong> — what was seen, when, by whom and what was done.</li>
-</ul>
-<h4>Licensing</h4>
-<ul>
-<li><strong>Valid licences</strong> for every install; <strong>DRM</strong> (digital rights management) enforces use rules technically; the
-<strong>EULA</strong> (end-user licence agreement) is the legal terms.</li>
-<li><strong>Perpetual</strong> licence (pay once, use that version) vs. <strong>subscription</strong> (pay per period, stops when payment stops).</li>
-<li><strong>Personal use vs. corporate use</strong> — a “free for personal use” or home licence usually does not allow business use.</li>
-<li><strong>Open-source</strong> licences (OSI-approved, such as GPL, MIT, Apache) allow use, change and sharing, but carry conditions such as keeping notices.</li>
-</ul>
-<h4>Regulated data and policies</h4>
-<ul>
-<li><strong>Credit card data</strong> — PCI DSS rules on storing and handling cardholder data.</li>
-<li><strong>Government-issued information</strong> (passport, driver’s licence, national ID numbers) and other <strong>PII</strong> (personally identifiable information).</li>
-<li><strong>Healthcare data</strong> — protected health information under HIPAA in the U.S.</li>
-<li><strong>Data retention requirements</strong> — keep records for the legally required period, then dispose of them securely.</li>
-<li><strong>NDA / MNDA</strong> — non-disclosure agreement (mutual when both parties share secrets).</li>
-<li><strong>AUP</strong> (acceptable use policy) and <strong>splash screens</strong> / logon banners that remind users of the policy and monitoring before sign-in.</li>
-</ul>
-{_FIG_IR}
-{worked('a repair that turned into an incident', '''<ol>
+HTML_POL = ('\n<p>A+ Core 2 4.6 covers how to handle prohibited content and incidents, and why licensing, regulated data and policies matter.</p>\n<h4>Incident response basics</h4>\n<ul>\n<li><strong>Inform management and, through them, law enforcement</strong> when the policy or law requires it.</li>\n<li><strong>Chain of custody</strong> — a record of who held the evidence, when and why, from collection to court; a gap can make evidence unusable.</li>\n<li><strong>Copy of drive</strong> — preserve <em>data integrity</em> by imaging through a write blocker and recording a hash of the original and the copy (NIST SP 800-86).</li>\n<li><strong>Order of volatility</strong> — collect what disappears first: CPU registers and cache, then memory, routing and process tables,\nthen temporary files, then disk, then remote logs and archives (RFC 3227).</li>\n<li><strong>Documentation of the incident</strong> — what was seen, when, by whom and what was done.</li>\n</ul>\n<h4>Licensing</h4>\n<ul>\n<li><strong>Valid licences</strong> for every install; <strong>DRM</strong> (digital rights management) enforces use rules technically; the\n<strong>EULA</strong> (end-user licence agreement) is the legal terms.</li>\n<li><strong>Perpetual</strong> licence (pay once, use that version) vs. <strong>subscription</strong> (pay per period, stops when payment stops).</li>\n<li><strong>Personal use vs. corporate use</strong> — a “free for personal use” or home licence usually does not allow business use.</li>\n<li><strong>Open-source</strong> licences (OSI-approved, such as GPL, MIT, Apache) allow use, change and sharing, but carry conditions such as keeping notices.</li>\n</ul>\n<h4>Regulated data and policies</h4>\n<ul>\n<li><strong>Credit card data</strong> — PCI DSS rules on storing and handling cardholder data.</li>\n<li><strong>Government-issued information</strong> (passport, driver’s licence, national ID numbers) and other <strong>PII</strong> (personally identifiable information).</li>\n<li><strong>Healthcare data</strong> — protected health information under HIPAA in the U.S.</li>\n<li><strong>Data retention requirements</strong> — keep records for the legally required period, then dispose of them securely.</li>\n<li><strong>NDA / MNDA</strong> — non-disclosure agreement (mutual when both parties share secrets).</li>\n<li><strong>AUP</strong> (acceptable use policy) and <strong>splash screens</strong> / logon banners that remind users of the policy and monitoring before sign-in.</li>\n</ul>\n' + str(_FIG_IR) + '\n' + str(worked('a repair that turned into an incident', '''<ol>
 <li>While recovering files, a technician sees images that appear to be prohibited content.</li>
 <li>They stop, close nothing further, do not copy or delete, and tell their manager straight away.</li>
 <li>The manager follows policy and contacts law enforcement; the laptop is bagged, labelled and signed for on a chain-of-custody form.</li>
-<li>The technician writes down what they saw, when, and every action taken; they do not discuss it with the customer or colleagues.</li></ol>''')}
-{scenario('the “free” PDF editor', '''<p>A department installs a PDF editor whose licence says “free for personal, non-commercial use”. A software audit flags
+<li>The technician writes down what they saw, when, and every action taken; they do not discuss it with the customer or colleagues.</li></ol>''')) + '\n' + str(scenario('the “free” PDF editor', '''<p>A department installs a PDF editor whose licence says “free for personal, non-commercial use”. A software audit flags
 40 installs. The service desk explains that the EULA does not cover business use, removes the copies, and buys a subscription
-licence. A new rule is added to the AUP: only software from the approved catalogue, which records each licence type.</p>''')}
-{cfu(('What is chain of custody?', 'A record of everyone who handled the evidence, when and why.'),
+licence. A new rule is added to the AUP: only software from the approved catalogue, which records each licence type.</p>''')) + '\n' + str(cfu(('What is chain of custody?', 'A record of everyone who handled the evidence, when and why.'),
      ('What is collected first under the order of volatility?', 'The most volatile data, such as CPU cache and memory, before disk.'),
-     ('What is the difference between a perpetual and a subscription licence?', 'Perpetual: pay once for a version; subscription: pay each period while you use it.'))}
-'''
+     ('What is the difference between a perpetual and a subscription licence?', 'Perpetual: pay once for a version; subscription: pay each period while you use it.'))) + '\n')
 
 _FIG_PRO = figure(
     'fig-c-professional', 'A professional support contact from start to finish',
@@ -62,35 +30,16 @@ _FIG_PRO = figure(
     'Close by documenting the work and following up to confirm the user is satisfied.',
     'The user should always know what you are doing and when you will be back.', cols=3)
 
-HTML_PRO = f'''
-<p>A+ Core 2 4.7 lists the communication and professional behaviours expected of a technician.</p>
-<ul>
-<li><strong>Professional appearance and attire</strong> — match the site: formal for an office visit, business casual or the company dress code otherwise.</li>
-<li><strong>Use proper language</strong> — avoid jargon, acronyms and slang; explain in plain language.</li>
-<li><strong>Maintain a positive attitude</strong> and project confidence.</li>
-<li><strong>Actively listen</strong> and take notes; do not interrupt. <strong>Be culturally sensitive</strong> — use proper titles and respect differences.</li>
-<li><strong>Be on time</strong>; if you will be late, contact the customer before the agreed time.</li>
-<li><strong>Avoid distractions</strong> — no personal calls, texting or social media; no talking to co-workers about unrelated things; no personal interruptions.</li>
-<li><strong>Dealing with a difficult customer or situation</strong> — do not argue or be defensive, do not minimise the problem, avoid being judgemental;
-<strong>clarify</strong> by asking open-ended questions and restating the issue to confirm understanding; do not disclose experience on social media.</li>
-<li><strong>Set and meet expectations</strong> — agree a timeline and keep the customer updated; offer repair or replacement options where they apply;
-provide proper documentation of the services; follow up afterwards to confirm satisfaction.</li>
-<li><strong>Deal appropriately with confidential and private materials</strong> on computers, desks, printers and phones — do not look, copy or share.</li>
-</ul>
-{_FIG_PRO}
-{worked('a call with an angry user', '''<ol>
+HTML_PRO = ('\n<p>A+ Core 2 4.7 lists the communication and professional behaviours expected of a technician.</p>\n<ul>\n<li><strong>Professional appearance and attire</strong> — match the site: formal for an office visit, business casual or the company dress code otherwise.</li>\n<li><strong>Use proper language</strong> — avoid jargon, acronyms and slang; explain in plain language.</li>\n<li><strong>Maintain a positive attitude</strong> and project confidence.</li>\n<li><strong>Actively listen</strong> and take notes; do not interrupt. <strong>Be culturally sensitive</strong> — use proper titles and respect differences.</li>\n<li><strong>Be on time</strong>; if you will be late, contact the customer before the agreed time.</li>\n<li><strong>Avoid distractions</strong> — no personal calls, texting or social media; no talking to co-workers about unrelated things; no personal interruptions.</li>\n<li><strong>Dealing with a difficult customer or situation</strong> — do not argue or be defensive, do not minimise the problem, avoid being judgemental;\n<strong>clarify</strong> by asking open-ended questions and restating the issue to confirm understanding; do not disclose experience on social media.</li>\n<li><strong>Set and meet expectations</strong> — agree a timeline and keep the customer updated; offer repair or replacement options where they apply;\nprovide proper documentation of the services; follow up afterwards to confirm satisfaction.</li>\n<li><strong>Deal appropriately with confidential and private materials</strong> on computers, desks, printers and phones — do not look, copy or share.</li>\n</ul>\n' + str(_FIG_PRO) + '\n' + str(worked('a call with an angry user', '''<ol>
 <li>Let them finish; take notes (active listening). Do not interrupt or argue.</li>
 <li>Restate: “So since this morning your laptop will not connect to the VPN and you have a client call at 2?” (clarify).</li>
 <li>Ask an open-ended question: “What happens on screen when you try to connect?”</li>
 <li>Set expectations: “I will call you back by 12:30 with either a fix or a loan laptop.” Call back on time.</li>
-<li>Document the work in plain language and follow up the next day.</li></ol>''')}
-{scenario('the technician who was always on the phone', '''<p>Feedback says an on-site technician is skilled but users feel ignored: he takes personal calls during visits, uses
+<li>Document the work in plain language and follow up the next day.</li></ol>''')) + '\n' + str(scenario('the technician who was always on the phone', '''<p>Feedback says an on-site technician is skilled but users feel ignored: he takes personal calls during visits, uses
 acronyms, and reads documents left on desks while he waits. The team lead coaches him: phone on silent, plain language, explain what
-he is doing, and never read printouts or screens that are not part of the job. User satisfaction scores recover within a month.</p>''')}
-{cfu(('Why use open-ended questions?', 'They get the user to describe the problem in their own words, which gives more detail.'),
+he is doing, and never read printouts or screens that are not part of the job. User satisfaction scores recover within a month.</p>''')) + '\n' + str(cfu(('Why use open-ended questions?', 'They get the user to describe the problem in their own words, which gives more detail.'),
      ('What should you do if you will be late to an appointment?', 'Contact the customer before the agreed time and give a new time.'),
-     ('Name two behaviours to avoid with a difficult customer.', 'Arguing or being defensive, and minimising or judging their problem.'))}
-'''
+     ('Name two behaviours to avoid with a difficult customer.', 'Arguing or being defensive, and minimising or judging their problem.'))) + '\n')
 
 SUPPLEMENTS = [
     {'course': 'ITSUP', 'chapter': 12, 'lesson': 2, 'id': 'cert-incident-licensing', 'title': 'Incident handling, licensing and regulated data',

@@ -12,50 +12,16 @@ _FIG = figure(
     'Zero Trust limit what they can reach.',
     'Each layer deters, delays, detects or limits; no single layer is enough.', cols=3)
 
-HTML = f'''
-<p>A+ Core 2 2.1 summarises physical and logical security measures and what each is for (NIST SP 800-53 Rev. 5,
-Physical and Environmental Protection and Access Control families).</p>
-<h4>Physical security</h4>
-<ul>
-<li><strong>Bollards</strong> — short posts that stop vehicles reaching doors or glass. <strong>Fences</strong> and <strong>lighting</strong>
-deter and expose intruders.</li>
-<li><strong>Access control vestibule</strong> (formerly “mantrap”) — two interlocked doors; the second opens only after the first closes,
-which defeats tailgating and piggybacking.</li>
-<li><strong>Badge reader</strong>, <strong>key fob</strong>, <strong>smart card</strong> and <strong>mobile digital key</strong> (a credential in a phone wallet)
-— electronic entry that is logged and can be revoked.</li>
-<li><strong>Security guards</strong> — judge and respond; can check identity and escort visitors. <strong>Magnetometers</strong> (metal detectors) screen people.</li>
-<li><strong>Video surveillance</strong> records and deters; <strong>alarm systems</strong> and <strong>motion sensors</strong> detect entry out of hours.</li>
-<li><strong>Door locks</strong> on server rooms and wiring closets; <strong>equipment locks</strong> (cable locks on laptops, locking racks and cases).</li>
-<li><strong>Biometrics</strong> — fingerprint, facial or other body features; often one factor of MFA.</li>
-</ul>
-<h4>Logical security</h4>
-<ul>
-<li><strong>Least privilege</strong> — only the rights needed for the job. <strong>Zero Trust</strong> — no user or device is trusted because of
-its network location; every request is verified (NIST SP 800-207). <strong>ACLs</strong> — lists that permit or deny access to files or traffic.</li>
-<li><strong>MFA</strong> — two or more different factor types (something you know, have, are). Methods: <strong>hardware token</strong> or FIDO2
-security key (phishing-resistant), <strong>authenticator application</strong>, <strong>TOTP/OTP</strong> codes (RFC 6238), push
-notification, <strong>SMS or voice call</strong> and email codes (weakest: open to SIM swapping and interception; NIST SP 800-63B).</li>
-<li><strong>SSO</strong> — one sign-in gives access to many applications; <strong>SAML</strong> is a common standard for passing that sign-in
-from an identity provider to the application.</li>
-<li><strong>Just-in-time access / PAM</strong> — privileged access management grants admin rights only when needed, for a limited time,
-with logging; no standing admin rights.</li>
-<li><strong>IAM</strong> (identity and access management) and <strong>directory services</strong> such as Active Directory hold accounts and groups.
-<strong>MDM</strong> enforces device policy on phones and laptops. <strong>DLP</strong> (data loss prevention) detects and blocks sensitive data leaving.</li>
-</ul>
-{_FIG}
-{worked('securing a new server room', '''<ol>
+HTML = ('\n<p>A+ Core 2 2.1 summarises physical and logical security measures and what each is for (NIST SP 800-53 Rev. 5,\nPhysical and Environmental Protection and Access Control families).</p>\n<h4>Physical security</h4>\n<ul>\n<li><strong>Bollards</strong> — short posts that stop vehicles reaching doors or glass. <strong>Fences</strong> and <strong>lighting</strong>\ndeter and expose intruders.</li>\n<li><strong>Access control vestibule</strong> (formerly “mantrap”) — two interlocked doors; the second opens only after the first closes,\nwhich defeats tailgating and piggybacking.</li>\n<li><strong>Badge reader</strong>, <strong>key fob</strong>, <strong>smart card</strong> and <strong>mobile digital key</strong> (a credential in a phone wallet)\n— electronic entry that is logged and can be revoked.</li>\n<li><strong>Security guards</strong> — judge and respond; can check identity and escort visitors. <strong>Magnetometers</strong> (metal detectors) screen people.</li>\n<li><strong>Video surveillance</strong> records and deters; <strong>alarm systems</strong> and <strong>motion sensors</strong> detect entry out of hours.</li>\n<li><strong>Door locks</strong> on server rooms and wiring closets; <strong>equipment locks</strong> (cable locks on laptops, locking racks and cases).</li>\n<li><strong>Biometrics</strong> — fingerprint, facial or other body features; often one factor of MFA.</li>\n</ul>\n<h4>Logical security</h4>\n<ul>\n<li><strong>Least privilege</strong> — only the rights needed for the job. <strong>Zero Trust</strong> — no user or device is trusted because of\nits network location; every request is verified (NIST SP 800-207). <strong>ACLs</strong> — lists that permit or deny access to files or traffic.</li>\n<li><strong>MFA</strong> — two or more different factor types (something you know, have, are). Methods: <strong>hardware token</strong> or FIDO2\nsecurity key (phishing-resistant), <strong>authenticator application</strong>, <strong>TOTP/OTP</strong> codes (RFC 6238), push\nnotification, <strong>SMS or voice call</strong> and email codes (weakest: open to SIM swapping and interception; NIST SP 800-63B).</li>\n<li><strong>SSO</strong> — one sign-in gives access to many applications; <strong>SAML</strong> is a common standard for passing that sign-in\nfrom an identity provider to the application.</li>\n<li><strong>Just-in-time access / PAM</strong> — privileged access management grants admin rights only when needed, for a limited time,\nwith logging; no standing admin rights.</li>\n<li><strong>IAM</strong> (identity and access management) and <strong>directory services</strong> such as Active Directory hold accounts and groups.\n<strong>MDM</strong> enforces device policy on phones and laptops. <strong>DLP</strong> (data loss prevention) detects and blocks sensitive data leaving.</li>\n</ul>\n' + str(_FIG) + '\n' + str(worked('securing a new server room', '''<ol>
 <li>Door: badge reader with a PIN (two factors) and a log of every entry; keys only for facilities, kept in a lock box.</li>
 <li>Entrance from the lobby: an access control vestibule, because staff were holding the door for others.</li>
 <li>Inside: a camera on the door and racks, and a motion sensor tied to the alarm system out of hours.</li>
-<li>Admins sign in through SSO with a FIDO2 security key; domain admin rights are granted just-in-time through PAM for each change.</li></ol>''')}
-{scenario('the friendly tailgater', '''<p>A visitor in a hi-vis vest follows an employee through the badge door carrying boxes; nobody stops him and a laptop goes
+<li>Admins sign in through SSO with a FIDO2 security key; domain admin rights are granted just-in-time through PAM for each change.</li></ol>''')) + '\n' + str(scenario('the friendly tailgater', '''<p>A visitor in a hi-vis vest follows an employee through the badge door carrying boxes; nobody stops him and a laptop goes
 missing. The review finds that the badge door works, but people hold it open to be polite. The site adds a vestibule at the main
 entrance, a guard at reception who signs in and escorts visitors, cable locks on hot-desk laptops, and a short awareness session:
-holding the door is how tailgating works.</p>''')}
-{cfu(('What does an access control vestibule prevent?', 'Tailgating and piggybacking: the second door opens only after the first closes.'),
+holding the door is how tailgating works.</p>''')) + '\n' + str(cfu(('What does an access control vestibule prevent?', 'Tailgating and piggybacking: the second door opens only after the first closes.'),
      ('Why is SMS the weakest MFA method?', 'Codes can be intercepted or redirected by SIM swapping.'),
-     ('What is just-in-time access?', 'Privileged rights granted only when needed, for a limited time, through PAM.'))}
-'''
+     ('What is just-in-time access?', 'Privileged rights granted only when needed, for a limited time, through PAM.'))) + '\n')
 
 SUPPLEMENTS = [
     {'course': 'ITSUP', 'chapter': 10, 'lesson': 1, 'id': 'cert-phys-logical-sec', 'title': 'Physical and logical security measures',

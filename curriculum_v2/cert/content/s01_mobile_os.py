@@ -11,57 +11,21 @@ _FIG = figure(
     'that its data is backed up or synced, because removing an app can delete data stored only on the device.',
     'Least-destructive first: every step to the left keeps the user’s data; the last box can lose local app data.', cols=3)
 
-HTML = f'''
-<p>Mobile tickets look different from desktop tickets, but the method is the same: scope the fault, change one thing at a
-time, and do the steps that cannot lose data first. Both Apple and Google publish the same basic order for an app
-that crashes, will not open or stops responding: <strong>close and reopen it, restart the device, update the app and the
-operating system, and only then delete and reinstall it</strong>, because deleting an app can remove data stored only in
-that app. Android adds two intermediate steps in <em>Settings &gt; Apps</em>: <strong>Force stop</strong> and
-<strong>clear cache</strong> (clearing <em>storage/data</em> as well resets the app, so it is a later step).</p>
-{_FIG}
-<h4>Symptom → first checks</h4>
-<table class="ref-table"><thead><tr><th scope="col">Symptom</th><th scope="col">Check first</th><th scope="col">Why</th></tr></thead><tbody>
-<tr><td>App fails to launch, or crashes</td><td>Close and reopen; restart; update the app</td><td>Clears a hung process; most crash fixes ship as app updates.</td></tr>
-<tr><td>App fails to install or update</td><td>Free storage; OS version meets the app’s minimum; store account signed in; device not blocked by MDM policy</td><td>Installers need space and a supported OS; managed devices may only allow approved apps.</td></tr>
-<tr><td>OS fails to update</td><td>Battery charge or charger connected, free storage, stable Wi-Fi, device still supported</td><td>Updates check power and space before installing; older models stop receiving releases.</td></tr>
-<tr><td>Poor battery life, device warm</td><td>Battery usage by app; background activity; battery health</td><td>A single runaway app or a worn battery are the usual causes.</td></tr>
-<tr><td>Random reboots</td><td>Recent update or new app; battery health; overheating; storage nearly full</td><td>Look for a pattern before resetting anything.</td></tr>
-<tr><td>Bluetooth, Wi-Fi or NFC not working</td><td>Toggle the radio, airplane mode off, forget and re-pair or rejoin; then reset network settings</td><td>Reset network settings clears saved Wi-Fi networks and pairings, so it is not the first step.</td></tr>
-<tr><td>Screen does not autorotate</td><td>Rotation lock (iPhone Control Center) or Auto-rotate (Android quick settings); some apps support one orientation only</td><td>Almost always a setting, not a sensor fault.</td></tr>
-</tbody></table>
-<h4>When the symptom is a security symptom</h4>
-<p>Some mobile symptoms point at compromise rather than a bug: <strong>high network traffic</strong> or a <strong>data-usage limit
-notification</strong> the user cannot explain, <strong>degraded response time</strong>, a <strong>high number of ads</strong> or
-pop-ups outside any app, <strong>fake security warnings</strong> that push the user to install something, <strong>unexpected
-application behaviour</strong>, limited or no connectivity after installing something, and <strong>leaked personal files or
-data</strong> (contacts receiving messages the user did not send). NIST SP 800-124 Rev. 2 lists the root causes to look for:
-apps installed from <strong>unofficial app stores</strong> (sideloading), <strong>developer mode</strong> or USB debugging left on,
-<strong>root access or a jailbreak</strong> (which removes the operating system’s app sandbox and update protections), and
-<strong>malicious or spoofed apps</strong> that imitate a real brand.</p>
-<p>The response order matters. Contain first (airplane mode or disconnect from Wi-Fi, and report it if the device is a
-managed corporate device), then identify (recently installed apps, apps with device-administrator rights or VPN
-and device-management profiles you do not recognise), then remove the cause and verify. Change account passwords
-<em>from a different, clean device</em>, because a keylogger on the phone would capture the new password. A rooted or
-jailbroken device cannot be trusted again until it is restored to the vendor’s firmware; on a managed device, the MDM
-compliance policy normally flags it and blocks corporate apps until that happens.</p>
-{worked('Android app crashes after an update', '''<ol>
+HTML = ('\n<p>Mobile tickets look different from desktop tickets, but the method is the same: scope the fault, change one thing at a\ntime, and do the steps that cannot lose data first. Both Apple and Google publish the same basic order for an app\nthat crashes, will not open or stops responding: <strong>close and reopen it, restart the device, update the app and the\noperating system, and only then delete and reinstall it</strong>, because deleting an app can remove data stored only in\nthat app. Android adds two intermediate steps in <em>Settings &gt; Apps</em>: <strong>Force stop</strong> and\n<strong>clear cache</strong> (clearing <em>storage/data</em> as well resets the app, so it is a later step).</p>\n' + str(_FIG) + '\n<h4>Symptom → first checks</h4>\n<table class="ref-table"><thead><tr><th scope="col">Symptom</th><th scope="col">Check first</th><th scope="col">Why</th></tr></thead><tbody>\n<tr><td>App fails to launch, or crashes</td><td>Close and reopen; restart; update the app</td><td>Clears a hung process; most crash fixes ship as app updates.</td></tr>\n<tr><td>App fails to install or update</td><td>Free storage; OS version meets the app’s minimum; store account signed in; device not blocked by MDM policy</td><td>Installers need space and a supported OS; managed devices may only allow approved apps.</td></tr>\n<tr><td>OS fails to update</td><td>Battery charge or charger connected, free storage, stable Wi-Fi, device still supported</td><td>Updates check power and space before installing; older models stop receiving releases.</td></tr>\n<tr><td>Poor battery life, device warm</td><td>Battery usage by app; background activity; battery health</td><td>A single runaway app or a worn battery are the usual causes.</td></tr>\n<tr><td>Random reboots</td><td>Recent update or new app; battery health; overheating; storage nearly full</td><td>Look for a pattern before resetting anything.</td></tr>\n<tr><td>Bluetooth, Wi-Fi or NFC not working</td><td>Toggle the radio, airplane mode off, forget and re-pair or rejoin; then reset network settings</td><td>Reset network settings clears saved Wi-Fi networks and pairings, so it is not the first step.</td></tr>\n<tr><td>Screen does not autorotate</td><td>Rotation lock (iPhone Control Center) or Auto-rotate (Android quick settings); some apps support one orientation only</td><td>Almost always a setting, not a sensor fault.</td></tr>\n</tbody></table>\n<h4>When the symptom is a security symptom</h4>\n<p>Some mobile symptoms point at compromise rather than a bug: <strong>high network traffic</strong> or a <strong>data-usage limit\nnotification</strong> the user cannot explain, <strong>degraded response time</strong>, a <strong>high number of ads</strong> or\npop-ups outside any app, <strong>fake security warnings</strong> that push the user to install something, <strong>unexpected\napplication behaviour</strong>, limited or no connectivity after installing something, and <strong>leaked personal files or\ndata</strong> (contacts receiving messages the user did not send). NIST SP 800-124 Rev. 2 lists the root causes to look for:\napps installed from <strong>unofficial app stores</strong> (sideloading), <strong>developer mode</strong> or USB debugging left on,\n<strong>root access or a jailbreak</strong> (which removes the operating system’s app sandbox and update protections), and\n<strong>malicious or spoofed apps</strong> that imitate a real brand.</p>\n<p>The response order matters. Contain first (airplane mode or disconnect from Wi-Fi, and report it if the device is a\nmanaged corporate device), then identify (recently installed apps, apps with device-administrator rights or VPN\nand device-management profiles you do not recognise), then remove the cause and verify. Change account passwords\n<em>from a different, clean device</em>, because a keylogger on the phone would capture the new password. A rooted or\njailbroken device cannot be trusted again until it is restored to the vendor’s firmware; on a managed device, the MDM\ncompliance policy normally flags it and blocks corporate apps until that happens.</p>\n' + str(worked('Android app crashes after an update', '''<ol>
 <li><strong>Scope:</strong> only the expense app crashes; other apps and the camera work. One-app fault, not the OS.</li>
 <li><strong>Least destructive:</strong> force stop, reopen — still crashes. Restart the phone — still crashes.</li>
 <li><strong>Update:</strong> Play Store shows a newer build of the app; install it — still crashes at launch.</li>
 <li><strong>Cache:</strong> Settings &gt; Apps &gt; Expense &gt; Storage &amp; cache &gt; Clear cache. The app opens.</li>
 <li><strong>Verify and document:</strong> user submits a test claim; ticket notes the build number and that clearing
-storage/data was not needed, so no local drafts were lost.</li></ol>''')}
-{scenario('the phone with too many ads', '''<p>A sales rep says her personal Android phone “shows adverts on the home screen” and her monthly data warning
+storage/data was not needed, so no local drafts were lost.</li></ol>''')) + '\n' + str(scenario('the phone with too many ads', '''<p>A sales rep says her personal Android phone “shows adverts on the home screen” and her monthly data warning
 arrived two weeks early. Settings shows a torch app installed from a link in a text message last week, with
 permission to display over other apps. That fits three Core 2 3.3 symptoms at once (high number of ads, high data
 usage, an app from an unofficial source). You put the phone in airplane mode, remove the app, run a Google Play
 Protect scan, check that no unknown device-admin app remains, and advise her to change the passwords she typed
-since the install from her laptop. If the symptoms return, back up photos and contacts and factory-reset.</p>''')}
-{cfu(('Why is “delete and reinstall the app” late in the order, not early?', 'Deleting an app can delete data stored only on the device; Apple and Google both list it after restart and update.'),
+since the install from her laptop. If the symptoms return, back up photos and contacts and factory-reset.</p>''')) + '\n' + str(cfu(('Why is “delete and reinstall the app” late in the order, not early?', 'Deleting an app can delete data stored only on the device; Apple and Google both list it after restart and update.'),
      ('A phone will not rotate the screen in any app. What do you check first?', 'Rotation lock / Auto-rotate in the quick settings — it is almost always a setting.'),
      ('Why change passwords from a different device after a suspected mobile compromise?', 'Malware on the phone (a keylogger or overlay) could capture the new password.'),
-     ('Name two root causes of mobile security issues listed in Core 2 3.3.', 'Any two of: unofficial app stores/sideloading, developer mode, root access/jailbreak, malicious or spoofed apps.'))}
-'''
+     ('Name two root causes of mobile security issues listed in Core 2 3.3.', 'Any two of: unofficial app stores/sideloading, developer mode, root access/jailbreak, malicious or spoofed apps.'))) + '\n')
 
 SUPPLEMENTS = [{
     'course': 'ITSUP', 'chapter': 4, 'lesson': 2, 'id': 'cert-mobile-os',

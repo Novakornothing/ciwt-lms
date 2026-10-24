@@ -20,89 +20,29 @@ _FIG_VPC = figure(
     'at each subnet.',
     'Public subnet faces the internet gateway; private subnets reach out only through NAT; on-premises connects by VPN or a dedicated link.', cols=5)
 
-HTML_TOPO = f'''
-<p>Network+ 1.6 asks you to compare topologies and architectures and to describe traffic flows.</p>
-<ul>
-<li><strong>Star / hub and spoke</strong> — every node connects to a central device (a switch, or a hub site in a WAN). Simple;
-the centre is a single point of failure.</li>
-<li><strong>Mesh</strong> — nodes connect to many or all others (full or partial mesh). Resilient but costly in links.</li>
-<li><strong>Point to point</strong> — one link between two endpoints (a WAN circuit or a wireless bridge).</li>
-<li><strong>Hybrid</strong> — a mix of the above, which is what most real networks are.</li>
-<li><strong>Three-tier hierarchical</strong> — <em>access</em> (user ports), <em>distribution</em> (policy, routing between
-VLANs) and <em>core</em> (fast transport). A <strong>collapsed core</strong> merges core and distribution for smaller sites.</li>
-<li><strong>Spine and leaf</strong> — the data-centre design: servers attach to leaf switches, and every leaf connects to every
-spine, giving equal-cost paths and predictable latency.</li>
-</ul>
-<p><strong>Traffic flows:</strong> <strong>north-south</strong> traffic enters or leaves the data centre (users to servers,
-servers to the internet); <strong>east-west</strong> traffic moves between servers inside it — the flow that spine and leaf is
-designed for.</p>
-{_FIG_TOPO}
-{worked('choosing a design for a small data centre', '''<ol>
+HTML_TOPO = ('\n<p>Network+ 1.6 asks you to compare topologies and architectures and to describe traffic flows.</p>\n<ul>\n<li><strong>Star / hub and spoke</strong> — every node connects to a central device (a switch, or a hub site in a WAN). Simple;\nthe centre is a single point of failure.</li>\n<li><strong>Mesh</strong> — nodes connect to many or all others (full or partial mesh). Resilient but costly in links.</li>\n<li><strong>Point to point</strong> — one link between two endpoints (a WAN circuit or a wireless bridge).</li>\n<li><strong>Hybrid</strong> — a mix of the above, which is what most real networks are.</li>\n<li><strong>Three-tier hierarchical</strong> — <em>access</em> (user ports), <em>distribution</em> (policy, routing between\nVLANs) and <em>core</em> (fast transport). A <strong>collapsed core</strong> merges core and distribution for smaller sites.</li>\n<li><strong>Spine and leaf</strong> — the data-centre design: servers attach to leaf switches, and every leaf connects to every\nspine, giving equal-cost paths and predictable latency.</li>\n</ul>\n<p><strong>Traffic flows:</strong> <strong>north-south</strong> traffic enters or leaves the data centre (users to servers,\nservers to the internet); <strong>east-west</strong> traffic moves between servers inside it — the flow that spine and leaf is\ndesigned for.</p>\n' + str(_FIG_TOPO) + '\n' + str(worked('choosing a design for a small data centre', '''<ol>
 <li>Requirement: twelve racks of virtualised servers. Most traffic is virtual machine to virtual machine and application to database — east-west.</li>
 <li>Three-tier: traffic between servers in different racks may climb to the distribution or core layer and back, so path length depends on where the two servers sit.</li>
 <li>Spine and leaf: each rack’s top-of-rack leaf switch connects to every spine. Any two servers in different racks are leaf, spine, leaf — the same number of hops whichever pair you pick.</li>
 <li>Growth: add spine switches for more bandwidth between racks; add leaf switches for more server ports.</li>
-<li>Decision: spine and leaf for the data centre; the office floors keep a collapsed core because their traffic is mostly north-south.</li></ol>''')}
-{scenario('the hub that took every branch down', '''<p>Six branch offices connect hub and spoke to head office. When the head-office WAN router failed, the branches lost
+<li>Decision: spine and leaf for the data centre; the office floors keep a collapsed core because their traffic is mostly north-south.</li></ol>''')) + '\n' + str(scenario('the hub that took every branch down', '''<p>Six branch offices connect hub and spoke to head office. When the head-office WAN router failed, the branches lost
 head-office applications <em>and</em> each other, because all branch-to-branch traffic passed through the hub. The options on the
 review were a redundant hub (a second router and circuit at head office) or a partial mesh between the busiest branches. Both cost
-more links; the question is which failures the business can tolerate.</p>''')}
-{cfu(('Which topology connects every leaf switch to every spine switch?', 'Spine and leaf.'),
+more links; the question is which failures the business can tolerate.</p>''')) + '\n' + str(cfu(('Which topology connects every leaf switch to every spine switch?', 'Spine and leaf.'),
      ('What does a collapsed core combine?', 'The core and distribution layers of the three-tier model.'),
-     ('Server-to-server traffic inside a data centre is called…?', 'East-west traffic.'))}
-'''
+     ('Server-to-server traffic inside a data centre is called…?', 'East-west traffic.'))) + '\n')
 
-HTML_CLOUD = f'''
-<h4>Cloud networking (Network+ 1.3)</h4>
-<p>NIST SP 800-145 defines the service models (IaaS, PaaS, SaaS) and deployment models (public, private, community and
-hybrid); Network+ adds the building blocks a network technician configures in a provider’s cloud:</p>
-<ul>
-<li><strong>VPC</strong> (virtual private cloud) — an isolated virtual network in the provider’s cloud, divided into subnets.</li>
-<li><strong>Network security groups</strong> filter traffic to individual instances; <strong>network security lists</strong>
-(network ACLs) filter at the subnet boundary.</li>
-<li><strong>Internet gateway</strong> — gives a public subnet a route to the internet. <strong>NAT gateway</strong> — lets
-instances in a private subnet start outbound connections without being reachable from outside.</li>
-<li><strong>Cloud connectivity</strong> — a site-to-site <strong>VPN</strong> over the internet, or a <strong>direct
-connect</strong> dedicated private circuit (for example AWS Direct Connect) for predictable bandwidth.</li>
-<li><strong>NFV</strong> (network functions virtualization) — firewalls, routers and load balancers run as software on standard servers.</li>
-<li><strong>Scalability</strong> (capacity can be added), <strong>elasticity</strong> (it is added and removed automatically
-with demand) and <strong>multitenancy</strong> (many customers share infrastructure, logically isolated).</li>
-</ul>
-{_FIG_VPC}
-<h4>Modern network environments (Network+ 1.8)</h4>
-<ul>
-<li><strong>SDN and SD-WAN</strong> — the control plane is centralised in software. SD-WAN is <strong>application aware</strong>
-(steers each application over the best link), supports <strong>zero-touch provisioning</strong> (a new branch device downloads
-its configuration when plugged in), is <strong>transport agnostic</strong> (broadband, LTE/5G or MPLS) and uses
-<strong>central policy management</strong>.</li>
-<li><strong>VXLAN</strong> (RFC 7348) — carries Layer 2 frames inside UDP (port 4789), with a 24-bit segment ID (about 16
-million segments, against 4,094 usable VLAN IDs). Uses: <strong>Layer 2 encapsulation</strong> over a routed fabric and
-<strong>data centre interconnect (DCI)</strong>.</li>
-<li><strong>Zero trust architecture</strong> (NIST SP 800-207) — no implicit trust from network location;
-<strong>policy-based authentication</strong> and authorization for every request, with <strong>least privilege</strong>.</li>
-<li><strong>SASE / SSE</strong> — secure access service edge combines SD-WAN with cloud-delivered security; security service
-edge is the security part (secure web gateway, cloud access security broker, zero trust network access).</li>
-<li><strong>Infrastructure as code (IaC)</strong> — configuration written as code: <strong>playbooks and templates</strong> for
-reusable tasks, detection of <strong>configuration drift</strong> and compliance, automated upgrades and <strong>dynamic
-inventories</strong>. Kept in <strong>source control</strong>: version history, a central repository, branching, and conflict
-identification before changes merge.</li>
-<li><strong>IPv6</strong> — mitigates IPv4 address exhaustion; transition uses <strong>dual stack</strong> (both protocols on
-each interface), <strong>tunnelling</strong> (IPv6 carried over IPv4) and <strong>NAT64</strong> (IPv6-only clients reach IPv4 servers).</li>
-</ul>
-{worked('choosing cloud building blocks', '''<ol>
+HTML_CLOUD = ('\n<h4>Cloud networking (Network+ 1.3)</h4>\n<p>NIST SP 800-145 defines the service models (IaaS, PaaS, SaaS) and deployment models (public, private, community and\nhybrid); Network+ adds the building blocks a network technician configures in a provider’s cloud:</p>\n<ul>\n<li><strong>VPC</strong> (virtual private cloud) — an isolated virtual network in the provider’s cloud, divided into subnets.</li>\n<li><strong>Network security groups</strong> filter traffic to individual instances; <strong>network security lists</strong>\n(network ACLs) filter at the subnet boundary.</li>\n<li><strong>Internet gateway</strong> — gives a public subnet a route to the internet. <strong>NAT gateway</strong> — lets\ninstances in a private subnet start outbound connections without being reachable from outside.</li>\n<li><strong>Cloud connectivity</strong> — a site-to-site <strong>VPN</strong> over the internet, or a <strong>direct\nconnect</strong> dedicated private circuit (for example AWS Direct Connect) for predictable bandwidth.</li>\n<li><strong>NFV</strong> (network functions virtualization) — firewalls, routers and load balancers run as software on standard servers.</li>\n<li><strong>Scalability</strong> (capacity can be added), <strong>elasticity</strong> (it is added and removed automatically\nwith demand) and <strong>multitenancy</strong> (many customers share infrastructure, logically isolated).</li>\n</ul>\n' + str(_FIG_VPC) + '\n<h4>Modern network environments (Network+ 1.8)</h4>\n<ul>\n<li><strong>SDN and SD-WAN</strong> — the control plane is centralised in software. SD-WAN is <strong>application aware</strong>\n(steers each application over the best link), supports <strong>zero-touch provisioning</strong> (a new branch device downloads\nits configuration when plugged in), is <strong>transport agnostic</strong> (broadband, LTE/5G or MPLS) and uses\n<strong>central policy management</strong>.</li>\n<li><strong>VXLAN</strong> (RFC 7348) — carries Layer 2 frames inside UDP (port 4789), with a 24-bit segment ID (about 16\nmillion segments, against 4,094 usable VLAN IDs). Uses: <strong>Layer 2 encapsulation</strong> over a routed fabric and\n<strong>data centre interconnect (DCI)</strong>.</li>\n<li><strong>Zero trust architecture</strong> (NIST SP 800-207) — no implicit trust from network location;\n<strong>policy-based authentication</strong> and authorization for every request, with <strong>least privilege</strong>.</li>\n<li><strong>SASE / SSE</strong> — secure access service edge combines SD-WAN with cloud-delivered security; security service\nedge is the security part (secure web gateway, cloud access security broker, zero trust network access).</li>\n<li><strong>Infrastructure as code (IaC)</strong> — configuration written as code: <strong>playbooks and templates</strong> for\nreusable tasks, detection of <strong>configuration drift</strong> and compliance, automated upgrades and <strong>dynamic\ninventories</strong>. Kept in <strong>source control</strong>: version history, a central repository, branching, and conflict\nidentification before changes merge.</li>\n<li><strong>IPv6</strong> — mitigates IPv4 address exhaustion; transition uses <strong>dual stack</strong> (both protocols on\neach interface), <strong>tunnelling</strong> (IPv6 carried over IPv4) and <strong>NAT64</strong> (IPv6-only clients reach IPv4 servers).</li>\n</ul>\n' + str(worked('choosing cloud building blocks', '''<ol>
 <li>Requirement: a public web front end, a database that must never be reachable from the internet, and patch downloads for both.</li>
 <li>Web server in a public subnet with a route to the internet gateway; security group allows only TCP 443 inbound.</li>
 <li>Database in a private subnet; its security group allows the database port only from the web tier’s security group.</li>
 <li>Private subnet’s default route points at the NAT gateway, so it can download patches but accepts no inbound connections.</li>
-<li>Head office connects by site-to-site VPN for administration — never by opening admin ports to the internet.</li></ol>''')}
-{scenario('the new branch', '''<p>A retailer opens 30 small shops. Each gets a broadband line and an LTE backup. An SD-WAN edge device is
+<li>Head office connects by site-to-site VPN for administration — never by opening admin ports to the internet.</li></ol>''')) + '\n' + str(scenario('the new branch', '''<p>A retailer opens 30 small shops. Each gets a broadband line and an LTE backup. An SD-WAN edge device is
 shipped to each shop; staff plug it in, it calls home (zero-touch provisioning) and downloads the central policy, which sends
 card-payment traffic over the best-performing link and fails over to LTE automatically. Configuration templates live in
-source control, so a change to all 30 shops is reviewed once and applied the same way everywhere.</p>''')}
-{cfu(('What lets instances in a private subnet download updates without being reachable from the internet?', 'A NAT gateway.'),
+source control, so a change to all 30 shops is reviewed once and applied the same way everywhere.</p>''')) + '\n' + str(cfu(('What lets instances in a private subnet download updates without being reachable from the internet?', 'A NAT gateway.'),
      ('Name two SD-WAN characteristics from Network+ 1.8.', 'Any two of: application aware, zero-touch provisioning, transport agnostic, central policy management.'),
-     ('Why does VXLAN scale further than VLANs?', 'Its 24-bit segment ID allows about 16 million segments versus 4,094 usable VLAN IDs.'))}
-'''
+     ('Why does VXLAN scale further than VLANs?', 'Its 24-bit segment ID allows about 16 million segments versus 4,094 usable VLAN IDs.'))) + '\n')
 
 SUPPLEMENTS = [
     {'course': 'NETOPS', 'chapter': 2, 'lesson': 1, 'id': 'cert-topologies',

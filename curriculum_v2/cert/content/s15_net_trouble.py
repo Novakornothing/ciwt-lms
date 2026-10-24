@@ -11,44 +11,15 @@ _FIG = figure(
     'light level, and for PoE check the power budget.',
     'show interfaces answers most physical-layer questions before you touch a cable.', cols=4)
 
-HTML = f'''
-<h4>Cabling and interface issues (Network+ 5.2)</h4>
-<table class="ref-table"><thead><tr><th scope="col">Finding</th><th scope="col">Meaning</th><th scope="col">Next step</th></tr></thead><tbody>
-<tr><td>Administratively down</td><td>The port was shut in configuration</td><td>Confirm it should be live, then <code>no shutdown</code></td></tr>
-<tr><td>Error disabled (err-disabled)</td><td>The switch shut the port after a violation (port security, BPDU guard)</td><td>Find and fix the cause, then reset the port</td></tr>
-<tr><td>Suspended</td><td>A link-aggregation member whose settings do not match the bundle</td><td>Match speed, duplex, VLANs and LACP mode on the member</td></tr>
-<tr><td>CRC errors</td><td>Frames corrupted in transit: damaged cable, bad termination, interference (EMI), crosstalk</td><td>Test or replace the cable; reroute away from interference</td></tr>
-<tr><td>Runts</td><td>Frames shorter than 64 bytes — collisions, often a duplex mismatch</td><td>Match duplex (auto on both ends)</td></tr>
-<tr><td>Giants</td><td>Frames larger than the configured MTU</td><td>Make MTU / jumbo-frame settings consistent along the path</td></tr>
-<tr><td>Attenuation; low received light (dBm)</td><td>Signal loss from distance, dirty or damaged fibre ends, too many joints</td><td>Clean and inspect connectors; check run length against the standard</td></tr>
-<tr><td>TX/RX transposed</td><td>Fibre strands crossed so transmit meets transmit</td><td>Swap the strands at one end (polarity)</td></tr>
-<tr><td>PoE device not powering</td><td>Power budget exhausted or the wrong PoE standard</td><td><code>show power inline</code>; move or reduce load</td></tr>
-</tbody></table>
-{_FIG}
-<h4>Tools and protocols (Network+ 5.5)</h4>
-<ul>
-<li><strong>Software:</strong> <strong>protocol analyzer</strong> (Wireshark) and <strong>tcpdump</strong> capture packets;
-<code>ping</code> and <code>traceroute</code>/<code>tracert</code> test reachability and path; <code>nslookup</code> and
-<code>dig</code> query DNS; <code>netstat</code> shows connections and listening ports; <code>ip</code>/<code>ifconfig</code>/
-<code>ipconfig</code> show addressing; <code>arp</code> shows IP-to-MAC mappings; <strong>Nmap</strong> discovers hosts and open
-ports (only with authorisation); <strong>LLDP/CDP</strong> identify the neighbouring device and port; speed testers measure throughput.</li>
-<li><strong>Hardware:</strong> toner, cable tester, <strong>taps</strong>, Wi-Fi analyzer and the <strong>visual fault locator</strong> (a
-red laser that shows breaks and bad joints in fibre).</li>
-<li><strong>Device commands:</strong> <code>show mac address-table</code>, <code>show ip route</code>, <code>show interfaces</code>,
-<code>show running-config</code>, <code>show arp</code>, <code>show vlan</code> and <code>show power inline</code>.</li>
-</ul>
-{worked('“slow network” on one port', '''<ol>
+HTML = ('\n<h4>Cabling and interface issues (Network+ 5.2)</h4>\n<table class="ref-table"><thead><tr><th scope="col">Finding</th><th scope="col">Meaning</th><th scope="col">Next step</th></tr></thead><tbody>\n<tr><td>Administratively down</td><td>The port was shut in configuration</td><td>Confirm it should be live, then <code>no shutdown</code></td></tr>\n<tr><td>Error disabled (err-disabled)</td><td>The switch shut the port after a violation (port security, BPDU guard)</td><td>Find and fix the cause, then reset the port</td></tr>\n<tr><td>Suspended</td><td>A link-aggregation member whose settings do not match the bundle</td><td>Match speed, duplex, VLANs and LACP mode on the member</td></tr>\n<tr><td>CRC errors</td><td>Frames corrupted in transit: damaged cable, bad termination, interference (EMI), crosstalk</td><td>Test or replace the cable; reroute away from interference</td></tr>\n<tr><td>Runts</td><td>Frames shorter than 64 bytes — collisions, often a duplex mismatch</td><td>Match duplex (auto on both ends)</td></tr>\n<tr><td>Giants</td><td>Frames larger than the configured MTU</td><td>Make MTU / jumbo-frame settings consistent along the path</td></tr>\n<tr><td>Attenuation; low received light (dBm)</td><td>Signal loss from distance, dirty or damaged fibre ends, too many joints</td><td>Clean and inspect connectors; check run length against the standard</td></tr>\n<tr><td>TX/RX transposed</td><td>Fibre strands crossed so transmit meets transmit</td><td>Swap the strands at one end (polarity)</td></tr>\n<tr><td>PoE device not powering</td><td>Power budget exhausted or the wrong PoE standard</td><td><code>show power inline</code>; move or reduce load</td></tr>\n</tbody></table>\n' + str(_FIG) + '\n<h4>Tools and protocols (Network+ 5.5)</h4>\n<ul>\n<li><strong>Software:</strong> <strong>protocol analyzer</strong> (Wireshark) and <strong>tcpdump</strong> capture packets;\n<code>ping</code> and <code>traceroute</code>/<code>tracert</code> test reachability and path; <code>nslookup</code> and\n<code>dig</code> query DNS; <code>netstat</code> shows connections and listening ports; <code>ip</code>/<code>ifconfig</code>/\n<code>ipconfig</code> show addressing; <code>arp</code> shows IP-to-MAC mappings; <strong>Nmap</strong> discovers hosts and open\nports (only with authorisation); <strong>LLDP/CDP</strong> identify the neighbouring device and port; speed testers measure throughput.</li>\n<li><strong>Hardware:</strong> toner, cable tester, <strong>taps</strong>, Wi-Fi analyzer and the <strong>visual fault locator</strong> (a\nred laser that shows breaks and bad joints in fibre).</li>\n<li><strong>Device commands:</strong> <code>show mac address-table</code>, <code>show ip route</code>, <code>show interfaces</code>,\n<code>show running-config</code>, <code>show arp</code>, <code>show vlan</code> and <code>show power inline</code>.</li>\n</ul>\n' + str(worked('“slow network” on one port', '''<ol>
 <li>One user’s file copies crawl; neighbours are fine. <code>show interfaces</code> on the user’s port: up/up, 100 Mb/s full duplex (hard-set), runts and CRC errors rising.</li>
 <li>The switch port is hard-set to 100 Mb/s full duplex. The PC auto-negotiates, gets no negotiation from a hard-set port, detects the speed and falls back to half duplex: a duplex mismatch.</li>
 <li>Set the port to auto speed/duplex, re-patch with a tested cable; link comes up at 1000/full and counters stop increasing.</li>
-<li>Clear counters, monitor for a day, document the change.</li></ol>''')}
-{scenario('the errors that followed the cable', '''<p>A user reports a slow, unreliable connection. The switch port shows CRC errors climbing. Moving the PC to a
+<li>Clear counters, monitor for a day, document the change.</li></ol>''')) + '\n' + str(scenario('the errors that followed the cable', '''<p>A user reports a slow, unreliable connection. The switch port shows CRC errors climbing. Moving the PC to a
 different switch port does not help — the errors move with it. Replacing the user’s patch cable stops the errors; the
-technician clears the counters and checks again the next day to confirm they stay at zero.</p>''')}
-{cfu(('A port shows “err-disabled”. What does that mean?', 'The switch shut the port itself after a violation such as port security or BPDU guard.'),
+technician clears the counters and checks again the next day to confirm they stay at zero.</p>''')) + '\n' + str(cfu(('A port shows “err-disabled”. What does that mean?', 'The switch shut the port itself after a violation such as port security or BPDU guard.'),
      ('Rising CRC errors on one port usually point at…?', 'The physical layer — cable, termination or interference.'),
-     ('Which tool shows the neighbouring switch’s name and port?', 'LLDP or CDP (show lldp/cdp neighbors).'))}
-'''
+     ('Which tool shows the neighbouring switch’s name and port?', 'LLDP or CDP (show lldp/cdp neighbors).'))) + '\n')
 
 SUPPLEMENTS = [{
     'course': 'NETOPS', 'chapter': 6, 'lesson': 1, 'id': 'cert-net-trouble', 'title': 'Interface states, error counters and the troubleshooting toolkit',

@@ -12,38 +12,15 @@ _FIG_APP = figure(
     'On the internet, a content delivery network serves copies of content from caches near users. QoS and TTL apply across the path.',
     'Name what the box does to traffic: forward, filter, detect, block, spread, cache or store.', cols=3)
 
-HTML_APP = f'''
-<p>Network+ 1.2 compares networking appliances, applications and functions, physical or virtual.</p>
-<ul>
-<li><strong>Router</strong> (forwards between networks by IP), <strong>switch</strong> (forwards frames by MAC within a LAN), <strong>firewall</strong>
-(permits or denies traffic by rule).</li>
-<li><strong>IDS vs. IPS</strong> — an intrusion detection system watches a copy of traffic (for example from a SPAN port) and alerts; an
-intrusion prevention system sits inline and can drop the traffic.</li>
-<li><strong>Load balancer</strong> — spreads client requests across several servers and stops sending to a server that fails its health check.</li>
-<li><strong>Proxy</strong> — makes requests on behalf of clients (forward proxy, for filtering and caching) or of servers (reverse proxy).</li>
-<li><strong>NAS vs. SAN</strong> — network-attached storage shares <em>files</em> over SMB or NFS; a storage area network presents
-<em>block</em> storage (LUNs) to servers over Fibre Channel or iSCSI, which the server formats as its own disk (SNIA definitions).</li>
-<li><strong>Wireless access point and controller</strong> — APs give Wi-Fi access; a wireless LAN controller manages many APs centrally.</li>
-<li><strong>CDN</strong> (content delivery network) — copies of web content cached at edge servers near users, for speed and to absorb load (RFC 7336).</li>
-<li><strong>VPN</strong> — an encrypted tunnel across an untrusted network.</li>
-<li><strong>QoS</strong> (quality of service) — classify and mark traffic (DSCP in the IP header, RFC 2474; voice is usually EF, DSCP 46), then queue
-or shape so delay-sensitive traffic goes first when the link is busy.</li>
-<li><strong>TTL</strong> (time to live) — the IPv4 TTL field (hop limit in IPv6) drops by one at each router; at zero the packet is discarded and an
-ICMP Time Exceeded is returned, which stops loops and is how traceroute works. A DNS TTL is something else: how long a record may be cached.</li>
-</ul>
-{_FIG_APP}
-{worked('slow file shares and choppy calls', '''<ol>
+HTML_APP = ('\n<p>Network+ 1.2 compares networking appliances, applications and functions, physical or virtual.</p>\n<ul>\n<li><strong>Router</strong> (forwards between networks by IP), <strong>switch</strong> (forwards frames by MAC within a LAN), <strong>firewall</strong>\n(permits or denies traffic by rule).</li>\n<li><strong>IDS vs. IPS</strong> — an intrusion detection system watches a copy of traffic (for example from a SPAN port) and alerts; an\nintrusion prevention system sits inline and can drop the traffic.</li>\n<li><strong>Load balancer</strong> — spreads client requests across several servers and stops sending to a server that fails its health check.</li>\n<li><strong>Proxy</strong> — makes requests on behalf of clients (forward proxy, for filtering and caching) or of servers (reverse proxy).</li>\n<li><strong>NAS vs. SAN</strong> — network-attached storage shares <em>files</em> over SMB or NFS; a storage area network presents\n<em>block</em> storage (LUNs) to servers over Fibre Channel or iSCSI, which the server formats as its own disk (SNIA definitions).</li>\n<li><strong>Wireless access point and controller</strong> — APs give Wi-Fi access; a wireless LAN controller manages many APs centrally.</li>\n<li><strong>CDN</strong> (content delivery network) — copies of web content cached at edge servers near users, for speed and to absorb load (RFC 7336).</li>\n<li><strong>VPN</strong> — an encrypted tunnel across an untrusted network.</li>\n<li><strong>QoS</strong> (quality of service) — classify and mark traffic (DSCP in the IP header, RFC 2474; voice is usually EF, DSCP 46), then queue\nor shape so delay-sensitive traffic goes first when the link is busy.</li>\n<li><strong>TTL</strong> (time to live) — the IPv4 TTL field (hop limit in IPv6) drops by one at each router; at zero the packet is discarded and an\nICMP Time Exceeded is returned, which stops loops and is how traceroute works. A DNS TTL is something else: how long a record may be cached.</li>\n</ul>\n' + str(_FIG_APP) + '\n' + str(worked('slow file shares and choppy calls', '''<ol>
 <li>Designers need a shared folder of large files: a NAS on the LAN, shared over SMB.</li>
 <li>The virtual server cluster needs shared disks it can format: a SAN over iSCSI on its own VLAN.</li>
 <li>Calls break up when backups run over the WAN: QoS marks voice EF and gives it priority on the WAN link.</li>
-<li>The public website is slow for overseas visitors: a CDN serves images from edge caches near them.</li></ol>''')}
-{scenario('the IDS that saw everything and stopped nothing', '''<p>An attack scan triggers hundreds of alerts on the company IDS, but the traffic still reaches the server. The IDS is
+<li>The public website is slow for overseas visitors: a CDN serves images from edge caches near them.</li></ol>''')) + '\n' + str(scenario('the IDS that saw everything and stopped nothing', '''<p>An attack scan triggers hundreds of alerts on the company IDS, but the traffic still reaches the server. The IDS is
 connected to a SPAN port, so it only sees a copy of traffic and can alert, not block. The team places an IPS inline at the firewall
-for internet traffic, tunes its signatures to avoid blocking legitimate traffic, and keeps the IDS for internal monitoring.</p>''')}
-{cfu(('What is the difference between NAS and SAN?', 'NAS shares files; a SAN presents block storage that the server formats.'),
+for internet traffic, tunes its signatures to avoid blocking legitimate traffic, and keeps the IDS for internal monitoring.</p>''')) + '\n' + str(cfu(('What is the difference between NAS and SAN?', 'NAS shares files; a SAN presents block storage that the server formats.'),
      ('What happens when a packet’s TTL reaches zero?', 'The router discards it and sends back ICMP Time Exceeded.'),
-     ('Why can an IPS block attacks when an IDS cannot?', 'The IPS sits inline in the traffic path; the IDS sees only a copy.'))}
-'''
+     ('Why can an IPS block attacks when an IDS cannot?', 'The IPS sits inline in the traffic path; the IDS sees only a copy.'))) + '\n')
 
 _FIG_DOC = figure(
     'fig-c-netdocs', 'The network documentation set',
@@ -55,36 +32,15 @@ _FIG_DOC = figure(
     'end-of-support dates, patches and firmware, and decommissioning. Change and configuration management keep the set current.',
     'If it is not documented, the next technician has to rediscover it.', cols=3)
 
-HTML_DOC = f'''
-<p>Network+ 3.1 explains why organisations document networks and manage changes and configurations.</p>
-<ul>
-<li><strong>Physical vs. logical diagrams</strong> — physical shows real devices, ports, cable runs and locations; logical shows subnets,
-VLANs, routing and traffic flow. <strong>Layer 1, 2 and 3 diagrams</strong> split these by OSI layer.</li>
-<li><strong>Rack diagrams</strong> (rack elevations) show what is in each rack unit; <strong>cable maps</strong> record each cable’s ends and labels (ANSI/TIA-606).</li>
-<li><strong>Asset inventory</strong> — hardware, software, licensing, and warranty and support contracts.</li>
-<li><strong>IPAM</strong> (IP address management) — tracks subnets, DHCP scopes, reservations and static assignments, so addresses are not duplicated.</li>
-<li><strong>SLA</strong> (service-level agreement) — the measurable service a provider commits to, such as uptime and response times.</li>
-<li><strong>Wireless survey / heat map</strong> — measured signal strength and coverage across the site.</li>
-<li><strong>Life-cycle management</strong> — <strong>EOL</strong> (end of life: no longer sold) and <strong>EOS</strong> (end of support: no more
-fixes); software management for patches and bug fixes, operating system and firmware updates; <strong>decommissioning</strong>
-(remove from service, wipe or destroy storage per NIST SP 800-88, update the inventory and diagrams).</li>
-<li><strong>Change management</strong> — request tracking, approval and records for each change.</li>
-<li><strong>Configuration management</strong> — the <em>production</em> configuration, a <em>backup</em> configuration, and a
-<em>baseline/golden</em> configuration that new devices start from and running devices are compared to (NIST SP 800-128).</li>
-</ul>
-{_FIG_DOC}
-{worked('replacing an end-of-support switch', '''<ol>
+HTML_DOC = ('\n<p>Network+ 3.1 explains why organisations document networks and manage changes and configurations.</p>\n<ul>\n<li><strong>Physical vs. logical diagrams</strong> — physical shows real devices, ports, cable runs and locations; logical shows subnets,\nVLANs, routing and traffic flow. <strong>Layer 1, 2 and 3 diagrams</strong> split these by OSI layer.</li>\n<li><strong>Rack diagrams</strong> (rack elevations) show what is in each rack unit; <strong>cable maps</strong> record each cable’s ends and labels (ANSI/TIA-606).</li>\n<li><strong>Asset inventory</strong> — hardware, software, licensing, and warranty and support contracts.</li>\n<li><strong>IPAM</strong> (IP address management) — tracks subnets, DHCP scopes, reservations and static assignments, so addresses are not duplicated.</li>\n<li><strong>SLA</strong> (service-level agreement) — the measurable service a provider commits to, such as uptime and response times.</li>\n<li><strong>Wireless survey / heat map</strong> — measured signal strength and coverage across the site.</li>\n<li><strong>Life-cycle management</strong> — <strong>EOL</strong> (end of life: no longer sold) and <strong>EOS</strong> (end of support: no more\nfixes); software management for patches and bug fixes, operating system and firmware updates; <strong>decommissioning</strong>\n(remove from service, wipe or destroy storage per NIST SP 800-88, update the inventory and diagrams).</li>\n<li><strong>Change management</strong> — request tracking, approval and records for each change.</li>\n<li><strong>Configuration management</strong> — the <em>production</em> configuration, a <em>backup</em> configuration, and a\n<em>baseline/golden</em> configuration that new devices start from and running devices are compared to (NIST SP 800-128).</li>\n</ul>\n' + str(_FIG_DOC) + '\n' + str(worked('replacing an end-of-support switch', '''<ol>
 <li>The asset inventory shows the access switch reaches end of support next quarter: no more security fixes.</li>
 <li>A change request is raised with scope, window and rollback; the new switch is configured from the golden config.</li>
 <li>Cutover follows the cable map so every patch lead goes back to the same port; the rack diagram is updated.</li>
-<li>The old switch is decommissioned: config wiped, removed from IPAM and the inventory, and disposed of per policy.</li></ol>''')}
-{scenario('the address that already existed', '''<p>A technician gives a new printer a static address that “looked free”. Two days later the finance server drops off the
+<li>The old switch is decommissioned: config wiped, removed from IPAM and the inventory, and disposed of per policy.</li></ol>''')) + '\n' + str(scenario('the address that already existed', '''<p>A technician gives a new printer a static address that “looked free”. Two days later the finance server drops off the
 network: it had the same address. There was no IPAM and the logical diagram was two years old. The team adopts an IPAM tool, records
-every static assignment and DHCP reservation in it, and makes updating IPAM and the diagram part of every change record.</p>''')}
-{cfu(('What does a logical diagram show that a physical diagram does not?', 'Subnets, VLANs, routing and traffic flow rather than devices and cable runs.'),
+every static assignment and DHCP reservation in it, and makes updating IPAM and the diagram part of every change record.</p>''')) + '\n' + str(cfu(('What does a logical diagram show that a physical diagram does not?', 'Subnets, VLANs, routing and traffic flow rather than devices and cable runs.'),
      ('What is the difference between EOL and EOS?', 'End of life: no longer sold; end of support: no more fixes or patches.'),
-     ('What is a golden configuration?', 'The approved baseline that new devices start from and running devices are compared to.'))}
-'''
+     ('What is a golden configuration?', 'The approved baseline that new devices start from and running devices are compared to.'))) + '\n')
 
 SUPPLEMENTS = [
     {'course': 'NETOPS', 'chapter': 4, 'lesson': 3, 'id': 'cert-net-appliances', 'title': 'Networking appliances, applications and functions',

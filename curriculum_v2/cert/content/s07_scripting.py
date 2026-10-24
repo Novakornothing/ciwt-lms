@@ -9,49 +9,16 @@ _FIG = figure(
     'deploy it with logging and verify the results. A script run on many PCs repeats any mistake on every one of them.',
     'A script multiplies whatever it does — including mistakes — so test and approval come before deployment.', cols=5)
 
-HTML = f'''
-<p>A script is a text file of commands that an interpreter runs in order. Support teams script the jobs they do
-often, so the job is done the same way every time. Core 2 4.8 expects you to recognise the common file types, know what
-scripts are used for, and understand the risks.</p>
-<table class="ref-table"><thead><tr><th scope="col">Extension</th><th scope="col">Language / interpreter</th><th scope="col">Typical use</th></tr></thead><tbody>
-<tr><td><code>.bat</code></td><td>Windows batch file (cmd.exe)</td><td>Simple legacy logon and maintenance tasks</td></tr>
-<tr><td><code>.ps1</code></td><td>PowerShell script</td><td>Modern Windows administration; subject to the PowerShell <em>execution policy</em></td></tr>
-<tr><td><code>.vbs</code></td><td>VBScript (Windows Script Host)</td><td>Legacy Windows scripts; Microsoft has deprecated VBScript</td></tr>
-<tr><td><code>.sh</code></td><td>Shell script (bash or another shell)</td><td>Linux and macOS tasks; first line names the interpreter (<code>#!/bin/bash</code>), and the file must be executable</td></tr>
-<tr><td><code>.js</code></td><td>JavaScript</td><td>Web pages, Node.js tools, and (legacy) Windows Script Host</td></tr>
-<tr><td><code>.py</code></td><td>Python</td><td>Cross-platform automation and data handling</td></tr>
-</tbody></table>
-<h4>Use cases</h4>
-<ul>
-<li><strong>Basic automation</strong> of repeated tasks, on one PC or many.</li>
-<li><strong>Restarting machines</strong> — for example PowerShell <code>Restart-Computer</code> in a maintenance window.</li>
-<li><strong>Remapping network drives</strong> — <code>net use H: \\\\fs01\\home /persistent:yes</code> or PowerShell <code>New-PSDrive -Persist</code>.</li>
-<li><strong>Installing applications</strong> — a package manager such as <code>winget install</code>, or an <code>.msi</code> with <code>msiexec /i … /qn</code>.</li>
-<li><strong>Automated backups</strong> — a scheduled <code>robocopy</code> job, or <code>rsync</code> on Linux.</li>
-<li><strong>Gathering information</strong> — inventory with <code>Get-CimInstance Win32_OperatingSystem</code> or <code>systeminfo</code>.</li>
-<li><strong>Initiating updates</strong> — triggering an update scan or package upgrade instead of waiting for the schedule.</li>
-</ul>
-{_FIG}
-<h4>Risks (“other considerations”)</h4>
-<p>The exam names three: <strong>unintentionally introducing malware</strong> (a script copied from a forum can download
-and run anything), <strong>inadvertently changing system settings</strong> (a wrong path or a missing condition repeats on
-every PC it runs on), and <strong>browser or system crashes due to mishandling of resources</strong> (a loop that never ends,
-or a script that fills a disk or memory). PowerShell’s execution policy is a safety feature that helps stop scripts running
-unintentionally — Microsoft is explicit that it is not a security boundary — so the real controls are reading the script,
-running it from a trusted location, testing it, and putting it through change control.</p>
-{worked('remapping a drive after a file-server move', '''<p>The H: drive moved from <code>\\\\fs01\\home</code> to <code>\\\\fs02\\home</code>. A two-line batch file does it:</p>
+HTML = ('\n<p>A script is a text file of commands that an interpreter runs in order. Support teams script the jobs they do\noften, so the job is done the same way every time. Core 2 4.8 expects you to recognise the common file types, know what\nscripts are used for, and understand the risks.</p>\n<table class="ref-table"><thead><tr><th scope="col">Extension</th><th scope="col">Language / interpreter</th><th scope="col">Typical use</th></tr></thead><tbody>\n<tr><td><code>.bat</code></td><td>Windows batch file (cmd.exe)</td><td>Simple legacy logon and maintenance tasks</td></tr>\n<tr><td><code>.ps1</code></td><td>PowerShell script</td><td>Modern Windows administration; subject to the PowerShell <em>execution policy</em></td></tr>\n<tr><td><code>.vbs</code></td><td>VBScript (Windows Script Host)</td><td>Legacy Windows scripts; Microsoft has deprecated VBScript</td></tr>\n<tr><td><code>.sh</code></td><td>Shell script (bash or another shell)</td><td>Linux and macOS tasks; first line names the interpreter (<code>#!/bin/bash</code>), and the file must be executable</td></tr>\n<tr><td><code>.js</code></td><td>JavaScript</td><td>Web pages, Node.js tools, and (legacy) Windows Script Host</td></tr>\n<tr><td><code>.py</code></td><td>Python</td><td>Cross-platform automation and data handling</td></tr>\n</tbody></table>\n<h4>Use cases</h4>\n<ul>\n<li><strong>Basic automation</strong> of repeated tasks, on one PC or many.</li>\n<li><strong>Restarting machines</strong> — for example PowerShell <code>Restart-Computer</code> in a maintenance window.</li>\n<li><strong>Remapping network drives</strong> — <code>net use H: \\\\fs01\\home /persistent:yes</code> or PowerShell <code>New-PSDrive -Persist</code>.</li>\n<li><strong>Installing applications</strong> — a package manager such as <code>winget install</code>, or an <code>.msi</code> with <code>msiexec /i … /qn</code>.</li>\n<li><strong>Automated backups</strong> — a scheduled <code>robocopy</code> job, or <code>rsync</code> on Linux.</li>\n<li><strong>Gathering information</strong> — inventory with <code>Get-CimInstance Win32_OperatingSystem</code> or <code>systeminfo</code>.</li>\n<li><strong>Initiating updates</strong> — triggering an update scan or package upgrade instead of waiting for the schedule.</li>\n</ul>\n' + str(_FIG) + '\n<h4>Risks (“other considerations”)</h4>\n<p>The exam names three: <strong>unintentionally introducing malware</strong> (a script copied from a forum can download\nand run anything), <strong>inadvertently changing system settings</strong> (a wrong path or a missing condition repeats on\nevery PC it runs on), and <strong>browser or system crashes due to mishandling of resources</strong> (a loop that never ends,\nor a script that fills a disk or memory). PowerShell’s execution policy is a safety feature that helps stop scripts running\nunintentionally — Microsoft is explicit that it is not a security boundary — so the real controls are reading the script,\nrunning it from a trusted location, testing it, and putting it through change control.</p>\n' + str(worked('remapping a drive after a file-server move', '''<p>The H: drive moved from <code>\\\\fs01\\home</code> to <code>\\\\fs02\\home</code>. A two-line batch file does it:</p>
 <pre><code>net use H: /delete /y
 net use H: \\\\fs02\\home\\%USERNAME% /persistent:yes</code></pre>
 <p>You run it on your own test account first, confirm H: opens the right folder, then submit it through change control
-to run at logon for the affected group. The ticket records the script, the test result and the approval.</p>''')}
-{scenario('the forum script', '''<p>A colleague finds a PowerShell “one-liner to speed up Windows” on a forum and wants to push it to every
+to run at logon for the affected group. The ticket records the script, the test result and the approval.</p>''')) + '\n' + str(scenario('the forum script', '''<p>A colleague finds a PowerShell “one-liner to speed up Windows” on a forum and wants to push it to every
 PC. Reading it, you see it downloads a second script from a URL and runs it. You cannot know what that second script
 will do tomorrow. You decline, explain the risk of introducing malware, and suggest raising the performance problem as a
-change with a reviewed, in-house script tested on a pilot group.</p>''')}
-{cfu(('Which extension is a PowerShell script, and what setting can stop it running?', '.ps1; the PowerShell execution policy.'),
+change with a reviewed, in-house script tested on a pilot group.</p>''')) + '\n' + str(cfu(('Which extension is a PowerShell script, and what setting can stop it running?', '.ps1; the PowerShell execution policy.'),
      ('Name the three script risks Core 2 4.8 lists.', 'Unintentionally introducing malware; inadvertently changing system settings; crashes from mishandling resources.'),
-     ('What does the first line #!/bin/bash in a .sh file do?', 'It tells the system which interpreter runs the script.'))}
-'''
+     ('What does the first line #!/bin/bash in a .sh file do?', 'It tells the system which interpreter runs the script.'))) + '\n')
 
 SUPPLEMENTS = [{
     'course': 'ITSUP', 'chapter': 13, 'lesson': 2, 'id': 'cert-scripting',
