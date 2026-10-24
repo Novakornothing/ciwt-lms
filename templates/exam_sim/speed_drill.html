@@ -20,12 +20,12 @@
   <button type="button" class="btn btn-navy" id="sdModeBlitz" aria-pressed="true">60-Second Timed Blitz</button>
   <button type="button" class="btn btn-outline-navy" id="sdModeFlip" aria-pressed="false">Flip-Card Study Mode</button>
 </div>
-<section class="card card-body mb-3" id="speedDrill" data-seconds="{{ seconds }}" data-record="{{ url_for('speed_drill_record', section_id=section.id) }}" aria-live="polite">
+<section class="card card-body mb-3" id="speedDrill" data-seconds="{{ seconds }}" data-record="{{ url_for('speed_drill_record', section_id=section.id) }}" aria-label="Speed-Drill card">
   <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
     <span class="small text-muted" id="sdCatLbl">—</span>
     <span class="sd-stats"><span>Time <strong id="sdClock">{{ seconds }}</strong>s</span><span>Streak <strong id="sdStreak">0</strong></span><span>Score <strong id="sdScore">0</strong></span><span>Retry queue <strong id="sdRetry">0</strong></span></span>
   </div>
-  <div class="sd-card card card-body mb-3" id="sdFront">Press Start to begin.</div>
+  <div class="sd-card card card-body mb-3" id="sdFront" aria-live="polite">Press Start to begin.</div>
   <div class="sd-choices" id="sdChoices"></div>
   <div class="d-none" id="sdFlip">
     <div class="sd-card card card-body mb-2 d-none" id="sdBack"></div>
@@ -35,7 +35,8 @@
       <button type="button" class="btn btn-outline-danger" id="sdAgain">Review again</button>
     </div>
   </div>
-  <p class="small mt-2 mb-0" id="sdFeedback"></p>
+  <p class="small mt-2 mb-0" id="sdFeedback" role="status" aria-live="polite"></p>
+  <p class="small text-muted mt-1 mb-0" id="sdKeys">Keys: <kbd>1</kbd>–<kbd>4</kbd> choose · <kbd>Enter</kbd> start / show answer · <kbd>G</kbd> Got it · <kbd>R</kbd> Review again</p>
   <div class="mt-2"><button type="button" class="btn btn-gold" id="sdStart">Start</button></div>
 </section>
 <script type="application/json" id="sdData">{{ cards|tojson }}</script>

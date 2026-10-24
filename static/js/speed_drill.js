@@ -18,6 +18,7 @@
     }).catch(function () { /* offline: the drill keeps going */ });
   }
   function next() {
+    if (!running) return;      // the Blitz clock can run out during the post-answer feedback delay
     if (retry.length && (i % 4 === 3 || i >= cards.length)) cur = retry.shift();
     else if (i < cards.length) cur = cards[i++];
     else { cur = null; }
@@ -91,5 +92,23 @@
   $('sdAgain').addEventListener('click', function () {
     if (!cur || !running) return; streak = 0; retry.push(cur); record(cur, 'again');
     $('sdStreak').textContent = 0; next();
+  });
+  // keyboard: 1-4 pick a Blitz choice; Space/Enter start or show the answer; G Got it; R Review again
+  document.addEventListener('keydown', function (e) {
+    var t = e.target, tag = (t.tagName || '').toLowerCase();
+    if (e.ctrlKey || e.metaKey || e.altKey || tag === 'input' || tag === 'textarea' || tag === 'select' || t.isContentEditable) return;
+    var k = e.key;
+    if (!running) {
+      if ((k === 'Enter' || k === ' ') && tag !== 'button') { e.preventDefault(); start(); }
+      return;
+    }
+    if (mode === 'blitz' && /^[1-4]$/.test(k)) {
+      var b = document.querySelectorAll('.sd-choice')[parseInt(k, 10) - 1];
+      if (b && !b.disabled) b.click();
+    } else if (mode === 'flip') {
+      if ((k === ' ' || k === 'Enter') && tag !== 'button') { e.preventDefault(); $('sdShow').click(); }
+      else if (k === 'g' || k === 'G') $('sdGot').click();
+      else if (k === 'r' || k === 'R') $('sdAgain').click();
+    }
   });
 })();

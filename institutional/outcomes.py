@@ -64,7 +64,9 @@ def exam_sim_summary(app, sids, students):
         scores = [r.score for r in latest.values() if r.score is not None]
         return {'exam': exam, 'code': code, 'name': name, 'attempts': len(rs), 'candidates': len(cands),
                 'voucher_ready': len(ready), 'voucher_ready_pct': _pct(len(ready), len(cands)),
-                'mean_score': round(sum(scores) / len(scores), 1) if scores else None}
+                'mean_score': round(sum(scores) / len(scores), 1) if scores else None,
+                'basis': 'voucher_ready: best sitting per student; mean_score: latest sitting per student and exam; '
+                         'submitted non-drill sittings of enrolled students only'}
     per = [summarise([r for r in rows if r.exam == ex], ex, m['code'], m['name']) for ex, m in EXAMS.items()]
     return {'exams': per, 'overall': summarise(rows, 'all', 'all', 'All exams')}
 

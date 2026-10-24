@@ -489,3 +489,72 @@ def test_landing_page_pillars(anon):
     for s in ('539 bespoke', '66 labs', 'Diagnose → Fix → Verify', 'VOUCHER READY', '98-card Speed-Drill',
               'Who Needs Me', 'LTI 1.3 Advantage', 'SAML 2.0', 'WCAG 2.1 AA', 'FERPA', 'novakornothing@gmail.com'):
         assert s in html, s
+
+
+# ------------------------------------------------------------------ pass 7 audit fixes
+def test_every_sim_pbq_first_remediation_link_is_its_own_ladder_section(app):
+    from curriculum_v2 import ladder as LD
+    lad = LD.ladder()
+    api = app.extensions['ciwt_exam_sim']
+    with app.test_request_context():
+        for s in SIM.SIMS:
+            links = api.remediation(s['oid'], s['obj'], 1)
+            assert links and 'rung=R1' in links[0]['rung_url'], s['id']
+            code, ch, lo = P.lesson_ref(links[0]['ref'])
+            sid = links[0]['rung_url'].rsplit('#ladder-', 1)[1]
+            assert lad[(code, f'{ch}.{lo}', sid)].get('obj') == s['obj'], (s['id'], links[0])
+
+
+def test_outcomes_exam_sim_ignores_drill_unsubmitted_and_empty(student, app, mod):
+    from institutional import outcomes as OC
+    uid = _user_id(app, mod, 'student1@lms.local')
+    with app.app_context():
+        empty = OC.exam_sim_summary(app, [1], set())
+    assert empty['overall'] == {**empty['overall'], 'attempts': 0, 'candidates': 0, 'voucher_ready': 0,
+                                'voucher_ready_pct': None, 'mean_score': None}
+    aid = _start(student, 'N', 'sprint')                       # left unsubmitted
+    aid2 = _start(student, 'N', 'sprint')
+    items, _a = _att(app, mod, aid2)
+    student.post(f'{BASE}/{aid2}', data=_form_for(items, 15))  # 900, ready
+    aid3 = _start(student, 'N', 'sprint')
+    student.post(f'{BASE}/{aid3}', data={})                    # latest: 100, not ready
+    r = student.post(f'{BASE}/{aid3}/remediate-drill')
+    did = int(re.search(r'/exam-sim/(\d+)', r.headers['Location']).group(1))
+    student.post(f'{BASE}/{did}', data={})                     # drill sitting excluded
+    with app.app_context():
+        n = next(x for x in OC.exam_sim_summary(app, [1], {uid})['exams'] if x['exam'] == 'N')
+        A = app.extensions['ciwt_exam_sim'].Attempt
+        subs = A.query.filter(A.section_id == 1, A.user_id == uid, A.exam == 'N', A.mode != 'drill',
+                              A.submitted_at.isnot(None)).count()
+    assert n['attempts'] == subs and n['voucher_ready'] == 1 and n['mean_score'] == 100   # best → ready; latest → mean
+    assert aid not in () and 'best sitting' in n['basis']
+
+
+def test_drill_from_sim_only_misses_still_builds(student, app, mod):
+    aid = _start(student, 'A2', 'max')
+    items, _a = _att(app, mod, aid)
+    b = P.bank()
+    data = _form_for(items, len(items))
+    for i, (iid, _o) in enumerate(items):                       # miss only the simulation PBQs
+        if b[iid]['type'] == 'sim_pbq':
+            for k in [k for k in data if k == f'q{i}' or k.startswith(f'q{i}_')]:
+                data.pop(k)
+    student.post(f'{BASE}/{aid}', data=data)
+    r = student.post(f'{BASE}/{aid}/remediate-drill')
+    assert r.status_code == 302 and '/exam-sim/' in r.headers['Location'] and 'result' not in r.headers['Location']
+    did = int(re.search(r'/exam-sim/(\d+)', r.headers['Location']).group(1))
+    ditems, d = _att(app, mod, did)
+    sim_oids = {o for iid, o in items if b[iid]['type'] == 'sim_pbq'}
+    assert d.mode == 'drill' and ditems and {o for _i, o in ditems} <= sim_oids
+    assert all(b[i]['type'] in ('single', 'multi') for i, _o in ditems)
+    html = student.get(f'{BASE}/{did}').get_data(as_text=True)
+    assert 'data-pre="1"' in html and 'id="esKeys"' in html     # drill also waits for the agreement, shortcuts present
+
+
+def test_speed_drill_keyboard_and_live_regions(student):
+    html = student.get('/student/section/1/speed-drill').get_data(as_text=True)
+    assert 'id="sdKeys"' in html and 'id="sdFeedback" role="status" aria-live="polite"' in html
+    assert 'id="speedDrill" data-seconds' in html and html.count('aria-live') == 2
+    js = open('static/js/speed_drill.js').read()
+    assert "if (!running) return;      // the Blitz clock" in js and "'keydown'" in js
+    assert 'speed-drill' in student.get('/student/section/1').get_data(as_text=True)

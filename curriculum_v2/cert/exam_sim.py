@@ -255,7 +255,22 @@ def register(app, db, deps):
         from curriculum_v2 import ladder as LD
         lad = LD.ladder()
         out = []
-        for ref in P.alignment()['objectives'].get(oid, {}).get('lessons', []):
+        refs = list(P.alignment()['objectives'].get(oid, {}).get('lessons', []))
+        if course_obj:
+            # the lesson whose ladder actually teaches the mapped course objective goes first, even when the
+            # alignment's lesson list for this exam objective does not name it (pass 7 audit: SIM-N-2, SIM-A2-1)
+            own = sorted({(k[0], k[1]) for k, v in lad.items() if v.get('obj') == course_obj},
+                         key=lambda t: (t[0], *[int(x) for x in t[1].split('.')]))
+            for code, lbl in own:
+                ref = f'{code} {lbl}'
+                if ref in refs:
+                    refs.remove(ref)
+                refs.insert(0, ref)
+                break
+            # then prefer alignment lessons that have a section for the objective over ones that would fall back
+            refs = refs[:1] + sorted(refs[1:], key=lambda r: not any(
+                v.get('obj') == course_obj and f'{k[0]} {k[1]}' == r for k, v in lad.items()))
+        for ref in refs:
             if len(out) >= 2:
                 break
             try:
@@ -532,6 +547,9 @@ def register(app, db, deps):
             weakest = min(domains, key=lambda d: d['pct'])['id'] if domains else None
             missed = sorted(P.pool(att.exam, weakest), key=sort_key) if weakest else []
         chosen = drill_form(att.exam, missed)
+        if not chosen and domains:     # missed objectives with no single/multi items: fall back to the weakest domain
+            weakest = min(domains, key=lambda d: d['pct'])['id']
+            chosen = drill_form(att.exam, sorted(P.pool(att.exam, weakest), key=sort_key))
         if not chosen:
             flash('No drill questions are available for those objectives yet.', 'warning')
             return redirect(url_for('exam_sim_result', section_id=sec.id, attempt_id=att.id))
