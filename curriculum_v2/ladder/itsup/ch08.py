@@ -598,3 +598,82 @@ STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladde
     '8.3': {'core-content': 'c30f458bbff0', 'services-are-background-jobs': '11b475916cd7'},
     '8.4': {'core-content': '0ce7b8cf7d0d'},
 }
+
+# ---------------------------------------------------------------- refinement pass 20: former skips, now laddered
+from curriculum_v2.ladder.itsup._lk import P as _P, X as _X  # noqa: E402
+
+_LUP = ('gui-update', 'Read the update state and history before deciding on any repair or install.')
+LESSONS['8.1'].update({
+    'start-here-windows-as-the-shops-default-client': _X('Start here — Windows as the shop’s default client', 'IT-8.1', L81, [
+        ('A PC never gets past POST. Does it need setup.exe?', 'No; it is a hardware fault', 'Yes; reinstall Windows', 'Yes; run an in-place upgrade',
+         'If the box never leaves POST, Windows has not even started, so installing it cannot help.', INSTALL, INSTALL),
+        ('What comes before any Windows install or repair?', 'Inventory: name, edition, disks', 'Formatting the system drive', 'Ordering a new licence key',
+         'Install and repair are changes, so you record what the box is first.', INSTALL, CLEANVS),
+        ('In the house-renovation story, why survey first?', 'You must know what is there', 'Surveys look professional', 'Builders like paperwork',
+         'You record the current state before changing it, like an inventory.', INSTALL, None),
+        ('In the trace, what is update status?', 'Part of describing the box', 'Trivia to skip', 'Only for servers',
+         'Update state is part of the inventory, not an afterthought.', UPDIGN, UPDIGN),
+        ('Install and repair of Windows are…', 'Changes', 'Quick fixes', 'Requests from users',
+         'They alter the system state and follow the change habits.', INSTALL, None),
+    ],
+        _P('Most office desks in this course run Windows. Installing or repairing Windows counts as a change, so first write down the computer’s '
+           'name, Windows edition and disks. A computer that never gets past the power-on test does not need the Windows installer, because Windows '
+           'never even started. Which updates are installed is part of describing the computer, not a minor detail.'),
+        _P('Before builders renovate a house, a surveyor walks through: which walls hold the roof up, where the pipes and wires run, how old the '
+           'boiler is. Nobody knocks down a wall first and checks later. And if the problem is a cracked foundation, new wallpaper will not help. '
+           'Inventory is the survey; reinstalling Windows is the renovation; a box stuck in POST is the cracked foundation.'),
+        ['Does it pass POST? If not, stay in hardware.', 'Record name, edition, disks.', 'Record update state.', 'Only then plan install or repair.'],
+        '<p>Order the checks before touching Windows.</p>',
+        order('Before install or repair', ['Check POST', 'Record name and edition', 'Record disks', 'Record update state', 'Plan the change'],
+              'Inventory before change.'), _LUP),
+    'teach-block-install-is-a-change': _X('Teach block — install is a change', 'IT-8.1', L81, [
+        ('What sits in the middle of the in-place versus clean board?', 'Data risk', 'Installation speed', 'Screen resolution',
+         'The choice hinges on what happens to user data.', CLEANVS, CLEANVS),
+        ('Is a MEM beep a reason to run setup.exe?', 'No; it is hardware', 'Yes; it fixes drivers', 'Yes; after a reboot',
+         'A memory beep is a POST hardware fault, not an OS problem.', INSTALL, INSTALL),
+        ('In the moving-house story, why pack valuables first?', 'They are hardest to replace', 'They are light to carry', 'Movers ask for them',
+         'Data risk drives the choice, like protecting valuables before a move.', CLEANVS, None),
+        ('Trace step 1 is…', 'Inventory', 'Clean install', 'Delete partitions',
+         'Inventory always comes first.', INSTALL, None),
+        ('Is a clean install done in class?', 'No', 'Yes, once each', 'Yes, on the host PC',
+         'No clean installs in class; the board discussion is the practice.', DESTRUCT, None),
+    ],
+        _P('In this teaching block: take an inventory first. A memory beep is a hardware fault and setup.exe will not fix it. On the board, '
+           'compare an in-place upgrade with a clean install, with the risk to user data written in the middle. Nobody does a clean install in class.'),
+        _P('When you move house, you do not throw everything in a skip and buy new. You decide what comes with you, starting with the things you '
+           'cannot replace: photos, documents, the family ring. An in-place upgrade is moving with your belongings; a clean install is starting '
+           'over in an empty flat. Data is the family ring, so it sits in the middle of the decision.'),
+        ['Inventory first.', 'MEM beep? Hardware, not setup.exe.', 'Compare in-place and clean.', 'Write data risk in the middle.', 'No clean install in class.'],
+        '<p>Sort the facts into in-place or clean.</p>',
+        sort('In-place or clean?', {'In-place': ['Keeps apps and files', 'Less data risk'], 'Clean': ['Wipes the drive', 'Needs a verified backup first']},
+             'Data risk is the deciding line.'), _LUP),
+    'reference-windows-11-requirements-and-servicing-checked-oct': _X('Reference — Windows 11 requirements and servicing (checked Oct 2026)', 'IT-8.1', L81, [
+        ('Which security chip does Windows 11 require?', 'TPM 2.0', 'TPM 1.2 or none', 'A smart-card reader',
+         'Windows 11 needs TPM 2.0, plus UEFI and Secure Boot capability.', APPREQ, None),
+        ('How long is a Home/Pro feature update serviced?', '24 months', '36 months', '10 years',
+         'Home/Pro get 24 months; Enterprise/Education get 36.', EDITION, None),
+        ('In the car-MOT story, why check before promising?', 'Not every car passes', 'Tests are free', 'Mechanics like forms',
+         'Check a PC with PC Health Check before promising an upgrade.', APPREQ, None),
+        ('Which tool checks a PC before promising an upgrade?', 'PC Health Check', 'Disk Cleanup', 'Task Manager',
+         'PC Health Check (or your management tool) verifies the requirements.', APPREQ, None),
+        ('When did Windows 10 reach end of support?', '14 October 2025', '1 January 2030', 'It never will',
+         'Windows 10 ended support on 14 October 2025; only enrolled devices get extended security updates.', UPDIGN, None),
+    ],
+        _P('Windows 11 needs a 64-bit processor from Microsoft’s list with at least two cores, 4 GB of memory, 64 GB of storage, UEFI with Secure '
+           'Boot, a TPM 2.0 chip and DirectX 12 graphics. Check a PC with PC Health Check before promising an upgrade. Each yearly feature update '
+           'gets 24 months of updates on Home and Pro, 36 on Enterprise and Education. Windows 10 support ended on 14 October 2025.'),
+        _P('Before you promise someone their old car will be fine for a long road trip, you take it for its safety inspection. Some cars pass, '
+           'some need parts, some are simply too old. Telling the owner “it’ll be fine” without checking is how they end up stranded. PC Health '
+           'Check is the inspection for Windows 11, and the servicing dates are the expiry on the inspection certificate.'),
+        ['Run PC Health Check.', 'Confirm CPU on the supported list, 4 GB RAM, 64 GB disk.', 'Confirm UEFI, Secure Boot, TPM 2.0.',
+         'Check the version and its end-of-servicing date.', 'Only then promise the upgrade.'],
+        '<p>Decide whether this PC can upgrade.</p>',
+        reveal('PC: 8 GB RAM, 256 GB SSD, TPM 1.2, legacy BIOS. Upgrade?', 'Not yet: Windows 11 needs TPM 2.0 and UEFI with Secure Boot. Check firmware options or plan a replacement.'), _LUP),
+})
+
+STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladder_check.py --stamp)
+    '8.1': {'start-here-windows-as-the-shops-default-client': '25c9270119ab', 'core-content': '437cb63af39e', 'teach-block-install-is-a-change': 'c12433064c59', 'reference-windows-11-requirements-and-servicing-checked-oct': '855b2e5390bf', 'os-types-file-systems-and-windows-editions': '3a1d8f4f0e3a'},
+    '8.2': {'core-content': '17bce7af2b16', 'installing-applications-to-requirements': '4a6c8b8eef52'},
+    '8.3': {'core-content': 'c30f458bbff0', 'services-are-background-jobs': '11b475916cd7'},
+    '8.4': {'core-content': '0ce7b8cf7d0d'},
+}

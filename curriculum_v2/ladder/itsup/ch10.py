@@ -701,3 +701,86 @@ STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladde
     '10.3': {'core-content': 'd87092c81595', 'workstation-security-options-and-hardening': '8da7e0508f59'},
     '10.4': {'core-content': 'd9561ac611c0', 'social-engineering-attacks-threats-and-vulnerabilities': '2631090f5e31'},
 }
+
+# ---------------------------------------------------------------- refinement pass 20: former skips, now laddered
+from curriculum_v2.ladder.itsup._lk import P as _P, X as _X  # noqa: E402
+
+_LMW = ('sec-malware', 'Contain a suspected malware PC and write the incident note without disabling Defender.')
+LESSONS['10.1'].update({
+    'start-here-security-is-part-of-the-ticket': _X('Start here — security is part of the ticket', 'IT-10.1', L101, [
+        ('A user typed their password into a phishing page. What is it?', 'An incident', 'A routine request', 'Nothing to log',
+         'Typed credentials mean possible compromise, so it is an incident.', 'MC-IT10-COMPROMISE-AS-REQUEST', None),
+        ('What does least privilege mean for you?', 'No admin because it is easier', 'Admin for everyone who asks', 'Share one admin account',
+         'Give only the rights a task needs.', BROADP, SHARED),
+        ('In the hospital story, why does the nurse isolate and call?', 'Specialists handle outbreaks', 'Nurses are not allowed to help', 'It is faster to wait',
+         'You isolate and hand off rather than becoming a one-person response team.', SOLO, None),
+        ('Should Defender be turned off to run a cleaner?', 'No; Defender stays on', 'Yes; it blocks the cleaner', 'Yes; for an hour only',
+         'Disabling protection widens the incident.', DISDEF, DISDEF),
+        ('Where do passwords go in the ticket?', 'Nowhere', 'In the notes field', 'In the title',
+         'Passwords never go in tickets.', PWREC, None),
+    ],
+        _P('Security is part of everyday support, not a separate job. Do not hand out admin rights because it is easier. If someone typed their '
+           'password into a phishing page, that is an incident. Keep Defender switched on. Keep passwords out of tickets. Isolate the problem and '
+           'pass it on; do not try to be a one-person incident response team with a USB cleaner.'),
+        _P('A ward nurse who spots a patient with signs of an infectious disease does not try to cure them alone with whatever is in the cupboard. '
+           'She isolates the patient, follows the protocol and calls the infection-control team. She also never props open the ward doors to make '
+           'her rounds quicker. Security in support is the same: isolate, protect, hand off, and never weaken the defences for convenience.'),
+        ['Treat typed credentials as an incident.', 'Grant only the rights the task needs.', 'Keep Defender on.', 'Keep passwords out of the ticket.',
+         'Isolate and hand off.'],
+        '<p>Sort each action into safe or unsafe.</p>',
+        sort('Safe or unsafe?', {'Safe': ['Isolate the PC', 'Hand off to security', 'Keep Defender on'], 'Unsafe': ['Turn Defender off', 'Share an admin password']},
+             'Protect and hand off; never weaken controls.'), _LMW),
+    'reference-authentication-and-passwords-current-guidance': _X('Reference — authentication and passwords (current guidance)', 'IT-10.1', L101, [
+        ('Which is phishing-resistant MFA?', 'A FIDO2 key or passkey', 'An SMS code to a phone', 'A push prompt to approve',
+         'FIDO2 keys and passkeys cannot be replayed on a fake site; SMS and push can be phished.', SMS, FATIGUE),
+        ('How long must a password used on its own be under NIST SP 800-63B-4?', 'At least 15 characters', 'Exactly 8 with a symbol', 'Any length if changed monthly',
+         'NIST requires 15 for single-factor passwords and drops composition rules and forced changes.', 'MC-C-IT10-MFA-SAME-FACTOR', None),
+        ('In the two-locks story, why two different kinds of lock?', 'Different factors fail differently', 'Two keys look secure', 'Locks are cheap',
+         'MFA combines different factor types, not two of the same.', SAMEF, None),
+        ('When should a password be changed?', 'When there is evidence of compromise', 'Every 30 days', 'After every login',
+         'Forced periodic changes are no longer recommended.', SAMEF, None),
+        ('A password plus a PIN is…', 'Not MFA: both are things you know', 'Strong MFA', 'Phishing-resistant',
+         'Both are knowledge factors, so it is not multi-factor.', SAMEF, SAMEF),
+    ],
+        _P('There are three kinds of proof: something you know, something you have, and something you are. MFA uses two or more different kinds. '
+           'Security keys, passkeys and smart cards resist phishing; text codes and push prompts can be tricked. Current NIST guidance says a '
+           'password used alone must be at least 15 characters, with no forced symbol rules and no regular forced changes; change it when compromised.'),
+        _P('A front door with two identical locks is barely safer than one: a thief who can pick one can pick the other. A door with a key lock '
+           'and a keypad is much stronger, because each needs a different trick. MFA is the mixed door. And a passkey is like a lock that only '
+           'opens for the real door frame, so a fake door built by a burglar gets nothing.'),
+        ['Know: password or PIN.', 'Have: phone app, security key, smart card.', 'Are: fingerprint or face.', 'MFA = two different kinds.',
+         'Prefer phishing-resistant: FIDO2, passkeys, smart cards.'],
+        '<p>Sort each method by factor type.</p>',
+        sort('Factor type', {'Know': ['Password', 'PIN'], 'Have': ['Security key', 'Smart card'], 'Are': ['Fingerprint']},
+             'MFA mixes different rows.'), ('wifi-secure', 'Choose the strongest authentication option for a network and account.')),
+})
+LESSONS['10.2'].update({
+    'teach-block-phish-and-malware-as-tickets': _X('Teach block — phish and malware as tickets', 'IT-10.2', L102, [
+        ('Which two notes does the class write?', 'Not opened, and password typed', 'Virus found, and virus removed', 'Defender on, and Defender off',
+         'The two cases differ in risk: a typed password is a likely compromise.', 'MC-IT10-COMPROMISE-AS-REQUEST', DISDEF),
+        ('What does the class score in each note?', 'Secrets and labels', 'Font and spelling', 'Length only',
+         'Notes must have the right label and no secrets.', PWREC, None),
+        ('In the fire-drill story, why no real fire?', 'Practice must be safe', 'Fires are boring', 'Drills are optional',
+         'No live malware in class; practice stays safe.', SOLO, None),
+        ('Is turning Defender off allowed in the block?', 'No', 'Yes, to see the malware', 'Yes, briefly',
+         'Defender stays on in every exercise.', DISDEF, DISDEF),
+        ('A user clicked a link but typed nothing. Label?', 'Suspicious, lower risk; report', 'Full compromise; reimage now', 'Not worth a ticket',
+         'Not entering credentials lowers risk, but it is still reported.', 'MC-IT10-COMPROMISE-AS-REQUEST', None),
+    ],
+        _P('The class writes two complete notes: one where the user did not open the phishing link, and one where they typed their password. '
+           'Classmates score each note for the right label and for any secrets that slipped in. No real malware is used, and Defender is never '
+           'switched off.'),
+        _P('Schools run fire drills without lighting a fire. The alarm sounds, everyone files out, the teacher counts heads, and afterwards the '
+           'class talks about what went well. Nobody sets a bin alight to make it realistic. This block is the phishing drill: two written '
+           'scenarios, scored by classmates, with no live malware and the defences left on.'),
+        ['Write the not-opened note.', 'Write the password-typed note.', 'Swap with a partner.', 'Score labels and check for secrets.', 'Fix and resubmit.'],
+        '<p>Write the password-typed note.</p>',
+        reveal('Note: user typed their password into a fake login page.', '“Incident. User entered credentials on phishing page 0915. Account disabled pending reset; sessions revoked; security notified. No password recorded.”'), _LMW),
+})
+
+STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladder_check.py --stamp)
+    '10.1': {'start-here-security-is-part-of-the-ticket': 'd711236ab617', 'core-content': '6c8b6368faef', 'reference-authentication-and-passwords-current-guidance': '087f152ea15e', 'physical-and-logical-security-measures': '069da8d01e07'},
+    '10.2': {'core-content': 'f34b0569a365', 'teach-block-phish-and-malware-as-tickets': 'f3e1e830e6bb', 'pc-security-symptoms-and-browser-security-settings': 'ccff02def16a', 'malware-types-and-the-tools-that-stop-them': '8fc7015dbb16'},
+    '10.3': {'core-content': 'd87092c81595', 'workstation-security-options-and-hardening': '8da7e0508f59'},
+    '10.4': {'core-content': 'd9561ac611c0', 'social-engineering-attacks-threats-and-vulnerabilities': '2631090f5e31'},
+}

@@ -486,3 +486,84 @@ STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladde
     '7.3': {'core-content': 'db998f156c90'},
     '7.4': {'core-content': 'f95487361aee'},
 }
+
+# ---------------------------------------------------------------- refinement pass 20: former skips, now laddered
+from curriculum_v2.ladder.itsup._lk import P as _P, X as _X  # noqa: E402
+
+_LDNS = ('win-dns-break', 'Name fails after the IP path works: prove it, look it up, make one change, verify.')
+LESSONS['7.1'].update({
+    'start-here-why-a-method-exists': _X('Start here — why a method exists', 'IT-7.1', L71, [
+        ('A beginner changes four settings and the fault clears. What is the problem?', 'Nobody knows which change worked', 'Nothing, the user is happy again', 'Four changes is too few to matter',
+         'Several changes at once hide cause and effect, so the fix cannot be explained, repeated or safely undone.', MANY, FIXFIRST),
+        ('Which step comes first in the method?', 'Name the outcome and scope', 'Reimage the PC to be safe', 'Change the likeliest setting',
+         'You first say what is broken and for whom, then pick a cheap test, then change one thing.', FIXFIRST, TOOLFIRST),
+        ('In the recipe-tasting story, why add one spice at a time?', 'So you know which one helped', 'Spices are very expensive', 'Chefs like slow cooking',
+         'One change at a time is the only way to know which change mattered.', MANY, None),
+        ('Trace step 2 picks the cheapest test that…', 'Can rule a theory out', 'Takes the longest time', 'Proves the user wrong',
+         'Cheap tests that can kill a theory narrow the search fast.', CONFIRMS, GUESS),
+        ('Where does “reimage” sit in the method?', 'An expensive last move', 'The first thing to try', 'Part of every ticket',
+         'Reimaging destroys evidence and time; it is not a method, it is a last resort.', TOOLFIRST, FIXFIRST),
+    ],
+        _P('Without a fixed way of working, beginners change lots of things at once and then cannot say which one helped. The method is short: '
+           'say what is broken and for how many people, choose the cheapest test that could prove your idea wrong, change one thing, check whether '
+           'the problem is gone, and write it down. Wiping and reinstalling is not a method; it is a costly final step.'),
+        _P('A cook whose soup tastes flat could throw in salt, lemon, pepper and herbs all at once. It might taste better, but next time they will '
+           'not know which ingredient fixed it, and if it is now too salty they cannot tell what to take out. A careful cook adds one thing, tastes, '
+           'and notes it. Troubleshooting is tasting the soup. One change, one taste, one note.'),
+        ['Name the outcome and scope.', 'Pick the cheapest test that can kill a theory.', 'Change one thing.', 'Is the outcome back?', 'Write it down.'],
+        '<p>Order the method, then try it in the lab on a name-resolution fault.</p>',
+        order('The method', ['Name outcome and scope', 'Cheapest killing test', 'One change', 'Check the outcome', 'Write it down'],
+              'Each step depends on the one before.'), _LDNS),
+    'teach-block-process-on-a-live-sentence': _X('Teach block — process on a live sentence', 'IT-7.1', L71, [
+        ('A user says “the internet is down.” What do you identify first?', 'One person or many', 'Which router to replace', 'Whether to reimage',
+         'Scope (one versus many) decides where the fault can be.', DSCOPE, TOOLFIRST),
+        ('Why does the block spend forty minutes on one sentence?', 'Practice beats a slide', 'The sentence is very long', 'There is nothing else to teach',
+         'Walking the process on a real sentence builds the habit far better than memorising seven words.', ORDER, None),
+        ('In the driving-lesson story, why drive real streets?', 'Practice beats reading rules', 'Roads are empty at noon', 'Cars need running in',
+         'Doing the process on live examples makes it stick.', ORDER, None),
+        ('After the cheap test, what comes next in the trace?', 'One change', 'Three changes together', 'Close the ticket',
+         'One change keeps cause and effect clear.', MANY, CLOSED),
+        ('Which cheap test fits “the internet is down” for one PC?', 'ipconfig /all on that PC', 'Replacing the core switch', 'Calling the ISP first',
+         'Start with the cheapest look at the one affected PC.', TOOLFIRST, DSCOPE),
+    ],
+        _P('In this teaching block the class takes one real complaint, “the internet is down,” and works through it together. First decide whether '
+           'it is one person or many. Then pick a cheap test. Then make one change. Spending forty minutes doing this teaches far more than a slide '
+           'with seven words on it.'),
+        _P('You cannot learn to drive by reading the Highway Code. At some point the instructor takes you out on real streets, with real '
+           'roundabouts and real cyclists, and makes you do the mirror-signal-manoeuvre routine again and again. This teach block is the driving '
+           'lesson for troubleshooting: one live sentence, worked slowly, until the routine happens without thinking.'),
+        ['Hear: “the internet is down.”', 'Identify: one PC or many?', 'Cheap test: ipconfig /all, ping the gateway.', 'One change.', 'Verify and record.'],
+        '<p>Walk the sentence yourself in the lab.</p>',
+        order('Live sentence', ['Identify scope', 'Cheap test', 'One change', 'Verify'], 'Scope, test, change, verify.'), _LDNS),
+})
+LESSONS['7.4'].update({
+    'two-drills': _X('Two drills', 'IT-7.4', L74, [
+        ('A PC gives a memory beep. Where does the work stay?', 'In POST, at the hardware', 'In Windows settings', 'In the DNS server',
+         'A beep at power-on happens before the OS, so the fault domain is hardware.', CROSS, CROSS),
+        ('Names fail after the IP path works. Which drill?', 'win-dns-break or full triage', 'The hw-board memory drill', 'A diskpart exercise',
+         'Name failure after IP works is a name-resolution fault.', CROSS, CROSS),
+        ('In the fire-and-flood story, why different crews?', 'Each fault has its own domain', 'Crews take turns', 'Flood crews are cheaper',
+         'Matching the drill to the fault domain avoids wrong-domain fixes.', CROSS, None),
+        ('Why does diskpart on a SaaS outage fail on purpose?', 'It is a wrong-domain, destructive fix', 'diskpart is too slow', 'SaaS has no disks',
+         'A tenant outage is not a disk problem; wiping a disk is destructive and wrong-domain.', CROSS, TOOLFIRST),
+        ('Which pair is matched correctly?', 'MEM beep → hw-board', 'MEM beep → win-dns-break', 'Name fail → hw-board',
+         'Beeps go to hardware; name failures go to DNS drills.', CROSS, None),
+    ],
+        _P('There are two practice drills. A memory beep at power-on means stay at the hardware stage and use the hw-board lab. A name that fails '
+           'after the address path works means use win-dns-break or the full triage lab. Running diskpart during a cloud-service outage fails the '
+           'pass bar on purpose, because it is the wrong fix in the wrong place.'),
+        _P('A town has a fire crew and a flood crew. If the river bursts its banks, sending the fire engine to hose the street makes things worse. '
+           'If a house is burning, the pumps that drain water are no help. The skill is matching the crew to the emergency. The two drills train '
+           'that match: hardware beeps go to the hardware crew, name failures to the DNS crew, and nobody brings diskpart to a cloud outage.'),
+        ['Hear the symptom.', 'Beep at power-on → hw-board (POST).', 'Name fails, IP works → win-dns-break or full triage.', 'Never use a destructive fix in the wrong domain.'],
+        '<p>Sort each symptom into its drill.</p>',
+        sort('Which drill?', {'hw-board': ['Memory beep at power-on', 'No POST, fans spin'], 'win-dns-break': ['Name fails, IP works', 'nslookup times out']},
+             'Match the drill to the fault domain.'), ('hw-board', 'Diagnose a memory beep without leaving POST.')),
+})
+
+STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladder_check.py --stamp)
+    '7.1': {'start-here-why-a-method-exists': '4162bcc5b0e6', 'core-content': '8bf5d2f53eba', 'cheap-tests-first': '05b0b4fae80b', 'teach-block-process-on-a-live-sentence': 'aa4fe500b0b2'},
+    '7.2': {'core-content': '788c7e9d4ffb'},
+    '7.3': {'core-content': 'db998f156c90'},
+    '7.4': {'core-content': 'f95487361aee', 'two-drills': '40c320f8e917'},
+}

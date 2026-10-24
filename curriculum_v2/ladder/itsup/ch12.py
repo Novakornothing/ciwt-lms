@@ -871,3 +871,10 @@ you to read the story, say the domain, and only then reach for the tools.</p>'''
 }
 
 STAMPS = {}
+
+STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladder_check.py --stamp)
+    '12.1': {'start-here-the-shop-is-a-system': 'd3ccd1c26ac3', 'core-content': 'de75b65f5338', 'change-control': '8f65055d8c46', 'rollback-is-part-of-the-plan': '72ce64f1294d', 'change-management-procedures': '50bcf49efca0'},
+    '12.2': {'core-content': '97196072b037', 'privacy': 'f4a534996782', 'ai-tools-at-work-policy-limitations-and-private-vs-public': 'c070e9ce170a', 'incident-handling-licensing-and-regulated-data': 'e72ee5e5e330'},
+    '12.3': {'core-content': 'b9c91ab2331b', 'recovery-words': '5c7cd1875b96'},
+    '12.4': {'core-content': '130e0c606c59', 'integrated-ticket': '6c82d5a3b9e4', 'teach-block-two-stories-two-domains': 'a38095d9a668'},
+}

@@ -594,3 +594,62 @@ STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladde
     '9.3': {'core-content': '10de5ce2b3cb', 'remote-access-technologies-and-their-security': '78e2e3ba0ddf'},
     '9.4': {'core-content': '20bf3596008c'},
 }
+
+# ---------------------------------------------------------------- refinement pass 20: former skips, now laddered
+from curriculum_v2.ladder.itsup._lk import P as _P, X as _X  # noqa: E402
+
+_LSH = ('linux-vm-shell', 'Find your way around a real Linux shell with read-only commands first.')
+LESSONS['9.1'].update({
+    'start-here-other-operating-systems-exist': _X('Start here — other operating systems exist', 'IT-9.1', L91, [
+        ('Linux and macOS are still made of what?', 'Brain, memory, disk, network', 'Completely different hardware', 'Only cloud services',
+         'Every OS runs on the same building blocks; only the commands are spelled differently.', WINHAB, None),
+        ('Which Linux command is the cousin of ipconfig?', 'ip a', 'mkfs', 'rm -rf',
+         'ip a shows addresses; mkfs and rm -rf are destructive.', WINHAB, WINHAB),
+        ('In the foreign-car story, why is the driver still fine?', 'The controls work the same way', 'Foreign cars drive themselves', 'Rules are identical',
+         'Different labels, same parts, just like a new OS.', WINHAB, None),
+        ('Which is never a first move on Linux?', 'mkfs', 'ip a', 'pwd',
+         'mkfs creates a filesystem and wipes data; it is never a first move.', WINHAB, None),
+        ('A managed Mac misbehaves. What do you not do?', 'Wipe it in the hallway', 'Write a ticket with evidence', 'Ask the MDM owner',
+         'Managed Macs are not wiped casually; evidence and escalation first.', WIPEMAC, None),
+    ],
+        _P('Linux and macOS computers have the same parts as Windows ones: a processor, memory, a disk and a network card. The commands just have '
+           'different names. ip a on Linux does roughly what ipconfig does on Windows. This chapter will not make you a Linux administrator, but '
+           'you will know not to run mkfs first or wipe a managed Mac on the spot.'),
+        _P('Rent a car abroad and the indicator stalk may be on the other side, the dashboard labels are in another language, and the gear stick '
+           'feels odd. Yet you still know where the brake is and how to steer, because every car has the same basic parts. A new operating system '
+           'is that hire car. Find the familiar controls first, and do not start pulling levers you do not recognise.'),
+        ['Remember: brain, memory, disk, network.', 'Find the cousin command: ip a for ipconfig.', 'Read before you change.', 'Never mkfs or wipe as a first move.'],
+        '<p>Match each Linux command to its Windows cousin.</p>',
+        sort('Cousins', {'ipconfig': ['ip a'], 'whoami': ['whoami'], 'dir': ['ls -l'], 'Never a first move': ['mkfs', 'rm -rf /']},
+             'Read-only cousins first; destructive commands never first.'), _LSH),
+    'reference-linux-commands-a-support-technician-uses': _X('Reference — Linux commands a support technician uses', 'IT-9.1', L91, [
+        ('Which command lists listening ports on Linux?', 'ss -tulpn', 'df -h', 'chmod +x',
+         'ss -tulpn shows listening sockets, the cousin of netstat -ano.', WINHAB, None),
+        ('“Permission denied” on a script you can read usually means…', 'It lacks the execute bit', 'The disk is full', 'DNS is broken',
+         'Add the execute bit with chmod +x, or run it through its interpreter.', PERMS, None),
+        ('In the phrasebook story, why carry a two-column list?', 'To map words you already know', 'To learn the whole language', 'For decoration',
+         'The table maps Windows habits to Linux commands.', WINHAB, None),
+        ('Which command reads a service’s log?', 'journalctl -u name', 'ls -l name', 'free -h',
+         'journalctl -u shows a unit’s log, like Event Viewer.', WINHAB, None),
+        ('Which runs one command as administrator?', 'sudo command', 'chmod 777 everything', 'su forever',
+         'sudo elevates one command; broad permissions are not a substitute.', BROAD, SUDONOTE),
+    ],
+        _P('This is a lookup table. Where am I: pwd, whoami, hostname. Files: ls -l, cat, less, tail -f. Permissions: chmod, chown. Admin: sudo. '
+           'Network: ip a, ip route, dig, resolvectl status, ss -tulpn. Services and logs: systemctl status and journalctl -u. Disk and memory: '
+           'df -h, free -h, top. Software: apt or dnf. A script you can read but not run usually needs chmod +x.'),
+        _P('A traveller with a pocket phrasebook does not learn the whole language. They look up “where is the station” and “how much is this,” '
+           'the phrases they already use at home, and find the local version. This reference is your phrasebook: each row starts with something you '
+           'already do on Windows and gives you the Linux words for it.'),
+        ['Where am I: pwd, whoami, hostname.', 'Network: ip a, ip route, dig.', 'Ports: ss -tulpn.', 'Services: systemctl status, journalctl -u.',
+         'Admin for one command: sudo.'],
+        '<p>Run the read-only rows in the Linux lab.</p>',
+        sort('Task to command', {'Addresses': ['ip a'], 'Ports': ['ss -tulpn'], 'Logs': ['journalctl -u sshd'], 'Disk space': ['df -h']},
+             'Each task has one cousin command.'), _LSH),
+})
+
+STAMPS = {   # r0_sha of the original when these rungs were written (tools/ladder_check.py --stamp)
+    '9.1': {'start-here-other-operating-systems-exist': 'abdd8a97788b', 'core-content': 'b0995cdfae4c', 'reference-linux-commands-a-support-technician-uses': '1b622ba67df4', 'linux-commands-key-files-and-os-components': '8cefe5923cad'},
+    '9.2': {'core-content': '5eaa3877a9f5', 'macos-features-and-tools': '3a91624fe026'},
+    '9.3': {'core-content': '10de5ce2b3cb', 'remote-access-technologies-and-their-security': '78e2e3ba0ddf'},
+    '9.4': {'core-content': '20bf3596008c'},
+}
