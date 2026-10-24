@@ -11,7 +11,6 @@ They are outside `templates/` and `static/`, so Flask can neither render nor ser
 | `static/img/navy-n.png` | `static/img/` | 2.1 MB original logo; pages use `navy-n-256.png`, `navy-n-512.webp` and `favicon-32.png`. |
 | `static/img/navy-interior-live.webp` | `static/img/` | 604 KB image no page or stylesheet references. |
 | `root-zips/*.zip` | repo root | Patch bundles from earlier hand-offs (landing, TQI, chapter nav, run class, embeds…). Their contents are already in the tree. |
-| `n74-ops-worker 4.js` | repo root | Copy (" 4" suffix) of an edge ops-worker script that hard-codes the demo logins; no template, route or script loads it, and it is kept out of the release zip. |
 
 To restore something: `git mv archive/<path> <original path>`.
 `archive/` is marked `export-ignore` in `.gitattributes`, so `git archive` (the release zip) leaves it out.
