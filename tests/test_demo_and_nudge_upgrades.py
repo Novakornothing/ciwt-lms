@@ -67,3 +67,11 @@ def test_site_name_default_is_novak_lms(app, anon):
     assert app.config['SITE_NAME'] == 'Novak LMS™'
     html = anon.get('/login').get_data(as_text=True)
     assert 'Novak LMS™' in html
+
+
+def test_student_views_hide_pending_sme_review_and_speed_drill_lists_fc0_u71(student):
+    es_home = student.get('/student/section/1/exam-sim').get_data(as_text=True)
+    assert 'Pending SME review' not in es_home
+    sd_page = student.get('/student/section/1/speed-drill').get_data(as_text=True)
+    assert 'Pending SME review' not in sd_page
+    assert '220-1201, 220-1202, N10-009, and FC0-U71' in sd_page

@@ -94,7 +94,7 @@
           {% for p in q.parts %}{% set k = loop.index0 %}<div class="es-row"><label for="q{{ i }}_{{ loop.index0 }}">{{ p.prompt }}</label>
             <select class="form-select form-select-sm" name="q{{ i }}_{{ loop.index0 }}" id="q{{ i }}_{{ loop.index0 }}"><option value="">—</option>{% for o in p.options %}<option{% if q.saved and q.saved[k] is defined and q.saved[k] == o %} selected{% endif %}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
         </div>
-        <p class="small text-muted mb-0">Simulation · every part must be right for credit; feedback shows parts right. {{ q.review }}.</p>
+        <p class="small text-muted mb-0">Simulation · every part must be right for credit; feedback shows parts right.</p>
       </div>
     {% else %}
       {% for p in q.prompts %}{% set k = loop.index0 %}<div class="es-row"><label for="q{{ i }}_{{ k }}">{{ p }}</label>

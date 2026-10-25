@@ -22,7 +22,7 @@
   <h3 class="h6">Domain performance</h3>
   {% for d in domains %}<div class="es-dombar"><span>{{ d.id }} {{ d.name }}</span><meter min="0" max="100" low="{{ 60 }}" optimum="100" value="{{ d.pct }}" aria-label="{{ d.name }} {{ d.pct }}%">{{ d.pct }}%</meter><span>{{ d.pct }}%</span></div>{% endfor %}
   <p class="small mt-2 mb-1"><strong>Objectives with missed items:</strong> {% if codes %}{{ codes|join(', ') }}{% else %}none{% endif %}</p>
-  <p class="small text-muted mb-2">Simulated report for voucher planning only — not an official CompTIA score report. {{ review_tag }}.</p>
+  <p class="small text-muted mb-2">Simulated report for voucher planning only — not an official CompTIA score report.</p>
   {% if not staff_view %}  <div class="d-flex flex-wrap gap-2 no-print">
     <button type="button" class="btn btn-outline-navy" id="esPrint"><i class="bi bi-printer" aria-hidden="true"></i> Print / Save Candidate Score Report</button>
     <form method="post" action="{{ url_for('exam_sim_remediate', section_id=section.id, attempt_id=att.id) }}">
@@ -52,6 +52,6 @@
   <div class="small">Your answer: {{ r.yours }} · Key: {{ r.key }}{% if r.parts > 1 %} · <strong>{{ r.parts_right }}/{{ r.parts }} parts right</strong>{% endif %}</div>
   {% if r.why %}<div class="small text-muted">{{ r.why }}</div>{% endif %}
 </li>{% endfor %}</ol>
-<p class="small text-muted">{{ disclaimer }} The scaled score is a simulation (100 + 800 × fraction correct); CompTIA does not publish its scaling. {{ review_tag }}.</p>
+<p class="small text-muted">{{ disclaimer }} The scaled score is a simulation (100 + 800 × fraction correct); CompTIA does not publish its scaling.</p>
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='js/exam_sim.js') }}" defer></script>{% endblock %}

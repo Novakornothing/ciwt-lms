@@ -3,7 +3,7 @@
 <section class="card mb-3 ladder-chapter" aria-labelledby="ladChH">
   <div class="card-header"><h2 class="h6 mb-0" id="ladChH"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ lad_title or 'Explanations picked for you' }}</h2></div>
   <div class="card-body">
-    <p class="small mx-muted">From the quick checks in the lessons. Not graded. {{ 'Pending SME review' }}.</p>
+    <p class="small mx-muted">From the quick checks in the lessons. Not graded.</p>
     {% for obj, b in lad.items() %}
       {% for w in b.worked %}
       <details class="ladder-recap mb-2"><summary><strong>{{ w.heading }}</strong> <span class="small">(lesson {{ w.label }}) · the explanation that worked for you: {{ w.view.label }}</span></summary>

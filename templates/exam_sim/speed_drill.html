@@ -7,7 +7,7 @@
   <li class="breadcrumb-item"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Exam-Day Simulator</a></li>
   <li class="breadcrumb-item active" aria-current="page">Speed-Drill</li></ol></nav>
 <h1 class="h3">Port, Protocol, Acronym &amp; Command Speed-Drill</h1>
-<p class="small text-muted">High-yield rapid recall for 220-1201, 220-1202 and N10-009. Cards you miss come back sooner (spaced repetition). {{ review }}.</p>
+<p class="small text-muted">High-yield rapid recall for 220-1201, 220-1202, N10-009, and FC0-U71. Cards you miss come back sooner (spaced repetition).</p>
 <form method="get" class="d-flex flex-wrap gap-2 align-items-end mb-3" id="sdFilter">
   <div><label class="form-label small mb-0" for="sdExam">Exam</label>
     <select class="form-select form-select-sm" name="exam" id="sdExam"><option value="">All exams</option>{% for k, code in exams.items() %}<option value="{{ k }}"{% if exam == k %} selected{% endif %}>{{ code }}</option>{% endfor %}</select></div>

@@ -23,7 +23,7 @@
     {% if ana.timeline %}<details class="mt-2"{% if staff %} open{% endif %}><summary class="small">Step-by-step timeline ({{ ana.timeline|length }} steps)</summary>
       <ol class="small lpa-timeline mt-2">{% for s in ana.timeline[-200:] %}<li value="{{ s.seq }}"><span class="badge lpa-{{ s.phase }} text-bg-light">{{ s.phase_label }}</span>
         <code>{{ s.action|truncate(80) }}</code>{% if s.outcome and s.outcome != 'ok' %} <span class="badge text-bg-light">{{ s.outcome }}</span>{% endif %}{% if s.newly %} <span class="badge text-bg-success">+{{ s.newly|join(', ') }}</span>{% endif %}{% if s.dt %} <span class="text-muted">+{{ s.dt }}s</span>{% endif %}</li>{% endfor %}</ol></details>{% endif %}
-    <p class="small text-muted mb-0 mt-2">Built from the lab's own event log with fixed rules. It describes process habits, not ability, and never changes a score. Pending SME review.</p>
+    <p class="small text-muted mb-0 mt-2">Built from the lab's own event log with fixed rules. It describes process habits, not ability, and never changes a score.{% if staff %} Pending SME review.{% endif %}</p>
   </div>
 </section>
 {% endif %}

@@ -7,7 +7,7 @@
   {% if v %}
   <section class="sublesson ladder-rung" aria-labelledby="lh-{{ L.sid }}">
     <p class="ladder-label" tabindex="-1"{% if L.feedback and not L.feedback.ok %} aria-describedby="lf-{{ L.sid }}"{% endif %}><span class="ladder-badge ladder-swapbadge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Swapped to {{ L.shown }}: {{ L.style }}{% if L.step_no %} — step {{ L.step_no }} of {{ L.step_total }}{% endif %}</span>
-      <span class="ladder-review">{{ L.review }}</span></p>
+      <span class="ladder-review visually-hidden">{{ L.review }}</span></p>
     {% if L.feedback and not L.feedback.ok %}<p class="ladder-feedback is-miss" id="lf-{{ L.sid }}">{{ L.feedback.text }}</p>{% endif %}
     <h3 id="lh-{{ L.sid }}">{{ L.heading }}</h3>
     {% if v.title %}<p class="ladder-title">{{ v.title }}</p>{% endif %}

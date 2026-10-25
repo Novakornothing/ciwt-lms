@@ -8,7 +8,7 @@
 <h1 class="h3">Exam-Day Readiness Simulator</h1>
 <p class="text-muted">Rehearse a real sitting: performance-based questions (PBQs) come first, the clock runs, and you can flag
 questions and skip the PBQs to come back to them. You get a simulated scaled score (100–900), a per-domain breakdown and a
-readiness badge. <span class="badge text-bg-light">{{ review }}</span></p>
+readiness badge.</p>
 <form method="post" action="{{ url_for('exam_sim_start', section_id=section.id) }}" class="card card-body mb-4 es-start" id="examSimStart">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {% if mult != 1.0 %}<p class="es-acc mb-3" id="esAccBadge"><span class="badge text-bg-info">{{ mult }}× time accommodation applied — {{ minutes_for('full', mult) }} min</span> <span class="small">{{ mult_label }} on every sitting length below.</span></p>{% endif %}

@@ -46,7 +46,7 @@
 <section class="card mb-3" aria-labelledby="mxGloss">
   <div class="card-header"><h2 class="h6 mb-0" id="mxGloss">Key terms (course glossary)</h2></div>
   <dl class="card-body mb-0 mx-gloss">
-    {% for g in review.glossary %}<dt>{{ g.term }}{% if g.pending %} <span class="mx-muted" title="Added in pass 9-10, pending SME review">†</span>{% endif %}</dt><dd>{{ g.definition }}</dd>{% endfor %}
+    {% for g in review.glossary %}<dt>{{ g.term }}</dt><dd>{{ g.definition }}</dd>{% endfor %}
   </dl>
 </section>
 {% endif %}
