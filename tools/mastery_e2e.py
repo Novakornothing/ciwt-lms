@@ -88,7 +88,7 @@ with sync_playwright() as p:
     b = p.chromium.launch()
     ctx = b.new_context(viewport={'width': W, 'height': 844 if PHONE else 800}, is_mobile=PHONE, has_touch=PHONE)
     if a.theme == 'dark':
-        ctx.add_init_script("try{localStorage.setItem('ciwt-theme','dark')}catch(e){}")
+        ctx.add_init_script("try{localStorage.setItem('novak-theme','dark')}catch(e){}")
     pg = ctx.new_page()
     errors = []
     pg.on('pageerror', lambda e: errors.append(str(e)))

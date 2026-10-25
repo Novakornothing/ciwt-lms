@@ -141,7 +141,7 @@ rather than let the disk fill. Restarting the guest does nothing; the host owner
 resuming it. In the same way, five guests that lose the network together point at the shared virtual switch or the host’s uplink, not at five
 guest NICs.</p>
 ''' + worked('slow since Tuesday', '''
-<p>Ticket: “CIWT-W11-07 has been slow since Tuesday.” Inside the guest: 8 GB RAM visible, 35 % used, disk 40 % free, no runaway process.
+<p>Ticket: “NOVAK-W11-07 has been slow since Tuesday.” Inside the guest: 8 GB RAM visible, 35 % used, disk 40 % free, no runaway process.
 The guest looks healthy. The VM’s settings (read-only view the shop allows) list four checkpoints, the oldest from Tuesday’s update. Note:
 “Guest: RAM 35 %, disk 40 % free, no high CPU. Guess (unconfirmed): checkpoint chain of 4 since Tue on host. Asked host owner to review and merge
 checkpoints. No checkpoints deleted.”</p>''') + cfu(
@@ -171,7 +171,7 @@ tenant usually belong to someone else.</p>
             ['State', 'Event Viewer errors in the guest', 'Checkpoint chain, Paused-Critical, backup jobs'],
             ['Cloud', 'Error text, time, tenant name', 'Service health incident, subscription limits'],
         ]) + worked('guest facts, then the ask', '''
-<p>“CIWT-W11-07 (VM). Guest: 8 GB, RAM 35 %, CPU &lt; 10 % idle, C: 40 % free; ipconfig 10.20.30.47 gw OK. Slow opening files since Tue.
+<p>“NOVAK-W11-07 (VM). Guest: 8 GB, RAM 35 %, CPU &lt; 10 % idle, C: 40 % free; ipconfig 10.20.30.47 gw OK. Slow opening files since Tue.
 <em>Guess:</em> checkpoint chain on host (4 checkpoints seen, oldest Tue). Ask to host owner: review/merge checkpoints, check datastore space.
 Nothing changed in the guest; no checkpoints touched.”</p>''') + '''
 <h3>Pass bar</h3>

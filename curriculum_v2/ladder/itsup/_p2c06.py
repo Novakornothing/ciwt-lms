@@ -59,7 +59,7 @@ _add('6.1', 'host-versus-guest', 'Host versus guest', 'IT-6.1', S1, [
      'If the bus breaks down, every passenger is late, as every guest suffers when the host fails.', FIVE, FIVE),
     ('In the picture, which arrow points at the host owner?', 'Five guests fail at once', 'One guest has APIPA', 'One user forgot a password',
      'Simultaneous failure across guests points at the shared host.', FIVE, FIVE),
-    ('The bench PC is CIWT-W11-07. What may it be?', 'A guest VM', 'The physical host', 'A network switch',
+    ('The bench PC is NOVAK-W11-07. What may it be?', 'A guest VM', 'The physical host', 'A network switch',
      'The Windows you type in on the bench may already be a guest.', HOWN, HOWN),
 ],
     (['The Windows you use in class may be a guest.', 'The host is the machine that holds its files.', 'If the host’s disk fills up, every guest looks sick.',

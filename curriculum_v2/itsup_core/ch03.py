@@ -219,7 +219,7 @@ at a time, and a note that a colleague could follow.</p>
             ['Power and heat', 'Does it fail under load, and how hot does it get?', 'Kernel-Power 41 events; firmware temperatures; PSU label vs load'],
             ['Display', 'When the image goes, does the PC keep running?', 'Sound or remote access continues; isolation order from 3.4'],
         ]) + worked('the capstone note', '''
-<p>“CIWT-W11-07, intermittent reboots, ‘sometimes no video’. Safety: no smell/heat. POST: completes, no codes (3 cold starts). Inventory:
+<p>“NOVAK-W11-07, intermittent reboots, ‘sometimes no video’. Safety: no smell/heat. POST: completes, no codes (3 cold starts). Inventory:
 16 GB seen of 16 GB; Disk 0 = 512 GB NVMe, Drive health OK, 4% life used. Backup: OneDrive synced today. Event Viewer: Kernel-Power 41 at each
 reboot, no bugcheck. Load test: reboot in 4 min; temps normal. ‘No video’ events coincide with the reboots (not a display fault). PSU label 300
 W; GPU added last month draws up to 220 W. Change: none yet — request a 550 W PSU with matching connectors. Next: verify with 3 load tests.”

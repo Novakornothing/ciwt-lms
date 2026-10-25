@@ -1,4 +1,4 @@
-/* CIWT live labs — terminal client (Windows cmd/PowerShell, IOS switch/router, Linux bash, ticket desk).
+/* Novak LMS live labs — terminal client (Windows cmd/PowerShell, IOS switch/router, Linux bash, ticket desk).
  * Server-side state: every command is POSTed and the transcript is stored, so a reload resumes exactly.
  * Mobile: keys bar (Tab ↑ ↓ Ctrl-C Clear ?), command chips that insert text, a focus mode sized to the
  * visual viewport so the on-screen keyboard never covers the prompt, 16px input (no iOS zoom). */

@@ -121,7 +121,7 @@ def register(app, db, d):
                     conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN institution_id INTEGER'))
         inst = Institution.query.filter_by(slug=DEFAULT_SLUG).first()
         if not inst:
-            inst = Institution(slug=DEFAULT_SLUG, name=app.config.get('SITE_NAME', 'CIWT'), active=True)
+            inst = Institution(slug=DEFAULT_SLUG, name=app.config.get('SITE_NAME', 'Novak Learning'), active=True)
             db.session.add(inst)
             db.session.commit()
         with db.engine.begin() as conn:

@@ -129,7 +129,7 @@ OBJECTIVE_REWRITES = {
              'Identify firmware settings (boot order, CSM/legacy mode, Secure Boot, XMP/EXPO) that can make a working PC appear dead'},
     (3, 2): {'Know when a degraded array is an incident, not a quiet disk swap':
              'Explain why a degraded RAID array is an incident that requires a verified backup before any disk swap'},
-    (6, 1): {'Know that this training PC may already be a guest (CIWT-W11-07)':
+    (6, 1): {'Know that this training PC may already be a guest (NOVAK-W11-07)':
              'Determine whether a Windows PC is a virtual machine guest (System Information, Task Manager, or the lab host name)'},
     (6, 2): {'Know when a “cloud outage” is a vendor ticket, not a local reimage':
              'Distinguish a SaaS/vendor outage from a local fault using scope and a provider status page, and route it to the vendor'},

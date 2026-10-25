@@ -161,7 +161,7 @@ with sync_playwright() as p:
     ctx = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True,
                         user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1')
     if a.theme == 'dark':
-        ctx.add_init_script("try{localStorage.setItem('ciwt-theme','dark')}catch(e){}")
+        ctx.add_init_script("try{localStorage.setItem('novak-theme','dark')}catch(e){}")
     pg = ctx.new_page()
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(a.base + '/login'); pg.fill('[name=email]', 'student1@lms.local'); pg.fill('[name=password]', 'student123')

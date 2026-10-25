@@ -69,7 +69,7 @@ def cert_body(pem):
 
 
 # ------------------------------------------------------------------ SP side
-def sp_metadata(entity_id, acs_url, cert_pem=None, org='CIWT LMS'):
+def sp_metadata(entity_id, acs_url, cert_pem=None, org='Novak LMS'):
     md = NS['md']
     xl = '{http://www.w3.org/XML/1998/namespace}lang'
     root = etree.Element(f'{{{md}}}EntityDescriptor', nsmap={'md': md, 'ds': NS['ds']}, entityID=entity_id)

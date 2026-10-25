@@ -4086,7 +4086,7 @@ Ticket B can be worked in minutes. Ticket A forces the next person to start from
                        '<li>Follow a live demonstration step by step</li>\n'
                        '<li>Complete a scaffolded checklist before working alone</li>\n'
                        '<li>Explain what you did in plain language</li></ul></div>\n'
-                       '<div class="build-on"><strong>Builds on:</strong> All prior CIWT support chapters—habits and '
+                       '<div class="build-on"><strong>Builds on:</strong> All prior IT support chapters—habits and '
                        'procedure</div>\n'
                        '<div class="plain-english"><h4>In plain English</h4>\n'
                        '<p>This is a <strong>practice ticket</strong>, not a new topic. Everything below was '

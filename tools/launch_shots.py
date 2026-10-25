@@ -34,7 +34,7 @@ def check(name, ok, detail=''):
 def ctx(b, w, theme, who=None):
     c = b.new_context(viewport={'width': w, 'height': 900 if w > 500 else 844}, device_scale_factor=2,
                       is_mobile=w < 500, has_touch=w < 500)
-    c.add_init_script(f"try{{localStorage.setItem('ciwt-theme','{theme}')}}catch(e){{}}")
+    c.add_init_script(f"try{{localStorage.setItem('novak-theme','{theme}')}}catch(e){{}}")
     p = c.new_page()
     if who:
         p.goto(B + '/login'); p.fill('input[name=email]', who[0]); p.fill('input[name=password]', who[1])

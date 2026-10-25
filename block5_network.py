@@ -184,7 +184,7 @@ CHAPTER5 = {
 </ol></div>
 
 <section id="s1" class="sublesson"><h3>Note bar</h3>
-<p>Example: “CIWT-W11-07. ipconfig 10.20.30.47 gw 10.20.30.1. ping 10.20.30.50 4/4. ping app.training.local fail. nslookup NXDOMAIN. flushed cache — still fail. Escalate to DNS owner for app.training.local.”</p>
+<p>Example: “NOVAK-W11-07. ipconfig 10.20.30.47 gw 10.20.30.1. ping 10.20.30.50 4/4. ping app.training.local fail. nslookup NXDOMAIN. flushed cache — still fail. Escalate to DNS owner for app.training.local.”</p>
 </section>
 
 <section id="s2" class="sublesson"><h3>Pass bar</h3>

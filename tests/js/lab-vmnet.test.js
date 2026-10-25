@@ -25,8 +25,8 @@ function lan(cfg) {
   return { fab, port, svc, got };
 }
 const CFG = { mac: '02:c1:77:00:00:01', ifaces: [{ seg: 'lan', ip: '10.10.0.1', bits: 24 }, { seg: 'lan', ip: '10.10.0.53', bits: 24 }],
-  dhcp: { seg: 'lan', pool: ['10.10.0.100', '10.10.0.101'], router: '10.10.0.1', dns: '10.10.0.53', domain: 'ciwt.lab', bits: 24 },
-  dns: { domain: 'ciwt.lab', records: { 'intranet.ciwt.lab': '10.10.0.80' } } };
+  dhcp: { seg: 'lan', pool: ['10.10.0.100', '10.10.0.101'], router: '10.10.0.1', dns: '10.10.0.53', domain: 'novak.lab', bits: 24 },
+  dns: { domain: 'novak.lab', records: { 'intranet.novak.lab': '10.10.0.80' } } };
 const dhcpType = (f) => { for (let p = 14 + 20 + 8 + 240; p < f.length && f[p] !== 255; p += 2 + f[p + 1]) if (f[p] === 53) return f[p + 2]; return 0; };
 
 test('DHCP: DISCOVER → OFFER, REQUEST → ACK with router, DNS and the same address', () => {
@@ -60,13 +60,13 @@ test('DNS: A record, NXDOMAIN, and the query is logged', () => {
   const { port, svc, got } = lan(CFG);
   port.send(arpReq(MAC, '10.10.0.100', '10.10.0.53'));      // services learns the client's MAC
   const q = (name) => { const parts = []; name.split('.').forEach((l) => { parts.push(l.length, ...Buffer.from(l)); }); return new Uint8Array([0, 7, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, ...parts, 0, 0, 1, 0, 1]); };
-  port.send(eth([2, 0xc1, 0x77, 0, 0, 1], MAC, 0x0800, ipv4('10.10.0.100', '10.10.0.53', 17, udp(40000, 53, q('intranet.ciwt.lab')))));
+  port.send(eth([2, 0xc1, 0x77, 0, 0, 1], MAC, 0x0800, ipv4('10.10.0.100', '10.10.0.53', 17, udp(40000, 53, q('intranet.novak.lab')))));
   let r = got[got.length - 1]; const d = r.slice(14 + 20 + 8);
   assert.strictEqual(d[3] & 15, 0); assert.strictEqual(d[7], 1);
   assert.deepStrictEqual(Array.from(d.slice(d.length - 4)), [10, 10, 0, 80]);
-  port.send(eth([2, 0xc1, 0x77, 0, 0, 1], MAC, 0x0800, ipv4('10.10.0.100', '10.10.0.53', 17, udp(40000, 53, q('nope.ciwt.lab')))));
+  port.send(eth([2, 0xc1, 0x77, 0, 0, 1], MAC, 0x0800, ipv4('10.10.0.100', '10.10.0.53', 17, udp(40000, 53, q('nope.novak.lab')))));
   r = got[got.length - 1]; assert.strictEqual(r[14 + 20 + 8 + 3] & 15, 3);
-  assert.ok(svc.events.some((e) => e.type === 'dns' && e.q === 'intranet.ciwt.lab' && e.rcode === 0));
+  assert.ok(svc.events.some((e) => e.type === 'dns' && e.q === 'intranet.novak.lab' && e.rcode === 0));
 });
 
 test('switch isolates segments: a frame reaches only ports that share a segment', () => {

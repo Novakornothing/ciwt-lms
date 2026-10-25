@@ -8,7 +8,7 @@
   /* CSRF: attach the session token to every same-origin state-changing fetch(). */
   (function () {
     var meta = document.querySelector('meta[name="csrf-token"]');
-    window.CIWT_CSRF = meta ? meta.content : '';
+    window.NOVAK_CSRF = meta ? meta.content : '';
     if (!window.fetch) return;
     var orig = window.fetch.bind(window);
     window.fetch = function (input, init) {
@@ -18,7 +18,7 @@
       var same = !/^https?:/i.test(u) || u.indexOf(location.origin) === 0;
       if (same && method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
         var h = new Headers(init.headers || (input && input.headers) || {});
-        if (!h.has('X-CSRFToken')) h.set('X-CSRFToken', window.CIWT_CSRF);
+        if (!h.has('X-CSRFToken')) h.set('X-CSRFToken', window.NOVAK_CSRF);
         init.headers = h;
       }
       return orig(input, init);
@@ -36,7 +36,7 @@
   <link rel="preload" as="style" href="{{ url_for('static', filename='vendor/bootstrap-icons/1.11.3/bootstrap-icons-subset.css') }}" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link href="{{ url_for('static', filename='vendor/bootstrap-icons/1.11.3/bootstrap-icons-subset.css') }}" rel="stylesheet"></noscript>
   <meta name="theme-color" content="#060d18">
-  <script>try{if(localStorage.getItem('ciwt-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+  <script>try{if(localStorage.getItem('novak-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
   {% if tenant_brand %}<link rel="stylesheet" href="{{ url_for('tenant_css', slug=tenant_brand.slug) }}">{% endif %}
   {% block head %}{% endblock %}
 </head>
@@ -197,12 +197,12 @@
     </div>
   </footer>
   <script src="{{ url_for('static', filename='vendor/bootstrap/5.3.3/bootstrap.bundle.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/ciwt-ui.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/novak-ui.js') }}"></script>
   {% block scripts %}{% endblock %}
 <script>
 (function(){
   const root = document.documentElement;
-  const key = 'ciwt-theme';
+  const key = 'novak-theme';
   const saved = localStorage.getItem(key);
   if (saved === 'dark') root.setAttribute('data-theme', 'dark');
   function syncIcon(){

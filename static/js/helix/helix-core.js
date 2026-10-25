@@ -1,4 +1,4 @@
-/* CIWT Helix core — pure, DOM-free logic shared by the runtime and the tests.
+/* Novak LMS Helix core — pure, DOM-free logic shared by the runtime and the tests.
    Smoothing (median outlier gate + 1D Kalman), validation scoring, AOI
    debouncing, attention state timeline, heat grid, and a retrying batch queue.
    UMD: window.HelixCore in the browser, module.exports under Node. */

@@ -577,7 +577,7 @@ LINUX_SHELL = _lab(
         {"id": "grep", "text": "Find the ERROR line in app.log with grep"},
         {"id": "q_perm", "text": "Checkpoint: read a permission string"},
     ],
-    "SR-4120 on ciwt-lnx-01: the nightly backup script won't run and an internal report is world-readable. "
+    "SR-4120 on novak-lnx-01: the nightly backup script won't run and an internal report is world-readable. "
     "Windows habits help: dir, cls, ipconfig and type give you the Linux equivalent. Tab completes commands and file names.",
     "Script runs, report locked down, notes written, error found — a clean Linux support session.",
     linux_state(),
@@ -1303,7 +1303,7 @@ def _wlp_pre(state, done, cmd):
             done.append(o)
     if cl in ("systeminfo", "systeminfo.exe"):
         mark("vm_check")
-        return ["Host Name:                 " + state.get("hostname", "CIWT-W11-07"),
+        return ["Host Name:                 " + state.get("hostname", "NOVAK-W11-07"),
                 "OS Name:                   Microsoft Windows 11 Pro", "OS Version:                10.0.26200 N/A Build 26200",
                 "System Manufacturer:       Microsoft Corporation", "System Model:              Virtual Machine",
                 "System Type:               x64-based PC", "Total Physical Memory:     8,192 MB", "Domain:                    training.local",
@@ -1325,24 +1325,24 @@ def _wlp_pre(state, done, cmd):
         else:
             return _BATT_REPORT + ["", "(Also run powercfg /batteryreport yourself first — that is how you get this report on a laptop.)"]
         return list(_BATT_REPORT)
-    if re.match(r"^nslookup (-type=mx|-q=mx|-querytype=mx) ciwt\.local", cl) or \
-            re.match(r"^resolve-dnsname ciwt\.local -type mx", cl) or re.match(r"^resolve-dnsname -type mx ciwt\.local", cl):
+    if re.match(r"^nslookup (-type=mx|-q=mx|-querytype=mx) novak\.local", cl) or \
+            re.match(r"^resolve-dnsname novak\.local -type mx", cl) or re.match(r"^resolve-dnsname -type mx novak\.local", cl):
         mark("mx")
         if cl.startswith("resolve"):
             return ["Name                 Type   TTL   Section    NameExchange          Preference",
                     "----                 ----   ---   -------    ------------          ----------",
-                    "ciwt.local           MX     3600  Answer     mail.ciwt.local       10",
-                    "ciwt.local           MX     3600  Answer     mail2.ciwt.local      20"]
+                    "novak.local           MX     3600  Answer     mail.novak.local       10",
+                    "novak.local           MX     3600  Answer     mail2.novak.local      20"]
         return ["Server:  dc01.training.local", "Address:  10.20.30.10", "",
-                "ciwt.local      MX preference = 10, mail exchanger = mail.ciwt.local",
-                "ciwt.local      MX preference = 20, mail exchanger = mail2.ciwt.local", "mail.ciwt.local internet address = 10.20.40.25"]
-    if cl.startswith("nslookup ") and "mx" not in cl and "ciwt.local" in cl:
-        return ["Server:  dc01.training.local", "Address:  10.20.30.10", "", "Name:    ciwt.local", "Address:  10.20.40.5",
-                "(That is the A record. Mail servers are listed in MX records: nslookup -type=MX ciwt.local)"]
+                "novak.local      MX preference = 10, mail exchanger = mail.novak.local",
+                "novak.local      MX preference = 20, mail exchanger = mail2.novak.local", "mail.novak.local internet address = 10.20.40.25"]
+    if cl.startswith("nslookup ") and "mx" not in cl and "novak.local" in cl:
+        return ["Server:  dc01.training.local", "Address:  10.20.30.10", "", "Name:    novak.local", "Address:  10.20.40.5",
+                "(That is the A record. Mail servers are listed in MX records: nslookup -type=MX novak.local)"]
     m = re.match(r"^(test-netconnection|tnc)\s+(\S+)(?:\s+-port\s+(\d+))?(?:\s+-informationlevel\s+\S+)?$", cl)
     if m:
         host, port = m.group(2), m.group(3)
-        known = {"mail.ciwt.local": "10.20.40.25", "mail2.ciwt.local": "10.20.40.26", "ciwt.local": "10.20.40.5"}
+        known = {"mail.novak.local": "10.20.40.25", "mail2.novak.local": "10.20.40.26", "novak.local": "10.20.40.5"}
         if host not in known:
             return [f"WARNING: Name resolution of {host} failed", "", f"ComputerName   : {host}", "RemoteAddress  :", "PingSucceeded  : False"]
         if not port:
@@ -1373,8 +1373,8 @@ WIN_LAPTOP_PORTS = _lab(
     [
         {"id": "vm_check", "text": "systeminfo — is this bench machine physical or virtual?"},
         {"id": "battery", "text": "powercfg /batteryreport, then read the user's report in C:\\Tickets"},
-        {"id": "mx", "text": "Find the mail servers for ciwt.local (nslookup -type=MX or Resolve-DnsName -Type MX)"},
-        {"id": "ports", "text": "Test-NetConnection mail.ciwt.local on port 25 and on port 587"},
+        {"id": "mx", "text": "Find the mail servers for novak.local (nslookup -type=MX or Resolve-DnsName -Type MX)"},
+        {"id": "ports", "text": "Test-NetConnection mail.novak.local on port 25 and on port 587"},
         {"id": "q_battery", "text": "Checkpoint: battery decision"},
         {"id": "q_port", "text": "Checkpoint: read the port test"},
     ],
@@ -1383,15 +1383,15 @@ WIN_LAPTOP_PORTS = _lab(
     "Evidence for both faults: a worn, possibly swelling battery to replace safely, and SMTP 25 blocked while submission port 587 works.",
     _win(shell="ps"),
     course_objectives=["IT-4.1", "IT-5.1", "IT-5.2", "IT-6.1"], minutes=25, pre=_wlp_pre,
-    hints=["systeminfo", "powercfg /batteryreport", "type C:\\Tickets\\battery-report-LT-0442.txt", "nslookup -type=MX ciwt.local",
-           "Test-NetConnection mail.ciwt.local -Port 25", "Test-NetConnection mail.ciwt.local -Port 587"],
+    hints=["systeminfo", "powercfg /batteryreport", "type C:\\Tickets\\battery-report-LT-0442.txt", "nslookup -type=MX novak.local",
+           "Test-NetConnection mail.novak.local -Port 25", "Test-NetConnection mail.novak.local -Port 587"],
     obj_hints={
         "vm_check": ["systeminfo shows the System Model and whether a hypervisor is running.", "systeminfo"],
         "battery": ["powercfg makes the battery report on a laptop; on this VM, read the one attached to the ticket.",
                     "powercfg /batteryreport  then  type C:\\Tickets\\battery-report-LT-0442.txt"],
-        "mx": ["Mail servers are published as MX records, not A records.", "nslookup -type=MX ciwt.local"],
+        "mx": ["Mail servers are published as MX records, not A records.", "nslookup -type=MX novak.local"],
         "ports": ["Ping proves the host; -Port proves the service. Test SMTP (25) and submission (587).",
-                  "Test-NetConnection mail.ciwt.local -Port 25   then   -Port 587"],
+                  "Test-NetConnection mail.novak.local -Port 25   then   -Port 587"],
     },
     palette=["systeminfo", "powercfg /batteryreport", "dir C:\\Tickets", "type ", "nslookup -type=MX ", "Test-NetConnection ", "-Port ", "cls"],
     steps=[
@@ -1404,7 +1404,7 @@ WIN_LAPTOP_PORTS = _lab(
                  2: "A swelling lithium cell is a safety risk; keeping it on charge makes it worse.",
                  3: "Never puncture or press a lithium cell."},
                 right="Correct: about 56% health plus a raised touchpad — replace it and handle it as a swollen battery.", title="Checkpoint"),
-        _choice("q_port", "q_port", "mail.ciwt.local: PingSucceeded True; port 25 TcpTestSucceeded False; port 587 True. What does that tell you?",
+        _choice("q_port", "q_port", "mail.novak.local: PingSucceeded True; port 25 TcpTestSucceeded False; port 587 True. What does that tell you?",
                 ["The mail server is down", "DNS is broken", "The host is up; port 25 is blocked or not offered to clients — "
                  "configure the client for submission on 587 (STARTTLS)", "The laptop has no IP address"], 2,
                 {0: "Ping and port 587 both answer — the server is up.", 1: "The name resolved to 10.20.40.25, so DNS works.",
@@ -1412,8 +1412,8 @@ WIN_LAPTOP_PORTS = _lab(
                 right="Correct: the host answers; 25 is blocked for clients, 587 is the submission port to use.", title="Checkpoint"),
     ],
     solution={"commands": ["systeminfo", "powercfg /batteryreport", "type C:\\Tickets\\battery-report-LT-0442.txt",
-                           "nslookup -type=MX ciwt.local", "Test-NetConnection mail.ciwt.local -Port 25",
-                           "Test-NetConnection mail.ciwt.local -Port 587"],
+                           "nslookup -type=MX novak.local", "Test-NetConnection mail.novak.local -Port 25",
+                           "Test-NetConnection mail.novak.local -Port 587"],
               "answers": {"q_battery": 1, "q_port": 2}},
 )
 
@@ -1421,8 +1421,8 @@ WIN_LAPTOP_PORTS = _lab(
 
 # ────────────────────────────────────────────────────────────── win-wifi-survey (ITSUP 5.4: a laptop WITH a Wi-Fi adapter)
 
-_NETS = [("CIWT-Staff", "WPA3-Personal", "CCMP", [("a4:2b:b0:11:20:01", 34, "802.11ax", 1, "2.4 GHz"), ("a4:2b:b0:11:20:05", 86, "802.11ax", 44, "5 GHz")]),
-         ("CIWT-Guest", "WPA2-Personal", "CCMP", [("a4:2b:b0:11:21:01", 31, "802.11ax", 1, "2.4 GHz")]),
+_NETS = [("Novak-Staff", "WPA3-Personal", "CCMP", [("a4:2b:b0:11:20:01", 34, "802.11ax", 1, "2.4 GHz"), ("a4:2b:b0:11:20:05", 86, "802.11ax", 44, "5 GHz")]),
+         ("Novak-Guest", "WPA2-Personal", "CCMP", [("a4:2b:b0:11:21:01", 31, "802.11ax", 1, "2.4 GHz")]),
          ("HP-Print-3F-LaserJet", "Open", "None", [("f0:92:1c:3f:00:aa", 70, "802.11n", 6, "2.4 GHz")]),
          ("NETGEAR-3F2A", "WPA2-Personal", "CCMP", [("9c:3d:cf:2a:3f:10", 64, "802.11ac", 1, "2.4 GHz")])]
 
@@ -1440,10 +1440,10 @@ def _wifi_pre(state, done, cmd):
         if band5:
             mark("verify")
         return ["There is 1 interface on the system:", "", "    Name                   : Wi-Fi", "    Description            : Intel(R) Wi-Fi 6E AX211 160MHz",
-                "    State                  : connected", "    SSID                   : CIWT-Staff", f"    BSSID                  : {bssid}",
+                "    State                  : connected", "    SSID                   : Novak-Staff", f"    BSSID                  : {bssid}",
                 "    Network type           : Infrastructure", "    Radio type             : 802.11ax", "    Authentication         : WPA3-Personal",
                 f"    Band                   : {band}", f"    Channel                : {ch}", f"    Receive rate (Mbps)    : {'960' if band5 else '28.9'}",
-                f"    Signal                 : {sig}%", "    Profile                : CIWT-Staff"]
+                f"    Signal                 : {sig}%", "    Profile                : Novak-Staff"]
     if cl.startswith("netsh wlan show networks") or cl.startswith("netsh wlan sh net"):
         bssid_mode = "bssid" in cl
         if bssid_mode:
@@ -1462,17 +1462,17 @@ def _wifi_pre(state, done, cmd):
         return out
     if cl in ("netsh wlan show profiles", "netsh wlan show profile"):
         mark("profiles")
-        return ["Profiles on interface Wi-Fi:", "", "User profiles", "-------------", "    All User Profile     : CIWT-Staff",
-                "    All User Profile     : CIWT-Guest", "    All User Profile     : Starbucks WiFi"]
+        return ["Profiles on interface Wi-Fi:", "", "User profiles", "-------------", "    All User Profile     : Novak-Staff",
+                "    All User Profile     : Novak-Guest", "    All User Profile     : Starbucks WiFi"]
     m = re.match(r'^netsh wlan show profile (?:name=)?"?([^"]+?)"?(?: key=clear)?$', cl)
-    if m and m.group(1).strip() == "ciwt-staff":
+    if m and m.group(1).strip() == "novak-staff":
         mark("profiles")
-        return ["Profile CIWT-Staff on interface Wi-Fi:", "    Connection mode        : Connect automatically", "    Authentication         : WPA3-Personal",
+        return ["Profile Novak-Staff on interface Wi-Fi:", "    Connection mode        : Connect automatically", "    Authentication         : WPA3-Personal",
                 "    Cipher                 : CCMP", "    Security key           : Present", "    Key Content            : (hidden by policy on this training laptop)"]
     if cl.startswith("netsh wlan connect") or cl.startswith("netsh wlan disconnect"):
         if "disconnect" in cl:
             return ["Disconnection request was completed successfully for interface \"Wi-Fi\"."]
-        if "ciwt-staff" in cl:
+        if "novak-staff" in cl:
             state["band"] = "5"
             mark("reconnect")
             return ["Connection request was completed successfully.",
@@ -1488,8 +1488,8 @@ WIN_WIFI_SURVEY = _lab(
     [
         {"id": "show_if", "text": "netsh wlan show interfaces — read signal, band and channel"},
         {"id": "survey", "text": "netsh wlan show networks mode=bssid — survey every access point"},
-        {"id": "profiles", "text": "netsh wlan show profiles — confirm the saved CIWT-Staff profile"},
-        {"id": "reconnect", "text": "Reconnect to CIWT-Staff (netsh wlan connect name=CIWT-Staff)"},
+        {"id": "profiles", "text": "netsh wlan show profiles — confirm the saved Novak-Staff profile"},
+        {"id": "reconnect", "text": "Reconnect to Novak-Staff (netsh wlan connect name=Novak-Staff)"},
         {"id": "verify", "text": "Verify with show interfaces: 5 GHz, strong signal"},
         {"id": "q_wifi", "text": "Checkpoint: why was it slow?"},
     ],
@@ -1499,17 +1499,17 @@ WIN_WIFI_SURVEY = _lab(
     _win(shell="cmd"),
     course_objectives=["IT-5.4", "NO-3.3"], minutes=20, pre=_wifi_pre,
     hints=["netsh wlan show interfaces", "netsh wlan show networks mode=bssid", "netsh wlan show profiles",
-           "netsh wlan connect name=CIWT-Staff", "netsh wlan show interfaces"],
+           "netsh wlan connect name=Novak-Staff", "netsh wlan show interfaces"],
     obj_hints={
         "show_if": ["Start with the adapter's own view of the link.", "netsh wlan show interfaces"],
         "survey": ["List the networks with each access point (BSSID) to compare bands and channels.", "netsh wlan show networks mode=bssid"],
         "profiles": ["Check the laptop has the right saved network before reconnecting.", "netsh wlan show profiles"],
-        "reconnect": ["Reconnecting lets Windows pick the strongest BSSID for the profile.", "netsh wlan connect name=CIWT-Staff"],
+        "reconnect": ["Reconnecting lets Windows pick the strongest BSSID for the profile.", "netsh wlan connect name=Novak-Staff"],
         "verify": ["Prove the fix with the same command you diagnosed with.", "netsh wlan show interfaces"],
     },
     palette=["netsh wlan show interfaces", "netsh wlan show networks mode=bssid", "netsh wlan show profiles", "netsh wlan connect name=", "cls"],
     steps=[
-        _choice("q_wifi", "q_wifi", "Before the fix: CIWT-Staff at 34% on 2.4 GHz channel 1, which NETGEAR-3F2A and CIWT-Guest also use; "
+        _choice("q_wifi", "q_wifi", "Before the fix: Novak-Staff at 34% on 2.4 GHz channel 1, which NETGEAR-3F2A and Novak-Guest also use; "
                 "the same SSID offered 86% on 5 GHz channel 44. Best explanation?",
                 ["The WPA3 password is wrong", "The laptop held a weak 2.4 GHz link on a busy channel instead of the strong 5 GHz radio",
                  "The DHCP server is down", "The printer's open network is blocking Teams"], 1,
@@ -1519,7 +1519,7 @@ WIN_WIFI_SURVEY = _lab(
                 right="Correct: weak signal + co-channel contention on 2.4 GHz; the 5 GHz radio was the fix.", title="Checkpoint"),
     ],
     solution={"commands": ["netsh wlan show interfaces", "netsh wlan show networks mode=bssid", "netsh wlan show profiles",
-                           "netsh wlan connect name=CIWT-Staff", "netsh wlan show interfaces"], "answers": {"q_wifi": 1}},
+                           "netsh wlan connect name=Novak-Staff", "netsh wlan show interfaces"], "answers": {"q_wifi": 1}},
 )
 
 # ────────────────────────────────────────────────────────────── hv-vswitch (ITSUP 6.3: Hyper-V host, simulated)

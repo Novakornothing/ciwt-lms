@@ -1,5 +1,4 @@
-/* CIWT legacy theme — extracted verbatim from templates/base.html (refinement pass).
-   New shared tokens/components live in ciwt-ui.css, loaded after this file. */
+/* Novak LMS theme — shared tokens/components live in novak-ui.css, loaded after this file. */
 /* Base — Navy IST tech shell */
 :root {
   --navy-950: #02060d;

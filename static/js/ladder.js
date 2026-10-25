@@ -259,7 +259,7 @@
 
   body.querySelectorAll('.ladder').forEach(init);
   setInterval(helixWatch, 2500);
-  window.CiwtLadder = { swap: swap, init: init, helixWatch: helixWatch, triggerStruggleNudge: triggerStruggleNudge };
+  window.NovakLadder = window.CiwtLadder = { swap: swap, init: init, helixWatch: helixWatch, triggerStruggleNudge: triggerStruggleNudge };
   window.HelixGaze = window.HelixGaze || {};
   window.HelixGaze.triggerStruggleNudge = triggerStruggleNudge;
 })();

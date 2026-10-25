@@ -21,7 +21,7 @@ def _ans(key, value, path="/root/SR-5120.txt"):
 # --------------------------------------------------------------------------------------------- 1: log investigation
 def _logs():
     r = random.Random(5120)
-    host = "ciwt-web-03"
+    host = "novak-web-03"
 
     def ln(day, t, fac, msg):
         return f"Oct {day} {t} {host} {fac} {msg}"
@@ -37,7 +37,7 @@ def _logs():
             buf.append(ln(day, ts(h, 17, 40), "auth.info", f"sshd[{pid}]: Accepted publickey for deploy from 10.0.5.20 port {40000 + pid} ssh2: ED25519 SHA256:q2Vd1Xk"))
             buf.append(ln(day, ts(h, 18, 5), "daemon.info", "udhcpc: lease of 10.0.5.33 obtained from 10.0.5.1, lease time 3600"))
     older.append(ln(15, "02:30:01", "cron.info", "crond[211]: USER root pid 1201 cmd /usr/local/bin/backup.sh"))
-    older.append(ln(15, "02:30:04", "user.err", "backup[1203]: ERROR: rsync to nas01.ciwt.lab::nightly failed: connection refused (code 10)"))
+    older.append(ln(15, "02:30:04", "user.err", "backup[1203]: ERROR: rsync to nas01.novak.lab::nightly failed: connection refused (code 10)"))
     older.append(ln(15, "02:30:04", "user.err", "backup[1203]: backup aborted, 0 files copied"))
     old.append(ln(16, "14:02:51", "kern.warn", "kernel: php-fpm invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE), order=0"))
     old.append(ln(16, "14:02:51", "kern.err", "kernel: Out of memory: Killed process 2211 (php-fpm) total-vm:612448kB, anon-rss:401220kB"))
@@ -64,7 +64,7 @@ def _logs():
 
 
 _LT, _LO, _LOO = _logs()
-_LOG_SETUP = _prelude("ciwt-web-03") + "mkdir -p /var/log\ncat > /var/log/messages <<'EOF'\n" + "\n".join(_LT) + \
+_LOG_SETUP = _prelude("novak-web-03") + "mkdir -p /var/log\ncat > /var/log/messages <<'EOF'\n" + "\n".join(_LT) + \
     "\nEOF\ncat > /var/log/messages.0 <<'EOF'\n" + "\n".join(_LO) + "\nEOF\ncat > /var/log/messages.1 <<'EOF'\n" + \
     "\n".join(_LOO) + "\nEOF\ngzip -f /var/log/messages.1\nuseradd -m svc-backup 2>/dev/null\n" + SYSLOG
 _ASK = "/root/SR-5120.txt"
@@ -84,7 +84,7 @@ LOGS = {
         {"id": "backup", "text": "backup_target = the host the nightly backup failed to reach (the compressed log)"},
         {"id": "record", "text": "Log a line containing SR-5120 to syslog with logger and confirm it in /var/log/messages"},
     ],
-    "intro": "SR-5120 (security): ciwt-web-03 may have been compromised. Write each answer to /root/SR-5120.txt as "
+    "intro": "SR-5120 (security): novak-web-03 may have been compromised. Write each answer to /root/SR-5120.txt as "
              "key=value lines (attacker_ip=…, failed_count=…, breached_user=…, oom_process=…, backup_target=…). "
              "The logs are real files: /var/log/messages (today), messages.0 (yesterday) and messages.1.gz (rotated, "
              "compressed). Copy them aside before you start — investigators must be able to show the evidence was not altered.",
@@ -108,7 +108,7 @@ LOGS = {
     "palette": ["grep ", "grep -c ", "zcat ", "| sort | uniq -c | sort -rn", "awk '{print $(NF-3)}'", "tail -n 20 ", "less ",
                 "sha256sum ", "logger -t ", "cat /root/SR-5120.txt", "clear"],
     "fallback": ["linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "web-03", "ciwt-web-03")], setup={"vm": _LOG_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "web-03", "novak-web-03")], setup={"vm": _LOG_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "preserve", "sh": "[ -f /root/evidence/messages.1.gz ] && [ -f /root/evidence/messages.0 ] && cd /root/evidence && sha256sum -c SHA256SUMS",
@@ -121,7 +121,7 @@ LOGS = {
          "why": "breached_user is missing or wrong ({v}). Did that address ever succeed?"},
         {"id": "oom", "sh": _ans("oom_process", "php-fpm"), "show": f"grep -i '^oom_process' {_ASK} 2>&1 | tail -1",
          "why": "oom_process is missing or wrong ({v})."},
-        {"id": "backup", "sh": _ans("backup_target", "nas01.ciwt.lab"), "hist": [r"\bzcat\b|gunzip\s+-c|gzip\s+-d?c|zgrep|zless"],
+        {"id": "backup", "sh": _ans("backup_target", "nas01.novak.lab"), "hist": [r"\bzcat\b|gunzip\s+-c|gzip\s+-d?c|zgrep|zless"],
          "show": f"grep -i '^backup_target' {_ASK} 2>&1 | tail -1", "why": "backup_target is missing or wrong ({v}), or you have not read the .gz log."},
         {"id": "record", "sh": "grep -q 'SR-5120' /var/log/messages", "hist": [r"^logger\b", r"grep\b.*SR-5120|tail\b.*messages"],
          "why": "Log a line with SR-5120 using logger, then find it in /var/log/messages."},
@@ -134,12 +134,12 @@ LOGS = {
         "grep 'Failed password' /var/log/messages | grep -c 203.0.113.77", "echo failed_count=37 >> /root/SR-5120.txt",
         "grep Accepted /var/log/messages | grep 203.0.113.77", "echo breached_user=svc-backup >> /root/SR-5120.txt",
         "grep -i 'out of memory' /var/log/messages.0", "echo oom_process=php-fpm >> /root/SR-5120.txt",
-        "zcat /var/log/messages.1.gz | grep -i backup", "echo backup_target=nas01.ciwt.lab >> /root/SR-5120.txt",
+        "zcat /var/log/messages.1.gz | grep -i backup", "echo backup_target=nas01.novak.lab >> /root/SR-5120.txt",
         "logger -t SR-5120 'SR-5120 findings filed'", "grep SR-5120 /var/log/messages"]},
 }
 
 # --------------------------------------------------------------------------------------------- 2: cron
-_CRON_SETUP = _prelude("ciwt-ops-01") + SYSLOG + r"""mkdir -p /usr/local/bin /var/backups
+_CRON_SETUP = _prelude("novak-ops-01") + SYSLOG + r"""mkdir -p /usr/local/bin /var/backups
 cat > /usr/local/bin/backup.sh <<'EOF'
 #!/bin/sh
 # nightly config backup (SR-4630)
@@ -199,7 +199,7 @@ CRON = {
     "palette": ["crontab -l", "crontab -l > /tmp/c", "crontab /tmp/c", "crontab -u reports ", "service crond ", "cat /tmp/c",
                 "sed -i ", "chmod 755 ", "cat /var/log/cron.log", "clear"],
     "fallback": ["linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "ops-01", "ciwt-ops-01")], setup={"vm": _CRON_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "ops-01", "novak-ops-01")], setup={"vm": _CRON_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "inspect", "hist": [r"^crontab\s+(-u\s+\w+\s+)?-l", r"(service|/etc/init\.d/)\s*crond\s+status|^ps\b|pidof\s+crond|pgrep"],
@@ -225,7 +225,7 @@ CRON = {
 }
 
 # --------------------------------------------------------------------------------------------- 3: users, groups and sudo
-_USR_SETUP = _prelude("ciwt-srv-07") + SYSLOG + r"""useradd -m -s /bin/sh jdoe; echo 'jdoe:Summer2024!' | chpasswd
+_USR_SETUP = _prelude("novak-srv-07") + SYSLOG + r"""useradd -m -s /bin/sh jdoe; echo 'jdoe:Summer2024!' | chpasswd
 mkdir -p /srv/helpdesk; chmod 755 /srv/helpdesk; echo 'shift handover notes' > /srv/helpdesk/README
 cat > /etc/sudoers.d/90-temp <<'EOF'
 # temporary access for project Falcon (2024) - remove when done
@@ -271,7 +271,7 @@ USERS = {
     "palette": ["groupadd ", "useradd -m -s /bin/sh -G helpdesk ", "id ", "chpasswd", "chage -l ", "chage -d 0 ", "chgrp ", "chmod 2770 ",
                 "visudo -c", "sudo -l -U ", "usermod -L ", "ls -ld ", "clear"],
     "fallback": ["win-ad-users", "linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "srv-07", "ciwt-srv-07")], setup={"vm": _USR_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "srv-07", "novak-srv-07")], setup={"vm": _USR_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "group", "sh": "grep -q '^helpdesk:' /etc/group", "why": "There is no group helpdesk yet."},
@@ -299,8 +299,8 @@ USERS = {
 }
 
 # --------------------------------------------------------------------------------------------- 4: packages and a service
-_PKG_SETUP = _prelude("ciwt-web-05") + SYSLOG + r"""mkdir -p /srv/www /etc/default
-echo '<h1>CIWT intranet OK</h1>' > /srv/www/index.html
+_PKG_SETUP = _prelude("novak-web-05") + SYSLOG + r"""mkdir -p /srv/www /etc/default; ln -sf /var/lib/*-repo /var/lib/novak-repo 2>/dev/null || true; sed -i "s/-repo$/novak-repo/; s|/.*-repo|/var/lib/novak-repo|" /etc/apk/repositories
+echo '<h1>Novak intranet OK</h1>' > /srv/www/index.html
 printf '# webd settings\nPORT=8080\nDOCROOT=/srv/www\n' > /etc/default/webd
 cat > /etc/init.d/webd <<'EOF'
 #!/bin/sh
@@ -328,7 +328,7 @@ PACKAGES = {
     "objectives": [
         {"id": "boot", "text": "Boot the VM"},
         {"id": "diagnose", "text": "Try the service and read its error, then search for the package (apk search / apk info)"},
-        {"id": "repo", "text": "Re-enable the package repository /var/lib/ciwt-repo in /etc/apk/repositories and apk update"},
+        {"id": "repo", "text": "Re-enable the package repository /var/lib/novak-repo in /etc/apk/repositories and apk update"},
         {"id": "install", "text": "Install the web server package that provides /usr/bin/darkhttpd"},
         {"id": "conflict", "text": "Find what is listening on port 8080 (ss -tlnp) and stop it"},
         {"id": "running", "text": "Start webd so http://127.0.0.1:8080/ serves the intranet page"},
@@ -355,17 +355,17 @@ PACKAGES = {
     "palette": ["service webd ", "apk search ", "apk info ", "apk add ", "apk update", "cat /etc/apk/repositories", "ss -tlnp",
                 "kill ", "tail /var/log/messages", "curl http://127.0.0.1:8080/", "clear"],
     "fallback": ["w11-services", "linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "web-05", "ciwt-web-05")], setup={"vm": _PKG_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "web-05", "novak-web-05")], setup={"vm": _PKG_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "diagnose", "hist": [r"(service\s+webd|/etc/init\.d/webd)\s+(start|status|restart)", r"^apk\s+(search|info|policy|list)\b"],
          "why": "Read the service's own error first (service webd start), then ask apk (apk search darkhttpd)."},
-        {"id": "repo", "sh": "grep -Eq '^[[:space:]]*/var/lib/ciwt-repo' /etc/apk/repositories", "hist": [r"^apk\s+(update|add)\b"],
-         "show": "grep ciwt-repo /etc/apk/repositories", "why": "The repository line is still disabled: {v}"},
+        {"id": "repo", "sh": "grep -Eq '^[[:space:]]*/var/lib/novak-repo' /etc/apk/repositories", "hist": [r"^apk\s+(update|add)\b"],
+         "show": "grep novak-repo /etc/apk/repositories", "why": "The repository line is still disabled: {v}"},
         {"id": "install", "sh": "apk info -e darkhttpd && [ -x /usr/bin/darkhttpd ]", "why": "darkhttpd is not installed."},
         {"id": "conflict", "sh": "! ss -tlnp | grep ':8080 ' | grep -q socat", "hist": [r"^(ss|netstat)\b.*-[a-z]*l"],
          "show": "ss -tlnp | grep ':8080 ' | grep -o 'users:.*' | head -1", "why": "Port 8080 is held by {v} (find it with ss -tlnp)."},
-        {"id": "running", "sh": "service webd status && curl -s -m 2 http://127.0.0.1:8080/ | grep -q 'CIWT intranet OK'", "secs": 5,
+        {"id": "running", "sh": "service webd status && curl -s -m 2 http://127.0.0.1:8080/ | grep -q 'Novak intranet OK'", "secs": 5,
          "show": "service webd status 2>&1", "why": "webd: {v}"},
         {"id": "enabled", "sh": "[ -L /etc/init.d/S50webd ] && readlink /etc/init.d/S50webd | grep -q 'webd$'", "why": "No S50webd link to webd yet."},
         {"id": "verify", "hist": [r"^(curl|wget)\b.*(127\.0\.0\.1|localhost):8080"], "why": "Test it like a user: curl http://127.0.0.1:8080/"},
@@ -469,7 +469,7 @@ FIREWALL = {
 
 # --------------------------------------------------------------------------------------------- 6: disk, partitions, mounts, fstab
 _Q3 = "region,q3\nnorth,41200\nsouth,38950\n"
-_DISK_SETUP = _prelude("ciwt-file-02") + r"""mkdir -p /srv/data/reports /mnt/olddata
+_DISK_SETUP = _prelude("novak-file-02") + r"""mkdir -p /srv/data/reports /mnt/olddata
 printf 'region,q3\nnorth,41200\nsouth,38950\n' > /srv/data/reports/q3.csv; echo 'app data v2' > /srv/data/README
 echo 'UUID=0c5e1f2a-7d3b-4e5f-9a1b-2c3d4e5f6a7b /mnt/olddata ext4 defaults 0 2   # old data disk (removed)' >> /etc/fstab
 """
@@ -490,7 +490,7 @@ DISK = {
         {"id": "swap", "text": "Make sda2 swap, turn it on and add it to fstab"},
         {"id": "clean", "text": "Remove the stale /mnt/olddata entry so findmnt --verify and mount -a are clean"},
     ],
-    "intro": "SR-4777: ciwt-file-02 is running out of space. A new 48 MB disk has been attached. Put the application data "
+    "intro": "SR-4777: novak-file-02 is running out of space. A new 48 MB disk has been attached. Put the application data "
              "(/srv/data) on its own ext4 partition and add some swap. Device names can change between boots, so mount "
              "by UUID. Someone left an entry for a removed disk in /etc/fstab. A real kernel, a real disk, real "
              "fdisk/mkfs/mount — a mistake here really loses data, so copy before you mount over a directory.",
@@ -516,7 +516,7 @@ DISK = {
     "palette": ["lsblk", "lsblk -f", "fdisk -l /dev/sda", "fdisk /dev/sda", "mkfs.ext4 -L ", "blkid", "mount ", "umount ", "cp -a ",
                 "cat /etc/fstab", "findmnt --verify", "mount -a", "mkswap ", "swapon ", "df -h", "clear"],
     "fallback": ["w11-disk"],
-    "vm": dict(IMAGE, machines=[_m("vm", "file-02", "ciwt-file-02", disk_mb=48)], setup={"vm": _DISK_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "file-02", "novak-file-02", disk_mb=48)], setup={"vm": _DISK_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "identify", "hist": [r"^lsblk\b|^fdisk\s+-l|^blkid\b|cat\s+/proc/partitions"], "why": "Identify the new disk first (lsblk)."},
@@ -556,7 +556,7 @@ sed -i 's/^PermitRootLogin .*/PermitRootLogin noo/' /etc/ssh/sshd_config
 _KEX = "curve25519-sha256"
 _SSH_WS = _prelude("dev-ws") + _SSH_HOSTS + r"""ip link set eth0 up; ip addr add 10.40.0.21/24 dev eth0
 { echo 'release 1.4'; seq 1 2000; } > /root/release-1.4.txt
-printf '\n# CIWT lab: classic X25519 key exchange - the post-quantum default (sntrup761x25519) is too slow in an in-browser VM\nHost *\n    KexAlgorithms %s\n' """ + _KEX + r""" >> /etc/ssh/ssh_config
+printf '\n# Novak lab: classic X25519 key exchange - the post-quantum default (sntrup761x25519) is too slow in an in-browser VM\nHost *\n    KexAlgorithms %s\n' """ + _KEX + r""" >> /etc/ssh/ssh_config
 """
 # the probe pins the KEX itself too (in case the student edits ssh_config); watchdogs stay generous for slow phones —
 # they only matter when a connection hangs, a refused/denied login returns at once
@@ -650,7 +650,7 @@ _SCRIPT_STARTER = r"""#!/bin/sh
 echo "app-backup.sh: not implemented yet" >&2
 exit 1
 """
-_SCR_SETUP = _prelude("ciwt-ops-04") + SYSLOG + "mkdir -p /usr/local/bin /srv/app/conf /backup\necho 'db=10.0.0.5' > /srv/app/conf/app.ini; echo v3.2 > /srv/app/VERSION\n" + \
+_SCR_SETUP = _prelude("novak-ops-04") + SYSLOG + "mkdir -p /usr/local/bin /srv/app/conf /backup\necho 'db=10.0.0.5' > /srv/app/conf/app.ini; echo v3.2 > /srv/app/VERSION\n" + \
     "cat > /usr/local/bin/app-backup.sh <<'EOF'\n" + _SCRIPT_STARTER + "EOF\nchmod 644 /usr/local/bin/app-backup.sh\n"
 _S = "/usr/local/bin/app-backup.sh"
 _SCRIPT_LINES = [
@@ -711,7 +711,7 @@ SCRIPT = {
     "palette": [f"cat {_S}", f"chmod 755 {_S}", "printf '%s\\n' ", f"{_S} /srv/app /backup", "echo $?", "ls -l /backup",
                 "gzip -dc FILE | tar tf -", "crontab -l", "grep app-backup /var/log/messages", "clear"],
     "fallback": ["linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "ops-04", "ciwt-ops-04")], setup={"vm": _SCR_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "ops-04", "novak-ops-04")], setup={"vm": _SCR_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "exec", "sh": f"[ -x {_S} ] && head -1 {_S} | grep -q '^#!/bin/sh'", "show": f"ls -l {_S} | cut -c1-10; head -1 {_S}",
@@ -742,25 +742,25 @@ _DNS_NET = {
     "segments": ["lan"],
     "services": {"name": "isp-resolver", "mac": "02:c1:77:00:03:01", "ifaces": [{"seg": "lan", "ip": "10.30.0.1", "bits": 24}],
                  "dns": {"records": {"www.example.com": "192.0.2.80", "updates.vendor.example": "198.51.100.44"}}},
-    "topology": "ws-22 10.30.0.22 ── LAN ── dns-01 10.30.0.53 (dnsmasq, ciwt.lab) ── upstream resolver 10.30.0.1 (internet names)",
+    "topology": "ws-22 10.30.0.22 ── LAN ── dns-01 10.30.0.53 (dnsmasq, novak.lab) ── upstream resolver 10.30.0.1 (internet names)",
 }
-_DNS_HOSTS = "printf '10.30.0.53 dns-01.ciwt.lab dns-01\\n' >> /etc/hosts\n"
+_DNS_HOSTS = "printf '10.30.0.53 dns-01.novak.lab dns-01\\n' >> /etc/hosts\n"
 _DNS_SRV = _prelude("dns-01") + SYSLOG + _DNS_HOSTS + r"""ip link set eth0 up; ip addr add 10.30.0.53/24 dev eth0; ip route add default via 10.30.0.1
 cat > /etc/dnsmasq.conf <<'EOF'
-# dns-01: internal resolver for ciwt.lab (dnsmasq 2.90). Test: dnsmasq --test ; apply: service dnsmasq restart
+# dns-01: internal resolver for novak.lab (dnsmasq 2.90). Test: dnsmasq --test ; apply: service dnsmasq restart
 listen-address=127.0.0.1
 bind-interfaces
 no-resolv
-domain=ciwt.lab
-local=/ciwt.lab/
-addn-hosts=/etc/hosts.ciwt
+domain=novak.lab
+local=/novak.lab/
+addn-hosts=/etc/hosts.novak
 user=dnsmasq
 log-queries
 EOF
-cat > /etc/hosts.ciwt <<'EOF'
-10.30.0.53  dns-01.ciwt.lab
-10.30.0.99  intranet.ciwt.lab
-10.30.0.25  mail.ciwt.lab
+cat > /etc/hosts.novak <<'EOF'
+10.30.0.53  dns-01.novak.lab
+10.30.0.99  intranet.novak.lab
+10.30.0.25  mail.novak.lab
 EOF
 service dnsmasq start >/dev/null 2>&1
 """
@@ -776,15 +776,15 @@ DNS = {
              "the client's resolv.conf to the server's listen address, its zone data and its forwarder until every name resolves.",
     "objectives": [
         {"id": "boot", "text": "Boot both VMs (ws-22 and dns-01)"},
-        {"id": "diagnose", "text": "ws-22: read /etc/resolv.conf and query intranet.ciwt.lab with drill or nslookup"},
-        {"id": "client", "text": "ws-22: use the resolver 10.30.0.53 and the search domain ciwt.lab"},
+        {"id": "diagnose", "text": "ws-22: read /etc/resolv.conf and query intranet.novak.lab with drill or nslookup"},
+        {"id": "client", "text": "ws-22: use the resolver 10.30.0.53 and the search domain novak.lab"},
         {"id": "listen", "text": "dns-01: answer queries from the LAN, not just from itself (listen address)"},
-        {"id": "record", "text": "intranet.ciwt.lab must resolve to the new server 10.30.0.80"},
-        {"id": "mx", "text": "Add mail for ciwt.lab: an MX record pointing at mail.ciwt.lab, and wiki.ciwt.lab as a CNAME of intranet"},
+        {"id": "record", "text": "intranet.novak.lab must resolve to the new server 10.30.0.80"},
+        {"id": "mx", "text": "Add mail for novak.lab: an MX record pointing at mail.novak.lab, and wiki.novak.lab as a CNAME of intranet"},
         {"id": "forward", "text": "dns-01: forward other names to the upstream resolver 10.30.0.1 (www.example.com must resolve on ws-22)"},
         {"id": "verify", "text": "ws-22: verify with both drill and nslookup after the fix"},
     ],
-    "intro": "SR-5307: on ws-22 nothing resolves — not internal names, not the internet. dns-01 runs dnsmasq for ciwt.lab; "
+    "intro": "SR-5307: on ws-22 nothing resolves — not internal names, not the internet. dns-01 runs dnsmasq for novak.lab; "
              "the intranet moved to 10.30.0.80 last week and mail was never added. The upstream resolver is 10.30.0.1. "
              "Two real VMs, real dnsmasq and real drill/nslookup: the dig-like tool here is drill (same flags for "
              "the basics: drill NAME @SERVER, drill MX NAME). Changes to dnsmasq need a restart.",
@@ -792,49 +792,49 @@ DNS = {
     "initial_state": {},
     "obj_hints": {
         "boot": ["Start both VMs.", "Start VMs."],
-        "diagnose": ["The resolver the client asks is in /etc/resolv.conf.", "on ws-22: cat /etc/resolv.conf ; drill intranet.ciwt.lab"],
-        "client": ["Two lines: search DOMAIN and nameserver ADDRESS.", "on ws-22: printf 'search ciwt.lab\\nnameserver 10.30.0.53\\n' > /etc/resolv.conf"],
+        "diagnose": ["The resolver the client asks is in /etc/resolv.conf.", "on ws-22: cat /etc/resolv.conf ; drill intranet.novak.lab"],
+        "client": ["Two lines: search DOMAIN and nameserver ADDRESS.", "on ws-22: printf 'search novak.lab\\nnameserver 10.30.0.53\\n' > /etc/resolv.conf"],
         "listen": ["ss -ulnp shows what dnsmasq listens on; listen-address takes a comma-separated list.",
                    "on dns-01: sed -i 's/^listen-address=.*/listen-address=127.0.0.1,10.30.0.53/' /etc/dnsmasq.conf ; service dnsmasq restart"],
-        "record": ["The ciwt.lab names come from addn-hosts=/etc/hosts.ciwt.", "on dns-01: sed -i 's/^10.30.0.99 /10.30.0.80 /' /etc/hosts.ciwt ; service dnsmasq restart"],
+        "record": ["The novak.lab names come from addn-hosts=/etc/hosts.novak.", "on dns-01: sed -i 's/^10.30.0.99 /10.30.0.80 /' /etc/hosts.novak ; service dnsmasq restart"],
         "mx": ["dnsmasq: mx-host=DOMAIN,HOST,PREF and cname=ALIAS,TARGET.",
-               "on dns-01: printf 'mx-host=ciwt.lab,mail.ciwt.lab,10\\ncname=wiki.ciwt.lab,intranet.ciwt.lab\\n' >> /etc/dnsmasq.conf ; dnsmasq --test ; service dnsmasq restart"],
+               "on dns-01: printf 'mx-host=novak.lab,mail.novak.lab,10\\ncname=wiki.novak.lab,intranet.novak.lab\\n' >> /etc/dnsmasq.conf ; dnsmasq --test ; service dnsmasq restart"],
         "forward": ["no-resolv means dnsmasq ignores resolv.conf; give it server=ADDRESS.",
                     "on dns-01: echo 'server=10.30.0.1' >> /etc/dnsmasq.conf ; service dnsmasq restart ; on ws-22: drill www.example.com"],
-        "verify": ["Both tools ask the same resolver; nslookup also shows which server answered.", "on ws-22: drill intranet.ciwt.lab ; nslookup wiki.ciwt.lab"],
+        "verify": ["Both tools ask the same resolver; nslookup also shows which server answered.", "on ws-22: drill intranet.novak.lab ; nslookup wiki.novak.lab"],
     },
     "course_objectives": ["NO-4.2", "IT-13.2", "IT-5.3"],
     "minutes": 40,
-    "palette": ["cat /etc/resolv.conf", "drill ", "drill MX ciwt.lab", "nslookup ", "@10.30.0.53", "cat /etc/dnsmasq.conf", "dnsmasq --test",
-                "service dnsmasq restart", "ss -ulnp", "cat /etc/hosts.ciwt", "sed -i ", "clear"],
+    "palette": ["cat /etc/resolv.conf", "drill ", "drill MX novak.lab", "nslookup ", "@10.30.0.53", "cat /etc/dnsmasq.conf", "dnsmasq --test",
+                "service dnsmasq restart", "ss -ulnp", "cat /etc/hosts.novak", "sed -i ", "clear"],
     "fallback": ["win-dns-break", "win-nslookup-ok"],
     "vm": dict(IMAGE, machines=[_m("ws", "ws-22", "ws-22", ["lan"]), _m("dns", "dns-01", "dns-01", ["lan"])],
                setup={"ws": _DNS_WS, "dns": _DNS_SRV}, net=_DNS_NET),
     "vm_checks": [
         {"id": "boot"},
         {"id": "diagnose", "hist": [r"^\[ws\]\s*cat\s+/etc/resolv\.conf", r"^\[ws\]\s*(drill|nslookup|host|dig)\b.*intranet"],
-         "why": "Start at the client: cat /etc/resolv.conf, then drill intranet.ciwt.lab on ws-22."},
-        {"id": "client", "on": "ws", "sh": "grep -Eq '^nameserver[[:space:]]+10\\.30\\.0\\.53' /etc/resolv.conf && grep -Eq '^(search|domain)[[:space:]]+ciwt\\.lab' /etc/resolv.conf && ! grep -q 10.30.0.254 /etc/resolv.conf",
+         "why": "Start at the client: cat /etc/resolv.conf, then drill intranet.novak.lab on ws-22."},
+        {"id": "client", "on": "ws", "sh": "grep -Eq '^nameserver[[:space:]]+10\\.30\\.0\\.53' /etc/resolv.conf && grep -Eq '^(search|domain)[[:space:]]+novak\\.lab' /etc/resolv.conf && ! grep -q 10.30.0.254 /etc/resolv.conf",
          "show": "grep -v '^#' /etc/resolv.conf | tr '\\n' ' '", "why": "ws-22 resolv.conf: {v}"},
-        {"id": "listen", "on": "ws", "sh": f"{_DR} dns-01.ciwt.lab @10.30.0.53 | grep -q 10.30.0.53", "secs": 6,
-         "show": "drill dns-01.ciwt.lab @10.30.0.53 2>&1 | grep -iE 'error|rcode' | head -1", "why": "dns-01 does not answer LAN queries yet ({v})."},
-        {"id": "record", "on": "ws", "sh": f"[ \"$({_DR} intranet.ciwt.lab @10.30.0.53)\" = 10.30.0.80 ]", "secs": 6,
-         "show": f"{_DR} intranet.ciwt.lab @10.30.0.53 2>&1 | head -1", "why": "intranet.ciwt.lab answers {v}; it moved to 10.30.0.80."},
-        {"id": "mx", "on": "ws", "sh": f"drill MX ciwt.lab @10.30.0.53 | grep -Eq 'MX[[:space:]]+10[[:space:]]+mail\\.ciwt\\.lab' && drill wiki.ciwt.lab @10.30.0.53 | grep -Eq 'CNAME[[:space:]]+intranet\\.ciwt\\.lab'",
-         "secs": 8, "show": "drill MX ciwt.lab @10.30.0.53 2>&1 | grep -E 'IN[[:space:]]+MX' | head -1", "why": "MX/CNAME not served yet ({v})."},
+        {"id": "listen", "on": "ws", "sh": f"{_DR} dns-01.novak.lab @10.30.0.53 | grep -q 10.30.0.53", "secs": 6,
+         "show": "drill dns-01.novak.lab @10.30.0.53 2>&1 | grep -iE 'error|rcode' | head -1", "why": "dns-01 does not answer LAN queries yet ({v})."},
+        {"id": "record", "on": "ws", "sh": f"[ \"$({_DR} intranet.novak.lab @10.30.0.53)\" = 10.30.0.80 ]", "secs": 6,
+         "show": f"{_DR} intranet.novak.lab @10.30.0.53 2>&1 | head -1", "why": "intranet.novak.lab answers {v}; it moved to 10.30.0.80."},
+        {"id": "mx", "on": "ws", "sh": f"drill MX novak.lab @10.30.0.53 | grep -Eq 'MX[[:space:]]+10[[:space:]]+mail\\.novak\\.lab' && drill wiki.novak.lab @10.30.0.53 | grep -Eq 'CNAME[[:space:]]+intranet\\.novak\\.lab'",
+         "secs": 8, "show": "drill MX novak.lab @10.30.0.53 2>&1 | grep -E 'IN[[:space:]]+MX' | head -1", "why": "MX/CNAME not served yet ({v})."},
         {"id": "forward", "on": "ws", "sh": f"[ \"$({_DR} www.example.com)\" = 192.0.2.80 ]", "secs": 8, "fabric": "dns_fwd",
          "show": f"{_DR} www.example.com 2>&1 | head -1", "why": "www.example.com from ws-22: {v}"},
         {"id": "verify", "hist": [r"^\[ws\]\s*drill\b", r"^\[ws\]\s*nslookup\b"],
          "before": None, "why": "Check with both tools on ws-22: drill and nslookup."},
     ],
     "solution": {"vm_commands": [
-        "[ws] cat /etc/resolv.conf", "[ws] drill intranet.ciwt.lab",
-        "[ws] printf 'search ciwt.lab\\nnameserver 10.30.0.53\\n' > /etc/resolv.conf", "[ws] drill intranet.ciwt.lab",
+        "[ws] cat /etc/resolv.conf", "[ws] drill intranet.novak.lab",
+        "[ws] printf 'search novak.lab\\nnameserver 10.30.0.53\\n' > /etc/resolv.conf", "[ws] drill intranet.novak.lab",
         "[dns] ss -ulnp", "[dns] sed -i 's/^listen-address=.*/listen-address=127.0.0.1,10.30.0.53/' /etc/dnsmasq.conf",
-        "[dns] sed -i 's/^10.30.0.99 /10.30.0.80 /' /etc/hosts.ciwt",
-        "[dns] printf 'mx-host=ciwt.lab,mail.ciwt.lab,10\\ncname=wiki.ciwt.lab,intranet.ciwt.lab\\nserver=10.30.0.1\\n' >> /etc/dnsmasq.conf",
+        "[dns] sed -i 's/^10.30.0.99 /10.30.0.80 /' /etc/hosts.novak",
+        "[dns] printf 'mx-host=novak.lab,mail.novak.lab,10\\ncname=wiki.novak.lab,intranet.novak.lab\\nserver=10.30.0.1\\n' >> /etc/dnsmasq.conf",
         "[dns] dnsmasq --test", "[dns] service dnsmasq restart",
-        "[ws] drill intranet.ciwt.lab", "[ws] drill MX ciwt.lab", "[ws] nslookup wiki.ciwt.lab", "[ws] drill www.example.com"]},
+        "[ws] drill intranet.novak.lab", "[ws] drill MX novak.lab", "[ws] nslookup wiki.novak.lab", "[ws] drill www.example.com"]},
 }
 DNS["vm_checks"][-1].pop("before")
 

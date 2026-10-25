@@ -47,6 +47,28 @@ def ensure_rich_demo_telemetry(app):
         now = utcnow()
         rnd = random.Random(20261024)
 
+        # Scrub any legacy 'CIWT' / 'ciwt' strings in Course, Module, Lesson, and LabEvent rows
+        for c_row in Course.query.all():
+            if c_row.description and 'CIWT' in c_row.description:
+                c_row.description = c_row.description.replace('CIWT', 'Novak LMS™')
+        for m_row in Module.query.all():
+            if m_row.content and 'CIWT' in m_row.content:
+                m_row.content = m_row.content.replace('CIWT', 'Novak LMS™')
+        for l_row in Lesson.query.all():
+            if l_row.content and ('CIWT' in l_row.content or 'ciwt' in l_row.content):
+                l_row.content = (l_row.content
+                                 .replace('CIWT-W11-07', 'NOVAK-W11-07')
+                                 .replace('CIWT-WIN-LAB', 'NOVAK-WIN-LAB')
+                                 .replace(r'CIWT\Trainee', r'NOVAK\Trainee')
+                                 .replace(r'ciwt\student', r'novak\student')
+                                 .replace('All prior CIWT support chapters', 'All prior IT support chapters')
+                                 .replace('CIWT', 'Novak LMS™'))
+        labs_api_0 = app.extensions.get('ciwt_lab_progress')
+        if labs_api_0:
+            for le_row in labs_api_0.LabEvent.query.filter(labs_api_0.LabEvent.action.ilike('%ciwt%')).all():
+                le_row.action = le_row.action.replace('ciwt.internal', 'novak.internal').replace('ciwt.lab', 'novak.lab').replace('ciwt.local', 'novak.local')
+        db.session.commit()
+
         # ------------------------------------------------------------------ 1. Course 3 (CLIENT) Active Section
         client_course = Course.query.filter_by(code='CLIENT').first()
         sec_client = None
@@ -335,9 +357,9 @@ def ensure_rich_demo_telemetry(app):
                     ('complete', 'all objectives met', 'ok', []),
                 ]),
                 (sec1, 'linux-vm-dns', ['boot', 'diagnose', 'client', 'listen', 'record', 'mx', 'forward', 'verify'], [
-                    ('vm', 'cat /etc/resolv.conf && ss -ulpn && dig @127.0.0.1 ciwt.internal', 'ok', ['boot', 'diagnose', 'client']),
+                    ('vm', 'cat /etc/resolv.conf && ss -ulpn && dig @127.0.0.1 novak.internal', 'ok', ['boot', 'diagnose', 'client']),
                     ('vm', 'sed -i "s/127.0.0.1/0.0.0.0/" /etc/dnsmasq.conf && service dnsmasq restart', 'ok', ['listen', 'record', 'mx', 'forward']),
-                    ('vm', 'dig @127.0.0.1 mail.ciwt.internal MX && nslookup intranet.ciwt.internal', 'ok', ['verify']),
+                    ('vm', 'dig @127.0.0.1 mail.novak.internal MX && nslookup intranet.novak.internal', 'ok', ['verify']),
                     ('complete', 'all objectives met', 'ok', []),
                 ]),
                 (sec1, 'win-ipconfig', ['run_hostname', 'run_ipconfig'], [

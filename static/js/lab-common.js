@@ -1,4 +1,4 @@
-/* CIWT live labs — shared client (all lab kinds).
+/* Novak LMS live labs — shared client (all lab kinds).
  * State lives on the server (lab_progress). This file only renders what the server returns:
  * objectives, score, hints, undo/reset, toasts and graded steps (activity labs and checkpoints).
  * Works with mouse, touch and keyboard; no drag-only interactions. */

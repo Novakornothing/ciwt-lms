@@ -1,5 +1,5 @@
 """
-CIWT Learning Management System
+Novak LMS™ Learning Management System
 Proprietary schoolhouse software for IT support and network operations training.
 Original instructional content. Not a vendor certification product.
 """
@@ -180,11 +180,11 @@ def _env_flag(name, default):
 
 # Privacy switches (pass 10). The "Listen" neural voice sends lesson text to Microsoft's online
 # Read Aloud speech service through edge-tts; CIWT_NEURAL_TTS=0 turns that off (browser voice only).
-app.config['NEURAL_TTS_ENABLED'] = _env_flag('CIWT_NEURAL_TTS', True)
+app.config['NEURAL_TTS_ENABLED'] = _env_flag('NOVAK_NEURAL_TTS', _env_flag('CIWT_NEURAL_TTS', True))
 # Helix attention data older than this many days is removed by `flask --app app helix-cleanup`
 # (or the button on Admin → Data & privacy). 0 keeps it until someone deletes it.
 try:
-    app.config['HELIX_RETENTION_DAYS'] = int(os.environ.get('CIWT_HELIX_RETENTION_DAYS', '365'))
+    app.config['HELIX_RETENTION_DAYS'] = int(os.environ.get('NOVAK_HELIX_RETENTION_DAYS') or os.environ.get('CIWT_HELIX_RETENTION_DAYS', '365'))
 except ValueError:
     app.config['HELIX_RETENTION_DAYS'] = 365
 csrf = CSRFProtect(app)
@@ -270,8 +270,8 @@ def _public_questions(questions):
 CSS_BUNDLE_PARTS = (
     'vendor/bootstrap/5.3.3/bootstrap.min.css',
     'vendor/fonts/v1/fonts.css',
-    'css/ciwt-theme.css',
-    'css/ciwt-ui.css',
+    'css/novak-theme.css',
+    'css/novak-ui.css',
     'css/helix.css',
     'css/labs.css',
     'css/mastery.css',
@@ -338,7 +338,7 @@ def css_bundle(digest):
 def api_tqi_ping():
     if request.method == 'OPTIONS':
         return ('', 204)
-    return jsonify({'ok': True, 'service': 'ciwt-lms', 'tqi_api': True})
+    return jsonify({'ok': True, 'service': 'novak-lms', 'tqi_api': True})
 
 # ==================== MODELS ====================
 
@@ -1759,7 +1759,7 @@ def healthz():
     ok = not missing and db_ok
     return jsonify({
         'ok': ok,
-        'service': 'ciwt-lms',
+        'service': 'novak-lms',
         'time': utcnow().isoformat() + 'Z',
         'missing_templates': missing,
         'database': 'ok' if db_ok else 'error: ' + db_err,
@@ -2078,8 +2078,8 @@ def aschool_trainee_guide():
 @login_required
 def aschool_trainee_guide_txt():
     lines = [
-        'CIWT IT A-SCHOOL TRAINEE GUIDE',
-        'Original CIWT material — proprietary schoolhouse content, not official NAVEDTRA.',
+        'NOVAK LMS IT TRAINEE GUIDE',
+        'Original Novak LMS™ material — proprietary training content, not official NAVEDTRA.',
         f'Generated {utcnow().isoformat()}Z',
         '',
     ]
@@ -2095,7 +2095,7 @@ def aschool_trainee_guide_txt():
         lines.append('')
     body = '\n'.join(lines)
     return Response(body, mimetype='text/plain', headers={
-        'Content-Disposition': 'attachment; filename=CIWT-IT-A-School-Trainee-Guide.txt'
+        'Content-Disposition': 'attachment; filename=Novak-LMS-IT-Trainee-Guide.txt'
     })
 
 
@@ -3951,7 +3951,7 @@ def tqi_official_txt(section_id):
     status = _tqi_status(section)
     eoc_avgs, eoc_n = _tqi_eoc_averages(section.id)
     lines = [
-        'CIWT SCHOOLHOUSE TQI PACKET',
+        'NOVAK LMS TQI PACKET',
         'Not the official NETC LAS export.',
         f"Course: {(section.course.title if section.course else '')} ({section.course.code if section.course else ''})",
         f"Class: {section.name}",
@@ -3981,7 +3981,7 @@ def tqi_official_txt(section_id):
     return Response(
         body,
         mimetype='text/plain; charset=utf-8',
-        headers={'Content-Disposition': f'attachment; filename=CIWT-TQI-{section.id}.txt'},
+        headers={'Content-Disposition': f'attachment; filename=Novak-LMS-TQI-{section.id}.txt'},
     )
 
 
@@ -6163,7 +6163,7 @@ def admin_backup_db():
         flash('Could not find SQLite file to back up.', 'danger')
         return redirect(url_for('admin_dashboard'))
     audit('backup_db')
-    return send_file(p, as_attachment=True, download_name=f'ciwt-backup-{utcnow().strftime("%Y%m%d-%H%M")}.db')
+    return send_file(p, as_attachment=True, download_name=f'novak-lms-backup-{utcnow().strftime("%Y%m%d-%H%M")}.db')
 
 
 @app.route('/admin/audit')
@@ -6247,7 +6247,7 @@ def export_analytics_csv():
     return Response(
         data,
         mimetype='text/csv',
-        headers={'Content-Disposition': 'attachment; filename=ciwt-analytics-export.csv'},
+        headers={'Content-Disposition': 'attachment; filename=novak-lms-analytics-export.csv'},
     )
 
 
@@ -6281,7 +6281,7 @@ def export_item_flags_csv():
     return Response(
         buf.getvalue(),
         mimetype='text/csv',
-        headers={'Content-Disposition': 'attachment; filename=ciwt-item-flags.csv'},
+        headers={'Content-Disposition': 'attachment; filename=novak-lms-item-flags.csv'},
     )
 
 
@@ -6396,7 +6396,7 @@ def seed_database():
     client = Course(
         code='CLIENT',
         title='Client Systems & Shop Procedures',
-        description='Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary CIWT course — not a vendor exam product.',
+        description='Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary Novak LMS™ course — not a vendor exam product.',
     )
     db.session.add_all([aplus, netplus, client])
     db.session.commit()
@@ -7032,20 +7032,20 @@ def sync_curriculum():
     if not aplus or not netplus:
         return False
     aplus.code, aplus.title = 'ITSUP', 'IT Support Technician Fundamentals'
-    aplus.description = 'Hardware, client networking, virtualization, and ticket habits for IT support technicians. Proprietary CIWT course.'
+    aplus.description = 'Hardware, client networking, virtualization, and ticket habits for IT support technicians. Proprietary Novak LMS™ course.'
     netplus.code, netplus.title = 'NETOPS', 'Network Operations Fundamentals'
     netplus.description = 'Networking concepts, infrastructure, operations, security, and troubleshooting.'
     if not client:
         client = Course(
             code='CLIENT',
             title='Client Systems & Shop Procedures',
-            description='Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary CIWT course — not a vendor exam product.',
+            description='Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary Novak LMS™ course — not a vendor exam product.',
         )
         db.session.add(client)
         db.session.flush()
     else:
         client.title = 'Client Systems & Shop Procedures'
-        client.description = 'Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary CIWT course — not a vendor exam product.'
+        client.description = 'Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary Novak LMS™ course — not a vendor exam product.'
 
     for course, pack in ((aplus, APLUS_LESSONS), (netplus, NETPLUS_LESSONS), (client, CLIENT_LESSONS)):
         for ch in pack:
@@ -7772,5 +7772,5 @@ if __name__ == '__main__':
     _host, _port, _debug, _note = run_settings()
     if _note:
         print(_note)
-    print(f'CIWT LMS on http://{_host}:{_port}  debug={"on" if _debug else "off"}')
+    print(f'Novak LMS on http://{_host}:{_port}  debug={"on" if _debug else "off"}')
     app.run(host=_host, port=_port, debug=_debug)

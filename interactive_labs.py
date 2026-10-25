@@ -24,7 +24,7 @@ def _lab(id, title, kind, blurb, objectives, intro, success_msg, initial_state, 
 
 def _win_state(**extra):
     base = {
-        "hostname": "CIWT-W11-07",
+        "hostname": "NOVAK-W11-07",
         "ipv4": "10.20.30.47",
         "mask": "255.255.255.0",
         "gateway": "10.20.30.1",
@@ -36,7 +36,7 @@ def _win_state(**extra):
         "edition": "Windows 11 Education",
         "version": "25H2",
         "build": "26200.9711",
-        "user": "CIWT\\Trainee",
+        "user": "NOVAK\\Trainee",
         "domain": "TRAINING",
         "pingable_ips": ["127.0.0.1", "10.20.30.1", "10.20.30.47", "10.20.30.50"],
         "name_map": {"gateway.training.local": "10.20.30.1"},
@@ -169,7 +169,7 @@ LABS = [
             {"id": "whoami", "text": "whoami"},
             {"id": "run_hostname", "text": "hostname"},
         ],
-        "You are on CIWT-W11-07, a Windows 11 Education training VM. Inventory it before you change anything.",
+        "You are on NOVAK-W11-07, a Windows 11 Education training VM. Inventory it before you change anything.",
         "You can identify edition, build, signed-in user, and computer name — the start of every Win11 ticket.",
         _win_state(),
         hints=["winver", "systeminfo", "whoami", "hostname"],
@@ -485,7 +485,7 @@ LABS = [
         [
             {"id": "fw", "text": "netsh advfirewall show allprofiles"},
         ],
-        "Before you turn a firewall off, prove which profile is on. That is a CIWT support habit.",
+        "Before you turn a firewall off, prove which profile is on. That is a core support habit.",
         "You can read Windows Defender Firewall profile state from CLI.",
         _win_state(),
         hints=["netsh advfirewall show allprofiles"],
@@ -565,7 +565,7 @@ LABS = [
         "A nameless switch with no banner is how boxes get the wrong cable in a hurry.",
         "The switch has a login banner.",
         _sw_state(),
-        hints=["enable", "conf t", "banner login CIWT-ACCESS"],
+        hints=["enable", "conf t", "banner login NOVAK-ACCESS"],
         builds_on=["sw-hostname-write"],
     ),
     _lab(
@@ -1831,7 +1831,7 @@ def _run_windows_base(cmd, state, done):
 
     if cl in ("winver", "winver.exe"):
         out.append(f"{state.get('edition')}  Version {state.get('version')}  OS Build {state.get('build')}")
-        out.append("CIWT Windows 11 Training VM — not a licensed Microsoft image.")
+        out.append("Novak LMS Windows 11 Training VM — not a licensed Microsoft image.")
         _mark(done, "winver")
         return out, state, done
 
@@ -1844,7 +1844,7 @@ def _run_windows_base(cmd, state, done):
         return out, state, done
 
     if cl == "whoami":
-        out.append(state.get("user") or "CIWT\\Trainee")
+        out.append(state.get("user") or "NOVAK\\Trainee")
         _mark(done, "whoami")
         return out, state, done
 
@@ -1906,7 +1906,7 @@ def _run_windows_base(cmd, state, done):
         pingable = set(state.get("pingable_ips") or [])
         if target in pingable or target == state.get("gateway") or target == state.get("ipv4"):
             out.append("Source        Destination     Bytes Time(ms)")
-            out.append(f"CIWT-W11-07   {target:<15} 32    1")
+            out.append(f"NOVAK-W11-07   {target:<15} 32    1")
             _mark(done, "test_conn")
             if target in (state.get("gateway"), "10.20.30.1"):
                 _mark(done, "ping_gw")
@@ -2278,7 +2278,7 @@ def _win_printers(c, cl, state, done):
         out.append("Id    ComputerName    PrinterName     DocumentName         SubmittedTime          JobStatus")
         out.append("--    ------------    -----------     ------------         -------------          ---------")
         for j in pr["jobs"]:
-            out.append(f"{j['id']:<5} CIWT-W11-07     {pr['name']:<15} {j['doc']:<20} 10/17/2026 9:{j['id']:02d}:00 AM  {j['status']}")
+            out.append(f"{j['id']:<5} NOVAK-W11-07     {pr['name']:<15} {j['doc']:<20} 10/17/2026 9:{j['id']:02d}:00 AM  {j['status']}")
         _mark(done, "get_jobs")
         if state.get("job_removed"):
             _mark(done, "verify_queue")
@@ -3172,7 +3172,7 @@ def run_router(cmd, state, done):
 
     if cl in ("show version", "sh ver"):
         out.append(f"{state.get('hostname')} uptime is 2 days, 3 hours")
-        out.append("Cisco IOS Software, Router Training Image (CIWT simulator)")
+        out.append("Cisco IOS Software, Router Training Image (Novak LMS simulator)")
         return out, state, done
 
     if cl in ("show interfaces", "show interface", "sh int", "show ip interface"):

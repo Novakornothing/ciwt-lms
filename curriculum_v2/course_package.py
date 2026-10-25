@@ -17,7 +17,7 @@ def objectives_for(code, chapter=None):
     """Lesson objectives as dicts: code, text, bloom, chapter."""
     return [dict(v, code=k) for k, v in _objectives_for(code, chapter)]
 
-DISCLAIMER = ('Original CIWT curriculum. Not affiliated with, endorsed by, or a substitute for any vendor '
+DISCLAIMER = ('Original Novak LMS™ curriculum. Not affiliated with, endorsed by, or a substitute for any vendor '
               'certification exam. Where objectives are compared with publicly published exam objective '
               'domains, that comparison is an alignment aid only.')
 

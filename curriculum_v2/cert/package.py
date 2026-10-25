@@ -9,7 +9,7 @@ from .mapping import CURATED
 
 COURSE_EXAMS = {'ITSUP': ('A1', 'A2'), 'CLIENT': ('A2',), 'NETOPS': ('N',)}
 STATEMENT = ('Lesson objectives below are aligned to the published CompTIA exam objectives listed here. The alignment '
-             'is CIWT’s own mapping, made to help students prepare; it is not reviewed or endorsed by CompTIA.')
+             'is Novak LMS™’s own mapping, made to help students prepare; it is not reviewed or endorsed by CompTIA.')
 
 
 def exams_for(code):

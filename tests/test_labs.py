@@ -132,7 +132,7 @@ def test_resume_after_reload_keeps_transcript_and_progress(student):
     assert "run_hostname" in st["done"]
     assert any("hostname" in t["t"] for t in st["transcript"])
     page = student.get("/labs/win-ipconfig").data.decode()
-    assert "run_hostname" in page and "CIWT-W11-07" in page
+    assert "run_hostname" in page and "NOVAK-W11-07" in page
 
 
 def test_state_is_per_user(student, student2):

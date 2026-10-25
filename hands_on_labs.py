@@ -59,7 +59,7 @@ WINDOWS_CLI_CHAPTERS = [
 </ol>
 <div class="lab-panel"><div class="lab-title"><span>LAB</span> Build your lab pad</div>
 <ol>
-<li>Create a VM named <code>CIWT-WIN-LAB</code>.</li>
+<li>Create a VM named <code>NOVAK-WIN-LAB</code>.</li>
 <li>Set network to NAT; confirm the guest gets an IP.</li>
 <li>Take snapshot <code>clean-base</code>.</li>
 <li>Write a five-line ticket-style note describing what you built.</li>
@@ -223,7 +223,7 @@ NETWORK_LAB_CHAPTERS = [
     "title": "Chapter 9 — Switch & Router CLI Lab Track",
     "order": 9,
     "minutes": 480,
-    "overview": "Beginner switch and router command-line labs for CIWT networking. Practice on simulators or isolated lab gear only. Commands are educational patterns used across many platforms.",
+    "overview": "Beginner switch and router command-line labs for Novak LMS™ networking. Practice on simulators or isolated lab gear only. Commands are educational patterns used across many platforms.",
     "lessons": [
       {
         "title": "9.1 Lab Topology and CLI Access",

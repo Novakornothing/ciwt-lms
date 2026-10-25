@@ -36,13 +36,13 @@ def lab_badges(analysis):
 
 def openbadges(pf, issuer_url, verify_url):
     """OpenBadges 2.0-shaped JSON (unsigned, hosted verification). One assertion per mastered competency and completed lab."""
-    issuer = {'type': 'Profile', 'id': issuer_url, 'name': 'Novak Learning — CIWT'}
+    issuer = {'type': 'Profile', 'id': issuer_url, 'name': 'Novak LMS™'}
     rec = {'type': 'name', 'hashed': False, 'identity': pf['student']['name']}
     asr = []
     for c in pf['competencies']:
         asr.append({'@context': 'https://w3id.org/openbadges/v2', 'type': 'Assertion', 'recipient': rec,
                     'issuedOn': c.get('when') or pf['generated'], 'verification': {'type': 'hosted', 'url': verify_url},
-                    'badge': {'type': 'BadgeClass', 'name': f"{c['id']}: {c['text']}", 'criteria': {'narrative': 'Mastery estimate ≥ 0.85 with medium or high confidence in the CIWT adaptive engine.'},
+                    'badge': {'type': 'BadgeClass', 'name': f"{c['id']}: {c['text']}", 'criteria': {'narrative': 'Mastery estimate ≥ 0.85 with medium or high confidence in the Novak LMS™ adaptive engine.'},
                               'issuer': issuer, 'tags': [c['course']]}})
     for lab in pf['labs']:
         asr.append({'@context': 'https://w3id.org/openbadges/v2', 'type': 'Assertion', 'recipient': rec,

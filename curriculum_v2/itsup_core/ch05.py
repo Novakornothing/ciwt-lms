@@ -217,14 +217,14 @@ SSID now WPA3-only. Moved printer to wired port 7 (approved). WPA3-only retained
 test, and stop at the layer that fails. Changes to shared equipment (switches, the router, DHCP scopes, DNS zones) belong to their owners;
 your evidence is what lets them act quickly.</p>
 ''' + table(['Line', 'Example', 'What a reviewer checks'], [
-            ['Identity', 'CIWT-W11-07, user jdoe, Ethernet, room 2', 'Which device, which path'],
+            ['Identity', 'NOVAK-W11-07, user jdoe, Ethernet, room 2', 'Which device, which path'],
             ['Lease', 'ipconfig: 10.20.30.47/24, gw 10.20.30.1, DNS 10.20.30.10, DHCP yes', 'Not 169.254; mask and gateway consistent'],
             ['Gateway', 'ping 10.20.30.1: 4/4', 'Local LAN works'],
             ['Remote IP', 'ping 10.20.30.50: 4/4', 'The server answers'],
             ['Name', 'nslookup app.training.local: NXDOMAIN from 10.20.30.10', 'The failing layer, with the server that said so'],
             ['Action / next', 'flushdns: no change (expected). Escalated to DNS owner', 'Who owns the next step'],
         ]) + worked('a note that would survive 02:00', '''
-<p>“CIWT-W11-07 (jdoe), wired. Lease 10.20.30.47/24 gw .1 DNS .10. Ping gw 4/4; ping 10.20.30.50 4/4. nslookup app.training.local →
+<p>“NOVAK-W11-07 (jdoe), wired. Lease 10.20.30.47/24 gw .1 DNS .10. Ping gw 4/4; ping 10.20.30.50 4/4. nslookup app.training.local →
 NXDOMAIN from 10.20.30.10; same from secondary .11. Flushdns no change. Not a client fault. Escalated to DNS owner (ticket 4471) for
 missing A record. Firewall unchanged.”</p>
 <p>Notice what it does not contain: no “rebooted to see”, no “reset network settings”, no firewall disabled “to test”. Each of those

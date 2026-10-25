@@ -35,9 +35,9 @@
       <h2 class="h5">Sent to a third party</h2>
       {% if neural_tts %}
       <p>The lesson <strong>Listen</strong> button’s neural voice is produced by Microsoft’s online text-to-speech service (the Read Aloud service used by Microsoft Edge), through the open-source <code>edge-tts</code> library. When you press Play, <strong>the server sends the lesson text</strong> (up to about 3,500 characters at a time) to that service and caches the audio. Your name and account are not sent; the service sees the server’s network address.</p>
-      <p class="mb-0">An administrator can turn this off with <code>CIWT_NEURAL_TTS=0</code>; Listen then uses your browser’s own voice.</p>
+      <p class="mb-0">An administrator can turn this off with <code>NOVAK_NEURAL_TTS=0</code>; Listen then uses your browser’s own voice.</p>
       {% else %}
-      <p class="mb-0">The online neural voice is <strong>turned off</strong> on this server (<code>CIWT_NEURAL_TTS=0</code>). Listen uses your browser’s speech engine, preferring voices the browser reports as on-device. Some browsers’ built-in voices are themselves online services; check your browser’s settings if that matters to you.</p>
+      <p class="mb-0">The online neural voice is <strong>turned off</strong> on this server (<code>NOVAK_NEURAL_TTS=0</code>). Listen uses your browser’s speech engine, preferring voices the browser reports as on-device. Some browsers’ built-in voices are themselves online services; check your browser’s settings if that matters to you.</p>
       {% endif %}
       <p class="mt-2 mb-0">Nothing else is sent off the server: fonts, icons and the eye-tracking model are served from this site.</p>
     </div></div>

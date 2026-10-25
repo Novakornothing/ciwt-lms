@@ -1,5 +1,5 @@
 /* =====================================================================
-   CIWT UI layer — shared tokens, components, layout fixes, mobile.
+   Novak LMS UI layer — shared tokens, components, layout fixes, mobile.
    Loaded after the legacy inline theme in base.html, so it refines rather
    than replaces it. Role accents (--accent) still come from base.html.
    ===================================================================== */
@@ -958,7 +958,7 @@ html[data-theme="dark"] .chip-scroll a.chip-link[aria-current] .chip-count { col
 .tqi-ended { color: var(--warning-ink, #8a5a00); font-weight: 600; }
 [data-theme="dark"] .tqi-ended { color: var(--gold-bright, #f0c14b); }
 @media (pointer: coarse) { .row-title-link { display: inline-flex; align-items: center; min-height: var(--tap); } }
-/* phones: the admin tabs scroll sideways; ciwt-ui.js scrolls the current tab into view, the fade hints at more */
+/* phones: the admin tabs scroll sideways; novak-ui.js scrolls the current tab into view, the fade hints at more */
 @media (max-width: 575.98px) {
   .admin-tabs { margin-left: -.75rem; margin-right: -.75rem; padding-left: .75rem; padding-right: .75rem; scroll-padding-inline: .75rem;
     -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 1.5rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 1.5rem), transparent); }

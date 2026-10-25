@@ -34,10 +34,10 @@ VM_ASSETS = {
     "wasm": "vendor/v86/v86.wasm",
     "bios": "vendor/v86/seabios.bin",
     "vga_bios": "vendor/v86/vgabios.bin",
-    "bzimage": "vendor/v86/ciwt-linux.bin",
+    "bzimage": "vendor/v86/novak-linux.bin",
 }
 # One image for every lab: tools/vm_image/build.sh (kernel 6.8.12 + netfilter/loop/ATA, BusyBox + real Alpine packages).
-IMAGE = {"image": "ciwt-linux.bin", "download_mb": 13.3, "prompt_re": r"[#%$] $"}
+IMAGE = {"image": "novak-linux.bin", "download_mb": 13.3, "prompt_re": r"[#%$] $"}
 
 
 def _prelude(host, home="/root"):
@@ -97,7 +97,7 @@ PERMS = {
     "minutes": 30,
     "palette": ["ls -l ", "cd ", "pwd", "cat ", "mkdir -p ", "echo ", "chmod ", "chown ", "adduser -D ", "id ", "clear"],
     "fallback": ["linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "VM", "ciwt-vm")], setup={"vm": _prelude("ciwt-vm")}),
+    "vm": dict(IMAGE, machines=[_m("vm", "VM", "novak-vm")], setup={"vm": _prelude("novak-vm")}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "mkdir", "sh": "[ -d /root/support/tickets ]", "why": "/root/support/tickets does not exist yet."},
@@ -122,7 +122,7 @@ PERMS = {
 }
 
 # --------------------------------------------------------------------------------------------- lab 2: shell (twin of linux-shell)
-_SHELL_SETUP = _prelude("ciwt-lnx-01") + r"""mkdir -p /root/support /root/Documents
+_SHELL_SETUP = _prelude("novak-lnx-01") + r"""mkdir -p /root/support /root/Documents
 cat > /root/support/backup.sh <<'EOF'
 #!/bin/sh
 # nightly backup of ~/support
@@ -150,13 +150,13 @@ SHELL = {
         {"id": "private", "text": "Remove read access for others on report.txt, then verify with ls -l"},
         {"id": "grep", "text": "Find the ERROR line in app.log with grep"},
     ],
-    "intro": "SR-4120 on ciwt-lnx-01: the nightly backup script won't run and an internal report is world-readable. "
+    "intro": "SR-4120 on novak-lnx-01: the nightly backup script won't run and an internal report is world-readable. "
              "This is a real Linux VM — Windows commands like dir or ipconfig really fail here, so use ls, ip a and "
              "friends. Tab completes, ↑ recalls. Press Check my work at any time.",
     "success_msg": "Fixed on a real Linux box: the backup ran, the report is private, and the error is found.",
     "initial_state": {},
     "obj_hints": {
-        "boot": ["Press Start VM and wait for root@ciwt-lnx-01:~#.", "Start VM."],
+        "boot": ["Press Start VM and wait for root@novak-lnx-01:~#.", "Start VM."],
         "identify": ["Two short commands print the user name and the machine name.", "whoami   then   hostname"],
         "navigate": ["~ is your home folder. Change into support, then list with the long format.", "cd ~/support   then   ls -l"],
         "mkdir": ["mkdir makes a directory.", "mkdir ~/support/logs"],
@@ -170,7 +170,7 @@ SHELL = {
     "minutes": 25,
     "palette": ["ls -l", "cd ", "pwd", "cat ", "chmod ", "grep ", "mkdir ", "echo ", "./", "whoami", "hostname", "clear"],
     "fallback": ["linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "ciwt-lnx-01", "ciwt-lnx-01")], setup={"vm": _SHELL_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "novak-lnx-01", "novak-lnx-01")], setup={"vm": _SHELL_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "identify", "hist": [r"^whoami\b|^id\b", r"^hostname\b|^uname\s+-n"], "why": "Run whoami and hostname."},
@@ -193,7 +193,7 @@ SHELL = {
 }
 
 # --------------------------------------------------------------------------------------------- lab 3: services, processes, disk, cron, syslog
-_SVC_SETUP = _prelude("ciwt-app-02") + r"""mkdir -p /usr/local/bin /root/bin /tmp/spool /var/spool/cron/crontabs /var/run
+_SVC_SETUP = _prelude("novak-app-02") + r"""mkdir -p /usr/local/bin /root/bin /tmp/spool /var/spool/cron/crontabs /var/run
 cat > /usr/local/bin/heartbeat <<'EOF'
 #!/bin/sh
 # writes a line to /var/log/heartbeat.log every 2 seconds
@@ -249,14 +249,14 @@ SERVICES = {
         {"id": "cron", "text": "Schedule /root/bin/cleanup.sh to run every 15 minutes in root's crontab"},
         {"id": "log", "text": "Record the fix in syslog with logger (message containing SR-4201) and find it in /var/log/messages"},
     ],
-    "intro": "SR-4201 on ciwt-app-02: the monitoring dashboard says the heartbeat service is down and /tmp is filling up. "
+    "intro": "SR-4201 on novak-app-02: the monitoring dashboard says the heartbeat service is down and /tmp is filling up. "
              "A real Linux VM is running in your browser with both faults really happening. Investigate before you change "
              "anything — your command history is part of the grade.",
     "success_msg": "Server healthy: runaway process gone, space freed, heartbeat running from a repaired init script, "
                    "cleanup scheduled and the fix logged.",
     "initial_state": {},
     "obj_hints": {
-        "boot": ["Press Start VM and wait for root@ciwt-app-02:~#.", "Start VM."],
+        "boot": ["Press Start VM and wait for root@novak-app-02:~#.", "Start VM."],
         "find": ["df -h shows which filesystem is full; du -sh /tmp/* shows what is big; ps lists processes.",
                  "df -h ; du -sh /tmp/* ; ps | grep debug   (or fuser /tmp/spool/debug.log)"],
         "kill": ["ps shows the PID in the first column. kill PID asks it to stop; killall matches by name.",
@@ -277,7 +277,7 @@ SERVICES = {
     "palette": ["df -h", "du -sh /tmp/*", "ps", "kill ", "killall ", "ls -l ", "cat ", "sed -i ", "chmod +x ",
                 "/etc/init.d/S50heartbeat ", "crontab -l", "logger ", "tail ", "clear"],
     "fallback": ["linux-shell"],
-    "vm": dict(IMAGE, machines=[_m("vm", "ciwt-app-02", "ciwt-app-02")], setup={"vm": _SVC_SETUP}),
+    "vm": dict(IMAGE, machines=[_m("vm", "novak-app-02", "novak-app-02")], setup={"vm": _SVC_SETUP}),
     "vm_checks": [
         {"id": "boot"},
         {"id": "find", "hist": [r"^(df|du)\b", r"^(ps|top|fuser|lsof|pgrep|pidof)\b|\|\s*grep\b.*debug"],
@@ -315,13 +315,13 @@ _NC_NET = {
                  "ifaces": [{"seg": "lan", "ip": "10.10.0.1", "bits": 24}, {"seg": "lan", "ip": "10.10.0.53", "bits": 24},
                             {"seg": "lan", "ip": "10.10.0.80", "bits": 24}],
                  "dhcp": {"seg": "lan", "pool": ["10.10.0.100", "10.10.0.150"], "router": "10.10.0.1", "dns": "10.10.0.53",
-                          "domain": "ciwt.lab", "bits": 24, "lease_s": 3600},
-                 "dns": {"domain": "ciwt.lab", "records": {"intranet.ciwt.lab": "10.10.0.80", "gw.ciwt.lab": "10.10.0.1",
-                                                           "dns1.ciwt.lab": "10.10.0.53"}}},
+                          "domain": "novak.lab", "bits": 24, "lease_s": 3600},
+                 "dns": {"domain": "novak.lab", "records": {"intranet.novak.lab": "10.10.0.80", "gw.novak.lab": "10.10.0.1",
+                                                           "dns1.novak.lab": "10.10.0.53"}}},
     "topology": "ws-14 (this VM, eth0) ── LAN switch ── gateway 10.10.0.1 · DHCP + DNS server 10.10.0.53 · intranet web 10.10.0.80",
 }
 _NC_SETUP = _prelude("ws-14") + r"""ip link set eth0 up; ip addr flush dev eth0; ip addr add 169.254.23.7/16 dev eth0
-echo '10.10.0.99   intranet.ciwt.lab intranet   # old server, decommissioned 2025' >> /etc/hosts
+echo '10.10.0.99   intranet.novak.lab intranet   # old server, decommissioned 2025' >> /etc/hosts
 """
 NETCLIENT = {
     "id": "linux-vm-netclient",
@@ -334,9 +334,9 @@ NETCLIENT = {
         {"id": "diagnose", "text": "Read the interface configuration (ip a) and spot the 169.254 (APIPA) address before changing anything"},
         {"id": "lease", "text": "Get a DHCP lease on eth0 (udhcpc -i eth0) — the DHCP server must see Discover/Request and send an ACK"},
         {"id": "route", "text": "Confirm the default gateway 10.10.0.1 (ip route) and that it answers ping"},
-        {"id": "dns", "text": "Confirm the DNS server from the lease (/etc/resolv.conf) and resolve intranet.ciwt.lab with nslookup"},
-        {"id": "hosts", "text": "Find and remove the stale /etc/hosts entry that overrides DNS for intranet.ciwt.lab"},
-        {"id": "reach", "text": "ping intranet.ciwt.lab by name successfully (it must reach 10.10.0.80)"},
+        {"id": "dns", "text": "Confirm the DNS server from the lease (/etc/resolv.conf) and resolve intranet.novak.lab with nslookup"},
+        {"id": "hosts", "text": "Find and remove the stale /etc/hosts entry that overrides DNS for intranet.novak.lab"},
+        {"id": "reach", "text": "ping intranet.novak.lab by name successfully (it must reach 10.10.0.80)"},
         {"id": "neigh", "text": "Show the neighbour (ARP) table and see the gateway's MAC address (ip neigh or arp -n)"},
     ],
     "intro": "SR-4307 from ws-14: \"intranet doesn't load, and I think the network is broken\". The workstation is a real "
@@ -353,10 +353,10 @@ NETCLIENT = {
         "route": ["ip route shows the routing table; the default line is the gateway. Ping it to prove layer 3 works locally.",
                   "ip route ; ping -c 3 10.10.0.1"],
         "dns": ["The DHCP client wrote the DNS server into /etc/resolv.conf. nslookup asks it directly (it skips /etc/hosts).",
-                "cat /etc/resolv.conf ; nslookup intranet.ciwt.lab"],
+                "cat /etc/resolv.conf ; nslookup intranet.novak.lab"],
         "hosts": ["nslookup says 10.10.0.80, but ping goes to 10.10.0.99 — something answers before DNS. /etc/hosts is checked first.",
                   "cat /etc/hosts ; sed -i '/10.10.0.99/d' /etc/hosts"],
-        "reach": ["After fixing hosts, ping by name and check the address it chose.", "ping -c 3 intranet.ciwt.lab"],
+        "reach": ["After fixing hosts, ping by name and check the address it chose.", "ping -c 3 intranet.novak.lab"],
         "neigh": ["The kernel keeps IP → MAC mappings it has learned.", "ip neigh   (or arp -n)"],
     },
     "course_objectives": ["IT-5.1", "IT-5.3", "IT-13.2", "NO-4.1", "NO-4.2"],
@@ -377,19 +377,19 @@ NETCLIENT = {
          "why": "Check ip route (default via 10.10.0.1) and ping the gateway — now: {v}"},
         {"id": "dns", "sh": "grep -q '^nameserver 10.10.0.53' /etc/resolv.conf", "hist": [r"resolv\.conf"],
          "fabric": "dns_intranet", "show": "grep nameserver /etc/resolv.conf || echo no nameserver",
-         "why": "Look at /etc/resolv.conf and resolve intranet.ciwt.lab with nslookup (the DNS server must see the query) — {v}"},
+         "why": "Look at /etc/resolv.conf and resolve intranet.novak.lab with nslookup (the DNS server must see the query) — {v}"},
         {"id": "hosts", "sh": "! grep -Eq '^[[:space:]]*10\\.10\\.0\\.99[[:space:]]' /etc/hosts",
          "show": "grep -n intranet /etc/hosts | head -2", "why": "/etc/hosts still overrides DNS: {v}"},
-        {"id": "reach", "sh": "ping -c 1 -W 2 intranet.ciwt.lab | grep -q '10\\.10\\.0\\.80'", "secs": 5,
-         "hist": [r"^ping\b.*intranet"], "why": "ping intranet.ciwt.lab must reach 10.10.0.80."},
+        {"id": "reach", "sh": "ping -c 1 -W 2 intranet.novak.lab | grep -q '10\\.10\\.0\\.80'", "secs": 5,
+         "hist": [r"^ping\b.*intranet"], "why": "ping intranet.novak.lab must reach 10.10.0.80."},
         {"id": "neigh", "hist": [r"^ip\s+(-[a-z0-9]+\s+)*n(eigh(bour)?)?\b|^arp\b"], "why": "Show the neighbour table (ip neigh)."},
     ],
     "solution": {"vm_commands": ["ip a", "udhcpc -i eth0", "ip route", "ping -c 2 10.10.0.1", "cat /etc/resolv.conf",
-                                 "nslookup intranet.ciwt.lab", "ping -c 1 intranet.ciwt.lab", "cat /etc/hosts",
-                                 "sed -i '/10.10.0.99/d' /etc/hosts", "ping -c 2 intranet.ciwt.lab", "ip neigh"],
+                                 "nslookup intranet.novak.lab", "ping -c 1 intranet.novak.lab", "cat /etc/hosts",
+                                 "sed -i '/10.10.0.99/d' /etc/hosts", "ping -c 2 intranet.novak.lab", "ip neigh"],
                  "fabric": {"events": [{"type": "dhcp", "msg": "ACK", "ip": "10.10.0.100"},
                                        {"type": "ping", "from": "10.10.0.100", "to": "10.10.0.1"},
-                                       {"type": "dns", "q": "intranet.ciwt.lab", "rcode": 0}]}},
+                                       {"type": "dns", "q": "intranet.novak.lab", "rcode": 0}]}},
 }
 
 # --------------------------------------------------------------------------------------------- lab 5: real routing between two networks
@@ -588,12 +588,12 @@ def _events(fabric):
 FABRIC_RULES = {
     "dhcp_ack": lambda ev: any(e.get("type") == "dhcp" and e.get("msg") == "ACK" for e in ev),
     "ping_gw": lambda ev: any(e.get("type") == "ping" and e.get("to") == "10.10.0.1" for e in ev),
-    "dns_intranet": lambda ev: any(e.get("type") == "dns" and str(e.get("q") or "").rstrip(".") in ("intranet.ciwt.lab", "intranet")
+    "dns_intranet": lambda ev: any(e.get("type") == "dns" and str(e.get("q") or "").rstrip(".") in ("intranet.novak.lab", "intranet")
                                    and e.get("rcode") in (0, None) for e in ev),
 }
 FABRIC_WHY = {"dhcp_ack": "the DHCP server has not acknowledged a lease yet",
               "ping_gw": "the gateway has not seen a ping from you yet",
-              "dns_intranet": "the DNS server has not been asked for intranet.ciwt.lab yet"}
+              "dns_intranet": "the DNS server has not been asked for intranet.novak.lab yet"}
 
 
 FABRIC_RULES.update(MORE_FABRIC)

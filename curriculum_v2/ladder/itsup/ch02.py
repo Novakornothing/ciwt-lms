@@ -532,7 +532,7 @@ LESSONS = {
               'when needed, but only the relevant lines go in your report.'),
             ['hostname: name on the wire.', 'whoami: account in use.', 'systeminfo | more: edition, build, hotfixes.', 'Copy the lines that answer the question.'],
             '<p>Match each command to what it shows.</p>',
-            sort('Command to fact', {'hostname': ['CIWT-W11-07'], 'whoami': ['ciwt\\student'], 'systeminfo': ['Windows 11 Education 25H2', 'Install date']},
+            sort('Command to fact', {'hostname': ['NOVAK-W11-07'], 'whoami': ['ciwt\\student'], 'systeminfo': ['Windows 11 Education 25H2', 'Install date']},
                  'Each command answers one question.'), ('win-hostname', 'Run hostname, whoami and systeminfo and note the key lines.')),
         '3-list-disk-before-any-wipe': X('3. List disk before any wipe', 'IT-2.4', S6, [
             ('Which diskpart command is allowed in Block 2?', 'list disk', 'clean', 'convert gpt',

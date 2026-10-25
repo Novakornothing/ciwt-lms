@@ -40,7 +40,7 @@ with sync_playwright() as p:
     b = p.chromium.launch()
     ctx = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
     if a.theme == 'dark':
-        ctx.add_init_script("try{localStorage.setItem('ciwt-theme','dark')}catch(e){}")
+        ctx.add_init_script("try{localStorage.setItem('novak-theme','dark')}catch(e){}")
     pg = ctx.new_page(); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(a.base + '/login'); pg.fill('[name=email]', 'student1@lms.local'); pg.fill('[name=password]', 'student123')

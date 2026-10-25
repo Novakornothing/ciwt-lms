@@ -31,7 +31,7 @@ def key_for(cid):
 def login(b, w, who, pw, theme='light'):
     c = b.new_context(viewport={'width': w, 'height': 900 if w > 500 else 844}, device_scale_factor=2 if w > 500 else 3,
                       is_mobile=w < 500, has_touch=w < 500)
-    c.add_init_script(f"try{{localStorage.setItem('ciwt-theme','{theme}')}}catch(e){{}}")
+    c.add_init_script(f"try{{localStorage.setItem('novak-theme','{theme}')}}catch(e){{}}")
     p = c.new_page()
     p.goto(B + '/login'); p.fill('input[name=email]', who); p.fill('input[name=password]', pw)
     p.click('form button[type=submit]'); p.wait_for_load_state('networkidle')

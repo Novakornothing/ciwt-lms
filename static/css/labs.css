@@ -1,4 +1,4 @@
-/* ============================================================ CIWT live labs (pass L1)
+/* ============================================================ Novak LMS live labs (pass L1)
    Terminal, Windows 11 desktop, activities, results. Phone-first: 390px portrait, landscape, tablet, desktop.
    Colours use theme variables so light and dark both meet WCAG AA. */
 
@@ -90,7 +90,7 @@ html.term-focus-on .lab-toast.show { transform: translate(-50%, 0); }
 @media (min-width: 992px) { .term-keys { display: none; } }
 /* phone focus mode: fixed overlay sized to the visual viewport, so the keyboard never covers the prompt */
 .term-wrap.term-focus { position: fixed; z-index: 1080; left: 0; right: 0; top: var(--vvtop, 0px); height: var(--vvh, 100dvh); border-radius: 0; border-width: 0; }
-.term-wrap.term-focus .term-body { height: auto; min-height: 0; max-height: none; flex: 1 1 auto; }   /* r5: the phone min/max-height (ciwt-ui.css) pushed the input and keys under the keyboard */
+.term-wrap.term-focus .term-body { height: auto; min-height: 0; max-height: none; flex: 1 1 auto; }   /* r5: the phone min/max-height (novak-ui.css) pushed the input and keys under the keyboard */
 .term-wrap.term-focus > :not(.term-body) { flex: 0 0 auto; }
 .term-wrap.term-focus.term-short .term-chips { display: none; }   /* keyboard open (short viewport): keep the prompt, keys and Check visible */
 .term-wrap.term-focus.term-short .term-bar { padding-top: .15rem; padding-bottom: .15rem; }
@@ -291,7 +291,7 @@ html.term-focus-on, html.term-focus-on body { overflow: hidden; }
 .term-wrap.term-focus .vm-tabs { flex: 0 0 auto; }
 
 /* The simulated Windows 11 desktop keeps Windows' own light palette in the site's dark theme: undo the theme's
-   forced light ink on text elements (ciwt-theme.css) inside the desk so it inherits the window colours. */
+   forced light ink on text elements (novak-theme.css) inside the desk so it inherits the window colours. */
 [data-theme="dark"] .w11-desk :is(h1, h2, h3, h4, h5, h6, p, li, td, th, dt, dd, label, .table, .form-label, .form-check-label) { color: inherit !important; }
 /* lab scenarios (PBQ tickets) */
 .lab-kind-scenario { background: color-mix(in srgb, #7048e8 16%, var(--surface)); color: color-mix(in srgb, #7048e8 50%, var(--ink)); }

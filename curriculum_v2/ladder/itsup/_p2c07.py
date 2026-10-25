@@ -73,7 +73,7 @@ _add('7.1', 'the-seven-words', 'The seven words', 'IT-7.1', S1, [
      'The words are short so you can say them under pressure. The user’s own diagnosis is not a box on this chain.',
     'Reveal the answer after you decide what Identify should contain.',
     reveal('A user rings: “Teams is broken, it’s DNS.” Write the Identify line.',
-           '“Who: J. Doe, CIWT-W11-07. Outcome: cannot join Teams calls since 09:10. How many: one user so far. Safety: none.”'), METH)
+           '“Who: J. Doe, NOVAK-W11-07. Outcome: cannot join Teams calls since 09:10. How many: one user so far. Safety: none.”'), METH)
 
 _add('7.2', '1-domains-you-already-know', '1. Domains you already know', 'IT-7.2', S2, [
     ('Shock, heat or smell. Which domain?', 'Safety: stop', 'Display after POST', 'Name resolution',

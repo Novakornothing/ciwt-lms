@@ -275,7 +275,7 @@ def to_docx(doc):
     st.font.name = 'Calibri'
     st.font.size = Pt(10.5)
     d.core_properties.title = doc['title']
-    d.core_properties.author = 'CIWT LMS'
+    d.core_properties.author = 'Novak LMS'
     for blk in doc['blocks']:
         kind = blk[0]
         if kind in ('h1', 'h2', 'h3'):
@@ -412,7 +412,7 @@ def to_pdf(doc):
         canvas.drawString(0.75 * inch, 0.5 * inch, _esc(doc['title'], uni)[:110])
         canvas.drawRightString(letter[0] - 0.75 * inch, 0.5 * inch, f'Page {d.page}')
         canvas.restoreState()
-    SimpleDocTemplate(buf, pagesize=letter, title=doc['title'], author='CIWT LMS',
+    SimpleDocTemplate(buf, pagesize=letter, title=doc['title'], author='Novak LMS',
                       leftMargin=0.75 * inch, rightMargin=0.75 * inch, topMargin=0.7 * inch,
                       bottomMargin=0.75 * inch).build(story, onFirstPage=_footer, onLaterPages=_footer)
     return buf.getvalue()

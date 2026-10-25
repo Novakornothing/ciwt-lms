@@ -97,7 +97,7 @@
     s.cb && s.cb(s.buf);
   };
   function baseCacheKey(m) {
-    return 'base_kernel_v1:' + (cfg.assets && cfg.assets.bzimage || 'ciwt-linux.bin') + ':m' + (m.spec.memory_mb || 64) + ':n' + (VMC.net ? 1 : 0) + ':d' + (m.spec.disk_mb || 0);
+    return 'base_kernel_v1:' + (cfg.assets && cfg.assets.bzimage || 'novak-linux.bin') + ':m' + (m.spec.memory_mb || 64) + ':n' + (VMC.net ? 1 : 0) + ':d' + (m.spec.disk_mb || 0);
   }
   function markBaseCached() {
     var b = $('vmBaseCached');

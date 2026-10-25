@@ -80,7 +80,7 @@ LESSONS = {
             order('Lab change loop', ['Snapshot', 'Baseline inventory', 'One change', 'Verify and record', 'Revert or keep'],
                   'Save first, look second, change one thing, prove it, then decide.'), ('virt-vm', 'Take a checkpoint, change one setting, verify, revert.')),
         'this-guest-is-shop-property': X('This guest is shop property', 'IT-13.1', S1, [
-            ('How should you treat CIWT-W11-07?', 'Like a shared bench PC', 'Like a throwaway sandbox', 'Like your personal laptop',
+            ('How should you treat NOVAK-W11-07?', 'Like a shared bench PC', 'Like a throwaway sandbox', 'Like your personal laptop',
              'Others use the same guest, so you inventory first and never run destructive commands.', RULES, RULES),
             ('What comes before any change to the lab VM?', 'An inventory', 'A disk clean', 'A reboot',
              'Inventory shows the starting state so you can prove what you changed.', STATE, STATE),
@@ -92,15 +92,15 @@ LESSONS = {
              'The respect you show the guest becomes how you handle real users’ machines.', RULES, None),
         ],
             P('The lab computer is not yours to break. Other students and instructors use it too. Before you change anything, write down how it '
-              'is set up. Never wipe its disk. Think of CIWT-W11-07 as a repair-bench PC that a colleague will sit at after you, and leave it in a '
+              'is set up. Never wipe its disk. Think of NOVAK-W11-07 as a repair-bench PC that a colleague will sit at after you, and leave it in a '
               'state they can work with.'),
             P('A library book passes through hundreds of hands. The good reader returns it without notes in the margins, folded corners or coffee '
               'rings, because the next person deserves the same book. Nobody checks every page, so it relies on habit. The lab guest is a library '
               'book. Taking an inventory first, avoiding destructive commands and leaving it tidy is the habit you will need on users’ PCs, '
               'where far more is at stake than a stained page.'),
-            ['Sign in to CIWT-W11-07.', 'Run the inventory and save it.', 'Never run diskpart clean or format.', 'Change one thing at a time and note it.'],
+            ['Sign in to NOVAK-W11-07.', 'Run the inventory and save it.', 'Never run diskpart clean or format.', 'Change one thing at a time and note it.'],
             '<p>Write your two-line inventory note for the guest.</p>',
-            reveal('What two lines open every lab note?', '“CIWT-W11-07, Windows 11 Pro, user lab\\student” then “ipconfig /all: Ethernet 10.20.30.41, gw 10.20.30.1, DNS 10.20.30.5.”'), L_IP),
+            reveal('What two lines open every lab note?', '“NOVAK-W11-07, Windows 11 Pro, user lab\\student” then “ipconfig /all: Ethernet 10.20.30.41, gw 10.20.30.1, DNS 10.20.30.5.”'), L_IP),
     },
     '13.2': {
         'core-content': X('Core content', 'IT-13.1', S2, [
@@ -149,7 +149,7 @@ LESSONS = {
               'hostname and ipconfig /all are the receipt, and anyone can read them later and agree on what the PC actually said.'),
             ['Run hostname.', 'Run ipconfig /all (or Get-NetIPConfiguration).', 'Paste both outputs into the ticket.', 'Add one line saying what they show.'],
             '<p>Write the evidence block you would paste for a PC with an APIPA address.</p>',
-            reveal('Evidence block for an APIPA PC?', '“hostname: CIWT-W11-07. ipconfig /all: Ethernet up, DHCP Yes, IPv4 169.254.12.7, gateway blank → no DHCP answer.”'), L_IP),
+            reveal('Evidence block for an APIPA PC?', '“hostname: NOVAK-W11-07. ipconfig /all: Ethernet up, DHCP Yes, IPv4 169.254.12.7, gateway blank → no DHCP answer.”'), L_IP),
         'scripting-basics-file-types-use-cases-and-risks': X('Scripting basics: file types, use cases and risks', 'IT-13.2', S2, [
             ('Which extension is a PowerShell script?', '.ps1', '.bat', '.vbs',
              '.ps1 is PowerShell; .bat is batch for cmd.exe; .vbs is deprecated VBScript.', EXE, None),

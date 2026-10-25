@@ -56,8 +56,8 @@
     return ok;
   }
   function enhance(form) {
-    if (form.hasAttribute('data-no-enhance') || form.__ciwt) return;
-    form.__ciwt = true;
+    if (form.hasAttribute('data-no-enhance') || form.__novak) return;
+    form.__novak = true;
     form.setAttribute('novalidate', '');
     form.addEventListener('submit', function (e) {
       var bad = null;

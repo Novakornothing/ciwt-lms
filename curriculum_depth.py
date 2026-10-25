@@ -125,7 +125,7 @@ add(5, 5, "Full triage lab", """
 
 # ----- Chapter 6 -----
 add(6, 1, "Host versus guest", """
-<p>The Windows you type in on the training bench may already be a guest (CIWT-W11-07). The host is the machine or cluster that holds the files. If the host datastore is full or the host NIC is down, every guest looks sick. Inventory the guest first. If the guest looks healthy and five guests failed together, the next person is the host owner — not five NIC replacements.</p>
+<p>The Windows you type in on the training bench may already be a guest (NOVAK-W11-07). The host is the machine or cluster that holds the files. If the host datastore is full or the host NIC is down, every guest looks sick. Inventory the guest first. If the guest looks healthy and five guests failed together, the next person is the host owner — not five NIC replacements.</p>
 """)
 add(6, 2, "What you may touch", """
 <p>SaaS: account, license, client. You do not reimage a laptop because Outlook 365 is yellow for the whole tenant. IaaS: you still own the guest OS and use Chapters 2–5 inside it. PaaS: you own the app path, not the platform OS. Write the tenant name and whether other users fail.</p>
@@ -223,7 +223,7 @@ add(12, 4, "Integrated ticket", """
 
 # ----- Chapter 13 -----
 add(13, 1, "This guest is shop property", """
-<p>Inventory before you change the lab VM. No clean. Treat CIWT-W11-07 like a real bench PC that someone else also uses.</p>
+<p>Inventory before you change the lab VM. No clean. Treat NOVAK-W11-07 like a real bench PC that someone else also uses.</p>
 """)
 add(13, 2, "Evidence lines", """
 <p>hostname and ipconfig /all go in the ticket. PowerShell Get-NetIPConfiguration is the same facts with different spelling.</p>

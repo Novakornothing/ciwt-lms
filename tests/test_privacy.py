@@ -53,7 +53,7 @@ def test_lesson_hides_neural_voice_when_off(student, ids, tts_off):
 
 def test_privacy_page_describes_tts(anon, app, tts_off):
     html = anon.get('/privacy').get_data(as_text=True)
-    assert 'turned off' in html and 'CIWT_NEURAL_TTS=0' in html
+    assert 'turned off' in html and 'NOVAK_NEURAL_TTS=0' in html
 
 
 def test_privacy_page_on(anon):

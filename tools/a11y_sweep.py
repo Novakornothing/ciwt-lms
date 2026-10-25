@@ -77,7 +77,7 @@ with sync_playwright() as p:
             mobile = w < 600
             ctx = b.new_context(viewport={'width': w, 'height': HEIGHT.get(w, 900)}, is_mobile=mobile, has_touch=w < 1000)
             if theme == 'dark':
-                ctx.add_init_script("try{localStorage.setItem('ciwt-theme','dark')}catch(e){}")
+                ctx.add_init_script("try{localStorage.setItem('novak-theme','dark')}catch(e){}")
             pg = ctx.new_page()
             if who != 'anon':
                 email, pw = who.split(':')

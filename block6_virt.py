@@ -28,7 +28,7 @@ CHAPTER6 = {
             "html": _NOTE + r'''<div class="lo-panel"><h4>Terminal objectives</h4>
 <ul>
 <li>Say host vs guest in one sentence</li>
-<li>Know that this training PC may already be a guest (CIWT-W11-07)</li>
+<li>Know that this training PC may already be a guest (NOVAK-W11-07)</li>
 <li>Do not snapshot or delete a VM that is not yours</li>
 </ul></div>
 <div class="instructor-note"><h4>Instructor — 40 minutes</h4>
@@ -126,7 +126,7 @@ CHAPTER6 = {
 <li>Escalate the host only with evidence</li>
 </ul></div>
 <div class="instructor-note"><h4>Instructor — 40 minutes</h4>
-<p>Story: “CIWT-W11-07 is slow since the snapshot Tuesday.” Trainees run inventory, write guest facts, then say what they would ask the host owner. No one deletes a snapshot in class.</p></div>
+<p>Story: “NOVAK-W11-07 is slow since the snapshot Tuesday.” Trainees run inventory, write guest facts, then say what they would ask the host owner. No one deletes a snapshot in class.</p></div>
 <div class="build-on"><strong>Builds on:</strong> 6.1–6.3 plus 2.6 and 1.3.</div>
 <div class="live-demo"><h4>Labs</h4>
 <p><strong>w11-inventory</strong> and <strong>gui-about</strong>. Note: name, RAM the guest sees, disk list if you already know 2.6. Guess line labeled guess: “snapshot chain on host?”</p></div>

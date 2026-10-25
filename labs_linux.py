@@ -24,10 +24,10 @@ def linux_state(**extra):
     fs = {
         '/': _d(owner='root', group='root'), '/home': _d(owner='root', group='root'), HOME: _d(0o750),
         '/tmp': _d(0o777, 'root', 'root'), '/etc': _d(owner='root', group='root'),
-        '/etc/hostname': _f('ciwt-lnx-01\n', 0o644, 'root', 'root'),
+        '/etc/hostname': _f('novak-lnx-01\n', 0o644, 'root', 'root'),
         '/etc/shadow': _f('root:*:19000:0:99999:7:::\n', 0o640, 'root', 'shadow'),
         '/var': _d(owner='root', group='root'), '/var/log': _d(owner='root', group='root'),
-        '/var/log/syslog': _f('Oct 17 09:01 ciwt-lnx-01 systemd[1]: Started OpenSSH server.\n', 0o640, 'syslog', 'adm'),
+        '/var/log/syslog': _f('Oct 17 09:01 novak-lnx-01 systemd[1]: Started OpenSSH server.\n', 0o640, 'syslog', 'adm'),
         HOME + '/support': _d(),
         HOME + '/support/backup.sh': _f('#!/bin/bash\necho "Backup of ~/support complete: 3 files copied to /tmp/backup"\n', 0o644),
         HOME + '/support/report.txt': _f('Quarterly support report - internal only\nOpen tickets: 14\n', 0o644),
@@ -36,7 +36,7 @@ def linux_state(**extra):
         HOME + '/.bashrc': _f('# ~/.bashrc\nalias ll="ls -l"\n'),
         HOME + '/Documents': _d(),
     }
-    st = {'fs': fs, 'cwd': HOME, 'user': 'trainee', 'host': 'ciwt-lnx-01', 'hist': [], 'ip': '10.20.40.15'}
+    st = {'fs': fs, 'cwd': HOME, 'user': 'trainee', 'host': 'novak-lnx-01', 'hist': [], 'ip': '10.20.40.15'}
     st.update(extra)
     return st
 
@@ -44,7 +44,7 @@ def linux_state(**extra):
 def prompt(state):
     cwd = state.get('cwd', HOME)
     short = '~' + cwd[len(HOME):] if cwd.startswith(HOME) else cwd
-    return f"{state.get('user', 'trainee')}@{state.get('host', 'ciwt-lnx-01')}:{short}$"
+    return f"{state.get('user', 'trainee')}@{state.get('host', 'novak-lnx-01')}:{short}$"
 
 
 def _abs(state, p):
@@ -176,7 +176,7 @@ def run(cmd, state, done, mark, rules):
         out.append(state['ip'] if '-I' in args else state['host'])
         rules(state, done, ('hostname',))
     elif name == 'uname':
-        out.append('Linux ciwt-lnx-01 6.8.0-45-generic #45-Ubuntu SMP x86_64 GNU/Linux' if 'a' in flags else 'Linux')
+        out.append('Linux novak-lnx-01 6.8.0-45-generic #45-Ubuntu SMP x86_64 GNU/Linux' if 'a' in flags else 'Linux')
     elif name in ('ip', 'ifconfig'):
         if name == 'ip' and (not args or args[0] not in ('a', 'addr', 'address', 'r', 'route')):
             out.append('Usage: ip addr   |   ip route')

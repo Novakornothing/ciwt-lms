@@ -1,4 +1,4 @@
-/* CIWT Helix runtime — opt-in attention signal for lesson pages.
+/* Novak LMS Helix runtime — opt-in attention signal for lesson pages.
    Camera mode: WebGazer (in-browser; video never leaves the device) with
    9-point calibration, 5-point validation (accuracy score), median/Kalman
    smoothing, face-lost / tab-hidden / low-confidence states, AOI timelines,
@@ -58,7 +58,7 @@
     return !!(window.isSecureContext !== false && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   }
   function csrfToken() {
-    if (window.CIWT_CSRF) return window.CIWT_CSRF;
+    if (window.NOVAK_CSRF) return window.NOVAK_CSRF;
     var m = document.querySelector('meta[name="csrf-token"]'); return m ? m.content : '';
   }
   function postJSON(u, body) {
@@ -1088,8 +1088,9 @@
     resizeT = setTimeout(function () { S.layoutDirty = true; if (S.filter) S.filter.bounds = { w: innerWidth, h: innerHeight }; }, 300);
   });
   function triggerStruggleNudge(secId, opts) {
-    if (window.CiwtLadder && window.CiwtLadder.triggerStruggleNudge) {
-      return window.CiwtLadder.triggerStruggleNudge(secId, opts);
+    var L = window.NovakLadder || window.CiwtLadder;
+    if (L && L.triggerStruggleNudge) {
+      return L.triggerStruggleNudge(secId, opts);
     }
     return Promise.resolve(false);
   }

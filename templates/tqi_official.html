@@ -16,7 +16,7 @@
 </nav>
 
 <div class="page-hero">
-  <div class="small text-uppercase mb-1 u-eyebrow">CIWT schoolhouse TQI packet — not NETC LAS</div>
+  <div class="small text-uppercase mb-1 u-eyebrow">Novak LMS™ TQI packet — not NETC LAS</div>
   <h1 class="h3 mb-1">{{ section.course.code if section.course else 'COURSE' }} — {{ section.name }}</h1>
   <p class="mb-0">Generated {{ generated.strftime('%d %b %Y %H:%M') }} UTC · Packet {{ status.packet.status }} · Student identities withheld</p>
 </div>
@@ -204,7 +204,7 @@
 <div class="card mb-3">
   <div class="card-header navy">9. Authentication</div>
   <div class="card-body">
-    <p>CIWT schoolhouse TQI packet. Student reaction is aggregated; comments are anonymous. Aligned to NAVEDTRA M-142.5 <em>functions</em> (critique program, instructor closeout, item analysis). <strong>This is not the official NETC LAS instrument or export.</strong></p>
+    <p>Novak LMS™ TQI packet. Student reaction is aggregated; comments are anonymous. Aligned to NAVEDTRA M-142.5 <em>functions</em> (critique program, instructor closeout, item analysis). <strong>This is not the official NETC LAS instrument or export.</strong></p>
     <div class="row mt-3">
       <div class="col-md-6">Instructor: {{ status.instructor.full_name if status.instructor else '________________' }}</div>
       <div class="col-md-6">Date: {{ generated.strftime('%Y-%m-%d') }}</div>

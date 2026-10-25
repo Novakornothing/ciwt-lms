@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>CIWT IT A-School Trainee Guide</title>
+  <title>Novak LMS™ IT Trainee Guide</title>
   <style>
     body { font-family: "Segoe UI", Calibri, sans-serif; max-width: 800px; margin: 24px auto; color: #111; }
     h1 { font-size: 22px; }
@@ -15,8 +15,8 @@
 <body>
   <p class="noprint"><button onclick="window.print()">Print / Save as PDF</button>
     <a href="{{ url_for('aschool_trainee_guide_txt') }}">Plain text</a></p>
-  <h1>CIWT IT A-School Trainee Guide</h1>
-  <p class="meta">Original CIWT instructional map. Proprietary schoolhouse material — not official NAVEDTRA courseware.<br>
+  <h1>Novak LMS™ IT Trainee Guide</h1>
+  <p class="meta">Original Novak LMS™ instructional map. Proprietary training material — not official NAVEDTRA courseware.<br>
   {{ stats.blocks }} blocks · {{ stats.hours }} contact hours · {{ stats.eos }} enabling objectives · {{ stats.with_lab }} live labs.<br>
   Generated {{ generated }} UTC.</p>
   {% for b in blocks %}

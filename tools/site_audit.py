@@ -111,7 +111,7 @@ with sync_playwright() as p:
             for w in map(int, a.widths.split(',')):
                 mob = w < 600
                 ctx = b.new_context(viewport={'width': w, 'height': 844 if mob else (1180 if w < 1000 else 860)}, is_mobile=mob, has_touch=w < 1000)
-                if theme == 'dark': ctx.add_init_script("try{localStorage.setItem('ciwt-theme','dark')}catch(e){}")
+                if theme == 'dark': ctx.add_init_script("try{localStorage.setItem('novak-theme','dark')}catch(e){}")
                 pg = ctx.new_page(); errs = []; reqs = []
                 pg.on('requestfinished', lambda r: reqs.append(r))
                 pg.on('console', lambda m: errs.append(m.text[:200]) if m.type == 'error' else None)

@@ -141,7 +141,7 @@ def test_single_blocking_css_bundle(anon):
     assert r.status_code == 200 and r.mimetype == 'text/css'
     assert 'immutable' in r.headers['Cache-Control']
     # cascade order: Bootstrap first, app CSS after it
-    assert css.index('bootstrap.min.css') < css.index('ciwt-theme.css') < css.index('ciwt-ui.css') < css.index('helix.css')
+    assert css.index('bootstrap.min.css') < css.index('novak-theme.css') < css.index('novak-ui.css') < css.index('helix.css')
     assert '.mobile-tabbar' in css and '@font-face' in css
     assert '../img/' not in css and 'url(/static/vendor/fonts/v1/ibm-plex-sans-400-700-latin.woff2)' in css
     # the font preload uses the same URL, so the font is fetched once

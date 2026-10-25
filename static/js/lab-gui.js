@@ -1,4 +1,4 @@
-/* CIWT live labs — Windows 11 desktop simulator.
+/* Novak LMS live labs — Windows 11 desktop simulator.
  * The server owns the desktop state (open window, Settings page, adapter, Active Directory). Every click is an
  * event POSTed to /labs/<id>/event; the reply re-renders the window, so a reload restores the same place.
  * Touch: 44px targets, long-press = right-click, narrow layout (Settings nav collapses behind a Back button),

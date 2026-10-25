@@ -8,7 +8,7 @@
     <div class="term-wrap term-{{ lab.kind }}" id="termWrap">
       <div class="term-bar">
         <span class="term-title"><span class="term-live-dot" aria-hidden="true"></span>
-          {% if lab.kind == 'windows' %}CIWT-W11-07 — Terminal{% elif lab.kind == 'linux' %}trainee@ciwt-lnx-01 — bash{% elif lab.kind == 'ticket' %}Scenario desk{% else %}{{ lab.initial_state.hostname or 'device' }} — console{% endif %}</span>
+          {% if lab.kind == 'windows' %}NOVAK-W11-07 — Terminal{% elif lab.kind == 'linux' %}trainee@novak-lnx-01 — bash{% elif lab.kind == 'ticket' %}Scenario desk{% else %}{{ lab.initial_state.hostname or 'device' }} — console{% endif %}</span>
         <span class="term-bar-tools">
           <button type="button" class="btn btn-sm term-btn" id="btnFocus" aria-pressed="false" title="Full-screen terminal"><i class="bi bi-arrows-fullscreen" aria-hidden="true"></i><span class="visually-hidden">Full-screen terminal</span></button>
           <button type="button" class="btn btn-sm term-btn term-exit" id="btnFocusExit">Done</button>
@@ -47,7 +47,7 @@
   </div>
   {% include '_lab_side.html' %}
 </div>
-{% set cfg = {'kind': lab.kind, 'boot': boot, 'welcome': {'windows': 'Microsoft Windows [Version 10.0.26200.9711]   (CIWT training VM — type help)', 'linux': 'Ubuntu 24.04 LTS (CIWT training server) — type help', 'switch': 'Press RETURN to get started. Type ? for help.', 'router': 'Press RETURN to get started. Type ? for help.', 'ticket': 'Scenario desk ready — type help.'}.get(lab.kind),
+{% set cfg = {'kind': lab.kind, 'boot': boot, 'welcome': {'windows': 'Microsoft Windows [Version 10.0.26200.9711]   (Novak LMS™ training VM — type help)', 'linux': 'Ubuntu 24.04 LTS (Novak LMS™ training server) — type help', 'switch': 'Press RETURN to get started. Type ? for help.', 'router': 'Press RETURN to get started. Type ? for help.', 'ticket': 'Scenario desk ready — type help.'}.get(lab.kind),
   'urls': {'cmd': url_for('interactive_lab_cmd', lab_id=lab.id), 'complete': url_for('interactive_lab_complete', lab_id=lab.id), 'hint': url_for('interactive_lab_hint', lab_id=lab.id), 'undo': url_for('interactive_lab_undo', lab_id=lab.id), 'reset': url_for('interactive_lab_reset', lab_id=lab.id), 'check': url_for('interactive_lab_check', lab_id=lab.id), 'state': url_for('interactive_lab_state', lab_id=lab.id)}} %}
 <script type="application/json" id="labConfig">{{ cfg|tojson }}</script>
 <script src="{{ url_for('static', filename='js/lab-common.js') }}"></script>

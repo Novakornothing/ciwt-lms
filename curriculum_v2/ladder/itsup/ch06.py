@@ -249,7 +249,7 @@ LESSONS = {
               'can actually check them and confirm or rule them out.'),
             ['Guest name and OS.', 'RAM and disk the guest sees.', 'Guest network tests.', 'Host ideas labelled as guesses.', 'Escalate to host owner.'],
             '<p>Sort each line.</p>',
-            sort('Fact or guess?', {'Guest fact': ['RAM seen 8 GB', 'Disk C: 3% free', 'Name CIWT-W11-07'], 'Labelled guess': ['Snapshot chain on host?', 'Datastore full?']},
+            sort('Fact or guess?', {'Guest fact': ['RAM seen 8 GB', 'Disk C: 3% free', 'Name NOVAK-W11-07'], 'Labelled guess': ['Snapshot chain on host?', 'Datastore full?']},
                  'Facts first, guesses labelled.'), VM),
     },
 }
