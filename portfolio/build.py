@@ -1,8 +1,9 @@
 """Pure helpers for the skills portfolio: certification domain readiness, lab process badges, OpenBadges-style export."""
-from curriculum_v2.cert.exams import DOMAINS
+from curriculum_v2.cert.exams import ALL_DOMAINS as DOMAINS
 from curriculum_v2.cert.mapping import CURATED
+from curriculum_v2.cert.tech_plus import TECH_OBJECTIVES
 
-EXAMS = {'A1': 'CompTIA A+ Core 1', 'A2': 'CompTIA A+ Core 2', 'N': 'CompTIA Network+'}
+EXAMS = {'A1': 'CompTIA A+ Core 1', 'A2': 'CompTIA A+ Core 2', 'N': 'CompTIA Network+', 'T': 'CompTIA Tech+'}
 BADGE_IDS = ('diagnosed_first', 'verified_before_submit', 'efficient')
 READY, DEVELOPING = 0.85, 0.6
 
@@ -17,8 +18,12 @@ def cert_readiness(states):
     for ex, name in EXAMS.items():
         doms = []
         for d, dname, weight in DOMAINS[ex]:
-            ps = [st['p'] for obj, st in states.items()
-                  for t in CURATED.get(obj, []) if t.startswith(f'{ex}:{d.split(".")[0]}.')]
+            if ex == 'T':
+                t_cobjs = {c for oid, m in TECH_OBJECTIVES.items() if m['domain'] == d for c in m['course_objs']}
+                ps = [st['p'] for obj, st in states.items() if obj in t_cobjs]
+            else:
+                ps = [st['p'] for obj, st in states.items()
+                      for t in CURATED.get(obj, []) if t.startswith(f'{ex}:{d.split(".")[0]}.')]
             if ps:
                 p = sum(ps) / len(ps)
                 doms.append({'domain': d, 'name': dname, 'weight': weight, 'p': round(p, 2), 'pct': round(100 * p), 'level': level(p),

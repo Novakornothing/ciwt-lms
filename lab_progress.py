@@ -799,7 +799,7 @@ def register(app, db, deps):
                 out[uid] = (None, 0, len(ids))
                 continue
             total = sum(max(r.best_score or 0, r.score or 0) for r in mine.values())
-            out[uid] = (round(total / len(ids), 1), len([r for r in mine.values() if r.completed_at]), len(ids))
+            out[uid] = (round(total / len(mine), 1), len([r for r in mine.values() if r.completed_at]), len(ids))
         return out
 
     def lab_signature(user_ids):

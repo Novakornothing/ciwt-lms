@@ -889,4 +889,196 @@ def ensure_rich_demo_telemetry(app):
                 ))
             db.session.commit()
 
+
+        # ------------------------------------------------------------------ 9. Deep-Dive Completeness (Student1 NETOPS Mastery, R1-R4 Profile, Sec 3/4 Tutor, 100% TQI Ready)
+        # 9a. Ensure Student1 has TestAttempts, QuizAttempts, LabProgress, and ExamSimAttempt in Section 2 (NETOPS)
+        if sec2:
+            s1_sec2_tests = KnowledgeTest.query.filter_by(course_id=sec2.course_id).order_by(KnowledgeTest.order).all()
+            for ti, test in enumerate(s1_sec2_tests):
+                if not TestAttempt.query.filter_by(user_id=s1.id, section_id=sec2.id, test_id=test.id).first():
+                    qs = json.loads(test.questions or '[]')
+                    comp_at = now - timedelta(hours=10 + ti * 4)
+                    if isinstance(qs, dict) and qs.get('kind') == 'practical':
+                        db.session.add(TestAttempt(
+                            user_id=s1.id, test_id=test.id, section_id=sec2.id,
+                            answers=json.dumps({'practical': True}), score=92.0, passed=True,
+                            started_at=comp_at - timedelta(minutes=35), completed_at=comp_at,
+                        ))
+                    elif isinstance(qs, list) and qs:
+                        ans = {}
+                        c_n = 0
+                        for qi, q in enumerate(qs):
+                            if not isinstance(q, dict):
+                                continue
+                            if qi % 12 != 0:
+                                ans[str(qi)] = q.get('correct')
+                                c_n += 1
+                            else:
+                                wrong = [o for o in (q.get('options') or []) if o != q.get('correct')]
+                                ans[str(qi)] = wrong[0] if wrong else q.get('correct')
+                        score = round(100.0 * c_n / len(qs), 1)
+                        db.session.add(TestAttempt(
+                            user_id=s1.id, test_id=test.id, section_id=sec2.id,
+                            answers=json.dumps(ans), score=score, passed=score >= 80,
+                            started_at=comp_at - timedelta(minutes=40), completed_at=comp_at,
+                        ))
+            s1_sec2_quizzes = (Quiz.query.join(Module, Module.id == Quiz.module_id)
+                               .filter(Module.course_id == sec2.course_id)
+                               .order_by(Module.order, Quiz.id).all())
+            for qi, qz in enumerate(s1_sec2_quizzes):
+                if not QuizAttempt.query.filter_by(user_id=s1.id, section_id=sec2.id, quiz_id=qz.id).first():
+                    q_items = json.loads(qz.questions or '[]')
+                    if not q_items:
+                        continue
+                    ans = {str(idx): it['correct'] for idx, it in enumerate(q_items)}
+                    db.session.add(QuizAttempt(
+                        user_id=s1.id, quiz_id=qz.id, section_id=sec2.id,
+                        answers=json.dumps(ans), score=100.0,
+                        completed_at=now - timedelta(hours=8 + qi * 3),
+                    ))
+            if es_api and not es_api.Attempt.query.filter_by(user_id=s1.id, section_id=sec2.id, exam='N').first():
+                from curriculum_v2.cert import exam_sim as ES
+                chosen = ES.build_form('N', 'full', rng=random.Random(f'{s1.id}:sec2:N:full'))
+                b_bank = ES.P.bank()
+                answers = {}
+                for i, (iid, _oid) in enumerate(chosen):
+                    it = b_bank.get(iid)
+                    if not it:
+                        continue
+                    if i % 11 != 0:
+                        answers[str(i)] = str(it['correct']) if it['type'] == 'single' else json.dumps([str(c) for c in it['correct']])
+                    else:
+                        wrong = [o for o in it['options'] if o != it['correct']] if it['type'] == 'single' else list(reversed(list(it['correct'])))
+                        answers[str(i)] = str(wrong[0] if wrong else it['correct']) if it['type'] == 'single' else json.dumps([str(c) for c in wrong])
+                correct_n = sum(1 for i, (iid, _o) in enumerate(chosen) if iid in b_bank and ES.P.grade(b_bank[iid], answers.get(str(i))))
+                earned, possible = ES.earned_and_possible(chosen, answers, b_bank)
+                score = ES.scaled(earned, possible)
+                by_dom = {}
+                for i, (iid, oid) in enumerate(chosen):
+                    it = b_bank.get(iid)
+                    if not it:
+                        continue
+                    dom = ES.OBJECTIVES[oid]['domain']
+                    d = by_dom.setdefault(dom, [0, 0])
+                    d[1] += 1
+                    if ES.P.grade(it, answers.get(str(i))):
+                        d[0] += 1
+                sub_at = now - timedelta(hours=12)
+                att = es_api.Attempt(
+                    user_id=s1.id, section_id=sec2.id, exam='N', mode='full',
+                    strict=True, items=json.dumps(chosen), answers=json.dumps(answers),
+                    flags=json.dumps([1]), started_at=sub_at - timedelta(minutes=50),
+                    deadline=sub_at + timedelta(minutes=40), submitted_at=sub_at,
+                    timed_out=False, score=score, correct=correct_n, total=len(chosen),
+                    badge='ready', domains=json.dumps(by_dom),
+                )
+                db.session.add(att)
+                db.session.flush()
+                g = es_api.Grade.query.filter_by(section_id=sec2.id, user_id=s1.id, exam='N').first()
+                if not g:
+                    g = es_api.Grade(section_id=sec2.id, user_id=s1.id, exam='N')
+                    db.session.add(g)
+                g.attempt_id, g.score, g.pct, g.status, g.synced_at = att.id, att.score, round(max(0, (att.score - 100)) / 8, 1), 'VOUCHER READY', sub_at
+            db.session.commit()
+            if gb_api and hasattr(gb_api, 'invalidate'):
+                gb_api.invalidate(sec2.id)
+
+        # 9b. Ensure Student1 has at least one R4 ('Trying it hands-on') resolved LadderState + LadderEvent in Sections 1, 2, and 5
+        for sec in (sec1, sec2, sec_client):
+            if not sec:
+                continue
+            code = sec.course.code if sec.course else 'ITSUP'
+            has_r4 = LadderState.query.filter_by(user_id=s1.id, section_id=sec.id, resolved='R4').first()
+            if not has_r4:
+                s1_rows = LadderState.query.filter_by(user_id=s1.id, section_id=sec.id).order_by(LadderState.id.desc()).all()
+                if s1_rows:
+                    r4_row = s1_rows[0]
+                    r4_row.current = 'R4'
+                    r4_row.resolved = 'R4'
+                    r4_row.tried_json = json.dumps(['R0', 'R1', 'R2', 'R3', 'R4'])
+                    t_at = now - timedelta(hours=5)
+                    for r_step in ('R1', 'R2', 'R3', 'R4'):
+                        db.session.add(LadderEvent(
+                            user_id=s1.id, section_id=sec.id, course=code, label=r4_row.label, sid=r4_row.sid,
+                            kind='request', rung=r_step, source='button', from_rung='R0',
+                            created_at=t_at - timedelta(minutes=4),
+                        ))
+                    db.session.add(LadderEvent(
+                        user_id=s1.id, section_id=sec.id, course=code, label=r4_row.label, sid=r4_row.sid,
+                        kind='resolved', rung='R4', created_at=t_at,
+                    ))
+        db.session.commit()
+
+        # 9c. Ensure Sections 3 and 4 also have TutorQuestion rows
+        if tutor_api and hasattr(tutor_api, 'TutorQuestion'):
+            TQ = tutor_api.TutorQuestion
+            extra_tutor = [
+                (sec3, 'ITSUP', 'How do I verify whether a display failure is the monitor cable vs the motherboard video output?',
+                 [{'type': 'lesson', 'label': '2.2', 'sid': 'display-and-video-troubleshooting'}, {'type': 'lab', 'lab_id': 'hw-pc-build'}]),
+                (sec3, 'ITSUP', 'Why should we test a backup restore to a scratch folder before relying on a nightly job?',
+                 [{'type': 'lesson', 'label': '12.3', 'sid': 'backup-and-restore-testing'}, {'type': 'lab', 'lab_id': 'linux-vm-restore'}]),
+                (sec4, 'NETOPS', 'When traceroute stops at the default gateway, how do I check the router interface and NAT masquerade rule?',
+                 [{'type': 'lesson', 'label': '3.2', 'sid': 'routing-and-nat'}, {'type': 'lab', 'lab_id': 'linux-vm-nat'}]),
+                (sec4, 'NETOPS', 'What is the difference between 802.1Q trunk native VLAN and allowed VLAN list on a switch uplink?',
+                 [{'type': 'lesson', 'label': '2.2', 'sid': 'trunks-and-802-1q'}, {'type': 'lab', 'lab_id': 'sw-vlan-and-trunk'}]),
+            ]
+            for idx_q, (sec_q, c_code, q_text, cites) in enumerate(extra_tutor):
+                if not sec_q or TQ.query.filter_by(section_id=sec_q.id, question=q_text).first():
+                    continue
+                sec_stu = (User.query.join(Enrollment, Enrollment.user_id == User.id)
+                           .filter(Enrollment.section_id == sec_q.id, User.role == 'student')
+                           .order_by(User.id).first()) or s1
+                db.session.add(TQ(
+                    user_id=sec_stu.id, section_id=sec_q.id, course=c_code, question=q_text,
+                    outcome='answered', cites_json=json.dumps(cites),
+                    created_at=now - timedelta(hours=3 + idx_q * 2),
+                ))
+            db.session.commit()
+
+        # 9d. Ensure ALL 5 sections meet 100% TQI Packet Ready criteria (>=60% EOC responses + critiques from all course instructors)
+        for sec in all_secs:
+            sec_students = (User.query.join(Enrollment, Enrollment.user_id == User.id)
+                            .filter(Enrollment.section_id == sec.id, User.role == 'student')
+                            .order_by(User.id).all())
+            need_eoc = max(1, int(round(len(sec_students) * 0.75)))
+            existing_eoc_uids = {r.user_id for r in TqiEocResponse.query.filter_by(section_id=sec.id).all()}
+            for i, stu in enumerate(sec_students):
+                if len(existing_eoc_uids) >= need_eoc:
+                    break
+                if stu.id in existing_eoc_uids:
+                    continue
+                answers = {k: 4 + ((i + n) % 2) if (i + n) % 5 != 0 else 3 for n, k in enumerate(keys)}
+                db.session.add(TqiEocResponse(
+                    section_id=sec.id, user_id=stu.id,
+                    answers_json=json.dumps(answers),
+                    comment=eoc_comments[i % len(eoc_comments)],
+                    created_at=now - timedelta(hours=6 + i),
+                    updated_at=now - timedelta(hours=6 + i),
+                ))
+                existing_eoc_uids.add(stu.id)
+
+            # Ensure every instructor associated with the section or course has a closeout/instruction critique
+            course_instr_ids = {sec.instructor_id} if sec.instructor_id else set()
+            for link in A.CourseInstructor.query.filter_by(course_id=sec.course_id).all():
+                course_instr_ids.add(link.user_id)
+            commented_instr_ids = {
+                r.user_id for r in TqiCritique.query.filter(
+                    TqiCritique.section_id == sec.id,
+                    TqiCritique.role.in_(['instructor', 'admin']),
+                ).all()
+            }
+            for iid in course_instr_ids - commented_instr_ids:
+                if not iid:
+                    continue
+                db.session.add(TqiCritique(
+                    section_id=sec.id, user_id=iid, role='instructor', kind='closeout', rating=5,
+                    body='Convening review complete: EOC survey benchmarks, item analysis, and lab process telemetry verified.',
+                    created_at=now - timedelta(hours=4),
+                ))
+            pkt = TqiPacket.query.filter_by(section_id=sec.id).first()
+            if pkt:
+                pkt.status = 'ready'
+                pkt.auto_ready_at = pkt.auto_ready_at or (now - timedelta(hours=3))
+        db.session.commit()
+
         return {'ok': True}
