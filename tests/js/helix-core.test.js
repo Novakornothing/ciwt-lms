@@ -126,3 +126,25 @@ test('batch queue: sequencing, retry with backoff, persistence', async () => {
   assert.strictEqual(q2.items.length, 1);
   assert.strictEqual(q2.push({}), 6);
 });
+
+test('OneEuro1D and velocity-adaptive GazeFilter snap to inter-tile jumps in <= 3 frames while smoothing fixation jitter', () => {
+  const euro = new H.OneEuro1D(1.15, 0.018, 1.0);
+  assert.ok(euro, 'OneEuro1D exported');
+  let t = 0;
+  for (let i = 0; i < 10; i++) { euro.step(300, t); t += 33; }
+  const step1 = euro.step(500, t);
+  assert.ok(step1 > 380, 'OneEuro1D responds rapidly to fast step: ' + step1);
+
+  // Mobile viewport scales maxJump proportionally (~126 px on 390x844) and defaults confirmN to 2
+  const fMobile = new H.GazeFilter({ bounds: { w: 390, h: 844 } });
+  assert.ok(fMobile.maxJump >= 105 && fMobile.maxJump <= 145, 'mobile maxJump=' + fMobile.maxJump);
+  assert.strictEqual(fMobile.confirmN, 2);
+
+  // Desktop viewport: inter-tile jump of 160 px reaches within 25 px of target in <= 3 frames
+  const f = new H.GazeFilter({ bounds: { w: 1280, h: 800 } });
+  for (let i = 0; i < 15; i++) f.push(400, 300, i * 33);
+  f.push(560, 300, 16 * 33);
+  const p2 = f.push(560, 300, 17 * 33);
+  const p3 = f.push(560, 300, 18 * 33);
+  assert.ok(Math.abs(p2.x - 560) < 30 || Math.abs(p3.x - 560) < 25, 'inter-tile jump reached target quickly: ' + p2.x + ', ' + p3.x);
+});

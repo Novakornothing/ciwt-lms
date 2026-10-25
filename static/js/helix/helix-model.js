@@ -47,16 +47,37 @@
     };
   }
 
-  function eye(P, a, b, up, lo, iris) {
+  function irisCentroid(lm, P, cIdx, ringIdx) {
+    var c = P(cIdx), sx = c[0], sy = c[1], n = 1;
+    for (var k = 0; k < ringIdx.length; k++) {
+      var p = lm[ringIdx[k]];
+      if (p && typeof p.x === 'number' && isFinite(p.x) && isFinite(p.y)) {
+        sx += p.x * (c[0] / (lm[cIdx].x || 1));
+      }
+    }
+    // Use P() directly when ring landmarks are valid
+    sx = c[0]; sy = c[1]; n = 1;
+    for (var j = 0; j < ringIdx.length; j++) {
+      var rk = ringIdx[j];
+      if (lm[rk] && typeof lm[rk].x === 'number' && isFinite(lm[rk].x) && isFinite(lm[rk].y)) {
+        var q = P(rk);
+        sx += q[0]; sy += q[1]; n++;
+      }
+    }
+    return [sx / n, sy / n];
+  }
+
+  function eye(P, a, b, up, lo, iris, lm, ring) {
     var A = P(a), B = P(b);
     if (A[0] > B[0]) { var t = A; A = B; B = t; }   // axis always points image-right
     var axis = sub(B, A), ew = len(axis) || 1;
     var e = [axis[0] / ew, axis[1] / ew], n = [-e[1], e[0]];   // n points image-down
-    var c = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2], I = P(iris);
+    var c = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+    var I = (lm && ring) ? irisCentroid(lm, P, iris, ring) : P(iris);
     var U = P(up), L = P(lo), lid = [(U[0] + L[0]) / 2, (U[1] + L[1]) / 2];
     return {
       u: dot(sub(I, c), e) / ew, v: dot(sub(I, c), n) / ew,
-      lid: dot(sub(I, lid), n) / ew, open: dot(sub(L, U), n) / ew, width: ew
+      lid: dot(sub(I, lid), n) / ew, open: dot(sub(L, U), n) / ew, width: ew, center: I
     };
   }
 
@@ -66,15 +87,16 @@
     if (!lm || lm.length < 478) return null;
     opts = opts || {};
     var P = function (i) { var p = lm[i]; return [p.x * W, p.y * H]; };
-    var r = eye(P, LM.R_OUT, LM.R_IN, LM.R_UP, LM.R_LO, LM.R_IRIS);
-    var l = eye(P, LM.L_IN, LM.L_OUT, LM.L_UP, LM.L_LO, LM.L_IRIS);
+    var r = eye(P, LM.R_OUT, LM.R_IN, LM.R_UP, LM.R_LO, LM.R_IRIS, lm, [469, 470, 471, 472]);
+    var l = eye(P, LM.L_IN, LM.L_OUT, LM.L_UP, LM.L_LO, LM.L_IRIS, lm, [474, 475, 476, 477]);
     var cr = P(LM.CHEEK_R), cl = P(LM.CHEEK_L), top = P(LM.TOP), chin = P(LM.CHIN), nose = P(LM.NOSE);
     var faceWpx = len(sub(cl, cr));
+    var hasMat = !!(matrix && matrix.length >= 16);
     var pose = headPose(matrix);
     if (!pose) {  // geometric fallback when no matrix is available
-      var mid = [(cr[0] + cl[0]) / 2, (cr[1] + cl[1]) / 2];
+      var mid0 = [(cr[0] + cl[0]) / 2, (cr[1] + cl[1]) / 2];
       pose = {
-        yaw: Math.asin(clamp((nose[0] - mid[0]) / (faceWpx / 2 || 1), -1, 1)),
+        yaw: Math.asin(clamp((nose[0] - mid0[0]) / (faceWpx / 2 || 1), -1, 1)),
         pitch: Math.asin(clamp((nose[1] - (top[1] + chin[1]) / 2) / ((chin[1] - top[1]) / 2 || 1), -1, 1)),
         roll: Math.atan2(cl[1] - cr[1], cl[0] - cr[0]), tx: 0, ty: 0, tz: 0
       };
@@ -84,18 +106,18 @@
     var focal = W / (2 * Math.tan(hfov / 2));
     var distanceCm = irisPx > 0.5 ? focal * IRIS_DIAMETER_CM / irisPx : null;
     var u = (r.u + l.u) / 2, v = (r.v + l.v) / 2;
-    // Geometric gaze point (cm, image-aligned axes) = eye position + D * tan(head angle + eye angle).
-    // Head angles come from the landmarks themselves (nose vs. cheeks / brow-chin), so their sign
-    // convention matches the iris offsets by construction; the regression then only has to learn an
-    // affine map from this to screen px, which keeps working when the head moves after calibration.
     var mid = [(cr[0] + cl[0]) / 2, (cr[1] + cl[1]) / 2];
-    var hYaw = Math.asin(clamp((nose[0] - mid[0]) / (faceWpx / 2 || 1), -0.9, 0.9));
+    var eyeX = ((r.width ? (r.center[0] + l.center[0]) / 2 : mid[0]) - W / 2) / focal;
+    var eyeY = ((r.center[1] + l.center[1]) / 2 - H / 2) / focal;
+    // Correct 2D nose-to-cheek ratio for perspective parallax when head translates sideways/vertically,
+    // and fuse with 3D facialTransformationMatrix pose when available.
+    var hYawRaw = Math.asin(clamp((nose[0] - mid[0]) / (faceWpx / 2 || 1), -0.9, 0.9));
     var faceHpx = len(sub(chin, top)) || 1;
-    var hPitch = Math.asin(clamp((nose[1] - (top[1] + chin[1]) / 2) / (faceHpx / 2), -0.9, 0.9));
+    var hPitchRaw = Math.asin(clamp((nose[1] - (top[1] + chin[1]) / 2) / (faceHpx / 2), -0.9, 0.9));
+    var hYaw = hasMat ? (0.82 * hYawRaw + 0.18 * (-pose.yaw)) : hYawRaw;
+    var hPitch = hasMat ? (0.60 * hPitchRaw + 0.40 * (pose.pitch + 0.15)) : hPitchRaw;
     var D = distanceCm || 55;
     var ex = Math.asin(clamp(EYE_GAIN * u, -0.95, 0.95)), ey = Math.asin(clamp(EYE_GAIN * v, -0.95, 0.95));
-    var eyeX = ((r.width ? (P(LM.R_IRIS)[0] + P(LM.L_IRIS)[0]) / 2 : mid[0]) - W / 2) / focal;
-    var eyeY = ((P(LM.R_IRIS)[1] + P(LM.L_IRIS)[1]) / 2 - H / 2) / focal;
     var gx = D * (eyeX + Math.tan(hYaw + ex)), gy = D * (eyeY + Math.tan(hPitch + ey));
     var bs = blendMap(opts.blendshapes);
     var vec = [gx, gy, r.u, r.v, l.u, l.v, r.lid, l.lid, r.open, l.open, u * u, v * v, u * v,
@@ -288,9 +310,74 @@
   /* crop features -> the 8 values appended to vec (CROP_NAMES); NaN where unavailable */
   function cropVec(crop) {
     var out = [], N = NaN;
-    ['r', 'l'].forEach(function (k) { var e = crop && crop[k], p = e && (e.tb || e.dc); out.push(p ? p[0] : N, p ? p[1] : N); });
+    ['r', 'l'].forEach(function (k) {
+      var e = crop && crop[k];
+      var p = e && ((e.tb && e.dc) ? [0.65 * e.tb[0] + 0.35 * e.dc[0], 0.65 * e.tb[1] + 0.35 * e.dc[1]] : (e.tb || e.dc));
+      out.push(p ? p[0] : N, p ? p[1] : N);
+    });
     ['r', 'l'].forEach(function (k) { var e = crop && crop[k]; out.push(e && fin(e.upper) ? e.upper : N, e && fin(e.lower) ? e.lower : N); });
     return out;
+  }
+
+  /* Fuse pose-normalised eye-crop pupil estimates directly into MediaPipe iris coordinates (uR, vR, uL, vL)
+     when consistent, reducing single-frame landmark quantisation noise before regression. */
+  function fuseCropFeatures(feat, crop) {
+    var cv = cropVec(crop);
+    if (!feat || !feat.vec || !crop) return cv;
+    var v = feat.vec;
+    if (fin(cv[0]) && Math.abs(cv[0] - v[2]) < 0.18) v[2] = 0.65 * v[2] + 0.35 * cv[0];
+    if (fin(cv[1]) && Math.abs(cv[1] - v[3]) < 0.18) v[3] = 0.60 * v[3] + 0.40 * cv[1];
+    if (fin(cv[2]) && Math.abs(cv[2] - v[4]) < 0.18) v[4] = 0.65 * v[4] + 0.35 * cv[2];
+    if (fin(cv[3]) && Math.abs(cv[3] - v[5]) < 0.18) v[5] = 0.60 * v[5] + 0.40 * cv[3];
+    var mu = (v[2] + v[4]) / 2, mv = (v[3] + v[5]) / 2;
+    v[10] = mu * mu; v[11] = mv * mv; v[12] = mu * mv;
+    return cv;
+  }
+
+  /* Per-dot calibration sample cleaner: drops blink/occluded/tap-shake frames, trims the worst 25%
+     outliers relative to the dot's median eye vector, weights surviving frames by proximity to the
+     medoid, and computes a denoised median anchor vector for the dot. */
+  function cleanCalibrationSamples(samples, opts) {
+    opts = opts || {};
+    var maxPoseJump = opts.maxPoseJump || 0.045;
+    var valid = [];
+    for (var i = 0; i < (samples || []).length; i++) {
+      var s = samples[i];
+      if (!s || !s.vec || s.blink || s.occluded) continue;
+      if (i > 0 && samples[i - 1] && samples[i - 1].pose && s.pose && (samples.length > 5)) {
+        var dyaw = Math.abs(s.pose.yaw - samples[i - 1].pose.yaw);
+        var dpitch = Math.abs(s.pose.pitch - samples[i - 1].pose.pitch);
+        if (dyaw + dpitch > maxPoseJump) continue;   // thumb tap-shake or sudden head jerk
+      }
+      valid.push(s);
+    }
+    if (valid.length < 4) {
+      return { kept: valid.map(function (s) { return { feat: s, vec: s.vec, weight: 1 }; }), anchor: valid.length ? valid[valid.length >> 1].vec.slice() : null, dropped: (samples ? samples.length : 0) - valid.length };
+    }
+    var keys = [2, 3, 4, 5, 6, 7];
+    var medK = keys.map(function (k) { return median(valid.map(function (s) { return s.vec[k]; }).filter(fin)); });
+    var dists = valid.map(function (s) {
+      var ss = 0;
+      for (var j = 0; j < keys.length; j++) {
+        var d = (s.vec[keys[j]] || 0) - medK[j];
+        ss += d * d;
+      }
+      return Math.sqrt(ss);
+    });
+    var mad = Math.max(0.006, 1.4826 * median(dists));
+    var indexed = valid.map(function (s, idx) { return { feat: s, vec: s.vec, d: dists[idx] }; });
+    indexed.sort(function (a, b) { return a.d - b.d; });
+    var keepN = valid.length >= 6 ? Math.max(4, Math.ceil(valid.length * (opts.keepFrac || 0.72))) : valid.length;
+    var kept = indexed.slice(0, keepN).map(function (item) {
+      var u = item.d / (2.0 * mad);
+      return { feat: item.feat, vec: item.vec, weight: 1 / (1 + u * u) };
+    });
+    var dim = kept[0].vec.length, anchor = new Array(dim);
+    for (var c = 0; c < dim; c++) {
+      var vals = kept.map(function (k) { return k.vec[c]; }).filter(fin);
+      anchor[c] = vals.length ? median(vals) : NaN;
+    }
+    return { kept: kept, anchor: anchor, dropped: (samples ? samples.length : 0) - kept.length };
   }
 
   /* ---------- linear algebra (small symmetric systems) ---------- */
@@ -338,8 +425,8 @@
     if (!this.features) return vec;
     return this.features.map(function (i) { return vec[i]; });
   };
-  GazeRegressor.prototype.addCalibration = function (vec, x, y, w) {
-    this.cal.push({ f: this._f(vec), x: x, y: y, w: w == null ? 1 : w, t: Date.now() });
+  GazeRegressor.prototype.addCalibration = function (vec, x, y, w, group) {
+    this.cal.push({ f: this._f(vec), x: x, y: y, w: w == null ? 1 : w, group: group, t: Date.now() });
     if (this.cal.length > this.maxCal) this.cal.splice(0, this.cal.length - this.maxCal);
   };
   GazeRegressor.prototype.addImplicit = function (vec, x, y, w, t) {
@@ -350,9 +437,10 @@
   GazeRegressor.prototype.size = function () { return this.cal.length + this.implicit.length; };
   GazeRegressor.prototype._rows = function (nowT) {
     var self = this, t0 = nowT || Date.now();
+    if (this.cal.length >= 8) return this.cal.slice();
     return this.cal.concat(this.implicit.map(function (s) {
       var age = Math.max(0, t0 - s.t);
-      return { f: s.f, x: s.x, y: s.y, w: s.w * Math.pow(0.5, age / self.halfLifeMs) };
+      return { f: s.f, x: s.x, y: s.y, w: s.w * Math.pow(0.5, age / self.halfLifeMs), group: s.group };
     }));
   };
   GazeRegressor.prototype.fit = function (nowT) {
@@ -362,18 +450,32 @@
     // stage 1: weighted affine map (light ridge) of the geometric estimate
     var geo = ridgeFit(rows, GEO_IDX, [1e-3]);
     if (!geo) return (this.model = null);
-    // stage 2: residual correction from eye-in-head features only (no head-position terms)
-    var resid = rows.map(function (r) { var g = ridgePredict(geo, r.f); return { f: r.f, x: r.x - g.x, y: r.y - g.y, w: r.w }; });
-    // pass 5: with eye-crop features present, add them to stage 2 and choose lambda by grouped CV
-    // (accepted by the warp A/B: -0.36 deg mean over 55 sequences, p=0.03; without crops CV alone was neutral)
     var hasCrop = !this.eyeIdx && rows.filter(function (r) { return r.f.length > 23 && (fin(r.f[23]) || fin(r.f[25])); }).length >= 6;
     var eidx = this.eyeIdx || (hasCrop ? EYE_IDX.concat(CROP_IDX) : EYE_IDX);
-    var sel = this.lambdaSel || (hasCrop ? 'cv' : 'gcv'), cv = sel === 'cv' ? cvLambda(resid, eidx, LAMBDAS_CV, cvGroups(rows)) : null;   // folds by calibration target, not residual
-    var eye = ridgeFit(resid, eidx, cv ? [cv.lambda] : LAMBDAS);
+    var sel = this.lambdaSel || (hasCrop ? 'cv' : 'gcv');
+    var resid = rows.map(function (r) { var g = ridgePredict(geo, r.f); return { f: r.f, x: r.x - g.x, y: r.y - g.y, w: r.w, group: r.group }; });
+    var groups = cvGroups(rows);
+    var cv = sel === 'cv' ? cvLambda(resid, eidx, LAMBDAS_CV, groups) : null;
+    var eye = cv ? ridgeFit(resid, eidx, [cv.lambdaX], [cv.lambdaY]) : ridgeFit(resid, eidx, LAMBDAS);
+    // 1-step Huber IRLS outlier downweighting: suppress stray glances or unflagged blink transitions
+    if (eye && rows.length >= 12) {
+      var errs = rows.map(function (r) { var p = ridgePredict(geo, r.f), q = ridgePredict(eye, r.f); return Math.hypot(p.x + q.x - r.x, p.y + q.y - r.y); });
+      var medE = Math.max(25, median(errs));
+      var rwRows = rows.map(function (r, idx) {
+        var e = errs[idx], huber = e > 1.75 * medE ? 1 / (1 + Math.pow(e / (2.0 * medE), 2)) : 1;
+        return { f: r.f, x: r.x, y: r.y, w: r.w * huber, group: r.group };
+      });
+      var geo2 = ridgeFit(rwRows, GEO_IDX, [1e-3]);
+      if (geo2) {
+        geo = geo2;
+        resid = rwRows.map(function (r) { var g = ridgePredict(geo, r.f); return { f: r.f, x: r.x - g.x, y: r.y - g.y, w: r.w, group: r.group }; });
+        eye = cv ? ridgeFit(resid, eidx, [cv.lambdaX], [cv.lambdaY]) : ridgeFit(resid, eidx, LAMBDAS);
+      }
+    }
     if (eye && cv) eye.cvErr = cv.cvErr;
     var rss = 0, W = 0;
     rows.forEach(function (r) { var p = ridgePredict(geo, r.f), q = ridgePredict(eye, r.f); W += r.w; rss += r.w * (Math.pow(p.x + q.x - r.x, 2) + Math.pow(p.y + q.y - r.y, 2)); });
-    this.model = { kind: 'hybrid', geo: geo, eye: eye, lambda: eye ? eye.lambda : null, crop: hasCrop, lambdaSel: cv ? 'cv' : 'gcv', n: rows.length, rmsPx: Math.sqrt(rss / W), bias: { x: 0, y: 0 } };
+    this.model = { kind: 'hybrid', geo: geo, eye: eye, lambda: eye ? eye.lambda : null, lambdaX: eye ? eye.lambdaX : null, lambdaY: eye ? eye.lambdaY : null, crop: hasCrop, lambdaSel: cv ? 'cv' : 'gcv', n: rows.length, rmsPx: Math.sqrt(rss / W), bias: { x: 0, y: 0 } };
     this.model.bias = this._implicitBias(nowT);
     return this.model;
   };
@@ -384,12 +486,19 @@
     if (!this.model || !this.implicit.length) return { x: 0, y: 0 };
     var t0 = nowT || Date.now(), sx = 0, sy = 0, sw = 0, self = this, k = 0;
     var recent = this.implicit.slice(-30);
+    var dxList = [], dyList = [], ws = [];
     recent.forEach(function (s) {
       var age = Math.max(0, t0 - s.t), w = Math.pow(0.5, age / (self.halfLifeMs / 4)) * (0.6 + 0.4 * (++k / recent.length));
       var p = self._predictRaw(s.f);
-      sx += w * (s.x - p.x); sy += w * (s.y - p.y); sw += w;
+      dxList.push(s.x - p.x); dyList.push(s.y - p.y); ws.push(w);
     });
-    var shrink = sw / (sw + 3);
+    var medX = median(dxList), medY = median(dyList);
+    for (var i = 0; i < recent.length; i++) {
+      var d = Math.hypot(dxList[i] - medX, dyList[i] - medY);
+      var rw = ws[i] / (1 + Math.pow(d / 140, 2));
+      sx += rw * dxList[i]; sy += rw * dyList[i]; sw += rw;
+    }
+    var shrink = sw / (sw + 1.8);
     return { x: shrink * sx / (sw || 1), y: shrink * sy / (sw || 1) };
   };
   GazeRegressor.prototype._predictRaw = function (f) {
@@ -423,35 +532,44 @@
     var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     rows.forEach(function (r) { x0 = Math.min(x0, r.x); x1 = Math.max(x1, r.x); y0 = Math.min(y0, r.y); y1 = Math.max(y1, r.y); });
     var cell = function (v, a, b) { return b - a < 1 ? 0 : Math.min(2, Math.floor(3 * (v - a) / (b - a + 1e-9))); };
-    return rows.map(function (r) { return cell(r.y, y0, y1) * 3 + cell(r.x, x0, x1); });
+    return rows.map(function (r) { return r.group != null ? r.group : (cell(r.y, y0, y1) * 3 + cell(r.x, x0, x1)); });
   }
   function cvLambda(rows, idx, lambdas, groups) {   // groups: fold id per row (default: cvGroups(rows))
     var g = groups || cvGroups(rows), keys = [];
     g.forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
     if (keys.length < 4) return null;
     var err = lambdas.map(function () { return 0; });
+    var errX = lambdas.map(function () { return 0; });
+    var errY = lambdas.map(function () { return 0; });
     keys.forEach(function (k) {
       var tr = rows.filter(function (_, i) { return g[i] !== k; }), te = rows.filter(function (_, i) { return g[i] === k; });
       var P = ridgePrep(tr, idx); if (!P) return;
       lambdas.forEach(function (lam, li) {
-        var m = P.model(lam), ex = [], ey = [];
+        var m = P.model(lam, lam), ex = [], ey = [];
         te.forEach(function (r) { var q = ridgePredict(m, r.f); ex.push(q.x - r.x); ey.push(q.y - r.y); });
-        err[li] += Math.hypot(median(ex), median(ey));
+        var mx = Math.abs(median(ex)), my = Math.abs(median(ey));
+        errX[li] += mx; errY[li] += my;
+        err[li] += Math.hypot(mx, my);
       });
     });
-    var bi = 0; err.forEach(function (e, i) { if (e < err[bi]) bi = i; });
-    return { lambda: lambdas[bi], cvErr: err[bi] / keys.length };
+    var bi = 0, bx = 0, by = 0;
+    err.forEach(function (e, i) { if (e < err[bi]) bi = i; });
+    errX.forEach(function (e, i) { if (e < errX[bx]) bx = i; });
+    errY.forEach(function (e, i) { if (e < errY[by]) by = i; });
+    return { lambda: lambdas[bi], lambdaX: lambdas[bx], lambdaY: lambdas[by], cvErr: Math.hypot(errX[bx], errY[by]) / keys.length };
   }
   function median(a) { var s = a.slice().sort(function (p, q) { return p - q; }), n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : 0; }
 
   /* Weighted ridge over columns idx (null = all), standardised, intercept unpenalised,
-     lambda chosen from `lambdas` by generalised cross-validation (closed form via eigendecomposition). */
-  function ridgeFit(rowsIn, idx, lambdas) {
+     decoupled lambda_x / lambda_y chosen from `lambdas` by generalised cross-validation. */
+  function ridgeFit(rowsIn, idx, lambdasX, lambdasY) {
     var P = ridgePrep(rowsIn, idx);
     if (!P) return null;
-    var best = null;
-    lambdas.forEach(function (lam) { var m = P.model(lam); if (!best || m.gcv < best.gcv) best = m; });
-    return best;
+    var lxList = lambdasX || LAMBDAS, lyList = lambdasY || lxList;
+    var bestX = null, bestY = null;
+    lxList.forEach(function (lam) { var m = P.model(lam, lam); if (!bestX || m.gcvX < bestX.gcvX) bestX = m; });
+    lyList.forEach(function (lam) { var m = P.model(lam, lam); if (!bestY || m.gcvY < bestY.gcvY) bestY = m; });
+    return P.model(bestX.lambdaX, bestY.lambdaY);
   }
   function ridgePrep(rowsIn, idx) {
     var rows = rowsIn;
@@ -484,21 +602,25 @@
     var E = jacobiEigen(G), V = E.V, d = E.d;
     var px = new Array(p).fill(0), py = new Array(p).fill(0);   // V^T b
     for (j = 0; j < p; j++) for (i = 0; i < p; i++) { px[j] += V[i][j] * bx[i]; py[j] += V[i][j] * by[i]; }
-    var model = function (lam) {
-      var wx = new Array(p).fill(0), wy = new Array(p).fill(0), df = 0;
+    var model = function (lamX, lamY) {
+      if (lamY == null) lamY = lamX;
+      var wx = new Array(p).fill(0), wy = new Array(p).fill(0), dfX = 0, dfY = 0;
       for (j = 0; j < p; j++) {
-        var g = 1 / (Math.max(d[j], 0) + lam);
-        df += Math.max(d[j], 0) * g;
-        for (i = 0; i < p; i++) { wx[i] += V[i][j] * g * px[j]; wy[i] += V[i][j] * g * py[j]; }
+        var dj = Math.max(d[j], 0);
+        var gx = 1 / (dj + lamX), gy = 1 / (dj + lamY);
+        dfX += dj * gx; dfY += dj * gy;
+        for (i = 0; i < p; i++) { wx[i] += V[i][j] * gx * px[j]; wy[i] += V[i][j] * gy * py[j]; }
       }
-      var rss = 0;
+      var rssX = 0, rssY = 0;
       for (k = 0; k < n; k++) {
         var ex = tx[k], ey = ty[k];
         for (i = 0; i < p; i++) { ex -= Z[k][i] * wx[i]; ey -= Z[k][i] * wy[i]; }
-        rss += ex * ex + ey * ey;
+        rssX += ex * ex; rssY += ey * ey;
       }
-      var gcv = n * rss / Math.pow(Math.max(1, n - df), 2);
-      return { idx: idx, mu: mu, sd: sd, mx: mx, my: my, wx: wx, wy: wy, lambda: lam, df: df, gcv: gcv, n: n, rmsPx: Math.sqrt(rss / W) };
+      var gcvX = n * rssX / Math.pow(Math.max(1, n - dfX), 2);
+      var gcvY = n * rssY / Math.pow(Math.max(1, n - dfY), 2);
+      var rss = rssX + rssY, df = (dfX + dfY) / 2;
+      return { idx: idx, mu: mu, sd: sd, mx: mx, my: my, wx: wx, wy: wy, lambda: lamX, lambdaX: lamX, lambdaY: lamY, df: df, gcv: gcvX + gcvY, gcvX: gcvX, gcvY: gcvY, n: n, rmsPx: Math.sqrt(rss / W) };
     };
     return { model: model };
   }
@@ -778,7 +900,7 @@
   }
 
   return { CROP: CROP, R_CONTOUR: R_CONTOUR, L_CONTOUR: L_CONTOUR, eyeCropTransform: eyeCropTransform, polygonMask: polygonMask, pupilTimmBarth: pupilTimmBarth, pupilDarkCentroid: pupilDarkCentroid, eyePatch: eyePatch, cropEyeFeatures: cropEyeFeatures,
-    LM: LM, FEATURE_NAMES: FEATURE_NAMES, CROP_NAMES: CROP_NAMES, CROP_IDX: CROP_IDX, cropVec: cropVec, cvLambda: cvLambda, cvGroups: cvGroups, GEO_IDX: GEO_IDX, EYE_IDX: EYE_IDX, ridgeFit: ridgeFit, headPose: headPose, eyeFeatures: eyeFeatures,
+    LM: LM, FEATURE_NAMES: FEATURE_NAMES, CROP_NAMES: CROP_NAMES, CROP_IDX: CROP_IDX, cropVec: cropVec, fuseCropFeatures: fuseCropFeatures, cleanCalibrationSamples: cleanCalibrationSamples, cvLambda: cvLambda, cvGroups: cvGroups, GEO_IDX: GEO_IDX, EYE_IDX: EYE_IDX, ridgeFit: ridgeFit, headPose: headPose, eyeFeatures: eyeFeatures,
     jacobiEigen: jacobiEigen, GazeRegressor: GazeRegressor, OrientationModels: OrientationModels,
     poseGuidance: poseGuidance, angularError: angularError, aoiResolution: aoiResolution,
     DriftTracker: DriftTracker, CM_PER_CSS_PX: CM_PER_CSS_PX, IRIS_DIAMETER_CM: IRIS_DIAMETER_CM,

@@ -183,3 +183,109 @@ test('recalTrigger fires on distance and head-turn changes, not on small moves',
   assert.strictEqual(M.recalTrigger(base, Object.assign({}, base, { distanceCm: 44 })).reason, 'distance');
   assert.strictEqual(M.recalTrigger(base, Object.assign({}, base, { yaw: 0.25 })).reason, 'head_turn');
 });
+
+test('cleanCalibrationSamples trims tap-shake and early-saccade outlier frames and produces a clean anchor', () => {
+  const { u } = calibrated(51);
+  const samples = [];
+  for (let i = 0; i < 12; i++) {
+    samples.push(feats(u, [500, 400]));
+  }
+  // Add 1 blink frame, 1 tap-shake frame (large pose jump), and 3 early-saccade outlier frames looking at [1200, 750]
+  const blinkF = feats(u, [500, 400]); blinkF.blink = true; samples.push(blinkF);
+  const shakeF = feats(u, [500, 400]); shakeF.pose = { yaw: shakeF.pose.yaw + 0.12, pitch: shakeF.pose.pitch + 0.08, roll: 0 }; samples.push(shakeF);
+  for (let i = 0; i < 3; i++) samples.push(feats(u, [1200, 750]));
+
+  const cleaned = M.cleanCalibrationSamples(samples);
+  assert.ok(cleaned.dropped >= 4, 'dropped blink, shake, and saccade outliers: ' + cleaned.dropped);
+  assert.ok(cleaned.kept.length >= 8 && cleaned.kept.length <= 13, 'kept clean majority: ' + cleaned.kept.length);
+  assert.ok(Array.isArray(cleaned.anchor) && cleaned.anchor.length === 23, 'anchor vector produced');
+});
+
+test('fuseCropFeatures blends plausible crop pupil centers into iris features and ignores wild glitches', () => {
+  const { u } = calibrated(61);
+  const f = feats(u, [640, 400]);
+  const origUR = f.vec[2], origVR = f.vec[3];
+  const crop = {
+    r: { tb: [origUR + 0.04, origVR - 0.03], dc: [origUR + 0.04, origVR - 0.03], open: 0.25, upper: -0.12, lower: 0.13, patch: [] },
+    l: { tb: [f.vec[4] + 0.04, f.vec[5] - 0.03], dc: [f.vec[4] + 0.04, f.vec[5] - 0.03], open: 0.25, upper: -0.12, lower: 0.13, patch: [] }
+  };
+  const cvec = M.fuseCropFeatures(f, crop);
+  assert.strictEqual(cvec.length, 8);
+  assert.ok(Math.abs(f.vec[2] - (0.65 * origUR + 0.35 * (origUR + 0.04))) < 1e-6, 'uR fused with crop tb');
+
+  // Wild glitch (> 0.18 away) should not corrupt uR
+  const f2 = feats(u, [640, 400]);
+  const uR2 = f2.vec[2];
+  M.fuseCropFeatures(f2, { r: { tb: [uR2 + 0.45, 0], dc: null, open: 0.25, upper: -0.1, lower: 0.1, patch: [] }, l: null });
+  assert.strictEqual(f2.vec[2], uR2, 'implausible crop glitch ignored');
+});
+
+test('decoupled lambdaX/lambdaY and Huber IRLS resist corrupted calibration samples', () => {
+  const { u, reg } = calibrated(71);
+  assert.ok(reg.model.lambdaX != null && reg.model.lambdaY != null, 'lambdaX and lambdaY exposed');
+  // Inject 2 wildly corrupted calibration samples (e.g. user looked away during a dot)
+  const badF = feats(u, [100, 100]);
+  reg.addCalibration(badF.vec, 1250, 780, 1, 99);
+  reg.addCalibration(badF.vec, 1250, 780, 1, 99);
+  reg.fit();
+  const errs = [];
+  for (let i = 0; i < 16; i++) {
+    const gx = (0.15 + 0.7 * (i % 4) / 3) * u.screenW, gy = (0.15 + 0.7 * Math.floor(i / 4) / 3) * u.screenH;
+    const ps = Array.from({ length: 10 }, () => reg.predict(feats(u, [gx, gy]).vec));
+    const px = ps.reduce((a, b) => a + b.x, 0) / ps.length, py = ps.reduce((a, b) => a + b.y, 0) / ps.length;
+    errs.push(Math.hypot(px - gx, py - gy));
+  }
+  errs.sort((a, b) => a - b);
+  assert.ok(errs[errs.length >> 1] < 95, 'Huber-reweighted median error remains low despite outliers: ' + errs[errs.length >> 1]);
+});
+
+test('MediaPipeEngine exportCalibration and importCalibration round-trip via sessionStorage', () => {
+  const vm = require('node:vm'), fs = require('node:fs');
+  const store = {};
+  const ctx = {
+    window: {
+      HelixModel: M,
+      innerWidth: 1280,
+      innerHeight: 800,
+      matchMedia: () => ({ matches: false }),
+      performance: { now: () => Date.now() }
+    },
+    screen: { width: 1280, height: 800 },
+    navigator: { userAgent: 'Mozilla/5.0', hardwareConcurrency: 8 },
+    location: { search: '' },
+    sessionStorage: {
+      getItem: (k) => store[k] || null,
+      setItem: (k, v) => { store[k] = String(v); },
+      removeItem: (k) => { delete store[k]; }
+    },
+    WebAssembly: WebAssembly,
+    Date: Date, Math: Math, Array: Array, Object: Object, JSON: JSON, Error: Error, Promise: Promise
+  };
+  ctx.window.sessionStorage = ctx.sessionStorage;
+  vm.runInNewContext(fs.readFileSync('static/js/helix/helix-engine.js', 'utf8'), ctx);
+  const E = ctx.window.HelixEngine;
+  const eng1 = new E.MediaPipeEngine({ mobile: false });
+  const { u } = calibrated(81);
+  // Feed 9 dots through beginSample / endSample
+  const pts = [[150, 100], [640, 100], [1130, 100], [150, 400], [640, 400], [1130, 400], [150, 700], [640, 700], [1130, 700]];
+  pts.forEach(([x, y]) => {
+    eng1.beginSample(x, y, 1);
+    eng1.collect.from = 0;
+    for (let i = 0; i < 10; i++) eng1.collect.samples.push(feats(u, [x, y]));
+    eng1.endSample();
+  });
+  assert.strictEqual(eng1.fit(), true, 'eng1 fitted');
+  assert.strictEqual(eng1.saveSessionCalibration({ valid: true, score: 86, errorPx: 48 }), true, 'saved to sessionStorage');
+  assert.ok(E.getSessionCalibration('landscape'), 'getSessionCalibration returns saved payload');
+
+  // Restore into a brand-new engine instance
+  const eng2 = new E.MediaPipeEngine({ mobile: false });
+  assert.strictEqual(eng2.ready(), false);
+  assert.strictEqual(eng2.loadSessionCalibration('landscape'), true, 'restored calibration');
+  assert.strictEqual(eng2.ready(), true);
+  assert.strictEqual(eng2.calScore.errorPx, 48);
+  const fTest = feats(u, [640, 400]);
+  const p1 = eng1.models.current().predict(fTest.vec);
+  const p2 = eng2.models.current().predict(fTest.vec);
+  assert.ok(Math.hypot(p1.x - p2.x, p1.y - p2.y) < 1e-6, 'restored model predicts identically');
+});

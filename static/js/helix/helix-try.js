@@ -25,7 +25,7 @@
       ['Inference', s.inferMs != null ? s.inferMs + ' ms/frame' : '—'], ['Face found', Math.round((s.faceRate || 0) * 100) + '% of frames'],
       ['Distance', s.distanceCm ? '~' + s.distanceCm + ' cm' : '—'], ['Head yaw / pitch', s.yawDeg != null ? s.yawDeg + '° / ' + s.pitchDeg + '°' : '—'],
       ['Training samples', (s.samples || 0) + ' calibration' + (s.implicit != null ? ' + ' + s.implicit + ' implicit' : '')],
-      ['Model', s.lambda != null ? 'ridge λ=' + s.lambda + (s.lambdaSel === 'cv' ? ' (grouped CV)' : ' (GCV)') + (s.modelCrop ? ' + eye-crop features' : '') + ', fit RMS ' + s.fitRmsPx + ' px' : '—'], ['Orientation', s.orientation || '—'],
+      ['Model', s.lambda != null ? 'ridge ' + (s.lambdaX != null && s.lambdaY != null && s.lambdaX !== s.lambdaY ? 'λx=' + s.lambdaX + ' λy=' + s.lambdaY : 'λ=' + s.lambda) + (s.lambdaSel === 'cv' ? ' (grouped CV)' : ' (GCV)') + (s.modelCrop ? ' + eye-crop features' : '') + ', fit RMS ' + s.fitRmsPx + ' px' : '—'], ['Orientation', s.orientation || '—'],
       ['Camera', s.resolution || '—'], ['Eye-crop stage', s.crop || '—'],
       ['Implicit error (median)', drift.median() != null ? Math.round(drift.median()) + ' px' : '—'],
       ['Gaze estimates', T.preds + ' (' + (T.lastPred ? Math.round(T.lastPred.x) + ', ' + Math.round(T.lastPred.y) : '—') + ')']
@@ -72,19 +72,43 @@
       g.beginPath(); g.moveTo(pts[i - 1].x, pts[i - 1].y); g.lineTo(pts[i].x, pts[i].y); g.stroke();
     }
   }
+  var activeTileIdx = -1, candTileIdx = -1, candTileSince = 0;
   function onFrame(ev) {
     T.frames++;
     if (!ev.pred) return;
-    var f = filt.push(ev.pred.x, ev.pred.y);
+    var prev = T.lastPred;
+    var f = filt.push(ev.pred.x, ev.pred.y, ev.t);
     if (!f.ok) return;
-    T.preds++; T.lastPred = { x: f.x, y: f.y, t: ev.t };
-    T.history.push({ x: Math.round(f.x), y: Math.round(f.y), t: ev.t }); if (T.history.length > 600) T.history.shift();
-    T.trailPts.push({ x: f.x, y: f.y }); if (T.trailPts.length > 24) T.trailPts.shift();
-    if (showDot) { dot.style.display = 'block'; dot.style.transform = 'translate(' + (f.x - 9) + 'px,' + (f.y - 9) + 'px)'; }
+    var now = ev.t || Date.now();
+    var hitIdx = -1, hitRect = null;
+    for (var i = 0; i < tiles.length; i++) {
+      var r = tiles[i].getBoundingClientRect();
+      var pad = (i === activeTileIdx) ? 16 : 6;
+      if (f.x >= r.left - pad && f.x <= r.right + pad && f.y >= r.top - pad && f.y <= r.bottom + pad) {
+        hitIdx = i; hitRect = r; break;
+      }
+    }
+    if (hitIdx === activeTileIdx) {
+      candTileIdx = hitIdx; candTileSince = now;
+    } else {
+      if (hitIdx !== candTileIdx) { candTileIdx = hitIdx; candTileSince = now; }
+      if (now - candTileSince >= (f.jumped ? 40 : 120)) activeTileIdx = hitIdx;
+    }
+    var dispX = f.x, dispY = f.y;
+    var step = prev ? Math.hypot(f.x - prev.x, f.y - prev.y) : 0;
+    if (activeTileIdx >= 0 && tiles[activeTileIdx] && step < 36) {
+      var ar = hitIdx === activeTileIdx && hitRect ? hitRect : tiles[activeTileIdx].getBoundingClientRect();
+      var cx = ar.left + ar.width / 2, cy = ar.top + ar.height / 2;
+      dispX = f.x + 0.22 * (cx - f.x);
+      dispY = f.y + 0.22 * (cy - f.y);
+    }
+    T.preds++; T.lastPred = { x: dispX, y: dispY, rawX: f.x, rawY: f.y, tile: activeTileIdx, t: now };
+    T.history.push({ x: Math.round(dispX), y: Math.round(dispY), t: now }); if (T.history.length > 600) T.history.shift();
+    T.trailPts.push({ x: dispX, y: dispY }); if (T.trailPts.length > 24) T.trailPts.shift();
+    if (showDot) { dot.style.display = 'block'; dot.style.transform = 'translate(' + (dispX - 9) + 'px,' + (dispY - 9) + 'px)'; }
     drawTrail();
-    tiles.forEach(function (t) {
-      var r = t.getBoundingClientRect();
-      t.classList.toggle('hot', f.x >= r.left && f.x <= r.right && f.y >= r.top && f.y <= r.bottom);
+    tiles.forEach(function (t, idx) {
+      t.classList.toggle('hot', idx === activeTileIdx);
     });
   }
 
@@ -102,18 +126,31 @@
     });
   }
 
+  function refreshSavedBtn() {
+    var b = $('hxTryUseSaved');
+    if (!b || !E || !E.getSessionCalibration) return;
+    var saved = E.getSessionCalibration();
+    b.hidden = !saved;
+    if (saved && saved.score && saved.score.errorPx != null) {
+      b.innerHTML = '<i class="bi bi-check2-circle" aria-hidden="true"></i> Use saved calibration (' + saved.score.errorPx + ' px)';
+    }
+  }
+  refreshSavedBtn();
+
   function calibrate(quick) {
     var useQuick = quick != null ? quick : !!($('hxTryQuick') && $('hxTryQuick').checked);
     state('Calibrating\u2026');
     return Calib.run(T.engine, { quick: useQuick, skipPositioning: !!quick, minAccuracy: 0, goLabel: 'Start tracking', allowPassive: false, onValidated: showResult })
       .then(function (r) {
+        refreshSavedBtn();
         if (r.action === 'cancel') { state(T.engine.ready() ? 'Tracking (calibration cancelled)' : 'Calibration cancelled'); return; }
         filt = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
         state('Tracking \u2014 look around the tiles');
       });
   }
 
-  function start() {
+  function start(useSaved) {
+    useSaved = useSaved === true;
     if (playBlocked && T.engine && T.engine.resumePlayback) {
       playBlocked = false;
       $('hxTryStart').disabled = true;
@@ -122,6 +159,11 @@
         filt = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
         T.engine.on(onFrame);
         enableControls(true);
+        if (useSaved && T.engine.loadSessionCalibration && T.engine.loadSessionCalibration()) {
+          if (T.engine.calScore) showResult(T.engine.calScore);
+          state('Tracking (restored saved calibration) \u2014 look around the tiles');
+          return;
+        }
         return calibrate(false);
       }).catch(function (err) {
         T.error = String(err && err.message || err);
@@ -133,7 +175,7 @@
     var qc = qs.get('crop');
     var hiToggle = $('hxTryHiRes');
     var wantHi = qs.get('hires') === '0' ? false : (hiToggle ? hiToggle.checked : true);
-    var cropMode = qc === '0' ? false : qc === 'view' ? 'view' : (hiToggle && !hiToggle.checked ? 'view' : true);
+    var cropMode = qc === '0' ? false : qc === '1' ? true : 'view';
     CFG.hiRes = wantHi;
     // Open camera synchronously inside the user tap/click gesture before awaiting MediaPipe WASM load
     if (E && E.prefetchCamera) {
@@ -149,6 +191,11 @@
       filt = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
       engine.on(onFrame);
       enableControls(true);
+      if (useSaved && engine.loadSessionCalibration && engine.loadSessionCalibration()) {
+        if (engine.calScore) showResult(engine.calScore);
+        state('Tracking (restored saved calibration) \u2014 look around the tiles');
+        return;
+      }
       return calibrate(false);
     }).catch(function (err) {
       if (err && err.code === 'play_blocked' && T.engine && T.engine.resumePlayback) {
@@ -192,7 +239,7 @@
       var cue = tile.querySelector('.hx-tile-cue');
       if (cue) cue.textContent = 'Look here';
       out.textContent = 'Look at tile ' + (ti + 1) + ' (' + (idx + 1) + ' of ' + seq.length + ')\u2026';
-      var tStart = Date.now() + 350, tileSamples = [];
+      var tStart = Date.now() + 450, tileSamples = [];
       var lis = T.engine.on(function (ev) {
         if (!ev.pred || Date.now() < tStart || !T.lastPred) return;
         tileSamples.push({ x: T.lastPred.x, y: T.lastPred.y });
@@ -204,15 +251,15 @@
           var sx = 0, sy = 0, inside = 0;
           tileSamples.forEach(function (p) {
             sx += p.x; sy += p.y;
-            if (p.x >= r.left - 18 && p.x <= r.right + 18 && p.y >= r.top - 18 && p.y <= r.bottom + 18) inside++;
+            if (p.x >= r.left - 22 && p.x <= r.right + 22 && p.y >= r.top - 22 && p.y <= r.bottom + 22) inside++;
           });
           var mx = sx / tileSamples.length, my = sy / tileSamples.length;
           dists.push(Math.hypot(mx - cx, my - cy));
-          if (inside >= Math.max(1, Math.floor(tileSamples.length * 0.35)) || ( mx >= r.left - 24 && mx <= r.right + 24 && my >= r.top - 24 && my <= r.bottom + 24 )) hits++;
+          if (inside >= Math.max(1, Math.floor(tileSamples.length * 0.30)) || ( mx >= r.left - 28 && mx <= r.right + 28 && my >= r.top - 28 && my <= r.bottom + 28 )) hits++;
         }
         idx++;
         stepTile();
-      }, 1550);
+      }, 1800);
     }
     stepTile();
   }
@@ -252,13 +299,26 @@
     $('hxTryHiRes').addEventListener('change', function () {
       CFG.hiRes = this.checked;
       if (T.engine && T.engine.opts) {
-        T.engine.opts.crop = this.checked ? true : 'view';
+        T.engine.opts.crop = this.checked ? 'view' : false;
         T.engine.cropDisabled = false;
       }
     });
   }
 
-  $('hxTryStart').addEventListener('click', start);
+  $('hxTryStart').addEventListener('click', function () { start(false); });
+  if ($('hxTryUseSaved')) {
+    $('hxTryUseSaved').addEventListener('click', function () {
+      if (T.engine) {
+        if (T.engine.loadSessionCalibration && T.engine.loadSessionCalibration()) {
+          if (T.engine.calScore) showResult(T.engine.calScore);
+          filt = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
+          state('Tracking (restored saved calibration) \u2014 look around the tiles');
+        }
+      } else {
+        start(true);
+      }
+    });
+  }
   $('hxTryRecal').addEventListener('click', function () { calibrate(false); });
   if ($('hxTryTargetBtn')) $('hxTryTargetBtn').addEventListener('click', runTargetTest);
   $('hxTryDot').addEventListener('click', function () {

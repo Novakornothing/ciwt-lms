@@ -1,6 +1,7 @@
 /* Novak LMS Helix core — pure, DOM-free logic shared by the runtime and the tests.
-   Smoothing (median outlier gate + 1D Kalman), validation scoring, AOI
-   debouncing, attention state timeline, heat grid, and a retrying batch queue.
+   Smoothing (median outlier gate + velocity-adaptive One-Euro / Kalman filter),
+   validation scoring, AOI debouncing, attention state timeline, heat grid,
+   and a retrying batch queue.
    UMD: window.HelixCore in the browser, module.exports under Node. */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -17,29 +18,59 @@
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   }
 
-  /* ---------- 1D Kalman (constant-position model) ---------- */
+  /* ---------- 1D One-Euro filter (Casiez et al., CHI 2012) ---------- */
+  function alphaFor(cutoff, dt) {
+    var tau = 1.0 / (2 * Math.PI * Math.max(1e-4, cutoff));
+    return 1.0 / (1.0 + tau / Math.max(1e-3, dt));
+  }
+  function OneEuro1D(minCutoff, beta, dCutoff) {
+    this.minCutoff = minCutoff == null ? 1.15 : minCutoff;
+    this.beta = beta == null ? 0.018 : beta;
+    this.dCutoff = dCutoff == null ? 1.0 : dCutoff;
+    this.x = null; this.dx = 0; this.lastT = null;
+  }
+  OneEuro1D.prototype.reset = function (z, t) {
+    this.x = z; this.dx = 0; this.lastT = t == null ? null : t;
+  };
+  OneEuro1D.prototype.update = function (z, t) {
+    if (this.x === null) { this.reset(z, t); return z; }
+    var dt = (t != null && this.lastT != null && t > this.lastT) ? Math.min(0.25, (t - this.lastT) / 1000) : (1 / 30);
+    if (t != null) this.lastT = t;
+    var rawDx = (z - this.x) / dt;
+    var ad = alphaFor(this.dCutoff, dt);
+    this.dx = this.dx + ad * (rawDx - this.dx);
+    var cutoff = this.minCutoff + this.beta * Math.abs(this.dx);
+    var a = alphaFor(cutoff, dt);
+    this.x = this.x + a * (z - this.x);
+    return this.x;
+  };
+  OneEuro1D.prototype.step = OneEuro1D.prototype.filter = OneEuro1D.prototype.update;
+
+  /* ---------- 1D Kalman (constant-position model with velocity boost) ---------- */
   function Kalman1D(q, r) {
     this.q = q == null ? 4 : q;     // process noise (px^2 per step): how fast true gaze moves
-    this.r = r == null ? 900 : r;   // measurement noise (px^2): WebGazer jitter (~30px sd)
+    this.r = r == null ? 900 : r;   // measurement noise (px^2)
     this.x = null; this.p = 1;
   }
   Kalman1D.prototype.reset = function (z) { this.x = z; this.p = this.r; };
-  Kalman1D.prototype.update = function (z) {
+  Kalman1D.prototype.update = function (z, boostQ) {
     if (this.x === null) { this.reset(z); return z; }
-    this.p += this.q;
+    this.p += (boostQ != null ? boostQ : this.q);
     var k = this.p / (this.p + this.r);
     this.x += k * (z - this.x);
     this.p *= (1 - k);
     return this.x;
   };
 
-  /* ---------- Gaze filter: validity + median outlier gate + saccade confirm + Kalman ---------- */
+  /* ---------- Gaze filter: validity + median outlier gate + saccade confirm + velocity-adaptive Kalman ---------- */
   function GazeFilter(opts) {
     opts = opts || {};
-    this.maxJump = opts.maxJump || 260;          // px from rolling median before a sample is "suspicious"
-    this.confirmN = opts.confirmN || 3;          // consecutive agreeing suspicious samples = real saccade
-    this.window = opts.window || 5;
     this.bounds = opts.bounds || null;           // {w,h}: reject wildly off-screen predictions
+    // Scale saccade outlier threshold to viewport diagonal when bounds are known (e.g. 125 px on phones, 220 px on desktop)
+    var diag = this.bounds ? Math.hypot(this.bounds.w || 1440, this.bounds.h || 900) : 1698;
+    this.maxJump = opts.maxJump || Math.max(105, Math.min(230, Math.round(0.135 * diag)));
+    this.confirmN = opts.confirmN || 2;          // 2 consecutive agreeing samples (~66 ms) = real saccade
+    this.window = opts.window || 5;
     this.kx = new Kalman1D(opts.q, opts.r);
     this.ky = new Kalman1D(opts.q, opts.r);
     this.raw = []; this.pendingJump = [];
@@ -74,10 +105,28 @@
       }
     }
     this.pendingJump.length = 0;
+    var prev = this.raw.length ? this.raw[this.raw.length - 1] : null;
     this.raw.push(p);
     if (this.raw.length > this.window) this.raw.shift();
     this.accepted++;
-    return { ok: true, x: this.kx.update(x), y: this.ky.update(y) };
+
+    // Velocity-adaptive step boost: when 2 consecutive samples agree on an intermediate step move
+    // (smaller than maxJump, e.g. 75-210 px between adjacent tiles) in the same direction from the
+    // current estimate, boost process noise so the gaze dot lands in 2 frames instead of crawling.
+    var boostQ = null;
+    if (prev && this.kx.x !== null && this.ky.x !== null) {
+      var est = { x: this.kx.x, y: this.ky.x };
+      var dCur = dist(p, est), dPrev = dist(prev, est), dPair = dist(p, prev);
+      var stepGate = Math.max(55, Math.min(85, this.maxJump * 0.38));
+      var dotDir = (p.x - est.x) * (prev.x - est.x) + (p.y - est.y) * (prev.y - est.y);
+      if (dCur > stepGate && dPrev > stepGate && dPair < Math.max(45, dCur * 0.65) && dotDir > 0) {
+        var mx2 = (p.x + prev.x) * 0.5, my2 = (p.y + prev.y) * 0.5;
+        this.kx.x = this.kx.x + 0.72 * (mx2 - this.kx.x);
+        this.ky.x = this.ky.x + 0.72 * (my2 - this.ky.x);
+        boostQ = this.kx.r * 0.5;
+      }
+    }
+    return { ok: true, x: this.kx.update(x, boostQ), y: this.ky.update(y, boostQ) };
   };
   GazeFilter.prototype.dispersion = function () {
     // RMS distance of the recent raw window from its centroid (precision proxy)
@@ -130,8 +179,6 @@
   };
 
   /* ---------- State timeline: segments, buckets, totals ---------- */
-  // pass 10: camera off (unplugged / permission revoked) counts as no face; another tab holding
-  // Helix and a sleeping device count as hidden. None of these is ever reading attention.
   var CATEGORY = { off_page: 'off_page', chrome: 'off_page', _idle: 'off_page', _paused: 'off_page',
                    _face_lost: 'face_lost', _camera_off: 'face_lost', _hidden: 'hidden', _other_tab: 'hidden',
                    _asleep: 'hidden', _low_conf: 'low_conf' };
@@ -142,7 +189,6 @@
     this.totals = { total: 0, attentive: 0, off_page: 0, face_lost: 0, hidden: 0, low_conf: 0 };
     this.minSegMs = 120;
   }
-  // a = {key, label, order, kind}; t = absolute ms
   StateTimeline.prototype.enter = function (a, t) {
     if (this.cur && this.cur.key === a.key) { this.cur.n++; return; }
     this.close(t);
@@ -164,13 +210,11 @@
     b.dwell_ms += dur;
     b.last_ms = rel1;
     if (dur >= this.minSegMs || !this.pending.length) b.visits += 1;
-    // merge tiny flickers into the previous segment rather than emitting noise
     var last = this.pending[this.pending.length - 1];
     if (dur < this.minSegMs && last && last.t1 === rel0) { last.t1 = rel1; return; }
     if (last && last.aoi === c.key && rel0 - last.t1 < this.minSegMs) { last.t1 = rel1; last.n += c.n; return; }
     this.pending.push({ t0: rel0, t1: rel1, aoi: c.key, label: c.label, n: c.n, conf: Math.round((c.conf || 0) * 100) / 100 });
   };
-  // Snapshot for upload: closes the open segment at t and immediately re-opens it.
   StateTimeline.prototype.checkpoint = function (t) {
     var c = this.cur;
     if (c) { this.close(t); this.cur = { key: c.key, label: c.label, order: c.order, kind: c.kind, t: t, n: 0, conf: c.conf }; }
@@ -208,8 +252,8 @@
 
   /* ---------- Batch queue with sequence numbers, retry/backoff, persistence ---------- */
   function BatchQueue(opts) {
-    this.send = opts.send;                      // function(batch) -> Promise<{ok, ack?, duplicate?}>
-    this.storage = opts.storage || null;        // localStorage-like
+    this.send = opts.send;
+    this.storage = opts.storage || null;
     this.key = opts.key || 'helix-queue';
     this.setTimer = opts.setTimeout || (typeof setTimeout !== 'undefined' ? setTimeout : null);
     this.now = opts.now || function () { return Date.now(); };
@@ -236,7 +280,6 @@
     batch.seq = this.seq++;
     this.items.push(batch);
     if (this.items.length > this.maxItems) {
-      // keep the newest cumulative data; drop oldest *segment-only* history first
       this.items.splice(0, this.items.length - this.maxItems);
     }
     this._save();
@@ -268,7 +311,7 @@
   BatchQueue.prototype.clear = function () { this.items = []; this._save(); };
 
   return {
-    clamp: clamp, median: median, Kalman1D: Kalman1D, GazeFilter: GazeFilter,
+    clamp: clamp, median: median, OneEuro1D: OneEuro1D, Kalman1D: Kalman1D, GazeFilter: GazeFilter,
     scoreValidation: scoreValidation, AoiDebouncer: AoiDebouncer, StateTimeline: StateTimeline,
     categoryOf: categoryOf, HeatGrid: HeatGrid, confidence: confidence, BatchQueue: BatchQueue
   };

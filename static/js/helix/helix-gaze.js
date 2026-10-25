@@ -599,7 +599,7 @@
     status('Loading gaze engine…');
     var qs = new URLSearchParams(location.search);
     var qc = qs.get('crop');
-    var defaultCrop = qc === '0' ? false : qc === 'view' ? 'view' : (device() === 'desktop' ? true : false);
+    var defaultCrop = qc === '0' ? false : qc === '1' ? true : (device() === 'desktop' ? 'view' : false);
     if (window.HELIX_ENGINE && window.HELIX_ENGINE.hiRes == null && device() === 'desktop' && !/[?&]hires=0\b/.test(location.search)) window.HELIX_ENGINE.hiRes = true;
     var opts = Object.assign({ prefer: qs.get('engine') || CFG.enginePrefer || 'auto', delegate: qs.get('delegate') === 'CPU' ? 'CPU' : null, crop: defaultCrop }, window.HELIX_ENGINE || {});
     return Engine.create(opts).then(function (engine) {
@@ -617,6 +617,20 @@
       S.implicitN = 0; S.orientation = Engine.orientationKey();
       attachImplicit();
       S.calAttempts = 0;
+      if (!/[?&]recal=1\b/.test(location.search) && engine.loadSessionCalibration && engine.loadSessionCalibration()) {
+        var sc = S.calibration = engine.calScore || { valid: true, score: 78, errorPx: 65, precisionPx: 30, resolution: 'paragraph', calibMs: 0, calibMode: 'cached' };
+        S.resolution = sc.resolution || 'heading';
+        postJSON(url(CFG.calibratedUrl, S.sessionId), Object.assign({
+          calibration_points: 9, calibration_score: sc.score,
+          validation_error_px: sc.errorPx, validation_precision_px: sc.precisionPx, recalibration: false,
+          calib_ms: sc.calibMs || 0, calib_mode: 'cached'
+        }, engineMeta())).catch(function () {});
+        S.lastCalibratedAt = now(); S.driftPrompted = false; S.lowPrompted = false; S.recalPrompted = false;
+        S.filter = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
+        beginLive();
+        toast('Restored your Helix calibration from this session.', [{ label: 'Recalibrate', cls: 'btn-outline-light', fn: function () { recalibrate(false); } }], 6000);
+        return;
+      }
       return calibrate(false);
     }).catch(function (err) {
       var msg = String(err && (err.name || err.message) || err);

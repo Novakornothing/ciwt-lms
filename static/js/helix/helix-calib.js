@@ -102,10 +102,13 @@
   /* ---------------- step 2: calibration dots */
   function canFollow(engine) { return engine.kind === 'mediapipe' && typeof engine.beginPursuit === 'function'; }
 
-  function calibrateDots(ov, engine, points, stepLabel, p0, p1) {
-    p0 = p0 == null ? 0.15 : p0; p1 = p1 == null ? 0.7 : p1;
+  function calibrateDots(ov, engine, points, stepLabel, p0, p1, dotOpts) {
+    p0 = p0 == null ? 0.15 : p0; p1 = p1 == null ? 0.7 : p1; dotOpts = dotOpts || {};
     return new Promise(function (resolve) {
       var touch = engine.mobile || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
+      var settleMs = dotOpts.settleMs || (touch ? 340 : SETTLE_MS);
+      var holdMs = dotOpts.holdMs || (touch ? 1050 : HOLD_MS);
+      var dotWeight = dotOpts.weight || 1;
       help(ov, '<h2 id="hxCalTitle" class="h5">' + (stepLabel || 'Calibrate') + ' <span class="hx-cal-step">step 2 of 3</span></h2>' +
         '<p class="mb-1">' + (touch ? '<strong>Tap each dot</strong>' : '<strong>Click each dot</strong>') + ' and keep looking at its centre until it turns gold (under a second). Move your eyes, not your head.</p>' +
         '<p class="small mb-0"><span id="hxCalCount">0</span> / ' + points.length + ' dots · <span id="hxCheer" class="hx-cheer"></span> <span id="hxFaceState" class="hx-face-state">face tracked</span> · Keyboard: Tab + Space · <button type="button" class="btn btn-link btn-sm p-0 text-reset" id="hxCalCancel">Cancel (Esc)</button></p>');
@@ -127,12 +130,12 @@
           if (busy || b.classList.contains('done')) return;
           busy = true; b.classList.add('active');
           var r = b.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
-          engine.beginSample(x, y, SETTLE_MS);
+          engine.beginSample(x, y, settleMs, dotWeight);
           var ring = b.querySelector('.hx-ring'), t0 = Date.now();
-          // hold for HOLD_MS, and longer on slow devices until enough frames were captured (max 4 s)
+          // hold for holdMs, and longer on slow devices until enough frames were captured (max 4 s)
           var enough = function () { return engine.sampleCount() >= MIN_FRAMES || Date.now() - t0 > MAX_HOLD_MS; };
           var anim = setInterval(function () {
-            var tp = (Date.now() - t0) / HOLD_MS, fp = engine.sampleCount() / MIN_FRAMES;
+            var tp = (Date.now() - t0) / holdMs, fp = engine.sampleCount() / MIN_FRAMES;
             ring.style.setProperty('--p', String(Math.min(1, Math.min(tp, Math.max(fp, tp * 0.9)))));
             if (tp >= 1 && enough()) { clearInterval(anim); finishDot(); }
           }, 50);
@@ -322,7 +325,7 @@
               // a few fixation dots anchor the absolute offset; if the follow step lost the face,
               // fall back to the full dot set instead of failing
               if (!pr.ok) { mode = 'follow+dots'; return calibrateDots(ov, engine, points, 'Let\u2019s use dots instead', 0.55, 0.7); }
-              return calibrateDots(ov, engine, ANCHORS, 'Three quick dots', 0.55, 0.7).then(function (x) { lagMs = pr.fit && pr.fit.lagMs; return x; });
+              return calibrateDots(ov, engine, ANCHORS, 'Three quick dots', 0.55, 0.7, { weight: 1.35 }).then(function (x) { lagMs = pr.fit && pr.fit.lagMs; return x; });
             })
           : calibrateDots(ov, engine, points);
         var lagMs = null;
@@ -332,6 +335,7 @@
           return validate(ov, engine, opts).then(function (v) {
             v.score.calibMs = Date.now() - tCal; v.score.totalMs = Date.now() - tStart;
             v.score.calibMode = mode; if (lagMs != null) v.score.pursuitLagMs = lagMs;
+            if (v.score && v.score.valid && engine.saveSessionCalibration) engine.saveSessionCalibration(v.score);
             if (opts.onValidated) opts.onValidated(v.score, attempt);
             return result(ov, engine, v, opts, attempt).then(function (action) {
               if (action === 'retry') return once();

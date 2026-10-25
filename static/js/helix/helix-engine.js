@@ -35,7 +35,7 @@
         // 720p on laptops: at ~55 cm a 640x480 frame leaves the eyes ~20-30 px wide; the warp
         // benchmark measured 6.8 deg -> 5.7 deg median error for the same face at 1280x720.
         // Phones are held closer (eyes are already large), so stay at 480x640 to save CPU/heat.
-        width: { ideal: mobile ? 480 : 1280 }, height: { ideal: mobile ? 640 : 720 },
+        width: { ideal: mobile ? 720 : 1280 }, height: { ideal: mobile ? 960 : 720 },
         frameRate: { ideal: mobile ? 24 : 30, max: 30 }
       }
     };
@@ -89,8 +89,9 @@
 
   function MediaPipeEngine(opts) {
     this.kind = 'mediapipe';
-    this.opts = opts;
-    this.mobile = opts.mobile == null ? isMobile() : opts.mobile;
+    this.opts = opts || {};
+    this.mobile = this.opts.mobile == null ? isMobile() : this.opts.mobile;
+    if (this.opts.detectWidth == null && this.mobile) this.opts.detectWidth = 540;
     this.models = new Model.OrientationModels({});
     this.models.use(orientationKey());
     this.listeners = [];
@@ -457,7 +458,8 @@
     // graceful degradation: if inference + crops no longer fit the frame budget at >= 12 fps, drop the stage
     if (this.frames > 60 && this.inferEma + this.cropMsEma > 1000 / 12) { this.cropDisabled = true; this._emit({ t: Date.now(), notice: 'crop_off', face: true, feat: feat, pred: null }); }
     feat.crop = out;
-    if (this.opts.crop === true) feat.vec = feat.vec.concat(Model.cropVec(out));   // GazeRegressor adds these to stage 2 when present
+    var cvec = Model.fuseCropFeatures ? Model.fuseCropFeatures(feat, out) : Model.cropVec(out);
+    if (this.opts.crop === true) feat.vec = feat.vec.concat(cvec);   // GazeRegressor adds these to stage 2 when present
   };
 
   MediaPipeEngine.prototype.recalCheck = function () {
@@ -467,29 +469,114 @@
 
 
   /* calibration: collect features while the student looks at (x, y) */
-  MediaPipeEngine.prototype.beginSample = function (x, y, settleMs) { this.collect = { x: x, y: y, from: Date.now() + (settleMs || 250), samples: [] }; };
+  MediaPipeEngine.prototype.beginSample = function (x, y, settleMs, weight) {
+    this.collect = { x: x, y: y, from: Date.now() + (settleMs || 250), weight: weight || 1, samples: [] };
+  };
   MediaPipeEngine.prototype.endSample = function () {
     var c = this.collect; this.collect = null;
     if (!c) return 0;
     var reg = this.models.current();
-    c.samples.forEach(function (f) { reg.addCalibration(f.vec, c.x, c.y); });
-    this.calFeats = (this.calFeats || []).concat(c.samples);
-    return c.samples.length;
+    var grp = (this._dotGroup = (this._dotGroup || 0) + 1);
+    var baseW = c.weight || 1;
+    var cleaned = (Model.cleanCalibrationSamples && c.samples.length >= 4)
+      ? Model.cleanCalibrationSamples(c.samples)
+      : { kept: c.samples.map(function (f) { return { feat: f, weight: 1 }; }), anchor: null, dropped: 0 };
+    this.rejected.calibOutliers = (this.rejected.calibOutliers || 0) + (cleaned.dropped || 0);
+    cleaned.kept.forEach(function (item) {
+      reg.addCalibration(item.feat.vec, c.x, c.y, baseW * (item.weight || 1), grp);
+    });
+    if (cleaned.anchor && cleaned.kept.length >= 3) {
+      reg.addCalibration(cleaned.anchor, c.x, c.y, baseW * 1.8, grp);
+    }
+    var keptFeats = cleaned.kept.map(function (item) { return item.feat; });
+    this.calFeats = (this.calFeats || []).concat(keptFeats);
+    return keptFeats.length;
   };
   /* smooth pursuit: record features while a dot moves along `path` ({t,x,y} pushed by the UI) */
   MediaPipeEngine.prototype.beginPursuit = function () { this.collect = { from: Date.now(), samples: [], rows: [], path: [] }; return this.collect.path; };
   MediaPipeEngine.prototype.endPursuit = function () {
     var c = this.collect; this.collect = null;
     if (!c || !c.path) return null;
-    var fit = Model.fitPursuit(c.rows, c.path, { weight: 0.7 });
+    var fit = Model.fitPursuit(c.rows, c.path, { weight: 0.55 });
     if (!fit) return null;
     var reg = this.models.current();
-    fit.pairs.forEach(function (p) { reg.addCalibration(p.vec, p.x, p.y, 0.7); });
+    fit.pairs.forEach(function (p) { reg.addCalibration(p.vec, p.x, p.y, 0.55); });
     this.calFeats = (this.calFeats || []).concat(c.rows.map(function (r) { return r.feat; }));
     return { lagMs: fit.lag, samples: fit.pairs.length, rmsPx: Math.round(fit.rms) };
   };
   MediaPipeEngine.prototype.sampleCount = function () { return this.collect ? this.collect.samples.length : 0; };
-  MediaPipeEngine.prototype.resetCalibration = function () { var reg = this.models.current(); reg.cal = []; reg.model = null; this.calFeats = []; };
+  MediaPipeEngine.prototype.resetCalibration = function () { var reg = this.models.current(); reg.cal = []; reg.model = null; this.calFeats = []; this._dotGroup = 0; };
+
+  var CALIB_STORAGE_KEY = 'novak_helix_calib_v1';
+  var CALIB_MAX_AGE_MS = 4 * 60 * 60 * 1000;
+  MediaPipeEngine.prototype.exportCalibration = function (score) {
+    var reg = this.models.current();
+    if (!reg || !reg.cal || reg.cal.length < 8) return null;
+    if (score != null) this.calScore = score;
+    return {
+      v: 1,
+      t: Date.now(),
+      orientation: this.models.key,
+      viewport: this.calViewport || (typeof window !== 'undefined' ? { w: window.innerWidth, h: window.innerHeight } : { w: 1280, h: 720 }),
+      score: this.calScore || null,
+      eyeBase: this.eyeBase || null,
+      calPose: this.calPose || null,
+      cal: reg.cal.map(function (r) {
+        return { f: Array.prototype.slice.call(r.f), x: r.x, y: r.y, w: r.w, group: r.group };
+      })
+    };
+  };
+  MediaPipeEngine.prototype.importCalibration = function (data) {
+    if (!data || data.v !== 1 || !Array.isArray(data.cal) || data.cal.length < 8) return false;
+    var key = data.orientation || orientationKey();
+    this.models.use(key);
+    var reg = this.models.current();
+    reg.cal = data.cal.map(function (r) {
+      return { f: r.f.slice(), x: +r.x, y: +r.y, w: r.w == null ? 1 : +r.w, group: r.group != null ? r.group : undefined };
+    });
+    var m = reg.fit();
+    if (!m) return false;
+    this.eyeBase = data.eyeBase || this.eyeBase;
+    this.calPose = data.calPose || this.calPose;
+    this.calViewport = data.viewport || (typeof window !== 'undefined' ? { w: window.innerWidth, h: window.innerHeight } : null);
+    this.calScore = data.score || null;
+    return true;
+  };
+  MediaPipeEngine.prototype.saveSessionCalibration = function (score) {
+    try {
+      if (typeof sessionStorage === 'undefined') return false;
+      var payload = this.exportCalibration(score);
+      if (!payload) return false;
+      var all = {};
+      try { all = JSON.parse(sessionStorage.getItem(CALIB_STORAGE_KEY) || '{}') || {}; } catch (e) { all = {}; }
+      all[payload.orientation] = payload;
+      sessionStorage.setItem(CALIB_STORAGE_KEY, JSON.stringify(all));
+      return true;
+    } catch (e) { return false; }
+  };
+  MediaPipeEngine.prototype.loadSessionCalibration = function (orient) {
+    try {
+      if (typeof sessionStorage === 'undefined') return false;
+      var all = JSON.parse(sessionStorage.getItem(CALIB_STORAGE_KEY) || '{}') || {};
+      var key = orient || orientationKey();
+      var entry = all[key];
+      if (!entry || !entry.t || Date.now() - entry.t > CALIB_MAX_AGE_MS) return false;
+      return this.importCalibration(entry);
+    } catch (e) { return false; }
+  };
+  function getSessionCalibration(orient) {
+    try {
+      if (typeof sessionStorage === 'undefined') return null;
+      var all = JSON.parse(sessionStorage.getItem(CALIB_STORAGE_KEY) || '{}') || {};
+      var key = orient || orientationKey();
+      var entry = all[key];
+      if (!entry || !entry.t || Date.now() - entry.t > CALIB_MAX_AGE_MS || !Array.isArray(entry.cal) || entry.cal.length < 8) return null;
+      return entry;
+    } catch (e) { return null; }
+  }
+  function clearSessionCalibration() {
+    try { if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(CALIB_STORAGE_KEY); } catch (e) {}
+  }
   MediaPipeEngine.prototype.fit = function () {
     var m = this.models.current().fit();
     if (m && this.calFeats && this.calFeats.length) {
@@ -537,7 +624,7 @@
     var reg = this.models.current(), m = reg && reg.model;
     return { engine: 'MediaPipe Face Landmarker', delegate: this.delegate, fps: this.fpsWin.length / 2, targetFps: this.fps,
       inferMs: Math.round(this.inferEma * 10) / 10, faceRate: this.frames ? this.faceFrames / this.frames : 0,
-      samples: reg ? reg.cal.length : 0, implicit: reg ? reg.implicit.length : 0, lambda: m ? m.lambda : null,
+      samples: reg ? reg.cal.length : 0, implicit: reg ? reg.implicit.length : 0, lambda: m ? m.lambda : null, lambdaX: m ? m.lambdaX : null, lambdaY: m ? m.lambdaY : null,
       fitRmsPx: m ? Math.round(m.rmsPx) : null, orientation: this.models.key, modelCrop: m ? !!m.crop : null, lambdaSel: m ? m.lambdaSel : null,
       faces: this.quality.faces, brightness: this.quality.brightness, contrast: this.quality.contrast, glare: this.quality.glare,
       occluded: this.occluded, thermal: this.thermal.hot, lowBattery: !!this.lowBattery, simd: this.simd, rejected: this.rejected,
@@ -629,6 +716,13 @@
     });
   }
 
+  WebGazerEngine.prototype.exportCalibration = function () { return null; };
+  WebGazerEngine.prototype.importCalibration = function () { return false; };
+  WebGazerEngine.prototype.saveSessionCalibration = function () { return false; };
+  WebGazerEngine.prototype.loadSessionCalibration = function () { return false; };
+
   window.HelixEngine = { create: create, MediaPipeEngine: MediaPipeEngine, WebGazerEngine: WebGazerEngine,
-    isMobile: isMobile, orientationKey: orientationKey, prefetchCamera: prefetchCamera, hiResCapable: hiResCapable, releasePrefetch: releasePrefetch, isIOS: isIOS, simdSupported: simdSupported };
+    isMobile: isMobile, orientationKey: orientationKey, prefetchCamera: prefetchCamera, hiResCapable: hiResCapable,
+    releasePrefetch: releasePrefetch, isIOS: isIOS, simdSupported: simdSupported,
+    getSessionCalibration: getSessionCalibration, clearSessionCalibration: clearSessionCalibration };
 })();
