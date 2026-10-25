@@ -46,3 +46,24 @@ def test_vm_lab_base_kernel_snapshot_cache_wiring(student):
     html = student.get('/labs/linux-vm-perms').get_data(as_text=True)
     assert 'id="vmBaseCached"' in html
     assert 'Instant-Boot Snapshot Cached' in html
+
+
+def test_comptia_tech_plus_fc0_u71_in_exam_sim_and_cert_coverage(student, instructor, app):
+    from curriculum_v2.cert import exam_sim as ES
+    from curriculum_v2.cert.exams import ALL_DOMAINS, ALL_EXAMS, ALL_OBJECTIVES
+    assert 'T' in ALL_EXAMS and ALL_EXAMS['T']['code'] == 'FC0-U71'
+    assert len(ALL_DOMAINS['T']) == 6 and sum(w for _d, _n, w in ALL_DOMAINS['T']) == 100
+    assert any(k.startswith('T:') for k in ALL_OBJECTIVES)
+    form = ES.build_form('T', 'full')
+    assert len(form) == 45 and len({i for i, _o in form}) == 45
+    assert str(form[0][0]).startswith('SIM-T-')
+    html_es = student.get('/student/section/1/exam-sim').get_data(as_text=True)
+    assert 'CompTIA Tech+ (FC0-U71)' in html_es and 'pass bar 650' in html_es
+    html_cov = instructor.get('/staff/cert-coverage?exam=T').get_data(as_text=True)
+    assert 'CompTIA Tech+ FC0-U71' in html_cov and 'Tech+ · 1.0 IT Concepts and Terminology' in html_cov
+
+
+def test_site_name_default_is_novak_lms(app, anon):
+    assert app.config['SITE_NAME'] == 'Novak LMS™'
+    html = anon.get('/login').get_data(as_text=True)
+    assert 'Novak LMS™' in html

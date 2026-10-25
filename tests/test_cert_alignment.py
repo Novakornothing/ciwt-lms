@@ -297,7 +297,8 @@ def test_coverage_page_staff_only_and_cites_sources(student, instructor, admin, 
         assert 'Exam Objectives Document Version 4.0' in html and 'Version 6.0' in html
         assert 'Not affiliated' in html and 'heuristic' in html
         assert 'built-in method' not in html and 'object at 0x' not in html, 'template printed a Python method'
-        assert html.count('class="cert-obj"') == len(OBJECTIVES)
+        from curriculum_v2.cert.exams import ALL_OBJECTIVES
+        assert html.count('class="cert-obj"') == len(ALL_OBJECTIVES)
     # filters: round 2 closed every partial, so the partial filter is empty and the exam filter narrows to one exam
     html = admin.get('/staff/cert-coverage?exam=N&status=partial').get_data(as_text=True)
     assert html.count('class="cert-obj"') == 0

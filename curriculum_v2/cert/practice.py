@@ -16,7 +16,8 @@ from datetime import timedelta
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from .exams import DISCLAIMER, DOMAINS, EXAMS, OBJECTIVES, label, sort_key
+from .exams import ALL_DOMAINS, ALL_EXAMS, ALL_OBJECTIVES, DISCLAIMER, DOMAINS, EXAMS, OBJECTIVES, label, sort_key
+from .tech_plus import build_tech_pool, tech_coverage_rows
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FULL_LENGTH = 45          # questions in a full practice exam (CompTIA's maximum is 90; see EXAMS[...]['official'])
@@ -55,12 +56,16 @@ def bank():
 
 def pool(exam, domain=None):
     """{objective_id: [item ids]} for one exam (optionally one domain), from the committed alignment."""
+    if exam == 'T':
+        tpool = build_tech_pool(bank())
+        return {oid: ids for oid, ids in tpool.items()
+                if ids and (not domain or ALL_OBJECTIVES[oid]['domain'] == domain)}
     objs = alignment()['objectives']
     out = {}
     for oid, v in objs.items():
         if not oid.startswith(exam + ':'):
             continue
-        if domain and OBJECTIVES[oid]['domain'] != domain:
+        if domain and ALL_OBJECTIVES[oid]['domain'] != domain:
             continue
         ids = [i for i in v['items'] if i in bank()]
         if ids:
@@ -85,7 +90,7 @@ def draw(exam, domain=None, n=None, rng=None):
     if domain:
         plan = {domain: n or DRILL_LENGTH}
     else:
-        plan = _allocate(n or FULL_LENGTH, {d: w for d, _name, w in DOMAINS[exam]})
+        plan = _allocate(n or FULL_LENGTH, {d: w for d, _name, w in ALL_DOMAINS[exam]})
     chosen, used = [], set()
     for dom, k in plan.items():
         objs = pool(exam, dom)
@@ -124,8 +129,8 @@ def _ensure_item_types(exam, chosen, used, rng):
         cands = [(i, o) for o, ids in sorted(objs.items()) for i in ids if b[i]['type'] == t and i not in used]
         rng.shuffle(cands)
         for iid, oid in cands:
-            dom = OBJECTIVES[oid]['domain']
-            slots = [k for k, (j, o2) in enumerate(chosen) if b[j]['type'] == 'single' and OBJECTIVES[o2]['domain'] == dom]
+            dom = ALL_OBJECTIVES[oid]['domain']
+            slots = [k for k, (j, o2) in enumerate(chosen) if b[j]['type'] == 'single' and ALL_OBJECTIVES[o2]['domain'] == dom]
             if slots:
                 k = rng.choice(slots)
                 used.discard(chosen[k][0])
@@ -138,7 +143,7 @@ def _ensure_item_types(exam, chosen, used, rng):
 def public_item(it, oid):
     """What the browser receives for one item: stem, options and type metadata. Never the key or rationale."""
     raw = it['raw']
-    out = {'text': it['text'], 'options': [str(o) for o in it['options']], 'lo': label(oid), 'lo_text': OBJECTIVES[oid]['title']}
+    out = {'text': it['text'], 'options': [str(o) for o in it['options']], 'lo': label(oid), 'lo_text': ALL_OBJECTIVES[oid]['title']}
     if it['type'] != 'single':
         out['type'] = it['type']
         if it['type'] == 'multi':
@@ -274,34 +279,38 @@ def register(app, db, deps):
         if not is_staff():
             abort(403)
         a, b = alignment(), baseline()
-        exam = request.args.get('exam') if request.args.get('exam') in EXAMS else None
+        t_objs, t_sum, t_bef = tech_coverage_rows(bank())
+        all_obj_rows = dict(a['objectives'], **t_objs)
+        all_sum = dict(a['summary'], T=t_sum)
+        all_bef = dict(b['summary'], T=t_bef)
+        exam = request.args.get('exam') if request.args.get('exam') in ALL_EXAMS else None
         status = request.args.get('status') if request.args.get('status') in ('covered', 'partial', 'gap') else None
         rows = []
-        for oid, v in a['objectives'].items():
-            o = OBJECTIVES[oid]
+        for oid, v in all_obj_rows.items():
+            o = ALL_OBJECTIVES[oid]
             if exam and o['exam'] != exam:
                 continue
             if status and v['status'] != status:
                 continue
-            rows.append({'oid': oid, 'o': o, 'v': v, 'before': b['status'].get(oid), 'lessons': lesson_links(v['lessons'], limit=6)})
+            rows.append({'oid': oid, 'o': o, 'v': v, 'before': b['status'].get(oid, 'covered'), 'lessons': lesson_links(v['lessons'], limit=6)})
         rows.sort(key=lambda r: sort_key(r['oid']))
-        return render_template('cert_coverage.html', rows=rows, exams=EXAMS, domains=DOMAINS, summary=a['summary'],
-                               before=b['summary'], disclaimer=DISCLAIMER, exam=exam, status=status)
+        return render_template('cert_coverage.html', rows=rows, exams=ALL_EXAMS, domains=ALL_DOMAINS, summary=all_sum,
+                               before=all_bef, disclaimer=DISCLAIMER, exam=exam, status=status)
 
     # ------------------------------------------------------------------------------ practice exams
     @login_required
     def practice_index():
         recent = (PracticeAttempt.query.filter_by(user_id=current_user.id)
                   .order_by(PracticeAttempt.started_at.desc()).limit(10).all())
-        return render_template('practice_index.html', exams=EXAMS, domains=DOMAINS, recent=recent, label=PRACTICE_LABEL,
+        return render_template('practice_index.html', exams=ALL_EXAMS, domains=ALL_DOMAINS, recent=recent, label=PRACTICE_LABEL,
                                disclaimer=DISCLAIMER, full_len=FULL_LENGTH, drill_len=DRILL_LENGTH,
-                               pools={ex: sum(len(v) for v in pool(ex).values()) for ex in EXAMS})
+                               pools={ex: sum(len(v) for v in pool(ex).values()) for ex in ALL_EXAMS})
 
     @login_required
     def practice_start():
         exam = request.form.get('exam')
         domain = request.form.get('domain') or None
-        if exam not in EXAMS or (domain and domain not in {d for d, _n, _w in DOMAINS[exam]}):
+        if exam not in ALL_EXAMS or (domain and domain not in {d for d, _n, _w in ALL_DOMAINS[exam]}):
             abort(400)
         chosen = draw(exam, domain)
         if not chosen:
@@ -322,9 +331,9 @@ def register(app, db, deps):
         return att
 
     def _title(att):
-        base = f'{EXAMS[att.exam]["name"]} ({EXAMS[att.exam]["code"]})'
+        base = f'{ALL_EXAMS[att.exam]["name"]} ({ALL_EXAMS[att.exam]["code"]})'
         if att.domain:
-            name = {d: n for d, n, _w in DOMAINS[att.exam]}[att.domain]
+            name = {d: n for d, n, _w in ALL_DOMAINS[att.exam]}[att.domain]
             return f'{base} — domain {att.domain} {name} drill'
         return f'{base} — full practice'
 
@@ -380,8 +389,8 @@ def register(app, db, deps):
                 d['missed'][oid] += 1
             review.append({'n': i + 1, 'text': it['text'], 'ok': ok, 'oid': oid, 'type': it['type'],
                            'yours': display_answer(it, answers.get(str(i))), 'key': display_key(it), 'why': it['explanation']})
-        names = {d: n for d, n, _w in DOMAINS[att.exam]}
-        weights = {d: w for d, _n, w in DOMAINS[att.exam]}
+        names = {d: n for d, n, _w in ALL_DOMAINS[att.exam]}
+        weights = {d: w for d, _n, w in ALL_DOMAINS[att.exam]}
         domains = []
         for dom in sorted(by_dom, key=lambda d: float(d)):
             d = by_dom[dom]
@@ -392,7 +401,7 @@ def register(app, db, deps):
                             'pct': round(100 * d['correct'] / d['total']) if d['total'] else 0, 'missed': missed})
         pct = round(100 * (att.correct or 0) / att.total) if att.total else 0
         return render_template('practice_result.html', att=att, title=_title(att), domains=domains, review=review, pct=pct,
-                               exam=EXAMS[att.exam], label=PRACTICE_LABEL, disclaimer=DISCLAIMER)
+                               exam=ALL_EXAMS[att.exam], label=PRACTICE_LABEL, disclaimer=DISCLAIMER)
 
     for rule, ep, fn, methods in (
         ('/staff/cert-coverage', 'cert_coverage', cert_coverage, ['GET']),

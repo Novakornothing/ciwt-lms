@@ -498,16 +498,26 @@ for _ex, _rows in (('A1', _A1), ('A2', _A2), ('N', _N)):
         }
 
 
+from .tech_plus import TECH_DOMAINS, TECH_EXAM, TECH_OBJECTIVES  # noqa: E402
+
+ALL_EXAMS = dict(EXAMS, T=TECH_EXAM)
+ALL_DOMAINS = dict(DOMAINS, T=TECH_DOMAINS)
+ALL_OBJECTIVES = dict(OBJECTIVES, **TECH_OBJECTIVES)
+
+
 def objectives_for(exam):
-    return [(k, v) for k, v in OBJECTIVES.items() if v['exam'] == exam]
+    src = TECH_OBJECTIVES if exam == 'T' else OBJECTIVES
+    return [(k, v) for k, v in src.items() if v['exam'] == exam]
 
 
 def sort_key(oid):
     ex, num = oid.split(':')
     a, b = num.split('.')
-    return (list(EXAMS).index(ex), int(a), int(b))
+    order = list(ALL_EXAMS) if ex in ALL_EXAMS else list(EXAMS)
+    return (order.index(ex) if ex in order else 99, int(a), int(b))
 
 
 def label(oid):
     ex, num = oid.split(':')
-    return f'{EXAMS[ex]["short"]} {num}'
+    meta = ALL_EXAMS.get(ex) or EXAMS[ex]
+    return f'{meta["short"]} {num}'

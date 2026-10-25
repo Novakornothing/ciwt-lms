@@ -40,7 +40,7 @@ app = Flask(__name__, instance_path=os.environ.get('CIWT_INSTANCE_DIR') or None)
 
 # ---- Product name: change it here (or set the SITE_NAME / SITE_TAGLINE env vars). Used in every
 # page <title>, the header wordmark, the footer, the sign-in page and site_email_subject().
-SITE_NAME = os.environ.get('SITE_NAME', 'Novak Learning')
+SITE_NAME = os.environ.get('SITE_NAME', 'Novak LMS™')
 SITE_TAGLINE = os.environ.get('SITE_TAGLINE', 'Info Systems Training')
 app.config['SITE_NAME'] = SITE_NAME
 
@@ -1527,8 +1527,19 @@ def landing_preview():
     return render_template('landing.html')
 
 
+@app.before_request
+def _redirect_legacy_host():
+    if app.config.get('TESTING'):
+        return None
+    host = (request.host or '').split(':')[0].lower()
+    if host in ('ciwt-lms.onrender.com', 'ciwt.novakornothing.com'):
+        qs = ('?' + request.query_string.decode('utf-8', 'ignore')) if request.query_string else ''
+        return redirect('https://novak-lms.onrender.com' + request.path + qs, code=301)
+    return None
+
+
 def _lms_host():
-    """Apex/www of novakornothing.com = marketing page. Render and ciwt = LMS."""
+    """Apex/www of novakornothing.com = marketing page. Render and lms = LMS."""
     host = (request.host or "").split(":")[0].lower()
     if host in ("novakornothing.com", "www.novakornothing.com"):
         return False

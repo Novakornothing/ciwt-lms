@@ -135,6 +135,33 @@ SIMS = [
                 _p('NTFS entry for BUILTIN\\Users', 'Remove the entry', ['Set it to Modify', 'Add Deny Read', 'Leave it as RX'])],
          explanation='The most restrictive of share and NTFS permissions wins. Share Change/Full lets NTFS decide; Finance '
                      'gets Modify, and removing Users (rather than a Deny that could hit Finance members) blocks everyone else.'),
+    # ------------------------------------------------------------------ Tech+ FC0-U71
+    dict(id='SIM-T-1', obj='IT-8.1', oid='T:3.1', text='A user on a shared Windows 11 workstation reports their system is sluggish and '
+         'cannot save files to the D: data volume. Inspect the workstation and choose the remediation steps.',
+         tabs=[_t('Workstation terminal', 'terminal', commands={
+             'systeminfo': 'OS Name: Microsoft Windows 11 Education\nTotal Physical Memory: 16,384 MB\nAvailable Physical Memory: 410 MB',
+             'tasklist': 'Image Name          PID   Mem Usage\nrender_preview.exe  4812  12,480,000 K\nexplorer.exe        2104     118,000 K',
+             'fsutil volume diskfree D:': 'Total free bytes        : 0 (0.0 MB)\nTotal bytes             : 34,359,738,368 (32.0 GB)'}),
+               _t('Disk & Startup inspector', 'inspector', text='Volume D: (NTFS) — 100% full (C:\\Temp_Captures redirected to D:\\Scratch)\nStartup impact: render_preview.exe (High, runaway background loop)')],
+         parts=[_p('Runaway memory process to stop', 'render_preview.exe (PID 4812)', ['explorer.exe shell (PID 2104)', 'Windows Boot Manager service', 'NTFS volume shadow service']),
+                _p('Why saves to D: fail', 'Volume D: has 0 bytes free', ['Volume D: is formatted ext4', 'RAM is below 64 GB minimum', 'User lacks read permission']),
+                _p('Preventive fix', 'Disable runaway app & clear D:\\Scratch', ['Reformat C: system volume as FAT32', 'Disable Windows Defender real-time', 'Set system paging file to 0 MB max'])],
+         explanation='tasklist shows render_preview.exe consuming over 12 GB of RAM, and fsutil shows 0 bytes free on D:. '
+                     'Stopping/disabling the runaway startup process and clearing D:\\Scratch restores both performance and saves.'),
+    dict(id='SIM-T-2', obj='IT-10.2', oid='T:6.1', text='An office manager needs a secure wireless network for staff laptops and a '
+         'separate guest network that cannot reach internal accounting servers. Review the router settings and complete the setup.',
+         tabs=[_t('Router Wi-Fi inspector', 'inspector', text='SSID 1: Novak-Staff · Security: Open (none) · VLAN 10 (10.10.10.0/24)\n'
+                                                             'SSID 2: Novak-Guest · Security: WPA2-PSK · VLAN 10 (bridged to internal LAN)\n'
+                                                             'Admin portal: http://10.10.10.1 (default password: admin)'),
+               _t('Security policy', 'topology', nodes=[
+                   ('Staff Wi-Fi', 'Must use modern personal encryption + strong passphrase on internal VLAN 10'),
+                   ('Guest Wi-Fi', 'Must be isolated from VLAN 10 accounting servers (client isolation / guest VLAN)'),
+                   ('Router Admin', 'Must require a unique strong admin password and MFA where supported')])],
+         parts=[_p('Encryption for Novak-Staff', 'WPA3-Personal (SAE)', ['Open with MAC filter', 'WEP 64-bit shared key', 'Disable SSID broadcast']),
+                _p('Isolation for Novak-Guest', 'Enable guest VLAN + client isolation', ['Bridge guest clients onto VLAN 10', 'Assign static IPs on staff VLAN 10', 'Turn off DHCP server on VLAN 10']),
+                _p('Router management hardening', 'Change default admin password', ['Leave admin/admin on internal LAN', 'Enable WAN Telnet access on TCP 23', 'Share admin login with guest users'])],
+         explanation='Staff Wi-Fi requires WPA3-Personal (or WPA2/WPA3), guest Wi-Fi must be segmented on an isolated VLAN '
+                     'with client isolation so guests cannot reach internal servers, and default router credentials must be changed.'),
 ]
 
 

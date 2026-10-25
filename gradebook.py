@@ -499,7 +499,7 @@ def register(app, db, deps):
         G = getattr(es, 'Grade', None) if es else None
         if G is None:
             return {}
-        from curriculum_v2.cert.exams import EXAMS
+        from curriculum_v2.cert.exams import ALL_EXAMS as EXAMS
         q = G.query.filter_by(section_id=section.id)
         if uids is not None:
             q = q.filter(G.user_id.in_(list(uids) or [0]))

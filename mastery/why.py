@@ -63,7 +63,7 @@ def exam_sim_signal(db, section, user):
         return None
     import json as _json
     from curriculum_v2.cert import exam_sim as ES
-    from curriculum_v2.cert.exams import DOMAINS, EXAMS
+    from curriculum_v2.cert.exams import ALL_DOMAINS as DOMAINS, ALL_EXAMS as EXAMS
     names = {dd: n for dd, n, _w in DOMAINS[att.exam]}
     doms = []
     for dom, ct in (_json.loads(att.domains or '{}') or {}).items():

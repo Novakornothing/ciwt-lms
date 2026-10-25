@@ -381,9 +381,13 @@ def test_mastery_why_and_portfolio_integration(student, instructor, app, mod):
 # ------------------------------------------------------------------ Option B pass 6
 def test_sim_pbqs_map_to_curated_course_objectives():
     from curriculum_v2.cert.mapping import CURATED
-    assert len(SIM.SIMS) == 9
+    from curriculum_v2.cert.tech_plus import TECH_OBJECTIVES
+    assert len(SIM.SIMS) == 11
     for s in SIM.SIMS:
-        assert s['oid'] in CURATED.get(s['obj'], ()), s['id']
+        if s['oid'].startswith('T:'):
+            assert s['obj'] in TECH_OBJECTIVES[s['oid']]['course_objs'], s['id']
+        else:
+            assert s['oid'] in CURATED.get(s['obj'], ()), s['id']
     for it in SIM.items():
         assert it['obj'] in CURATED and it['raw']['obj'] == it['obj']
 
@@ -451,7 +455,7 @@ def test_outcomes_exam_sim_metrics(student, instructor, admin, app, mod):
     a2 = next(x for x in es['exams'] if x['exam'] == 'A2')
     assert a2['attempts'] >= 1 and a2['candidates'] == 1 and a2['voucher_ready'] == 1
     assert a2['voucher_ready_pct'] == 100.0 and a2['mean_score'] == 900
-    assert {x['exam'] for x in es['exams']} == {'A1', 'A2', 'N'} and es['overall']['attempts'] >= 1
+    assert {'A1', 'A2', 'N'} <= {x['exam'] for x in es['exams']} and es['overall']['attempts'] >= 1
     html = instructor.get('/instructor/section/1/outcomes').get_data(as_text=True)
     assert 'Exam-Day Simulator &amp; Voucher Readiness' in html and 'id="ocExamSim"' in html
     assert admin.get('/admin/outcomes').status_code == 200

@@ -54,7 +54,7 @@ def register(app, db, d):
         if ESA is None:
             return []
         from curriculum_v2.cert import exam_sim as ES
-        from curriculum_v2.cert.exams import EXAMS
+        from curriculum_v2.cert.exams import ALL_EXAMS as EXAMS
         rows = ESA.query.filter(ESA.user_id == user.id, ESA.submitted_at.isnot(None)).order_by(ESA.submitted_at.desc()).all()
         out = []
         for ex in EXAMS:
@@ -64,7 +64,7 @@ def register(app, db, d):
             ready = [r for r in mine if r.badge == 'ready']
             r = max(ready, key=lambda x: (x.score or 0, x.submitted_at)) if ready else mine[0]
             out.append({'exam': ex, 'code': EXAMS[ex]['code'], 'name': EXAMS[ex]['name'], 'score': r.score,
-                        'bar': ES.PASS_SCORE[ex], 'ready': r.badge == 'ready',
+                        'bar': ES.PASS_SCORE.get(ex, 650), 'ready': r.badge == 'ready',
                         'status': ES.VOUCHER_STATUS.get(r.badge, 'REMEDIATION REQUIRED'),
                         'date': str(r.submitted_at)[:10], 'mode': ('Exam mode' if r.strict else 'Practice mode') + ' · '
                         + ES.MODES.get(r.mode, {}).get('name', r.mode)})

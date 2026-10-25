@@ -23,7 +23,7 @@ from flask_login import current_user, login_required
 
 from . import practice as P
 from . import sim_pbq
-from .exams import DISCLAIMER, DOMAINS, EXAMS, OBJECTIVES, label, sort_key
+from .exams import ALL_DOMAINS as DOMAINS, ALL_EXAMS as EXAMS, ALL_OBJECTIVES as OBJECTIVES, DISCLAIMER, label, sort_key
 
 REVIEW = 'Pending SME review'
 PASS_SCORE = {'A1': 675, 'A2': 700, 'N': 720}
@@ -66,7 +66,7 @@ def scaled(correct, total):
 
 
 def readiness(score, exam, domain_pcts):
-    bar = PASS_SCORE[exam]
+    bar = PASS_SCORE.get(exam, 650)
     if score >= bar and all(p >= DOMAIN_FLOOR for p in domain_pcts):
         return 'ready'
     if score >= bar - BORDERLINE_BAND:
@@ -255,7 +255,7 @@ def register(app, db, deps):
         from curriculum_v2 import ladder as LD
         lad = LD.ladder()
         out = []
-        refs = list(P.alignment()['objectives'].get(oid, {}).get('lessons', []))
+        refs = list((P.alignment()['objectives'].get(oid) or OBJECTIVES.get(oid) or {}).get('lessons', []))
         if course_obj:
             # the lesson whose ladder actually teaches the mapped course objective goes first, even when the
             # alignment's lesson list for this exam objective does not name it (pass 7 audit: SIM-N-2, SIM-A2-1)
@@ -399,7 +399,7 @@ def register(app, db, deps):
         past = (ExamSimAttempt.query.filter_by(user_id=current_user.id, section_id=sec.id)
                 .order_by(ExamSimAttempt.id.desc()).limit(10).all())
         mult = multiplier(sec.id, current_user.id)
-        return render_template('exam_sim/home.html', section=sec, exams=EXAMS, modes=MODES, pass_score=PASS_SCORE,
+        return render_template('exam_sim/home.html', section=sec, exams=EXAMS, modes=MODES, pass_score=dict(PASS_SCORE, T=650),
                                mult=mult, mult_label=ACCOMMODATIONS.get(mult), minutes_for=minutes_for,
                                default_exam=default_exam(sec), past=past, badges=BADGES, disclaimer=DISCLAIMER,
                                review=REVIEW)
@@ -470,7 +470,7 @@ def register(app, db, deps):
         mult = multiplier(sec.id, att.user_id)
         return render_template('exam_sim/take.html', section=sec, att=att, questions=questions,
                                pre='_pre' in m, mult=mult, minutes=minutes_for(att.mode, mult),
-                               mult_label=ACCOMMODATIONS.get(mult), rules=CANDIDATE_RULES, bar=PASS_SCORE[att.exam],
+                               mult_label=ACCOMMODATIONS.get(mult), rules=CANDIDATE_RULES, bar=PASS_SCORE.get(att.exam, 650),
                                remaining=remaining_of(att, now), paused='_pause' in m and not att.strict,
                                whiteboard=m.get('_wb', ''), exam=EXAMS[att.exam], mode=MODES[att.mode],
                                n_pbq=sum(1 for q in questions if q['pbq']))
@@ -586,7 +586,7 @@ def register(app, db, deps):
         return render_template('exam_sim/result.html', section=sec, att=att, domains=domains, review=review,
                                candidate=db.session.get(User, att.user_id), codes=codes, status=status,
                                staff_view=att.user_id != current_user.id,
-                               exam=EXAMS[att.exam], mode=MODES[att.mode], bar=PASS_SCORE[att.exam],
+                               exam=EXAMS[att.exam], mode=MODES[att.mode], bar=PASS_SCORE.get(att.exam, 650),
                                badge=BADGES[att.badge or 'remediate'], disclaimer=DISCLAIMER, review_tag=REVIEW)
 
     # ------------------------------------------------------------------ instructor
@@ -618,7 +618,7 @@ def register(app, db, deps):
                                students=students, acc=acc, accommodations=ACCOMMODATIONS, can_grade=can_grade(sec),
                                last_sync=synced.synced_at if synced else None, minutes_for=minutes_for,
                                exams=EXAMS, modes=MODES, badges=BADGES, counts=counts, weak=weak_rows,
-                               pass_score=PASS_SCORE, disclaimer=DISCLAIMER)
+                               pass_score=dict(PASS_SCORE, T=650), disclaimer=DISCLAIMER)
 
     def staff_section(section_id):
         sec = db.get_or_404(ClassSection, section_id)
@@ -655,7 +655,7 @@ def register(app, db, deps):
             u = users.get(r.user_id)
             w.writerow([u.full_name if u else r.user_id, u.email if u else '', EXAMS[r.exam]['short'], EXAMS[r.exam]['code'],
                         MODES.get(r.mode, {}).get('name', r.mode), 'exam' if r.strict else 'practice', r.score,
-                        PASS_SCORE[r.exam], VOUCHER_STATUS.get(r.badge, ''), r.correct, r.total,
+                        PASS_SCORE.get(r.exam, 650), VOUCHER_STATUS.get(r.badge, ''), r.correct, r.total,
                         r.submitted_at.strftime('%Y-%m-%d %H:%M'), 'yes' if latest.get((r.user_id, r.exam)) is r else '',
                         acc.get(r.user_id, 1.0)])
         audit('exam_sim_export', f'section {sec.id}: {len(rows)} rows')
@@ -678,7 +678,7 @@ def register(app, db, deps):
             g.attempt_id, g.score, g.status, g.synced_at = r.id, r.score, VOUCHER_STATUS.get(r.badge, ''), now
             g.pct = round(max(0, (r.score or 100) - 100) / 8, 1)
             db.session.add(g)
-            by_exam.setdefault(ex, {})[uid] = (r.score, f'{VOUCHER_STATUS.get(r.badge, "")} · pass bar {PASS_SCORE[ex]} (simulated)')
+            by_exam.setdefault(ex, {})[uid] = (r.score, f'{VOUCHER_STATUS.get(r.badge, "")} · pass bar {PASS_SCORE.get(ex, 650)} (simulated)')
         db.session.commit()
         msg = f'Synced {len(latest)} latest sitting(s) to the gradebook line items.'
         lti = app.extensions.get('ciwt_lti')

@@ -45,7 +45,7 @@ def _answered(o):
 def exam_sim_summary(app, sids, students):
     """Exam-Day Simulator & voucher readiness (Option B pass 6): per exam and overall. Drill sittings excluded.
     voucher_ready = students whose best sitting reached VOUCHER READY; mean_score = mean of each student's latest."""
-    from curriculum_v2.cert.exams import EXAMS
+    from curriculum_v2.cert.exams import ALL_EXAMS as EXAMS
     es = app.extensions.get('ciwt_exam_sim')
     A = getattr(es, 'Attempt', None) if es else None
     rows = []

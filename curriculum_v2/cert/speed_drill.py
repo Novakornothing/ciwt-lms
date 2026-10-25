@@ -19,7 +19,7 @@ CATEGORIES = {
     'cli': 'CLI Commands (Windows, Linux, Cisco IOS)',
     'acronyms': 'Acronyms & Security/Cloud Concepts',
 }
-EXAM_CODES = {'A1': '220-1201', 'A2': '220-1202', 'N': 'N10-009'}
+EXAM_CODES = {'T': 'FC0-U71', 'A1': '220-1201', 'A2': '220-1202', 'N': 'N10-009'}
 BLITZ_SECONDS = 60
 BALANCE = 1.15
 
@@ -82,8 +82,11 @@ _RAW = [
 def _cards():
     out = []
     for n, (cat, exams, front, back) in enumerate(_RAW, 1):
-        out.append({'id': f'SD-{n:03d}', 'cat': cat, 'exams': exams.split(), 'front': front, 'back': back,
-                    'codes': [EXAM_CODES[e] for e in exams.split()], 'review': REVIEW})
+        exs = exams.split()
+        if ('A1' in exs or 'A2' in exs) and 'T' not in exs:
+            exs = ['T'] + exs
+        out.append({'id': f'SD-{n:03d}', 'cat': cat, 'exams': exs, 'front': front, 'back': back,
+                    'codes': [EXAM_CODES[e] for e in exs], 'review': REVIEW})
     return out
 
 
