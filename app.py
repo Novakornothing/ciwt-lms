@@ -1949,6 +1949,8 @@ def sync_pilot_slice():
         n += 1
     if n:
         db.session.commit()
+    from curriculum_v2.depth_wave1 import ensure_wave1_db_assessments
+    ensure_wave1_db_assessments(db, Course, Module, Quiz, KnowledgeTest, TestAttempt)
     return n
 
 
@@ -7140,6 +7142,8 @@ def sync_curriculum():
         if changed:
             qz.questions = json.dumps(items)
     db.session.commit()
+    from curriculum_v2.lesson_visuals import apply_lesson_visuals
+    apply_lesson_visuals(db, Course, Module, Lesson)
     _ensure_gold_path_releases()
     return True
 
@@ -7767,7 +7771,7 @@ def _ensure_section_access_table():
 
 _ensure_section_access_table()
 
-if not app.config.get('TESTING') and (
+if not app.config.get('TESTING') and os.environ.get('SECRET_KEY') != 'test' and (
     os.environ.get('CIWT_ALLOW_REAL_DB') == '1'
     or os.environ.get('RENDER')
     or os.environ.get('CIWT_RICH_DEMO') == '1'

@@ -3427,6 +3427,7 @@
    "lessons": [
     "ITSUP 4.1",
     "ITSUP 4.2",
+    "NETOPS 5.3",
     "ITSUP 4.4"
    ],
    "status": "covered",
@@ -3458,10 +3459,15 @@
    "lessons": [
     "ITSUP 5.2",
     "NETOPS 1.3",
-    "ITSUP 9.3",
     "NETOPS 1.1",
+    "NETOPS 5.3",
+    "ITSUP 5.1",
     "NETOPS 4.2",
-    "NETOPS 5.2"
+    "NETOPS 5.2",
+    "NETOPS 1.4",
+    "NETOPS 4.3",
+    "ITSUP 9.3",
+    "NETOPS 1.2"
    ],
    "status": "covered",
    "title": "Compare and contrast Transmission Control Protocol (TCP) and User Datagram Protocol (UDP) ports, protocols, and their purposes.",
@@ -3489,8 +3495,8 @@
    "lessons": [
     "NETOPS 3.3",
     "ITSUP 5.4",
-    "NETOPS 2.3",
-    "NETOPS 3.4"
+    "NETOPS 3.4",
+    "NETOPS 2.3"
    ],
    "status": "covered",
    "title": "Explain wireless networking technologies.",
@@ -3504,7 +3510,7 @@
   "A1:2.3": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.75,
+   "content_ratio": 0.875,
    "items": [
     "Q5.6",
     "X-IT-5.2.3",
@@ -3524,6 +3530,8 @@
    "lessons": [
     "ITSUP 5.2",
     "NETOPS 5.3",
+    "NETOPS 1.3",
+    "NETOPS 4.3",
     "ITSUP 5.1",
     "ITSUP 5.3",
     "ITSUP 5.5"
@@ -3532,9 +3540,7 @@
    "title": "Summarize services provided by networked hosts.",
    "topics_missing": [
     "Print server",
-    "Syslog",
-    "UTM",
-    "Load balancer"
+    "UTM"
    ],
    "weight": 2.88
   },
@@ -3570,16 +3576,18 @@
     "NETOPS 4.2",
     "ITSUP 1.1",
     "ITSUP 7.3",
+    "NETOPS 1.2",
     "NETOPS 4.1",
+    "NETOPS 4.4",
     "ITSUP 4.2",
     "NETOPS 5.2",
+    "NETOPS 5.3",
     "NETOPS 6.1",
     "NETOPS 6.3",
     "ITSUP 5.1",
     "ITSUP 5.3",
     "NETOPS 4.3",
-    "ITSUP 5.5",
-    "NETOPS 4.4"
+    "ITSUP 5.5"
    ],
    "status": "covered",
    "title": "Explain common network configuration concepts.",
@@ -3614,8 +3622,15 @@
    "lessons": [
     "ITSUP 5.3",
     "NETOPS 2.3",
+    "NETOPS 1.1",
+    "NETOPS 2.4",
+    "NETOPS 3.2",
+    "NETOPS 6.1",
+    "NETOPS 1.4",
+    "NETOPS 2.2",
     "NETOPS 4.3",
     "NETOPS 5.3",
+    "NETOPS 5.4",
     "ITSUP 5.1",
     "ITSUP 5.4",
     "ITSUP 5.2",
@@ -3662,22 +3677,31 @@
     "ITSUP 5.1",
     "NETOPS 1.2",
     "NETOPS 4.1",
+    "NETOPS 4.3",
+    "NETOPS 4.4",
     "ITSUP 5.3",
     "ITSUP 5.5",
+    "NETOPS 2.2",
+    "NETOPS 3.1",
+    "NETOPS 3.2",
+    "NETOPS 6.3",
     "ITSUP 13.2",
     "ITSUP 13.3",
     "NETOPS 1.1",
-    "NETOPS 3.2",
-    "NETOPS 4.3",
+    "NETOPS 1.4",
+    "NETOPS 6.4",
     "ITSUP 1.3",
     "ITSUP 5.2",
     "ITSUP 7.2",
-    "NETOPS 1.4",
-    "NETOPS 3.1",
-    "NETOPS 4.4",
+    "NETOPS 2.1",
+    "NETOPS 2.4",
+    "NETOPS 5.2",
     "NETOPS 5.3",
+    "NETOPS 5.4",
     "NETOPS 6.1",
-    "NETOPS 6.3"
+    "NETOPS 9.2",
+    "NETOPS 9.5",
+    "NETOPS 1.3"
    ],
    "status": "covered",
    "title": "Given a scenario, configure basic wired/wireless small office/home office (SOHO) networks.",
@@ -3687,7 +3711,7 @@
   "A1:2.7": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.833,
+   "content_ratio": 0.917,
    "items": [
     "C-A1-2.7-1",
     "C-A1-2.7-2",
@@ -3713,12 +3737,12 @@
     "NETOPS 2.3",
     "ITSUP 5.3",
     "NETOPS 4.3",
+    "NETOPS 3.1",
     "NETOPS 3.3"
    ],
    "status": "covered",
    "title": "Compare and contrast internet connection types, network types, and their characteristics.",
    "topics_missing": [
-    "PAN",
     "MAN"
    ],
    "weight": 2.88
@@ -3740,6 +3764,7 @@
    "labs": [],
    "lessons": [
     "ITSUP 5.3",
+    "NETOPS 6.1",
     "NETOPS 2.3"
    ],
    "status": "covered",
@@ -3798,7 +3823,8 @@
     "ITSUP 3.4",
     "NETOPS 2.3",
     "ITSUP 3.1",
-    "ITSUP 3.3"
+    "ITSUP 3.3",
+    "NETOPS 2.1"
    ],
    "status": "covered",
    "title": "Summarize basic cable types and their connectors, features, and purposes.",
@@ -3824,8 +3850,9 @@
    ],
    "lessons": [
     "ITSUP 2.4",
-    "ITSUP 4.1",
     "ITSUP 2.1",
+    "ITSUP 3.1",
+    "ITSUP 4.1",
     "ITSUP 2.6"
    ],
    "status": "covered",
@@ -3867,8 +3894,8 @@
     "ITSUP 3.1",
     "ITSUP 2.3",
     "ITSUP 3.3",
-    "ITSUP 2.5",
-    "ITSUP 2.1"
+    "ITSUP 2.1",
+    "ITSUP 2.5"
    ],
    "status": "covered",
    "title": "Compare and contrast storage devices.",
@@ -3908,8 +3935,8 @@
    ],
    "lessons": [
     "ITSUP 2.3",
-    "ITSUP 3.3",
     "ITSUP 3.1",
+    "ITSUP 3.3",
     "ITSUP 2.1",
     "ITSUP 2.5",
     "ITSUP 2.2"
@@ -3936,8 +3963,8 @@
    "labs": [],
    "lessons": [
     "ITSUP 3.3",
-    "ITSUP 2.3",
-    "ITSUP 3.1"
+    "ITSUP 3.1",
+    "ITSUP 2.3"
    ],
    "status": "covered",
    "title": "Given a scenario, install the appropriate power supply.",
@@ -3988,6 +4015,7 @@
    "labs": [],
    "lessons": [
     "ITSUP 4.3",
+    "NETOPS 2.3",
     "ITSUP 4.1"
    ],
    "status": "covered",
@@ -3998,7 +4026,7 @@
   "A1:4.1": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.9,
+   "content_ratio": 1.0,
    "items": [
     "A1.48",
     "A2.7",
@@ -4026,13 +4054,13 @@
    "lessons": [
     "ITSUP 6.2",
     "ITSUP 6.1",
-    "ITSUP 5.3"
+    "NETOPS 1.2",
+    "ITSUP 5.3",
+    "NETOPS 1.4"
    ],
    "status": "covered",
    "title": "Explain virtualization concepts.",
-   "topics_missing": [
-    "Test development"
-   ],
+   "topics_missing": [],
    "weight": 5.5
   },
   "A1:4.2": {
@@ -4054,7 +4082,9 @@
    "labs": [],
    "lessons": [
     "ITSUP 6.2",
-    "NETOPS 3.2"
+    "NETOPS 3.2",
+    "NETOPS 2.1",
+    "NETOPS 5.1"
    ],
    "status": "covered",
    "title": "Summarize cloud computing concepts.",
@@ -4088,7 +4118,8 @@
     "ITSUP 2.4",
     "ITSUP 3.5",
     "ITSUP 2.3",
-    "ITSUP 2.5"
+    "ITSUP 2.5",
+    "ITSUP 3.1"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot motherboards, RAM, CPUs, and power.",
@@ -4218,9 +4249,16 @@
     "gui-renew"
    ],
    "lessons": [
-    "NETOPS 2.1",
+    "NETOPS 1.1",
     "NETOPS 6.1",
+    "NETOPS 1.3",
+    "NETOPS 2.1",
+    "NETOPS 4.3",
+    "NETOPS 5.3",
     "ITSUP 7.2",
+    "NETOPS 2.3",
+    "NETOPS 3.2",
+    "NETOPS 5.1",
     "ITSUP 3.4",
     "ITSUP 5.1",
     "ITSUP 5.3",
@@ -4228,14 +4266,13 @@
     "ITSUP 6.3",
     "ITSUP 7.4",
     "ITSUP 13.3",
-    "NETOPS 1.1",
-    "NETOPS 1.3",
-    "NETOPS 2.3",
-    "NETOPS 3.2",
+    "NETOPS 1.2",
+    "NETOPS 1.4",
+    "NETOPS 2.4",
     "NETOPS 3.3",
-    "NETOPS 4.3",
-    "NETOPS 5.1",
-    "NETOPS 5.3",
+    "NETOPS 3.4",
+    "NETOPS 4.1",
+    "NETOPS 4.4",
     "NETOPS 6.3",
     "ITSUP 5.5",
     "ITSUP 7.1",
@@ -4320,9 +4357,9 @@
     "ITSUP 8.1",
     "ITSUP 9.4",
     "ITSUP 9.2",
+    "ITSUP 8.2",
     "ITSUP 9.1",
-    "ITSUP 9.3",
-    "ITSUP 8.2"
+    "ITSUP 9.3"
    ],
    "status": "covered",
    "title": "Explain common operating system (OS) types and their purposes.",
@@ -4349,6 +4386,8 @@
     "ITSUP 8.1",
     "ITSUP 11.1",
     "ITSUP 6.1",
+    "NETOPS 1.1",
+    "NETOPS 6.3",
     "ITSUP 8.3"
    ],
    "status": "covered",
@@ -4409,9 +4448,9 @@
     "ITSUP 8.4",
     "ITSUP 3.1",
     "ITSUP 11.1",
+    "ITSUP 8.2",
     "ITSUP 11.3",
-    "ITSUP 8.3",
-    "ITSUP 8.2"
+    "ITSUP 8.3"
    ],
    "status": "covered",
    "title": "Given a scenario, perform OS installations and upgrades in a diverse environment.",
@@ -4446,8 +4485,11 @@
     "ITSUP 6.1",
     "ITSUP 10.3",
     "ITSUP 11.3",
-    "ITSUP 8.4",
     "ITSUP 8.2",
+    "NETOPS 4.1",
+    "NETOPS 4.3",
+    "NETOPS 5.3",
+    "ITSUP 8.4",
     "ITSUP 8.3"
    ],
    "status": "covered",
@@ -4491,12 +4533,12 @@
     "ITSUP 13.5",
     "ITSUP 11.1",
     "ITSUP 11.4",
-    "ITSUP 8.3",
     "ITSUP 8.2",
+    "ITSUP 8.3",
     "ITSUP 11.2",
     "ITSUP 2.3",
-    "ITSUP 2.6",
     "ITSUP 8.1",
+    "ITSUP 2.6",
     "ITSUP 8.4",
     "ITSUP 13.6"
    ],
@@ -4682,28 +4724,34 @@
     "ITSUP 13.5",
     "NETOPS 5.3",
     "ITSUP 13.2",
+    "NETOPS 1.4",
+    "NETOPS 3.1",
+    "NETOPS 4.3",
+    "NETOPS 4.4",
     "ITSUP 5.3",
+    "NETOPS 1.2",
+    "NETOPS 3.2",
+    "NETOPS 4.1",
+    "NETOPS 5.2",
     "ITSUP 1.1",
     "ITSUP 4.2",
+    "ITSUP 5.1",
     "ITSUP 5.2",
     "ITSUP 7.2",
     "ITSUP 10.2",
     "ITSUP 13.3",
+    "NETOPS 1.1",
+    "NETOPS 2.1",
+    "NETOPS 2.2",
     "NETOPS 2.3",
-    "NETOPS 3.2",
-    "NETOPS 4.3",
     "NETOPS 6.1",
     "ITSUP 1.3",
-    "ITSUP 5.1",
     "ITSUP 5.5",
     "ITSUP 8.2",
     "ITSUP 9.3",
     "ITSUP 12.1",
-    "NETOPS 2.1",
-    "NETOPS 3.1",
-    "NETOPS 4.1",
-    "NETOPS 4.4",
-    "NETOPS 5.2",
+    "NETOPS 1.3",
+    "NETOPS 6.3",
     "ITSUP 13.1",
     "ITSUP 13.4",
     "ITSUP 13.6",
@@ -4902,8 +4950,11 @@
    ],
    "lessons": [
     "ITSUP 10.2",
+    "NETOPS 4.3",
     "NETOPS 5.3",
-    "ITSUP 4.2"
+    "ITSUP 4.2",
+    "NETOPS 4.2",
+    "ITSUP 10.1"
    ],
    "status": "covered",
    "title": "Given a scenario, configure relevant security settings in a browser.",
@@ -4915,7 +4966,7 @@
   "A2:2.2": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.87,
+   "content_ratio": 0.913,
    "items": [
     "A1.33",
     "A1.41",
@@ -4957,8 +5008,8 @@
    ],
    "lessons": [
     "ITSUP 8.2",
-    "ITSUP 10.1",
     "ITSUP 8.1",
+    "ITSUP 10.1",
     "ITSUP 9.1",
     "ITSUP 10.3",
     "ITSUP 9.2",
@@ -4970,7 +5021,6 @@
    "status": "covered",
    "title": "Given a scenario, configure and apply basic Microsoft Windows OS security settings.",
    "topics_missing": [
-    "NTFS vs. share permissions",
     "Log-in script",
     "Security groups"
    ],
@@ -4979,7 +5029,7 @@
   "A2:2.3": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.875,
+   "content_ratio": 1.0,
    "items": [
     "X-IT-5.4.2",
     "C-A2-2.3-1",
@@ -4996,14 +5046,14 @@
    "lessons": [
     "ITSUP 5.4",
     "NETOPS 3.3",
+    "NETOPS 5.2",
+    "NETOPS 1.3",
     "NETOPS 5.3",
-    "NETOPS 5.2"
+    "ITSUP 10.1"
    ],
    "status": "covered",
    "title": "Compare and contrast wireless security protocols and authentication methods.",
-   "topics_missing": [
-    "Kerberos"
-   ],
+   "topics_missing": [],
    "weight": 2.55
   },
   "A2:2.4": {
@@ -5094,6 +5144,8 @@
     "ITSUP 11.2",
     "ITSUP 11.3",
     "ITSUP 12.2",
+    "NETOPS 5.1",
+    "NETOPS 5.3",
     "ITSUP 10.3"
    ],
    "status": "covered",
@@ -5122,6 +5174,7 @@
    "lessons": [
     "ITSUP 10.3",
     "ITSUP 10.1",
+    "NETOPS 5.2",
     "ITSUP 10.2",
     "NETOPS 5.3"
    ],
@@ -5181,18 +5234,22 @@
    ],
    "labs": [],
    "lessons": [
+    "NETOPS 6.3",
     "ITSUP 6.2",
     "ITSUP 10.2",
     "ITSUP 10.3",
+    "ITSUP 11.1",
     "ITSUP 4.1",
     "ITSUP 8.3",
     "ITSUP 9.2",
     "ITSUP 9.4",
-    "ITSUP 11.1",
     "ITSUP 11.3",
     "ITSUP 12.2",
+    "NETOPS 1.1",
     "NETOPS 3.3",
-    "NETOPS 6.3"
+    "NETOPS 4.3",
+    "NETOPS 5.2",
+    "ITSUP 10.1"
    ],
    "status": "covered",
    "title": "Compare and contrast common data destruction and disposal methods.",
@@ -5354,7 +5411,7 @@
   "A2:4.1": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.706,
+   "content_ratio": 0.824,
    "items": [
     "A1.38",
     "A1.49",
@@ -5396,12 +5453,14 @@
    ],
    "lessons": [
     "ITSUP 12.4",
+    "NETOPS 6.3",
     "ITSUP 1.1",
     "ITSUP 8.1",
-    "NETOPS 6.3",
     "ITSUP 3.4",
     "ITSUP 7.3",
     "ITSUP 10.4",
+    "NETOPS 4.3",
+    "NETOPS 5.3",
     "ITSUP 1.2",
     "ITSUP 1.3",
     "ITSUP 2.6",
@@ -5419,9 +5478,7 @@
    "status": "covered",
    "title": "Given a scenario, implement best practices associated with documentation and support systems information management.",
    "topics_missing": [
-    "CMDB",
     "Procurement life cycle",
-    "Assigned users",
     "Incident reports",
     "Custom installation procedure"
    ],
@@ -5486,9 +5543,9 @@
    ],
    "lessons": [
     "ITSUP 12.1",
+    "NETOPS 6.2",
     "ITSUP 1.2",
     "ITSUP 12.4",
-    "NETOPS 6.2",
     "ITSUP 7.4",
     "NETOPS 6.3",
     "ITSUP 1.1",
@@ -5672,6 +5729,8 @@
     "ITSUP 1.4",
     "NETOPS 5.3",
     "NETOPS 1.3",
+    "NETOPS 2.1",
+    "NETOPS 3.3",
     "NETOPS 4.2",
     "NETOPS 6.1",
     "ITSUP 1.1",
@@ -5730,6 +5789,7 @@
    ],
    "lessons": [
     "ITSUP 9.3",
+    "NETOPS 5.3",
     "ITSUP 5.2",
     "NETOPS 1.3",
     "NETOPS 5.2",
@@ -5745,7 +5805,7 @@
   "N:1.1": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.714,
+   "content_ratio": 0.857,
    "items": [
     "N1.0",
     "N1.21",
@@ -5758,14 +5818,13 @@
    ],
    "labs": [],
    "lessons": [
-    "NETOPS 1.1",
-    "NETOPS 1.4"
+    "NETOPS 1.4",
+    "NETOPS 1.1"
    ],
    "status": "covered",
    "title": "Explain concepts related to the Open Systems Interconnection (OSI) reference model.",
    "topics_missing": [
-    "Layer 5 Session",
-    "Layer 6 Presentation"
+    "Layer 5 Session"
    ],
    "weight": 2.88
   },
@@ -5794,14 +5853,25 @@
    ],
    "lessons": [
     "NETOPS 4.3",
-    "NETOPS 5.3",
+    "NETOPS 1.1",
     "NETOPS 6.3",
+    "NETOPS 1.4",
     "NETOPS 3.2",
+    "NETOPS 5.2",
+    "NETOPS 5.3",
+    "NETOPS 6.4",
+    "ITSUP 5.1",
+    "NETOPS 6.1",
     "ITSUP 4.2",
     "ITSUP 5.3",
-    "NETOPS 6.1",
+    "NETOPS 1.3",
+    "NETOPS 2.2",
+    "NETOPS 4.1",
     "NETOPS 4.2",
-    "NETOPS 4.4"
+    "NETOPS 4.4",
+    "NETOPS 5.4",
+    "NETOPS 6.2",
+    "NETOPS 9.1"
    ],
    "status": "covered",
    "title": "Compare and contrast networking appliances, applications, and functions.",
@@ -5835,7 +5905,7 @@
   "N:1.4": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.862,
+   "content_ratio": 1.0,
    "items": [
     "A1.16",
     "A1.19",
@@ -5865,17 +5935,19 @@
     "ITSUP 5.2",
     "NETOPS 5.2",
     "NETOPS 1.1",
+    "NETOPS 4.3",
+    "NETOPS 5.3",
     "ITSUP 5.1",
-    "NETOPS 1.2"
+    "NETOPS 1.2",
+    "NETOPS 1.4",
+    "NETOPS 4.1",
+    "NETOPS 4.2",
+    "NETOPS 5.1",
+    "NETOPS 6.4"
    ],
    "status": "covered",
    "title": "Explain common networking ports, protocols, services, and traffic types.",
-   "topics_missing": [
-    "SQL Server 1433",
-    "SIP 5060/5061",
-    "GRE",
-    "Anycast"
-   ],
+   "topics_missing": [],
    "weight": 2.88
   },
   "N:1.5": {
@@ -5895,7 +5967,9 @@
    "labs": [],
    "lessons": [
     "NETOPS 2.3",
-    "ITSUP 3.4"
+    "ITSUP 3.4",
+    "NETOPS 6.1",
+    "NETOPS 2.1"
    ],
    "status": "covered",
    "title": "Compare and contrast transmission media and transceivers.",
@@ -5920,6 +5994,8 @@
    "lessons": [
     "NETOPS 2.1",
     "NETOPS 3.2",
+    "NETOPS 1.1",
+    "NETOPS 3.1",
     "NETOPS 3.3"
    ],
    "status": "covered",
@@ -5930,7 +6006,7 @@
   "N:1.7": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.714,
+   "content_ratio": 0.857,
    "items": [
     "A1.13",
     "A2.3",
@@ -5954,16 +6030,21 @@
     "linux-vm-web"
    ],
    "lessons": [
-    "ITSUP 5.1",
     "NETOPS 1.2",
+    "ITSUP 5.1",
+    "NETOPS 4.3",
+    "NETOPS 4.4",
     "ITSUP 5.3",
     "ITSUP 5.5",
-    "ITSUP 5.2"
+    "NETOPS 3.2",
+    "NETOPS 4.1",
+    "ITSUP 5.2",
+    "NETOPS 1.1",
+    "NETOPS 1.4"
    ],
    "status": "covered",
    "title": "Given a scenario, use appropriate IPv4 network addressing.",
    "topics_missing": [
-    "VLSM",
     "IPv4 classes"
    ],
    "weight": 2.88
@@ -5987,7 +6068,13 @@
    ],
    "lessons": [
     "NETOPS 3.2",
-    "NETOPS 5.3"
+    "NETOPS 5.3",
+    "NETOPS 2.1",
+    "NETOPS 5.2",
+    "NETOPS 5.4",
+    "NETOPS 1.1",
+    "NETOPS 1.2",
+    "NETOPS 5.1"
    ],
    "status": "covered",
    "title": "Summarize evolving use cases for modern network environments.",
@@ -5997,7 +6084,7 @@
   "N:2.1": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.769,
+   "content_ratio": 1.0,
    "items": [
     "N1.23",
     "N1.6",
@@ -6028,20 +6115,29 @@
    ],
    "lessons": [
     "NETOPS 3.1",
+    "NETOPS 6.4",
     "NETOPS 3.2",
-    "NETOPS 2.1",
-    "NETOPS 2.2",
+    "NETOPS 1.1",
+    "NETOPS 1.2",
+    "NETOPS 1.3",
+    "NETOPS 1.4",
     "NETOPS 4.3",
+    "NETOPS 4.4",
+    "NETOPS 6.3",
     "NETOPS 9.3",
+    "NETOPS 9.5",
+    "NETOPS 5.2",
+    "NETOPS 2.2",
+    "NETOPS 9.1",
+    "NETOPS 9.6",
+    "NETOPS 2.1",
+    "NETOPS 2.3",
+    "NETOPS 4.2",
     "NETOPS 9.4"
    ],
    "status": "covered",
    "title": "Explain characteristics of routing technologies.",
-   "topics_missing": [
-    "EIGRP",
-    "Prefix length",
-    "VIP"
-   ],
+   "topics_missing": [],
    "weight": 5.0
   },
   "N:2.2": {
@@ -6075,12 +6171,23 @@
    ],
    "lessons": [
     "NETOPS 6.1",
-    "NETOPS 2.2",
+    "NETOPS 1.1",
+    "NETOPS 5.1",
     "NETOPS 2.1",
-    "NETOPS 2.3",
-    "NETOPS 9.2",
+    "NETOPS 2.2",
+    "NETOPS 2.4",
     "NETOPS 9.4",
-    "NETOPS 9.5"
+    "NETOPS 1.4",
+    "NETOPS 6.4",
+    "NETOPS 3.2",
+    "NETOPS 5.2",
+    "NETOPS 5.4",
+    "NETOPS 9.1",
+    "NETOPS 9.2",
+    "NETOPS 9.3",
+    "NETOPS 9.5",
+    "NETOPS 2.3",
+    "NETOPS 9.6"
    ],
    "status": "covered",
    "title": "Given a scenario, configure switching technologies and features.",
@@ -6090,7 +6197,7 @@
   "N:2.3": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.933,
+   "content_ratio": 1.0,
    "items": [
     "N1.9",
     "N2.14",
@@ -6108,16 +6215,19 @@
    ],
    "lessons": [
     "NETOPS 3.3",
+    "NETOPS 3.4",
     "ITSUP 5.4",
     "NETOPS 2.3",
+    "NETOPS 3.1",
+    "NETOPS 3.2",
     "NETOPS 5.3",
-    "NETOPS 3.4"
+    "NETOPS 6.1",
+    "NETOPS 2.1",
+    "NETOPS 4.1"
    ],
    "status": "covered",
    "title": "Given a scenario, select and configure wireless devices and technologies.",
-   "topics_missing": [
-    "Point to point"
-   ],
+   "topics_missing": [],
    "weight": 5.0
   },
   "N:2.4": {
@@ -6139,11 +6249,13 @@
    "labs": [],
    "lessons": [
     "NETOPS 6.3",
+    "NETOPS 2.3",
+    "NETOPS 2.4",
     "ITSUP 1.2",
     "ITSUP 3.3",
-    "NETOPS 2.3",
     "NETOPS 6.1",
-    "NETOPS 2.1"
+    "NETOPS 2.1",
+    "NETOPS 6.2"
    ],
    "status": "covered",
    "title": "Explain important factors of physical installations.",
@@ -6176,13 +6288,17 @@
    ],
    "lessons": [
     "NETOPS 6.3",
+    "NETOPS 4.3",
+    "NETOPS 6.2",
     "ITSUP 8.1",
     "ITSUP 10.4",
     "ITSUP 11.3",
     "ITSUP 12.1",
-    "NETOPS 4.3",
+    "NETOPS 5.4",
     "NETOPS 6.1",
-    "NETOPS 9.1"
+    "NETOPS 6.4",
+    "NETOPS 9.1",
+    "NETOPS 9.6"
    ],
    "status": "covered",
    "title": "Explain the purpose of organizational processes and procedures.",
@@ -6192,7 +6308,7 @@
   "N:3.2": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.8,
+   "content_ratio": 0.9,
    "items": [
     "N1.11",
     "N1.28",
@@ -6210,13 +6326,19 @@
    ],
    "lessons": [
     "NETOPS 5.1",
+    "NETOPS 5.2",
     "NETOPS 1.3",
-    "NETOPS 5.2"
+    "NETOPS 2.4",
+    "NETOPS 4.3",
+    "NETOPS 5.3",
+    "NETOPS 3.4",
+    "NETOPS 6.1",
+    "NETOPS 6.3",
+    "NETOPS 5.4"
    ],
    "status": "covered",
    "title": "Given a scenario, use network monitoring technologies.",
    "topics_missing": [
-    "Port mirroring",
     "Traffic analysis"
    ],
    "weight": 3.8
@@ -6248,7 +6370,7 @@
   "N:3.4": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.875,
+   "content_ratio": 0.958,
    "items": [
     "N2.2",
     "N3.1",
@@ -6276,13 +6398,13 @@
     "NETOPS 4.2",
     "ITSUP 5.2",
     "NETOPS 4.1",
+    "NETOPS 4.4",
+    "NETOPS 1.2",
     "NETOPS 4.3"
    ],
    "status": "covered",
    "title": "Given a scenario, implement IPv4 and IPv6 network services.",
    "topics_missing": [
-    "DoH/DoT",
-    "PTP",
     "NTS"
    ],
    "weight": 3.8
@@ -6312,7 +6434,12 @@
    "lessons": [
     "NETOPS 5.2",
     "NETOPS 5.3",
-    "ITSUP 9.3"
+    "ITSUP 9.3",
+    "NETOPS 1.1",
+    "NETOPS 3.2",
+    "NETOPS 4.3",
+    "NETOPS 9.1",
+    "NETOPS 9.6"
    ],
    "status": "covered",
    "title": "Compare and contrast network access and management methods.",
@@ -6369,7 +6496,10 @@
    "labs": [],
    "lessons": [
     "NETOPS 5.3",
-    "ITSUP 10.4"
+    "ITSUP 10.4",
+    "NETOPS 5.4",
+    "NETOPS 5.2",
+    "NETOPS 4.1"
    ],
    "status": "covered",
    "title": "Summarize various types of attacks and their impact to the network.",
@@ -6402,7 +6532,11 @@
    "lessons": [
     "NETOPS 5.3",
     "NETOPS 5.2",
-    "NETOPS 4.3"
+    "NETOPS 5.4",
+    "NETOPS 4.3",
+    "NETOPS 4.4",
+    "NETOPS 4.1",
+    "NETOPS 4.2"
    ],
    "status": "covered",
    "title": "Given a scenario, apply network security features, defense techniques, and solutions.",
@@ -6412,7 +6546,7 @@
   "N:5.1": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.875,
+   "content_ratio": 1.0,
    "items": [
     "N3.8",
     "Q7.0",
@@ -6452,12 +6586,13 @@
    "lessons": [
     "NETOPS 6.2",
     "ITSUP 7.1",
+    "NETOPS 4.3",
     "ITSUP 1.1",
     "ITSUP 1.2",
     "ITSUP 1.3",
     "ITSUP 1.4",
     "ITSUP 11.1",
-    "NETOPS 4.3",
+    "NETOPS 5.3",
     "NETOPS 6.3",
     "ITSUP 7.3",
     "ITSUP 7.4",
@@ -6465,9 +6600,7 @@
    ],
    "status": "covered",
    "title": "Explain the troubleshooting methodology.",
-   "topics_missing": [
-    "Plan of action and potential effects"
-   ],
+   "topics_missing": [],
    "weight": 4.8
   },
   "N:5.2": {
@@ -6492,10 +6625,14 @@
    "lessons": [
     "NETOPS 6.1",
     "NETOPS 2.3",
-    "ITSUP 3.4",
     "NETOPS 2.1",
+    "NETOPS 5.1",
+    "ITSUP 3.4",
+    "NETOPS 2.4",
     "NETOPS 2.2",
-    "NETOPS 6.3"
+    "NETOPS 6.3",
+    "NETOPS 6.2",
+    "NETOPS 6.4"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot common cabling and physical interface issues.",
@@ -6534,10 +6671,22 @@
    ],
    "lessons": [
     "NETOPS 6.1",
+    "NETOPS 1.2",
+    "NETOPS 4.4",
     "NETOPS 3.2",
-    "NETOPS 5.3",
+    "NETOPS 5.4",
     "NETOPS 9.4",
+    "NETOPS 1.1",
+    "NETOPS 2.2",
     "NETOPS 3.1",
+    "NETOPS 5.2",
+    "NETOPS 5.3",
+    "NETOPS 6.3",
+    "NETOPS 6.4",
+    "NETOPS 9.2",
+    "NETOPS 9.5",
+    "NETOPS 2.1",
+    "NETOPS 2.4",
     "NETOPS 4.1"
    ],
    "status": "covered",
@@ -6548,7 +6697,7 @@
   "N:5.4": {
    "assessment": "covered",
    "content": "covered",
-   "content_ratio": 0.727,
+   "content_ratio": 0.909,
    "items": [
     "N1.20",
     "N2.15",
@@ -6563,24 +6712,26 @@
    ],
    "labs": [],
    "lessons": [
-    "NETOPS 3.3",
-    "NETOPS 2.1",
-    "NETOPS 6.1",
-    "ITSUP 5.3",
     "NETOPS 1.3",
+    "NETOPS 3.3",
+    "NETOPS 6.1",
+    "NETOPS 5.1",
+    "NETOPS 1.1",
+    "NETOPS 2.1",
     "NETOPS 2.3",
     "NETOPS 3.2",
-    "NETOPS 5.1",
-    "NETOPS 3.1",
     "NETOPS 3.4",
+    "NETOPS 4.3",
+    "ITSUP 5.3",
+    "NETOPS 1.4",
+    "NETOPS 3.1",
+    "NETOPS 5.3",
     "NETOPS 6.3"
    ],
    "status": "covered",
    "title": "Given a scenario, troubleshoot common performance issues.",
    "topics_missing": [
-    "Bottlenecking",
-    "Packet loss",
-    "Client disassociation"
+    "Bottlenecking"
    ],
    "weight": 4.8
   },
@@ -6641,17 +6792,23 @@
    ],
    "lessons": [
     "NETOPS 6.1",
+    "NETOPS 1.4",
     "ITSUP 5.3",
-    "NETOPS 2.2",
+    "NETOPS 2.4",
+    "NETOPS 4.4",
+    "NETOPS 9.5",
+    "NETOPS 1.1",
     "NETOPS 9.3",
+    "NETOPS 9.4",
+    "NETOPS 2.2",
+    "NETOPS 9.1",
+    "NETOPS 9.6",
+    "NETOPS 2.3",
+    "NETOPS 9.2",
     "ITSUP 5.2",
     "ITSUP 5.5",
-    "NETOPS 2.3",
-    "NETOPS 9.4",
-    "ITSUP 5.1",
     "NETOPS 2.1",
-    "NETOPS 9.2",
-    "NETOPS 9.5"
+    "ITSUP 5.1"
    ],
    "status": "covered",
    "title": "Given a scenario, use the appropriate tool or protocol to solve networking issues.",
@@ -6665,7 +6822,7 @@
    "gap": 0,
    "items": 281,
    "partial": 0,
-   "topic_ratio": 0.965,
+   "topic_ratio": 0.976,
    "total": 27,
    "weighted_covered": 100.0,
    "weighted_partial": 0
@@ -6675,7 +6832,7 @@
    "gap": 0,
    "items": 474,
    "partial": 0,
-   "topic_ratio": 0.937,
+   "topic_ratio": 0.944,
    "total": 36,
    "weighted_covered": 100.0,
    "weighted_partial": 0
@@ -6685,7 +6842,7 @@
    "gap": 0,
    "items": 290,
    "partial": 0,
-   "topic_ratio": 0.94,
+   "topic_ratio": 0.986,
    "total": 25,
    "weighted_covered": 100.0,
    "weighted_partial": 0

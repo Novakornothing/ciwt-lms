@@ -5925,3 +5925,5 @@ CLIENT = [
 NETPLUS = NETPLUS + NETWORK_LAB_CHAPTERS
 _apply_ciwt_deepen(NETWORK_LAB_CHAPTERS)
 apply_netops(NETPLUS)
+from curriculum_v2.lesson_visuals import apply_lesson_visuals_to_packs as _apply_visuals_pack
+_apply_visuals_pack(CLIENT, 'CLIENT')

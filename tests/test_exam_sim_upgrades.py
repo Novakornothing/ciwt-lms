@@ -382,7 +382,7 @@ def test_mastery_why_and_portfolio_integration(student, instructor, app, mod):
 def test_sim_pbqs_map_to_curated_course_objectives():
     from curriculum_v2.cert.mapping import CURATED
     from curriculum_v2.cert.tech_plus import TECH_OBJECTIVES
-    assert len(SIM.SIMS) == 11
+    assert len(SIM.SIMS) == 36
     for s in SIM.SIMS:
         if s['oid'].startswith('T:'):
             assert s['obj'] in TECH_OBJECTIVES[s['oid']]['course_objs'], s['id']

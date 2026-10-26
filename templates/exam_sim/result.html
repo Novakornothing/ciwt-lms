@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ exam.short }} simulator results — {{ site_name }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/pbq-workbench.css') }}">{% endblock %}
 {% block content %}
 <nav aria-label="breadcrumb"><ol class="breadcrumb small">
   <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
@@ -48,7 +48,7 @@
 </tr>{% endfor %}</tbody></table>
 <h2 class="h5">Question review</h2>
 <ol class="es-review">{% for r in review %}<li class="{{ 'es-ok' if r.ok else 'es-bad' }}">
-  <div>{% if r.pbq %}<span class="badge text-bg-warning">PBQ</span> {% endif %}{% if r.flagged %}<span class="badge text-bg-info">Flagged</span> {% endif %}{% if not r.answered %}<span class="badge text-bg-secondary">Unanswered</span> {% endif %}{{ r.text }} <span class="small text-muted">{{ r.lo }}</span></div>
+  <div>{% if r.pbq %}<span class="badge text-bg-warning">PBQ</span> {% endif %}{% if r.sim %}<span class="badge text-bg-info">Interactive Workbench</span> {% endif %}{% if r.flagged %}<span class="badge text-bg-info">Flagged</span> {% endif %}{% if not r.answered %}<span class="badge text-bg-secondary">Unanswered</span> {% endif %}{{ r.text }} <span class="small text-muted">{{ r.lo }}</span></div>
   <div class="small">Your answer: {{ r.yours }} · Key: {{ r.key }}{% if r.parts > 1 %} · <strong>{{ r.parts_right }}/{{ r.parts }} parts right</strong>{% endif %}</div>
   {% if r.why %}<div class="small text-muted">{{ r.why }}</div>{% endif %}
 </li>{% endfor %}</ol>

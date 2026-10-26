@@ -1,0 +1,453 @@
+/* ==========================================================================
+   Novak LMS™ — Interactive Visual PBQ Workbench (Pearson VUE / TestOut Style)
+   Used on Exam-Day Readiness Simulator (templates/exam_sim/take.html & result.html)
+   ========================================================================== */
+
+.pbq-wb {
+  border: 2px solid #0b2545;
+  border-radius: 0.5rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  margin-bottom: 0.9rem;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(11, 37, 69, 0.16);
+}
+
+.pbq-wb-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  padding: 0.55rem 0.85rem;
+  background: linear-gradient(90deg, #0b2545 0%, #133b6e 100%);
+  border-bottom: 1px solid #1e3a5f;
+}
+
+.pbq-wb-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f8fafc;
+}
+
+.pbq-wb-mode-pill {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: rgba(201, 162, 39, 0.22);
+  color: #fde68a;
+  border: 1px solid rgba(201, 162, 39, 0.55);
+}
+
+.pbq-wb-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: #1e293b;
+  color: #cbd5e1;
+  border: 1px solid #475569;
+}
+
+.pbq-wb-progress.pbq-progress-complete {
+  background: #064e3b;
+  color: #a7f3d0;
+  border-color: #10b981;
+}
+
+.pbq-wb-progress.pbq-progress-partial {
+  background: #1e3a5f;
+  color: #bae6fd;
+  border-color: #38bdf8;
+}
+
+/* Workbench Tab Bar */
+.pbq-wb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem 0;
+  background: #111c33;
+  border-bottom: 1px solid #1e293b;
+}
+
+.pbq-wb-tab {
+  appearance: none;
+  border: 1px solid #334155;
+  border-bottom: 0;
+  background: #1e293b;
+  color: #cbd5e1;
+  padding: 0.42rem 0.85rem;
+  border-radius: 0.35rem 0.35rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.pbq-wb-tab:hover,
+.pbq-wb-tab:focus-visible {
+  background: #27374d;
+  color: #ffffff;
+  outline: none;
+}
+
+.pbq-wb-tab.is-active {
+  background: #0f172a;
+  color: #fcd34d;
+  border-color: #c9a227;
+  box-shadow: inset 0 2px 0 #c9a227;
+}
+
+/* Workbench Panels */
+.pbq-wb-panel {
+  padding: 0.75rem 0.85rem;
+  background: #0f172a;
+}
+
+.pbq-wb-panel.d-none {
+  display: none !important;
+}
+
+/* Tab 1: Interactive SVG Topology / Hardware / System Visualizer */
+.pbq-wb-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+.pbq-wb-svg-wrap {
+  background: radial-gradient(circle at 50% 35%, #162440 0%, #0b1324 100%);
+  border: 1px solid #263859;
+  border-radius: 0.4rem;
+  padding: 0.35rem;
+  overflow-x: auto;
+}
+
+.pbq-wb-svg {
+  width: 100%;
+  height: auto;
+  min-height: 220px;
+  max-height: 310px;
+  display: block;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.pbq-svg-grid-line {
+  stroke: rgba(148, 163, 184, 0.08);
+  stroke-width: 1;
+}
+
+.pbq-svg-banner {
+  fill: #0b2545;
+  stroke: #1e3a5f;
+  stroke-width: 1;
+}
+
+.pbq-svg-banner-text {
+  fill: #93c5fd;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.pbq-svg-banner-sub {
+  fill: #cbd5e1;
+  font-size: 10px;
+}
+
+.pbq-svg-link {
+  stroke: #38bdf8;
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  opacity: 0.65;
+}
+
+.pbq-svg-link.pbq-link-configured {
+  stroke: #10b981;
+  stroke-dasharray: none;
+  opacity: 0.9;
+}
+
+.pbq-svg-node {
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.pbq-svg-node-box {
+  fill: #1e293b;
+  stroke: #475569;
+  stroke-width: 2;
+  rx: 8;
+  ry: 8;
+}
+
+.pbq-svg-node:hover .pbq-svg-node-box,
+.pbq-svg-node:focus .pbq-svg-node-box {
+  stroke: #38bdf8;
+  fill: #23324a;
+}
+
+.pbq-svg-node.is-active .pbq-svg-node-box {
+  stroke: #fbbf24;
+  stroke-width: 2.75;
+  fill: #1e3a5f;
+}
+
+.pbq-svg-node.pbq-node-configured .pbq-svg-node-box {
+  stroke: #10b981;
+}
+
+.pbq-svg-node.pbq-node-configured.is-active .pbq-svg-node-box {
+  stroke: #fbbf24;
+}
+
+.pbq-svg-led {
+  fill: #f59e0b;
+}
+
+.pbq-svg-node.pbq-node-configured .pbq-svg-led {
+  fill: #10b981;
+}
+
+.pbq-svg-node-title {
+  fill: #f8fafc;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.pbq-svg-node-sub {
+  fill: #94a3b8;
+  font-size: 9.5px;
+}
+
+.pbq-svg-badge-bg {
+  fill: #334155;
+  rx: 4;
+  ry: 4;
+}
+
+.pbq-svg-node.pbq-node-configured .pbq-svg-badge-bg {
+  fill: #065f46;
+}
+
+.pbq-svg-badge-text {
+  fill: #e2e8f0;
+  font-size: 9.5px;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.pbq-svg-node.pbq-node-configured .pbq-svg-badge-text {
+  fill: #a7f3d0;
+}
+
+.pbq-wb-QuickBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: #162238;
+  border: 1px solid #263859;
+  border-radius: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.pbq-wb-QuickBar-info {
+  color: #cbd5e1;
+}
+
+.pbq-wb-QuickBar-info strong {
+  color: #fcd34d;
+}
+
+/* Tab 2: Live Device Inspector & Telemetry Feed */
+.pbq-inspector-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.pbq-inspector-node-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.pbq-inspector-pill {
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #cbd5e1;
+  border-radius: 0.3rem;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pbq-inspector-pill.is-active {
+  background: #c9a227;
+  color: #0b1320;
+  border-color: #c9a227;
+}
+
+.pbq-inspector-pill.pbq-pill-configured {
+  border-color: #10b981;
+}
+
+.pbq-inspector-out {
+  background: #09101d;
+  color: #a7f3d0;
+  border: 1px solid #1e293b;
+  border-radius: 0.35rem;
+  padding: 0.65rem 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+/* Tab 3: Interactive Diagnostic Command Console (pbq-cli) */
+.pbq-cli-cmds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.45rem;
+}
+
+.pbq-cli-pill {
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #93c5fd;
+  border-radius: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.pbq-cli-pill:hover,
+.pbq-cli-pill:focus-visible {
+  background: #27374d;
+  color: #ffffff;
+  border-color: #60a5fa;
+}
+
+.pbq-cli-input-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+
+.pbq-cli-prompt {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fcd34d;
+  white-space: nowrap;
+}
+
+.pbq-cli-input {
+  flex: 1;
+  background: #09101d;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  border-radius: 0.3rem;
+  padding: 0.32rem 0.6rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+}
+
+.pbq-cli-input:focus {
+  outline: 2px solid #38bdf8;
+  border-color: #38bdf8;
+}
+
+.pbq-cli-out {
+  background: #09101d;
+  color: #d7f5dd;
+  border: 1px solid #1e293b;
+  border-radius: 0.35rem;
+  padding: 0.65rem 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+/* Interactive Configuration Row Sync (.es-row enhancements inside .es-pbq) */
+.es-pbq .es-row {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #dee2e6;
+  border-left: 4px solid #64748b;
+  border-radius: 0.35rem;
+  background: #f8fafc;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.es-pbq .es-row:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.es-pbq .es-row.is-active {
+  background: #fffbeb;
+  border-color: #c9a227;
+  border-left-color: #0b2545;
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.25);
+}
+
+.es-pbq .es-row.pbq-row-configured {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+}
+
+.es-pbq .es-row.pbq-row-configured.is-active {
+  background: #ecfdf5;
+  border-color: #c9a227;
+  border-left-color: #059669;
+}
+
+.pbq-row-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.42rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.es-pbq .es-row.pbq-row-configured .pbq-row-badge {
+  background: #d1fae5;
+  color: #065f46;
+}

@@ -82,7 +82,10 @@ def build_form(exam, mode, rng=None):
     pbq_pool = [(i, o) for o, ids in sorted(P.pool(exam).items()) for i in ids if b[i]['type'] in PBQ_TYPES]
     rng.shuffle(pbq_pool)
     sims = [(i, o) for i, o in sim_pbq.by_exam(exam) if i in b]
-    rng.shuffle(sims)
+    core_sims, extra_sims = sims[:3], sims[3:]
+    rng.shuffle(core_sims)
+    rng.shuffle(extra_sims)
+    sims = core_sims + extra_sims
     pbqs, used, doms = [], set(), set()
     for iid, oid in sims[:m['pbqs']]:
         pbqs.append((iid, oid)); used.add(iid); doms.add(OBJECTIVES[oid]['domain'])

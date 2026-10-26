@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block title %}{{ exam.short }} simulator — {{ site_name }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/pbq-workbench.css') }}">{% endblock %}
 {% block content %}
 <div class="es-bar" id="examSim" data-remaining="{{ remaining }}" data-strict="{{ '1' if att.strict else '0' }}" data-total="{{ questions|length }}" data-pbqs="{{ n_pbq }}"
      data-paused="{{ '1' if paused else '0' }}" data-attempt="{{ att.id }}" data-pre="{{ '1' if pre else '0' }}"
+     data-exam-code="{{ exam.code }}"
      data-begin="{{ url_for('exam_sim_begin', section_id=section.id, attempt_id=att.id) }}"
      data-autosave="{{ url_for('exam_sim_autosave', section_id=section.id, attempt_id=att.id) }}"
      data-pause-url="{{ url_for('exam_sim_pause', section_id=section.id, attempt_id=att.id) }}">
@@ -54,20 +55,79 @@
     <span class="small text-muted es-keys" id="esKeys">Shortcuts: <kbd>←</kbd>/<kbd>→</kbd> Prev/Next · <kbd>1</kbd>–<kbd>6</kbd> Select · <kbd>F</kbd> Flag · <kbd>W</kbd> Whiteboard</span>
   </nav>
   <div id="esQuestions">
-  {% for q in questions %}{% set i = q.n %}
-  <section class="card card-body mb-3 es-q{% if q.pbq %} es-pbq{% endif %}" id="esq{{ i }}" data-n="{{ i }}" data-pos="{{ loop.index }}" aria-labelledby="esqh{{ i }}">
+  {% for q in questions %}{% set i = q.n %}{% set pbq_total = (q.parts|length) if q.type == 'sim_pbq' else ((q.prompts|length) if q.type == 'match' else (q.slots if q.type == 'order' else 0)) %}{% set pbq_done = (q.saved | select | list | length) if (q.pbq and q.saved) else 0 %}
+  <section class="card card-body mb-3 es-q{% if q.pbq %} es-pbq{% endif %}" id="esq{{ i }}" data-n="{{ i }}" data-pos="{{ loop.index }}" aria-labelledby="esqh{{ i }}"{% if q.pbq %} data-pbq-type="{{ q.type }}" data-exam-code="{{ exam.code }}" data-lo="{{ q.lo }}"{% endif %}>
     <div class="d-flex justify-content-between align-items-start gap-2">
-      <h2 class="h6 mb-2" id="esqh{{ i }}">Question {{ loop.index }}{% if q.pbq %} <span class="badge text-bg-warning">PBQ</span>{% endif %}{% if q.type == 'sim_pbq' %} <span class="badge text-bg-info">Simulation</span>{% endif %} <span class="small text-muted">{{ q.lo }}</span></h2>
+      <h2 class="h6 mb-2" id="esqh{{ i }}">Question {{ loop.index }}{% if q.pbq %} <span class="badge text-bg-warning">PBQ</span>{% endif %}{% if q.type == 'sim_pbq' %} <span class="badge text-bg-info">Simulation</span>{% endif %} <span class="small text-muted">{{ q.lo }}</span>{% if q.pbq %} <span class="badge pbq-wb-progress" data-pbq-progress>Simulation Tasks Configured: {{ pbq_done }} / {{ pbq_total }}</span>{% endif %}</h2>
       <label class="es-flag"><input type="checkbox" name="flag{{ i }}" value="1" class="es-flag-box"{% if q.flagged %} checked{% endif %}> <i class="bi bi-flag" aria-hidden="true"></i> Flag for review</label>
     </div>
     <p>{{ q.text }}</p>
+    {% if q.pbq %}
+    <div class="pbq-wb" data-pbq-workbench data-pbq-kind="{{ q.type }}" data-q="{{ i }}">
+      <div class="pbq-wb-header">
+        <div class="pbq-wb-title">
+          <span>Interactive PBQ Simulation Workbench</span>
+          <span class="pbq-wb-mode-pill" data-wb-mode-pill>{{ exam.code }} Lab Environment</span>
+        </div>
+        <span class="pbq-wb-progress" data-wb-progress-mirror>Simulation Tasks Configured: {{ pbq_done }} / {{ pbq_total }}</span>
+      </div>
+      <div class="pbq-wb-tabs" role="tablist" aria-label="PBQ Workbench Views">
+        <button type="button" role="tab" class="pbq-wb-tab is-active" id="pbqWbTab_{{ i }}_visualizer" data-wb-tab="visualizer" aria-controls="pbqWbPanel_{{ i }}_visualizer" aria-selected="true">Topology &amp; Hardware Visualizer</button>
+        <button type="button" role="tab" class="pbq-wb-tab" id="pbqWbTab_{{ i }}_inspector" data-wb-tab="inspector" aria-controls="pbqWbPanel_{{ i }}_inspector" aria-selected="false">Live Device Inspector / Logs</button>
+        <button type="button" role="tab" class="pbq-wb-tab" id="pbqWbTab_{{ i }}_terminal" data-wb-tab="terminal" aria-controls="pbqWbPanel_{{ i }}_terminal" aria-selected="false">Diagnostic Terminal</button>
+      </div>
+      <div class="pbq-wb-panel" role="tabpanel" id="pbqWbPanel_{{ i }}_visualizer" data-wb-panel="visualizer">
+        <div class="pbq-wb-stage">
+          <div class="pbq-wb-svg-wrap" data-wb-svg-mount></div>
+          <div class="pbq-wb-QuickBar">
+            <div class="pbq-wb-QuickBar-info" data-wb-quick-info>Click any diagram node or configuration row below to synchronize telemetry.</div>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-sm btn-outline-light pbq-inspect-btn" data-wb-open-inspector="0">Inspect Node Telemetry</button>
+              <button type="button" class="btn btn-sm btn-warning pbq-jump-btn" data-pbq-jump="0">Jump to Config Field</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pbq-wb-panel d-none" role="tabpanel" id="pbqWbPanel_{{ i }}_inspector" data-wb-panel="inspector">
+        <div class="pbq-inspector-bar">
+          <div class="pbq-inspector-node-pills" data-wb-inspector-pills></div>
+          <button type="button" class="btn btn-sm btn-warning pbq-jump-btn" data-pbq-jump="0" data-wb-inspector-jump>Jump to Config Field</button>
+        </div>
+        <pre class="pbq-inspector-out" aria-live="polite" data-wb-inspector-out>Select a node in the diagram to inspect live telemetry.</pre>
+      </div>
+      <div class="pbq-wb-panel d-none" role="tabpanel" id="pbqWbPanel_{{ i }}_terminal" data-wb-panel="terminal">
+        <div class="pbq-cli" data-pbq-cli>
+          <div class="pbq-cli-cmds">
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="help">help</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="status">status</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="show run">show run</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="show vlan">show vlan</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="show ip route">show ip route</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="ping">ping</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="nslookup">nslookup</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="ipconfig /all">ipconfig /all</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="diskpart">diskpart</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="bootrec">bootrec</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="permissions">permissions</button>
+            <button type="button" class="pbq-cli-pill" data-pbq-cli-cmd="inspect 1">inspect 1</button>
+          </div>
+          <div class="pbq-cli-input-row">
+            <label class="pbq-cli-prompt" for="pbqCliIn_{{ i }}">pbq-cli&gt;</label>
+            <input type="text" class="pbq-cli-input" id="pbqCliIn_{{ i }}" data-pbq-cli-input placeholder="Type help, status, show run, show vlan, ping, ipconfig /all, diskpart, inspect 1..." autocomplete="off">
+            <button type="button" class="btn btn-sm btn-warning" data-pbq-cli-run>Run</button>
+          </div>
+          <pre class="pbq-cli-out" aria-live="polite" data-pbq-cli-out>pbq-cli ready. Type "help" or click a diagnostic command above.</pre>
+        </div>
+      </div>
+    </div>
+    {% endif %}
     {% if q.type in ('single', 'multi') %}
       {% if q.type == 'multi' %}<p class="small text-muted">Choose {{ q.choose }}.</p>{% endif %}
       {% for o in q.options %}<div class="form-check es-opt"><input class="form-check-input" type="{{ 'radio' if q.type == 'single' else 'checkbox' }}" name="q{{ i }}" id="q{{ i }}o{{ loop.index }}" value="{{ o }}"{% if (q.type == 'single' and q.saved == o) or (q.type == 'multi' and q.saved and o in q.saved) %} checked{% endif %}><label class="form-check-label" for="q{{ i }}o{{ loop.index }}">{{ o }}</label>
         <button type="button" class="es-strike" aria-pressed="false" aria-label="Eliminate option {{ loop.index }}" title="Strike out (or Alt+Click / right-click the option)"><i class="bi bi-slash-circle" aria-hidden="true"></i></button></div>{% endfor %}
     {% elif q.type == 'order' %}
       <p class="small text-muted">Pick the step for each position.</p>
-      {% for k in range(q.slots) %}<div class="es-row"><label for="q{{ i }}_{{ k }}">Step {{ k + 1 }}</label>
+      {% for k in range(q.slots) %}<div class="es-row" data-pbq-row="{{ k }}"><label for="q{{ i }}_{{ k }}">Step {{ k + 1 }}</label>
         <select class="form-select form-select-sm" name="q{{ i }}_{{ k }}" id="q{{ i }}_{{ k }}"><option value="">—</option>{% for o in q.options %}<option{% if q.saved and q.saved[k] == o %} selected{% endif %}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
     {% elif q.type == 'sim_pbq' %}
       <div class="es-sim" data-n="{{ i }}">
@@ -91,13 +151,13 @@
           {% endif %}
         </div>{% endfor %}
         <div class="es-parts">
-          {% for p in q.parts %}{% set k = loop.index0 %}<div class="es-row"><label for="q{{ i }}_{{ loop.index0 }}">{{ p.prompt }}</label>
+          {% for p in q.parts %}{% set k = loop.index0 %}<div class="es-row" data-pbq-row="{{ loop.index0 }}"><label for="q{{ i }}_{{ loop.index0 }}">{{ p.prompt }}</label>
             <select class="form-select form-select-sm" name="q{{ i }}_{{ loop.index0 }}" id="q{{ i }}_{{ loop.index0 }}"><option value="">—</option>{% for o in p.options %}<option{% if q.saved and q.saved[k] is defined and q.saved[k] == o %} selected{% endif %}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
         </div>
         <p class="small text-muted mb-0">Simulation · every part must be right for credit; feedback shows parts right.</p>
       </div>
     {% else %}
-      {% for p in q.prompts %}{% set k = loop.index0 %}<div class="es-row"><label for="q{{ i }}_{{ k }}">{{ p }}</label>
+      {% for p in q.prompts %}{% set k = loop.index0 %}<div class="es-row" data-pbq-row="{{ k }}"><label for="q{{ i }}_{{ k }}">{{ p }}</label>
         <select class="form-select form-select-sm" name="q{{ i }}_{{ k }}" id="q{{ i }}_{{ k }}"><option value="">—</option>{% for o in q.options %}<option{% if q.saved and q.saved[k] is defined and q.saved[k] == o %} selected{% endif %}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
     {% endif %}
   </section>
@@ -113,4 +173,4 @@
   </section>
 </form>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/exam_sim.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/exam_sim.js') }}" defer></script><script src="{{ url_for('static', filename='js/pbq-workbench.js') }}" defer></script>{% endblock %}

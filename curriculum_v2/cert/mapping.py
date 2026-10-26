@@ -96,11 +96,12 @@ def chapter_candidates(prefix, ch):
 def lessons_inventory():
     """[(course, chapter, lesson_order, title, plain_text)] from the assembled course packs."""
     import lessons as L
+    from curriculum_v2.lesson_visuals import strip_lesson_visuals
     out = []
     for course, attr in COURSE_PACKS:
         for ch in getattr(L, attr):
             for les in ch['lessons']:
-                out.append((course, int(ch['order']), int(les.get('order') or 0), les.get('title') or '', plain(les.get('html'))))
+                out.append((course, int(ch['order']), int(les.get('order') or 0), les.get('title') or '', plain(strip_lesson_visuals(les.get('html')))))
     return out
 
 

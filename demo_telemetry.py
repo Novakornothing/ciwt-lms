@@ -155,6 +155,9 @@ def ensure_rich_demo_telemetry(app):
                     ta.passed = ta.score >= 80
             db.session.commit()
 
+        from curriculum_v2.depth_wave1 import ensure_wave1_db_assessments
+        ensure_wave1_db_assessments(db, Course, Module, Quiz, KnowledgeTest, TestAttempt)
+
         # Ensure Course 3 (CLIENT) has Knowledge Test A, B, C (orders 1, 2, 3) so Gradebook 'Knowledge tests (70%)' is populated
         if client_course and not KnowledgeTest.query.filter_by(course_id=client_course.id, order=1).first():
             from question_bank import tests_aplus

@@ -29,10 +29,33 @@ PRACTICE_LABEL = 'Practice exam — not an official CompTIA exam'
 _cache = {}
 
 
+def _extra_items():
+    if 'extra_items' not in _cache:
+        from .bank_a1_extra import ITEMS as a1_extra
+        from .bank_n_extra import ITEMS as n_extra
+        items = []
+        for it in list(a1_extra) + list(n_extra):
+            it.setdefault('raw', it)
+            items.append(it)
+        _cache['extra_items'] = items
+    return _cache['extra_items']
+
+
 def alignment():
     if 'a' not in _cache:
         with open(os.path.join(HERE, 'alignment.json'), encoding='utf-8') as f:
-            _cache['a'] = json.load(f)
+            a = json.load(f)
+        for it in _extra_items():
+            iid = it['id']
+            oids = [c for c in (it.get('cert') or []) if c in a['objectives']]
+            a.setdefault('item_map', {})[iid] = oids
+            for oid in oids:
+                items_list = a['objectives'][oid]['items']
+                if iid not in items_list:
+                    items_list.append(iid)
+        for ex, s in a.get('summary', {}).items():
+            s['items'] = sum(len(v['items']) for oid, v in a['objectives'].items() if oid.startswith(ex + ':'))
+        _cache['a'] = a
     return _cache['a']
 
 
@@ -49,6 +72,8 @@ def bank():
         from .mapping import bank_items
         from .sim_pbq import items as sim_items
         _cache['bank'] = {it['id']: it for it in bank_items()}
+        for it in _extra_items():
+            _cache['bank'][it['id']] = it
         # Option B pass 4: interactive simulation PBQs (exam simulator only; not in the alignment pools)
         _cache['bank'].update({it['id']: it for it in sim_items()})
     return _cache['bank']
