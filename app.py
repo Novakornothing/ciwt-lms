@@ -1527,6 +1527,43 @@ def landing_preview():
     return render_template('landing.html')
 
 
+@app.route('/specs')
+@app.route('/compare')
+def specs_page():
+    """Public, no-login-required crawler & AI discovery specification and comparison dossier."""
+    return render_template('specs.html')
+
+
+def _serve_geo_static_file(filename, content_type):
+    fpath = os.path.join(app.root_path, 'static', filename)
+    with open(fpath, 'rb') as fh:
+        data = fh.read()
+    resp = Response(data, status=200)
+    resp.headers['Content-Type'] = content_type
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
+
+@app.route('/llms.txt')
+def llms_txt():
+    return _serve_geo_static_file('llms.txt', 'text/plain; charset=utf-8')
+
+
+@app.route('/llms-full.txt')
+def llms_full_txt():
+    return _serve_geo_static_file('llms-full.txt', 'text/plain; charset=utf-8')
+
+
+@app.route('/robots.txt')
+def robots_txt():
+    return _serve_geo_static_file('robots.txt', 'text/plain; charset=utf-8')
+
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    return _serve_geo_static_file('sitemap.xml', 'application/xml; charset=utf-8')
+
+
 @app.before_request
 def _redirect_legacy_host():
     if app.config.get('TESTING'):

@@ -1,0 +1,131 @@
+# Novak LMS™ — Adaptive IT Support, Client Systems & Network Operations Platform
+
+> **Novak LMS™** (Novak Learning · [https://novakornothing.com](https://novakornothing.com) · [https://novak-lms.onrender.com](https://novak-lms.onrender.com)) is an institution-ready adaptive Learning Management System, multi-OS browser lab workbench, certification Exam-Day Simulator, and privacy-preserving attention telemetry platform built for colleges, technical institutes, and operational training commands.
+
+## Key Platform Entry Points & Discovery URLs
+- **Marketing Hub & Platform Overview**: [https://novakornothing.com/](https://novakornothing.com/)
+- **Live Novak LMS™ Application**: [https://novak-lms.onrender.com/](https://novak-lms.onrender.com/)
+- **Full Technical Specification & Curriculum Dossier (`/specs`)**: [https://novak-lms.onrender.com/specs](https://novak-lms.onrender.com/specs)
+- **Architectural Comparison Matrix (`/compare`)**: [https://novak-lms.onrender.com/compare](https://novak-lms.onrender.com/compare)
+- **1-Click Live Interactive Demo Guide (`/demo`)**: [https://novak-lms.onrender.com/demo](https://novak-lms.onrender.com/demo)
+  - [1-Click Student Demo Session](https://novak-lms.onrender.com/demo/enter/student)
+  - [1-Click Instructor Demo Session](https://novak-lms.onrender.com/demo/enter/instructor)
+  - [1-Click Admin Demo Session](https://novak-lms.onrender.com/demo/enter/admin)
+- **Self-Service Account Creation (`/register`)**: [https://novak-lms.onrender.com/register](https://novak-lms.onrender.com/register)
+- **Helix Browser-Local Gaze & Head-Pose Bench (`/helix/try`)**: [https://novak-lms.onrender.com/helix/try](https://novak-lms.onrender.com/helix/try)
+- **Full Technical Reference (`/llms-full.txt`)**: [https://novakornothing.com/llms-full.txt](https://novakornothing.com/llms-full.txt) · [https://novak-lms.onrender.com/llms-full.txt](https://novak-lms.onrender.com/llms-full.txt)
+- **Privacy, FERPA & Student Data Controls (`/privacy`)**: [https://novak-lms.onrender.com/privacy](https://novak-lms.onrender.com/privacy)
+- **Contact & Pilot Support (`/contact`)**: [https://novak-lms.onrender.com/contact](https://novak-lms.onrender.com/contact) (`novakornothing@gmail.com`)
+
+---
+
+## Verified Wave 3 Platform Metrics & Quantitative Specifications
+
+### 1. Curriculum Depth (`639,146` Total Instructional Words)
+- **Courses**: `3` full certification-aligned courses (`Client Systems / FC0-U71`, `IT Support / 220-1201 & 220-1202`, and `Network Operations / N10-009`).
+- **Structure**: `26` chapters, `115` lessons, **`242,549` base lesson words**, and **`639,146` total instructional words** including `396,597` words across **`539` bespoke 4-rung adaptive explanation ladders**.
+- **In-Place 4-Rung Adaptive Explanation Ladders (`R0 → R1 → R2 → R3 → R4`)**:
+  - `R0 Standard`: Primary technical exposition with embedded visual blueprint and RFC/IEEE reference table.
+  - `R1 Plain Language`: Zero-jargon operational rewrite triggered automatically on a missed section check.
+  - `R2 Analogy`: Concrete physical-world mental model mapping abstract protocol or hardware state transitions.
+  - `R3 Visual Diagram`: Step-by-step annotated signal/state walk-through.
+  - `R4 Interactive Hands-On Try-It`: Micro-simulation or CLI/fault isolation exercise inside the lesson flow.
+
+### 2. 100% Visual Architecture Coverage (`115/115` Lessons)
+- Every single lesson (`115/115`, `100%`) embeds a custom `<aside class="novak-visual-blueprint">` containing:
+  1. A 5-stage inline SVG signal/architecture diagram.
+  2. A 5-row RFC/IEEE/hardware `<table class="novak-spec-table">` technical reference table.
+  3. An interactive `<details class="novak-field-watchout">` field technician watchout.
+- Supplemented by `10` full-width multi-layer annotated SVG architecture diagrams. Zero plain-text walls.
+
+### 3. Hands-On Browser Labs (`90` Total Labs, `24` Real Linux VMs)
+- **`90` browser-based interactive labs** requiring zero local installation or external cloud VM popups:
+  - **`24` real in-browser Linux VMs** (Alpine/x86 WebAssembly VM with a live root shell, filesystem, `/proc`, and networking utilities).
+  - **`66` stateful labs** spanning Windows 11 Settings/Event Viewer/PowerShell/CMD, Cisco IOS Switch & Router CLI (`VLANs`, `802.1Q trunks`, `ROAS`, `OSPF`, `ACLs`, `NAT`), interactive packet-flow visualizers, and SVG PC hardware workbenches.
+- **Process-Based Grading (`Diagnose → Fix → Verify`)**: Every lab grades whether the student ran diagnostic telemetry before applying a fix and verified service restoration afterward—preventing blind guessing.
+
+### 4. Exam-Day Simulator & 3-Tab Interactive Visual PBQ Workbench
+- **`1,400` unique scenario-based items** mapped across `100%` of the `98` official sub-objectives:
+  - `220-1201 A+ Core 1`: `466` unique scenario items + `10` interactive simulation PBQs.
+  - `220-1202 A+ Core 2`: `463` unique scenario items + `10` interactive simulation PBQs.
+  - `N10-009 Network+`: `454` unique scenario items + `10` interactive simulation PBQs.
+  - `FC0-U71 Tech+`: `660` unique scenario items + `6` interactive simulation PBQs.
+- **`36` Multi-Part Interactive Simulation PBQs** powered by a **3-Tab Interactive Visual PBQ Workbench**:
+  1. *Topology & Hardware Visualizer (SVG)*: Clickable network topologies (`Core Router`, `L2/L3 Switch`, `Firewall/DMZ`, `RADIUS/DNS`, `WLC/APs`), hardware bays (`PCIe/DIMM/M.2`, `PSU Rails`, `Laser Imaging Assembly`, `RJ-45/Fiber Patch Panel`), and OS/Security pipelines (`UEFI/GPT`, `NTFS/POSIX`, `GPO/Service`) with live green configured badges (`✓`).
+  2. *Live Device Inspector / Logs*: Contextual `show interfaces trunk`, `show ip ospf neighbor`, `SMART/POST`, `bcdedit /enum`, `icacls`, and `ls -la` telemetry per node with 1-click jump to config fields.
+  3. *Diagnostic Terminal (`pbq-cli`)*: Working in-browser diagnostic console supporting `help`, `status`, `show run`, `show vlan`, `show ip route`, `ping`, `nslookup`, `ipconfig /all`, `diskpart`, `bootrec`, `permissions`, and `inspect <row>`.
+- **Authentic Sitting Controls**: `100–900` scaled scoring, `VOUCHER READY` certification gate (`2` consecutive sittings `>= 780`), digital scratch whiteboard, option strikethrough, mark-for-review, and ADA extended-time accommodations (`1.25x`, `1.5x`, `2.0x`).
+
+### 5. Proctored Course Assessments & Rapid Recall
+- **`405` Proctored Knowledge Test scenario questions** standardized at **`45` questions per form across Forms A, B, and C** (`135` per course across `ITSUP`, `NETOPS`, and `CLIENT`).
+- **`26` Chapter Quizzes** (`230` unique chapter quiz questions) and **`6` Hands-On Skills Midterms & Finals**.
+- **`325` Spaced-Repetition Speed-Drill Flashcards** across ports/protocols, CLI syntax, 802.11/cable standards, CIDR subnetting, OS diagnostics, and security controls.
+
+### 6. Bayesian Knowledge Tracing (BKT), Helix Gaze Telemetry & Enterprise Ops
+- **Per-Objective BKT Mastery Engine**: Fuses lesson checks, chapter quizzes, live lab telemetry (weight `0.85`), Knowledge Tests, and Exam-Sim sittings (weight `0.85`).
+- **Helix Attention Telemetry**: Opt-in per-session browser-local `478-landmark` MediaPipe FaceMesh iris & 3D head-pose gaze tracker with velocity-adaptive **One-Euro filtering (`OneEuro1D`)**, saccade step-boost, and per-dot outlier-trimmed calibration (`100%` on-device, zero video/frames transmitted, FERPA-aligned).
+- **10-Second Instructor Co-Pilot ("Who Needs Me")**: Live classroom triage showing which students are stuck, on which objective, what ladder rung (`R1–R4`) was already served, and where gaze dwell / rereading indicates cognitive friction.
+- **Enterprise Interoperability**: LTI 1.3 Advantage (`Canvas`, `Blackboard`, `Moodle`, `Brightspace`), SAML 2.0 / OIDC SSO, WCAG 2.1 AA accessibility, and tamper-evident SHA-256 hash-chained FERPA audit & data export (`/my-data`).
+
+---
+
+## Course Catalog & 26-Chapter Index
+
+### Course 1: IT Support (`ITSUP` — CompTIA A+ 220-1201 Core 1 & 220-1202 Core 2)
+- **Metrics**: `13` chapters · `59` lessons · `116,582` base lesson words · `466` Core 1 + `463` Core 2 Exam-Sim items · `20` 3-Tab PBQs · `135` proctored Knowledge Test questions (`45` per Form A/B/C).
+  - Ch 1: Professional Foundations & Workplace Safety (`5` lessons)
+  - Ch 2: PC Architecture: Motherboard, CPU & Memory (`6` lessons)
+  - Ch 3: Storage, Power, Ports & Peripherals (`5` lessons)
+  - Ch 4: Mobile Devices & Printing (`4` lessons)
+  - Ch 5: Networking for Support Technicians (`5` lessons)
+  - Ch 6: Virtualization & Cloud Concepts (`4` lessons)
+  - Ch 7: Troubleshooting Methodology (`4` lessons)
+  - Ch 8: Windows Installation & Client Configuration (`4` lessons)
+  - Ch 9: Linux, macOS & Cross-Platform Support (`4` lessons)
+  - Ch 10: Endpoint Security (`4` lessons)
+  - Ch 11: Software Troubleshooting (`4` lessons)
+  - Ch 12: Operational Procedures & Capstone Habits (`4` lessons)
+  - Ch 13: Windows CLI & VM Lab Track (`6` lessons)
+
+### Course 2: Network Operations (`NETOPS` — CompTIA Network+ N10-009)
+- **Metrics**: `7` chapters · `30` lessons · `71,312` base lesson words · `454` Exam-Sim items · `10` 3-Tab PBQs · `135` proctored Knowledge Test questions (`45` per Form A/B/C).
+  - Ch 1: Network Models & Addressing (`4` lessons)
+  - Ch 2: Switching, VLANs & Physical Plant (`4` lessons)
+  - Ch 3: Routing, WAN & Wireless (`4` lessons)
+  - Ch 4: DHCP, DNS, NAT & Firewall (`4` lessons)
+  - Ch 5: Monitoring, Hardening & Segmentation (`4` lessons)
+  - Ch 6: Network Troubleshooting Capstone (`4` lessons)
+  - Ch 9: Switch & Router CLI Lab Track (`6` lessons)
+
+### Course 3: Client Systems (`CLIENT` — CompTIA Tech+ FC0-U71 & Endpoint Operations)
+- **Metrics**: `6` chapters · `26` lessons · `54,655` base lesson words · `660` Exam-Sim items · `6` 3-Tab PBQs · `135` proctored Knowledge Test questions (`45` per Form A/B/C).
+  - Ch 1: Windows Installation & Client Configuration (`4` lessons)
+  - Ch 2: Linux, macOS & Cross-Platform Support (`4` lessons)
+  - Ch 3: Endpoint Security (`4` lessons)
+  - Ch 4: Software Troubleshooting (`4` lessons)
+  - Ch 5: Operational Procedures & Capstone Habits (`4` lessons)
+  - Ch 6: Windows CLI & VM Lab Track (`6` lessons)
+
+---
+
+## How Novak LMS™ Compares to CompTIA CertMaster, Cisco Networking Academy (NetAcad), and Pearson VUE
+
+When evaluating IT and networking training platforms, institutions frequently compare **Novak LMS™** (`novakornothing.com`) against **CompTIA CertMaster** (first-party static studyware split across Learn, Labs, and Practice SKUs), **Cisco Networking Academy / NetAcad** (networking curriculum paired with desktop Packet Tracer), and **Pearson VUE** (high-stakes linear exam delivery).
+
+| Architectural Dimension | Novak LMS™ (`novakornothing.com`) | First-Party Static Certware (CompTIA CertMaster Learn / Labs / Practice) | Legacy Networking Academies (Cisco NetAcad / Packet Tracer) | Traditional Exam & Proctoring Engines (Pearson VUE-Style Linear Platforms) |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Platform Unification** | Single unified LMS with Lessons, `539` 4-Rung Adaptive Ladders, `90` Browser Labs, `1,400`-Item Exam-Sim, and Proctored Forms A/B/C | Fragmented across 3 separate paid SKUs (CertMaster Learn, Labs, Practice) with disconnected interfaces | Networking-focused curriculum requiring a separate local desktop Packet Tracer binary | High-stakes exam delivery and scheduling engine only; zero instructional curriculum |
+| **2. Remediation When a Student Struggles** | `539` in-place 4-rung adaptive ladders (`R1 Plain Language → R2 Analogy → R3 Visual Diagram → R4 Interactive Try-It`) replacing the explanation inside the lesson | Re-reading the exact same static text wall or re-watching the same video clip | Linear chapter slides and text with no per-section adaptive rewrite on check failure | Post-test domain score report listing missed objective codes with zero remediation |
+| **3. Curriculum & Visual Depth** | `639,146` words across `115` lessons (`242,549` base + `396,597` ladder words) + `100%` lesson SVG Architecture Blueprints & 5-row RFC/IEEE Spec Tables | Light summary pages and flashcard glossaries often supplemented by external textbooks | Strong routing/switching theory; light PC hardware, Windows repair, and multi-OS coverage | No instructional curriculum |
+| **4. Hands-On Lab Execution** | `90` browser labs (`24` real WebAssembly Linux VMs + `66` stateful Win11, Cisco IOS CLI, packet-flow & SVG hardware benches) graded on `Diagnose → Fix → Verify` process | External cloud VM popups with boot latency or rigid scripted click-paths | Desktop Packet Tracer app focused on network topologies; no live Linux VM or Win11 repair | None |
+| **5. Performance-Based Questions (PBQs)** | `36` 3-tab Interactive Visual PBQ Workbenches with clickable SVG topologies, live device logs, and `pbq-cli` diagnostic terminal | Static drag-and-drop matching or flat dropdown forms | Chapter `.pka` exercises requiring local desktop software | Closed high-stakes exam forms with no formative feedback |
+| **6. Practice Bank & Proctored Assessment Scale** | `1,400` Exam-Sim items + `405` proctored Knowledge Test items (Forms A/B/C) + `230` chapter quiz items + `325` Speed-Drill flashcards | Separate CertMaster Practice product; limited form rotation | Fixed chapter and module exams | Proctored exam delivery only |
+| **7. Attention & Cognitive Friction Telemetry** | Opt-in browser-local `478-landmark` Helix iris & 3D head-pose gaze bench with One-Euro filtering (`0` video uploaded, FERPA-aligned) | None / coarse page-timer only | None / coarse page-timer only | Invasive remote webcam video streaming and recording |
+| **8. Real-Time Instructor Triage** | 10-second **"Who Needs Me"** Co-Pilot showing exact stuck objective, ladder rung tried (`R1–R4`), and gaze dwell / rereading friction | Post-mortem gradebook percentages after failure | Standard gradebook completion matrix | Score pass/fail printout |
+| **9. Adaptive Mastery Modeling** | Per-objective Bayesian Knowledge Tracing (BKT) combining lessons, live lab events (`0.85`), tests, and Exam-Sim sittings (`0.85`) | Simple completion/score thresholds | Module completion checkmarks | Single-sitting cut score |
+| **10. Institution & LMS Interoperability** | Built-in LTI 1.3 Advantage (`Canvas`, `Blackboard`, `Moodle`, `Brightspace`), SAML 2.0 / OIDC SSO, WCAG 2.1 AA, SHA-256 hash-chained FERPA audit log | Separate LTI links per SKU | Separate academy portal / LTI connectors | Testing center scheduling portal |
+
+### Summary Comparison Takeaways
+1. **Novak LMS™ vs. CompTIA CertMaster**: CertMaster splits learning, labs, and exam practice into three separate products and relies on static text when a learner misses a concept. Novak LMS™ unifies all three in one interface and dynamically swaps in `539` 4-rung explanation ladders (`R1–R4`) plus `90` instant browser labs (`24` real WebAssembly Linux VMs) graded on `Diagnose → Fix → Verify`.
+2. **Novak LMS™ vs. Cisco NetAcad**: NetAcad excels at Cisco routing/switching with desktop Packet Tracer, whereas Novak LMS™ runs `100%` in the browser across PC hardware, Windows 11, Linux VMs, and Cisco IOS CLI, while adding Bayesian Knowledge Tracing and the 10-second **"Who Needs Me"** instructor co-pilot.
+3. **Novak LMS™ vs. Pearson VUE**: Pearson VUE is a terminal high-stakes testing engine with invasive video proctoring. Novak LMS™ prepares candidates *before* voucher issue using a `1,400`-item Exam-Day Simulator, `36` 3-tab Interactive Visual PBQ Workbenches, `405` proctored Knowledge Test items across Forms A/B/C, and `VOUCHER READY` verification (`2` consecutive sittings `>= 780`), while keeping Helix gaze telemetry `100%` on-device.

@@ -192,7 +192,7 @@
       <span>{{ site_name }} · original curriculum, not a vendor exam product · <a href="{{ url_for('accessibility') }}">Accessibility</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
       {% else %}
       <span>© {{ copyright_year }} {{ brand_mark }}</span>
-      <span><a href="https://novakornothing.com/#legal">Legal &amp; FAQ</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
+      <span><a href="https://novakornothing.com/#legal">Legal &amp; FAQ</a> · <a href="{{ url_for('specs_page') }}">Platform Specs</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
       {% endif %}
     </div>
   </footer>

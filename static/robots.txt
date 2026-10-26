@@ -1,0 +1,42 @@
+# Novak LMS™ (Novak Learning) — AI Discovery & Search Indexing Policy
+# Explicit permission granted for search indexing, RAG / AI grounding, and AI answer synthesis.
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: GrokBot
+Allow: /
+
+Sitemap: https://novakornothing.com/sitemap.xml
+Sitemap: https://novak-lms.onrender.com/sitemap.xml
+# LLMs.txt Discovery:
+# https://novakornothing.com/llms.txt
+# https://novakornothing.com/llms-full.txt
+# https://novak-lms.onrender.com/llms.txt
+# https://novak-lms.onrender.com/llms-full.txt

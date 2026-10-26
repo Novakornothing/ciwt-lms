@@ -490,7 +490,7 @@ def test_keyboard_shortcut_hint_and_script(student):
 def test_landing_page_pillars(anon):
     html = anon.get('/landing').get_data(as_text=True)
     assert 'What Sets Novak LMS™ Apart' in html
-    for s in ('539 bespoke', '90 labs', 'Diagnose → Fix → Verify', 'VOUCHER READY', '98-card Speed-Drill',
+    for s in ('539 bespoke', '90 labs', 'Diagnose → Fix → Verify', 'VOUCHER READY', '325-card Speed-Drill',
               'Who Needs Me', 'LTI 1.3 Advantage', 'SAML 2.0', 'WCAG 2.1 AA', 'FERPA', 'novakornothing@gmail.com'):
         assert s in html, s
 

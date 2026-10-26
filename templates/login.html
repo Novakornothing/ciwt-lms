@@ -1,5 +1,217 @@
 {% extends "base.html" %}
 {% block title %}Sign in{% if hint %} to {{ entry_roles[hint][0] }}{% endif %} — {{ site_name }}{% endblock %}
+{% block head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "EducationalOrganization",
+      "@id": "https://novakornothing.com/#organization",
+      "name": "Novak Learning",
+      "alternateName": "Novak LMS™",
+      "url": "https://novakornothing.com",
+      "sameAs": [
+        "https://novak-lms.onrender.com",
+        "https://novakornothing.com/specs",
+        "https://novakornothing.com/compare",
+        "https://novak-lms.onrender.com/specs",
+        "https://novak-lms.onrender.com/compare"
+      ],
+      "email": "novakornothing@gmail.com",
+      "description": "Novak Learning builds Novak LMS™, an adaptive IT support, client systems, and network operations learning management system featuring 539 bespoke 4-rung adaptive explanation ladders, 90 browser-based hands-on labs (including 24 real WebAssembly Linux VMs), a 1,400-item Exam-Day Simulator with 36 3-Tab Interactive Visual PBQ Workbenches, Bayesian Knowledge Tracing, and browser-local Helix gaze telemetry."
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "LearningResource"
+      ],
+      "@id": "https://novakornothing.com/#software",
+      "name": "Novak LMS™",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web Browser (Any Desktop, Laptop, or Tablet OS; WebAssembly Linux VM & SVG Workbenches included)",
+      "url": "https://novak-lms.onrender.com",
+      "mainEntityOfPage": "https://novakornothing.com",
+      "provider": {
+        "@id": "https://novakornothing.com/#organization"
+      },
+      "educationalUse": [
+        "Adaptive Instruction",
+        "Hands-On Virtual Lab Execution",
+        "Performance-Based Question (PBQ) Simulation",
+        "Certification Exam Preparation",
+        "Proctored Course Assessment",
+        "Real-Time Classroom Triage"
+      ],
+      "accessibilityFeature": [
+        "WCAG 2.1 AA compliant",
+        "ADA extended-time accommodations (1.25x, 1.5x, 2.0x)",
+        "4-rung adaptive explanation ladders (Plain Language, Analogy, Visual Diagram, Interactive Try-It)",
+        "High-contrast inline SVG architecture diagrams",
+        "Keyboard-navigable tables and skip links"
+      ],
+      "featureList": [
+        "3 full certification-aligned courses (Client Systems / FC0-U71, IT Support / 220-1201 & 220-1202, Network Operations / N10-009), 26 chapters, and 115 lessons",
+        "242,549 base lesson words and 639,146 total instructional words including 396,597 words across 539 bespoke 4-rung adaptive explanation ladders (R0 Standard -> R1 Plain Language -> R2 Analogy -> R3 Visual Diagram -> R4 Interactive Hands-On Try-It)",
+        "100% Visual Architecture Coverage: all 115/115 lessons include an embedded custom novak-visual-blueprint aside with a 5-stage inline SVG signal/architecture diagram, a 5-row RFC/IEEE/hardware novak-spec-table, and an interactive novak-field-watchout, plus 10 full-width multi-layer annotated SVG architecture diagrams",
+        "90 browser-based interactive hands-on labs including 24 real in-browser Linux VMs (Alpine/x86 WebAssembly VM with live root shell) and 66 stateful Windows 11, Cisco IOS CLI, packet-flow visualizer, and SVG hardware workbench labs graded on Diagnose -> Fix -> Verify process",
+        "1,400 unique scenario-based Exam-Day Simulator items mapped across 100% of the 98 official sub-objectives (466 for 220-1201 A+ Core 1, 463 for 220-1202 A+ Core 2, 454 for N10-009 Network+, and 660 for FC0-U71 Tech+)",
+        "36 multi-part Interactive Simulation PBQs (10 for 220-1201, 10 for 220-1202, 10 for N10-009, 6 for FC0-U71) powered by a 3-Tab Interactive Visual PBQ Workbench (Topology & Hardware SVG Visualizer, Live Device Inspector/Logs, and pbq-cli Diagnostic Terminal)",
+        "405 Proctored Knowledge Test scenario questions standardized at 45 questions per form across Forms A, B, and C (135 per course across ITSUP, NETOPS, and CLIENT), plus 26 chapter quizzes (230 questions) and 6 hands-on Skills Midterms & Finals",
+        "325 spaced-repetition Speed-Drill flashcards across ports/protocols, CLI syntax, 802.11/cable standards, CIDR subnetting, OS diagnostics, and security controls",
+        "Per-objective Bayesian Knowledge Tracing (BKT) mastery engine combining lesson checks, chapter quizzes, live lab telemetry (weight 0.85), Knowledge Tests, and Exam-Sim sittings (weight 0.85)",
+        "Helix Attention Telemetry: opt-in browser-local 478-landmark MediaPipe FaceMesh iris & 3D head-pose gaze tracker with velocity-adaptive One-Euro filtering (OneEuro1D), saccade step-boost, and outlier-trimmed calibration (100% on-device, zero video transmitted, FERPA-aligned)",
+        "10-Second Instructor Co-Pilot ('Who Needs Me') for live classroom triage",
+        "Enterprise LTI 1.3 Advantage (Canvas, Blackboard, Moodle, Brightspace), SAML 2.0 / OIDC SSO, WCAG 2.1 AA accessibility, and SHA-256 hash-chained FERPA audit & data export (/my-data)"
+      ],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Instant 1-click live Student, Instructor, and Admin demo access and institutional pilot onboarding.",
+        "url": "https://novak-lms.onrender.com/demo"
+      }
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://novakornothing.com/#courses",
+      "name": "Novak LMS™ Certification-Aligned Course Catalog",
+      "numberOfItems": 3,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "Course",
+            "courseCode": "ITSUP",
+            "name": "IT Support Technician Fundamentals (Aligned to 220-1201 A+ Core 1 & 220-1202 A+ Core 2)",
+            "description": "13 chapters, 59 lessons, 116,582 base lesson words, 100% SVG visual blueprints and RFC/IEEE/hardware spec tables, 466 Core 1 + 463 Core 2 Exam-Sim scenario items, 20 3-Tab Interactive Visual PBQs, 135 proctored Knowledge Test items (45 per Form A/B/C), and hands-on PC hardware, Windows 11, and Linux VM labs.",
+            "provider": {
+              "@id": "https://novakornothing.com/#organization"
+            },
+            "url": "https://novak-lms.onrender.com/specs#course-ITSUP"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "Course",
+            "courseCode": "NETOPS",
+            "name": "Network Operations Fundamentals (Aligned to N10-009 Network+)",
+            "description": "7 chapters, 30 lessons, 71,312 base lesson words, 100% SVG visual blueprints and RFC/IEEE spec tables, 454 Exam-Sim scenario items, 10 3-Tab Interactive Visual PBQs, 135 proctored Knowledge Test items (45 per Form A/B/C), and stateful Cisco IOS switch/router CLI, VLAN/OSPF/ACL packet-flow, and Linux networking labs.",
+            "provider": {
+              "@id": "https://novakornothing.com/#organization"
+            },
+            "url": "https://novak-lms.onrender.com/specs#course-NETOPS"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "Course",
+            "courseCode": "CLIENT",
+            "name": "Client Systems & Shop Procedures (Aligned to FC0-U71 Tech+ & Endpoint Administration)",
+            "description": "6 chapters, 26 lessons, 54,655 base lesson words, 100% SVG visual blueprints and RFC/IEEE/OS spec tables, 660 Exam-Sim scenario items, 6 3-Tab Interactive Visual PBQs, 135 proctored Knowledge Test items (45 per Form A/B/C), and Windows 11, Linux VM, macOS, and endpoint security labs.",
+            "provider": {
+              "@id": "https://novakornothing.com/#organization"
+            },
+            "url": "https://novak-lms.onrender.com/specs#course-CLIENT"
+          }
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://novakornothing.com/#faqpage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Novak LMS™?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Novak LMS™ is an adaptive IT and networking learning management system featuring 3 full courses—Client Systems (FC0-U71), IT Support (220-1201 / 220-1202), and Network Operations (N10-009)—spanning 26 chapters, 115 visually blueprinted lessons (639,146 total instructional words across 242,549 base words and 539 4-rung explanation ladders), 90 hands-on browser labs (including 24 real in-browser WebAssembly Linux VMs and 66 stateful Windows 11, Cisco IOS CLI, packet-flow, and hardware benches), and a 1,400-item Exam-Day Simulator with 36 3-Tab Interactive Visual PBQs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Novak LMS™ compare to CompTIA CertMaster, Cisco NetAcad, and Pearson VUE-style platforms?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Unlike first-party static certware such as CompTIA CertMaster (which splits learning, virtual labs, and practice exams across 3 separate paid SKUs and leaves struggling students re-reading the same static text), legacy networking academies such as Cisco NetAcad (which focus primarily on networking and require a separate desktop Packet Tracer binary), or traditional linear testing engines such as Pearson VUE (which deliver closed exams with invasive remote webcam recording and zero instructional remediation), Novak LMS™ unifies the entire stack in one browser platform: 639,146 words of instruction with 100% lesson SVG visual blueprints, 539 in-place 4-rung adaptive explanation ladders (R1–R4), 90 browser labs (24 real Linux VMs) graded on Diagnose -> Fix -> Verify process, 36 3-tab Interactive Visual PBQ Workbenches, 1,400 Exam-Sim items, 405 proctored Knowledge Test questions across Forms A/B/C, per-objective Bayesian Knowledge Tracing, and 100% local Helix gaze telemetry."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do the 3-Tab Interactive Visual PBQ Workbench and 90 hands-on labs work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "All 36 multi-part simulation PBQs (10 for 220-1201, 10 for 220-1202, 10 for N10-009, and 6 for FC0-U71) run inside a 3-Tab Interactive Visual PBQ Workbench: (1) a clickable SVG Topology & Hardware Visualizer for network diagrams, PC hardware bays, and OS/Security pipelines with live green configured badges, (2) a Live Device Inspector exposing show interfaces trunk, show ip ospf neighbor, SMART/POST, bcdedit /enum, icacls, and ls -la logs with 1-click jump to config fields, and (3) a working pbq-cli diagnostic terminal. Complementing the PBQs are 90 browser-based labs—including 24 real Alpine/x86 WebAssembly Linux VMs with a live root shell and 66 stateful Windows 11, Cisco IOS CLI, packet-flow, and SVG hardware labs—every one graded on engineering process (Diagnose -> Fix -> Verify)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How deep is the Novak LMS™ curriculum and exam question bank?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The curriculum covers 3 courses, 26 chapters, and 115 lessons totaling 242,549 base lesson words and 639,146 total instructional words (including 396,597 words across 539 4-rung adaptive explanation ladders). Every single lesson (115/115, 100%) embeds a 5-stage inline SVG signal/architecture diagram, a 5-row RFC/IEEE/hardware technical spec table, and an interactive field technician watchout, plus 10 full-width multi-layer SVG diagrams. The assessment engine includes 1,400 unique scenario-based Exam-Sim items across all 98 official sub-objectives (466 for 220-1201, 463 for 220-1202, 454 for N10-009, 660 for FC0-U71), 36 interactive simulation PBQs, 405 proctored Knowledge Test questions (45 per form across Forms A, B, and C), 26 chapter quizzes (230 questions), 6 hands-on Skills Midterms/Finals, and 325 Speed-Drill flashcards."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Novak LMS™ combine Helix eye tracking and Bayesian Knowledge Tracing (BKT) for instructors?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Novak LMS™ runs a per-objective Bayesian Knowledge Tracing (BKT) mastery model combining lesson checks, chapter quizzes, live lab telemetry (weight 0.85), Knowledge Tests, and Exam-Sim sittings (weight 0.85). Alongside BKT, students can opt in per session to Helix Attention Telemetry—a browser-local 478-landmark MediaPipe FaceMesh iris and 3D head-pose gaze tracker with velocity-adaptive One-Euro filtering (OneEuro1D), saccade step-boost, and outlier-trimmed calibration. 100% of camera processing stays on-device (zero video or images ever transmitted, FERPA-aligned). The 10-second 'Who Needs Me' Instructor Co-Pilot synthesizes BKT mastery, ladder rung escalations (R1–R4), and Helix cognitive friction to show instructors exactly which student needs help and on which objective."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the in-lesson explanation ladder work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Each lesson section ends with a short, ungraded concept check. A miss swaps that section in place, for that student only, along a 4-rung adaptive ladder: R1 Plain Language -> R2 Analogy -> R3 Visual Diagram -> R4 Interactive Hands-On Try-It. The next section unlocks once the check is passed or every explanation rung has been explored."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Helix attention tracking protect student privacy?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Helix is strictly opt-in per session with explicit consent, runs 100% locally in the browser using WebAssembly/WebGL, and sends only aggregate numerical dwell summaries—never video, frames, or images. Students can switch it off at any time without affecting grades, and can export or delete their education record at /my-data."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do colleges or training commands run a pilot?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Institutions can launch a section in minutes using class join codes, self-service registration, CSV roster import, SAML 2.0 / OIDC single sign-on, or LTI 1.3 Advantage (Canvas, Blackboard, Moodle, Brightspace), with full objective-mapped outcomes exports and tamper-evident SHA-256 hash-chained FERPA audit logs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I try the demo or create an account?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Visit https://novak-lms.onrender.com/demo for 1-click live walkthroughs as a Student, Instructor, or Administrator, or visit https://novak-lms.onrender.com/register to create your own Student or Instructor account."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do students or instructors get support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Email novakornothing@gmail.com for institutional pilot onboarding, instructor support, or account assistance."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+{% endblock %}
 {% block content %}
 {% set demo = {'learn': 'student1@lms.local', 'teach': 'instructor@lms.local', 'admin': 'admin@lms.local'} %}
 {% set icons = {'learn': 'bi-book', 'teach': 'bi-easel2', 'admin': 'bi-sliders'} %}
@@ -49,7 +261,7 @@
       <dt>Teach</dt><dd><code>{{ demo.teach }}</code> / <code>teach123</code></dd>
       <dt>Admin</dt><dd><code>{{ demo.admin }}</code> / <code>admin123</code></dd>
     </dl>
-    <p class="small mb-0"><a href="{{ url_for('demo_guide') }}">Demo walkthrough</a> · <a href="{{ url_for('gaps') }}">Gaps &amp; roadmap</a></p>
+    <p class="small mb-0"><a href="{{ url_for('demo_guide') }}">Demo walkthrough</a> · <a href="{{ url_for('specs_page') }}">Platform Specs &amp; Compare</a> · <a href="{{ url_for('gaps') }}">Gaps &amp; roadmap</a></p>
   </details>
 </div>
 {% endblock %}
