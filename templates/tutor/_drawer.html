@@ -10,7 +10,7 @@
   </div>
   <form id="tutor-form">
     <label class="form-label small" for="tutor-dq">Ask about this lesson or lab</label>
-    <textarea class="form-control mb-2" id="tutor-dq" rows="2" maxlength="500" required></textarea>
+    <textarea class="form-control ai-tutor-input tutor-input mb-2" id="tutor-dq" rows="2" maxlength="500" required></textarea>
     <button class="btn btn-brand btn-sm" type="submit">Ask</button>
     <a class="small ms-2" href="{{ url_for('tutor_page', section_id=tutor_section_id) }}">Open full tutor</a>
   </form>

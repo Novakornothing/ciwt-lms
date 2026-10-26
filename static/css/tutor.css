@@ -42,3 +42,52 @@ body.has-mobile-tabbar .tutor-fab { bottom: calc(var(--tabbar-h, 64px) + .75rem)
 .pf-bar > span.pf-w-90 { width: 90%; }
 .pf-bar > span.pf-w-95 { width: 95%; }
 .pf-bar > span.pf-w-100 { width: 100%; }
+
+/* High-contrast Dark & Light Mode AI Tutor drawer, answer cards, and inputs */
+html:not([data-theme="dark"]) .tutor-drawer {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+}
+html[data-theme="dark"] .tutor-drawer,
+[data-theme="dark"] .tutor-drawer {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.65) !important;
+}
+html[data-theme="dark"] .tutor-answer,
+[data-theme="dark"] .tutor-answer {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-left-color: #38bdf8 !important;
+}
+html:not([data-theme="dark"]) #tutor-q,
+html:not([data-theme="dark"]) #tutor-dq,
+html:not([data-theme="dark"]) .ai-tutor-input,
+html:not([data-theme="dark"]) .tutor-input {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  caret-color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+}
+html[data-theme="dark"] #tutor-q,
+html[data-theme="dark"] #tutor-dq,
+html[data-theme="dark"] .ai-tutor-input,
+html[data-theme="dark"] .tutor-input,
+[data-theme="dark"] #tutor-q,
+[data-theme="dark"] #tutor-dq,
+[data-theme="dark"] .ai-tutor-input,
+[data-theme="dark"] .tutor-input {
+  color: #f8fafc !important;
+  background-color: #0f172a !important;
+  caret-color: #38bdf8 !important;
+  border: 1px solid #475569 !important;
+}
+html[data-theme="dark"] #tutor-q::placeholder,
+html[data-theme="dark"] #tutor-dq::placeholder,
+html[data-theme="dark"] .ai-tutor-input::placeholder,
+html[data-theme="dark"] .tutor-input::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}

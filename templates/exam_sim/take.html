@@ -63,7 +63,9 @@
     </div>
     <p>{{ q.text }}</p>
     {% if q.pbq %}
-    <div class="pbq-wb" data-pbq-workbench data-pbq-kind="{{ q.type }}" data-q="{{ i }}">
+    <div class="pbq-split-workspace pbq-split-pane" data-pbq-split-workspace>
+    <div class="pbq-pane-left">
+    <div class="pbq-wb pbq-split-pane" data-pbq-workbench data-pbq-kind="{{ q.type }}" data-q="{{ i }}" data-wb-layout="split">
       <div class="pbq-wb-header">
         <div class="pbq-wb-title">
           <span>Interactive PBQ Simulation Workbench</span>
@@ -120,6 +122,9 @@
         </div>
       </div>
     </div>
+    </div>
+    <div class="pbq-pane-right pbq-grid">
+      <div class="pbq-config-dock-hdr">Configuration &amp; Answer Matrix</div>
     {% endif %}
     {% if q.type in ('single', 'multi') %}
       {% if q.type == 'multi' %}<p class="small text-muted">Choose {{ q.choose }}.</p>{% endif %}
@@ -159,6 +164,10 @@
     {% else %}
       {% for p in q.prompts %}{% set k = loop.index0 %}<div class="es-row" data-pbq-row="{{ k }}"><label for="q{{ i }}_{{ k }}">{{ p }}</label>
         <select class="form-select form-select-sm" name="q{{ i }}_{{ k }}" id="q{{ i }}_{{ k }}"><option value="">—</option>{% for o in q.options %}<option{% if q.saved and q.saved[k] is defined and q.saved[k] == o %} selected{% endif %}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}
+    {% endif %}
+    {% if q.pbq %}
+    </div>
+    </div>
     {% endif %}
   </section>
   {% endfor %}

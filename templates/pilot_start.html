@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Start 30-Day / 30-Student Free Institutional Bundle — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+      <div class="eyebrow">Instant Self-Service Institutional Onboarding · $0 Cost · No Credit Card Required</div>
+      <h1 class="h3 mb-1">Start Your 30-Day / 30-Student Free Institutional Bundle</h1>
+      <p class="mb-0">Provision a live 30-seat institutional cohort in 60 seconds with full access to all 3 certification-aligned courses, 115 visual lessons, 539 4-rung adaptive ladders, 90 browser labs (including 24 Linux VMs), Exam-Day Simulator, Split-Pane PBQs, and Instructor Co-Pilot.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-light btn-sm" href="{{ url_for('roi_dashboard') }}"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> ROI Calculator</a>
+      <a class="btn btn-outline-gold btn-sm" href="{{ url_for('compliance_center') }}"><i class="bi bi-shield-check" aria-hidden="true"></i> VPAT / SOC 2 / HECVAT</a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header navy d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0">Provision Your 30-Day / 30-Student Institutional Workspace</h2>
+        <span class="badge badge-live">Instant Activation</span>
+      </div>
+      <div class="card-body p-4">
+        <form method="post" action="{{ url_for('pilot_start') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label class="form-label" for="institutionName">Institution, College, or Training Command Name *</label>
+            <input type="text" class="form-control" id="institutionName" name="institution_name" required
+                   placeholder="e.g., Coastal Technical College or Cyber Training Command"
+                   value="{{ form.get('institution_name', '') }}">
+            {% if errors.get('institution_name') %}<div class="text-danger small mt-1">{{ errors.get('institution_name') }}</div>{% endif %}
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label" for="adminName">Your Full Name &amp; Title *</label>
+              <input type="text" class="form-control" id="adminName" name="admin_name" required
+                     placeholder="e.g., Dr. Jordan Vance, Dean of IT"
+                     value="{{ form.get('admin_name', '') }}">
+              {% if errors.get('admin_name') %}<div class="text-danger small mt-1">{{ errors.get('admin_name') }}</div>{% endif %}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label" for="workEmail">Institutional / Work Email *</label>
+              <input type="email" class="form-control" id="workEmail" name="work_email" required
+                     placeholder="e.g., jvance@coastal.edu"
+                     value="{{ form.get('work_email', '') }}">
+              {% if errors.get('work_email') %}<div class="text-danger small mt-1">{{ errors.get('work_email') }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label" for="primaryCourse">Primary Cohort Track (All 3 Included)</label>
+              <select class="form-select" id="primaryCourse" name="primary_course">
+                <option value="ITSUP" {% if form.get('primary_course', 'ITSUP') == 'ITSUP' %}selected{% endif %}>IT Support Fundamentals (220-1201 / 220-1202 A+)</option>
+                <option value="NETOPS" {% if form.get('primary_course') == 'NETOPS' %}selected{% endif %}>Network Operations (N10-009 Network+)</option>
+                <option value="CLIENT" {% if form.get('primary_course') == 'CLIENT' %}selected{% endif %}>Client Systems &amp; Shop Procedures (FC0-U71 Tech+)</option>
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label" for="lmsIntegration">Preferred Roster &amp; LMS Integration</label>
+              <select class="form-select" id="lmsIntegration" name="lms_integration">
+                <option value="Standalone" {% if form.get('lms_integration') == 'Standalone' %}selected{% endif %}>Standalone Join Code &amp; CSV Roster</option>
+                <option value="Canvas LTI 1.3" {% if form.get('lms_integration') == 'Canvas LTI 1.3' %}selected{% endif %}>Canvas LMS (LTI 1.3 Advantage)</option>
+                <option value="Blackboard" {% if form.get('lms_integration') == 'Blackboard' %}selected{% endif %}>Anthology Blackboard (LTI 1.3)</option>
+                <option value="Moodle" {% if form.get('lms_integration') == 'Moodle' %}selected{% endif %}>Moodle (LTI 1.3 Advantage)</option>
+                <option value="Brightspace" {% if form.get('lms_integration') == 'Brightspace' %}selected{% endif %}>D2L Brightspace (LTI 1.3 Advantage)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="pilotPassword">Account Password <span class="text-muted fw-normal">(optional — leave blank to auto-generate)</span></label>
+            <input type="password" class="form-control" id="pilotPassword" name="password"
+                   placeholder="At least 8 characters, or leave blank for instant generated credentials"
+                   autocomplete="new-password">
+          </div>
+
+          <button type="submit" class="btn btn-brand btn-lg w-100">
+            <i class="bi bi-rocket-takeoff" aria-hidden="true"></i> Launch 30-Day / 30-Student Free Bundle Now
+          </button>
+          <p class="small text-muted text-center mt-2 mb-0">
+            Creates your Instructor/Admin account, provisions your 30-seat class section with a live <code>PILOT-XXXX</code> join code, and unlocks all modules immediately.
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header navy">What’s Included in the 30-Day / 30-Student Free Bundle</div>
+      <div class="card-body">
+        <ul class="ui-checklist mb-0">
+          <li><strong>30 Full Student Seats for 30 Days ($0 Cost):</strong> Invite up to 30 real students via 1-click Join Code, CSV roster upload, or LTI 1.3 Advantage launch.</li>
+          <li><strong>All 3 Certification-Aligned Courses Unlocked:</strong> Client Systems (FC0-U71), IT Support (220-1201 / 220-1202), and Network Operations (N10-009) — 26 chapters &amp; 115 visual lessons.</li>
+          <li><strong>539 4-Rung Adaptive Explanation Ladders:</strong> Every concept section adapts in-place (`R0 Standard → R1 Plain Language → R2 Analogy → R3 Visual Diagram → R4 Try-It`).</li>
+          <li><strong>All 90 Browser-Native Hands-On Labs:</strong> Including 24 real Alpine/x86 WebAssembly Linux VMs and 66 Windows 11, Cisco IOS CLI, and Hardware benches graded on <strong>Diagnose → Fix → Verify</strong>.</li>
+          <li><strong>1,400-Item Exam-Day Simulator &amp; 36 Split-Pane PBQs:</strong> Full 90-question sittings, <code>VOUCHER READY</code> gating, and 325-card Speed-Drill deck.</li>
+          <li><strong>10-Second "Who Needs Me" Instructor Co-Pilot:</strong> Real-time triage + optional on-device Helix gaze telemetry (0 video transmitted, FERPA-aligned).</li>
+          <li><strong>Full VPAT 2.5, SOC 2 &amp; HECVAT v3.04 Compliance Packet:</strong> Ready for campus IT security and accessibility review.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="eyebrow">Projected Financial Impact</div>
+        <h3 class="h6 fw-bold mb-1">Cut Institutional Training TCO by 68%</h3>
+        <p class="small text-muted mb-2">Replacing 4 separate legacy vendor licenses with Novak LMS™ saves an average of <strong>$78,750/yr</strong> per 250 students plus <strong>580+ instructor hours/yr</strong>.</p>
+        <a href="{{ url_for('roi_dashboard') }}" class="btn btn-sm btn-outline-navy">Open Interactive ROI Calculator →</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

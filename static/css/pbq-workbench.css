@@ -451,3 +451,74 @@
   background: #d1fae5;
   color: #065f46;
 }
+
+/* ==========================================================================
+   Side-by-Side Split-Pane PBQ Workbench Layout (>= 900px Desktop & Tablet)
+   Left Pane (56%): Topology SVG Visualizer + Live Inspector + pbq-cli
+   Right Pane (44%): Sticky Configuration & Answer Matrix (.pbq-grid / .es-row)
+   ========================================================================== */
+.pbq-layout-toggle {
+  appearance: none;
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  background: rgba(15, 23, 42, 0.65);
+  color: #bae6fd;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.pbq-layout-toggle.is-active {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+  color: #a7f3d0;
+}
+
+.pbq-config-dock-hdr {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #f8fafc;
+  background: linear-gradient(90deg, #0b2545 0%, #1e3a5f 100%);
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.45rem 0.45rem 0 0;
+  border-bottom: 2px solid #c9a227;
+  margin-bottom: 0.65rem;
+}
+
+@media (min-width: 900px) {
+  .pbq-split-workspace.pbq-split-pane {
+    display: grid;
+    grid-template-columns: minmax(0, 56%) minmax(0, 44%);
+    gap: 1rem;
+    align-items: start;
+  }
+  .pbq-split-workspace > .pbq-pane-left {
+    min-width: 0;
+  }
+  .pbq-split-workspace > .pbq-pane-right {
+    position: sticky;
+    top: calc(var(--topbar-h, 64px) + 0.75rem);
+    background: var(--surface, #ffffff);
+    border: 2px solid #1e3a5f;
+    border-radius: 0.5rem;
+    padding: 0 0.85rem 0.85rem;
+    box-shadow: 0 6px 18px rgba(11, 37, 69, 0.12);
+    max-height: calc(100vh - var(--topbar-h, 64px) - 1.5rem);
+    overflow-y: auto;
+  }
+  [data-theme="dark"] .pbq-split-workspace > .pbq-pane-right {
+    background: #0f172a;
+    border-color: #334155;
+  }
+  .pbq-split-workspace > .pbq-pane-right > .pbq-config-dock-hdr {
+    margin-left: -0.85rem;
+    margin-right: -0.85rem;
+  }
+  /* In Split View mode, show Topology Visualizer, Inspector, and CLI simultaneously in Left Pane */
+  .pbq-wb.pbq-split-pane[data-wb-layout="split"] .pbq-wb-panel.d-none {
+    display: block !important;
+    border-top: 1px solid #1e293b;
+  }
+}

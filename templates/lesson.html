@@ -1,143 +1,298 @@
 {% extends "base.html" %}
 {% block title %}{{ lesson.title }} — {{ site_name }}{% endblock %}
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-1">
-  <ol class="breadcrumb mb-0">
-    <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">Class</a></li>
-    <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">All chapters</a></li>
-    <li class="breadcrumb-item"><a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">{{ module.title }}</a></li>
-    <li class="breadcrumb-item active">{{ lesson.title }}</li>
-  </ol>
-</nav>
+{% set sec_count = (lesson_sections_meta|length) if (lesson_sections_meta is defined and lesson_sections_meta) else 1 %}
+{% set checks_done = ladder_gate.done if ladder_gate else 0 %}
+{% set checks_total = ladder_gate.total if (ladder_gate and ladder_gate.total) else sec_count %}
 
-<div class="page-hero lesson-hero mb-2">
-  <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center">
-    <div class="min-w-0">
-      <div class="small text-uppercase u-eyebrow d-none d-sm-block">{{ module.title }}</div>
-      <h1 class="h4 mb-0">{{ lesson.title }}</h1>
-      <div class="lesson-hero-links small">
-        <span>Lesson {{ lesson.order }} of {{ lessons|length }} · ~{{ lesson.estimated_minutes }} min</span>
-        <span class="d-none d-sm-inline" aria-hidden="true">·</span>
-        <a class="d-none d-sm-inline" href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">All lessons in this chapter</a>
-        {% if current_user.is_authenticated %}
-        <span aria-hidden="true">·</span>
-        <a href="{{ url_for('tickets_new', lesson_id=lesson.id, section_id=section_id, course_id=module.course_id) }}">Report an issue</a>
-        {% endif %}
+{# 1. Sticky Lesson Progress Header & Section Stepper Bar (.novak-lesson-progress-bar) #}
+<div class="novak-lesson-progress-bar" id="novakLessonProgressBar" role="region" aria-label="Lesson progress and navigation">
+  <div class="novak-reading-progress-track">
+    <div class="novak-reading-progress-fill" id="lessonProgressFill" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ ((100 * checks_done) // (checks_total or 1)) }}"></div>
+  </div>
+  <div class="novak-progress-inner">
+    <div class="novak-where-am-i min-w-0">
+      <nav aria-label="breadcrumb" class="mb-0">
+        <ol class="breadcrumb mb-0 small">
+          <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">{{ course.code if (course is defined and course) else 'Class' }}</a></li>
+          <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">All chapters</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">Ch {{ module.order }}: {{ module.title }}</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Lesson {{ lesson.order }} of {{ lessons|length }}</li>
+        </ol>
+      </nav>
+      <div class="novak-progress-pills">
+        <span class="novak-stepper-pill" id="lessonStepperPill">Section <span id="currentSecNum">1</span> of {{ sec_count }} · ~{{ lesson.estimated_minutes }} min left</span>
+        <span class="novak-checks-pill"><i class="bi bi-check2-circle" aria-hidden="true"></i> <span id="checksPassedPill">{{ checks_done }} / {{ checks_total }}</span> Section Checks Passed</span>
       </div>
     </div>
-    <div class="d-flex flex-wrap gap-1 lesson-hero-btns">
-      {% if lesson_labs %}
-      <a href="#chapter-lab" class="btn btn-brand btn-sm">
-        <i class="bi bi-terminal" aria-hidden="true"></i> <span class="d-none d-sm-inline">Lab for this lesson</span><span class="d-sm-none">Lab</span>
-      </a>
-      {% endif %}
-      <button type="button" class="btn btn-outline-gold btn-sm" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer">
-        <i class="bi bi-list" aria-hidden="true"></i> Chapters
+
+    {% if lesson_sections_meta is defined and lesson_sections_meta %}
+    <div class="novak-section-stepper-pills d-none d-md-flex" role="navigation" aria-label="Section stepper">
+      {% for s in lesson_sections_meta %}
+      <a href="#ladder-sec-{{ s.sid }}" class="novak-step-dot{% if loop.first %} is-active{% endif %}" data-section-jump="{{ loop.index0 }}" title="Section {{ s.idx }}: {{ s.heading }}">{{ s.idx }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="novak-view-controls">
+      <button type="button" class="btn btn-sm btn-outline-navy" id="toggle-focus-mode" data-focus-mode="off" aria-pressed="false" title="Switch between Step-by-Step Focus Mode and Full Page View">
+        <i class="bi bi-layers" aria-hidden="true"></i> <span id="focusModeLabel">Focus Mode (Step-by-Step)</span>
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-gold" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer">
+        <i class="bi bi-list" aria-hidden="true"></i> Curriculum Map (☰)
       </button>
     </div>
   </div>
 </div>
-{% if mastery_gate is defined %}{% include 'mastery/_lesson_banner.html' %}{% endif %}
-{# Labs sit under the lesson — not a full catalog dump at the top #}
 
-<div class="offcanvas offcanvas-start" tabindex="-1" id="lessonDrawer" aria-labelledby="lessonDrawerLabel">
+{# Slide-Over Curriculum Navigation Drawer (Mobile/Tablet & 1-Click Trigger) #}
+<div class="offcanvas offcanvas-start novak-curriculum-nav-drawer" tabindex="-1" id="lessonDrawer" aria-labelledby="lessonDrawerLabel">
   <div class="offcanvas-header border-bottom">
-    <h2 class="offcanvas-title h5 mb-0" id="lessonDrawerLabel">Course navigation</h2>
+    <h2 class="offcanvas-title h5 mb-0" id="lessonDrawerLabel">{{ course.title if (course is defined and course) else 'Course navigation' }}</h2>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body p-0" id="lessonSideNav">
     {% if course_modules %}
-    <div class="card-header navy">Chapters</div>
-    <div class="list-group list-group-flush">
+    <div class="card-header navy">Chapters &amp; Lessons</div>
+    <div class="novak-drawer-tree">
       {% for m in course_modules %}
-      <a href="{{ url_for('view_module', section_id=section_id, module_id=m.id) }}"
-         class="list-group-item list-group-item-action py-2 {% if m.id == module.id %}active-lesson{% endif %}">
-        {{ m.order }}. {{ m.title }}
-      </a>
+      <details class="novak-chapter-group" {% if m.id == module.id %}open{% endif %}>
+        <summary class="novak-chapter-summary {% if m.id == module.id %}is-current-chapter{% endif %}">
+          <span><strong>Ch {{ m.order }}.</strong> {{ m.title }}</span>
+          <span class="badge text-bg-secondary">{{ (module_lessons_map.get(m.id, []) if module_lessons_map is defined else [])|length }}</span>
+        </summary>
+        <div class="list-group list-group-flush lesson-nav">
+          {% set ch_lessons = module_lessons_map.get(m.id, []) if module_lessons_map is defined else (lessons if m.id == module.id else []) %}
+          {% for L in ch_lessons %}
+          <a href="{{ url_for('view_lesson', section_id=section_id, module_id=m.id, lesson_id=L.id) }}"
+             class="list-group-item list-group-item-action py-2 d-flex justify-content-between align-items-center {% if L.id == lesson.id %}active-lesson{% endif %}">
+            <span>
+              <span class="novak-lesson-status-ico" aria-hidden="true">{% if m.order < module.order or (m.id == module.id and L.order < lesson.order) %}✓{% elif L.id == lesson.id %}●{% else %}○{% endif %}</span>
+              <span class="small fw-bold">{{ L.order }}.</span> {{ L.title.split(' ', 1)[1] if ' ' in L.title else L.title }}
+            </span>
+            <span class="small text-muted">~{{ L.estimated_minutes }}m</span>
+          </a>
+          {% else %}
+          <a href="{{ url_for('view_module', section_id=section_id, module_id=m.id) }}" class="list-group-item list-group-item-action py-2 small">Open Chapter {{ m.order }}</a>
+          {% endfor %}
+        </div>
+      </details>
       {% endfor %}
     </div>
-    {% endif %}
+    {% else %}
     <div class="card-header navy border-top">Lessons in this chapter</div>
     <div class="list-group list-group-flush lesson-nav">
       {% for L in lessons %}
       <a href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=L.id) }}"
          class="list-group-item list-group-item-action py-2 {% if L.id == lesson.id %}active-lesson{% endif %}">
+        <span class="novak-lesson-status-ico" aria-hidden="true">{% if L.order < lesson.order %}✓{% elif L.id == lesson.id %}●{% else %}○{% endif %}</span>
         <span class="small fw-bold">{{ L.order }}.</span> {{ L.title.split(' ', 1)[1] if ' ' in L.title else L.title }}
       </a>
       {% endfor %}
     </div>
+    {% endif %}
     <div class="card-header navy border-top">On this page</div>
     <div class="list-group list-group-flush" id="subNav"></div>
   </div>
 </div>
 
-<div class="lesson-layout">
-  <div class="curriculum-stage" id="curriculumStage">
-    <div class="curriculum-fs-toolbar d-none" id="curriculumFsToolbar">
-      <span class="fw-semibold text-truncate me-auto">{{ lesson.title }}</span>
-      <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer">
-        <i class="bi bi-list"></i> Chapters
-      </button>
-      <button type="button" class="btn btn-sm btn-brand" id="curriculumExitFsBtn">
-        <i class="bi bi-fullscreen-exit"></i> Exit full screen
-      </button>
+{# Clean 3-Zone Curriculum Workspace Layout #}
+<div class="novak-lesson-workspace">
+  {# Persistent Left Curriculum Sidebar on Desktop #}
+  <aside class="novak-curriculum-sidebar novak-curriculum-nav-drawer d-none d-xl-block" aria-label="Course curriculum tree">
+    <div class="novak-sidebar-card">
+      <div class="novak-sidebar-head">
+        <div class="small text-uppercase fw-bold text-muted">{{ course.code if (course is defined and course) else 'CURRICULUM' }}</div>
+        <div class="fw-bold text-truncate">{{ course.title if (course is defined and course) else module.title }}</div>
+      </div>
+      <div class="novak-sidebar-body">
+        {% if course_modules %}
+          {% for m in course_modules %}
+          <details class="novak-chapter-group" {% if m.id == module.id %}open{% endif %}>
+            <summary class="novak-chapter-summary {% if m.id == module.id %}is-current-chapter{% endif %}">
+              <span class="text-truncate"><strong>Ch {{ m.order }}.</strong> {{ m.title }}</span>
+            </summary>
+            <div class="novak-chapter-lessons">
+              {% set ch_lessons = module_lessons_map.get(m.id, []) if module_lessons_map is defined else (lessons if m.id == module.id else []) %}
+              {% for L in ch_lessons %}
+              <a href="{{ url_for('view_lesson', section_id=section_id, module_id=m.id, lesson_id=L.id) }}"
+                 class="novak-tree-lesson {% if L.id == lesson.id %}active-lesson{% endif %}">
+                <span class="novak-lesson-status-ico" aria-hidden="true">{% if m.order < module.order or (m.id == module.id and L.order < lesson.order) %}✓{% elif L.id == lesson.id %}●{% else %}○{% endif %}</span>
+                <span class="text-truncate">{{ L.title }}</span>
+              </a>
+              {% endfor %}
+            </div>
+          </details>
+          {% endfor %}
+        {% else %}
+          {% for L in lessons %}
+          <a href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=L.id) }}"
+             class="novak-tree-lesson {% if L.id == lesson.id %}active-lesson{% endif %}">
+            <span class="novak-lesson-status-ico" aria-hidden="true">{% if L.order < lesson.order %}✓{% elif L.id == lesson.id %}●{% else %}○{% endif %}</span>
+            <span class="text-truncate">{{ L.title }}</span>
+          </a>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <div class="novak-sidebar-foot">
+        {% if lesson_labs %}
+        <a href="#chapter-lab" class="btn btn-sm btn-brand w-100 mb-1"><i class="bi bi-terminal" aria-hidden="true"></i> Launch Lesson Lab</a>
+        {% endif %}
+        {% if quizzes %}
+        <a href="{{ url_for('take_quiz', section_id=section_id, quiz_id=quizzes[0].id) }}" class="btn btn-sm btn-outline-navy w-100"><i class="bi bi-check2-square" aria-hidden="true"></i> Chapter Quiz</a>
+        {% endif %}
+      </div>
     </div>
-    <div class="card card-elevated curriculum-card">
-      <div class="card-header navy py-1 px-2 px-sm-3 d-flex justify-content-between align-items-center flex-wrap gap-1 narrate-bar">
-        <div class="d-flex flex-wrap align-items-center gap-1">
-          <span class="fw-semibold small me-1 d-none d-sm-inline"><i class="bi bi-soundwave" aria-hidden="true"></i> Listen</span>
-          <button type="button" class="btn btn-brand btn-sm py-0 px-2" id="ttsPlay"><i class="bi bi-play-fill" aria-hidden="true"></i> Play</button>
-          <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="ttsPause" aria-label="Pause"><i class="bi bi-pause-fill" aria-hidden="true"></i><span class="d-none d-sm-inline"> Pause</span></button>
-          <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="ttsStop" aria-label="Stop"><i class="bi bi-stop-fill" aria-hidden="true"></i><span class="d-none d-sm-inline"> Stop</span></button>
-          <button type="button" class="btn btn-outline-light btn-sm py-0 px-2 d-sm-none" id="ttsMore" aria-expanded="false" aria-controls="ttsOptions" aria-label="Narration options"><i class="bi bi-three-dots" aria-hidden="true"></i></button>
-          <span class="narrate-options" id="ttsOptions">
-          {% if config.NEURAL_TTS_ENABLED %}<select id="ttsVoice" class="form-select form-select-sm w-auto py-0" aria-label="Narration voice">
-            <option value="en-US-JennyNeural" selected>Jenny — neural</option>
-            <option value="en-US-GuyNeural">Guy — neural</option>
-          </select>{% else %}<span class="small opacity-75 ms-1" title="The online neural voice is turned off on this server">Browser voice</span>{% endif %}
-          <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="ttsFromHere"><i class="bi bi-cursor-text" aria-hidden="true"></i> From selection</button>
-          </span>
-          <span class="small opacity-75 ms-1" id="ttsStatus" aria-live="polite"></span>
-          <audio id="ttsAudio" controls class="ms-2" style="height:1.75rem;max-width:12rem" hidden></audio>
+  </aside>
+
+  {# Center Focused Reading Canvas #}
+  <div class="lesson-layout flex-grow-1 min-w-0">
+    <div class="page-hero lesson-hero mb-2">
+      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center">
+        <div class="min-w-0">
+          <div class="small text-uppercase u-eyebrow d-none d-sm-block">{{ module.title }}</div>
+          <h1 class="h4 mb-0">{{ lesson.title }}</h1>
+          <div class="lesson-hero-links small">
+            <span>Lesson {{ lesson.order }} of {{ lessons|length }} · ~{{ lesson.estimated_minutes }} min · {{ sec_count }} concept sections</span>
+            <span class="d-none d-sm-inline" aria-hidden="true">·</span>
+            <a class="d-none d-sm-inline" href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">All lessons in this chapter</a>
+            {% if current_user.is_authenticated %}
+            <span aria-hidden="true">·</span>
+            <a href="{{ url_for('tickets_new', lesson_id=lesson.id, section_id=section_id, course_id=module.course_id) }}">Report an issue</a>
+            {% endif %}
+          </div>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-light py-0 px-2 curriculum-fs-inline" id="curriculumFullscreenBtn2" aria-label="Full screen">
-          <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i><span class="d-none d-sm-inline"> Full screen</span>
+        <div class="d-flex flex-wrap gap-1 lesson-hero-btns">
+          {% if prev_l %}
+          <a href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=prev_l.id) }}" class="btn btn-outline-light btn-sm" title="Previous: {{ prev_l.title }}">← Prev</a>
+          {% endif %}
+          {% if next_l %}
+          <a href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=next_l.id) }}" class="btn btn-outline-light btn-sm" title="Next: {{ next_l.title }}">Next →</a>
+          {% endif %}
+          {% if lesson_labs %}
+          <a href="#chapter-lab" class="btn btn-brand btn-sm">
+            <i class="bi bi-terminal" aria-hidden="true"></i> <span class="d-none d-sm-inline">Lab for this lesson</span><span class="d-sm-none">Lab</span>
+          </a>
+          {% endif %}
+          <button type="button" class="btn btn-outline-gold btn-sm" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer">
+            <i class="bi bi-list" aria-hidden="true"></i> Chapters
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {% if mastery_gate is defined %}{% include 'mastery/_lesson_banner.html' %}{% endif %}
+
+    {% if is_windows_boot_lesson is defined and is_windows_boot_lesson %}
+    <section class="novak-boot-quickcard mb-3" aria-label="Windows Boot Process 3-Minute Quick Reference">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <div>
+          <span class="badge badge-gold me-1">220-1202 1.9 Exam Quick-Mastery</span>
+          <strong>Windows UEFI/GPT Boot Sequence &amp; Recovery Chain (Master in &lt; 3 Min)</strong>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-navy" id="toggleBootConciseBtn" aria-pressed="false">
+          Streamlined Exam Summary Mode
         </button>
       </div>
-      <div class="card-body module-content pt-2" id="lessonBody">
-        {% if ladder_html %}
-        <div class="lesson-meta-strip mb-2">
-          {% if ladder_gate and ladder_gate.on and not ladder_gate.exempt %}<p class="ladder-topstatus mb-0" data-gate-top>
-            <span class="ladder-topcount"><i class="bi bi-check2-square" aria-hidden="true"></i> <span data-gate-top-count>{{ ladder_gate.done }} of {{ ladder_gate.total }}</span> sections verified</span>
-            <span class="small"><span class="d-none d-md-inline">What to do next: answer the quick check under each section. Locked sections open as you go. </span><a href="#ladderGate">See what is left</a></span></p>{% endif %}
-          <p class="ladder-intro small mb-0"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> <span class="d-none d-md-inline">Each section ends with a quick check (not graded) — if it doesn’t click, get another explanation right here. </span><span class="d-md-none">4-rung adaptive checks — </span><a href="{{ url_for('ladder_profile', section_id=section_id) }}">What helps you learn</a></p>
-        </div>
-        {{ ladder_html | safe }}{% else %}{{ lesson.content | render_lesson | safe }}{% endif %}
-        {% include '_lesson_labs.html' %}
-        {% if mastery_quick is defined %}{% include 'mastery/_quickcheck.html' %}{% endif %}
+      <div class="novak-boot-flow-strip">
+        <span class="novak-boot-step"><strong>1. UEFI / POST</strong><small>Hardware init &amp; Secure Boot key check</small></span>
+        <span class="novak-boot-arrow" aria-hidden="true">→</span>
+        <span class="novak-boot-step"><strong>2. FAT32 ESP</strong><small><code>\EFI\Microsoft\Boot\bootmgfw.efi</code></small></span>
+        <span class="novak-boot-arrow" aria-hidden="true">→</span>
+        <span class="novak-boot-step"><strong>3. BCD Store</strong><small><code>\EFI\Microsoft\Boot\BCD</code></small></span>
+        <span class="novak-boot-arrow" aria-hidden="true">→</span>
+        <span class="novak-boot-step"><strong>4. winload.efi</strong><small>Loads kernel &amp; BOOT_START drivers</small></span>
+        <span class="novak-boot-arrow" aria-hidden="true">→</span>
+        <span class="novak-boot-step"><strong>5. ntoskrnl.exe</strong><small>Kernel, HAL &amp; registry hives</small></span>
+        <span class="novak-boot-arrow" aria-hidden="true">→</span>
+        <span class="novak-boot-step"><strong>6. winlogon.exe</strong><small><code>smss → wininit → services/lsass</code></small></span>
       </div>
-    </div>
-    {% set _gate = ladder_gate if ladder_gate and ladder_gate.on and not ladder_gate.exempt else None %}
-    {% if _gate %}{% include 'ladder/_gate.html' %}{% endif %}
-    {% macro adv(to, label) %}{% if _gate %}{{ url_for('lesson_advance', section_id=section_id, lesson_id=lesson.id, to=to, **kwargs) }}{% else %}{{ label }}{% endif %}{% endmacro %}
-    <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
-      {% if prev_l %}
-      <a class="btn btn-outline-navy lesson-prev" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=prev_l.id) }}">
-        ← {{ prev_l.title }}
-      </a>
-      {% else %}<span></span>{% endif %}
-      {% if next_l %}
-      <a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('next', url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=next_l.id), next_id=next_l.id) }}">
-        Next lesson →
-      </a>
-      {% elif quizzes or lesson_labs %}
-      <span class="d-flex flex-wrap gap-2">
-      {% if quizzes %}<a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('quiz', url_for('take_quiz', section_id=section_id, quiz_id=quizzes[0].id), quiz_id=quizzes[0].id) }}">Continue to Adaptive Check →</a>{% endif %}
-      {% if lesson_labs %}<a class="btn {{ 'btn-outline-navy' if quizzes else 'btn-brand' }}" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('lab', '#chapter-lab') }}">Continue to Lab →</a>{% endif %}
-      </span>
-      {% else %}
-      <a class="btn btn-brand" href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">Back to chapter</a>
-      {% endif %}
+      <div class="small mt-2 text-muted">
+        <strong>Key WinRE Recovery Commands:</strong>
+        <code>bootrec /rebuildbcd</code> (scan &amp; rebuild BCD) ·
+        <code>bcdedit /enum</code> (inspect boot entries) ·
+        <code>DISM /Online /Cleanup-Image /RestoreHealth</code> → <code>sfc /scannow</code> (repair corrupted system files).
+      </div>
+    </section>
+    {% endif %}
+
+    <div class="curriculum-stage" id="curriculumStage">
+      <div class="curriculum-fs-toolbar d-none" id="curriculumFsToolbar">
+        <span class="fw-semibold text-truncate me-auto">{{ lesson.title }}</span>
+        <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer">
+          <i class="bi bi-list"></i> Chapters
+        </button>
+        <button type="button" class="btn btn-sm btn-brand" id="curriculumExitFsBtn">
+          <i class="bi bi-fullscreen-exit"></i> Exit full screen
+        </button>
+      </div>
+      <div class="card card-elevated curriculum-card">
+        <div class="card-header navy py-1 px-2 px-sm-3 d-flex justify-content-between align-items-center flex-wrap gap-1 narrate-bar">
+          <div class="d-flex flex-wrap align-items-center gap-1">
+            <span class="fw-semibold small me-1 d-none d-sm-inline"><i class="bi bi-soundwave" aria-hidden="true"></i> Listen</span>
+            <button type="button" class="btn btn-brand btn-sm py-0 px-2" id="ttsPlay"><i class="bi bi-play-fill" aria-hidden="true"></i> Play</button>
+            <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="ttsPause" aria-label="Pause"><i class="bi bi-pause-fill" aria-hidden="true"></i><span class="d-none d-sm-inline"> Pause</span></button>
+            <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="ttsStop" aria-label="Stop"><i class="bi bi-stop-fill" aria-hidden="true"></i><span class="d-none d-sm-inline"> Stop</span></button>
+            <button type="button" class="btn btn-outline-light btn-sm py-0 px-2 d-sm-none" id="ttsMore" aria-expanded="false" aria-controls="ttsOptions" aria-label="Narration options"><i class="bi bi-three-dots" aria-hidden="true"></i></button>
+            <span class="narrate-options" id="ttsOptions">
+            {% if config.NEURAL_TTS_ENABLED %}<select id="ttsVoice" class="form-select form-select-sm w-auto py-0" aria-label="Narration voice">
+              <option value="en-US-JennyNeural" selected>Jenny — neural</option>
+              <option value="en-US-GuyNeural">Guy — neural</option>
+            </select>{% else %}<span class="small opacity-75 ms-1" title="The online neural voice is turned off on this server">Browser voice</span>{% endif %}
+            <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="ttsFromHere"><i class="bi bi-cursor-text" aria-hidden="true"></i> From selection</button>
+            </span>
+            <span class="small opacity-75 ms-1" id="ttsStatus" aria-live="polite"></span>
+            <audio id="ttsAudio" controls class="ms-2" style="height:1.75rem;max-width:12rem" hidden></audio>
+          </div>
+          <div class="d-flex align-items-center gap-1">
+            <button type="button" class="btn btn-sm btn-outline-light py-0 px-2 curriculum-fs-inline" id="curriculumFullscreenBtn2" aria-label="Full screen">
+              <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i><span class="d-none d-sm-inline"> Full screen</span>
+            </button>
+          </div>
+        </div>
+        <div class="card-body module-content pt-2" id="lessonBody">
+          {% if ladder_html %}
+          <div class="lesson-meta-strip mb-2">
+            {% if ladder_gate and ladder_gate.on and not ladder_gate.exempt %}<p class="ladder-topstatus mb-0" data-gate-top>
+              <span class="ladder-topcount"><i class="bi bi-check2-square" aria-hidden="true"></i> <span data-gate-top-count>{{ ladder_gate.done }} of {{ ladder_gate.total }}</span> sections verified</span>
+              <span class="small"><span class="d-none d-md-inline">What to do next: answer the quick check under each section. Locked sections open as you go. </span><a href="#ladderGate">See what is left</a></span></p>{% endif %}
+            <p class="ladder-intro small mb-0"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> <span class="d-none d-md-inline">Each section ends with a quick check (not graded) — if it doesn’t click, get another explanation right here. </span><span class="d-md-none">4-rung adaptive checks — </span><a href="{{ url_for('ladder_profile', section_id=section_id) }}">What helps you learn</a></p>
+          </div>
+          {{ ladder_html | safe }}{% else %}{{ lesson.content | render_lesson | safe }}{% endif %}
+
+          {# Step-by-Step Focus Mode Navigation Bar #}
+          <div class="novak-focus-nav-bar d-none" id="focusModeNavBar" role="navigation" aria-label="Focus mode section navigation">
+            <button type="button" class="btn btn-outline-navy btn-sm" id="focusPrevSection">← Previous Section</button>
+            <span class="fw-bold small" id="focusStepCounter">Section 1 of {{ sec_count }}</span>
+            <button type="button" class="btn btn-brand btn-sm" id="focusNextSection">Next Section →</button>
+          </div>
+
+          {% include '_lesson_labs.html' %}
+          {% if mastery_quick is defined %}{% include 'mastery/_quickcheck.html' %}{% endif %}
+        </div>
+      </div>
+      {% set _gate = ladder_gate if ladder_gate and ladder_gate.on and not ladder_gate.exempt else None %}
+      {% if _gate %}{% include 'ladder/_gate.html' %}{% endif %}
+      {% macro adv(to, label) %}{% if _gate %}{{ url_for('lesson_advance', section_id=section_id, lesson_id=lesson.id, to=to, **kwargs) }}{% else %}{{ label }}{% endif %}{% endmacro %}
+      <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
+        {% if prev_l %}
+        <a class="btn btn-outline-navy lesson-prev" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=prev_l.id) }}">
+          ← {{ prev_l.title }}
+        </a>
+        {% else %}<span></span>{% endif %}
+        {% if next_l %}
+        <a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('next', url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=next_l.id), next_id=next_l.id) }}">
+          Next lesson →
+        </a>
+        {% elif quizzes or lesson_labs %}
+        <span class="d-flex flex-wrap gap-2">
+        {% if quizzes %}<a class="btn btn-brand" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('quiz', url_for('take_quiz', section_id=section_id, quiz_id=quizzes[0].id), quiz_id=quizzes[0].id) }}">Continue to Adaptive Check →</a>{% endif %}
+        {% if lesson_labs %}<a class="btn {{ 'btn-outline-navy' if quizzes else 'btn-brand' }}" data-gated="{{ 1 if _gate else 0 }}" href="{{ adv('lab', '#chapter-lab') }}">Continue to Lab →</a>{% endif %}
+        </span>
+        {% else %}
+        <a class="btn btn-brand" href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">Back to chapter</a>
+        {% endif %}
+      </div>
     </div>
   </div>
 </div>
@@ -201,90 +356,6 @@
   }
 </style>
 
-<style>
-  .lesson-nav .active-lesson { font-weight: 700; }
-  #lessonDrawer {
-    width: min(320px, 94vw);
-    background: var(--surface);
-    color: var(--ink);
-  }
-  #lessonDrawer .offcanvas-header {
-    background: var(--navy-900, #06101f);
-    color: #f5f8fc;
-  }
-  #lessonDrawer .offcanvas-header .btn-close { filter: invert(1); opacity: .85; }
-  #lessonDrawer .list-group-item {
-    border-left: 0; border-right: 0;
-    background: var(--surface);
-    color: var(--ink);
-  }
-  #lessonDrawer .list-group-item:hover {
-    background: var(--surface-3);
-  }
-  #lessonDrawer .list-group-item.active-lesson {
-    font-weight: 700;
-    background: color-mix(in srgb, var(--accent) 16%, transparent);
-  }
-
-  /* Curriculum full screen / focus mode */
-  .curriculum-fs-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem 1rem;
-    background: var(--navy-900, #06101f);
-    color: #f5f8fc;
-    margin: -1rem -1rem 1rem;
-  }
-  body.curriculum-fullscreen {
-    overflow: hidden;
-  }
-  body.curriculum-fullscreen .topbar,
-  body.curriculum-fullscreen footer,
-  body.curriculum-fullscreen .staff-command-bar,
-  body.curriculum-fullscreen .teach-topbar,
-  body.curriculum-fullscreen .breadcrumb,
-  body.curriculum-fullscreen .page-hero,
-  body.curriculum-fullscreen .narrate-bar,
-  body.curriculum-fullscreen .curriculum-fs-inline {
-    display: none !important;
-  }
-  body.curriculum-fullscreen .app-main {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: none !important;
-  }
-  body.curriculum-fullscreen #curriculumStage {
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-    background: var(--surface-2);
-    overflow: auto;
-    padding: 1rem 1.25rem 2rem;
-  }
-  body.curriculum-fullscreen .curriculum-fs-toolbar {
-    display: flex !important;
-    margin: -1rem -1.25rem 1rem;
-  }
-  body.curriculum-fullscreen .curriculum-card {
-    max-width: 920px;
-    margin: 0 auto;
-    border: none;
-    box-shadow: none;
-  }
-  body.curriculum-fullscreen .curriculum-card .card-header.navy {
-    display: none;
-  }
-  body.curriculum-fullscreen #lessonBody {
-    font-size: 1.08rem;
-    line-height: 1.75;
-    padding: 0.5rem 0 2rem;
-  }
-</style>
 {% if current_user.is_authenticated %}
 <script>
 (function(){
@@ -541,7 +612,7 @@
     });
     if (spanIdx >= 0 && wordSpans[spanIdx]) {
       wordSpans[spanIdx].classList.add('tts-active');
-      wordSpans[spanIdx].classList.remove('tts-done');
+      wordSpans[spanIdx].removeAttribute && wordSpans[spanIdx].classList.remove('tts-done');
     }
   }
 
@@ -555,7 +626,6 @@
     const u = new SpeechSynthesisUtterance(text.slice(0, 6000));
     u.rate = 0.92;
     const voices = window.speechSynthesis.getVoices() || [];
-    // with the neural voice switched off, prefer voices the browser marks as on-device (localService)
     const local = NEURAL_TTS ? voices : voices.filter(v => v.localService);
     const pool = local.length ? local : voices;
     const prefer = pool.find(v => /en-US/i.test(v.lang) && /Google|Samantha|Microsoft|Neural/i.test(v.name))
@@ -568,7 +638,7 @@
 
   async function speakNeural(text, label, offset) {
     if (!text) { setStatus('Nothing to read'); return; }
-    if (!NEURAL_TTS) { browserFallback(text); return; }   // neural voice turned off on this server (privacy switch)
+    if (!NEURAL_TTS) { browserFallback(text); return; }
     startOffsetInFull = offset || 0;
     highlightAtTime._map = null;
     playBtn.disabled = true;
@@ -598,31 +668,11 @@
         setStatus('Finished');
         wordSpans.forEach(sp => { sp.classList.remove('tts-active'); sp.classList.add('tts-done'); });
       };
-      audio.ontimeupdate = function () {
-        highlightAtTime(audio.currentTime + 0.2);
-      };
-      await new Promise((resolve) => {
-        let done = false;
-        audio.onloadeddata = () => { if (!done) { done = true; resolve(); } };
-        audio.onerror = () => { if (!done) { done = true; resolve(); } };
-        audio.load();
-        setTimeout(() => { if (!done) { done = true; resolve(); } }, 10000);
-      });
-      if (audio.duration && isFinite(audio.duration) && wordTimings.length) {
-        const estEnd = wordTimings[wordTimings.length - 1].end || 1;
-        const scale = audio.duration / estEnd;
-        wordTimings = wordTimings.map(w => ({
-          text: w.text, start: w.start * scale, end: w.end * scale
-        }));
-        highlightAtTime._map = null;
-      }
+      audio.ontimeupdate = () => highlightAtTime(audio.currentTime);
       await audio.play();
-      let msg = label || 'Narrating';
-      if (data.truncated) msg += ' (first part)';
-      setStatus(msg);
+      setStatus(label || 'Playing');
     } catch (e) {
-      console.error(e);
-      setStatus('Neural failed — browser voice');
+      setStatus('Voice error — browser voice');
       browserFallback(text);
     } finally {
       playBtn.disabled = false;
@@ -630,47 +680,50 @@
     }
   }
 
-  document.addEventListener('mouseup', function () {
-    const tsel = selectionInLesson();
-    if (tsel.length >= 4) {
-      lastSelection = tsel;
-      setStatus('Selection ready — From selection');
+  document.addEventListener('selectionchange', () => {
+    const s = selectionInLesson();
+    if (s.length >= 2) lastSelection = s;
+  });
+
+  playBtn.addEventListener('click', () => {
+    const sel = selectionInLesson();
+    if (sel.length >= 2) {
+      const { text, offset } = textFromSelectionOnward();
+      speakNeural(text, 'Playing from selection', offset);
+    } else {
+      speakNeural(plainFromBody(), 'Playing full lesson', 0);
     }
   });
 
-  playBtn.onclick = function () {
-    if (audio.src && audio.paused && audio.currentTime > 0 && !audio.ended) {
-      audio.play();
-      setStatus('Narrating');
-      return;
-    }
-    if (audio.src && !audio.paused && !audio.ended) {
-      return;
-    }
-    speakNeural(plainFromBody(), 'Narrating', 0);
-  };
   if (fromBtn) {
-    fromBtn.onclick = function () {
+    fromBtn.addEventListener('click', () => {
       const { text, offset } = textFromSelectionOnward();
-      if (!text) { setStatus('Highlight text first'); return; }
-      speakNeural(text, 'Narrating from selection', offset);
-    };
+      if (!text) {
+        setStatus('Highlight a word in the lesson first, then click From selection');
+        return;
+      }
+      speakNeural(text, 'Playing from selection', offset);
+    });
   }
+
   const pauseBtn = document.getElementById('ttsPause');
   const stopBtn = document.getElementById('ttsStop');
-  if (pauseBtn) pauseBtn.onclick = function () {
-    audio.pause();
-    if ('speechSynthesis' in window) window.speechSynthesis.pause();
-    setStatus('Paused');
-  };
-  if (stopBtn) stopBtn.onclick = function () {
-    audio.pause();
-    audio.removeAttribute('src');
-    audio.load();
+  if (pauseBtn) pauseBtn.addEventListener('click', () => {
+    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+      if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); setStatus('Resumed'); }
+      else { window.speechSynthesis.pause(); setStatus('Paused'); }
+      return;
+    }
+    if (audio.paused && audio.src) { audio.play(); setStatus('Playing'); }
+    else { audio.pause(); setStatus('Paused'); }
+  });
+  if (stopBtn) stopBtn.addEventListener('click', () => {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    audio.pause();
+    audio.currentTime = 0;
     clearHighlights();
     setStatus('Stopped');
-  };
+  });
 })();
 </script>
 {% if current_user.is_authenticated %}

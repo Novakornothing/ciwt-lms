@@ -286,7 +286,11 @@ def register_ladder(app, db, ctx):
             shown = 'R0'
         nxt_avail = any(r not in st['tried'] for r in allowed)
         api = lambda ep, **kw: url_for(ep, section_id=section.id, lesson_id=lesson.id, sid=sid, **kw)
+        all_sids = [s['sid'] for s in LSEC.sections(lesson.content or '')]
+        sec_idx = (all_sids.index(sid) + 1) if sid in all_sids else 1
+        sec_tot = len(all_sids) or 1
         return {
+            'sec_index': sec_idx, 'sec_total': sec_tot,
             'sid': sid, 'heading': sec['heading'], 'orig_html': sec['html'], 'shown': shown,
             'view': rung_view(ent, shown), 'state': st, 'allowed': allowed,
             'tried_views': [{'rung': r, 'label': LS.LABEL[r]} for r in ['R0'] + [x for x in LP.RUNGS if x in st['tried']]],

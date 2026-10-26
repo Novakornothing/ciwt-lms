@@ -108,3 +108,276 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
+
+/* =====================================================================
+   Novak LMS™ Curriculum UX (Progress Bar, Step-by-Step Focus Mode,
+   Blueprint Progressive Disclosure) & Instant Smart Search Autocomplete
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  function initCurriculumUX() {
+    var lessonBody = document.getElementById('lessonBody');
+    var progressBar = document.getElementById('novakLessonProgressBar');
+    if (!lessonBody || !progressBar) return;
+
+    var progressFill = document.getElementById('lessonProgressFill');
+    var currentSecNum = document.getElementById('currentSecNum');
+    var stepDots = Array.prototype.slice.call(document.querySelectorAll('.novak-step-dot'));
+    var focusToggleBtn = document.getElementById('toggle-focus-mode');
+    var focusModeLabel = document.getElementById('focusModeLabel');
+    var focusNavBar = document.getElementById('focusModeNavBar');
+    var focusPrevBtn = document.getElementById('focusPrevSection');
+    var focusNextBtn = document.getElementById('focusNextSection');
+    var focusStepCounter = document.getElementById('focusStepCounter');
+
+    // Collect section blocks (.novak-section-card or section.sublesson)
+    function getSectionBlocks() {
+      var cards = Array.prototype.slice.call(lessonBody.querySelectorAll('.novak-section-card'));
+      if (cards.length) return cards;
+      return Array.prototype.slice.call(lessonBody.querySelectorAll('section.sublesson'));
+    }
+
+    // 1. De-clutter <aside class="novak-visual-blueprint">: make the 5-row spec table collapsible
+    var blueprint = lessonBody.querySelector('aside.novak-visual-blueprint');
+    if (blueprint && !blueprint.hasAttribute('data-ux-enhanced')) {
+      blueprint.setAttribute('data-ux-enhanced', '1');
+      var specWrap = blueprint.querySelector('.novak-spec-table-wrap');
+      var header = blueprint.querySelector('.novak-visual-header');
+      if (specWrap && header) {
+        var toggleSpecBtn = document.createElement('button');
+        toggleSpecBtn.type = 'button';
+        toggleSpecBtn.className = 'btn btn-sm btn-outline-navy ms-auto';
+        toggleSpecBtn.setAttribute('aria-expanded', 'true');
+        toggleSpecBtn.textContent = 'Compact Spec Table';
+        toggleSpecBtn.addEventListener('click', function () {
+          var hidden = specWrap.classList.toggle('d-none');
+          toggleSpecBtn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+          toggleSpecBtn.textContent = hidden ? 'Expand 5-Row Spec Table' : 'Compact Spec Table';
+        });
+        header.appendChild(toggleSpecBtn);
+      }
+    }
+
+    // 2. Reading Progress & Scroll Spy
+    var activeIdx = 0;
+    var focusMode = false;
+
+    function updateFocusView() {
+      var blocks = getSectionBlocks();
+      if (!blocks.length) return;
+      activeIdx = Math.max(0, Math.min(blocks.length - 1, activeIdx));
+      blocks.forEach(function (b, idx) {
+        b.classList.toggle('novak-step-hidden', focusMode && idx !== activeIdx);
+      });
+      stepDots.forEach(function (d, idx) {
+        d.classList.toggle('is-active', idx === activeIdx);
+      });
+      if (currentSecNum) currentSecNum.textContent = String(activeIdx + 1);
+      if (focusStepCounter) focusStepCounter.textContent = 'Section ' + (activeIdx + 1) + ' of ' + blocks.length;
+      if (focusPrevBtn) focusPrevBtn.disabled = activeIdx <= 0;
+      if (focusNextBtn) focusNextBtn.disabled = activeIdx >= blocks.length - 1;
+      if (focusMode && progressFill) {
+        var pct = Math.round(((activeIdx + 1) / blocks.length) * 100);
+        progressFill.style.width = pct + '%';
+        progressFill.setAttribute('aria-valuenow', String(pct));
+      }
+    }
+
+    function onScrollProgress() {
+      if (focusMode) return;
+      var rect = lessonBody.getBoundingClientRect();
+      var viewH = window.innerHeight || document.documentElement.clientHeight;
+      var totalScroll = Math.max(1, lessonBody.offsetHeight - viewH * 0.5);
+      var scrolled = Math.max(0, -rect.top + viewH * 0.25);
+      var pct = Math.max(5, Math.min(100, Math.round((scrolled / totalScroll) * 100)));
+      if (progressFill) {
+        progressFill.style.width = pct + '%';
+        progressFill.setAttribute('aria-valuenow', String(pct));
+      }
+      var blocks = getSectionBlocks();
+      if (blocks.length) {
+        var found = 0;
+        for (var i = 0; i < blocks.length; i++) {
+          var br = blocks[i].getBoundingClientRect();
+          if (br.top <= viewH * 0.42) found = i;
+        }
+        activeIdx = found;
+        if (currentSecNum) currentSecNum.textContent = String(activeIdx + 1);
+        stepDots.forEach(function (d, idx) {
+          d.classList.toggle('is-active', idx === activeIdx);
+        });
+      }
+    }
+
+    window.addEventListener('scroll', onScrollProgress, { passive: true });
+    onScrollProgress();
+
+    // 3. Focus Mode (Step-by-Step) Toggle
+    if (focusToggleBtn) {
+      focusToggleBtn.addEventListener('click', function () {
+        focusMode = !focusMode;
+        lessonBody.classList.toggle('novak-focus-mode-active', focusMode);
+        focusToggleBtn.setAttribute('data-focus-mode', focusMode ? 'on' : 'off');
+        focusToggleBtn.setAttribute('aria-pressed', focusMode ? 'true' : 'false');
+        if (focusModeLabel) {
+          focusModeLabel.textContent = focusMode ? 'Full Page View' : 'Focus Mode (Step-by-Step)';
+        }
+        if (focusNavBar) {
+          focusNavBar.classList.toggle('d-none', !focusMode);
+        }
+        updateFocusView();
+        if (!focusMode) onScrollProgress();
+      });
+    }
+
+    if (focusPrevBtn) {
+      focusPrevBtn.addEventListener('click', function () {
+        if (activeIdx > 0) {
+          activeIdx--;
+          updateFocusView();
+          lessonBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    }
+    if (focusNextBtn) {
+      focusNextBtn.addEventListener('click', function () {
+        var blocks = getSectionBlocks();
+        if (activeIdx < blocks.length - 1) {
+          activeIdx++;
+          updateFocusView();
+          lessonBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    }
+
+    stepDots.forEach(function (dot) {
+      dot.addEventListener('click', function (e) {
+        var idx = parseInt(dot.getAttribute('data-section-jump'), 10);
+        if (isNaN(idx)) return;
+        activeIdx = idx;
+        if (focusMode) {
+          e.preventDefault();
+          updateFocusView();
+          lessonBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          stepDots.forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
+          if (currentSecNum) currentSecNum.textContent = String(idx + 1);
+        }
+      });
+    });
+
+    // 4. Windows Boot Process Streamlined Summary Mode button
+    var bootBtn = document.getElementById('toggleBootConciseBtn');
+    if (bootBtn) {
+      bootBtn.addEventListener('click', function () {
+        var concise = bootBtn.getAttribute('aria-pressed') !== 'true';
+        bootBtn.setAttribute('aria-pressed', concise ? 'true' : 'false');
+        bootBtn.textContent = concise ? 'Show Full Lesson Prose' : 'Streamlined Exam Summary Mode';
+        lessonBody.querySelectorAll('section.sublesson.depth, .worked, .scenario-box').forEach(function (el) {
+          el.classList.toggle('d-none', concise);
+        });
+      });
+    }
+  }
+
+  // 5. Live Instant Smart Search Autocomplete Dropdown in Navbar
+  function initInstantSearch() {
+    var input = document.getElementById('curricSearch');
+    var dropdown = document.getElementById('globalSearchDropdown');
+    if (!input || !dropdown) return;
+    var form = input.closest('form');
+    var apiUrl = (form && form.getAttribute('data-api-search')) || '/api/search';
+    var timer = null;
+    var activeItemIdx = -1;
+
+    function closeDropdown() {
+      dropdown.classList.add('d-none');
+      dropdown.innerHTML = '';
+      activeItemIdx = -1;
+    }
+
+    function esc(s) {
+      var d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    function renderDropdown(data) {
+      var results = (data && data.results) || [];
+      if (!results.length) {
+        dropdown.innerHTML = '<div class="p-2 small text-muted">No instant matches for “' + esc(data.query) + '”. Press Enter for full search.</div>';
+        dropdown.classList.remove('d-none');
+        return;
+      }
+      var html = [];
+      if (data.did_you_mean && data.did_you_mean.toLowerCase() !== (data.query || '').toLowerCase()) {
+        html.push('<div class="novak-search-cat">Showing smart match: <strong>' + esc(data.did_you_mean) + '</strong></div>');
+      }
+      var topItems = results.slice(0, 8);
+      topItems.forEach(function (r, idx) {
+        html.push(
+          '<a class="novak-search-item" role="option" data-search-idx="' + idx + '" href="' + esc(r.url) + '">' +
+          '<div class="d-flex justify-content-between align-items-center gap-2">' +
+          '<strong class="text-truncate">' + esc(r.title) + '</strong>' +
+          '<span class="badge text-bg-secondary">' + esc(r.kind) + '</span>' +
+          '</div>' +
+          '<div class="small text-muted text-truncate">' + esc(r.course) + (r.chapter ? ' · ' + esc(r.chapter) : '') + '</div>' +
+          '</a>'
+        );
+      });
+      dropdown.innerHTML = html.join('');
+      dropdown.classList.remove('d-none');
+      activeItemIdx = -1;
+    }
+
+    input.addEventListener('input', function () {
+      var q = (input.value || '').trim();
+      if (timer) clearTimeout(timer);
+      if (q.length < 2) {
+        closeDropdown();
+        return;
+      }
+      timer = setTimeout(function () {
+        fetch(apiUrl + '?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) { if (data && data.ok) renderDropdown(data); })
+          .catch(function () {});
+      }, 160);
+    });
+
+    input.addEventListener('keydown', function (e) {
+      if (dropdown.classList.contains('d-none')) return;
+      var items = Array.prototype.slice.call(dropdown.querySelectorAll('.novak-search-item'));
+      if (!items.length) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeItemIdx = (activeItemIdx + 1) % items.length;
+        items.forEach(function (el, i) { el.classList.toggle('is-active', i === activeItemIdx); });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeItemIdx = (activeItemIdx - 1 + items.length) % items.length;
+        items.forEach(function (el, i) { el.classList.toggle('is-active', i === activeItemIdx); });
+      } else if (e.key === 'Enter' && activeItemIdx >= 0 && items[activeItemIdx]) {
+        e.preventDefault();
+        window.location.href = items[activeItemIdx].getAttribute('href');
+      } else if (e.key === 'Escape') {
+        closeDropdown();
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.novak-search-form')) closeDropdown();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initCurriculumUX();
+      initInstantSearch();
+    });
+  } else {
+    initCurriculumUX();
+    initInstantSearch();
+  }
+})();

@@ -91,10 +91,13 @@
   --info-bg: rgba(62, 199, 255, 0.12);
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.4);
   --shadow-lg: 0 20px 56px rgba(0,0,0,.5);
-  --bs-body-color: #f5f8fd;
-  --bs-secondary-color: #b8c7db;
-  --bs-tertiary-color: #9aadc4;
-  --bs-border-color: #24364f;
+  --bs-body-bg: #0d1524;
+  --bs-tertiary-bg: #162235;
+  --bs-secondary-bg: #111c2d;
+  --bs-body-color: #f8fafc;
+  --bs-secondary-color: #cbd5e1;
+  --bs-tertiary-color: #94a3b8;
+  --bs-border-color: #334155;
 }
 /* role accents tuned for dark: data-theme is on <html>, data-role on <body>, so these are descendant selectors */
 [data-theme="dark"] [data-role="instructor"] {

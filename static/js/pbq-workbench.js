@@ -786,13 +786,22 @@
       var activeNode = nodes[activeNodeIndex] || nodes[0];
       var activeRowIdx = activeNode ? activeNode.rowIndex : 0;
 
+      if (host.classList && host.classList.add) {
+        host.classList.add('pbq-split-pane');
+      }
+      if (host.setAttribute) {
+        host.setAttribute('data-wb-layout', 'split');
+      }
       host.innerHTML = [
         '<div class="pbq-wb-header">',
         '  <div class="pbq-wb-title">',
-        '    <span>Interactive PBQ Simulation Workbench</span>',
+        '    <span>Interactive Split-Pane PBQ Workbench</span>',
         '    <span class="pbq-wb-mode-pill" data-wb-mode-pill>' + escHtml(tpl.badgeLabel) + '</span>',
         '  </div>',
-        '  <span class="pbq-wb-progress" data-wb-progress-mirror>Simulation Tasks Configured: 0 / ' + rows.length + '</span>',
+        '  <div class="d-flex align-items-center gap-2">',
+        '    <button type="button" class="pbq-layout-toggle is-active" data-wb-toggle-split title="Toggle Side-by-Side Split View vs Tabbed View">Split-Pane View</button>',
+        '    <span class="pbq-wb-progress" data-wb-progress-mirror>Simulation Tasks Configured: 0 / ' + rows.length + '</span>',
+        '  </div>',
         '</div>',
         '<div class="pbq-wb-tabs" role="tablist" aria-label="PBQ Workbench Views">',
         tabButtonsHtml,
@@ -834,6 +843,9 @@
 
     function switchTab(tabId) {
       activeTab = tabId;
+      if (host.setAttribute) {
+        host.setAttribute('data-wb-layout', 'tabbed');
+      }
       Array.prototype.slice.call(host.querySelectorAll('[data-wb-tab]')).forEach(function (btn) {
         var on = btn.getAttribute('data-wb-tab') === tabId;
         btn.classList.toggle('is-active', on);
@@ -934,6 +946,16 @@
 
     // Delegated click listener inside the workbench host
     host.addEventListener('click', function (e) {
+      var splitToggle = e.target.closest('[data-wb-toggle-split]');
+      if (splitToggle) {
+        e.preventDefault();
+        var cur = (host.getAttribute && host.getAttribute('data-wb-layout')) || 'split';
+        var nextLayout = cur === 'split' ? 'tabbed' : 'split';
+        if (host.setAttribute) host.setAttribute('data-wb-layout', nextLayout);
+        splitToggle.classList.toggle('is-active', nextLayout === 'split');
+        return;
+      }
+
       var tabBtn = e.target.closest('[data-wb-tab]');
       if (tabBtn) {
         e.preventDefault();

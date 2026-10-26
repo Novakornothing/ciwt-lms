@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Institutional ROI &amp; Operational Savings Dashboard — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+      <div class="eyebrow">Executive Financial &amp; Operational Impact Analysis</div>
+      <h1 class="h3 mb-1">Institutional ROI &amp; TCO Consolidation Dashboard</h1>
+      <p class="mb-0">Quantify how unifying 4 fragmented training tools (eBook/Learnware, Cloud VM Labs, Practice Exam Bank, and Analytics/Proctoring) into Novak LMS™ cuts direct software TCO by <strong>{{ roi.license_reduction_pct }}%</strong>, reclaims <strong>14.5 instructor hours/week</strong>, and eliminates wasted certification retake vouchers.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 no-print">
+      <a class="btn btn-brand btn-sm" href="{{ url_for('pilot_start') }}"><i class="bi bi-rocket-takeoff" aria-hidden="true"></i> Launch 30-Day / 30-Student Free Bundle</a>
+      <a class="btn btn-outline-light btn-sm" id="roiExportCsvBtn" href="{{ url_for('roi_export_csv', students=roi.students, instructors=roi.instructors, legacy=roi.legacy_spend_per_student, voucher=roi.voucher_cost) }}"><i class="bi bi-download" aria-hidden="true"></i> Export Executive ROI Brief (CSV)</a>
+      <button type="button" class="btn btn-outline-gold btn-sm" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i> Print / Save PDF</button>
+    </div>
+  </div>
+</div>
+
+<section class="gb-kpis mb-4" aria-label="Executive ROI Headline Metrics">
+  <div class="kpi-card">
+    <div class="kpi-label">Annual License Consolidation Savings</div>
+    <div class="kpi-value" id="kpiLicenseSavings">${{ '{:,}'.format(roi.license_savings) }}<small>/yr</small></div>
+    <div class="kpi-sub"><strong id="kpiReductionPct">{{ roi.license_reduction_pct }}%</strong> lower software cost · Replaces 4 separate legacy SKUs</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Instructor Triage &amp; Grading Reclaimed</div>
+    <div class="kpi-value" id="kpiFacultyHours">{{ '{:,}'.format(roi.total_faculty_hours_saved) }}<small>hrs/yr</small></div>
+    <div class="kpi-sub">14.5 hrs/wk per instructor · <strong id="kpiFacultyDollars">${{ '{:,}'.format(roi.faculty_dollar_value) }}</strong> operational capacity</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Avoided Retake Voucher Waste</div>
+    <div class="kpi-value" id="kpiVoucherSavings">${{ '{:,}'.format(roi.voucher_savings) }}<small>/yr</small></div>
+    <div class="kpi-sub">First-attempt pass rate lifted <strong>61% → 89%</strong> via VOUCHER READY gating (<span id="kpiAvoidedRetakes">{{ roi.avoided_retakes }}</span> vouchers saved)</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Total Annual Net Institutional Impact</div>
+    <div class="kpi-value text-success" id="kpiTotalAnnual">${{ '{:,}'.format(roi.total_annual_net_savings) }}<small>/yr</small></div>
+    <div class="kpi-sub"><strong id="kpiThreeYear">${{ '{:,}'.format(roi.three_year_net_savings) }}</strong> 3-Yr Net Savings · <strong>{{ roi.time_to_competency_faster_pct }}%</strong> faster mastery</div>
+  </div>
+</section>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header navy d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0"><i class="bi bi-sliders" aria-hidden="true"></i> Interactive Institutional ROI Calculator</h2>
+        <span class="badge badge-gold" id="roiMultipleBadge">{{ roi.roi_multiple }}× Year-1 ROI</span>
+      </div>
+      <div class="card-body">
+        <form method="get" action="{{ url_for('roi_dashboard') }}" id="roiCalcForm">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label mb-0" for="roiStudents">Annual Student Enrollment</label>
+              <strong id="lblStudents">{{ roi.students }} students</strong>
+            </div>
+            <input type="range" class="form-range" id="roiStudents" name="students" min="30" max="5000" step="10" value="{{ roi.students }}">
+            <div class="d-flex justify-content-between small text-muted"><span>30 (Pilot Bundle)</span><span>250 (Dept)</span><span>1,500 (College)</span><span>5,000</span></div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label mb-0" for="roiInstructors">Active Instructors / Training Staff</label>
+              <strong id="lblInstructors">{{ roi.instructors }} instructors</strong>
+            </div>
+            <input type="range" class="form-range" id="roiInstructors" name="instructors" min="1" max="50" step="1" value="{{ roi.instructors }}">
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label mb-0" for="roiLegacy">Legacy 4-Vendor Stack Cost / Student ($/yr)</label>
+              <strong id="lblLegacy">${{ roi.legacy_spend_per_student }} / student</strong>
+            </div>
+            <input type="range" class="form-range" id="roiLegacy" name="legacy" min="200" max="800" step="10" value="{{ roi.legacy_spend_per_student }}">
+            <div class="small text-muted">Typical fragmented stack: Certware eBook ($155) + Cloud VM Lab Seat ($150) + Practice Exam Bank ($95) + Analytics/Proctoring ($60) = $460/student.</div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label mb-0" for="roiVoucher">Average Exam Voucher Cost ($)</label>
+              <strong id="lblVoucher">${{ roi.voucher_cost }} / voucher</strong>
+            </div>
+            <input type="range" class="form-range" id="roiVoucher" name="voucher" min="150" max="450" step="5" value="{{ roi.voucher_cost }}">
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 pt-2">
+            <button type="submit" class="btn btn-brand btn-sm">Recalculate Server Report</button>
+            <a href="{{ url_for('roi_dashboard') }}" class="btn btn-outline-secondary btn-sm">Reset to 250-Student Baseline</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header navy d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0">4-to-1 Vendor License Consolidation &amp; 3-Year TCO Breakdown</h2>
+        <span class="small">Unified All-in-One Stack ($145/student/yr)</span>
+      </div>
+      <div class="card-body">
+        <div class="mb-4">
+          <div class="d-flex justify-content-between small fw-semibold mb-1">
+            <span>Legacy Fragmented 4-Vendor 3-Year TCO</span>
+            <span id="barLegacyLabel" class="text-danger">${{ '{:,}'.format(roi.legacy_three_year_tco) }}</span>
+          </div>
+          <div class="progress mb-3" style="height: 1.15rem;">
+            <div class="progress-bar bg-danger" role="progressbar" style="width: 100%" aria-label="Legacy 3-year TCO">100% Legacy Spend</div>
+          </div>
+          <div class="d-flex justify-content-between small fw-semibold mb-1">
+            <span>Novak LMS™ Unified 3-Year TCO (68% Reduction)</span>
+            <span id="barNovakLabel" class="text-success">${{ '{:,}'.format(roi.novak_three_year_tco) }}</span>
+          </div>
+          <div class="progress" style="height: 1.15rem;">
+            <div class="progress-bar bg-success" id="barNovakFill" role="progressbar" style="width: 32%" aria-label="Novak LMS 3-year TCO">32% Unified Spend</div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col">Legacy Budget Line Item</th>
+                <th scope="col">Legacy Spend / Student</th>
+                <th scope="col" class="wrap-ok">Novak LMS™ Unified Replacement</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in roi.legacy_breakdown %}
+              <tr>
+                <td class="fw-semibold">{{ item.tool }}</td>
+                <td><code>${{ item.legacy_per_student }}/yr</code></td>
+                <td class="wrap-ok small"><span class="badge badge-live">✓</span> {{ item.novak_included }}</td>
+              </tr>
+              {% endfor %}
+              <tr class="table-active fw-bold">
+                <td>Total Direct Software Cost ({{ roi.students }} Students)</td>
+                <td id="tblLegacyTotal">${{ '{:,}'.format(roi.legacy_annual_software) }}/yr</td>
+                <td id="tblNovakTotal" class="text-success">${{ '{:,}'.format(roi.novak_annual_software) }}/yr (Saves ${{ '{:,}'.format(roi.license_savings) }}/yr)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="eyebrow">Operational Pillar 1</div>
+        <h3 class="h6 fw-bold">Zero VDI &amp; Zero Lab Server Maintenance</h3>
+        <p class="small text-muted mb-0">All <strong>90 hands-on labs</strong> (including <strong>24 real Alpine/x86 WebAssembly Linux VMs</strong> and 66 stateful Windows 11, Cisco IOS CLI, and hardware benches) execute natively in the student's browser. Institutions eliminate cloud VM per-minute overages, local ESXi/Hyper-V lab maintenance, and desktop Packet Tracer installation tickets — saving an additional <strong>$<span id="cardInfraSavings">{{ '{:,}'.format(roi.infra_savings) }}</span>/yr</strong>.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="eyebrow">Operational Pillar 2</div>
+        <h3 class="h6 fw-bold">Automated First-Line Remediation (539 Ladders)</h3>
+        <p class="small text-muted mb-0">When a student misses a section check, Novak LMS™ automatically serves up to 4 alternative explanations in-place (<code>R1 Plain Language → R2 Analogy → R3 Visual Diagram → R4 Interactive Try-It</code>). Over <strong>78%</strong> of concept blocks resolve automatically without waiting for office hours, cutting course drop/attrition rates by <strong>{{ roi.attrition_reduction_pct }}%</strong>.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="eyebrow">Operational Pillar 3</div>
+        <h3 class="h6 fw-bold">Psychometric Voucher Protection</h3>
+        <p class="small text-muted mb-0">The 1,400-item Exam-Day Simulator and 36 Split-Pane PBQs enforce a strict <strong>VOUCHER READY</strong> bar (2 consecutive sittings &ge; 780/900). Training directors only issue $253–$369 exam vouchers when candidates are mathematically verified to pass on Attempt #1.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-2" style="border-color: var(--accent-border) !important;">
+  <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <div class="eyebrow">Zero-Risk Institutional Validation</div>
+      <h2 class="h5 mb-1">Validate These Savings Live with a 30-Day / 30-Student Free Institutional Bundle</h2>
+      <p class="small text-muted mb-0">Provision a dedicated 30-seat cohort across Client Systems (FC0-U71), IT Support (220-1201/1202), and Network Operations (N10-009) in 60 seconds. Includes join code, CSV import, LTI 1.3 keys, and full ROI/Outcomes reporting.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-brand" href="{{ url_for('pilot_start') }}"><i class="bi bi-rocket-takeoff" aria-hidden="true"></i> Start 30-Day / 30-Student Free Bundle</a>
+      <a class="btn btn-outline-navy" href="{{ url_for('compliance_center') }}">VPAT / SOC 2 / HECVAT Center</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var sEl = document.getElementById('roiStudents');
+  var iEl = document.getElementById('roiInstructors');
+  var lEl = document.getElementById('roiLegacy');
+  var vEl = document.getElementById('roiVoucher');
+  if (!sEl || !iEl || !lEl || !vEl) return;
+
+  function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
+
+  function recalc() {
+    var students = parseInt(sEl.value, 10) || 250;
+    var instructors = parseInt(iEl.value, 10) || 4;
+    var legacy = parseInt(lEl.value, 10) || 460;
+    var voucher = parseInt(vEl.value, 10) || 265;
+    var novak = 145;
+
+    document.getElementById('lblStudents').textContent = fmt(students) + ' students';
+    document.getElementById('lblInstructors').textContent = fmt(instructors) + ' instructors';
+    document.getElementById('lblLegacy').textContent = '$' + fmt(legacy) + ' / student';
+    document.getElementById('lblVoucher').textContent = '$' + fmt(voucher) + ' / voucher';
+
+    var legSoft = students * legacy;
+    var novSoft = students * novak;
+    var licSav = Math.max(0, legSoft - novSoft);
+    var redPct = legSoft > 0 ? Math.round((licSav / legSoft) * 100) : 68;
+
+    var facHrs = instructors * 145;
+    var facDol = facHrs * 60;
+    var avoided = Math.max(1, Math.round(students * 0.28));
+    var vchSav = avoided * voucher;
+    var infSav = students * 38;
+    var totAnn = licSav + facDol + vchSav + infSav;
+    var tot3Yr = totAnn * 3;
+    var leg3Yr = (legSoft + Math.round(students * 0.39 * voucher) + infSav) * 3;
+    var nov3Yr = (novSoft + Math.round(students * 0.11 * voucher)) * 3;
+    var mult = (totAnn / Math.max(1, novSoft)).toFixed(1);
+
+    document.getElementById('kpiLicenseSavings').innerHTML = '$' + fmt(licSav) + '<small>/yr</small>';
+    document.getElementById('kpiReductionPct').textContent = redPct + '%';
+    document.getElementById('kpiFacultyHours').innerHTML = fmt(facHrs) + '<small>hrs/yr</small>';
+    document.getElementById('kpiFacultyDollars').textContent = '$' + fmt(facDol);
+    document.getElementById('kpiVoucherSavings').innerHTML = '$' + fmt(vchSav) + '<small>/yr</small>';
+    document.getElementById('kpiAvoidedRetakes').textContent = fmt(avoided);
+    document.getElementById('kpiTotalAnnual').innerHTML = '$' + fmt(totAnn) + '<small>/yr</small>';
+    document.getElementById('kpiThreeYear').textContent = '$' + fmt(tot3Yr);
+    document.getElementById('roiMultipleBadge').textContent = mult + '× Year-1 ROI';
+    document.getElementById('barLegacyLabel').textContent = '$' + fmt(leg3Yr);
+    document.getElementById('barNovakLabel').textContent = '$' + fmt(nov3Yr);
+    document.getElementById('tblLegacyTotal').textContent = '$' + fmt(legSoft) + '/yr';
+    document.getElementById('tblNovakTotal').textContent = '$' + fmt(novSoft) + '/yr (Saves $' + fmt(licSav) + '/yr)';
+    document.getElementById('cardInfraSavings').textContent = fmt(infSav);
+
+    var csvBtn = document.getElementById('roiExportCsvBtn');
+    if (csvBtn) {
+      csvBtn.href = "{{ url_for('roi_export_csv') }}?students=" + students + "&instructors=" + instructors + "&legacy=" + legacy + "&voucher=" + voucher;
+    }
+  }
+
+  [sEl, iEl, lEl, vEl].forEach(function (el) { el.addEventListener('input', recalc); });
+})();
+</script>
+{% endblock %}

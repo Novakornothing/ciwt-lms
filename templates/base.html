@@ -68,10 +68,10 @@
             {% endif %}
           </ul>
           {% if current_user.is_authenticated %}
-          <form class="d-flex ms-lg-2 my-2 my-lg-0" method="get" action="{{ url_for('curriculum_search') }}" role="search">
+          <form class="d-flex ms-lg-2 my-2 my-lg-0 position-relative novak-search-form" method="get" action="{{ url_for('curriculum_search') }}" role="search" data-api-search="{{ url_for('api_smart_search') }}">
             <label class="visually-hidden" for="curricSearch">Search curriculum</label>
-            <input id="curricSearch" class="form-control form-control-sm border-0 nav-search" type="search" name="q" placeholder="Search curriculum"
-                  >
+            <input id="curricSearch" class="form-control form-control-sm nav-search search-input" type="search" name="q" placeholder="Search lessons, labs, VLAN, BSOD…" autocomplete="off">
+            <div id="globalSearchDropdown" class="novak-search-dropdown d-none" role="listbox" aria-label="Instant search results"></div>
           </form>
           {% endif %}
           <ul class="navbar-nav align-items-lg-center gap-lg-1">
@@ -192,7 +192,7 @@
       <span>{{ site_name }} · original curriculum, not a vendor exam product · <a href="{{ url_for('accessibility') }}">Accessibility</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
       {% else %}
       <span>© {{ copyright_year }} {{ brand_mark }}</span>
-      <span><a href="https://novakornothing.com/#legal">Legal &amp; FAQ</a> · <a href="{{ url_for('specs_page') }}">Platform Specs</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
+      <span><a href="https://novakornothing.com/#legal">Legal &amp; FAQ</a> · <a href="{{ url_for('specs_page') }}">Platform Specs</a> · <a href="{{ url_for('roi_dashboard') }}">ROI Calculator</a> · <a href="{{ url_for('compliance_center') }}">VPAT / SOC 2 / HECVAT</a> · <a href="{{ url_for('pilot_start') }}">30-Day Free Bundle</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
       {% endif %}
     </div>
   </footer>

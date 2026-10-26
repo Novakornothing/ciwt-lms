@@ -1,9 +1,27 @@
 {# Explanation ladder: one concept section for one student (pass 19). Needs L (mastery/ladder.py section_ctx). #}
 {%- set v = L.view -%}
 {%- set st = L.state -%}
-<div class="ladder{% if v %} ladder-swapped ladder-k-{{ v.kind }}{% endif %}{% if st.exhausted %} ladder-exhausted{% endif %}" id="ladder-{{ L.sid }}"
+<div class="ladder novak-section-card{% if v %} ladder-swapped ladder-k-{{ v.kind }}{% endif %}{% if st.exhausted %} ladder-exhausted{% endif %}" id="ladder-{{ L.sid }}"
      data-ladder-sid="{{ L.sid }}" data-shown="{{ L.shown }}" data-heading="{{ L.heading }}"
+     data-sec-index="{{ L.sec_index|default(1) }}" data-sec-total="{{ L.sec_total|default(1) }}"
      data-event-url="{{ L.url_event }}" data-next="{{ 1 if L.next_available else 0 }}">
+  <div class="novak-section-card-header">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <span class="novak-section-badge">Section {{ L.sec_index|default(1) }} of {{ L.sec_total|default(1) }}</span>
+      <span class="novak-section-title-pill text-truncate">{{ L.heading }}</span>
+      {% if st.resolved %}<span class="badge badge-live">✓ Verified</span>{% endif %}
+    </div>
+    <div class="novak-adaptive-rung-bar" role="group" aria-label="Adaptive explanation modes for {{ L.heading }}">
+      <span class="novak-rung-status">Current Rung: {{ L.shown }} {{ 'Standard' if L.shown == 'R0' else L.style }}</span>
+      <span class="novak-rung-pills">
+        <span class="novak-rung-pill {% if L.shown == 'R0' %}is-active{% endif %}">R0 Standard</span>
+        <span class="novak-rung-pill {% if L.shown == 'R1' %}is-active{% endif %}">R1 Plain Language</span>
+        <span class="novak-rung-pill {% if L.shown == 'R2' %}is-active{% endif %}">R2 Real-World Analogy</span>
+        <span class="novak-rung-pill {% if L.shown == 'R3' %}is-active{% endif %}">R3 Visual Diagram</span>
+        <span class="novak-rung-pill {% if L.shown == 'R4' %}is-active{% endif %}">R4 Hands-On Try-It</span>
+      </span>
+    </div>
+  </div>
   {% if v %}
   <section class="sublesson ladder-rung" aria-labelledby="lh-{{ L.sid }}">
     <p class="ladder-label" tabindex="-1"{% if L.feedback and not L.feedback.ok %} aria-describedby="lf-{{ L.sid }}"{% endif %}><span class="ladder-badge ladder-swapbadge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Swapped to {{ L.shown }}: {{ L.style }}{% if L.step_no %} — step {{ L.step_no }} of {{ L.step_total }}{% endif %}</span>

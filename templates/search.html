@@ -3,20 +3,32 @@
 {% block content %}
 {% from '_ui.html' import empty_state %}
 <div class="page-hero">
-  <h1 class="h3 mb-1">Find curriculum</h1>
-  <p class="mb-0">Search lessons, chapters, and knowledge tests.</p>
+  <div class="eyebrow">Smart Fuzzy, Stemmed &amp; Synonym-Expanded Curriculum Search</div>
+  <h1 class="h3 mb-1">Find curriculum, hands-on labs &amp; exam objectives</h1>
+  <p class="mb-0">Search across 115 lessons, 90 browser labs, 26 chapters, and 98 exam sub-objectives — with automatic typo correction and IT acronym expansion.</p>
 </div>
 
 <form class="card card-body mb-4" method="get" action="{{ url_for('curriculum_search') }}">
   <div class="d-flex flex-wrap gap-2">
-    <input type="search" name="q" value="{{ q }}" class="form-control u-minw-16 flex-fill"
-           placeholder="Example: RAID, APIPA, Secure Boot, DHCP" autofocus>
-    <button class="btn btn-brand">Search</button>
+    <input type="search" name="q" value="{{ q }}" class="form-control search-input u-minw-16 flex-fill"
+           placeholder="Example: VLAN trunking OSPF, Wi-Fi 6, BSOD, bootmgr, etherchannel, subnetting" autofocus>
+    <button class="btn btn-brand"><i class="bi bi-search" aria-hidden="true"></i> Search</button>
   </div>
+  {% if expanded_terms and q %}
+  <div class="small text-muted mt-2 d-flex flex-wrap align-items-center gap-1">
+    {% if did_you_mean and did_you_mean|lower != q|lower %}
+    <span class="badge badge-gold me-1">Showing results matching: {{ did_you_mean }}</span>
+    {% endif %}
+    <span>Smart expansion:</span>
+    {% for term in expanded_terms[:8] %}
+    <a href="{{ url_for('curriculum_search', q=term) }}" class="badge text-bg-secondary text-decoration-none">{{ term }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
 </form>
 
 {% if q %}
-  <p class="text-muted">{{ results|length }} result{{ 's' if results|length != 1 else '' }} for “{{ q }}”</p>
+  <p class="text-muted">{{ results|length }} result{{ 's' if results|length != 1 else '' }} for “{{ q }}”{% if did_you_mean and did_you_mean|lower != q|lower %} (matched <strong>{{ did_you_mean }}</strong>){% endif %}</p>
   {% if results %}
   <div class="list-group mb-3">
     {% for r in results %}
@@ -26,7 +38,11 @@
         <span class="badge {% if r.locked %}badge-closed{% else %}badge-live{% endif %}">{{ r.kind }}{% if r.locked %} · locked{% endif %}</span>
       </div>
       <div class="small text-muted">{{ r.course }}{% if r.chapter and r.chapter != r.course %} · {{ r.chapter }}{% endif %}</div>
-      {% if r.snippet %}<div class="small mt-1">{{ r.snippet }}</div>{% endif %}
+      {% if r.snippet_html %}
+      <div class="small mt-1">{{ r.snippet_html | safe }}</div>
+      {% elif r.snippet %}
+      <div class="small mt-1">{{ r.snippet }}</div>
+      {% endif %}
     </a>
     {% endfor %}
   </div>

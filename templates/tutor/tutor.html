@@ -15,7 +15,7 @@
   <select class="form-select mb-2" id="tutor-sec" name="section_id">{% for s in sections %}<option value="{{ s.id }}"{% if s.id == section_id %} selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
   {% else %}<input type="hidden" name="section_id" value="{{ section_id }}">{% endif %}
   <label class="form-label" for="tutor-q">Your question</label>
-  <textarea class="form-control mb-2" id="tutor-q" name="q" rows="3" maxlength="500" required placeholder="e.g. Why does a 169.254 address mean there is no DHCP lease?">{{ q }}</textarea>
+  <textarea class="form-control ai-tutor-input tutor-input mb-2" id="tutor-q" name="q" rows="3" maxlength="500" required placeholder="e.g. Why does a 169.254 address mean there is no DHCP lease?">{{ q }}</textarea>
   <button class="btn btn-brand" type="submit"{% if not on %} disabled{% endif %}><i class="bi bi-chat-square-text" aria-hidden="true"></i> Ask</button>
 </form>
 {% include "tutor/_answer.html" %}

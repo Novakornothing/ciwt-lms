@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Pilot Launchpad: {{ section.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+      <div class="eyebrow">30-Day / 30-Student Free Institutional Bundle · ACTIVE</div>
+      <h1 class="h3 mb-1">{{ section.name }}</h1>
+      <p class="mb-0">Your 30-seat institutional pilot cohort is live through <strong>{{ section.end_date }}</strong> ({{ days_remaining }} days remaining). All chapters, 539 adaptive ladders, 90 browser labs, and Exam-Day Simulators are pre-activated.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-brand btn-sm" href="{{ url_for('instructor_section', section_id=section.id) }}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Open Instructor Workspace</a>
+      <a class="btn btn-outline-light btn-sm" href="{{ url_for('student_section', section_id=section.id) }}"><i class="bi bi-eye" aria-hidden="true"></i> Preview Student View</a>
+    </div>
+  </div>
+</div>
+
+{% if generated_pw %}
+<div class="alert alert-info mb-4">
+  <i class="bi bi-key-fill me-2" aria-hidden="true"></i>
+  <strong>Save Your Instructor Credentials:</strong> Signed in as <code>{{ current_user.email }}</code> · Temporary Password: <code>{{ generated_pw }}</code> (you can change this anytime in <a href="{{ url_for('account') }}">Account</a>).
+</div>
+{% endif %}
+
+<section class="gb-kpis mb-4" aria-label="Pilot bundle status">
+  <div class="kpi-card">
+    <div class="kpi-label">Class Join Code</div>
+    <div class="kpi-value"><code id="pilotJoinCode">{{ join_code }}</code></div>
+    <div class="kpi-sub">Share with students at <code>/register</code></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Student Seats Active</div>
+    <div class="kpi-value">{{ enrolled_count }} / {{ section.max_students or 30 }}</div>
+    <div class="kpi-sub">30-Student Free Institutional Bundle</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Pilot Window</div>
+    <div class="kpi-value">{{ days_remaining }}<small>days</small></div>
+    <div class="kpi-sub">{{ section.start_date }} → {{ section.end_date }}</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Primary Course Track</div>
+    <div class="kpi-value">{{ section.course.code if section.course else 'ITSUP' }}</div>
+    <div class="kpi-sub">{{ section.course.title if section.course else 'All 3 Tracks Accessible' }}</div>
+  </div>
+</section>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header navy">1. Enroll Your 30 Students (Invite Link, Join Code, or CSV)</div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">Share this direct registration link with your students—it pre-fills Join Code <code>{{ join_code }}</code> and places them straight into <strong>{{ section.name }}</strong>:</p>
+        <div class="input-group mb-3">
+          <input type="text" class="form-control font-monospace" id="pilotInviteUrl" readonly value="{{ invite_url }}" aria-label="Student invite link">
+          <button class="btn btn-brand" type="button" id="copyInviteBtn" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('pilotInviteUrl').value); this.textContent='Copied!';">
+            <i class="bi bi-clipboard" aria-hidden="true"></i> Copy Invite Link
+          </button>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_section', section_id=section.id) }}#roster"><i class="bi bi-filetype-csv" aria-hidden="true"></i> Bulk Import Students via CSV</a>
+          {% if first_lesson %}
+          <a class="btn btn-sm btn-outline-gold" href="{{ url_for('view_lesson', section_id=section.id, module_id=first_lesson.module_id, lesson_id=first_lesson.id) }}"><i class="bi bi-book" aria-hidden="true"></i> Launch Lesson 1.1 Reader</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header navy">2. Executive Evaluation &amp; Campus Integration Shortcuts</div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a class="btn btn-outline-navy text-start d-flex justify-content-between align-items-center" href="{{ url_for('instructor_section', section_id=section.id) }}">
+            <span><strong><i class="bi bi-people me-1" aria-hidden="true"></i> Instructor Command Center &amp; "Who Needs Me" Co-Pilot</strong><br><span class="small text-muted">Manage release schedules, view BKT mastery heatmaps, and monitor live triage.</span></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a class="btn btn-outline-navy text-start d-flex justify-content-between align-items-center" href="{{ url_for('roi_dashboard', students=30, instructors=1) }}">
+            <span><strong><i class="bi bi-graph-up-arrow me-1" aria-hidden="true"></i> Institutional ROI &amp; 68% TCO Savings Brief</strong><br><span class="small text-muted">Export a customized financial impact report for your Dean, Provost, or CIO.</span></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a class="btn btn-outline-navy text-start d-flex justify-content-between align-items-center" href="{{ url_for('compliance_center') }}">
+            <span><strong><i class="bi bi-shield-check me-1" aria-hidden="true"></i> VPAT 2.5, SOC 2 &amp; HECVAT v3.04 Trust Center</strong><br><span class="small text-muted">Download JSON/CSV/Markdown accessibility &amp; security packets for IT review.</span></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

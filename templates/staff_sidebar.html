@@ -136,6 +136,12 @@
           <a class="rail-link {% if ep in ('admin_lti','admin_lti_new','admin_lti_edit') %}active{% endif %}" href="{{ url_for('admin_lti') }}">
             <i class="bi bi-plug"></i><span>LMS (LTI)</span>
           </a>
+          <a class="rail-link {% if ep in ('admin_roi','roi_dashboard') %}active{% endif %}" href="{{ url_for('admin_roi') }}">
+            <i class="bi bi-graph-up-arrow"></i><span>Institutional ROI</span>
+          </a>
+          <a class="rail-link {% if ep in ('admin_compliance','compliance_center') %}active{% endif %}" href="{{ url_for('admin_compliance') }}">
+            <i class="bi bi-shield-check"></i><span>VPAT / SOC 2 / HECVAT</span>
+          </a>
           <a class="rail-link {% if ep == 'admin_audit' %}active{% endif %}" href="{{ url_for('admin_audit') }}">
             <i class="bi bi-shield-check"></i><span>Audit log</span>
           </a>

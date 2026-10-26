@@ -31,8 +31,7 @@ html, body { overflow-x: clip; }
 .topbar .teach-topbar .teach-label, .topbar .teach-topbar #teachClock { color: #fff; }
 .topbar .teach-topbar #teachStatus { color: #b8c7db !important; }
 .topbar .teach-topbar .btn-outline-navy { --bs-btn-color: #f5f8fd; --bs-btn-border-color: rgba(255,255,255,.45); --bs-btn-hover-bg: rgba(255,255,255,.12); --bs-btn-hover-color: #fff; color: #f5f8fd; border-color: rgba(255,255,255,.45); background: transparent; }
-#curricSearch::placeholder { color: rgba(230,238,249,.7); }
-#curricSearch { color: #fff !important; }
+/* #curricSearch contrast handled in theme-aware Search & AI Tutor Contrast block below */
 
 /* ---------- typography & hero ---------- */
 .eyebrow { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .12em; font-weight: 600; color: var(--accent-bright); margin-bottom: .25rem; }
@@ -870,7 +869,7 @@ details.card-disclosure:not([open]) > summary { border-bottom: 0; border-radius:
 .u-ink-2 { color: var(--ink-secondary); }
 .u-minw-9 { min-width: 9rem; } .u-minw-12 { min-width: 12rem; } .u-minw-16 { min-width: 16rem; }
 .u-maxw-20 { max-width: 20rem; } .u-maxw-34 { max-width: 34rem; } .u-w-14 { width: 14rem; }
-.nav-search { min-width: 9rem; max-width: 14rem; background: rgba(255,255,255,.12); color: inherit; }
+.nav-search { min-width: 11rem; max-width: 17rem; }
 
 /* ---- Flash messages (pass 6) ---- */
 .ui-flash { display: flex; align-items: flex-start; gap: .65rem; padding-right: 3.25rem; border-width: 1px; border-left-width: 4px; }
@@ -1183,4 +1182,479 @@ aside.novak-visual-blueprint details.novak-field-watchout > summary {
   aside.novak-visual-blueprint .novak-spec-table td {
     padding: 0.35rem 0.45rem;
   }
+}
+
+/* ==========================================================================
+   1. HIGH-CONTRAST LIGHT MODE SEARCH & DARK MODE AI TUTOR / INPUT LOCK
+   ========================================================================== */
+html:not([data-theme="dark"]) input[name="q"],
+html:not([data-theme="dark"]) .search-input,
+html:not([data-theme="dark"]) #global-search-input,
+html:not([data-theme="dark"]) #curricSearch,
+html:not([data-theme="dark"]) .nav-search,
+html[data-theme="light"] input[name="q"],
+html[data-theme="light"] .search-input,
+html[data-theme="light"] #global-search-input,
+html[data-theme="light"] #curricSearch,
+body.light-mode input[name="q"],
+body.light-mode .search-input {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  caret-color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+}
+html:not([data-theme="dark"]) input[name="q"]::placeholder,
+html:not([data-theme="dark"]) .search-input::placeholder,
+html:not([data-theme="dark"]) #global-search-input::placeholder,
+html:not([data-theme="dark"]) #curricSearch::placeholder,
+html[data-theme="light"] input[name="q"]::placeholder,
+html[data-theme="light"] .search-input::placeholder {
+  color: #475569 !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="dark"] input[name="q"],
+html[data-theme="dark"] .search-input,
+html[data-theme="dark"] #global-search-input,
+html[data-theme="dark"] #curricSearch,
+html[data-theme="dark"] .nav-search,
+[data-theme="dark"] input[name="q"],
+[data-theme="dark"] .search-input,
+[data-theme="dark"] #curricSearch {
+  color: #f8fafc !important;
+  background-color: #0f172a !important;
+  caret-color: #38bdf8 !important;
+  border: 1px solid #334155 !important;
+}
+html[data-theme="dark"] input[name="q"]::placeholder,
+html[data-theme="dark"] .search-input::placeholder,
+html[data-theme="dark"] #global-search-input::placeholder,
+html[data-theme="dark"] #curricSearch::placeholder,
+[data-theme="dark"] #curricSearch::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* AI Tutor, Chat, Feedback & General Form Inputs in Light & Dark Mode */
+html:not([data-theme="dark"]) #ai-tutor-input,
+html:not([data-theme="dark"]) .ai-tutor-input,
+html:not([data-theme="dark"]) .tutor-input,
+html:not([data-theme="dark"]) .chat-input,
+html:not([data-theme="dark"]) #tutor-q,
+html:not([data-theme="dark"]) #tutor-dq,
+html:not([data-theme="dark"]) textarea,
+html:not([data-theme="dark"]) input[type="text"],
+html:not([data-theme="dark"]) input[type="email"],
+html:not([data-theme="dark"]) input[type="password"] {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  caret-color: #0f172a !important;
+}
+html[data-theme="dark"] #ai-tutor-input,
+html[data-theme="dark"] .ai-tutor-input,
+html[data-theme="dark"] .tutor-input,
+html[data-theme="dark"] .chat-input,
+html[data-theme="dark"] #tutor-q,
+html[data-theme="dark"] #tutor-dq,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] input[type="text"],
+html[data-theme="dark"] input[type="search"],
+html[data-theme="dark"] input[type="email"],
+html[data-theme="dark"] input[type="password"],
+[data-theme="dark"] .ai-tutor-input,
+[data-theme="dark"] .tutor-input,
+[data-theme="dark"] textarea {
+  color: #f8fafc !important;
+  background-color: #0f172a !important;
+  caret-color: #38bdf8 !important;
+  border-color: #334155 !important;
+}
+html[data-theme="dark"] #ai-tutor-input::placeholder,
+html[data-theme="dark"] .ai-tutor-input::placeholder,
+html[data-theme="dark"] .tutor-input::placeholder,
+html[data-theme="dark"] .chat-input::placeholder,
+html[data-theme="dark"] textarea::placeholder,
+html[data-theme="dark"] input[type="text"]::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* ==========================================================================
+   2. FLAGSHIP CURRICULUM WORKSPACE: STICKY PROGRESS, 3-ZONE SHELL & CARDS
+   ========================================================================== */
+.novak-lesson-progress-bar {
+  position: sticky;
+  top: var(--topbar-h, 64px);
+  z-index: 1022;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--surface-3);
+  border-radius: 12px;
+  margin-bottom: 0.9rem;
+  box-shadow: 0 4px 20px rgba(6, 13, 24, 0.08);
+  overflow: hidden;
+}
+[data-theme="dark"] .novak-lesson-progress-bar {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+.novak-reading-progress-track {
+  height: 4px;
+  width: 100%;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.novak-reading-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0ea5e9, #38bdf8, #f59e0b);
+  transition: width 0.2s ease-out;
+}
+.novak-progress-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.85rem;
+  padding: 0.55rem 0.9rem;
+}
+.novak-where-am-i {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.novak-progress-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.novak-stepper-pill,
+.novak-checks-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.16rem 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--surface-4);
+}
+.novak-checks-pill {
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+}
+.novak-section-stepper-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  flex-wrap: wrap;
+}
+.novak-step-dot {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none !important;
+  background: var(--surface-2);
+  color: var(--ink-secondary);
+  border: 1px solid var(--surface-4);
+  transition: all 0.15s ease;
+}
+.novak-step-dot:hover,
+.novak-step-dot.is-active {
+  background: var(--accent);
+  color: #06101f !important;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.novak-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* 3-Zone Curriculum Workspace Layout */
+.novak-lesson-workspace {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+.novak-curriculum-sidebar {
+  width: 272px;
+  flex: 0 0 272px;
+  position: sticky;
+  top: calc(var(--topbar-h, 64px) + 4.75rem);
+  max-height: calc(100vh - var(--topbar-h, 64px) - 5.5rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.novak-sidebar-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-3);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.novak-sidebar-head {
+  padding: 0.75rem 0.9rem;
+  background: linear-gradient(135deg, #07101f, #13284a);
+  color: #f8fafc;
+  border-bottom: 1px solid var(--accent-border);
+}
+.novak-sidebar-head .text-muted {
+  color: #94a3b8 !important;
+}
+.novak-sidebar-body {
+  padding: 0.35rem 0;
+  max-height: 58vh;
+  overflow-y: auto;
+}
+.novak-chapter-group {
+  border-bottom: 1px solid var(--surface-3);
+}
+.novak-chapter-summary {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--ink);
+  list-style: none;
+  user-select: none;
+}
+.novak-chapter-summary::-webkit-details-marker { display: none; }
+.novak-chapter-summary:hover { background: var(--surface-2); }
+.novak-chapter-summary.is-current-chapter {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  font-weight: 700;
+}
+.novak-chapter-lessons {
+  display: flex;
+  flex-direction: column;
+  padding: 0.2rem 0 0.4rem;
+  background: var(--surface-2);
+}
+.novak-tree-lesson {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.85rem 0.38rem 1.15rem;
+  font-size: 0.8rem;
+  color: var(--ink-secondary);
+  text-decoration: none !important;
+  border-left: 3px solid transparent;
+}
+.novak-tree-lesson:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+.novak-tree-lesson.active-lesson {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  color: var(--ink);
+  font-weight: 700;
+  border-left-color: var(--accent);
+}
+.novak-lesson-status-ico {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--success);
+  flex-shrink: 0;
+}
+.novak-sidebar-foot {
+  padding: 0.65rem 0.85rem;
+  border-top: 1px solid var(--surface-3);
+  background: var(--surface-2);
+}
+
+/* Interactive Learning Section Cards (.novak-section-card) */
+.novak-section-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-3);
+  border-radius: 12px;
+  padding: 1.15rem 1.35rem;
+  margin-bottom: 1.35rem;
+  box-shadow: 0 2px 12px rgba(6, 13, 24, 0.05);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+[data-theme="dark"] .novak-section-card {
+  background: #0f172a;
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+.novak-section-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--surface-4));
+}
+.novak-section-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1px solid var(--surface-3);
+}
+.novak-section-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--navy-800, #101c32);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+.novak-section-title-pill {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  max-width: 22rem;
+}
+.novak-adaptive-rung-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+.novak-rung-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  margin-right: 0.2rem;
+}
+.novak-rung-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.novak-rung-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.14rem 0.48rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-secondary);
+  border: 1px solid var(--surface-4);
+}
+.novak-rung-pill.is-active {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  color: var(--ink);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+/* Step-by-Step Focus Mode */
+#lessonBody.novak-focus-mode-active .novak-section-card.novak-step-hidden,
+#lessonBody.novak-focus-mode-active section.sublesson.novak-step-hidden {
+  display: none !important;
+}
+.novak-focus-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  margin: 1rem 0;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--accent-border);
+}
+
+/* Windows Boot Sequence Quick-Mastery Card */
+.novak-boot-quickcard {
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(245, 158, 11, 0.08));
+  border: 1.5px solid var(--accent-border);
+}
+.novak-boot-flow-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.novak-boot-step {
+  flex: 1 1 8.5rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--surface-4);
+  font-size: 0.8rem;
+}
+.novak-boot-step small {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+.novak-boot-arrow {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Search Highlight & Live Instant Autocomplete Dropdown */
+mark.search-hl {
+  background: rgba(250, 204, 21, 0.35);
+  color: inherit;
+  padding: 0.05rem 0.2rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.novak-search-dropdown {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  width: min(28rem, 92vw);
+  max-height: 24rem;
+  overflow-y: auto;
+  z-index: 2050;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #94a3b8;
+  border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(6, 13, 24, 0.28);
+  padding: 0.4rem;
+}
+html[data-theme="dark"] .novak-search-dropdown,
+[data-theme="dark"] .novak-search-dropdown {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+.novak-search-cat {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  padding: 0.35rem 0.6rem 0.15rem;
+}
+[data-theme="dark"] .novak-search-cat { color: #94a3b8; }
+.novak-search-item {
+  display: block;
+  padding: 0.45rem 0.65rem;
+  border-radius: 7px;
+  text-decoration: none !important;
+  color: inherit !important;
+  font-size: 0.83rem;
+}
+.novak-search-item:hover,
+.novak-search-item.is-active {
+  background: rgba(56, 189, 248, 0.15);
 }
