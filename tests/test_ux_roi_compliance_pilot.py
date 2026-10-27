@@ -1,4 +1,4 @@
-"""Comprehensive tests for the 8 UX, Smart Search, Split-Pane PBQ, VPAT/SOC2/HECVAT Compliance,
+"""Comprehensive tests for the 8 UX, Smart Search, Split-Pane PBQ, VPAT 2.5 / Security / Privacy Architecture,
 Institutional ROI Dashboard, 30-Day/30-Student Free Pilot Bundle, and Financial/Operational Marketing upgrades.
 """
 import json
@@ -131,21 +131,22 @@ def test_4_smart_search_fuzzy_synonyms_stemming_and_instant_api(student, anon):
         assert 'No lessons match' not in page, f'/search returned empty state for {q!r}'
 
 
-def test_5_vpat_soc2_hecvat_compliance_center_and_exports(anon, admin):
-    """Verify /compliance, /admin/compliance, and /compliance/export/<standard> (vpat, hecvat, soc2)."""
-    for client, path in ((anon, '/compliance'), (admin, '/admin/compliance')):
+def test_5_security_privacy_vpat_compliance_center_and_exports(anon, admin):
+    """Verify /compliance, /security, /admin/compliance, and /compliance/export/<standard> (vpat, privacy, security) with zero SOC 2 / HECVAT claims."""
+    for client, path in ((anon, '/compliance'), (anon, '/security'), (admin, '/admin/compliance')):
         r = client.get(path)
         assert r.status_code == 200, path
         html = r.get_data(as_text=True)
         assert 'ciwt' not in html.lower()
-        for expected in ('VPAT® 2.5', 'HECVAT v3.04', 'SOC 2', 'WCAG 2.1', 'Section 508', 'CC1.1', 'FERPA'):
+        assert 'soc 2' not in html.lower() and 'soc2' not in html.lower() and 'hecvat' not in html.lower()
+        for expected in ('VPAT® 2.5', 'Zero-Video', 'WCAG 2.1', 'Section 508', 'TLS 1.3', 'FERPA'):
             assert expected in html, f'Missing {expected} on {path}'
 
-    for std in ('vpat', 'hecvat', 'soc2'):
+    for std in ('vpat', 'privacy', 'security'):
         r_json = anon.get(f'/compliance/export/{std}?format=json')
         assert r_json.status_code == 200
         j = json.loads(r_json.get_data(as_text=True))
-        assert j['standard'] == std.upper() and j['controls_count'] >= 8
+        assert j['standard'] == std.upper() and j['controls_count'] >= 4
         assert 'ciwt' not in json.dumps(j).lower()
 
         r_csv = anon.get(f'/compliance/export/{std}?format=csv')
@@ -242,7 +243,7 @@ def test_8_financial_and_operational_marketing_focus(app, anon):
 
     llms_txt = anon.get('/llms.txt').get_data(as_text=True)
     assert '30-Day / 30-Student Free Institutional Pilot Bundle' in llms_txt
-    assert 'VPAT 2.5' in llms_txt and 'HECVAT' in llms_txt and 'SOC 2' in llms_txt
+    assert 'VPAT 2.5' in llms_txt and 'Zero-Video' in llms_txt and 'soc 2' not in llms_txt.lower() and 'hecvat' not in llms_txt.lower()
 
 
 def test_9_milestone_checks_cohesive_steps_and_clickable_5_learning_paths(student, app, mod):
@@ -520,26 +521,29 @@ def test_14_legal_terms_dmca_liability_shield_oss_audit_and_no_official_comptia_
             idx = pos + 16
 
 
-def test_15_wave7_commercial_value_metric_hero_demo_cta_security_posture_pricing_slas_and_consult(anon):
-    """Verify Wave 7 Commercial Enterprise Conversion Upgrades:
-    1. Economic Value Metric above the fold (80% cloud lab hosting savings, $0/hr VM burn, 52% instructor load reduction, $42,000+ saved per 100-student cohort).
-    2. Massive 1-click 'Launch Live Interactive Demo' CTA (#heroLaunchInteractiveDemo) in the main Hero.
-    3. Enterprise Security Posture Bar & /security (/compliance) covering SOC 2 Type II, GDPR & CCPA, Section 508 (VPAT 2.5), HECVAT v3.04, and SCORM/xAPI/Navy ILE.
-    4. Commercial Pricing Tiers ($0 Pilot, $39/seat/mo Academy Pro, Custom Enterprise), Onboarding SLAs (99.9% Uptime, < 24-Hour Onboarding, < 1-Hour P1 SLA), and /consult booking flow + .ics invite.
+def test_15_wave7_and_wave8_clean_hub_economic_metric_demo_cta_factual_security_and_no_soc2_hecvat_or_unbuilt(anon):
+    """Verify:
+    1. Clean sticky top navbar (.hub-topnav), emblem logo (img.mark, img.nav-mark), and focused Hero on /landing.
+    2. Economic Value Metric (Up to 80% Lower cloud lab hosting overhead, $0/hr VM burn, 52% instructor load reduction, $42,000+ saved per 100-student cohort).
+    3. Massive 1-click 'Launch Live Interactive Demo' CTA (#heroLaunchInteractiveDemo).
+    4. Factual Technical Security & Privacy Architecture (#heroSecurityPostureBar & /security) with ZERO 'SOC 2', 'HECVAT', or 'not built yet' claims anywhere.
+    5. Commercial Pricing Tiers ($0 Pilot, $39/seat/mo Academy Pro, Custom Enterprise), Onboarding SLAs (99.9% Uptime, < 24-Hour Onboarding, < 1-Hour P1 SLA), and /consult booking flow + .ics invite.
     """
     land = anon.get("/landing").get_data(as_text=True)
     for token in (
+        "class=\"hub-topnav\"",
+        "class=\"mark\"",
         "id=\"heroLaunchInteractiveDemo\"",
         "Launch Live Interactive Demo",
-        "Up to 80%",
+        "Up to 80% Lower",
         "$0/hr",
-        "52%",
-        "$42,000+",
-        "SOC 2 Type II Ready",
-        "Section 508 &amp; WCAG 2.2 AA",
-        "GDPR &amp; CCPA Compliant",
-        "HECVAT v3.04 &amp; FERPA",
-        "SCORM / xAPI / Navy ILE",
+        "52% Reduction",
+        "$42,000+ Saved",
+        "Zero-Video Client-Side Privacy (100% RAM)",
+        "Browser-Sandboxed Lab Isolation (105 Labs)",
+        "TLS 1.3 · RBAC · SHA-256 Audit Log",
+        "WCAG 2.2 AA &amp; Section 508 (VPAT 2.5)",
+        "SCORM 1.2/2004, ADL xAPI &amp; Navy ILE",
         "id=\"pricing-slas\"",
         "$39",
         "99.9%",
@@ -548,12 +552,10 @@ def test_15_wave7_commercial_value_metric_hero_demo_cta_security_posture_pricing
     ):
         assert token in land, f"Missing {token} in /landing"
 
-    sec_html = anon.get("/security").get_data(as_text=True)
-    assert "SOC 2 Type II" in sec_html and "GDPR (EU/UK Art. 5, 9, 17, 25, 28, 32)" in sec_html
-
-    con_get = anon.get("/consult")
-    assert con_get.status_code == 200
-    assert "Schedule a 25-Minute Technical &amp; Architecture Consult" in con_get.get_data(as_text=True)
+    for route in ("/landing", "/security", "/compliance", "/specs", "/gaps", "/consult"):
+        body = anon.get(route).get_data(as_text=True).lower()
+        assert "soc 2" not in body and "soc2" not in body and "hecvat" not in body, f"Found forbidden SOC2/HECVAT in {route}"
+        assert "not built yet" not in body and "not in this prototype" not in body and "still outside this repo" not in body, f"Found unbuilt claim in {route}"
 
     con_post = anon.post("/consult", data={
         "contact_name": "Director Sarah Chen",
@@ -566,8 +568,4 @@ def test_15_wave7_commercial_value_metric_hero_demo_cta_security_posture_pricing
         "notes": "Cut AWS lab hosting spend by 80%",
     })
     assert con_post.status_code == 200
-    post_html = con_post.get_data(as_text=True)
-    assert "Technical Consult Request Confirmed" in post_html and "Apex Cyber Bootcamp" in post_html
-
-    ics = anon.get("/consult/invite.ics?org=Apex+Cyber+Bootcamp")
-    assert ics.status_code == 200 and "BEGIN:VCALENDAR" in ics.get_data(as_text=True)
+    assert "Technical Consult Request Confirmed" in con_post.get_data(as_text=True)

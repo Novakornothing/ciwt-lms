@@ -1,4 +1,4 @@
-"""Novak LMS™ Institutional Compliance Center (VPAT 2.5, HECVAT v3.04, SOC 2 TSC),
+"""Novak LMS™ Institutional Security, Privacy & Accessibility Center (Section 508 VPAT 2.5, FERPA/GDPR Privacy, Technical Security),
 Institutional ROI & Financial Impact Calculator, and 30-Day / 30-Student Free Pilot Bundle Onboarding.
 """
 import csv
@@ -136,153 +136,83 @@ VPAT_CRITERIA = [
 
 
 # ---------------------------------------------------------------------------
-# 2. HECVAT v3.04 (Higher Education Community Vendor Assessment Toolkit)
+# 2. Zero-Video Client-Side Privacy, FERPA & GDPR Data Governance Controls
 # ---------------------------------------------------------------------------
-HECVAT_CONTROLS = [
+PRIVACY_CONTROLS = [
     {
-        'domain': 'GEN — Institution & Vendor Governance',
-        'id': 'HECVAT-GEN-01',
-        'question': 'Does the solution support higher-education & government training deployments with documented security, privacy, and accessibility policies?',
-        'response': 'Yes — Compliant',
-        'evidence': 'Novak LMS™ provides public and admin documentation (/compliance, /privacy, /specs), VPAT 2.5 AA conformance, FERPA-aligned data governance, and zero third-party ad/tracker scripts.',
-    },
-    {
-        'domain': 'DATA — FERPA & Student Data Privacy',
-        'id': 'HECVAT-DATA-01',
-        'question': 'Is institutional and student PII/education record data isolated, never sold, and exportable/deletable by the student or institution?',
-        'response': 'Yes — Compliant',
-        'evidence': 'Strict tenant/institution scoping (institution_id); zero data brokerage or advertising; self-service student record download (JSON) and erasure/correction workflow at /my-data.',
-    },
-    {
-        'domain': 'PRIV — Biometric & Webcam Privacy (Helix)',
-        'id': 'HECVAT-PRIV-01',
+        'domain': 'PRIV — Zero-Video Client-Side Biometric Privacy (Helix™)',
+        'id': 'PRIV-RAM-01',
         'question': 'Does the platform transmit or store student webcam video, images, or raw biometric recordings on external servers?',
-        'response': 'No Video Ever Transmitted — 100% On-Device',
-        'evidence': 'Helix 478-landmark MediaPipe FaceMesh gaze tracking is strictly opt-in per session, runs 100% locally in the browser via WebAssembly/WebGL, and sends only aggregate numerical dwell summaries. Saying no never affects grades.',
+        'response': 'No Video Ever Transmitted — 100% Client-Side RAM',
+        'evidence': 'Helix™ 478-landmark MediaPipe FaceMesh gaze tracking is strictly opt-in per session, executes 100% locally in volatile browser RAM via WebAssembly, and transmits only aggregate numerical dwell summaries. Saying no never affects grades.',
     },
     {
-        'domain': 'AI — Generative AI & Grounded Tutor Controls',
-        'id': 'HECVAT-AI-01',
-        'question': 'Are AI tutoring features grounded in course-approved curriculum with instructor kill-switches and zero training on student PII?',
-        'response': 'Yes — Compliant',
-        'evidence': 'The Course Tutor retrieves strictly from vetted course lessons, 4-rung ladders, lab guides, and glossaries with explicit source citations, refuses to hand out graded test answers, and can be toggled on/off per section by the instructor.',
+        'domain': 'DATA — FERPA & GDPR Student Record Ownership',
+        'id': 'PRIV-DATA-02',
+        'question': 'Is institutional and student education record data isolated, never sold, and exportable/deletable by the student?',
+        'response': 'Yes — Active & Verified',
+        'evidence': 'Strict institutional scoping (institution_id); zero third-party ad trackers or data brokers; self-service student record download (JSON) and erasure/correction workflow at /my-data.',
     },
     {
-        'domain': 'IAM — SSO, SAML 2.0, OIDC & LTI 1.3 Advantage',
-        'id': 'HECVAT-IAM-01',
-        'question': 'Does the platform integrate with campus Identity Providers (SAML 2.0 / OIDC) and LMS platforms via LTI 1.3 Advantage?',
-        'response': 'Yes — Compliant',
-        'evidence': 'Built-in LTI 1.3 Advantage OIDC login, JWKS keyset (/lti/jwks.json), Deep Linking, and Assignment & Grade Services (AGS) for Canvas, Blackboard, Moodle, and D2L Brightspace, plus SAML 2.0 / OIDC SSO.',
+        'domain': 'SANDBOX — Browser-Sandboxed Lab Isolation',
+        'id': 'SEC-LAB-03',
+        'question': 'How are the 105 hands-on Linux, Windows, and Cisco labs isolated from the host machine and external network?',
+        'response': '100% Browser-Sandboxed Execution',
+        'evidence': 'All 105 hands-on labs (including 24 WebAssembly v86 Linux VMs and 8 Ubuntu GNOME GUI + Bash workbenches) execute inside isolated client-side browser sandboxes with zero external network attack surface.',
     },
     {
-        'domain': 'CRYPTO — Encryption in Transit & At Rest',
-        'id': 'HECVAT-CRP-01',
-        'question': 'Is all traffic encrypted via TLS 1.2/1.3 with HSTS, and are credentials hashed with modern memory-hard/salted KDFs?',
-        'response': 'Yes — Compliant',
-        'evidence': 'Enforced HTTPS with HSTS (max-age=31536000; includeSubDomains), TLS 1.3 edge termination, encrypted database storage at rest, and Werkzeug scrypt/PBKDF2 salted password hashes.',
-    },
-    {
-        'domain': 'AUDIT — Tamper-Evident Audit Logging',
-        'id': 'HECVAT-AUD-01',
-        'question': 'Are administrative actions, grade modifications, logins, and data exports logged in a tamper-evident audit trail?',
-        'response': 'Yes — Compliant',
-        'evidence': 'Every sensitive event is recorded in AuditLog with a cryptographic SHA-256 hash chain (prev_hash -> entry_hash) verified continuously at /admin/audit and /admin/compliance.',
-    },
-    {
-        'domain': 'BCDR — Availability, Backups & Disaster Recovery',
-        'id': 'HECVAT-BCDR-01',
-        'question': 'Does the platform maintain health checks, database backups, and zero-VDI browser lab resilience?',
-        'response': 'Yes — Compliant',
-        'evidence': 'Continuous /healthz telemetry, 1-click encrypted database snapshot exports (/admin/backup), and 90 browser-native labs (including WebAssembly Linux VMs) that eliminate remote VDI server outages.',
+        'domain': 'AI — Grounded Course Tutor Controls',
+        'id': 'PRIV-AI-04',
+        'question': 'Are AI tutoring features grounded in course curriculum with instructor controls and zero training on student PII?',
+        'response': 'Yes — Active & Verified',
+        'evidence': 'The Course Tutor retrieves strictly from course lessons, 5-path ladders, lab guides, and glossaries with source citations, refuses to hand out graded test answers, and can be toggled on/off per section by the instructor.',
     },
 ]
 
 
 # ---------------------------------------------------------------------------
-# 3. SOC 2 Type II Readiness & AICPA Trust Services Criteria (TSC) Matrix
+# 3. Technical Security, Authentication & Cryptographic Audit Controls
 # ---------------------------------------------------------------------------
-SOC2_CONTROLS = [
+SECURITY_CONTROLS = [
     {
-        'criteria': 'CC1.1 – CC1.5',
-        'category': 'Control Environment',
-        'control_name': 'Role-Based Governance & Institutional Ethics',
-        'implementation': 'Strict separation of Student, Instructor, and Administrator privileges (@role_required), institutional tenant scoping, and transparent privacy disclosures.',
+        'criteria': 'SEC-TLS-01',
+        'category': 'Transport & Session Encryption',
+        'control_name': 'TLS 1.3 / HTTPS & Hardened Session Cookies',
+        'implementation': 'Enforced HTTPS with HSTS (max-age=31536000; includeSubDomains), TLS 1.3 edge termination, and HttpOnly, SameSite=Lax, Secure session cookies.',
         'status': 'Active & Verified',
     },
     {
-        'criteria': 'CC2.1 – CC2.3',
-        'category': 'Communication & Information',
-        'control_name': 'Transparent Security, Syllabus & Privacy Specifications',
-        'implementation': 'Public machine-readable specifications (/specs, /llms.txt, /compliance), in-app privacy policy (/privacy), and explicit per-session consent dialogs for Helix telemetry.',
+        'criteria': 'SEC-AUTH-02',
+        'category': 'Authentication & Access Control',
+        'control_name': 'PBKDF2/scrypt Password Hashing, RBAC & LTI 1.3 / SSO',
+        'implementation': 'Werkzeug salted scrypt/PBKDF2 password hashing, strict role-based access control (@role_required for Student, Instructor, Admin), SAML 2.0 / OIDC SSO, and RSA-2048 JWKS signed LTI 1.3 Advantage handshakes.',
         'status': 'Active & Verified',
     },
     {
-        'criteria': 'CC3.1 – CC3.4',
-        'category': 'Risk Assessment',
-        'control_name': 'Automated Threat Mitigation & Dependency Hygiene',
-        'implementation': 'Zero external CDN script dependencies (100% self-hosted vendor assets), strict Content-Security-Policy (CSP), X-Frame-Options, and X-Content-Type-Options: nosniff.',
+        'criteria': 'SEC-CSRF-03',
+        'category': 'Request & Input Integrity',
+        'control_name': 'CSRF Protection, Parameterized Queries & CSP Headers',
+        'implementation': 'Synchronizer CSRF tokens enforced on all state-changing POST/PUT/DELETE requests, SQLAlchemy parameterized queries, 100% self-hosted vendor assets (zero external CDN scripts), and strict X-Content-Type-Options: nosniff.',
         'status': 'Active & Verified',
     },
     {
-        'criteria': 'CC4.1 – CC4.2',
-        'category': 'Monitoring Activities',
-        'control_name': 'Real-Time Health, TQI & Audit Chain Verification',
-        'implementation': 'Automated /healthz endpoint, Training Quality Indicator (TQI) packet monitoring, and live SHA-256 AuditLog hash-chain integrity verification.',
+        'criteria': 'SEC-AUDIT-04',
+        'category': 'Tamper-Evident Audit Logging',
+        'control_name': 'SHA-256 Cryptographic Hash-Chained Audit Trail',
+        'implementation': 'Append-only SHA-256 hash-chained AuditEvent log (prev_hash -> entry_hash) for logins, gradebook changes, and data exports, verified continuously at /admin/audit and /security.',
         'status': 'Active & Verified',
     },
     {
-        'criteria': 'CC5.1 – CC5.3',
-        'category': 'Control Activities',
-        'control_name': 'CSRF Protection, Input Sanitization & Rate Limiting',
-        'implementation': 'Synchronizer CSRF tokens enforced on all state-changing POST/PUT/DELETE requests (HTML forms and fetch headers), SQLAlchemy parameterized queries, and login/API rate limiting.',
-        'status': 'Active & Verified',
-    },
-    {
-        'criteria': 'CC6.1 – CC6.8',
-        'category': 'Logical & Physical Access Controls',
-        'control_name': 'Authentication, Session Hardening & LTI 1.3 / SSO',
-        'implementation': 'HttpOnly, SameSite=Lax, and Secure session cookies; salted scrypt/PBKDF2 password hashes; SAML 2.0 / OIDC SSO; RSA-2048 JWKS signed LTI 1.3 Advantage handshakes.',
-        'status': 'Active & Verified',
-    },
-    {
-        'criteria': 'CC7.1 – CC7.5',
-        'category': 'System Operations & Incident Response',
-        'control_name': 'Tamper-Evident Logging & Operational Ticketing',
-        'implementation': 'Append-only SHA-256 hash-chained AuditLog for all authentication, gradebook, and data-export events, paired with built-in curriculum/system ticket triage (/admin/tickets).',
-        'status': 'Active & Verified',
-    },
-    {
-        'criteria': 'CC8.1',
-        'category': 'Change Management',
-        'control_name': 'Automated 1,000+ Test CI Gate & Schema Validation',
-        'implementation': 'Every release passes 972+ pytest integration/security/accessibility tests and 56+ Node.js unit tests, plus deterministic r0_sha curriculum stamp verification.',
-        'status': 'Active & Verified',
-    },
-    {
-        'criteria': 'CC9.1 – CC9.2',
-        'category': 'Risk Mitigation & Vendor Management',
-        'control_name': 'Zero Third-Party Subprocessor Lock-In for Labs or Gaze',
-        'implementation': 'All 90 labs (including 24 WebAssembly Linux VMs) and 478-landmark Helix gaze tracking execute locally in the user browser—eliminating third-party cloud VM and video-proctoring subprocessors.',
-        'status': 'Active & Verified',
-    },
-    {
-        'criteria': 'A1.1 – A1.3',
-        'category': 'Availability',
-        'control_name': 'Stateless Web Workers, Brotli Asset Bundling & DB Backups',
-        'implementation': 'Immutable content-hashed CSS/font bundles with Brotli/Gzip compression, SQLite WAL / PostgreSQL pooling, and 1-click admin database backups.',
-        'status': 'Active & Verified',
-    },
-    {
-        'criteria': 'C1.1 – C1.2 & P1–P8',
-        'category': 'Confidentiality & Privacy (FERPA)',
-        'control_name': 'Data Minimization, Self-Service Export & Right to Erasure',
-        'implementation': 'Students control their own education record via /my-data (full JSON export and account/record deletion request) with zero behavioral advertising.',
+        'criteria': 'SEC-OSS-05',
+        'category': 'Open-Source Toolchain Governance',
+        'control_name': '100% Permissive MIT / Apache-2.0 / BSD-2-Clause Runtime',
+        'implementation': 'All client and server dependencies (v86 BSD-2-Clause, MediaPipe Apache-2.0, Bootstrap/Flask/SQLAlchemy MIT/BSD) are verified permissive with zero viral copyleft in the host runtime (/compliance/oss-licenses).',
         'status': 'Active & Verified',
     },
 ]
 
 
-# ---------------------------------------------------------------------------
+
 # 4. Institutional ROI & Operational Savings Model
 # ---------------------------------------------------------------------------
 def calculate_institutional_roi(
@@ -389,13 +319,13 @@ def export_compliance_packet(standard: str, fmt: str = 'json', audit_stats: dict
         title = 'Novak LMS™ VPAT 2.5 (WCAG 2.1 Level AA & Revised Section 508) Accessibility Conformance Report'
         rows = VPAT_CRITERIA
         cols = ('code', 'name', 'level', 'status', 'remarks')
-    elif std == 'hecvat':
-        title = 'Novak LMS™ HECVAT v3.04 (Higher Education Community Vendor Assessment Toolkit) Response'
-        rows = HECVAT_CONTROLS
+    elif std in ('privacy', 'ferpa', 'gdpr'):
+        title = 'Novak LMS™ Zero-Video Client-Side Privacy, FERPA & GDPR Data Governance Report'
+        rows = PRIVACY_CONTROLS
         cols = ('id', 'domain', 'question', 'response', 'evidence')
-    elif std == 'soc2':
-        title = 'Novak LMS™ SOC 2 Trust Services Criteria (AICPA TSC CC1-CC9, Availability, Confidentiality, Privacy) Matrix'
-        rows = SOC2_CONTROLS
+    elif std in ('security', 'architecture'):
+        title = 'Novak LMS™ Technical Security, Browser Sandbox Isolation & Cryptographic Audit Matrix'
+        rows = SECURITY_CONTROLS
         cols = ('criteria', 'category', 'control_name', 'status', 'implementation')
     else:
         return None, None, None

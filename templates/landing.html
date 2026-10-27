@@ -3,588 +3,485 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Novak or Nothing — Novak LMS™</title>
-  <meta name="description" content="Novak LMS™: Adaptive IT support and networking training platform, Helix eye tracking, operations boards, interactive demo, FAQ, and legal/privacy information.">
+  <title>Novak or Nothing — Novak LMS™ Adaptive IT &amp; Cybersecurity Training Platform</title>
+  <meta name="description" content="Novak LMS™: Adaptive 5-path IT support and networking training platform, 105 browser-native Linux/Windows/Cisco labs ($0/hr cloud VM burn), Helix local gaze telemetry, and Exam-Day readiness simulator.">
   <link rel="icon" href="https://novak-lms.onrender.com/static/img/navy-n-256.png">
   <!-- Asset reference for pre-pilot checks: navy-n-512.webp -->
   <style>
     :root {
       --navy: #061428;
-      --deep: #02060d;
+      --deep: #030812;
+      --surface: rgba(10, 24, 48, 0.78);
+      --surface-strong: rgba(8, 20, 42, 0.92);
       --gold: #d4b46a;
-      --gold-2: #f0d9a0;
-      --ice: #c9e4ff;
-      --muted: #9db4d0;
-      --line: rgba(212, 180, 106, 0.35);
+      --gold-2: #f3dfa6;
+      --ice: #e8f2ff;
+      --muted: #9eb4ce;
+      --line: rgba(212, 180, 106, 0.28);
+      --line-soft: rgba(148, 184, 232, 0.16);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; overflow-x: clip; }
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     body {
       min-height: 100vh;
-      min-height: 100dvh;
-      font-family: "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
       color: var(--ice);
       background: var(--deep);
-      overflow-x: hidden;
+      overflow-x: clip;
       line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
     }
 
-    html, body {
-      max-width: 100vw;
-      overflow-x: hidden;
-    }
+    /* Subtle Ambient Stage */
     .stage {
-      position: fixed; inset: 0;
-      overflow: hidden;
-      max-width: 100vw;
-      pointer-events: none;
+      position: fixed;
+      inset: 0;
       background:
-        radial-gradient(900px 500px at 50% 115%, rgba(12, 48, 110, 0.45), transparent 60%),
-        radial-gradient(700px 400px at 80% 0%, rgba(20, 70, 160, 0.2), transparent 55%),
-        linear-gradient(180deg, #010308 0%, #061428 55%, #02060d 100%);
+        radial-gradient(900px 460px at 50% 0%, rgba(26, 82, 176, 0.26), transparent 65%),
+        radial-gradient(700px 420px at 85% 90%, rgba(212, 180, 106, 0.10), transparent 60%),
+        linear-gradient(180deg, #02060e 0%, #061326 55%, #02060e 100%);
       z-index: 0;
+      pointer-events: none;
     }
     .grid {
-      position: absolute; inset: -20%;
+      position: absolute;
+      inset: 0;
       background-image:
-        linear-gradient(rgba(80, 160, 255, 0.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(80, 160, 255, 0.07) 1px, transparent 1px);
+        linear-gradient(rgba(100, 165, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(100, 165, 255, 0.045) 1px, transparent 1px);
       background-size: 56px 56px;
-      transform: perspective(400px) rotateX(62deg);
-      animation: gridDrift 28s linear infinite;
-      mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 80%, transparent);
-    }
-    @keyframes gridDrift {
-      from { background-position: 0 0; }
-      to { background-position: 0 56px; }
-    }
-    .scan {
-      position: absolute; left: 0; right: 0; height: 18%;
-      background: linear-gradient(to bottom, transparent, rgba(120, 190, 255, 0.08), transparent);
-      animation: scan 9s ease-in-out infinite;
-      pointer-events: none;
-    }
-    @keyframes scan {
-      0%, 100% { top: -20%; }
-      50% { top: 90%; }
-    }
-    .orb {
-      position: absolute; border-radius: 50%;
-      filter: blur(40px);
-      animation: float 16s ease-in-out infinite;
-      pointer-events: none;
-    }
-    .orb.a { width: 280px; height: 280px; left: 8%; top: 18%; background: rgba(30, 90, 210, 0.35); }
-    .orb.b { width: 220px; height: 220px; right: 10%; top: 28%; background: rgba(212, 180, 106, 0.16); animation-delay: -6s; }
-    .orb.c { width: 160px; height: 160px; left: 40%; bottom: 8%; background: rgba(40, 140, 255, 0.2); animation-delay: -11s; }
-    @keyframes float {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(18px, -24px) scale(1.08); }
-    }
-    .watermark {
-      position: absolute; inset: 0;
-      background: url("/static/img/navy-n-512.webp") center 42% / min(88vmin, 720px) no-repeat;
-      opacity: 0.16;
-      filter: saturate(1.15);
-      animation: pulseMark 8s ease-in-out infinite;
-      pointer-events: none;
-    }
-    @keyframes pulseMark {
-      0%, 100% { opacity: 0.12; transform: scale(1); }
-      50% { opacity: 0.22; transform: scale(1.03); }
-    }
-    .particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-    .dot {
-      position: absolute; width: 3px; height: 3px; border-radius: 50%;
-      background: #9ecbff;
-      opacity: 0.55;
-      animation: rise linear infinite;
-    }
-    @keyframes rise {
-      from { transform: translateY(110vh); opacity: 0; }
-      15% { opacity: 0.6; }
-      to { transform: translateY(-10vh); opacity: 0; }
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 70%, transparent 100%);
     }
 
-    .wrap {
-      position: relative; z-index: 2;
-      min-height: 100vh;
+    /* 1. Clean Sticky Top Navigation Bar */
+    nav.hub-topnav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(3, 9, 20, 0.86);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(212, 180, 106, 0.22);
+    }
+    .hub-topnav-inner {
+      max-width: 74rem;
+      margin: 0 auto;
+      padding: 0.65rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    a.hub-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      text-decoration: none;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.96rem;
+      letter-spacing: 0.08em;
+    }
+    .nav-mark-frame {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      padding: 2px;
+      background: linear-gradient(135deg, rgba(212, 180, 106, 0.7), rgba(56, 189, 248, 0.45));
+      box-shadow: 0 2px 12px rgba(56, 189, 248, 0.25);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    img.nav-mark {
+      width: 100%;
+      height: 100%;
+      border-radius: 7px;
+      object-fit: cover;
+      display: block;
+      background: #041022;
+    }
+    .hub-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem 0.9rem;
+      flex-wrap: wrap;
+    }
+    .hub-nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.84rem;
+      font-weight: 600;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+    .hub-nav-links a:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .hub-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    a.nav-btn-outline {
+      color: var(--ice);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.42rem 0.85rem;
+      border-radius: 7px;
+      border: 1px solid rgba(212, 180, 106, 0.38);
+      background: rgba(10, 26, 54, 0.6);
+      transition: border-color 0.15s ease;
+    }
+    a.nav-btn-outline:hover { border-color: var(--gold); color: #ffffff; }
+    a.nav-btn-gold {
+      color: #030812;
+      background: linear-gradient(135deg, #f3dfa6 0%, #d4b46a 100%);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.44rem 0.95rem;
+      border-radius: 7px;
+      box-shadow: 0 4px 14px rgba(212, 180, 106, 0.3);
+      transition: transform 0.15s ease;
+    }
+    a.nav-btn-gold:hover { transform: translateY(-1px); }
+
+    /* 2. Focused, Spacious Hero Section (Fits 100% Above the Fold on 1440x900) */
+    header.wrap {
+      position: relative;
+      z-index: 2;
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 2.3rem 1.25rem 1.8rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 2.4rem 1.25rem 2rem;
       text-align: center;
     }
-    .mark {
-      width: min(38vw, 200px);
-      height: auto;
-      filter: drop-shadow(0 0 28px rgba(40, 110, 255, 0.45));
-      animation: markIn 1.1s ease both, markFloat 6s ease-in-out 1.1s infinite;
+    .hero-emblem-badge {
+      width: 92px;
+      height: 92px;
+      border-radius: 22px;
+      padding: 3px;
+      background: linear-gradient(135deg, #f3dfa6 0%, #d4b46a 45%, #38bdf8 100%);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 32px rgba(56, 189, 248, 0.32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
-    @keyframes markIn {
-      from { opacity: 0; transform: translateY(16px) scale(0.96); }
-      to { opacity: 1; transform: none; }
-    }
-    @keyframes markFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+    img.mark {
+      width: 100%;
+      height: 100%;
+      border-radius: 19px;
+      object-fit: cover;
+      display: block;
+      background: #041022;
     }
     .brand {
-      margin-top: 1.05rem;
-      letter-spacing: 0.28em;
-      font-size: clamp(0.72rem, 2vw, 0.92rem);
+      margin-top: 0.85rem;
+      letter-spacing: 0.24em;
+      font-size: 0.76rem;
+      font-weight: 700;
       text-transform: uppercase;
       color: var(--gold-2);
     }
     h1 {
       margin-top: 0.45rem;
-      max-width: 52rem;
-      font-size: clamp(1.22rem, 3.3vw, 2.35rem);
-      font-weight: 650;
-      line-height: 1.25;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #f4f8ff;
+      max-width: 48rem;
+      font-size: clamp(1.65rem, 3.4vw, 2.65rem);
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: -0.01em;
+      color: #ffffff;
     }
-    .rule {
-      width: min(220px, 50vw);
-      height: 1px;
-      margin: 0.9rem auto 0.8rem;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    }
-    .tag {
-      max-width: 36rem;
-      color: var(--muted);
-      font-size: 0.98rem;
+    .hero-sub {
+      margin-top: 0.75rem;
+      max-width: 44rem;
+      color: #c6daf3;
+      font-size: clamp(0.95rem, 1.35vw, 1.08rem);
       line-height: 1.55;
+      font-weight: 400;
     }
-    nav.deck {
-      margin-top: 1.8rem;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 16.5rem));
-      gap: 0.75rem;
-      width: min(35rem, 100%);
-    }
-    @media (max-width: 560px) {
-      nav.deck { grid-template-columns: 1fr; }
-    }
-    a.btn {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.18rem;
-      padding: 0.95rem 1.1rem;
-      text-decoration: none;
-      color: var(--ice);
-      border: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(10, 28, 58, 0.78), rgba(4, 12, 24, 0.86));
-      backdrop-filter: blur(8px);
-      border-radius: 6px;
-      text-align: left;
-      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-    }
-    a.btn:hover, a.btn:focus-visible {
-      transform: translateY(-2px);
-      border-color: var(--gold);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 180, 106, 0.25);
-      outline: none;
-    }
-    a.btn strong {
-      font-size: 0.88rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--gold-2);
-    }
-    a.btn span { font-size: 0.8rem; color: #9ab0c8; }
-    a.btn.primary {
-      grid-column: 1 / -1;
-      background: linear-gradient(90deg, rgba(18, 56, 118, 0.92), rgba(10, 26, 54, 0.92));
-      border-color: rgba(212, 180, 106, 0.65);
-    }
-    a.btn.accent {
-      border-color: rgba(120, 190, 255, 0.45);
-      background: linear-gradient(180deg, rgba(14, 42, 84, 0.82), rgba(6, 18, 36, 0.88));
-    }
-    .sublinks {
+    .hero-sub strong { color: #ffffff; font-weight: 700; }
+
+    /* Primary Hero CTA Row */
+    .hero-cta-bar {
       margin-top: 1.35rem;
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       justify-content: center;
-      gap: 0.55rem 1.1rem;
-      font-size: 0.8rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      gap: 0.75rem;
+      width: 100%;
     }
-    .sublinks a {
-      color: var(--gold-2);
+    a.hero-mega-cta {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.88rem 1.65rem;
+      border-radius: 10px;
       text-decoration: none;
-      padding: 0.3rem 0.65rem;
-      border: 1px solid rgba(212, 180, 106, 0.28);
-      border-radius: 999px;
-      background: rgba(6, 20, 40, 0.65);
+      background: linear-gradient(135deg, #f6e2ab 0%, #d4b46a 60%, #b8923e 100%);
+      color: #030812 !important;
+      border: 1px solid #fff5d6;
+      box-shadow: 0 10px 28px rgba(212, 180, 106, 0.38);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    a.hero-mega-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px rgba(212, 180, 106, 0.52);
+    }
+    a.hero-mega-cta strong {
+      font-size: 0.98rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #030812 !important;
+    }
+    a.hero-mega-cta span {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #0f2140 !important;
+      margin-top: 0.1rem;
+    }
+    a.hero-secondary-cta {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.88rem 1.35rem;
+      border-radius: 10px;
+      text-decoration: none;
+      background: rgba(12, 30, 62, 0.78);
+      color: #ffffff;
+      border: 1px solid rgba(212, 180, 106, 0.48);
       transition: border-color 0.15s ease, background 0.15s ease;
     }
-    .sublinks a:hover {
+    a.hero-secondary-cta:hover {
+      border-color: var(--gold-2);
+      background: rgba(20, 48, 94, 0.88);
+    }
+    a.hero-secondary-cta strong { font-size: 0.92rem; font-weight: 700; color: var(--gold-2); }
+    a.hero-secondary-cta span { font-size: 0.74rem; color: var(--muted); margin-top: 0.1rem; }
+
+    /* Quiet Quick-Jump Links under CTA */
+    .hero-quick-links {
+      margin-top: 0.85rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 0.35rem 0.9rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .hero-quick-links a {
+      color: #b8d0ec;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+    .hero-quick-links a:hover {
+      color: var(--gold-2);
+      text-decoration: underline;
+    }
+    .hero-quick-links .dot-sep { opacity: 0.4; }
+
+    /* Slim Single-Row Technical Trust Strip */
+    .hero-trust-strip {
+      margin-top: 1.25rem;
+      width: 100%;
+      padding: 0.6rem 0.9rem;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 184, 232, 0.18);
+      background: rgba(6, 16, 34, 0.75);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem 0.95rem;
+      font-size: 0.75rem;
+    }
+    .hero-trust-strip a {
+      color: #d6e6fa;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+      padding: 0.18rem 0.5rem;
+      border-radius: 6px;
+      background: rgba(16, 38, 76, 0.55);
+      border: 1px solid rgba(212, 180, 106, 0.22);
+      font-weight: 600;
+      transition: border-color 0.15s ease;
+    }
+    .hero-trust-strip a:hover {
       border-color: var(--gold);
-      background: rgba(18, 48, 96, 0.75);
+      color: #ffffff;
     }
 
+    /* Main Content Container */
     main.info-sections {
       position: relative;
       z-index: 2;
-      max-width: 58rem;
+      max-width: 68rem;
       margin: 0 auto;
-      padding: 1rem 1.25rem 3.5rem;
+      padding: 0.5rem 1.25rem 3.5rem;
+      display: grid;
+      gap: 1.75rem;
     }
     .panel {
-      margin-top: 2rem;
-      padding: 1.6rem 1.5rem;
+      padding: 1.65rem 1.6rem;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: linear-gradient(180deg, rgba(8, 22, 46, 0.86), rgba(3, 9, 19, 0.92));
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(9, 24, 50, 0.84), rgba(4, 11, 24, 0.92));
       backdrop-filter: blur(10px);
     }
+    .section-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--gold-2);
+      margin-bottom: 0.25rem;
+    }
     .panel h2 {
-      font-size: 1.15rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--gold-2);
-      margin-bottom: 0.85rem;
-    }
-    .panel p, .panel li {
-      color: var(--muted);
-      font-size: 0.94rem;
-    }
-    .pillars {
-      padding-left: 1.25rem;
-      display: grid;
-      gap: 0.65rem;
-    }
-    .pillars strong, .plain strong { color: #f4f8ff; }
-    ul.plain {
-      list-style: none;
-      display: grid;
-      gap: 0.65rem;
-    }
-    ul.plain li {
-      border-left: 3px solid var(--gold);
-      padding-left: 0.8rem;
-    }
-    details {
-      border: 1px solid rgba(212, 180, 106, 0.25);
-      border-radius: 6px;
-      padding: 0.75rem 1rem;
-      margin-bottom: 0.6rem;
-      background: rgba(4, 12, 24, 0.75);
-    }
-    summary {
-      cursor: pointer;
-      font-weight: 600;
-      color: #f4f8ff;
-      font-size: 0.95rem;
-    }
-    details p { margin-top: 0.55rem; }
-    .demo-strip {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-      gap: 0.7rem;
-      margin-top: 0.9rem;
-    }
-    .cta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-top: 1rem;
-    }
-    .pill-btn {
-      display: inline-block;
-      padding: 0.6rem 1.05rem;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.88rem;
-      text-decoration: none;
-      letter-spacing: 0.05em;
-    }
-    .pill-gold { background: var(--gold); color: #02060d; }
-    .pill-line { border: 1px solid var(--gold); color: var(--gold-2); }
-    footer.hub-footer {
-      position: relative;
-      z-index: 2;
-      border-top: 1px solid rgba(212, 180, 106, 0.22);
-      text-align: center;
-      padding: 1.5rem 1rem 2rem;
-      font-size: 0.8rem;
-      color: #7c93ad;
-    }
-    footer.hub-footer a { color: var(--gold-2); text-decoration: none; }
-    footer.hub-footer a:hover { text-decoration: underline; }
-
-    .comp-wrap {
-      overflow-x: auto;
-      margin-top: 0.9rem;
-      border: 1px solid rgba(212, 180, 106, 0.32);
-      border-radius: 6px;
-      background: rgba(2, 8, 18, 0.85);
-    }
-    table.comp-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 44rem;
-      font-size: 0.85rem;
-      text-align: left;
-    }
-    table.comp-table caption {
-      text-align: left;
-      padding: 0.7rem 0.9rem;
-      font-weight: 600;
-      color: var(--gold-2);
-      background: rgba(12, 32, 68, 0.65);
-      border-bottom: 1px solid rgba(212, 180, 106, 0.28);
-    }
-    table.comp-table th, table.comp-table td {
-      padding: 0.68rem 0.85rem;
-      border-bottom: 1px solid rgba(212, 180, 106, 0.16);
-      vertical-align: top;
-      line-height: 1.45;
-    }
-    table.comp-table thead th {
-      background: rgba(14, 38, 78, 0.88);
-      color: var(--gold-2);
-      font-size: 0.78rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-    table.comp-table tbody th {
-      color: #f4f8ff;
-      font-weight: 600;
-      width: 16%;
-      background: rgba(8, 22, 46, 0.55);
-    }
-    table.comp-table td.novak-col {
-      color: #f4f8ff;
-      background: rgba(18, 52, 108, 0.34);
-      border-left: 2px solid var(--gold);
-      border-right: 1px solid rgba(212, 180, 106, 0.25);
-    }
-    table.comp-table td { color: var(--muted); }
-
-    @media (max-width: 767.98px) {
-      .grid {
-        inset: 0 !important;
-        transform: none !important;
-        max-width: 100vw !important;
-      }
-      .comp-wrap {
-        max-width: 100% !important;
-        overflow-x: hidden !important;
-      }
-      table.comp-table {
-        min-width: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        table-layout: fixed !important;
-        font-size: 0.72rem !important;
-      }
-      table.comp-table th,
-      table.comp-table td {
-        padding: 0.35rem 0.3rem !important;
-        word-break: break-word !important;
-        overflow-wrap: anywhere !important;
-        white-space: normal !important;
-      }
-    }
-  
-    /* Wave 7 Commercial Enterprise Conversion Styles */
-    .hero-demo-mega-wrap {
-      margin-top: 1.25rem;
-      width: min(44rem, 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.55rem;
-    }
-    a.hero-mega-cta {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      padding: 1.05rem 1.4rem;
-      border-radius: 10px;
-      text-decoration: none;
-      background: linear-gradient(135deg, #f5d78e 0%, #d4b46a 55%, #b8913c 100%);
-      color: #02060d !important;
-      border: 2px solid #fff3cf;
-      box-shadow: 0 12px 34px rgba(212, 180, 106, 0.42), 0 0 0 4px rgba(212, 180, 106, 0.16);
-      transition: transform 0.16s ease, box-shadow 0.16s ease;
-      text-align: center;
-    }
-    a.hero-mega-cta:hover, a.hero-mega-cta:focus-visible {
-      transform: translateY(-2px) scale(1.01);
-      box-shadow: 0 16px 42px rgba(212, 180, 106, 0.58), 0 0 0 5px rgba(240, 217, 160, 0.25);
-      outline: none;
-    }
-    a.hero-mega-cta strong {
-      font-size: clamp(0.95rem, 2.2vw, 1.18rem);
+      font-size: 1.32rem;
       font-weight: 800;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: #02060d !important;
+      color: #ffffff;
+      margin-bottom: 0.45rem;
+      letter-spacing: -0.01em;
     }
-    a.hero-mega-cta span {
-      margin-top: 0.2rem;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #0b1b36 !important;
+    .panel > p {
+      color: var(--muted);
+      font-size: 0.93rem;
+      max-width: 54rem;
     }
-    .hero-quick-demos {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.45rem 0.85rem;
-      font-size: 0.78rem;
-    }
-    .hero-quick-demos a {
-      color: var(--gold-2);
-      text-decoration: none;
-      padding: 0.22rem 0.65rem;
-      border-radius: 999px;
-      border: 1px solid rgba(212, 180, 106, 0.38);
-      background: rgba(8, 24, 52, 0.75);
-      font-weight: 600;
-    }
-    .hero-quick-demos a:hover {
-      border-color: var(--gold);
-      background: rgba(18, 48, 96, 0.88);
-    }
-    .econ-banner {
-      margin-top: 1.35rem;
-      width: min(56rem, 100%);
+
+    /* 3-Card Economic Value Grid */
+    .econ-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.7rem;
-      text-align: left;
-    }
-    @media (max-width: 760px) {
-      .econ-banner { grid-template-columns: 1fr; }
-    }
-    .econ-card {
-      padding: 0.85rem 1rem;
-      border-radius: 8px;
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      background: linear-gradient(180deg, rgba(10, 30, 64, 0.88), rgba(4, 12, 26, 0.94));
-    }
-    .econ-metric {
-      font-size: 1.18rem;
-      font-weight: 800;
-      color: var(--gold-2);
-      letter-spacing: 0.02em;
-    }
-    .econ-title {
-      font-size: 0.84rem;
-      font-weight: 700;
-      color: #f4f8ff;
-      margin-top: 0.15rem;
-    }
-    .econ-desc {
-      font-size: 0.76rem;
-      color: var(--muted);
-      margin-top: 0.2rem;
-      line-height: 1.4;
-    }
-    .sec-posture-bar {
-      margin-top: 1.15rem;
-      width: min(56rem, 100%);
-      padding: 0.8rem 1rem;
-      border-radius: 8px;
-      border: 1px solid rgba(212, 180, 106, 0.38);
-      background: rgba(4, 14, 30, 0.86);
-    }
-    .sec-posture-head {
-      font-size: 0.72rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--gold-2);
-      font-weight: 700;
-      margin-bottom: 0.55rem;
-      text-align: center;
-    }
-    .sec-badges-grid {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 0.5rem;
+      gap: 0.95rem;
+      margin-top: 1.1rem;
     }
     @media (max-width: 820px) {
-      .sec-badges-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .econ-grid { grid-template-columns: 1fr; }
     }
-    @media (max-width: 440px) {
-      .sec-badges-grid { grid-template-columns: 1fr; }
-    }
-    a.sec-badge-pill {
+    .econ-card {
+      padding: 1.15rem 1.1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      background: rgba(6, 18, 38, 0.85);
       display: flex;
-      align-items: center;
-      gap: 0.45rem;
-      padding: 0.45rem 0.6rem;
-      border-radius: 6px;
-      border: 1px solid rgba(120, 190, 255, 0.28);
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .econ-metric {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--gold-2);
+      line-height: 1.15;
+    }
+    .econ-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .econ-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.48;
+      margin-top: 0.15rem;
+    }
+
+    /* 2x2 Feature Grid + 3 Role Cards */
+    .feature-grid-2x2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.95rem;
+      margin-top: 1.1rem;
+    }
+    @media (max-width: 720px) {
+      .feature-grid-2x2 { grid-template-columns: 1fr; }
+    }
+    .feature-card {
+      padding: 1.15rem 1.15rem;
+      border-radius: 10px;
+      border: 1px solid var(--line-soft);
+      background: rgba(6, 18, 38, 0.78);
+    }
+    .feature-card h3 {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--gold-2);
+      margin-bottom: 0.3rem;
+    }
+    .feature-card p {
+      font-size: 0.84rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .demo-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 760px) {
+      .demo-strip { grid-template-columns: 1fr; }
+    }
+    a.role-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      padding: 0.95rem 1.05rem;
+      border-radius: 9px;
+      border: 1px solid rgba(212, 180, 106, 0.32);
       background: rgba(10, 28, 58, 0.72);
       text-decoration: none;
-      color: #f4f8ff;
-      text-align: left;
-      transition: border-color 0.15s ease, transform 0.15s ease;
+      color: var(--ice);
+      transition: transform 0.15s ease, border-color 0.15s ease;
     }
-    a.sec-badge-pill:hover {
+    a.role-card:hover {
+      transform: translateY(-2px);
       border-color: var(--gold);
-      transform: translateY(-1px);
     }
-    .sec-badge-icon {
-      flex: 0 0 24px;
-      width: 24px;
-      height: 24px;
-      display: grid;
-      place-items: center;
-      border-radius: 5px;
-      background: rgba(212, 180, 106, 0.18);
-      color: var(--gold-2);
-      font-weight: 800;
-      font-size: 0.75rem;
-    }
-    .sec-badge-text strong {
-      display: block;
-      font-size: 0.74rem;
-      color: var(--gold-2);
-      line-height: 1.2;
-    }
-    .sec-badge-text span {
-      display: block;
-      font-size: 0.67rem;
-      color: var(--muted);
-      line-height: 1.2;
-    }
+    a.role-card strong { color: var(--gold-2); font-size: 0.88rem; }
+    a.role-card span { color: var(--muted); font-size: 0.79rem; line-height: 1.4; }
+
+    /* Pricing & SLA Grid */
     .pricing-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.9rem;
-      margin-top: 1rem;
+      gap: 0.95rem;
+      margin-top: 1.1rem;
     }
-    @media (max-width: 820px) {
+    @media (max-width: 840px) {
       .pricing-grid { grid-template-columns: 1fr; }
     }
     .price-card {
       padding: 1.25rem 1.15rem;
-      border-radius: 8px;
-      border: 1px solid rgba(212, 180, 106, 0.32);
-      background: rgba(4, 14, 30, 0.85);
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(6, 16, 34, 0.86);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
     .price-card.featured {
       border: 2px solid var(--gold);
-      background: linear-gradient(180deg, rgba(16, 44, 92, 0.9), rgba(6, 18, 38, 0.95));
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      background: linear-gradient(180deg, rgba(16, 44, 92, 0.88), rgba(6, 18, 38, 0.95));
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42);
     }
     .price-tier-tag {
       font-size: 0.72rem;
@@ -597,20 +494,20 @@
       font-size: 1.55rem;
       font-weight: 800;
       color: #ffffff;
-      margin: 0.35rem 0 0.2rem;
+      margin: 0.3rem 0 0.2rem;
     }
     .price-amount small {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 500;
       color: var(--muted);
     }
     .price-list {
       list-style: none;
-      margin: 0.75rem 0 1rem;
+      margin: 0.7rem 0 1rem;
       padding: 0;
       display: grid;
-      gap: 0.4rem;
-      font-size: 0.84rem;
+      gap: 0.38rem;
+      font-size: 0.82rem;
       color: var(--ice);
     }
     .price-list li::before {
@@ -628,18 +525,161 @@
       .sla-grid { grid-template-columns: 1fr; }
     }
     .sla-box {
-      padding: 0.85rem 1rem;
-      border-radius: 6px;
+      padding: 0.8rem 0.95rem;
+      border-radius: 8px;
       border-left: 3px solid var(--gold);
-      background: rgba(8, 24, 52, 0.68);
+      background: rgba(8, 24, 52, 0.65);
     }
     .sla-box strong {
       display: block;
       color: var(--gold-2);
-      font-size: 0.92rem;
-      margin-bottom: 0.2rem;
+      font-size: 0.86rem;
+      margin-bottom: 0.15rem;
     }
+    .sla-box p { font-size: 0.78rem; color: var(--muted); }
 
+    /* Collapsible Technical Dossier & FAQ Drawers */
+    details.hub-details-drawer {
+      border: 1px solid rgba(212, 180, 106, 0.28);
+      border-radius: 10px;
+      padding: 0.85rem 1.1rem;
+      background: rgba(5, 14, 30, 0.82);
+    }
+    details.hub-details-drawer > summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--gold-2);
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      list-style: none;
+    }
+    details.hub-details-drawer > summary::-webkit-details-marker { display: none; }
+    details {
+      border: 1px solid rgba(212, 180, 106, 0.22);
+      border-radius: 8px;
+      padding: 0.7rem 0.95rem;
+      margin-bottom: 0.55rem;
+      background: rgba(4, 12, 24, 0.75);
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #f4f8ff;
+      font-size: 0.9rem;
+    }
+    details p { margin-top: 0.5rem; font-size: 0.86rem; color: var(--muted); }
+
+    .pillars {
+      padding-left: 1.25rem;
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 0.75rem;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    .pillars strong, .plain strong { color: #f4f8ff; }
+    ul.plain {
+      list-style: none;
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 0.75rem;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+    ul.plain li {
+      border-left: 3px solid var(--gold);
+      padding-left: 0.75rem;
+    }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-top: 1rem;
+    }
+    .pill-btn {
+      display: inline-block;
+      padding: 0.55rem 1rem;
+      border-radius: 7px;
+      font-weight: 700;
+      font-size: 0.84rem;
+      text-decoration: none;
+    }
+    .pill-gold { background: var(--gold); color: #030812; }
+    .pill-line { border: 1px solid var(--gold); color: var(--gold-2); }
+
+    .comp-wrap {
+      overflow-x: auto;
+      margin-top: 0.85rem;
+      border: 1px solid rgba(212, 180, 106, 0.28);
+      border-radius: 8px;
+      background: rgba(2, 8, 18, 0.88);
+    }
+    table.comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 44rem;
+      font-size: 0.82rem;
+      text-align: left;
+    }
+    table.comp-table caption {
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      font-weight: 600;
+      color: var(--gold-2);
+      background: rgba(12, 32, 68, 0.65);
+      border-bottom: 1px solid rgba(212, 180, 106, 0.25);
+    }
+    table.comp-table th, table.comp-table td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid rgba(212, 180, 106, 0.14);
+      vertical-align: top;
+      line-height: 1.42;
+    }
+    table.comp-table thead th {
+      background: rgba(14, 38, 78, 0.88);
+      color: var(--gold-2);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    table.comp-table tbody th {
+      color: #f4f8ff;
+      font-weight: 600;
+      width: 16%;
+      background: rgba(8, 22, 46, 0.55);
+    }
+    table.comp-table td.novak-col {
+      color: #f4f8ff;
+      background: rgba(18, 52, 108, 0.34);
+      border-left: 2px solid var(--gold);
+      border-right: 1px solid rgba(212, 180, 106, 0.25);
+    }
+    table.comp-table td { color: var(--muted); }
+
+    footer.hub-footer {
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid rgba(212, 180, 106, 0.2);
+      text-align: center;
+      padding: 1.5rem 1rem 2rem;
+      font-size: 0.8rem;
+      color: #869eb8;
+    }
+    footer.hub-footer a { color: var(--gold-2); text-decoration: none; }
+    footer.hub-footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 767.98px) {
+      .hub-topnav-inner { padding: 0.55rem 0.85rem; }
+      .hub-nav-links { display: none; }
+      header.wrap { padding: 1.5rem 0.9rem 1.25rem; }
+      .hero-emblem-badge { width: 72px; height: 72px; border-radius: 16px; }
+      .panel { padding: 1.15rem 0.95rem !important; }
+      table.comp-table { min-width: 0 !important; width: 100% !important; table-layout: fixed !important; font-size: 0.72rem !important; }
+      table.comp-table th, table.comp-table td { padding: 0.35rem 0.3rem !important; word-break: break-word !important; overflow-wrap: anywhere !important; }
+    }
   </style>
   <script type="application/ld+json">
 {
@@ -855,275 +895,271 @@
 <body>
   <div class="stage" aria-hidden="true">
     <div class="grid"></div>
-    <div class="orb a"></div>
-    <div class="orb b"></div>
-    <div class="orb c"></div>
-    <div class="watermark"></div>
-    <div class="scan"></div>
-    <div class="particles" id="particles"></div>
   </div>
 
-  <header class="wrap" role="banner" aria-label="Novak LMS™ — Novak or Nothing">
-    <img class="mark" src="/static/img/navy-n-512.webp" onerror="this.onerror=null;this.src='/static/img/navy-n-256.png';" alt="Novak or Nothing emblem">
+  <!-- 1. Clean Sticky Top Navigation Bar -->
+  <nav class="hub-topnav" aria-label="Primary navigation">
+    <div class="hub-topnav-inner">
+      <a class="hub-brand" href="#top">
+        <span class="nav-mark-frame">
+          <img class="nav-mark" src="/static/img/navy-n-512.webp" onerror="this.onerror=null;this.src='/navy-n.png';" alt="Novak LMS™ emblem">
+        </span>
+        <span>NOVAK LMS™</span>
+      </a>
+      <div class="hub-nav-links">
+        <a href="#platform">Platform</a>
+        <a href="#financial-roi">80% Lab Savings &amp; ROI</a>
+        <a href="#pricing-slas">Pricing &amp; SLAs</a>
+        <a href="https://novak-lms.onrender.com/helix/try">Eye Tracking</a>
+        <a href="https://novak-lms.onrender.com/security">Security &amp; Privacy</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="hub-nav-actions">
+        <a class="nav-btn-outline" href="/register">Create Account</a>
+        <a class="nav-btn-gold" href="https://novak-lms.onrender.com/demo/enter/student">Launch Live Demo →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 2. Focused, Uncluttered Hero Section (Fits 100% Above the Fold on 1440x900) -->
+  <header class="wrap" id="top" role="banner" aria-label="Novak LMS™ — Novak or Nothing">
+    <div class="hero-emblem-badge">
+      <img class="mark" src="/static/img/navy-n-512.webp" onerror="this.onerror=null;this.src='/navy-n.png';" alt="Novak or Nothing emblem">
+    </div>
     <p class="brand">Novak or Nothing</p>
     <h1>Every Mind Learns Differently.<br>Now the Course Does Too.</h1>
-    <div class="rule"></div>
-    <p class="tag" style="max-width:48rem;color:#dbeafe;font-weight:500">
-      <strong>Slash Cloud Lab &amp; Software Hosting Overhead by Up to 80% ($0/hr Per-Seat VM Burn).</strong>
-      Unify adaptive 5-path curriculum, 105 browser-native WebAssembly Linux/Windows/Cisco workbenches, and Exam-Day readiness under one enterprise platform — cutting instructor remediation load by <strong>52%</strong> and saving <strong>$42,000+ per 100-student cohort</strong>.
+    <p class="hero-sub">
+      The adaptive IT &amp; cybersecurity training platform that switches explanations in real time, runs <strong>105 Linux, Windows &amp; Cisco labs in the browser</strong>, and <strong>slashes cloud lab hosting overhead by up to 80% ($0/hr VM burn)</strong>.
     </p>
 
-    <div class="hero-demo-mega-wrap" role="region" aria-label="Instant 1-Click Live Interactive Demo">
+    <div class="hero-cta-bar" role="region" aria-label="Instant 1-Click Live Interactive Demo">
       <a class="hero-mega-cta" id="heroLaunchInteractiveDemo" href="https://novak-lms.onrender.com/demo/enter/student">
-        <strong>🚀 Launch Live Interactive Demo — Instant 1-Click Access (No Login Required)</strong>
-        <span>Test-drive 5-path adaptive lessons, Ubuntu GNOME GUI + Bash Split-View labs &amp; Exam-Sim right now →</span>
+        <strong>🚀 Launch Live Interactive Demo →</strong>
+        <span>Instant 1-click access · No login or signup required</span>
       </a>
-      <div class="hero-quick-demos">
-        <a href="https://novak-lms.onrender.com/demo/enter/instructor">Instructor Analytics &amp; Co-Pilot Demo →</a>
-        <a href="https://novak-lms.onrender.com/labs/linux-gui-logs">Try Live Ubuntu GNOME GUI Lab →</a>
-        <a href="https://novak-lms.onrender.com/pilot/start">Start 30-Day Free 30-Seat Institutional Pilot →</a>
-        <a href="https://novak-lms.onrender.com/consult">Schedule a Technical Consult →</a>
-      </div>
+      <a class="hero-secondary-cta" href="https://novak-lms.onrender.com/pilot/start">
+        <strong>Start 30-Day / 30-Student Free Bundle</strong>
+        <span>Provision 30 student seats in 60 seconds</span>
+      </a>
     </div>
 
-    <div class="econ-banner" aria-label="Economic Value Metrics for Bootcamps, Universities &amp; Training Commands">
-      <div class="econ-card">
-        <div class="econ-metric">Up to 80% Lower</div>
-        <div class="econ-title">Software &amp; Cloud Lab Hosting Overhead ($0/hr VM Burn)</div>
-        <div class="econ-desc">In-browser WebAssembly Linux VMs, Ubuntu GNOME GUIs &amp; Win11/Cisco workbenches eliminate $18–$45/seat/mo in AWS/Azure cloud lab bills.</div>
-      </div>
-      <div class="econ-card">
-        <div class="econ-metric">52% Reduction</div>
-        <div class="econ-title">In 1-on-1 Instructor Remediation &amp; Tutoring Load</div>
-        <div class="econ-desc">539 in-place 5-modality adaptive ladders (Standard → Plain English → Analogy → Visual Map → Try-It) resolve student blocks automatically.</div>
-      </div>
-      <div class="econ-card">
-        <div class="econ-metric">$42,000+ Saved</div>
-        <div class="econ-title">Per 100-Student Cohort (35%+ Fewer Dropouts &amp; Retakes)</div>
-        <div class="econ-desc">Psychometric VOUCHER READY gating lifts first-attempt pass rates from 61% to 89%. <a href="https://novak-lms.onrender.com/roi" style="color:var(--gold-2);font-weight:700">Calculate your cohort ROI →</a></div>
-      </div>
+    <div class="hero-quick-links" aria-label="Quick platform destinations">
+      <a href="https://novak-lms.onrender.com"><strong>NOVAK LMS™</strong></a>
+      <span class="dot-sep">·</span>
+      <a href="/demo"><strong>Demo</strong></a>
+      <span class="dot-sep">·</span>
+      <a href="https://novak-lms.onrender.com/demo/enter/instructor">Instructor Demo</a>
+      <span class="dot-sep">·</span>
+      <a href="https://novak-lms.onrender.com/labs/linux-gui-logs">Try Ubuntu GNOME GUI Lab</a>
+      <span class="dot-sep">·</span>
+      <a href="https://novak-lms.onrender.com/helix/try"><strong>Eye Tracking</strong></a>
+      <span class="dot-sep">·</span>
+      <a href="https://n74-ops.jesse-novak.workers.dev/" target="_blank" rel="noopener"><strong>OPs</strong></a>
+      <span class="dot-sep">·</span>
+      <a href="/register"><strong>Create Account</strong></a>
+      <span class="dot-sep">·</span>
+      <a href="https://novak-lms.onrender.com/consult">Schedule a Technical Consult</a>
     </div>
 
-    <div class="sec-posture-bar" aria-label="Enterprise Security Posture &amp; Compliance Attestations">
-      <div class="sec-posture-head">Enterprise Security Posture &amp; Procurement Readiness — Click Any Standard to Inspect Controls</div>
-      <div class="sec-badges-grid">
-        <a class="sec-badge-pill" href="https://novak-lms.onrender.com/security#soc2">
-          <span class="sec-badge-icon" aria-hidden="true">🛡️</span>
-          <span class="sec-badge-text"><strong>SOC 2 Type II Ready</strong><span>CC1–CC9 TSC Control Matrix</span></span>
-        </a>
-        <a class="sec-badge-pill" href="https://novak-lms.onrender.com/security#vpat">
-          <span class="sec-badge-icon" aria-hidden="true">♿</span>
-          <span class="sec-badge-text"><strong>Section 508 &amp; WCAG 2.2 AA</strong><span>Downloadable VPAT 2.5 ACR</span></span>
-        </a>
-        <a class="sec-badge-pill" href="https://novak-lms.onrender.com/security#gdpr">
-          <span class="sec-badge-icon" aria-hidden="true">🔒</span>
-          <span class="sec-badge-text"><strong>GDPR &amp; CCPA Compliant</strong><span>100% Client-Side RAM · 0 Video Sent</span></span>
-        </a>
-        <a class="sec-badge-pill" href="https://novak-lms.onrender.com/security#hecvat">
-          <span class="sec-badge-icon" aria-hidden="true">🏛️</span>
-          <span class="sec-badge-text"><strong>HECVAT v3.04 &amp; FERPA</strong><span>University &amp; K-12 CIO Vetted</span></span>
-        </a>
-        <a class="sec-badge-pill" href="https://novak-lms.onrender.com/security#scorm-xapi-ile">
-          <span class="sec-badge-icon" aria-hidden="true">⚓</span>
-          <span class="sec-badge-text"><strong>SCORM / xAPI / Navy ILE</strong><span>1-Click LMS &amp; LTI 1.3 Dispatch</span></span>
-        </a>
-      </div>
-    </div>
-
-    <nav class="deck" aria-label="Primary destinations">
-      <a class="btn primary" href="https://novak-lms.onrender.com">
-        <strong>NOVAK LMS™</strong>
-        <span>Adaptive IT &amp; networking training platform</span>
-      </a>
-      <a class="btn accent" href="/demo">
-        <strong>Demo</strong>
-        <span>1-click live Student, Instructor &amp; Admin walkthrough</span>
-      </a>
-      <a class="btn accent" href="/register">
-        <strong>Create Account</strong>
-        <span>Start a new Student or Instructor account</span>
-      </a>
-      <a class="btn" href="https://novak-lms.onrender.com/helix/try">
-        <strong>Eye Tracking</strong>
-        <span>478-landmark iris &amp; 3D head-pose gaze bench</span>
-      </a>
-      <a class="btn" href="https://n74-ops.jesse-novak.workers.dev/" target="_blank" rel="noopener">
-        <strong>OPs</strong>
-        <span>Staff and student operations boards</span>
-      </a>
-    </nav>
-
-    <div class="sublinks" aria-label="Information sections on this page">
-      <a href="https://novak-lms.onrender.com/pilot/start">30-Day / 30-Student Free Bundle</a>
-      <a href="#financial-roi">68% TCO &amp; ROI Savings</a>
-      <a href="https://novak-lms.onrender.com/roi">ROI Calculator</a>
-      <a href="https://novak-lms.onrender.com/compliance">VPAT / SOC 2 / HECVAT</a>
-      <a href="#demo-paths">1-Click Demo</a>
-      <a href="#apart">What Sets Novak LMS™ Apart</a>
-      <a href="#comparison">Stack Comparison</a>
-      <a href="#pricing-slas">Commercial Pricing &amp; SLAs</a>
-      <a href="https://novak-lms.onrender.com/consult">Schedule Technical Consult</a>
-      <a href="https://novak-lms.onrender.com/security">Security Posture (SOC 2 / GDPR / 508)</a>
-      <a href="#legal">Legal &amp; DMCA</a>
+    <div class="hero-trust-strip" id="heroSecurityPostureBar" aria-label="Technical security and privacy architecture">
+      <a href="https://novak-lms.onrender.com/security#gdpr">🔒 Zero-Video Client-Side Privacy (100% RAM)</a>
+      <a href="https://novak-lms.onrender.com/security#privacy-controls">🖥️ Browser-Sandboxed Lab Isolation (105 Labs)</a>
+      <a href="https://novak-lms.onrender.com/security#security-architecture">🛡️ TLS 1.3 · RBAC · SHA-256 Audit Log</a>
+      <a href="https://novak-lms.onrender.com/compliance#vpat">♿ WCAG 2.2 AA &amp; Section 508 (VPAT 2.5)</a>
+      <a href="https://novak-lms.onrender.com/security#scorm-xapi-ile">⚓ SCORM 1.2/2004, ADL xAPI &amp; Navy ILE</a>
     </div>
   </header>
 
   <main class="info-sections" id="about">
-    <section class="panel" id="demo-paths" aria-labelledby="demoH">
-      <h2 id="demoH">Instant Demo &amp; Account Access</h2>
-      <p>Jump straight into a pre-seeded live session with one click, or create your own Student or Instructor account.</p>
-      <div class="demo-strip">
-        <a class="btn" href="https://novak-lms.onrender.com/demo/enter/student">
-          <strong>Student Demo →</strong>
-          <span>5-rung clickable learning paths (R0–R4), 105 hands-on labs (8 Ubuntu GNOME GUI + 24 Linux VMs), 696+ SVGs &amp; Exam-Day Simulator</span>
-        </a>
-        <a class="btn" href="https://novak-lms.onrender.com/demo/enter/instructor">
-          <strong>Instructor Demo →</strong>
-          <span>"Who Needs Me" Co-Pilot, Helix Attention &amp; Gradebook</span>
-        </a>
-        <a class="btn" href="https://novak-lms.onrender.com/demo/enter/admin">
-          <strong>Admin Demo →</strong>
-          <span>Institutional Outcomes, TQI &amp; LTI 1.3 / SSO</span>
-        </a>
-      </div>
-      <div class="cta-row">
-        <a class="pill-btn pill-gold" href="https://novak-lms.onrender.com/pilot/start">Start 30-Day / 30-Student Free Bundle</a>
-        <a class="pill-btn pill-line" href="https://novak-lms.onrender.com/roi">Institutional ROI Calculator</a>
-        <a class="pill-btn pill-line" href="https://novak-lms.onrender.com/compliance">VPAT / SOC 2 / HECVAT</a>
-        <a class="pill-btn pill-line" href="/register">Create New Account</a>
-        <a class="pill-btn pill-line" href="/demo">Full Demo Guide</a>
-        <a class="pill-btn pill-line" href="/login">Sign In to Novak LMS™</a>
-      </div>
-    </section>
-
+    <!-- 3. Why Institutions Switch (Economic Value Metric) -->
     <section class="panel" id="financial-roi" aria-labelledby="roiSavH">
+      <div class="section-eyebrow">Economic Value &amp; Operational Impact</div>
       <h2 id="roiSavH">Financial &amp; Operational Impact: Cut Training TCO by 68%</h2>
-      <p>Colleges, universities, and operational training commands waste over $460/student/year stitching together separate eBooks, external cloud VM subscriptions, practice exam banks, and analytics add-ons. <strong>Novak LMS™</strong> replaces all 4 licenses with one unified browser platform:</p>
-      <ol class="pillars" style="margin-top:0.85rem">
-        <li><strong>Consolidate 4 Vendor Licenses into 1 Unified Stack (68% Lower Cost per Student · $78,750+ Saved per 250 Students/Yr).</strong> Stop paying separately for static eBooks/certware, external cloud VM lab seats, practice-exam banks, and readiness analytics. Everything runs in one license ($145/student/yr or institutional site license).</li>
-        <li><strong>Eliminate Retake Voucher Waste ($18,400+ Saved per 250 Students · 61% → 89% First-Attempt Pass Rate).</strong> Psychometric <strong>VOUCHER READY</strong> gating (2 consecutive sittings &ge; 780/900 on the 1,400-item Exam-Day Simulator &amp; 36 Split-Pane PBQs) ensures institutions only issue $253–$369 exam vouchers when candidates are mathematically verified to pass on Attempt #1.</li>
-        <li><strong>Reclaim 14.5 Instructor Hours Every Week (580+ Faculty Hours/Yr).</strong> Automated 539 4-rung in-place remediation ladders (R1 Plain Language → R2 Analogy → R3 Visual Diagram → R4 Try-It) resolve first-line student confusion automatically, while the 10-second "Who Needs Me" Co-Pilot pinpoints the exact students who need human intervention.</li>
-        <li><strong>Zero VDI Infrastructure &amp; Zero Lab Maintenance Overhead.</strong> All 90 browser-native hands-on labs (including 24 real Alpine/x86 WebAssembly Linux VMs) execute with zero local ESXi/Hyper-V servers, zero per-minute cloud VM overages, and zero IT helpdesk setup tickets.</li>
-        <li><strong>Procurement-Ready VPAT 2.5, SOC 2 &amp; HECVAT v3.04 Compliance.</strong> Built-in WCAG 2.1 Level AA / Revised Section 508 conformance, FERPA-aligned data governance, LTI 1.3 Advantage (Canvas, Blackboard, Moodle, Brightspace), SAML 2.0 / OIDC SSO, and SHA-256 tamper-evident audit logs.</li>
-      </ol>
-      <div class="cta-row">
-        <a class="pill-btn pill-gold" href="https://novak-lms.onrender.com/pilot/start">Launch 30-Day / 30-Student Free Institutional Bundle →</a>
-        <a class="pill-btn pill-line" href="https://novak-lms.onrender.com/roi">Interactive Institutional ROI Dashboard →</a>
-        <a class="pill-btn pill-line" href="https://novak-lms.onrender.com/compliance">VPAT 2.5, SOC 2 &amp; HECVAT Center →</a>
+      <p>Bootcamps, colleges, and training commands spend over $460/student/year stitching together separate eBooks, external cloud VM subscriptions, practice exam banks, and analytics tools. <strong>Novak LMS™</strong> replaces all 4 licenses in one unified platform:</p>
+
+      <div class="econ-grid">
+        <div class="econ-card">
+          <div class="econ-metric">Up to 80% Lower</div>
+          <div class="econ-title">Software &amp; Cloud Lab Hosting Overhead ($0/hr VM Burn)</div>
+          <div class="econ-desc">All 105 browser-native labs (including 8 Ubuntu 24.04 GNOME GUIs and 24 real Alpine/x86 WebAssembly Linux VMs) execute on the learner's device — eliminating $18–$45/seat/mo in AWS/Azure cloud VM bills.</div>
+        </div>
+        <div class="econ-card">
+          <div class="econ-metric">52% Reduction</div>
+          <div class="econ-title">In 1-on-1 Instructor Remediation (14.5 Hrs/Wk Saved)</div>
+          <div class="econ-desc">539 in-place 5-modality adaptive ladders (Standard → Plain English → Analogy → Visual Map → Try-It) resolve student blocks automatically, reclaiming 580+ faculty hours/yr.</div>
+        </div>
+        <div class="econ-card">
+          <div class="econ-metric">$42,000+ Saved</div>
+          <div class="econ-title">Per 100-Student Cohort ($78,750+ per 250 Students/Yr)</div>
+          <div class="econ-desc">Psychometric <strong>VOUCHER READY</strong> gating lifts first-attempt pass rates from 61% to 89%, saving $18,400+ in retake vouchers per 250 students. <a href="https://novak-lms.onrender.com/roi" style="color:var(--gold-2);font-weight:700">Open ROI Calculator →</a></div>
+        </div>
       </div>
+
+      <details class="hub-details-drawer" style="margin-top:1rem">
+        <summary><span>View Full 5-Point Institutional TCO &amp; Operational Savings Breakdown</span><span>Expand ▾</span></summary>
+        <ol class="pillars">
+          <li><strong>Consolidate 4 Vendor Licenses into 1 Unified Stack (68% Lower Cost per Student · $78,750+ Saved per 250 Students/Yr).</strong> Stop paying separately for static eBooks/certware, external cloud VM lab seats, practice-exam banks, and readiness analytics.</li>
+          <li><strong>Eliminate Retake Voucher Waste ($18,400+ Saved per 250 Students · 61% → 89% First-Attempt Pass Rate).</strong> Psychometric <strong>VOUCHER READY</strong> gating (2 consecutive sittings &ge; 780/900 on the 1,400-item Exam-Day Simulator &amp; 36 Split-Pane PBQs) verifies readiness before issuing $253–$369 exam vouchers.</li>
+          <li><strong>Reclaim 14.5 Instructor Hours Every Week (580+ Faculty Hours/Yr).</strong> Automated 539 4-rung in-place remediation ladders + 10-second "Who Needs Me" Co-Pilot pinpoint the exact students who need human intervention.</li>
+          <li><strong>Zero VDI Infrastructure &amp; Zero Lab Maintenance Overhead.</strong> All 90 browser-native hands-on labs baseline (expanded to 105 total labs including 24 real Alpine/x86 WebAssembly Linux VMs) execute with zero local ESXi/Hyper-V servers and zero per-minute cloud VM overages.</li>
+          <li><strong>Verifiable Accessibility, Privacy &amp; LMS Interoperability.</strong> Built-in WCAG 2.1/2.2 Level AA / Revised Section 508 (VPAT 2.5) conformance, FERPA/GDPR zero-video data governance, LTI 1.3 Advantage, SCORM 1.2/2004, ADL xAPI (cmi5), SAML 2.0 / OIDC SSO, and SHA-256 tamper-evident audit logs.</li>
+        </ol>
+      </details>
     </section>
 
-    <section class="panel" aria-labelledby="apartH" id="apart">
+    <!-- 4. What's Inside the Platform (Clean 2x2 Grid + 1-Click Role Entry + Collapsible Technical Dossier) -->
+    <section class="panel" id="platform" aria-labelledby="apartH">
+      <div class="section-eyebrow">Unified Adaptive Learning &amp; Lab Engine</div>
       <h2 id="apartH">What Sets Novak LMS™ Apart</h2>
-      <ol class="pillars">
-        <li><strong>860,000+ total instructional words (639,146 core + 220,000+ inline visual/boot deep-dive words) &amp; 696+ inline SVG technical diagrams across 100% of lessons.</strong> Spans 3 full courses (Client Systems / FC0-U71, IT Support / 220-1201 &amp; 220-1202, and Network Operations / N10-009), 26 chapters, and 115 lessons (242,549 base lesson words + 396,597 ladder words + 6-stage UEFI/GPT Windows 11 &amp; GRUB2/initramfs/systemd Linux boot architecture deep dives). Every single lesson (115/115, 100%) embeds a 5-stage inline SVG signal/architecture blueprint, 3+ inline section schematics (696+ SVGs total), a 5-row RFC/IEEE/hardware technical spec table, and an interactive field technician watchout.</li>
-        <li><strong>539 bespoke 4-rung explanation ladders with 5 freely clickable in-place learning paths (R0–R4).</strong> Every concept card lets students click any of 5 learning paths on demand at any time on desktop or mobile—<strong>R0 Standard · R1 Plain English · R2 Real-World Analogy · R3 Visual Map · R4 Interactive Try-It</strong>—without waiting to fail a check, while automatic diagnostic remediation and 4 balanced Milestone Checks per lesson verify mastery in place.</li>
-        <li><strong>105 total hands-on labs (98 interactive browser labs + 9 classroom labs, expanding our 90 labs baseline with 8 Ubuntu 24.04 GNOME GUI + Bash Split-View workbenches &amp; 24 real WebAssembly Linux VMs), graded on engineering process.</strong> Every Linux lesson leads with an interactive <strong>Ubuntu 24.04 LTS GNOME 46 Desktop + Bash Split-View Workbench</strong> (8 GNOME GUI labs across NetworkManager, GNOME Disks, GUFW Firewall, Users/Nautilus, GNOME Logs, System Monitor, APT/Cron, and Seahorse SSH Keys), paired with 24 real in-browser x86 WebAssembly Linux 6.8 VMs, 8 Windows 11 GUI labs, 27 Windows PowerShell/CMD labs, 19 Cisco IOS Switch/Router CLI labs, and 9 hardware/subnetting workbenches—all graded on <strong>Diagnose → Fix → Verify</strong>.</li>
-        <li><strong>1,400-item Exam-Day Simulator &amp; 36 3-Tab Interactive Visual PBQ Workbenches.</strong> 1,400 unique scenario-based items mapped across 100% of the 98 official sub-objectives (466 for 220-1201 A+ Core 1, 463 for 220-1202 A+ Core 2, 454 for N10-009 Network+, and 660 for FC0-U71 Tech+), 36 multi-part simulation PBQs in a 3-Tab Interactive Visual PBQ Workbench (Topology &amp; Hardware SVG Visualizer, Live Device Logs, and <code>pbq-cli</code> Diagnostic Terminal), 405 proctored Knowledge Test scenario questions standardized at 45 questions per form across Forms A, B, and C, 26 chapter quizzes (230 questions), 6 Skills Midterms/Finals, and a 325-card Speed-Drill deck, with 100–900 scaled scoring, VOUCHER READY (2 consecutive sittings &ge; 780), whiteboard, strikethrough, and ADA extended time (1.25&times;, 1.5&times;, 2.0&times;).</li>
-        <li><strong>Bayesian Knowledge Tracing (BKT), Helix gaze telemetry &amp; 10-second instructor co-pilot.</strong> Per-objective BKT mastery engine paired with opt-in browser-local 478-landmark MediaPipe FaceMesh iris &amp; 3D head-pose gaze tracking with One-Euro filtering (<code>OneEuro1D</code>, 100% on-device, zero video transmitted) and the "Who Needs Me" Co-Pilot + Instructor Time-to-Mastery CSV analytics (<code>median_seconds_to_resolve</code>, <code>mean_attempts_to_resolve</code>, and <code>helix_triggered</code>) showing which students are stuck, on what objective, and what ladder rung (R1–R4) was already tried.</li>
-        <li><strong>Institution-ready interoperability.</strong> LTI 1.3 Advantage (Canvas, Blackboard, Moodle, Brightspace), SAML 2.0 / OIDC single sign-on, WCAG 2.1 AA accessibility, and tamper-evident SHA-256 hash-chained FERPA audit &amp; data export (<code>/my-data</code>).</li>
-      </ol>
+      <p>Every course, lab, and readiness simulator runs in a single browser tab — engineered for zero setup friction and immediate mastery.</p>
+
+      <div class="feature-grid-2x2">
+        <div class="feature-card">
+          <h3>1. 5 Clickable Learning Paths (R0–R4) &amp; 696+ SVGs</h3>
+          <p>Students switch any concept card on demand between <strong>Standard (R0)</strong>, <strong>Plain English (R1)</strong>, <strong>Real-World Analogy (R2)</strong>, <strong>Visual Map (R3)</strong>, and <strong>Interactive Try-It (R4)</strong> across 115 visually blueprinted lessons (860,000+ total words; 639,146 core curriculum words).</p>
+        </div>
+        <div class="feature-card">
+          <h3>2. 105 Browser-Native Labs (GUI + CLI Workbenches)</h3>
+          <p><strong>8 Ubuntu 24.04 GNOME 46 Desktop + Bash Split-View</strong> labs, <strong>8 Windows 11 GUI</strong> labs, <strong>24 real WebAssembly Linux VMs</strong>, <strong>19 Cisco IOS Switch/Router CLI</strong> labs, and <strong>27 PowerShell/CMD</strong> labs — all graded on <strong>Diagnose → Fix → Verify</strong>.</p>
+        </div>
+        <div class="feature-card">
+          <h3>3. Helix™ 30 Hz Local Gaze Telemetry &amp; BKT</h3>
+          <p>Opt-in 478-landmark MediaPipe iris &amp; head-pose tracking with <code>OneEuro1D</code> filtering runs <strong>100% in browser RAM (zero video transmitted)</strong>, paired with Bayesian Knowledge Tracing and the 10-second "Who Needs Me" Instructor Co-Pilot.</p>
+        </div>
+        <div class="feature-card">
+          <h3>4. 1,400-Item Exam-Day Simulator &amp; 36 Split-Pane PBQs</h3>
+          <p>Covers 100% of the 98 published sub-objectives across <strong>IT Support (220-1201 / 220-1202)</strong>, <strong>Network Ops (N10-009)</strong>, and <strong>Client Systems (FC0-U71)</strong> with 3-Tab Visual PBQ Workbenches (<code>pbq-cli</code>), 405 Proctored Test items (Forms A/B/C), and a 325-card Speed-Drill deck.</p>
+        </div>
+      </div>
+
+      <div id="demo-paths" style="margin-top:1.15rem">
+        <div class="section-eyebrow" id="demoH">Instant 1-Click Role Walkthroughs</div>
+        <div class="demo-strip">
+          <a class="role-card" href="https://novak-lms.onrender.com/demo/enter/student">
+            <strong>Student Demo →</strong>
+            <span>5-path clickable lessons (R0–R4), 105 live labs (8 Ubuntu GNOME GUI + 24 Linux VMs) &amp; Exam-Day Simulator</span>
+          </a>
+          <a class="role-card" href="https://novak-lms.onrender.com/demo/enter/instructor">
+            <strong>Instructor Demo →</strong>
+            <span>10-second "Who Needs Me" Co-Pilot, Time-to-Mastery CSV analytics, Helix Attention &amp; Gradebook</span>
+          </a>
+          <a class="role-card" href="https://novak-lms.onrender.com/demo/enter/admin">
+            <strong>Admin Demo →</strong>
+            <span>Institutional Outcomes, TQI packets, SCORM 1.2/2004 &amp; xAPI exports, LTI 1.3 &amp; SHA-256 Audit Chain</span>
+          </a>
+        </div>
+      </div>
+
+      <details class="hub-details-drawer" id="apart" style="margin-top:1.15rem">
+        <summary><span>Inspect Full 6-Pillar Technical Specifications &amp; 10-Dimension Stack Comparison Matrix</span><span>Expand ▾</span></summary>
+        <div style="padding-top:0.75rem">
+          <ol class="pillars">
+            <li><strong>860,000+ total instructional words (639,146 core + 220,000+ inline visual/boot deep-dive words) &amp; 696+ inline SVG technical diagrams across 100% of lessons.</strong> Spans 3 full courses (Client Systems / FC0-U71, IT Support / 220-1201 &amp; 220-1202, and Network Operations / N10-009), 26 chapters, and 115 lessons (242,549 base lesson words + 396,597 ladder words + 6-stage UEFI/GPT Windows 11 &amp; GRUB2/initramfs/systemd Linux boot architecture deep dives).</li>
+            <li><strong>539 bespoke 4-rung explanation ladders with 5 freely clickable in-place learning paths (R0–R4).</strong> Every concept card lets students click any of 5 learning paths on demand at any time on desktop or mobile—<strong>R0 Standard · R1 Plain English · R2 Real-World Analogy · R3 Visual Map · R4 Interactive Try-It</strong>.</li>
+            <li><strong>105 total hands-on labs (98 interactive browser labs + 9 classroom labs, expanding our 90 labs baseline with 8 Ubuntu 24.04 GNOME GUI + Bash Split-View workbenches &amp; 24 real WebAssembly Linux VMs), graded on engineering process.</strong> Every Linux lesson leads with an interactive <strong>Ubuntu 24.04 LTS GNOME 46 Desktop + Bash Split-View Workbench</strong>, paired with 24 real in-browser x86 WebAssembly Linux 6.8 VMs, 8 Windows 11 GUI labs, 27 Windows PowerShell/CMD labs, 19 Cisco IOS Switch/Router CLI labs, and 9 hardware/subnetting workbenches—all graded on <strong>Diagnose → Fix → Verify</strong>.</li>
+            <li><strong>1,400-item Exam-Day Simulator &amp; 36 3-Tab Interactive Visual PBQ Workbenches.</strong> 1,400 unique scenario-based items mapped across 100% of the 98 published sub-objectives (466 for 220-1201 A+ Core 1, 463 for 220-1202 A+ Core 2, 454 for N10-009 Network+, and 660 for FC0-U71 Tech+), 36 multi-part simulation PBQs in a 3-Tab Interactive Visual PBQ Workbench (Topology &amp; Hardware SVG Visualizer, Live Device Logs, and <code>pbq-cli</code> Diagnostic Terminal), 405 proctored Knowledge Test scenario questions standardized at 45 questions per form across Forms A, B, and C, 26 chapter quizzes (230 questions), 6 Skills Midterms/Finals, and a 325-card Speed-Drill deck, with 100–900 scaled scoring and VOUCHER READY gating.</li>
+            <li><strong>Bayesian Knowledge Tracing (BKT), Helix gaze telemetry &amp; 10-second instructor co-pilot.</strong> Per-objective BKT mastery engine paired with opt-in browser-local 478-landmark MediaPipe FaceMesh iris &amp; 3D head-pose gaze tracking with One-Euro filtering (<code>OneEuro1D</code>, 100% on-device, zero video transmitted) and the "Who Needs Me" Co-Pilot.</li>
+            <li><strong>Institution-ready interoperability.</strong> SCORM 1.2 / 2004, ADL xAPI (cmi5), DoD Navy ILE, LTI 1.3 Advantage (Canvas, Blackboard, Moodle, Brightspace), SAML 2.0 / OIDC single sign-on, WCAG 2.1/2.2 AA accessibility, and tamper-evident SHA-256 hash-chained FERPA audit &amp; data export (<code>/my-data</code>).</li>
+          </ol>
+
+          <div id="comparison" style="margin-top:1.25rem">
+            <h3 id="compH" style="font-size:1rem;color:var(--gold-2);margin-bottom:0.4rem">How Novak LMS™ Compares Across the Stack</h3>
+            <div class="comp-wrap" tabindex="0" role="region" aria-label="How Novak LMS™ Compares Across the Stack">
+              <table class="comp-table">
+                <caption>Side-by-side architectural comparison: Novak LMS™ vs. CompTIA CertMaster, Cisco NetAcad, and Pearson VUE-style platforms</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Dimension</th>
+                    <th scope="col">Novak LMS™ (Unified Adaptive Platform)</th>
+                    <th scope="col">First-Party Static Certware (e.g., CompTIA CertMaster Learn / Labs / Practice)</th>
+                    <th scope="col">Legacy Networking Academies (e.g., Cisco NetAcad / Packet Tracer)</th>
+                    <th scope="col">Traditional Exam &amp; Proctoring Engines (e.g., VUE-Style Linear Testing Platforms)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">1. Platform Unification</th>
+                    <td class="novak-col"><strong>Single unified LMS</strong> with 115 Visual Lessons (696+ SVGs) + 539 5-Path Ladders (R0–R4) + 105 Total Labs (8 Ubuntu GNOME GUI + 24 Linux VMs + 90+ browser labs) + 1,400-Item Exam-Sim + 36 3-Tab PBQs + Proctored Tests (Forms A/B/C)</td>
+                    <td>3 separate fragmented paid SKUs (CertMaster Learn, CertMaster Labs, CertMaster Practice) with separate gradebooks</td>
+                    <td>Networking-focused portal requiring a separate local desktop Packet Tracer binary</td>
+                    <td>Exam delivery and scheduling engine only; zero instructional curriculum</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">2. Remediation When a Student Struggles</th>
+                    <td class="novak-col"><strong>5 freely clickable learning paths (R0–R4) + 539 in-place 4-rung adaptive ladders (R1–R4)</strong> replacing the explanation inside the lesson on demand or on check miss</td>
+                    <td>Re-reading the exact same static text wall or re-watching the same video</td>
+                    <td>Linear slides and chapters with no per-section adaptive rewrite on check failure</td>
+                    <td>Post-test domain score report listing missed objective codes only</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">3. Curriculum &amp; Visual Depth</th>
+                    <td class="novak-col"><strong>860,000+ total words (639,146 core across 115 lessons:</strong> 242,549 base + 396,597 ladder words) + <strong>696+ inline SVG diagrams</strong> + <strong>100% lesson SVG Architecture Blueprints</strong> &amp; 5-row RFC/IEEE Spec Tables</td>
+                    <td>Light summary pages and glossaries often requiring external textbooks</td>
+                    <td>Strong routing/switching depth; light PC hardware, Windows repair, and multi-OS coverage</td>
+                    <td>No instructional curriculum</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">4. Hands-On Lab Execution</th>
+                    <td class="novak-col"><strong>105 total labs / 98 interactive browser labs</strong> (8 Ubuntu 24.04 GNOME GUI + Bash Split-View labs, 24 real WebAssembly Linux VMs, 8 Win11 GUI, 27 Win11 CLI, 19 Cisco IOS CLI &amp; 90+ core labs) graded on <strong>Diagnose → Fix → Verify</strong> process</td>
+                    <td>Slow remote VDI/cloud VM sessions with queue times and fragile browser popups</td>
+                    <td>Requires local desktop Packet Tracer installation or external NetLab reservation</td>
+                    <td>Closed static exam simulation items only</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">5. Performance-Based Questions (PBQs)</th>
+                    <td class="novak-col"><strong>36 multi-part PBQs in a 3-Tab Interactive Visual Workbench</strong> (Clickable SVG Topology/Hardware Visualizer + Live Device Logs + working <code>pbq-cli</code> terminal)</td>
+                    <td>Basic drag-and-drop or static dropdown forms with no live CLI or interactive SVG inspector</td>
+                    <td>Packet Tracer `.pka` files detached from web exam simulator</td>
+                    <td>High-stakes terminal PBQs with zero post-question diagnostic feedback</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">6. Practice Bank &amp; Proctored Assessment Scale</th>
+                    <td class="novak-col"><strong>1,400 Exam-Sim items</strong> across 100% of 98 sub-objectives + <strong>405 Proctored Knowledge Test items</strong> (45/form across Forms A/B/C) + 325 Speed-Drill cards + VOUCHER READY gate</td>
+                    <td>Single practice pool with repetitive retakes</td>
+                    <td>Chapter checkpoints and final exam</td>
+                    <td>Single-sitting high-stakes exam delivery</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">7. Attention &amp; Cognitive Friction Telemetry</th>
+                    <td class="novak-col"><strong>Opt-in browser-local Helix 478-landmark FaceMesh + One-Euro gaze filter</strong>; <strong>0 video frames ever leave the device</strong>; never affects grades</td>
+                    <td>None (click/completion timestamps only)</td>
+                    <td>None (page-view timestamps only)</td>
+                    <td>Invasive remote webcam/screen recording uploaded to third-party proctoring servers</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">8. Real-Time Instructor Triage</th>
+                    <td class="novak-col"><strong>10-second live classroom co-pilot</strong> fusing BKT mastery, missed checks, ladder rungs tried, and local gaze dwell/rereads</td>
+                    <td>Post-mortem gradebook percentages after failure</td>
+                    <td>Standard gradebook completion matrix</td>
+                    <td>Score pass/fail printout</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">9. Adaptive Mastery Modeling</th>
+                    <td class="novak-col"><strong>Per-objective Bayesian Knowledge Tracing (BKT)</strong> combining lessons, live lab events (0.85), tests, and Exam-Sim sittings (0.85)</td>
+                    <td>Simple completion/score thresholds</td>
+                    <td>Module completion checkmarks</td>
+                    <td>Single-sitting cut score (100–900)</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">10. Institution &amp; LMS Interoperability</th>
+                    <td class="novak-col">Built-in <strong>SCORM 1.2/2004, ADL xAPI (cmi5), DoD Navy ILE, LTI 1.3 Advantage</strong> (Canvas, Blackboard, Moodle, Brightspace), SAML 2.0 / OIDC SSO, WCAG 2.1/2.2 AA, SHA-256 hash-chained FERPA audit log</td>
+                    <td>LTI links per separate SKU</td>
+                    <td>Separate academy portal / LTI connectors</td>
+                    <td>Testing center scheduling portal</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
 
-    <section class="panel" aria-labelledby="compH" id="comparison">
-      <h2 id="compH">How Novak LMS™ Compares Across the Stack</h2>
-      <p>Colleges and operational training commands traditionally stitch together fragmented studyware, desktop-only network simulators, and linear testing portals. Here is how <strong>Novak LMS™</strong> compares head-to-head across 10 architectural dimensions:</p>
-      <div class="comp-wrap" tabindex="0" role="region" aria-label="How Novak LMS™ Compares Across the Stack">
-        <table class="comp-table">
-          <caption>Side-by-side architectural comparison: Novak LMS™ vs. CompTIA CertMaster, Cisco NetAcad, and Pearson VUE-style platforms</caption>
-          <thead>
-            <tr>
-              <th scope="col">Dimension</th>
-              <th scope="col">Novak LMS™ (Unified Adaptive Platform)</th>
-              <th scope="col">First-Party Static Certware (e.g., CompTIA CertMaster Learn / Labs / Practice)</th>
-              <th scope="col">Legacy Networking Academies (e.g., Cisco NetAcad / Packet Tracer)</th>
-              <th scope="col">Traditional Exam &amp; Proctoring Engines (e.g., VUE-Style Linear Testing Platforms)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">1. Platform Unification</th>
-              <td class="novak-col"><strong>Single unified LMS</strong> with 115 Visual Lessons (696+ SVGs) + 539 5-Path Ladders (R0–R4) + 105 Total Labs (8 Ubuntu GNOME GUI + 24 Linux VMs + 90+ browser labs) + 1,400-Item Exam-Sim + 36 3-Tab PBQs + Proctored Tests (Forms A/B/C)</td>
-              <td>3 separate fragmented paid SKUs (CertMaster Learn, CertMaster Labs, CertMaster Practice) with separate gradebooks</td>
-              <td>Networking-focused portal requiring a separate local desktop Packet Tracer binary</td>
-              <td>Exam delivery and scheduling engine only; zero instructional curriculum</td>
-            </tr>
-            <tr>
-              <th scope="row">2. Remediation When a Student Struggles</th>
-              <td class="novak-col"><strong>5 freely clickable learning paths (R0–R4) + 539 in-place 4-rung adaptive ladders (R1–R4)</strong> replacing the explanation inside the lesson on demand or on check miss (Standard → Plain English → Real-World Analogy → Visual Map → Interactive Try-It)</td>
-              <td>Re-reading the exact same static text wall or re-watching the same video</td>
-              <td>Linear slides and chapters with no per-section adaptive rewrite on check failure</td>
-              <td>Post-test domain score report listing missed objective codes only</td>
-            </tr>
-            <tr>
-              <th scope="row">3. Curriculum &amp; Visual Depth</th>
-              <td class="novak-col"><strong>860,000+ total words (639,146 core across 115 lessons:</strong> 242,549 base + 396,597 ladder words) + <strong>696+ inline SVG diagrams</strong> + <strong>100% lesson SVG Architecture Blueprints</strong> &amp; 5-row RFC/IEEE Spec Tables</td>
-              <td>Light summary pages and glossaries often requiring external textbooks</td>
-              <td>Strong routing/switching depth; light PC hardware, Windows repair, and multi-OS coverage</td>
-              <td>No instructional curriculum</td>
-            </tr>
-            <tr>
-              <th scope="row">4. Hands-On Lab Execution</th>
-              <td class="novak-col"><strong>105 total labs / 98 interactive browser labs</strong> (8 Ubuntu 24.04 GNOME GUI + Bash Split-View labs, 24 real WebAssembly Linux VMs, 8 Win11 GUI, 27 Win11 CLI, 19 Cisco IOS CLI &amp; 90+ core labs) graded on <strong>Diagnose → Fix → Verify</strong> process</td>
-              <td>External cloud VM popups with boot latency or rigid scripted click-paths</td>
-              <td>Desktop Packet Tracer app focused on network topologies; no live Linux VM or Win11 repair</td>
-              <td>None</td>
-            </tr>
-            <tr>
-              <th scope="row">5. Performance-Based Questions (PBQs)</th>
-              <td class="novak-col"><strong>36 3-Tab Interactive Visual PBQ Workbenches</strong> with clickable SVG topologies, live device logs, and <code>pbq-cli</code> diagnostic terminal</td>
-              <td>Static drag-and-drop matching or flat dropdown forms</td>
-              <td>Chapter <code>.pka</code> packet exercises requiring local desktop app</td>
-              <td>Closed high-stakes exam forms with zero formative feedback</td>
-            </tr>
-            <tr>
-              <th scope="row">6. Practice Bank &amp; Proctored Assessment Scale</th>
-              <td class="novak-col"><strong>1,400 Exam-Sim items</strong> + <strong>405 proctored Knowledge Test items</strong> (45 per Form A/B/C) + 230 chapter quiz items + <strong>325 Speed-Drill flashcards</strong></td>
-              <td>Separate practice product; limited form rotation</td>
-              <td>Fixed chapter and module exams</td>
-              <td>Proctored exam delivery only</td>
-            </tr>
-            <tr>
-              <th scope="row">7. Attention &amp; Cognitive Friction Telemetry</th>
-              <td class="novak-col">Opt-in browser-local <strong>478-landmark Helix iris &amp; 3D head-pose gaze bench</strong> with One-Euro filtering (<code>0</code> video uploaded, FERPA-aligned)</td>
-              <td>None / coarse page-timer only</td>
-              <td>None / coarse page-timer only</td>
-              <td>Invasive remote webcam video streaming and recording</td>
-            </tr>
-            <tr>
-              <th scope="row">8. Real-Time Instructor Triage</th>
-              <td class="novak-col"><strong>10-second "Who Needs Me" Co-Pilot</strong> showing exact stuck objective, ladder rung tried (R1–R4), and gaze dwell / rereading friction</td>
-              <td>Post-mortem gradebook percentages after failure</td>
-              <td>Standard gradebook completion matrix</td>
-              <td>Score pass/fail printout</td>
-            </tr>
-            <tr>
-              <th scope="row">9. Adaptive Mastery Modeling</th>
-              <td class="novak-col"><strong>Per-objective Bayesian Knowledge Tracing (BKT)</strong> combining lessons, live lab events (0.85), tests, and Exam-Sim sittings (0.85)</td>
-              <td>Simple completion/score thresholds</td>
-              <td>Module completion checkmarks</td>
-              <td>Single-sitting cut score (100–900)</td>
-            </tr>
-            <tr>
-              <th scope="row">10. Institution &amp; LMS Interoperability</th>
-              <td class="novak-col">Built-in <strong>LTI 1.3 Advantage</strong> (Canvas, Blackboard, Moodle, Brightspace), SAML 2.0 / OIDC SSO, WCAG 2.1 AA, SHA-256 hash-chained FERPA audit log</td>
-              <td>LTI links per separate SKU</td>
-              <td>Separate academy portal / LTI connectors</td>
-              <td>Testing center scheduling portal</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="cta-row">
-        <a class="pill-btn pill-line" href="/specs">Full Technical Specifications &amp; 115-Lesson Syllabus →</a>
-        <a class="pill-btn pill-line" href="/llms.txt">AI Index (/llms.txt)</a>
-        <a class="pill-btn pill-line" href="/llms-full.txt">Full AI Technical Dossier (/llms-full.txt)</a>
-      </div>
-    </section>
-
+    <!-- 5. Commercial Licensing Tiers, Enterprise Onboarding SLAs & Technical Consult -->
     <section class="panel" aria-labelledby="pricingH" id="pricing-slas">
-      <h2 id="pricingH">Commercial Licensing Tiers, Enterprise Onboarding SLAs &amp; Technical Consult</h2>
-      <p>Transparent, predictable seat and institutional licensing with <strong>$0/hr cloud VM overage fees</strong>, guaranteed <strong>&lt; 24-hour cohort onboarding</strong>, and contractual enterprise Service Level Agreements (SLAs).</p>
+      <div class="section-eyebrow">Commercial Licensing &amp; Turnkey Onboarding</div>
+      <h2 id="pricingH">Transparent Pricing, Enterprise Onboarding SLAs &amp; Technical Consult</h2>
+      <p>Predictable seat and institutional licensing with <strong>$0/hr cloud VM overage fees</strong>, guaranteed <strong>&lt; 24-hour cohort onboarding</strong>, and contractual Service Level Agreements (SLAs).</p>
 
       <div class="pricing-grid">
         <div class="price-card">
@@ -1136,7 +1172,7 @@
               <li>All 105 browser labs (8 Ubuntu GNOME GUI + 24 Linux VMs)</li>
               <li>1,400-item Exam-Day Simulator &amp; 36 Split-Pane PBQs</li>
               <li>1-click SCORM 1.2 / 2004 &amp; ADL xAPI (cmi5) export</li>
-              <li>Full VPAT 2.5, SOC 2 Type II &amp; HECVAT v3.04 packet</li>
+              <li>Full Section 508 (VPAT 2.5) &amp; Security Architecture packet</li>
             </ul>
           </div>
           <a class="pill-btn pill-line" style="text-align:center" href="https://novak-lms.onrender.com/pilot/start">Provision Free 30-Seat Pilot →</a>
@@ -1167,7 +1203,7 @@
               <li>Dedicated tenant isolation + SAML 2.0 / OIDC SSO &amp; LTI 1.3</li>
               <li>OEM Whitelabel custom branding &amp; custom domain support</li>
               <li>DoD Navy ILE / JKO SCORM &amp; live ADL xAPI LRS streaming</li>
-              <li>Executed GDPR DPA, FERPA Addendum, SOC 2 &amp; BAA/MSA</li>
+              <li>Executed GDPR DPA, FERPA Addendum &amp; custom MSA</li>
               <li><strong>Dedicated Customer Success Engineer &amp; &lt; 1-Hr P1 SLA</strong></li>
             </ul>
           </div>
@@ -1175,86 +1211,55 @@
         </div>
       </div>
 
-      <h3 style="font-size:0.95rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-2);margin-top:1.4rem">Contractual Enterprise Onboarding &amp; Support SLAs</h3>
       <div class="sla-grid">
         <div class="sla-box">
           <strong>99.9% Uptime SLA &amp; Zero-VM Downtime</strong>
-          <p style="font-size:0.8rem">Edge-cached curriculum and browser-native WebAssembly labs eliminate remote VDI queue bottlenecks and server crashes.</p>
+          <p>Edge-cached curriculum and browser-native WebAssembly labs eliminate remote VDI queue bottlenecks.</p>
         </div>
         <div class="sla-box">
           <strong>&lt; 24-Hour Turnkey LMS &amp; Roster Onboarding</strong>
-          <p style="font-size:0.8rem">Dedicated onboarding engineer configures your Canvas/Blackboard/Moodle LTI 1.3, SCORM 2004 dispatch, or SSO within 1 business day.</p>
+          <p>Dedicated onboarding engineer configures your Canvas/Blackboard/Moodle LTI 1.3, SCORM 2004 dispatch, or SSO within 1 business day.</p>
         </div>
         <div class="sla-box">
           <strong>&lt; 1-Hour P1 Engineering Escalation SLA</strong>
-          <p style="font-size:0.8rem">Direct Slack/Teams channel with our systems engineering team, &lt; 1-hr critical response, and quarterly TQI pass-rate reviews.</p>
+          <p>Direct engineering escalation channel, &lt; 1-hr critical response, and quarterly TQI pass-rate reviews.</p>
         </div>
       </div>
 
-      <div class="cta-row" style="margin-top:1.25rem">
+      <div class="cta-row" id="contact">
         <a class="pill-btn pill-gold" href="https://novak-lms.onrender.com/consult">📅 Schedule a 25-Minute Technical &amp; ROI Consult →</a>
         <a class="pill-btn pill-line" href="https://novak-lms.onrender.com/pilot/start">Launch Instant 30-Day / 30-Seat Pilot</a>
-        <a class="pill-btn pill-line" href="https://novak-lms.onrender.com/security">Inspect SOC 2 Type II, GDPR, Section 508 &amp; HECVAT Controls →</a>
-      </div>
-    </section>
-
-    <section class="panel" aria-labelledby="faqH" id="faq">
-      <h2 id="faqH">Technical &amp; Procurement Reference (FAQ)</h2>
-      <h2 id="faqH">FAQ</h2>
-      <details><summary>What is Novak LMS™?</summary><p>An adaptive LMS with Client Systems (FC0-U71), IT Support (220-1201 / 220-1202), and Networking (N10-009) courses, 115 visually blueprinted lessons (639,146 total instructional words across 242,549 base words and 539 4-rung adaptive ladders), 90 hands-on labs (including 24 real in-browser Linux VMs and 66 stateful Windows 11 / Cisco IOS / hardware simulators), and a 1,400-item Exam-Day Simulator with 36 3-Tab Interactive Visual PBQs, built for colleges and training commands.</p></details>
-      <details><summary>How does Novak LMS™ compare to CompTIA CertMaster, Cisco NetAcad, and Pearson VUE-style platforms?</summary><p>First-party static certware like CompTIA CertMaster splits learning, labs, and practice into 3 separate paid SKUs and serves the same static text when a student struggles; Cisco NetAcad focuses on networking and requires a separate desktop Packet Tracer binary; Pearson VUE-style engines only deliver closed terminal exams with invasive webcam recording. Novak LMS™ unifies the entire stack in one browser platform: 639,146 words of instruction with 100% lesson SVG visual blueprints, 539 in-place 4-rung adaptive explanation ladders (R1–R4), 90 browser labs (24 real WebAssembly Linux VMs) graded on Diagnose → Fix → Verify process, 36 3-Tab Interactive Visual PBQ Workbenches, 1,400 Exam-Sim items, 405 proctored Knowledge Test questions across Forms A/B/C, per-objective Bayesian Knowledge Tracing, and 100% on-device Helix gaze telemetry.</p></details>
-      <details><summary>How do the 3-Tab Interactive Visual PBQ Workbench and 90 hands-on labs work?</summary><p>All 36 multi-part simulation PBQs (10 for 220-1201, 10 for 220-1202, 10 for N10-009, and 6 for FC0-U71) run inside a 3-Tab Interactive Visual PBQ Workbench: (1) a clickable SVG Topology &amp; Hardware Visualizer for network diagrams, PC hardware bays, and OS/Security pipelines with live green configured badges (✓), (2) a Live Device Inspector exposing <code>show interfaces trunk</code>, <code>show ip ospf neighbor</code>, <code>SMART/POST</code>, <code>bcdedit /enum</code>, <code>icacls</code>, and <code>ls -la</code> logs with 1-click jump to config fields, and (3) a working <code>pbq-cli</code> diagnostic terminal. Complementing the PBQs are 90 browser-based labs—including 24 real Alpine/x86 WebAssembly Linux VMs with a live root shell and 66 stateful Windows 11, Cisco IOS CLI, packet-flow, and SVG hardware labs—every one graded on engineering process (Diagnose → Fix → Verify).</p></details>
-      <details><summary>How deep is the Novak LMS™ curriculum and exam question bank?</summary><p>Novak LMS™ covers 3 full courses, 26 chapters, and 115 lessons totaling 242,549 base lesson words and 639,146 total instructional words (including 396,597 words across 539 4-rung adaptive explanation ladders). Every single lesson (115/115, 100%) embeds a 5-stage inline SVG signal/architecture diagram, a 5-row RFC/IEEE/hardware spec table, and an interactive field technician watchout, plus 10 full-width multi-layer SVG diagrams. Assessments include 1,400 unique scenario-based Exam-Sim items across 100% of the 98 official sub-objectives (466 for 220-1201, 463 for 220-1202, 454 for N10-009, 660 for FC0-U71), 36 interactive simulation PBQs, 405 proctored Knowledge Test questions standardized at 45 per form across Forms A, B, and C, 26 chapter quizzes (230 questions), 6 hands-on Skills Midterms &amp; Finals, and 325 Speed-Drill flashcards.</p></details>
-      <details><summary>How does Novak LMS™ combine Helix eye tracking and Bayesian Knowledge Tracing (BKT) for instructors?</summary><p>Novak LMS™ runs a per-objective Bayesian Knowledge Tracing (BKT) mastery engine combining lesson checks, chapter quizzes, live lab telemetry (weight 0.85), Knowledge Tests, and Exam-Sim sittings (weight 0.85). Alongside BKT, students can opt in per session to Helix Attention Telemetry—a browser-local 478-landmark MediaPipe FaceMesh iris and 3D head-pose gaze tracker with velocity-adaptive One-Euro filtering (<code>OneEuro1D</code>), saccade step-boost, and outlier-trimmed calibration (100% on-device, zero video transmitted, FERPA-aligned). The 10-second "Who Needs Me" Instructor Co-Pilot synthesizes these signals to show which students are stuck, on which exact objective, what ladder rung (R1–R4) was already served, and where gaze dwell or rereading indicates cognitive friction.</p></details>
-      <details><summary>How does the in-lesson explanation ladder work?</summary><p>Every concept card gives students 5 freely clickable learning paths at the top of the card—Standard (R0), Plain English (R1), Real-World Analogy (R2), Visual Map (R3), and Interactive Try-It (R4)—so any learner can switch modalities on demand at any time. Each of the 4 balanced Concept Steps per lesson ends with a Milestone Check (while sub-sections offer optional practice self-checks); a miss automatically escalates to the next explanation rung in place.</p></details>
-      <details><summary>How does Helix attention tracking protect student privacy?</summary><p>It is opt-in per session with explicit consent, runs entirely in the browser and sends only summary numbers (such as time on a section), never video or images. Students can switch it off at any time.</p></details>
-      <details><summary>How do colleges or training commands run a pilot?</summary><p>We set up a section, you enroll students by join code, self-service account creation, CSV or LTI 1.3 (Canvas, Moodle, Blackboard, Brightspace), and at term end you export an outcomes report mapped to course and certification objectives. Email us to start.</p></details>
-      <details><summary>How do I try the demo or create an account?</summary><p>Click <a href="/demo" style="color:var(--gold-2)">Demo</a> above for 1-click sign-in as a Student, Instructor, or Admin, or click <a href="/register" style="color:var(--gold-2)">Create Account</a> to register your own login and automatically join the demo cohort.</p></details>
-      <details><summary>How do students or instructors get support?</summary><p>Email <a href="mailto:novakornothing@gmail.com" style="color:var(--gold-2)">novakornothing@gmail.com</a> for pilot onboarding, instructor support, or account help.</p></details>
-    </section>
-
-    <section class="panel" aria-labelledby="privacyH" id="legal">
-      <h2 id="privacyH">Legal Information &amp; Privacy note</h2>
-      <ul class="plain">
-        <li><strong>Minimal data, FERPA-aligned.</strong> We keep only what a course needs: your account, your work and your progress. No advertising, no selling of data.</li>
-        <li><strong>Helix is optional and stays on your device.</strong> The per-session webcam attention feature is opt-in, runs 100% locally in the browser, and no video or images ever leave the device. Saying no never affects grades.</li>
-        <li><strong>Your record is yours.</strong> Students can download their education record or request a correction or deletion at any time at <a href="/my-data" style="color:var(--gold-2)">/my-data</a>.</li>
-        <li><strong>Never sold.</strong> Student data is never sold or shared with third-party advertisers. Full details: <a href="/privacy" style="color:var(--gold-2)">Privacy</a>.</li>
-        <li><strong>Every sensitive action is logged.</strong> Grade changes, exports, deletions and permission changes go to a tamper-evident (hash-chained) audit log.</li>
-        <li><strong>Enterprise Content Liability Shield &amp; DMCA Safe Harbor Protocol (17 U.S.C. § 512).</strong> Content copyright and IP compliance for any custom syllabus, question bank, or material uploaded by an Enterprise Account or Instructor falls 100% on the uploading Enterprise Account or Instructor, who agree to defend and indemnify Novak Learning. Standardized DMCA Take-Down notices are processed via <a href="/terms#dmca-protocol" style="color:var(--gold-2)">/terms (DMCA &amp; Terms of Service)</a>.</li>
-        <li><strong>Permissive WebAssembly &amp; Open-Source Toolchain (MIT / Apache 2.0 / BSD-2-Clause).</strong> All external WebAssembly and runtime libraries (<code>v86</code> BSD-2-Clause, MediaPipe Apache-2.0, Bootstrap/Flask/SQLAlchemy MIT/BSD) are verified business-safe for commercial monetization and OEM whitelabeling without exposing proprietary IP.</li>
-        <li><strong>Independent curriculum &amp; trademark non-affiliation notice.</strong> © 2026 Novak LMS™. All lessons, 5-path explanation ladders, 105 labs, and readiness simulators are independent instructional material — this is not an official CompTIA exam or vendor-authorized test. CompTIA®, A+®, Network+®, Security+®, Tech+®, Cisco®, and Microsoft® are registered trademarks of their respective owners, which do not sponsor, authorize, or endorse Novak LMS™.</li>
-      </ul>
-    </section>
-
-    <section class="panel" aria-labelledby="contactH" id="contact">
-      <h2 id="contactH">Schedule a Technical Consult &amp; Enterprise Sales</h2>
-      <p>Book a live 25-minute Technical Architecture, LMS Integration &amp; TCO Briefing with our engineering team, or launch an instant self-service pilot:</p>
-      <div class="cta-row">
-        <a class="pill-btn pill-gold" href="https://novak-lms.onrender.com/consult">📅 Schedule a Technical Consult</a>
-        <a class="pill-btn pill-line" href="https://novak-lms.onrender.com/pilot/start">Start 30-Day / 30-Seat Free Pilot</a>
         <a class="pill-btn pill-line" href="mailto:novakornothing@gmail.com?subject=Novak%20LMS%20Enterprise%20Consult">novakornothing@gmail.com</a>
         <a class="pill-btn pill-line" href="/login">Sign in to Novak LMS™</a>
         <a class="pill-btn pill-line" href="/register">Create Account</a>
       </div>
     </section>
+
+    <!-- 6. Clean Collapsible FAQ & Legal / Privacy Reference -->
+    <section class="panel" aria-labelledby="faqH" id="faq">
+      <div class="section-eyebrow">Documentation, FAQ &amp; Governance</div>
+      <h2 id="faqH">Technical FAQ &amp; Legal Information</h2>
+      <details><summary>What is Novak LMS™?</summary><p>An adaptive LMS with Client Systems (FC0-U71), IT Support (220-1201 / 220-1202), and Networking (N10-009) courses, 115 visually blueprinted lessons (639,146 total instructional words across 242,549 base words and 539 4-rung adaptive ladders), 90 hands-on labs baseline (expanded to 105 total labs including 8 Ubuntu GNOME GUI workbenches and 24 real in-browser Linux VMs), and a 1,400-item Exam-Day Simulator with 36 3-Tab Interactive Visual PBQs.</p></details>
+      <details><summary>How does Novak LMS™ compare to CompTIA CertMaster, Cisco NetAcad, and Pearson VUE-style platforms?</summary><p>First-party static certware splits learning, labs, and practice into 3 separate paid SKUs and serves the same static text when a student struggles; Novak LMS™ unifies 639,146 words of instruction with 100% lesson SVG visual blueprints, 539 in-place 4-rung adaptive explanation ladders (R1–R4), 90 browser labs (24 real WebAssembly Linux VMs) graded on Diagnose → Fix → Verify process, 36 3-Tab Interactive Visual PBQ Workbenches, 1,400 Exam-Sim items, 405 proctored Knowledge Test questions across Forms A/B/C, per-objective Bayesian Knowledge Tracing, and 100% on-device Helix gaze telemetry.</p></details>
+      <details><summary>How do the 3-Tab Interactive Visual PBQ Workbench and 90 hands-on labs work?</summary><p>All 36 multi-part simulation PBQs run inside a 3-Tab Interactive Visual PBQ Workbench: (1) a clickable SVG Topology &amp; Hardware Visualizer, (2) a Live Device Inspector exposing <code>show interfaces trunk</code>, <code>show ip ospf neighbor</code>, <code>SMART/POST</code>, <code>bcdedit /enum</code>, <code>icacls</code>, and <code>ls -la</code> logs, and (3) a working <code>pbq-cli</code> diagnostic terminal. Complementing the PBQs are 105 hands-on labs (built on our 90 browser-based labs baseline, including 24 real Alpine/x86 WebAssembly Linux VMs and 8 Ubuntu 24.04 GNOME GUI workbenches) graded on engineering process (Diagnose → Fix → Verify).</p></details>
+      <details><summary>How deep is the Novak LMS™ curriculum and exam question bank?</summary><p>Novak LMS™ covers 3 full courses, 26 chapters, and 115 lessons totaling 242,549 base lesson words and 639,146 total instructional words (including 396,597 words across 539 4-rung adaptive explanation ladders), 1,400 unique scenario-based Exam-Sim items across 100% of the 98 published sub-objectives, 36 interactive simulation PBQs, 405 proctored Knowledge Test questions across Forms A, B, and C, and 325 Speed-Drill flashcards.</p></details>
+      <details><summary>How does Novak LMS™ combine Helix eye tracking and Bayesian Knowledge Tracing (BKT) for instructors?</summary><p>Novak LMS™ runs a per-objective Bayesian Knowledge Tracing (BKT) mastery engine combining lesson checks, chapter quizzes, live lab telemetry (weight 0.85), Knowledge Tests, and Exam-Sim sittings (weight 0.85). Alongside BKT, students can opt in per session to Helix Attention Telemetry—a browser-local 478-landmark MediaPipe FaceMesh iris and 3D head-pose gaze tracker with velocity-adaptive One-Euro filtering (<code>OneEuro1D</code>), 100% on-device in volatile RAM with zero video transmitted. The 10-second "Who Needs Me" Instructor Co-Pilot synthesizes these signals to show which students are stuck, on which exact objective, and what ladder rung (R1–R4) was already served.</p></details>
+      <details><summary>How does Helix attention tracking protect student privacy?</summary><p>It is opt-in per session with explicit consent, runs entirely in the browser and sends only summary numbers (such as time on a section), and no video or images ever leave the device. Students can switch it off at any time.</p></details>
+      <details><summary>How do colleges or training commands run a pilot?</summary><p>Provision a self-service 30-Day / 30-Seat Institutional Pilot in 60 seconds at <a href="https://novak-lms.onrender.com/pilot/start" style="color:var(--gold-2)">/pilot/start</a>, or enroll students via join code, CSV, SCORM 1.2/2004, or LTI 1.3 (Canvas, Moodle, Blackboard, Brightspace).</p></details>
+
+      <div id="legal" style="margin-top:1.1rem;padding-top:1rem;border-top:1px solid rgba(212,180,106,0.2)">
+        <h3 id="privacyH" style="font-size:0.95rem;color:var(--gold-2);margin-bottom:0.45rem">Legal Information &amp; Privacy note</h3>
+        <ul class="plain">
+          <li><strong>Minimal data, FERPA-aligned &amp; Zero-Video RAM Privacy.</strong> We keep only what a course needs: your account, your work and your progress. The optional Helix webcam feature runs 100% locally in browser RAM, and no video or images ever leave the device. Students can download or erase their record at <a href="/my-data" style="color:var(--gold-2)">/my-data</a>. Full details: <a href="/privacy" style="color:var(--gold-2)">Privacy</a>.</li>
+          <li><strong>Tamper-Evident Audit Chain &amp; Enterprise Content Liability Shield (17 U.S.C. § 512).</strong> Every sensitive action is logged in a tamper-evident SHA-256 hash-chained audit log. Content copyright and IP compliance for any custom material uploaded by an Enterprise Account or Instructor falls 100% on the uploading Enterprise Account or Instructor. Standardized DMCA Take-Down notices are processed via <a href="/terms#dmca-protocol" style="color:var(--gold-2)">/terms (Terms of Service &amp; DMCA Safe Harbor)</a>.</li>
+          <li><strong>Permissive WebAssembly &amp; Open-Source Toolchain (MIT / Apache 2.0 / BSD-2-Clause) &amp; Independent Trademark Notice.</strong> All external WebAssembly and runtime libraries (<code>v86</code> BSD-2-Clause, MediaPipe Apache-2.0, Bootstrap/Flask/SQLAlchemy MIT/BSD) are verified business-safe for commercial monetization and OEM whitelabeling. © 2026 Novak LMS™. All lessons, 5-path explanation ladders, 105 labs, and readiness simulators are independent instructional material — this is not an official CompTIA exam or vendor-authorized test. CompTIA®, A+®, Network+®, Security+®, Tech+®, Cisco®, and Microsoft® are registered trademarks of their respective owners, which do not sponsor, authorize, or endorse Novak LMS™.</li>
+        </ul>
+      </div>
+    </section>
   </main>
 
   <footer class="hub-footer">
-    © 2026 Novak LMS™ · novakornothing.com · <a href="/specs">Platform Specs</a> · <a href="/compare">Compare</a> · <a href="/llms.txt">llms.txt</a> · <a href="/terms">Terms &amp; DMCA</a> · <a href="/privacy">Privacy</a> · Contact: <a href="mailto:novakornothing@gmail.com">novakornothing@gmail.com</a> · <a href="/contact">Contact &amp; help</a>
+    © 2026 Novak LMS™ · novakornothing.com · <a href="https://novak-lms.onrender.com/consult">Schedule Consult</a> · <a href="https://novak-lms.onrender.com/security">Security &amp; Privacy</a> · <a href="/specs">Platform Specs</a> · <a href="/compare">Compare</a> · <a href="/llms.txt">llms.txt</a> · <a href="/terms">Terms &amp; DMCA</a> · <a href="/privacy">Privacy</a> · Contact: <a href="mailto:novakornothing@gmail.com">novakornothing@gmail.com</a> · <a href="/contact">Contact &amp; help</a>
   </footer>
-
-  <script>
-    const root = document.getElementById("particles");
-    for (let i = 0; i < 28; i++) {
-      const d = document.createElement("i");
-      d.className = "dot";
-      d.style.left = Math.random() * 100 + "%";
-      d.style.animationDuration = 8 + Math.random() * 14 + "s";
-      d.style.animationDelay = -Math.random() * 16 + "s";
-      d.style.opacity = 0.2 + Math.random() * 0.5;
-      root.appendChild(d);
-    }
-  </script>
 </body>
 </html>

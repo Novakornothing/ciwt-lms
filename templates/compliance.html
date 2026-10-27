@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}VPAT 2.5, SOC 2 &amp; HECVAT Compliance Center — {{ site_name }}{% endblock %}
+{% block title %}Security Architecture, Zero-Video Privacy, Section 508 &amp; SCORM/xAPI Center — {{ site_name }}{% endblock %}
 {% block content %}
 <div class="page-hero mb-4">
   <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div>
-      <div class="eyebrow">Institutional Trust, Accessibility &amp; Security Architecture</div>
-      <h1 class="h3 mb-1">Enterprise Security Posture: SOC 2 Type II, GDPR, Section 508 (VPAT® 2.5), HECVAT &amp; SCORM/ILE Trust Center</h1>
-      <p class="mb-0">Verifiable accessibility conformance (WCAG 2.1 Level AA &amp; Revised Section 508), Higher Education Community Vendor Assessment Toolkit (HECVAT v3.04), and AICPA SOC 2 Trust Services Criteria (CC1–CC9) control matrix.</p>
+      <div class="eyebrow">Technical Security Posture, Privacy by Design &amp; Open Standards</div>
+      <h1 class="h3 mb-1">Security Architecture, Zero-Video Privacy, Section 508 (VPAT® 2.5) &amp; SCORM/xAPI Trust Center</h1>
+      <p class="mb-0">Verifiable technical security safeguards: 100% client-side RAM gaze processing (zero video transmitted), browser-sandboxed WebAssembly lab isolation, TLS 1.3 / RBAC / SHA-256 tamper-evident audit logging, WCAG 2.1/2.2 AA &amp; Revised Section 508 accessibility, and native SCORM 1.2 / 2004 &amp; ADL xAPI (cmi5) interoperability.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
       <a class="btn btn-brand btn-sm" href="{{ url_for('compliance_export', standard='vpat', format='json') }}"><i class="bi bi-download" aria-hidden="true"></i> Export VPAT 2.5 (JSON)</a>
-      <a class="btn btn-outline-light btn-sm" href="{{ url_for('compliance_export', standard='hecvat', format='json') }}"><i class="bi bi-download" aria-hidden="true"></i> Export HECVAT (JSON)</a>
-      <a class="btn btn-outline-light btn-sm" href="{{ url_for('compliance_export', standard='soc2', format='json') }}"><i class="bi bi-download" aria-hidden="true"></i> Export SOC 2 Matrix (JSON)</a>
+      <a class="btn btn-outline-light btn-sm" href="{{ url_for('compliance_export', standard='privacy', format='json') }}"><i class="bi bi-download" aria-hidden="true"></i> Export Privacy Controls (JSON)</a>
+      <a class="btn btn-outline-light btn-sm" href="{{ url_for('compliance_export', standard='security', format='json') }}"><i class="bi bi-download" aria-hidden="true"></i> Export Security Matrix (JSON)</a>
       <a class="btn btn-outline-light btn-sm" href="{{ url_for('terms_of_service') }}"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Terms, DMCA &amp; Liability Shield</a>
       <a class="btn btn-outline-light btn-sm" href="{{ url_for('oss_licenses_json') }}"><i class="bi bi-code-slash" aria-hidden="true"></i> WASM/OSS License Audit (JSON)</a>
       <a class="btn btn-outline-gold btn-sm" href="{{ url_for('pilot_start') }}"><i class="bi bi-rocket-takeoff" aria-hidden="true"></i> Start 30-Day / 30-Student Free Bundle</a>
@@ -19,32 +19,32 @@
   </div>
 </div>
 
-<section class="gb-kpis mb-4" aria-label="Compliance and security summary">
+<section class="gb-kpis mb-4" aria-label="Security and privacy architecture summary">
   <div class="kpi-card">
-    <div class="kpi-label">WCAG 2.1 AA / Section 508</div>
+    <div class="kpi-label">WCAG 2.1/2.2 AA / Section 508</div>
     <div class="kpi-value">VPAT 2.5</div>
     <div class="kpi-sub">100% Level A &amp; AA Criteria Supported · ADA 1.25×–2.0× Timers</div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">Higher-Ed Assessment</div>
-    <div class="kpi-value">HECVAT v3.04</div>
-    <div class="kpi-sub">FERPA-Aligned · LTI 1.3 Advantage · SAML 2.0 / OIDC SSO</div>
+    <div class="kpi-label">Client-Side Biometric Privacy</div>
+    <div class="kpi-value">0 Video Sent</div>
+    <div class="kpi-sub">100% Volatile Browser RAM Gaze Processing · FERPA &amp; GDPR Aligned</div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">Trust Services Criteria</div>
-    <div class="kpi-value">SOC 2 Type II</div>
-    <div class="kpi-sub">CC1–CC9, Availability, Confidentiality &amp; Privacy Controls</div>
+    <div class="kpi-label">Lab Sandbox Isolation</div>
+    <div class="kpi-value">105 Labs</div>
+    <div class="kpi-sub">Client-Side WebAssembly v86 &amp; GUI Sandboxes · 0 External Attack Surface</div>
   </div>
   <div class="kpi-card">
     <div class="kpi-label">SHA-256 Audit Hash Chain</div>
     <div class="kpi-value">{% if audit_stats.verified %}VERIFIED{% else %}ACTIVE{% endif %}</div>
-    <div class="kpi-sub">{{ audit_stats.events_count }} Tamper-Evident Audit Events · 0 Video Transmitted</div>
+    <div class="kpi-sub">{{ audit_stats.events_count }} Tamper-Evident Audit Events · TLS 1.3 &amp; RBAC</div>
   </div>
 </section>
 
 <div class="card mb-4">
   <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <h2 class="h6 mb-0" id="vpat">1. VPAT® 2.5 — WCAG 2.1 Level A / AA &amp; Revised Section 508 Accessibility Conformance Report (ACR)</h2>
+    <h2 class="h6 mb-0" id="vpat">1. VPAT® 2.5 — WCAG 2.1/2.2 Level A / AA &amp; Revised Section 508 Accessibility Conformance Report (ACR)</h2>
     <div class="d-flex flex-wrap gap-1">
       <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='vpat', format='json') }}">JSON</a>
       <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='vpat', format='csv') }}">CSV</a>
@@ -54,7 +54,7 @@
   <div class="card-body">
     <p class="small text-muted mb-3">
       <strong>Product Evaluated:</strong> Novak LMS™ Adaptive Learning, Lab &amp; Certification Readiness Platform ·
-      <strong>Evaluation Methods:</strong> Automated axe-core WCAG 2.1 Level AA suite, keyboard-only navigation audits, screen-reader live-region verification, and color-contrast validation across Light Mode and Dark Mode.
+      <strong>Evaluation Methods:</strong> Automated axe-core WCAG 2.1/2.2 Level AA suite, keyboard-only navigation audits, screen-reader live-region verification, and color-contrast validation across Light Mode and Dark Mode.
     </p>
     <div class="table-responsive" tabindex="0" role="region" aria-labelledby="vpat">
       <table class="table table-hover align-middle mb-0">
@@ -85,30 +85,30 @@
 
 <div class="card mb-4">
   <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <h2 class="h6 mb-0" id="hecvat">2. HECVAT v3.04 — Higher Education Community Vendor Assessment Toolkit (Full &amp; Lite)</h2>
+    <h2 class="h6 mb-0" id="privacy-controls">2. Zero-Video Client-Side Privacy, Browser Lab Sandbox Isolation &amp; FERPA/GDPR Data Governance</h2>
     <div class="d-flex flex-wrap gap-1">
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='hecvat', format='json') }}">JSON</a>
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='hecvat', format='csv') }}">CSV</a>
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='hecvat', format='md') }}">Markdown</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='privacy', format='json') }}">JSON</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='privacy', format='csv') }}">CSV</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='privacy', format='md') }}">Markdown</a>
     </div>
   </div>
   <div class="card-body">
     <p class="small text-muted mb-3">
-      Designed for university CIOs, CISO security review boards, community college procurement teams, and government training commands evaluating cloud learning platforms.
+      Factual architecture controls verifying how Novak LMS™ isolates student lab environments and processes webcam attention signals 100% locally in volatile browser RAM.
     </p>
-    <div class="table-responsive" tabindex="0" role="region" aria-labelledby="hecvat">
+    <div class="table-responsive" tabindex="0" role="region" aria-labelledby="privacy-controls">
       <table class="table table-hover align-middle mb-0">
         <thead>
           <tr>
-            <th scope="col">HECVAT ID</th>
-            <th scope="col">Assessment Domain</th>
-            <th scope="col" class="wrap-ok">Control Question</th>
-            <th scope="col">Vendor Response</th>
-            <th scope="col" class="wrap-ok">Verifiable Platform Evidence</th>
+            <th scope="col">Control ID</th>
+            <th scope="col">Architecture Domain</th>
+            <th scope="col" class="wrap-ok">Technical Question</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="wrap-ok">Implemented Platform Evidence</th>
           </tr>
         </thead>
         <tbody>
-          {% for row in hecvat_controls %}
+          {% for row in privacy_controls %}
           <tr>
             <th scope="row"><code>{{ row.id }}</code></th>
             <td class="fw-semibold">{{ row.domain }}</td>
@@ -125,30 +125,30 @@
 
 <div class="card mb-4">
   <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <h2 class="h6 mb-0" id="soc2">3. SOC 2 Trust Services Criteria (AICPA TSC CC1–CC9, Availability, Confidentiality, Privacy)</h2>
+    <h2 class="h6 mb-0" id="security-architecture">3. Transport Encryption, Authentication, RBAC &amp; SHA-256 Tamper-Evident Audit Architecture</h2>
     <div class="d-flex flex-wrap gap-1">
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='soc2', format='json') }}">JSON</a>
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='soc2', format='csv') }}">CSV</a>
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='soc2', format='md') }}">Markdown</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='security', format='json') }}">JSON</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='security', format='csv') }}">CSV</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('compliance_export', standard='security', format='md') }}">Markdown</a>
     </div>
   </div>
   <div class="card-body">
     <p class="small text-muted mb-3">
-      Live mapping of AICPA Trust Services Criteria to Novak LMS™ technical safeguards, cryptographic controls, and continuous verification gates.
+      Implemented application security safeguards, session hardening, password hashing, and cryptographic audit logging verified in the codebase.
     </p>
-    <div class="table-responsive" tabindex="0" role="region" aria-labelledby="soc2">
+    <div class="table-responsive" tabindex="0" role="region" aria-labelledby="security-architecture">
       <table class="table table-hover align-middle mb-0">
         <thead>
           <tr>
-            <th scope="col">TSC Criteria</th>
+            <th scope="col">Control ID</th>
             <th scope="col">Category</th>
-            <th scope="col">Control Objective</th>
+            <th scope="col">Safeguard</th>
             <th scope="col">Status</th>
             <th scope="col" class="wrap-ok">Technical Implementation &amp; Verification</th>
           </tr>
         </thead>
         <tbody>
-          {% for row in soc2_controls %}
+          {% for row in security_controls %}
           <tr>
             <th scope="row"><code>{{ row.criteria }}</code></th>
             <td class="fw-semibold">{{ row.category }}</td>
@@ -224,30 +224,27 @@
 
 <div class="card mb-4" id="gdpr">
   <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <h2 class="h6 mb-0">5. GDPR (EU/UK Art. 5, 9, 17, 25, 28, 32), CCPA/CPRA &amp; Zero-Server Biometric Privacy Architecture</h2>
+    <h2 class="h6 mb-0">5. Zero-Server Biometric Privacy, FERPA &amp; Self-Service Student Data Portability (/my-data)</h2>
     <span class="badge badge-live">✓ 100% Client-Side RAM Gaze Processing · 0 Video Transmitted</span>
   </div>
   <div class="card-body small">
-    <p class="text-muted mb-3">
-      Engineered for multinational corporate training teams, EU/UK academies, and privacy-conscious institutions requiring strict <strong>GDPR (Regulation (EU) 2016/679)</strong>, <strong>UK GDPR</strong>, <strong>CCPA/CPRA</strong>, and <strong>FERPA</strong> data protection compliance:
-    </p>
     <div class="row g-3">
       <div class="col-md-4">
         <div class="p-3 border rounded h-100">
-          <h3 class="h6 fw-bold mb-1"> GDPR Art. 9 &amp; Art. 25 Privacy by Design (Zero Biometric Transmission)</h3>
+          <h3 class="h6 fw-bold mb-1">Zero Biometric Video Transmission</h3>
           <p class="mb-0 text-muted">Helix™ attention telemetry executes 100% locally inside the learner's browser WebAssembly sandbox (`@mediapipe/tasks-vision` + `OneEuro1D`). Raw webcam frames never leave device RAM and are never uploaded, recorded, or stored on any server.</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="p-3 border rounded h-100">
-          <h3 class="h6 fw-bold mb-1"> GDPR Art. 15, 17 &amp; 20 Self-Service Data Portability &amp; Erasure</h3>
-          <p class="mb-0 text-muted">Every learner and administrator has 1-click access to `/my-data` for machine-readable JSON/CSV educational record portability (Art. 20) and cryptographic right-to-erasure / consent revocation (Art. 17) logged in our SHA-256 hash chain.</p>
+          <h3 class="h6 fw-bold mb-1">Self-Service Data Portability &amp; Erasure</h3>
+          <p class="mb-0 text-muted">Every learner and administrator has 1-click access to `/my-data` for machine-readable JSON educational record portability and cryptographic right-to-erasure / consent revocation logged in our SHA-256 hash chain.</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="p-3 border rounded h-100">
-          <h3 class="h6 fw-bold mb-1"> GDPR Art. 28 Data Processing Addendum (DPA) &amp; Sub-Processor Isolation</h3>
-          <p class="mb-0 text-muted">Zero third-party ad trackers, zero external CDN font/script leaks, and zero cross-tenant data commingling. Standard Contractual Clauses (SCCs) and executed Enterprise DPAs are included with all Academy and Enterprise licenses.</p>
+          <h3 class="h6 fw-bold mb-1">100% Self-Hosted Assets &amp; Permissive OSS Stack</h3>
+          <p class="mb-0 text-muted">Zero third-party ad trackers, zero external CDN font/script leaks, and 100% permissive MIT / Apache-2.0 / BSD-2-Clause client libraries (<a href="{{ url_for('oss_licenses_json') }}">/compliance/oss-licenses</a>).</p>
         </div>
       </div>
     </div>
@@ -257,13 +254,13 @@
 <div class="card">
   <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
     <div>
-      <h2 class="h6 mb-1">Need a Signed Vendor Questionnaire or Custom Institutional Security Packet?</h2>
-      <p class="small text-muted mb-0">Download the JSON/CSV/Markdown compliance bundles above or launch a self-service 30-Day / 30-Student Free Institutional Pilot Bundle immediately.</p>
+      <h2 class="h6 mb-1">Need a Technical Architecture Briefing or Institutional Security Packet?</h2>
+      <p class="small text-muted mb-0">Download the JSON/CSV/Markdown security &amp; accessibility bundles above, schedule a 25-minute technical consult, or launch a 30-Day / 30-Student Free Institutional Pilot Bundle immediately.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
       <a class="btn btn-brand" href="{{ url_for('pilot_start') }}">Start 30-Day / 30-Student Free Bundle</a>
+      <a class="btn btn-outline-navy" href="{{ url_for('schedule_consult') }}">Schedule Technical Consult</a>
       <a class="btn btn-outline-navy" href="{{ url_for('roi_dashboard') }}">View Institutional ROI Dashboard</a>
-      <a class="btn btn-outline-navy" href="mailto:{{ novak_contact_email }}?subject=Compliance%20%26%20HECVAT%20Packet">Contact Security &amp; Compliance</a>
     </div>
   </div>
 </div>

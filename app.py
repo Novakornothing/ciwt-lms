@@ -2277,8 +2277,8 @@ def compliance_center():
     return render_template(
         'compliance.html',
         vpat_criteria=CRP.VPAT_CRITERIA,
-        hecvat_controls=CRP.HECVAT_CONTROLS,
-        soc2_controls=CRP.SOC2_CONTROLS,
+        privacy_controls=CRP.PRIVACY_CONTROLS,
+        security_controls=CRP.SECURITY_CONTROLS,
         audit_stats=_audit_chain_summary(),
     )
 
@@ -2292,8 +2292,8 @@ def admin_compliance():
     return render_template(
         'compliance.html',
         vpat_criteria=CRP.VPAT_CRITERIA,
-        hecvat_controls=CRP.HECVAT_CONTROLS,
-        soc2_controls=CRP.SOC2_CONTROLS,
+        privacy_controls=CRP.PRIVACY_CONTROLS,
+        security_controls=CRP.SECURITY_CONTROLS,
         audit_stats=_audit_chain_summary(),
     )
 
@@ -2406,7 +2406,7 @@ def consult_ics():
         "DTSTART:20261028T140000Z\r\n"
         "DTEND:20261028T143000Z\r\n"
         f"SUMMARY:Novak LMS Technical & ROI Architecture Consult ({org})\r\n"
-        "DESCRIPTION:25-Minute Technical Architecture, 80% Cloud Lab Cost Reduction, SOC 2 Type II / GDPR / Section 508 & Turnkey LMS Onboarding Briefing.\r\n"
+        "DESCRIPTION:25-Minute Technical Architecture, 80% Cloud Lab Cost Reduction, Zero-Video Privacy, TLS 1.3 / RBAC &amp; Section 508 & Turnkey LMS Onboarding Briefing.\r\n"
         "LOCATION:https://novak-lms.onrender.com/demo/enter/student\r\n"
         "END:VEVENT\r\n"
         "END:VCALENDAR\r\n"
