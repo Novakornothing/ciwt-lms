@@ -661,8 +661,10 @@ def run_smart_search(
             if getattr(current_user, 'role', '') in ('instructor', 'admin'):
                 url = url_for_fn('instructor_test_performance', section_id=section.id, test_id=test.id)
                 locked = False
-            else:
+            elif getattr(current_user, 'is_authenticated', False):
                 locked = not is_available_fn(section.id, 'test', test.id, current_user.id)
+            else:
+                locked = False
                 url = url_for_fn('take_test', section_id=section.id, test_id=test.id) if not locked else url_for_fn('student_section', section_id=section.id)
             item = {
                 'kind': 'Test',

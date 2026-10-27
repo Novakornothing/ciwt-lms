@@ -94,7 +94,7 @@ def test_3_split_pane_pbq_workbench(student):
     assert '.pbq-split-workspace.pbq-split-pane' in wb_css
 
 
-def test_4_smart_search_fuzzy_synonyms_stemming_and_instant_api(student):
+def test_4_smart_search_fuzzy_synonyms_stemming_and_instant_api(student, anon):
     """Verify Smart Search handles multi-word queries, IT synonyms, stemming, and typos on /search and /api/search."""
     # Direct unit checks on smart_search module
     assert SS.stem('subnetting') == 'subnet'
@@ -118,6 +118,7 @@ def test_4_smart_search_fuzzy_synonyms_stemming_and_instant_api(student):
         'ospf neigbor',
     ]
     for q in queries:
+        assert anon.get(f'/api/search?q={q}').status_code == 200
         api_r = student.get(f'/api/search?q={q}')
         assert api_r.status_code == 200
         data = api_r.get_json()
