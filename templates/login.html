@@ -216,6 +216,9 @@
 {% set demo = {'learn': 'student1@lms.local', 'teach': 'instructor@lms.local', 'admin': 'admin@lms.local'} %}
 {% set icons = {'learn': 'bi-book', 'teach': 'bi-easel2', 'admin': 'bi-sliders'} %}
 <div class="login-wrap">
+  <div class="text-center mb-3">
+    <span class="entry-mark"><img src="/static/img/navy-n-256.png" alt="Novak LMS™ emblem" width="64" height="64" style="width:100%;height:100%;object-fit:contain;display:block;position:relative;z-index:1"><span class="logo-live" aria-hidden="true"></span></span>
+  </div>
   <nav class="login-roles" aria-label="Sign in as">
     {% for key, r in entry_roles.items() %}
     <a href="{{ url_for('login', **{'as': key}) }}" class="{{ 'active' if hint == key }}"{% if hint == key %} aria-current="page"{% endif %}><i class="bi {{ icons[key] }}" aria-hidden="true"></i> {{ r[0] }}</a>

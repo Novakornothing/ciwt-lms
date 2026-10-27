@@ -7,19 +7,19 @@
      data-event-url="{{ L.url_event }}" data-next="{{ 1 if L.next_available else 0 }}">
   <div class="novak-section-card-header">
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <span class="novak-section-badge">Section {{ L.sec_index|default(1) }} of {{ L.sec_total|default(1) }}</span>
+      <span class="novak-section-badge">Step {{ L.sec_index|default(1) }} of {{ L.sec_total|default(1) }}</span>
       <span class="novak-section-title-pill text-truncate">{{ L.heading }}</span>
       {% if st.resolved %}<span class="badge badge-live">✓ Verified</span>{% endif %}
     </div>
-    <div class="novak-adaptive-rung-bar" role="group" aria-label="Adaptive explanation modes for {{ L.heading }}">
-      <span class="novak-rung-status">Current Rung: {{ L.shown }} {{ 'Standard' if L.shown == 'R0' else L.style }}</span>
-      <span class="novak-rung-pills">
-        <span class="novak-rung-pill {% if L.shown == 'R0' %}is-active{% endif %}">R0 Standard</span>
-        <span class="novak-rung-pill {% if L.shown == 'R1' %}is-active{% endif %}">R1 Plain Language</span>
-        <span class="novak-rung-pill {% if L.shown == 'R2' %}is-active{% endif %}">R2 Real-World Analogy</span>
-        <span class="novak-rung-pill {% if L.shown == 'R3' %}is-active{% endif %}">R3 Visual Diagram</span>
-        <span class="novak-rung-pill {% if L.shown == 'R4' %}is-active{% endif %}">R4 Hands-On Try-It</span>
-      </span>
+    <div class="novak-adaptive-rung-bar novak-adaptive-bar ladder-rungs" role="group" aria-label="Adaptive explanation modes for {{ L.heading }}">
+      <span class="novak-rung-status visually-hidden">Current Rung: {{ L.shown }} {{ 'Standard' if L.shown == 'R0' else L.style }}</span>
+      <div class="novak-segmented-rungs">
+        <span class="novak-rung-pill {% if L.shown == 'R0' %}is-active{% endif %}"><span class="visually-hidden">R0 Standard</span><span aria-hidden="true">Standard</span></span>
+        <span class="novak-rung-pill {% if L.shown == 'R1' %}is-active{% endif %}"><span class="visually-hidden">R1 Plain Language</span><span aria-hidden="true">Plain English</span></span>
+        <span class="novak-rung-pill {% if L.shown == 'R2' %}is-active{% endif %}"><span class="visually-hidden">R2 Real-World Analogy</span><span aria-hidden="true">Real-World Analogy</span></span>
+        <span class="novak-rung-pill {% if L.shown == 'R3' %}is-active{% endif %}"><span class="visually-hidden">R3 Visual Diagram</span><span aria-hidden="true">Visual Map</span></span>
+        <span class="novak-rung-pill {% if L.shown == 'R4' %}is-active{% endif %}"><span class="visually-hidden">R4 Hands-On Try-It</span><span aria-hidden="true">Interactive Try-It</span></span>
+      </div>
     </div>
   </div>
   {% if v %}
@@ -38,7 +38,7 @@
   {{ L.orig_html|safe }}
   {% endif %}
   {% if L.steps|length > 1 and (v or st.tried|length > 1 or st.resolved) %}
-  <ol class="ladder-steps" aria-label="Explanations for {{ L.heading }}">{% for s in L.steps %}<li class="ls-{{ s.state }}"{% if s.state == 'current' %} aria-current="step"{% endif %} title="{{ s.short }}">{{ s.rung }}<span class="visually-hidden"> {{ s.short }}{{ ' (worked)' if s.state == 'resolved' else ' (seen)' if s.state == 'tried' else '' }}</span></li>{% endfor %}</ol>
+  <ol class="ladder-steps visually-hidden" aria-label="Explanations for {{ L.heading }}">{% for s in L.steps %}<li class="ls-{{ s.state }}"{% if s.state == 'current' %} aria-current="step"{% endif %} title="{{ s.short }}">{{ s.rung }}<span class="visually-hidden"> {{ s.short }}{{ ' (worked)' if s.state == 'resolved' else ' (seen)' if s.state == 'tried' else '' }}</span></li>{% endfor %}</ol>
   {% endif %}
   <div class="ladder-panel">
     {%- set fb_here = L.feedback and (L.feedback.ok or not v) %}

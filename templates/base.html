@@ -41,7 +41,7 @@
   {% block head %}{% endblock %}
 </head>
 {% set ui_role = acting_role if acting_role is defined and acting_role else (current_user.role if current_user.is_authenticated else 'student') %}
-<body data-role="{{ ui_role }}" class="{% if current_user.is_authenticated %}has-staff-rail has-mobile-tabbar{% endif %}">
+<body data-role="{{ ui_role }}" class="{% if current_user.is_authenticated %}has-staff-rail has-mobile-tabbar{% endif %}{% if request.endpoint == 'view_lesson' %} is-lesson-route staff-rail-collapsed{% endif %}">
   <a class="skip-link" href="#main">Skip to main content</a>
   <header class="topbar"{% if current_user.is_authenticated %} data-role-label="{{ ui_role|upper }}"{% endif %}>
     <nav class="navbar navbar-expand-lg navbar-dark" aria-label="Primary">
@@ -53,6 +53,7 @@
         {% endif %}
         <a class="navbar-brand" href="{{ url_for('index') }}">
           <span class="brand-logo-wrap">
+            <img src="/static/img/navy-n-256.png" alt="Novak LMS™ emblem" width="48" height="48" style="width:100%;height:100%;object-fit:contain;display:block;position:relative;z-index:1">
             <span class="logo-live" aria-hidden="true"></span>
           </span>
           <span><span class="brand-title-line">{{ brand_mark }}</span><span class="brand-sub">{{ site_tagline }}</span></span>
@@ -70,7 +71,11 @@
           {% if current_user.is_authenticated %}
           <form class="d-flex ms-lg-2 my-2 my-lg-0 position-relative novak-search-form" method="get" action="{{ url_for('curriculum_search') }}" role="search" data-api-search="{{ url_for('api_smart_search') }}">
             <label class="visually-hidden" for="curricSearch">Search curriculum</label>
-            <input id="curricSearch" class="form-control form-control-sm nav-search search-input" type="search" name="q" placeholder="Search lessons, labs, VLAN, BSOD…" autocomplete="off">
+            <div class="novak-search-input-wrap">
+              <i class="bi bi-search novak-search-ico" aria-hidden="true"></i>
+              <input id="curricSearch" class="form-control form-control-sm nav-search search-input novak-search-input" type="search" name="q" placeholder="Search lessons, labs, CLI commands, or objectives..." autocomplete="off">
+              <kbd class="novak-search-kbd d-none d-xl-inline-block" aria-hidden="true">⌘K</kbd>
+            </div>
             <div id="globalSearchDropdown" class="novak-search-dropdown d-none" role="listbox" aria-label="Instant search results"></div>
           </form>
           {% endif %}

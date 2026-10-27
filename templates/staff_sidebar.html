@@ -378,13 +378,18 @@
   }
 
   try {
-    if (localStorage.getItem(KEY) === '1') setCollapsed(true);
+    if (document.body.classList.contains('is-lesson-route')) {
+      document.body.classList.add('staff-rail-collapsed');
+    } else if (localStorage.getItem(KEY) === '1') {
+      setCollapsed(true);
+    }
   } catch (e) {}
 
   if (toggle) {
     toggle.addEventListener('click', function () {
-      if (window.innerWidth < 992) {
+      if (window.innerWidth < 992 || document.body.classList.contains('is-lesson-route')) {
         document.body.classList.remove('staff-rail-open');
+        document.body.classList.add('staff-rail-collapsed');
         return;
       }
       setCollapsed(!document.body.classList.contains('staff-rail-collapsed'));

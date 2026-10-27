@@ -3442,10 +3442,12 @@ def view_lesson(section_id, module_id, lesson_id):
         kw in ((lesson.title or '') + ' ' + (lesson.content or '')[:3500]).lower()
         for kw in ('bootmgfw', 'winload', 'bootrec', 'bcdedit', 'secure boot')
     )
+    _plain_words = len(re.sub(r'<[^>]+>', ' ', lesson.content or '').split())
+    read_minutes = max(4, min(12, round(_plain_words / 280))) if _plain_words else 8
     return render_template(
         'lesson.html', module=module, course=course, lesson=lesson, lessons=lessons,
         module_lessons_map=module_lessons_map, lesson_sections_meta=lesson_sections_meta,
-        is_windows_boot_lesson=is_windows_boot_lesson,
+        is_windows_boot_lesson=is_windows_boot_lesson, read_minutes=read_minutes,
         ladder_html=ladder_html, ladder_gate=ladder_gate,
         mastery_gate=mastery_gate, mastery_review_url=mastery_review_url, mastery_quick=mastery_quick,
         prev_l=prev_l, next_l=next_l, section_id=section_id, quizzes=quizzes,

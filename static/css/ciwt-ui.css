@@ -1658,3 +1658,548 @@ html[data-theme="dark"] .novak-search-dropdown,
 .novak-search-item.is-active {
   background: rgba(56, 189, 248, 0.15);
 }
+
+
+/* ==========================================================================
+   3. SUBTRACTIVE UI/UX REDESIGN — COHESIVE LIGHT/DARK SAAS SHELL & LESSON FLOW
+   ========================================================================== */
+
+/* Shared Semantic Theme Tokens (Light vs Dark) */
+:root,
+html:not([data-theme="dark"]) {
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted-token: #64748b;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #e2e8f0;
+  --surface-4: #cbd5e1;
+  --ink: #0f172a;
+  --ink-secondary: #334155;
+  --ink-muted: #475569;
+  --bs-body-bg: #f8fafc;
+  --bs-body-color: #0f172a;
+  --bs-border-color: #e2e8f0;
+}
+
+html[data-theme="dark"],
+[data-theme="dark"] {
+  --bg-canvas: #070d19;
+  --bg-surface: #0f172a;
+  --bg-elevated: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted-token: #94a3b8;
+  --border-subtle: #1e293b;
+  --border-strong: #334155;
+  --surface: #0f172a;
+  --surface-2: #070d19;
+  --surface-3: #1e293b;
+  --surface-4: #334155;
+  --ink: #f8fafc;
+  --ink-secondary: #cbd5e1;
+  --ink-muted: #94a3b8;
+  --bs-body-bg: #070d19;
+  --bs-body-color: #f8fafc;
+  --bs-border-color: #1e293b;
+}
+
+/* 100% Cohesive Light Mode & Dark Mode Surface Harmonization */
+html:not([data-theme="dark"]) body {
+  background-color: var(--bg-canvas) !important;
+  background-image:
+    radial-gradient(900px 380px at 0% -8%, rgba(14, 165, 233, 0.06), transparent 60%),
+    radial-gradient(800px 340px at 100% 0%, rgba(59, 130, 246, 0.05), transparent 55%) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme="dark"] body {
+  background-color: var(--bg-canvas) !important;
+  background-image:
+    radial-gradient(900px 420px at 5% -10%, rgba(56, 189, 248, 0.1), transparent 55%),
+    radial-gradient(700px 360px at 100% 0%, rgba(30, 58, 138, 0.18), transparent 50%) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Light Mode Topbar, Hero, Sidebar & Card Headers — Harmonized Slate-White Aesthetic (No orphan dark boxes!) */
+html:not([data-theme="dark"]) .topbar {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+html:not([data-theme="dark"]) .topbar::after {
+  display: none !important;
+}
+html:not([data-theme="dark"]) .topbar .navbar-brand,
+html:not([data-theme="dark"]) .topbar .navbar-brand .brand-title-line {
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .topbar .navbar-brand .brand-sub {
+  color: #0284c7 !important;
+}
+html:not([data-theme="dark"]) .topbar .nav-link,
+html:not([data-theme="dark"]) .topbar .user-meta .user-name,
+html:not([data-theme="dark"]) #themeToggle {
+  color: #334155 !important;
+}
+html:not([data-theme="dark"]) .topbar .nav-link:hover {
+  color: #0f172a !important;
+  background: #f1f5f9 !important;
+  box-shadow: none !important;
+}
+html:not([data-theme="dark"]) .topbar .role-chip {
+  background: #e0f2fe !important;
+  color: #0369a1 !important;
+  border-color: #bae6fd !important;
+}
+html:not([data-theme="dark"]) .topbar .mobile-menu-btn {
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Light Mode Page Hero & Card Header Navy -> Clean Slate-Tinted SaaS Surface */
+html:not([data-theme="dark"]) .page-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 60%, #e0f2fe 100%) !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+  padding: 1.4rem 1.65rem !important;
+}
+html:not([data-theme="dark"]) .page-hero::before {
+  display: none !important;
+}
+html:not([data-theme="dark"]) .page-hero h1,
+html:not([data-theme="dark"]) .page-hero .h3,
+html:not([data-theme="dark"]) .page-hero .h4 {
+  color: #0f172a !important;
+  font-family: var(--font) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+html:not([data-theme="dark"]) .page-hero p,
+html:not([data-theme="dark"]) .page-hero .small,
+html:not([data-theme="dark"]) .page-hero .text-muted {
+  color: #334155 !important;
+}
+html:not([data-theme="dark"]) .page-hero .eyebrow,
+html:not([data-theme="dark"]) .page-hero .u-eyebrow {
+  color: #0284c7 !important;
+}
+html:not([data-theme="dark"]) .page-hero .btn-outline-light {
+  color: #0f172a !important;
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+html:not([data-theme="dark"]) .page-hero .btn-outline-light:hover {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+}
+html:not([data-theme="dark"]) .home-hero .home-meter {
+  background: #cbd5e1 !important;
+}
+
+html:not([data-theme="dark"]) .card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03) !important;
+}
+html:not([data-theme="dark"]) .card-header,
+html:not([data-theme="dark"]) .card-header.navy {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  font-weight: 700 !important;
+}
+html:not([data-theme="dark"]) .card-header.navy *,
+html:not([data-theme="dark"]) .card-header.navy .small {
+  color: #334155 !important;
+}
+html:not([data-theme="dark"]) .card-header.navy .btn-brand {
+  color: #06101f !important;
+}
+html:not([data-theme="dark"]) .novak-sidebar-head {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+html:not([data-theme="dark"]) .novak-sidebar-head .text-muted {
+  color: #0284c7 !important;
+}
+html:not([data-theme="dark"]) footer {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+html:not([data-theme="dark"]) footer span,
+html:not([data-theme="dark"]) footer a {
+  color: #475569 !important;
+}
+
+/* Dark Mode Hero & Surfaces Typography Polish */
+html[data-theme="dark"] .page-hero h1,
+html[data-theme="dark"] .page-hero .h3,
+html[data-theme="dark"] .page-hero .h4 {
+  font-family: var(--font) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+html[data-theme="dark"] .topbar::after {
+  display: none !important;
+}
+
+/* Issue 1 Fix: ONLY EVER ONE Visible Left Sidebar (260px wide) on Lesson Pages */
+body.is-lesson-route .staff-rail {
+  transform: translateX(-100%) !important;
+  width: 260px !important;
+  z-index: 1055 !important;
+}
+body.is-lesson-route.staff-rail-open .staff-rail {
+  transform: translateX(0) !important;
+}
+body.is-lesson-route.staff-rail-open .rail-scrim {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+body.is-lesson-route .topbar,
+body.is-lesson-route header.topbar,
+body.is-lesson-route .app-main,
+body.is-lesson-route footer,
+body.is-lesson-route.staff-rail-collapsed .topbar,
+body.is-lesson-route.staff-rail-collapsed header.topbar,
+body.is-lesson-route.staff-rail-collapsed .app-main,
+body.is-lesson-route.staff-rail-collapsed footer {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+body.is-lesson-route .staff-rail-expand {
+  display: none !important;
+}
+body.is-lesson-route .staff-rail:not(.staff-rail-open) {
+  display: none !important;
+}
+body.is-lesson-route.staff-rail-open .staff-rail {
+  display: flex !important;
+  transform: translateX(0) !important;
+}
+body.is-lesson-route #mobileStaffMenuBtn {
+  display: inline-grid !important;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 8px;
+  margin-right: 0.5rem;
+}
+
+/* Issue 2 Fix: Generous Top Navbar Search Input (Never Clips Placeholder) */
+.novak-search-form {
+  min-width: 320px;
+  width: clamp(280px, 34vw, 460px);
+}
+.novak-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.novak-search-ico {
+  position: absolute;
+  left: 0.75rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  pointer-events: none;
+  z-index: 2;
+}
+html[data-theme="dark"] .novak-search-ico {
+  color: #94a3b8;
+}
+#curricSearch.novak-search-input,
+.novak-search-form .nav-search {
+  min-width: 100% !important;
+  max-width: none !important;
+  width: 100% !important;
+  padding-left: 2.2rem !important;
+  padding-right: 3.1rem !important;
+  height: 2.35rem;
+  font-size: 0.85rem !important;
+  border-radius: 999px !important;
+}
+.novak-search-kbd {
+  position: absolute;
+  right: 0.65rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 5px;
+  pointer-events: none;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+html[data-theme="dark"] .novak-search-kbd {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #334155;
+}
+@media (max-width: 991.98px) {
+  .novak-search-form {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* Issue 3 & 4 Fix: Single Slim Sticky Lesson Header + 260px Curriculum Sidebar + Centered 760px Concept Card */
+.novak-curriculum-sidebar {
+  width: 260px !important;
+  flex: 0 0 260px !important;
+  top: calc(var(--topbar-h, 64px) + 1rem) !important;
+  max-height: calc(100vh - var(--topbar-h, 64px) - 2rem) !important;
+}
+.novak-sidebar-back {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.novak-back-link {
+  color: var(--text-secondary) !important;
+  text-decoration: none !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.novak-back-link:hover {
+  color: var(--text-primary) !important;
+}
+
+.novak-lesson-topbar-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+.novak-report-issue-link {
+  color: var(--text-muted-token) !important;
+  text-decoration: none !important;
+  font-size: 0.75rem;
+}
+.novak-report-issue-link:hover {
+  text-decoration: underline !important;
+}
+
+/* Mode Toggle Pill & Listen Popover */
+.novak-mode-pill,
+.novak-listen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+.novak-mode-pill.is-active {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-surface));
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+.novak-listen-popover {
+  position: relative;
+}
+.novak-listen-popover > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.novak-listen-popover > summary::-webkit-details-marker {
+  display: none;
+}
+.novak-listen-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 1050;
+  min-width: 19rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+}
+
+/* Remove double-card wrapper around lessonBody so concept cards sit cleanly on the canvas */
+.curriculum-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.curriculum-card > #lessonBody {
+  padding: 0 !important;
+}
+
+/* High-Contrast Centered Concept Card (max-width: 760px, 32px padding, 17px body font, 1.75 line-height) */
+.novak-lesson-progress-bar,
+.novak-section-card,
+.novak-focus-nav-bar,
+.novak-boot-quickcard,
+#chapter-lab,
+#ladderGate,
+.novak-lesson-footer-nav {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.novak-section-card {
+  max-width: 760px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 32px !important;
+  border-radius: 16px !important;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.05) !important;
+  font-size: 17px !important;
+  line-height: 1.75 !important;
+}
+html[data-theme="dark"] .novak-section-card {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+}
+.novak-section-card p,
+.novak-section-card li {
+  font-size: 17px !important;
+  line-height: 1.75 !important;
+  color: var(--text-secondary) !important;
+}
+.novak-section-card h2,
+.novak-section-card h3 {
+  color: var(--text-primary) !important;
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.85rem !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.015em;
+}
+
+/* Single Sleek Segmented Control for Rung Bar (Standard · Plain English · Real-World Analogy · Visual Map · Interactive Try-It) */
+.novak-section-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.novak-segmented-rungs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 9px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+}
+.novak-rung-pill {
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  padding: 0.22rem 0.58rem !important;
+  border-radius: 6px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text-muted-token) !important;
+  transition: all 0.12s ease;
+}
+.novak-rung-pill.is-active {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+
+/* Eliminate Repetitive Dashed Lock Clutter (Both in Guided Step Mode & Full Article Mode) */
+.ladder-lock {
+  display: none !important;
+}
+#lessonBody:not(.novak-focus-mode-active) .novak-section-card.is-locked-section:not(.is-locked-expanded) > :not(.novak-section-card-header) {
+  display: none !important;
+}
+#lessonBody:not(.novak-focus-mode-active) .novak-section-card.is-locked-section:not(.is-locked-expanded) {
+  padding: 1rem 1.5rem !important;
+  margin-bottom: 0.65rem !important;
+  opacity: 0.78;
+}
+#lessonBody:not(.novak-focus-mode-active) .novak-section-card.is-locked-section:not(.is-locked-expanded) .novak-section-card-header {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom: 0 !important;
+}
+#lessonBody:not(.novak-focus-mode-active) .novak-section-card.is-locked-section .novak-section-badge::after {
+  content: " · Locked (Click to preview)";
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* Guided Step Flow Primary Action Bar */
+.novak-focus-nav-bar {
+  max-width: 760px !important;
+  margin: 1.25rem auto 1.5rem !important;
+  padding: 1rem 1.35rem !important;
+  border-radius: 14px !important;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-strong) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+}
+
+/* Issue 6 Fix: Clean Bottom-Right Floating Button Dock (bottom: 20px; right: 20px; gap: 10px) */
+.tutor-fab {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 120px !important;
+  z-index: 1050 !important;
+  min-height: 40px !important;
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.82rem !important;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18) !important;
+}
+.helix-dock {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 1055 !important;
+}
+.helix-pill-btn {
+  min-height: 40px !important;
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.82rem !important;
+}
+@media (max-width: 767.98px) {
+  body.has-mobile-tabbar .tutor-fab {
+    bottom: calc(var(--tabbar-h, 64px) + 14px) !important;
+    right: 112px !important;
+  }
+  body.has-mobile-tabbar .helix-dock {
+    bottom: calc(var(--tabbar-h, 64px) + 14px) !important;
+    right: 14px !important;
+  }
+}

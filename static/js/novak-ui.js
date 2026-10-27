@@ -119,6 +119,7 @@
   function initCurriculumUX() {
     var lessonBody = document.getElementById('lessonBody');
     var progressBar = document.getElementById('novakLessonProgressBar');
+    var workspace = document.getElementById('novakLessonWorkspace') || document.querySelector('.novak-lesson-workspace');
     if (!lessonBody || !progressBar) return;
 
     var progressFill = document.getElementById('lessonProgressFill');
@@ -159,24 +160,81 @@
       }
     }
 
-    // 2. Reading Progress & Scroll Spy
+    // 2. Clean locked sections in Full Article mode: collapse locked cards and allow click-to-expand
+    function syncLockedSections() {
+      var blocks = getSectionBlocks();
+      blocks.forEach(function (b) {
+        var prev = b.previousElementSibling;
+        var hasLock = prev && prev.classList && prev.classList.contains('ladder-lock');
+        b.classList.toggle('is-locked-section', !!hasLock);
+        if (hasLock && !b.hasAttribute('data-lock-toggle-wired')) {
+          b.setAttribute('data-lock-toggle-wired', '1');
+          var hdr = b.querySelector('.novak-section-card-header');
+          if (hdr) {
+            hdr.style.cursor = 'pointer';
+            hdr.addEventListener('click', function (ev) {
+              if (ev.target.closest('button, a, input')) return;
+              b.classList.toggle('is-locked-expanded');
+            });
+          }
+        }
+      });
+    }
+    syncLockedSections();
+
+    // 3. Guided Step Flow (Default ON: 1 focused concept card at a time)
     var activeIdx = 0;
-    var focusMode = false;
+    var focusMode = true;
+
+    // If URL hash points to a specific section, open on that step
+    var initialBlocks = getSectionBlocks();
+    if (location.hash && initialBlocks.length) {
+      var hashId = location.hash.slice(1);
+      for (var hi = 0; hi < initialBlocks.length; hi++) {
+        var bSid = initialBlocks[hi].getAttribute('data-ladder-sid') || '';
+        if (initialBlocks[hi].id === hashId || ('ladder-sec-' + bSid) === hashId) {
+          activeIdx = hi;
+          break;
+        }
+      }
+    }
 
     function updateFocusView() {
       var blocks = getSectionBlocks();
       if (!blocks.length) return;
       activeIdx = Math.max(0, Math.min(blocks.length - 1, activeIdx));
+      if (workspace) workspace.classList.toggle('focus-mode-active', focusMode);
+      lessonBody.classList.toggle('novak-focus-mode-active', focusMode);
       blocks.forEach(function (b, idx) {
         b.classList.toggle('novak-step-hidden', focusMode && idx !== activeIdx);
       });
+      // Hide non-section sibling elements (preambles, labs, gate) when in Guided Step mode unless on final step
+      var labSec = document.getElementById('chapter-lab');
+      var gateSec = document.getElementById('ladderGate');
+      var quickSec = document.getElementById('mxQuick');
+      var onLastStep = activeIdx >= blocks.length - 1;
+      if (labSec) labSec.classList.toggle('d-none', focusMode && !onLastStep);
+      if (gateSec) gateSec.classList.toggle('d-none', focusMode && !onLastStep);
+      if (quickSec) quickSec.classList.toggle('d-none', focusMode && !onLastStep);
+
       stepDots.forEach(function (d, idx) {
         d.classList.toggle('is-active', idx === activeIdx);
       });
       if (currentSecNum) currentSecNum.textContent = String(activeIdx + 1);
-      if (focusStepCounter) focusStepCounter.textContent = 'Section ' + (activeIdx + 1) + ' of ' + blocks.length;
+      if (focusStepCounter) focusStepCounter.textContent = 'Step ' + (activeIdx + 1) + ' of ' + blocks.length;
       if (focusPrevBtn) focusPrevBtn.disabled = activeIdx <= 0;
       if (focusNextBtn) focusNextBtn.disabled = activeIdx >= blocks.length - 1;
+      if (focusToggleBtn) {
+        focusToggleBtn.classList.toggle('is-active', focusMode);
+        focusToggleBtn.setAttribute('data-focus-mode', focusMode ? 'on' : 'off');
+        focusToggleBtn.setAttribute('aria-pressed', focusMode ? 'true' : 'false');
+      }
+      if (focusModeLabel) {
+        focusModeLabel.textContent = focusMode ? 'Show All Sections' : 'Guided Step View';
+      }
+      if (focusNavBar) {
+        focusNavBar.classList.toggle('d-none', !focusMode || blocks.length <= 1);
+      }
       if (focusMode && progressFill) {
         var pct = Math.round(((activeIdx + 1) / blocks.length) * 100);
         progressFill.style.width = pct + '%';
@@ -211,21 +269,17 @@
     }
 
     window.addEventListener('scroll', onScrollProgress, { passive: true });
-    onScrollProgress();
+    updateFocusView();
 
-    // 3. Focus Mode (Step-by-Step) Toggle
+    document.addEventListener('ladder:updated', function () {
+      syncLockedSections();
+      updateFocusView();
+    });
+
+    // 4. Guided Step Mode / Show All Sections Toggle
     if (focusToggleBtn) {
       focusToggleBtn.addEventListener('click', function () {
         focusMode = !focusMode;
-        lessonBody.classList.toggle('novak-focus-mode-active', focusMode);
-        focusToggleBtn.setAttribute('data-focus-mode', focusMode ? 'on' : 'off');
-        focusToggleBtn.setAttribute('aria-pressed', focusMode ? 'true' : 'false');
-        if (focusModeLabel) {
-          focusModeLabel.textContent = focusMode ? 'Full Page View' : 'Focus Mode (Step-by-Step)';
-        }
-        if (focusNavBar) {
-          focusNavBar.classList.toggle('d-none', !focusMode);
-        }
         updateFocusView();
         if (!focusMode) onScrollProgress();
       });
@@ -236,7 +290,7 @@
         if (activeIdx > 0) {
           activeIdx--;
           updateFocusView();
-          lessonBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       });
     }
@@ -246,10 +300,24 @@
         if (activeIdx < blocks.length - 1) {
           activeIdx++;
           updateFocusView();
-          lessonBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       });
     }
+
+    // Intercept "Next section ↓" chip clicks inside Guided Step mode to advance cleanly
+    document.addEventListener('click', function (e) {
+      var chip = e.target.closest && e.target.closest('[data-continue]');
+      if (!chip || !focusMode) return;
+      var blocks = getSectionBlocks();
+      if (activeIdx < blocks.length - 1) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        activeIdx++;
+        updateFocusView();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, true);
 
     stepDots.forEach(function (dot) {
       dot.addEventListener('click', function (e) {
@@ -259,7 +327,7 @@
         if (focusMode) {
           e.preventDefault();
           updateFocusView();
-          lessonBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           stepDots.forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
           if (currentSecNum) currentSecNum.textContent = String(idx + 1);
@@ -267,7 +335,7 @@
       });
     });
 
-    // 4. Windows Boot Process Streamlined Summary Mode button
+    // 5. Windows Boot Process Streamlined Summary Mode button
     var bootBtn = document.getElementById('toggleBootConciseBtn');
     if (bootBtn) {
       bootBtn.addEventListener('click', function () {
@@ -330,6 +398,14 @@
       dropdown.classList.remove('d-none');
       activeItemIdx = -1;
     }
+
+    document.addEventListener('keydown', function (e) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        input.focus();
+        input.select();
+      }
+    });
 
     input.addEventListener('input', function () {
       var q = (input.value || '').trim();

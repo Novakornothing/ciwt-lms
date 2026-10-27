@@ -4,46 +4,7 @@
 {% set sec_count = (lesson_sections_meta|length) if (lesson_sections_meta is defined and lesson_sections_meta) else 1 %}
 {% set checks_done = ladder_gate.done if ladder_gate else 0 %}
 {% set checks_total = ladder_gate.total if (ladder_gate and ladder_gate.total) else sec_count %}
-
-{# 1. Sticky Lesson Progress Header & Section Stepper Bar (.novak-lesson-progress-bar) #}
-<div class="novak-lesson-progress-bar" id="novakLessonProgressBar" role="region" aria-label="Lesson progress and navigation">
-  <div class="novak-reading-progress-track">
-    <div class="novak-reading-progress-fill" id="lessonProgressFill" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ ((100 * checks_done) // (checks_total or 1)) }}"></div>
-  </div>
-  <div class="novak-progress-inner">
-    <div class="novak-where-am-i min-w-0">
-      <nav aria-label="breadcrumb" class="mb-0">
-        <ol class="breadcrumb mb-0 small">
-          <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">{{ course.code if (course is defined and course) else 'Class' }}</a></li>
-          <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">All chapters</a></li>
-          <li class="breadcrumb-item"><a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">Ch {{ module.order }}: {{ module.title }}</a></li>
-          <li class="breadcrumb-item active" aria-current="page">Lesson {{ lesson.order }} of {{ lessons|length }}</li>
-        </ol>
-      </nav>
-      <div class="novak-progress-pills">
-        <span class="novak-stepper-pill" id="lessonStepperPill">Section <span id="currentSecNum">1</span> of {{ sec_count }} · ~{{ lesson.estimated_minutes }} min left</span>
-        <span class="novak-checks-pill"><i class="bi bi-check2-circle" aria-hidden="true"></i> <span id="checksPassedPill">{{ checks_done }} / {{ checks_total }}</span> Section Checks Passed</span>
-      </div>
-    </div>
-
-    {% if lesson_sections_meta is defined and lesson_sections_meta %}
-    <div class="novak-section-stepper-pills d-none d-md-flex" role="navigation" aria-label="Section stepper">
-      {% for s in lesson_sections_meta %}
-      <a href="#ladder-sec-{{ s.sid }}" class="novak-step-dot{% if loop.first %} is-active{% endif %}" data-section-jump="{{ loop.index0 }}" title="Section {{ s.idx }}: {{ s.heading }}">{{ s.idx }}</a>
-      {% endfor %}
-    </div>
-    {% endif %}
-
-    <div class="novak-view-controls">
-      <button type="button" class="btn btn-sm btn-outline-navy" id="toggle-focus-mode" data-focus-mode="off" aria-pressed="false" title="Switch between Step-by-Step Focus Mode and Full Page View">
-        <i class="bi bi-layers" aria-hidden="true"></i> <span id="focusModeLabel">Focus Mode (Step-by-Step)</span>
-      </button>
-      <button type="button" class="btn btn-sm btn-outline-gold" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer">
-        <i class="bi bi-list" aria-hidden="true"></i> Curriculum Map (☰)
-      </button>
-    </div>
-  </div>
-</div>
+{% set read_mins = read_minutes if (read_minutes is defined and read_minutes) else 8 %}
 
 {# Slide-Over Curriculum Navigation Drawer (Mobile/Tablet & 1-Click Trigger) #}
 <div class="offcanvas offcanvas-start novak-curriculum-nav-drawer" tabindex="-1" id="lessonDrawer" aria-labelledby="lessonDrawerLabel">
@@ -70,7 +31,6 @@
               <span class="novak-lesson-status-ico" aria-hidden="true">{% if m.order < module.order or (m.id == module.id and L.order < lesson.order) %}✓{% elif L.id == lesson.id %}●{% else %}○{% endif %}</span>
               <span class="small fw-bold">{{ L.order }}.</span> {{ L.title.split(' ', 1)[1] if ' ' in L.title else L.title }}
             </span>
-            <span class="small text-muted">~{{ L.estimated_minutes }}m</span>
           </a>
           {% else %}
           <a href="{{ url_for('view_module', section_id=section_id, module_id=m.id) }}" class="list-group-item list-group-item-action py-2 small">Open Chapter {{ m.order }}</a>
@@ -96,11 +56,19 @@
   </div>
 </div>
 
-{# Clean 3-Zone Curriculum Workspace Layout #}
-<div class="novak-lesson-workspace">
-  {# Persistent Left Curriculum Sidebar on Desktop #}
+{# Clean 2-Column Curriculum Workspace Layout (ONE single 260px left sidebar + Centered Focused Reading Stage) #}
+<div class="novak-lesson-workspace focus-mode-active" id="novakLessonWorkspace">
+  {# Single Persistent Left Curriculum Sidebar (260px wide) #}
   <aside class="novak-curriculum-sidebar novak-curriculum-nav-drawer d-none d-xl-block" aria-label="Course curriculum tree">
     <div class="novak-sidebar-card">
+      <div class="novak-sidebar-back">
+        <a href="{{ url_for('student_dashboard') if current_user.is_authenticated and current_user.role == 'student' else (class_home if class_home is defined else url_for('student_section', section_id=section_id)) }}" class="novak-back-link">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i> Dashboard
+        </a>
+        <a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}" class="novak-back-link">
+          {{ course.code if (course is defined and course) else 'Class' }}
+        </a>
+      </div>
       <div class="novak-sidebar-head">
         <div class="small text-uppercase fw-bold text-muted">{{ course.code if (course is defined and course) else 'CURRICULUM' }}</div>
         <div class="fw-bold text-truncate">{{ course.title if (course is defined and course) else module.title }}</div>
@@ -145,38 +113,86 @@
     </div>
   </aside>
 
-  {# Center Focused Reading Canvas #}
+  {# Center Focused Reading Stage #}
   <div class="lesson-layout flex-grow-1 min-w-0">
-    <div class="page-hero lesson-hero mb-2">
-      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center">
-        <div class="min-w-0">
-          <div class="small text-uppercase u-eyebrow d-none d-sm-block">{{ module.title }}</div>
-          <h1 class="h4 mb-0">{{ lesson.title }}</h1>
-          <div class="lesson-hero-links small">
-            <span>Lesson {{ lesson.order }} of {{ lessons|length }} · ~{{ lesson.estimated_minutes }} min · {{ sec_count }} concept sections</span>
-            <span class="d-none d-sm-inline" aria-hidden="true">·</span>
-            <a class="d-none d-sm-inline" href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">All lessons in this chapter</a>
+    {# Single Slim Sticky Lesson Topbar Card (combines breadcrumb, title, sleek 4px progress bar, Step X of N · ~8 min read, Guided Step toggle, Listen popover, Launch Lab) #}
+    <div class="novak-lesson-progress-bar" id="novakLessonProgressBar" role="region" aria-label="Lesson progress and navigation">
+      <div class="novak-reading-progress-track">
+        <div class="novak-reading-progress-fill" id="lessonProgressFill" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ ((100 * (checks_done if checks_done > 0 else 1)) // (checks_total or 1)) }}" style="width: {{ ((100 * (checks_done if checks_done > 0 else 1)) // (checks_total or 1)) }}%"></div>
+      </div>
+      <div class="novak-progress-inner">
+        <div class="novak-where-am-i min-w-0">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <nav aria-label="breadcrumb" class="mb-0">
+              <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{{ class_home if class_home is defined else url_for('student_section', section_id=section_id) }}">{{ course.code if (course is defined and course) else 'Class' }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('view_module', section_id=section_id, module_id=module.id) }}">Ch {{ module.order }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Lesson {{ lesson.order }} of {{ lessons|length }}</li>
+              </ol>
+            </nav>
+            <span class="novak-stepper-pill" id="lessonStepperPill">Step <span id="currentSecNum">1</span> of {{ sec_count }} · ~{{ read_mins }} min read</span>
+            <span class="novak-checks-pill" title="Verified concept checks"><i class="bi bi-check2-circle" aria-hidden="true"></i> <span id="checksPassedPill">{{ checks_done }} / {{ checks_total }}</span> <span class="visually-hidden">Section Checks Passed</span><span aria-hidden="true">Verified</span></span>
+          </div>
+          <div class="d-flex flex-wrap align-items-baseline gap-2 mt-1">
+            <h1 class="novak-lesson-topbar-title mb-0">{{ lesson.title }}</h1>
             {% if current_user.is_authenticated %}
-            <span aria-hidden="true">·</span>
-            <a href="{{ url_for('tickets_new', lesson_id=lesson.id, section_id=section_id, course_id=module.course_id) }}">Report an issue</a>
+            <a class="novak-report-issue-link small" href="{{ url_for('tickets_new', lesson_id=lesson.id, section_id=section_id, course_id=module.course_id) }}">Report issue</a>
             {% endif %}
           </div>
         </div>
-        <div class="d-flex flex-wrap gap-1 lesson-hero-btns">
-          {% if prev_l %}
-          <a href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=prev_l.id) }}" class="btn btn-outline-light btn-sm" title="Previous: {{ prev_l.title }}">← Prev</a>
-          {% endif %}
-          {% if next_l %}
-          <a href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=next_l.id) }}" class="btn btn-outline-light btn-sm" title="Next: {{ next_l.title }}">Next →</a>
-          {% endif %}
+
+        {% if lesson_sections_meta is defined and lesson_sections_meta %}
+        <div class="novak-section-stepper-pills {% if sec_count > 8 %}d-none{% else %}d-none d-md-flex{% endif %}" role="navigation" aria-label="Section stepper">
+          {% for s in lesson_sections_meta %}
+          <a href="#ladder-sec-{{ s.sid }}" class="novak-step-dot{% if loop.first %} is-active{% endif %}" data-section-jump="{{ loop.index0 }}" title="Section {{ s.idx }}: {{ s.heading }}">{{ s.idx }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="novak-view-controls">
+          <button type="button" class="btn btn-sm novak-mode-pill is-active" id="toggle-focus-mode" data-focus-mode="on" aria-pressed="true" title="Switch between Guided Step Flow (1 card at a time) and Full Article View">
+            <i class="bi bi-layers" aria-hidden="true"></i>
+            <span id="focusModeLabel">Show All Sections</span>
+            <span class="visually-hidden">Focus Mode (Step-by-Step)</span>
+          </button>
+
+          {# Compact 🎧 Listen Popover Toggle #}
+          <details class="novak-listen-popover">
+            <summary class="btn btn-sm novak-listen-btn" title="Listen to lesson narration">
+              <i class="bi bi-headphones" aria-hidden="true"></i> <span>Listen</span>
+            </summary>
+            <div class="novak-listen-panel narrate-bar">
+              <div class="d-flex flex-wrap align-items-center gap-1">
+                <button type="button" class="btn btn-brand btn-sm py-0 px-2" id="ttsPlay"><i class="bi bi-play-fill" aria-hidden="true"></i> Play</button>
+                <button type="button" class="btn btn-outline-navy btn-sm py-0 px-2" id="ttsPause" aria-label="Pause"><i class="bi bi-pause-fill" aria-hidden="true"></i> Pause</button>
+                <button type="button" class="btn btn-outline-navy btn-sm py-0 px-2" id="ttsStop" aria-label="Stop"><i class="bi bi-stop-fill" aria-hidden="true"></i> Stop</button>
+                <button type="button" class="btn btn-outline-navy btn-sm py-0 px-2 d-none" id="ttsMore" aria-expanded="false" aria-controls="ttsOptions" aria-label="Narration options"><i class="bi bi-three-dots" aria-hidden="true"></i></button>
+                <span class="narrate-options d-flex flex-wrap align-items-center gap-1" id="ttsOptions">
+                  {% if config.NEURAL_TTS_ENABLED %}<select id="ttsVoice" class="form-select form-select-sm w-auto py-0" aria-label="Narration voice">
+                    <option value="en-US-JennyNeural" selected>Jenny — neural</option>
+                    <option value="en-US-GuyNeural">Guy — neural</option>
+                  </select>{% else %}<span class="small text-muted ms-1">Browser voice</span>{% endif %}
+                  <button type="button" class="btn btn-outline-navy btn-sm py-0 px-2" id="ttsFromHere"><i class="bi bi-cursor-text" aria-hidden="true"></i> From selection</button>
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-navy py-0 px-2 curriculum-fs-inline" id="curriculumFullscreenBtn2" aria-label="Full screen">
+                  <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+                </button>
+                <span class="small text-muted w-100 mt-1" id="ttsStatus" aria-live="polite"></span>
+                <audio id="ttsAudio" controls class="mt-1 w-100" style="height:1.75rem" hidden></audio>
+              </div>
+            </div>
+          </details>
+
           {% if lesson_labs %}
-          <a href="#chapter-lab" class="btn btn-brand btn-sm">
-            <i class="bi bi-terminal" aria-hidden="true"></i> <span class="d-none d-sm-inline">Lab for this lesson</span><span class="d-sm-none">Lab</span>
+          <a href="#chapter-lab" class="btn btn-sm btn-brand">
+            <i class="bi bi-terminal" aria-hidden="true"></i> Launch Lab
           </a>
           {% endif %}
-          <button type="button" class="btn btn-outline-gold btn-sm" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer">
-            <i class="bi bi-list" aria-hidden="true"></i> Chapters
+
+          <button type="button" class="btn btn-sm btn-outline-navy d-xl-none" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer">
+            <i class="bi bi-list" aria-hidden="true"></i> <span class="visually-hidden">Curriculum Map (☰)</span><span aria-hidden="true">Chapters</span>
           </button>
+          <span class="visually-hidden">Curriculum Map (☰)</span>
         </div>
       </div>
     </div>
@@ -197,7 +213,7 @@
       <div class="novak-boot-flow-strip">
         <span class="novak-boot-step"><strong>1. UEFI / POST</strong><small>Hardware init &amp; Secure Boot key check</small></span>
         <span class="novak-boot-arrow" aria-hidden="true">→</span>
-        <span class="novak-boot-step"><strong>2. FAT32 ESP</strong><small><code>\EFI\Microsoft\Boot\bootmgfw.efi</code></small></span>
+        <span class="novak-boot-step"><strong>2. FAT32 ESP</strong><small><code>\EFI\Microsoft\Bootootmgfw.efi</code></small></span>
         <span class="novak-boot-arrow" aria-hidden="true">→</span>
         <span class="novak-boot-step"><strong>3. BCD Store</strong><small><code>\EFI\Microsoft\Boot\BCD</code></small></span>
         <span class="novak-boot-arrow" aria-hidden="true">→</span>
@@ -226,45 +242,25 @@
           <i class="bi bi-fullscreen-exit"></i> Exit full screen
         </button>
       </div>
-      <div class="card card-elevated curriculum-card">
-        <div class="card-header navy py-1 px-2 px-sm-3 d-flex justify-content-between align-items-center flex-wrap gap-1 narrate-bar">
-          <div class="d-flex flex-wrap align-items-center gap-1">
-            <span class="fw-semibold small me-1 d-none d-sm-inline"><i class="bi bi-soundwave" aria-hidden="true"></i> Listen</span>
-            <button type="button" class="btn btn-brand btn-sm py-0 px-2" id="ttsPlay"><i class="bi bi-play-fill" aria-hidden="true"></i> Play</button>
-            <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="ttsPause" aria-label="Pause"><i class="bi bi-pause-fill" aria-hidden="true"></i><span class="d-none d-sm-inline"> Pause</span></button>
-            <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="ttsStop" aria-label="Stop"><i class="bi bi-stop-fill" aria-hidden="true"></i><span class="d-none d-sm-inline"> Stop</span></button>
-            <button type="button" class="btn btn-outline-light btn-sm py-0 px-2 d-sm-none" id="ttsMore" aria-expanded="false" aria-controls="ttsOptions" aria-label="Narration options"><i class="bi bi-three-dots" aria-hidden="true"></i></button>
-            <span class="narrate-options" id="ttsOptions">
-            {% if config.NEURAL_TTS_ENABLED %}<select id="ttsVoice" class="form-select form-select-sm w-auto py-0" aria-label="Narration voice">
-              <option value="en-US-JennyNeural" selected>Jenny — neural</option>
-              <option value="en-US-GuyNeural">Guy — neural</option>
-            </select>{% else %}<span class="small opacity-75 ms-1" title="The online neural voice is turned off on this server">Browser voice</span>{% endif %}
-            <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="ttsFromHere"><i class="bi bi-cursor-text" aria-hidden="true"></i> From selection</button>
-            </span>
-            <span class="small opacity-75 ms-1" id="ttsStatus" aria-live="polite"></span>
-            <audio id="ttsAudio" controls class="ms-2" style="height:1.75rem;max-width:12rem" hidden></audio>
-          </div>
-          <div class="d-flex align-items-center gap-1">
-            <button type="button" class="btn btn-sm btn-outline-light py-0 px-2 curriculum-fs-inline" id="curriculumFullscreenBtn2" aria-label="Full screen">
-              <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i><span class="d-none d-sm-inline"> Full screen</span>
-            </button>
-          </div>
-        </div>
-        <div class="card-body module-content pt-2" id="lessonBody">
+      <div class="curriculum-card">
+        <div class="module-content novak-focus-mode-active" id="lessonBody">
           {% if ladder_html %}
-          <div class="lesson-meta-strip mb-2">
+          <div class="lesson-meta-strip visually-hidden">
             {% if ladder_gate and ladder_gate.on and not ladder_gate.exempt %}<p class="ladder-topstatus mb-0" data-gate-top>
               <span class="ladder-topcount"><i class="bi bi-check2-square" aria-hidden="true"></i> <span data-gate-top-count>{{ ladder_gate.done }} of {{ ladder_gate.total }}</span> sections verified</span>
-              <span class="small"><span class="d-none d-md-inline">What to do next: answer the quick check under each section. Locked sections open as you go. </span><a href="#ladderGate">See what is left</a></span></p>{% endif %}
-            <p class="ladder-intro small mb-0"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> <span class="d-none d-md-inline">Each section ends with a quick check (not graded) — if it doesn’t click, get another explanation right here. </span><span class="d-md-none">4-rung adaptive checks — </span><a href="{{ url_for('ladder_profile', section_id=section_id) }}">What helps you learn</a></p>
+              <span class="small">What to do next: answer the quick check under each section. Locked sections open as you go. <a href="#ladderGate">See what is left</a></span></p>{% endif %}
+            <p class="ladder-intro small mb-0"><a href="{{ url_for('ladder_profile', section_id=section_id) }}">What helps you learn</a></p>
           </div>
           {{ ladder_html | safe }}{% else %}{{ lesson.content | render_lesson | safe }}{% endif %}
 
-          {# Step-by-Step Focus Mode Navigation Bar #}
-          <div class="novak-focus-nav-bar d-none" id="focusModeNavBar" role="navigation" aria-label="Focus mode section navigation">
-            <button type="button" class="btn btn-outline-navy btn-sm" id="focusPrevSection">← Previous Section</button>
-            <span class="fw-bold small" id="focusStepCounter">Section 1 of {{ sec_count }}</span>
-            <button type="button" class="btn btn-brand btn-sm" id="focusNextSection">Next Section →</button>
+          {# Guided Step Flow Primary Action Bar #}
+          <div class="novak-focus-nav-bar" id="focusModeNavBar" role="navigation" aria-label="Guided step navigation">
+            <button type="button" class="btn btn-outline-navy" id="focusPrevSection">← Previous Step</button>
+            <div class="novak-focus-step-meta">
+              <span class="fw-bold" id="focusStepCounter">Step 1 of {{ sec_count }}</span>
+              <a class="small text-muted text-decoration-none ms-2" href="{{ url_for('ladder_profile', section_id=section_id) }}">Learning profile</a>
+            </div>
+            <button type="button" class="btn btn-brand" id="focusNextSection">Continue to Next Step →</button>
           </div>
 
           {% include '_lesson_labs.html' %}
@@ -274,7 +270,7 @@
       {% set _gate = ladder_gate if ladder_gate and ladder_gate.on and not ladder_gate.exempt else None %}
       {% if _gate %}{% include 'ladder/_gate.html' %}{% endif %}
       {% macro adv(to, label) %}{% if _gate %}{{ url_for('lesson_advance', section_id=section_id, lesson_id=lesson.id, to=to, **kwargs) }}{% else %}{{ label }}{% endif %}{% endmacro %}
-      <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
+      <div class="d-flex justify-content-between flex-wrap gap-2 mt-3 novak-lesson-footer-nav">
         {% if prev_l %}
         <a class="btn btn-outline-navy lesson-prev" href="{{ url_for('view_lesson', section_id=section_id, module_id=module.id, lesson_id=prev_l.id) }}">
           ← {{ prev_l.title }}
