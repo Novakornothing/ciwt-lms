@@ -1,3 +1,5 @@
+import re
+import html as _html_mod
 """Explanation ladder engine (pass 19): per-student, in-place re-explanation of lesson sections.
 
 Content comes from curriculum_v2/ladder (one file per chapter; every rung is "Pending SME review"). This module
@@ -278,6 +280,108 @@ def register_ladder(app, db, ctx):
         c = chks[n % len(chks)]
         return {'id': c['id'], 'q': c['q'], 'options': c['options']}
 
+    _META_SID_PREFIXES = (
+        'start-here', 'hour-plan', 'teach-block', 'words-you-will-hear',
+        'beyond-the-quiz', 'practice-standard', 'what-a-computer-is',
+        'what-a-user-actually', 'what-a-ticket-is', 'desk-set-classify',
+        'worked-contacts', '6-desk-drill',
+    )
+
+    def _clean_student_heading(heading):
+        h = (heading or '').strip()
+        if h.lower() == 'start here if you have never done this':
+            return '1.1 Core Role: Restoring Service & Protecting State'
+        if h.lower().startswith('start here — '):
+            return 'Foundations: ' + h[len('Start here — '):].strip()
+        if h.lower().startswith('hour plan for '):
+            return 'Guided Practice & Pacing — ' + h[len('Hour plan for '):].strip()
+        if h.lower().startswith('teach block — '):
+            return 'Shop Application — ' + h[len('Teach block — '):].strip()
+        return h
+
+    def _clean_student_orig_html(orig_html, raw_heading, display_heading):
+        if not orig_html or raw_heading == display_heading:
+            return orig_html
+        return re.sub(
+            r'(<h3\b[^>]*>)(.*?)(</h3>)',
+            lambda m_tag: m_tag.group(1) + _html_mod.escape(display_heading) + m_tag.group(3),
+            orig_html,
+            count=1,
+            flags=re.S | re.I,
+        )
+
+    def _milestone_plan(course, label, secs, cfg):
+        """Select 4 Milestone Check sections per lesson and group all sections into 4 Cohesive Concept Steps."""
+        laddered = []
+        for s in secs:
+            ent = LD.entry(course, label, s['sid'])
+            if not ent or cfg['overrides'].get(f'{label}|{s["sid"]}', {}).get('off'):
+                continue
+            if not allowed_for(cfg, label, s['sid']) and not cfg['micro_checks']:
+                continue
+            laddered.append(s)
+        if not laddered:
+            return {'milestones': [], 'milestone_set': set(), 'step_of': {}, 'milestone_idx': {}, 'total_steps': 1}
+
+        if course == 'ITSUP' and label == '1.1':
+            preferred = ['what-software-is', '1-what-the-role-actually-delivers', '2-three-kinds-of-work', '3-impact-and-identity']
+            avail = [s['sid'] for s in laddered]
+            ms = [sid for sid in preferred if sid in avail]
+            if not ms:
+                ms = avail[:4]
+        else:
+            core_cands = [
+                s['sid'] for s in laddered
+                if not any(s['sid'].startswith(p) for p in _META_SID_PREFIXES)
+            ]
+            if len(core_cands) < 4:
+                core_cands = [s['sid'] for s in laddered]
+            if len(core_cands) <= 4:
+                ms = list(core_cands)
+            else:
+                idxs = sorted({round(i * (len(core_cands) - 1) / 3) for i in range(4)})
+                ms = [core_cands[i] for i in idxs]
+
+        ms_set = set(ms)
+        ordered_ms = [s['sid'] for s in laddered if s['sid'] in ms_set]
+        if not ordered_ms:
+            ordered_ms = [laddered[-1]['sid']]
+
+        total_steps = len(ordered_ms)
+        milestone_idx = {sid: i + 1 for i, sid in enumerate(ordered_ms)}
+        step_of = {}
+        cur_step = 1
+        for s in secs:
+            step_of[s['sid']] = cur_step
+            if s['sid'] in milestone_idx and cur_step < total_steps:
+                cur_step += 1
+        return {
+            'milestones': ordered_ms,
+            'milestone_set': set(ordered_ms),
+            'step_of': step_of,
+            'milestone_idx': milestone_idx,
+            'total_steps': total_steps,
+        }
+
+    def milestone_steps(section, lesson):
+        """Return the 4 Milestone Concept Steps metadata for the lesson topbar & stepper."""
+        cfg = settings(section.id) if section else {'enabled': True, 'max_rung': LP.DEFAULT_MAX_RUNG, 'micro_checks': True, 'overrides': {}}
+        course = course_code(section) if section else 'ITSUP'
+        label = label_of(lesson)
+        secs = LSEC.sections(LSEC.student_html(lesson.content or ''))
+        plan = _milestone_plan(course, label, secs, cfg)
+        sec_by_sid = {s['sid']: s for s in secs}
+        out = []
+        for idx, msid in enumerate(plan['milestones'], 1):
+            s = sec_by_sid.get(msid) or {'sid': msid, 'heading': msid, 'kind': 'core'}
+            out.append({
+                'idx': idx,
+                'sid': msid,
+                'heading': _clean_student_heading(s['heading']),
+                'kind': s.get('kind', 'core'),
+            })
+        return out
+
     def section_ctx(user, section, lesson, sec, ent, st, cfg, show_rung=None, feedback=None):
         course, label, sid = ent['course'], label_of(lesson), sec['sid']
         allowed = allowed_for(cfg, label, sid)
@@ -286,12 +390,28 @@ def register_ladder(app, db, ctx):
             shown = 'R0'
         nxt_avail = any(r not in st['tried'] for r in allowed)
         api = lambda ep, **kw: url_for(ep, section_id=section.id, lesson_id=lesson.id, sid=sid, **kw)
-        all_sids = [s['sid'] for s in LSEC.sections(lesson.content or '')]
+        all_secs = LSEC.sections(LSEC.student_html(lesson.content or ''))
+        all_sids = [s['sid'] for s in all_secs]
         sec_idx = (all_sids.index(sid) + 1) if sid in all_sids else 1
         sec_tot = len(all_sids) or 1
+        plan = _milestone_plan(course, label, all_secs, cfg)
+        is_milestone = sid in plan['milestone_set']
+        step_group = plan['step_of'].get(sid, 1)
+        step_group_total = plan['total_steps']
+        milestone_index = plan['milestone_idx'].get(sid, step_group)
+        display_heading = _clean_student_heading(sec['heading'])
+        display_orig_html = _clean_student_orig_html(sec['html'], sec['heading'], display_heading)
+        r3_html = ((ent.get('rungs') or {}).get('R3') or {}).get('html') or ''
+        r3_svg_match = re.search(r'<svg\b.*?</svg>', r3_html, flags=re.S | re.I)
+        r3_svg_html = r3_svg_match.group(0) if (r3_svg_match and '<svg' not in display_orig_html) else None
         return {
             'sec_index': sec_idx, 'sec_total': sec_tot,
-            'sid': sid, 'heading': sec['heading'], 'orig_html': sec['html'], 'shown': shown,
+            'is_milestone': is_milestone, 'milestone_index': milestone_index,
+            'step_group': step_group, 'step_group_total': step_group_total,
+            'sid': sid, 'heading': sec['heading'], 'display_heading': display_heading,
+            'orig_html': sec['html'], 'display_orig_html': display_orig_html,
+            'r3_svg_html': r3_svg_html,
+            'shown': shown,
             'view': rung_view(ent, shown), 'state': st, 'allowed': allowed,
             'tried_views': [{'rung': r, 'label': LS.LABEL[r]} for r in ['R0'] + [x for x in LP.RUNGS if x in st['tried']]],
             'next_available': nxt_avail, 'micro_checks': cfg['micro_checks'],
@@ -367,7 +487,12 @@ def register_ladder(app, db, ctx):
             return out
         rows = {r.sid: r for r in m.LadderState.query.filter_by(user_id=user.id, section_id=section.id, course=course,
                                                                  label=label).all()}
-        for sec in LSEC.sections(LSEC.student_html(lesson.content or '')):
+        secs = LSEC.sections(LSEC.student_html(lesson.content or ''))
+        plan = _milestone_plan(course, label, secs, cfg)
+        ms_set = plan['milestone_set']
+        for sec in secs:
+            if sec['sid'] not in ms_set:
+                continue
             ent = LD.entry(course, label, sec['sid'])
             if not ent or cfg['overrides'].get(f'{label}|{sec["sid"]}', {}).get('off'):
                 continue
@@ -376,7 +501,8 @@ def register_ladder(app, db, ctx):
             if r and (r.resolved or r.exhausted_at):
                 out['done'] += 1
             else:
-                out['pending'].append({'sid': sec['sid'], 'heading': (LD.ladder().get((course, label, sec['sid'])) or {}).get('heading') or sec['sid']})
+                raw_h = (LD.ladder().get((course, label, sec['sid'])) or {}).get('heading') or sec['sid']
+                out['pending'].append({'sid': sec['sid'], 'heading': _clean_student_heading(raw_h)})
         out['on'] = out['total'] > 0
         out['first'] = out['pending'][0]['sid'] if out['pending'] else None
         out['exempt'] = out['on'] and bypassed(user.id, section.id, lesson.id)
@@ -443,8 +569,11 @@ def register_ladder(app, db, ctx):
             deep = deep_rung if deep_sid == sec['sid'] and deep_rung in (st['tried'] or []) else None
             c = section_ctx(user, section, lesson, sec, ent, st, cfg, show_rung='R0' if want else deep)
             out.append(src[pos:sec['start']])
-            out.append(f'<span class="ladder-anchor" id="ladder-sec-{sec["sid"]}"></span>')
-            if locked:
+            if c.get('is_milestone'):
+                out.append(f'<span class="ladder-anchor" id="ladder-sec-{sec["sid"]}"></span>')
+            else:
+                out.append(f'<span class="ladder-sub-anchor" id="ladder-sub-{sec["sid"]}"></span>')
+            if locked and c.get('is_milestone'):
                 out.append(f'<div class="ladder-lock" data-lock-sid="{sec["sid"]}" role="note"><i class="bi bi-lock" aria-hidden="true"></i> '
                            'Complete the quick check above to unlock this section.</div>')
             out.append(render_section(c))
@@ -566,13 +695,18 @@ def register_ladder(app, db, ctx):
         section, lesson, cfg, course, label, sec, ent = _target(section_id, lesson_id, sid)
         if rung not in ('R0',) + LP.RUNGS:
             abort(404)
-        row = state_row(current_user.id, section.id, course, label, sid)
-        st = as_state(row) if row else LP.new_state()
-        if rung != 'R0' and rung not in st['tried']:
+        prof = profile_of(current_user.id)
+        row = ensure_row(current_user, section, course, label, sid, lesson.id, cfg, prof)
+        st = as_state(row)
+        allowed = allowed_for(cfg, label, sid)
+        if rung != 'R0' and rung not in allowed and rung not in st['tried']:
             abort(404)
+        if rung != 'R0' and rung not in st['tried']:
+            st['tried'] = list(st['tried']) + [rung]
         log(current_user.id, section.id, course, label, sid, 'see_original' if rung == 'R0' else 'show', rung=rung)
-        if row:
-            row.current = rung if not st['resolved'] else row.current
+        if not st['resolved']:
+            st['current'] = rung
+        save_state(row, st)
         return reply(section, lesson, sec, ent, st, cfg, None, 'show', show_rung=rung)
 
     @login_required
@@ -1000,7 +1134,7 @@ def register_ladder(app, db, ctx):
     from types import SimpleNamespace
     return SimpleNamespace(models=m, settings=settings, render_lesson=render_lesson, profile=profile_of,
                            gate=gate, module_gate=module_gate, bypassed=bypassed, clicked=clicked,
-                           class_clicked=class_clicked, STYLE=STYLE,
+                           class_clicked=class_clicked, STYLE=STYLE, milestone_steps=milestone_steps,
                            needs_me_reasons=needs_me_reasons, class_exhausted=class_exhausted,
                            for_objectives=for_objectives, analytics=analytics)
 

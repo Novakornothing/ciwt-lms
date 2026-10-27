@@ -42,12 +42,12 @@
     setTimeout(put, 190);
   }
 
-  function submitForm(box, form, extra) {
+  function submitForm(box, form, extra, actionUrl) {
     var data = new FormData(form);
     Object.keys(extra || {}).forEach(function (k) { data.set(k, extra[k]); });
     var btn = form.querySelector('[type="submit"]');
     if (btn) btn.disabled = true;
-    return post(form.action, data).then(function (j) {
+    return post(actionUrl || form.action, data).then(function (j) {
       if (j.error) {
         var fb = box.querySelector('.ladder-feedback');
         if (fb) { fb.textContent = j.error; fb.className = 'ladder-feedback is-miss'; }
@@ -247,7 +247,11 @@
     var another = box.querySelector('form.ladder-another');
     if (another) another.addEventListener('submit', function (e) { e.preventDefault(); submitForm(box, another); });
     box.querySelectorAll('form.ladder-showform').forEach(function (f) {
-      f.addEventListener('submit', function (e) { e.preventDefault(); submitForm(box, f); });
+      f.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var act = (e.submitter && e.submitter.getAttribute('formaction')) || f.action;
+        submitForm(box, f, null, act);
+      });
     });
     var tog = box.querySelector('.ladder-orig-toggle');
     if (tog) {

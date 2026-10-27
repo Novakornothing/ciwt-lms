@@ -12,6 +12,7 @@ import interactive_labs as IL
 import labs_activity as LA
 import labs_gui as LG
 import labs_linux as LX
+import labs_linux_gui as LLG
 import labs_vm as VM
 import labs_scenario as SC
 
@@ -21,6 +22,7 @@ KIND_GROUPS = [
     ("windows", "Windows command line", "cmd and PowerShell on a Windows 11 VM."),
     ("win11gui", "Windows 11 desktop", "Settings, Services, Device Manager, Network Connections and Active Directory."),
     ("linux", "Linux shell", "bash on a support server."),
+    ("linuxgui", "Ubuntu Linux GUI desktop", "GNOME Settings (NetworkManager), GNOME Disks, GUFW Firewall, Systemd Services, Users & Nautilus Permissions + Bash Split View."),
     ("switch", "Switch (IOS)", "VLANs, access ports, trunks, port security."),
     ("router", "Router (IOS)", "Interfaces, routes, inter-VLAN routing and ACLs."),
     ("vm", "Real Linux VM (runs in your browser)", "A genuine Linux machine boots on your device — real commands, graded by inspecting the VM."),
@@ -63,10 +65,12 @@ def fresh_state(lab_id, uid=0, reseed=0):
     if not lab:
         return None
     st = deepcopy(lab["initial_state"])
-    if lab["kind"] == "linux" and "fs" not in st:
+    if lab["kind"] in ("linux", "linuxgui") and "fs" not in st:
         st.update(LX.linux_state())
     if lab["kind"] == "win11gui" and not st.get("gui"):
         st["gui"] = LG.gui_state()
+    if lab["kind"] in ("linuxgui", "linux") and not st.get("linuxgui"):
+        st["linuxgui"] = LLG.linux_gui_state()
     st["seed"] = _seed(lab_id, uid, reseed)
     if lab["kind"] == "vm":
         st.update(VM.fresh(lab, st["seed"]))
@@ -77,7 +81,7 @@ def fresh_state(lab_id, uid=0, reseed=0):
 
 
 def prompt(lab, state):
-    if lab["kind"] == "linux":
+    if lab["kind"] in ("linux", "linuxgui"):
         return LX.prompt(state)
     if lab["kind"] in ("activity", "win11gui", "vm"):
         return ""
@@ -122,6 +126,9 @@ def view(lab, state, done):
         g.pop("seen", None)
         out["gui"] = g
         out["facts"] = {k: state.get(k) for k in ("hostname", "ipv4", "mask", "gateway", "dns", "edition", "version", "build", "user", "domain")}
+    if lab["kind"] in ("linuxgui", "linux"):
+        out["linuxgui"] = LLG.public_gui(state)
+        out["facts"] = {"hostname": state.get("hostname") or state.get("host") or "novak-lnx-01", "user": state.get("user") or "trainee", "ipv4": state.get("ip") or "10.20.40.15"}
     if lab.get("steps"):
         out["steps"] = public_steps(lab, state)
     return out
@@ -180,7 +187,7 @@ def run_command(lab_id, state, done, command):
     if cmd.lower() in ("clear", "cls") or cmd == "\x0c":
         return {"lines": [], "clear": True}, state, done
     extra = []
-    if kind == "linux":
+    if kind in ("linux", "linuxgui"):
         def mark(oid):
             if oid not in done:
                 done.append(oid)
@@ -302,8 +309,11 @@ def apply_event(lab_id, state, done, ev, data):
     lab = get_lab(lab_id)
     state = deepcopy(state) if state else fresh_state(lab_id)
     done = list(done or [])
-    if not lab or lab["kind"] != "win11gui":
+    if not lab or lab["kind"] not in ("win11gui", "linuxgui", "linux"):
         return {"error": "This lab has no desktop.", "changed": False}, state, done
+    if lab["kind"] in ("linuxgui", "linux"):
+        result, state, done = LLG.apply(lab, state, done, ev, data if isinstance(data, dict) else {})
+        return result, state, _clean(lab, done)
     result, state, done = LG.apply(lab, state, done, ev, data if isinstance(data, dict) else {})
     return result, state, _clean(lab, done)
 
@@ -349,7 +359,7 @@ def _derived_hints(lab):
     elif lab["id"] in IL.VERIFY_SEQUENCES:
         cmds = IL.VERIFY_SEQUENCES[lab["id"]][0]
     out = {}
-    if cmds and lab["kind"] not in ("activity", "win11gui"):
+    if cmds and lab["kind"] not in ("activity", "win11gui", "linuxgui"):
         state, done, since = fresh_state(lab["id"]), [], []
         for c in cmds:
             before = set(done)
@@ -383,7 +393,7 @@ def next_hint(lab, state, done, hints_used):
                 "Use the feedback: each wrong choice explains why it is wrong. Eliminate those and check again.")
     else:
         seq = _derived_hints(lab).get(o["id"])
-        if seq and lab["kind"] != "win11gui":
+        if seq and lab["kind"] not in ("win11gui", "linuxgui"):
             text = (f"Next: {o['text']}. Start with: {seq[-1].split()[0]}" if tier == 1 else
                     "Type: " + "  →  ".join(seq))
         else:

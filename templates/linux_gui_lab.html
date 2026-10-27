@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}{{ lab.title }} — Live Lab{% endblock %}
+{% block content %}
+{% set kind_label = 'Ubuntu 24.04 LTS · GNOME Desktop + Bash Split Workbench' %}
+{% include '_lab_header.html' %}
+<div class="lab-shell lab-shell-gui">
+  <div class="lab-main">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="badge text-bg-primary"><i class="bi bi-ubuntu me-1" aria-hidden="true"></i>Ubuntu 24.04 LTS · GNOME 46 Desktop</span>
+        <span class="small text-muted">Host: <code>{{ boot.facts.hostname or 'novak-lnx-01' }}</code> · User: <code>{{ boot.facts.user or 'trainee' }}</code></span>
+      </div>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Linux Workbench Layout Mode">
+        <button type="button" class="btn btn-outline-navy active" id="lnxModeSplit" data-lnx-mode="split">
+          <i class="bi bi-layout-split me-1" aria-hidden="true"></i>GUI + Bash Split View
+        </button>
+        <button type="button" class="btn btn-outline-navy" id="lnxModeGui" data-lnx-mode="gui">
+          <i class="bi bi-window-desktop me-1" aria-hidden="true"></i>Full GNOME Desktop
+        </button>
+        <button type="button" class="btn btn-outline-navy" id="lnxModeTerm" data-lnx-mode="term">
+          <i class="bi bi-terminal me-1" aria-hidden="true"></i>Full Bash Terminal
+        </button>
+      </div>
+    </div>
+
+    <div class="lnx-workbench-grid" id="lnxWorkbenchGrid" data-mode="split" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:1rem;align-items:stretch">
+      {# Left Pane: Interactive Ubuntu GNOME Desktop Environment #}
+      <div class="lnx-desk" id="lnxDesk" aria-label="Ubuntu GNOME desktop simulator ({{ boot.facts.hostname or 'novak-lnx-01' }})" role="application"
+           style="background:linear-gradient(135deg,#2c001e 0%,#4a154b 52%,#111827 100%);border:1.5px solid rgba(244,114,182,0.35);border-radius:12px;overflow:hidden;min-height:460px;display:flex;flex-direction:column;color:#f8fafc">
+        {# GNOME Top Bar #}
+        <div class="lnx-topbar" style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0.75rem;background:rgba(9,13,22,0.88);border-bottom:1px solid rgba(255,255,255,0.12);font-size:0.78rem;font-weight:600">
+          <div class="d-flex align-items-center gap-2">
+            <span class="px-2 py-0 rounded" style="background:rgba(233,84,32,0.28);color:#ff8a65">Activities</span>
+            <span id="lnxActiveAppLabel">GNOME Settings</span>
+          </div>
+          <div class="font-monospace small text-light">Tue Oct 27 · 09:42</div>
+          <div class="d-flex align-items-center gap-2">
+            <span title="Wired eth0 status"><i class="bi bi-ethernet" aria-hidden="true"></i> <span id="lnxTrayNet">10.20.40.15</span></span>
+            <span title="UFW Firewall"><i class="bi bi-shield-check" aria-hidden="true"></i></span>
+            <span title="System power menu"><i class="bi bi-power" aria-hidden="true"></i></span>
+          </div>
+        </div>
+
+        {# GNOME Workspace Body: Left Ubuntu Dock + Active Application Window #}
+        <div class="lnx-workspace" style="display:flex;flex:1;min-height:410px">
+          <nav class="lnx-dock" aria-label="Ubuntu Dock" style="width:62px;background:rgba(9,13,22,0.72);border-right:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;align-items:center;padding:0.6rem 0.3rem;gap:0.55rem">
+            <button type="button" class="btn btn-sm lnx-dock-btn" data-lnx-app="network" title="GNOME Settings → Network (nm-connection-editor)" style="width:46px;height:46px;border-radius:10px;background:rgba(56,189,248,0.18);color:#38bdf8;border:1px solid rgba(56,189,248,0.4)">
+              <i class="bi bi-hdd-network fs-5" aria-hidden="true"></i>
+              <span class="visually-hidden">GNOME Network Settings</span>
+            </button>
+            <button type="button" class="btn btn-sm lnx-dock-btn" data-lnx-app="disks" title="GNOME Disks &amp; GParted Partition Manager" style="width:46px;height:46px;border-radius:10px;background:rgba(251,191,36,0.18);color:#fbbf24;border:1px solid rgba(251,191,36,0.4)">
+              <i class="bi bi-device-hdd fs-5" aria-hidden="true"></i>
+              <span class="visually-hidden">GNOME Disks</span>
+            </button>
+            <button type="button" class="btn btn-sm lnx-dock-btn" data-lnx-app="firewall" title="GUFW Firewall &amp; Systemd Services" style="width:46px;height:46px;border-radius:10px;background:rgba(52,211,153,0.18);color:#34d399;border:1px solid rgba(52,211,153,0.4)">
+              <i class="bi bi-shield-lock fs-5" aria-hidden="true"></i>
+              <span class="visually-hidden">GUFW Firewall &amp; Services</span>
+            </button>
+            <button type="button" class="btn btn-sm lnx-dock-btn" data-lnx-app="users" title="GNOME Settings → Users &amp; Sudo Groups" style="width:46px;height:46px;border-radius:10px;background:rgba(167,139,250,0.18);color:#a78bfa;border:1px solid rgba(167,139,250,0.4)">
+              <i class="bi bi-people fs-5" aria-hidden="true"></i>
+              <span class="visually-hidden">GNOME Users</span>
+            </button>
+            <button type="button" class="btn btn-sm lnx-dock-btn" data-lnx-app="files" title="Nautilus Files &amp; Permissions" style="width:46px;height:46px;border-radius:10px;background:rgba(244,114,182,0.18);color:#f472b6;border:1px solid rgba(244,114,182,0.4)">
+              <i class="bi bi-folder2-open fs-5" aria-hidden="true"></i>
+              <span class="visually-hidden">Nautilus Files &amp; Permissions</span>
+            </button>
+          </nav>
+
+          <div class="lnx-win-host flex-grow-1 p-3" id="lnxWinHost" style="background:rgba(15,23,42,0.92);overflow-y:auto">
+            {# Populated dynamically by static/js/lab-linux-gui.js #}
+          </div>
+        </div>
+        <div class="px-3 py-1 small" id="lnxStatusStrip" role="status" aria-live="polite" style="background:rgba(9,13,22,0.9);border-top:1px solid rgba(255,255,255,0.1);color:#38bdf8;min-height:28px">
+          Ubuntu GNOME 46 Desktop Ready — select a tool in the dock or run commands in the bash terminal.
+        </div>
+      </div>
+
+      {# Right Pane: Synchronized Interactive Bash Terminal #}
+      <div class="term-wrap term-linux" id="termWrap" style="min-height:460px;display:flex;flex-direction:column">
+        <div class="term-bar">
+          <span class="term-title"><span class="term-live-dot" aria-hidden="true"></span> trainee@novak-lnx-01 — bash (Synced with GNOME GUI)</span>
+        </div>
+        <div class="term-body flex-grow-1" id="termBody" role="log" aria-live="polite" aria-label="Linux bash terminal output" tabindex="0"></div>
+        <div class="term-note" id="termNote" role="status" aria-live="polite" hidden><div class="term-note-body"></div><button type="button" class="term-note-x" id="termNoteX" aria-label="Close note">×</button></div>
+        <form class="term-input-row" id="termForm" autocomplete="off">
+          <label class="prompt" id="termPrompt" for="termInput">{{ prompt or 'trainee@novak-lnx-01:~$' }}</label>
+          <input id="termInput" class="term-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                 placeholder="Type bash command (e.g. ip a, lsblk, sudo ufw status, id tech1)..." enterkeyhint="send">
+          <button type="submit" class="btn btn-sm term-send" aria-label="Run command"><i class="bi bi-arrow-return-left" aria-hidden="true"></i></button>
+        </form>
+        <div class="term-chips" role="toolbar" aria-label="Quick Linux CLI commands">
+          {% for p in (palette or ['ip addr', 'ls -l ~/support', 'df -h', 'uname -a', 'whoami', 'help']) %}
+          <button type="button" class="tchip" data-chip="{{ p }}">{{ p }}</button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <p class="small text-muted mt-2 mb-3">
+      <strong>Dual-Mode Linux Workbench:</strong> Practice graphical Linux administration in <strong>GNOME Settings (NetworkManager)</strong>, <strong>GNOME Disks</strong>, <strong>GUFW Firewall &amp; Systemd</strong>, and <strong>GNOME Users / Nautilus Permissions</strong>, or verify state from the <strong>bash terminal</strong> side-by-side.
+    </p>
+    {% if steps %}
+    <h2 class="h5 mt-2">Checkpoint questions</h2>
+    <div class="lab-steps" id="labSteps"></div>
+    {% endif %}
+  </div>
+  {% include '_lab_side.html' %}
+</div>
+{% set cfg = {'kind': lab.kind, 'boot': boot, 'welcome': 'Ubuntu 24.04 LTS (Novak LMS™ GNOME + Bash Workbench — type help)',
+  'urls': {'event': url_for('interactive_lab_event', lab_id=lab.id), 'cmd': url_for('interactive_lab_cmd', lab_id=lab.id), 'complete': url_for('interactive_lab_complete', lab_id=lab.id), 'hint': url_for('interactive_lab_hint', lab_id=lab.id), 'undo': url_for('interactive_lab_undo', lab_id=lab.id), 'reset': url_for('interactive_lab_reset', lab_id=lab.id), 'check': url_for('interactive_lab_check', lab_id=lab.id), 'state': url_for('interactive_lab_state', lab_id=lab.id)}} %}
+<script type="application/json" id="labConfig">{{ cfg|tojson }}</script>
+<script src="{{ url_for('static', filename='js/lab-common.js') }}"></script>
+<script src="{{ url_for('static', filename='js/lab-terminal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/lab-linux-gui.js') }}"></script>
+{% with tutor_section_id = tutor_default_section() %}{% include 'tutor/_drawer.html' %}{% endwith %}
+{% endblock %}

@@ -369,7 +369,7 @@ def register(app, db, deps):
         boot['transcript'] = _j(row.transcript_json, [])
         if lab.get('kind') == 'vm':
             boot['vm_nonce'] = state.get('nonce')
-        tpl = {'win11gui': 'win11_gui_lab.html', 'activity': 'activity_lab.html', 'vm': 'vm_lab.html'}.get(lab.get('kind'), 'interactive_lab.html')
+        tpl = {'win11gui': 'win11_gui_lab.html', 'linuxgui': 'linux_gui_lab.html', 'activity': 'activity_lab.html', 'vm': 'vm_lab.html'}.get(lab.get('kind'), 'interactive_lab.html')
         vm_ok = None
         if lab.get('kind') == 'vm':
             import os

@@ -3432,12 +3432,17 @@ def view_lesson(section_id, module_id, lesson_id):
     module_lessons_map = {}
     for cm in course_modules:
         module_lessons_map[cm.id] = Lesson.query.filter_by(module_id=cm.id).order_by(Lesson.order).all()
-    from curriculum_v2.ladder import sections as _LSEC
-    raw_secs = _LSEC.sections(lesson.content or '')
-    lesson_sections_meta = [
-        {'idx': idx + 1, 'sid': s['sid'], 'heading': s['heading'], 'kind': s['kind']}
-        for idx, s in enumerate(raw_secs)
-    ]
+    try:
+        lesson_sections_meta = mastery_api.ladder.milestone_steps(section, lesson)
+    except Exception:
+        lesson_sections_meta = []
+    if not lesson_sections_meta:
+        from curriculum_v2.ladder import sections as _LSEC
+        raw_secs = _LSEC.sections(lesson.content or '')
+        lesson_sections_meta = [
+            {'idx': idx + 1, 'sid': s['sid'], 'heading': s['heading'], 'kind': s['kind']}
+            for idx, s in enumerate(raw_secs[:4])
+        ]
     is_windows_boot_lesson = any(
         kw in ((lesson.title or '') + ' ' + (lesson.content or '')[:3500]).lower()
         for kw in ('bootmgfw', 'winload', 'bootrec', 'bcdedit', 'secure boot')

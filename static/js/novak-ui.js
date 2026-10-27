@@ -139,7 +139,26 @@
       return Array.prototype.slice.call(lessonBody.querySelectorAll('section.sublesson'));
     }
 
-    // 1. De-clutter <aside class="novak-visual-blueprint">: make the 5-row spec table collapsible
+    // Group sections into 4 Cohesive Concept Steps (by data-step-group, or chunked into 4 groups)
+    function getStepGroups() {
+      var blocks = getSectionBlocks();
+      if (!blocks.length) return [];
+      var groupsMap = {};
+      var groupKeys = [];
+      var hasExplicitGroups = blocks[0].hasAttribute('data-step-group');
+      blocks.forEach(function (b, idx) {
+        var g = hasExplicitGroups ? (parseInt(b.getAttribute('data-step-group'), 10) || 1) : (Math.min(4, Math.floor((idx * 4) / blocks.length) + 1));
+        if (!groupsMap[g]) {
+          groupsMap[g] = [];
+          groupKeys.push(g);
+        }
+        groupsMap[g].push(b);
+      });
+      groupKeys.sort(function (a, b) { return a - b; });
+      return groupKeys.map(function (k) { return groupsMap[k]; });
+    }
+
+    // 1. Keep <aside class="novak-visual-blueprint"> open and visible at the top of the lesson
     var blueprint = lessonBody.querySelector('aside.novak-visual-blueprint');
     if (blueprint && !blueprint.hasAttribute('data-ux-enhanced')) {
       blueprint.setAttribute('data-ux-enhanced', '1');
@@ -160,59 +179,51 @@
       }
     }
 
-    // 2. Clean locked sections in Full Article mode: collapse locked cards and allow click-to-expand
-    function syncLockedSections() {
-      var blocks = getSectionBlocks();
-      blocks.forEach(function (b) {
-        var prev = b.previousElementSibling;
-        var hasLock = prev && prev.classList && prev.classList.contains('ladder-lock');
-        b.classList.toggle('is-locked-section', !!hasLock);
-        if (hasLock && !b.hasAttribute('data-lock-toggle-wired')) {
-          b.setAttribute('data-lock-toggle-wired', '1');
-          var hdr = b.querySelector('.novak-section-card-header');
-          if (hdr) {
-            hdr.style.cursor = 'pointer';
-            hdr.addEventListener('click', function (ev) {
-              if (ev.target.closest('button, a, input')) return;
-              b.classList.toggle('is-locked-expanded');
-            });
-          }
-        }
-      });
-    }
-    syncLockedSections();
-
-    // 3. Guided Step Flow (Default ON: 1 focused concept card at a time)
+    // 2. Guided Step Flow (Default ON: 4 Cohesive Concept Steps per lesson, each showing 3-5 sub-sections + inline visuals + 1 Milestone Check)
     var activeIdx = 0;
     var focusMode = true;
 
-    // If URL hash points to a specific section, open on that step
-    var initialBlocks = getSectionBlocks();
-    if (location.hash && initialBlocks.length) {
+    // If URL hash points to a specific section, open on the Concept Step containing that section
+    var initGroups = getStepGroups();
+    if (location.hash && initGroups.length) {
       var hashId = location.hash.slice(1);
-      for (var hi = 0; hi < initialBlocks.length; hi++) {
-        var bSid = initialBlocks[hi].getAttribute('data-ladder-sid') || '';
-        if (initialBlocks[hi].id === hashId || ('ladder-sec-' + bSid) === hashId) {
-          activeIdx = hi;
-          break;
+      for (var gi = 0; gi < initGroups.length; gi++) {
+        for (var bi = 0; bi < initGroups[gi].length; bi++) {
+          var b = initGroups[gi][bi];
+          var bSid = b.getAttribute('data-ladder-sid') || '';
+          if (b.id === hashId || ('ladder-sec-' + bSid) === hashId || ('ladder-sub-' + bSid) === hashId) {
+            activeIdx = gi;
+            break;
+          }
         }
       }
     }
 
     function updateFocusView() {
-      var blocks = getSectionBlocks();
-      if (!blocks.length) return;
-      activeIdx = Math.max(0, Math.min(blocks.length - 1, activeIdx));
+      var groups = getStepGroups();
+      if (!groups.length) return;
+      var totalSteps = groups.length;
+      activeIdx = Math.max(0, Math.min(totalSteps - 1, activeIdx));
       if (workspace) workspace.classList.toggle('focus-mode-active', focusMode);
       lessonBody.classList.toggle('novak-focus-mode-active', focusMode);
-      blocks.forEach(function (b, idx) {
-        b.classList.toggle('novak-step-hidden', focusMode && idx !== activeIdx);
+      groups.forEach(function (grp, gIdx) {
+        var hide = focusMode && gIdx !== activeIdx;
+        grp.forEach(function (b) {
+          b.classList.toggle('novak-step-hidden', hide);
+        });
       });
-      // Hide non-section sibling elements (preambles, labs, gate) when in Guided Step mode unless on final step
+
+      // Keep inline visual figures & boot deep dive visible on their corresponding steps (or always visible in Full mode)
+      var inlineFigs = Array.prototype.slice.call(lessonBody.querySelectorAll('figure.novak-inline-visual'));
+      inlineFigs.forEach(function (fig, fIdx) {
+        var targetStep = Math.min(totalSteps - 1, fIdx);
+        fig.classList.toggle('d-none', focusMode && activeIdx !== targetStep && activeIdx !== 0);
+      });
+
       var labSec = document.getElementById('chapter-lab');
       var gateSec = document.getElementById('ladderGate');
       var quickSec = document.getElementById('mxQuick');
-      var onLastStep = activeIdx >= blocks.length - 1;
+      var onLastStep = activeIdx >= totalSteps - 1;
       if (labSec) labSec.classList.toggle('d-none', focusMode && !onLastStep);
       if (gateSec) gateSec.classList.toggle('d-none', focusMode && !onLastStep);
       if (quickSec) quickSec.classList.toggle('d-none', focusMode && !onLastStep);
@@ -221,9 +232,9 @@
         d.classList.toggle('is-active', idx === activeIdx);
       });
       if (currentSecNum) currentSecNum.textContent = String(activeIdx + 1);
-      if (focusStepCounter) focusStepCounter.textContent = 'Step ' + (activeIdx + 1) + ' of ' + blocks.length;
+      if (focusStepCounter) focusStepCounter.textContent = 'Step ' + (activeIdx + 1) + ' of ' + totalSteps;
       if (focusPrevBtn) focusPrevBtn.disabled = activeIdx <= 0;
-      if (focusNextBtn) focusNextBtn.disabled = activeIdx >= blocks.length - 1;
+      if (focusNextBtn) focusNextBtn.disabled = activeIdx >= totalSteps - 1;
       if (focusToggleBtn) {
         focusToggleBtn.classList.toggle('is-active', focusMode);
         focusToggleBtn.setAttribute('data-focus-mode', focusMode ? 'on' : 'off');
@@ -233,10 +244,10 @@
         focusModeLabel.textContent = focusMode ? 'Show All Sections' : 'Guided Step View';
       }
       if (focusNavBar) {
-        focusNavBar.classList.toggle('d-none', !focusMode || blocks.length <= 1);
+        focusNavBar.classList.toggle('d-none', !focusMode || totalSteps <= 1);
       }
       if (focusMode && progressFill) {
-        var pct = Math.round(((activeIdx + 1) / blocks.length) * 100);
+        var pct = Math.round(((activeIdx + 1) / totalSteps) * 100);
         progressFill.style.width = pct + '%';
         progressFill.setAttribute('aria-valuenow', String(pct));
       }
@@ -253,12 +264,15 @@
         progressFill.style.width = pct + '%';
         progressFill.setAttribute('aria-valuenow', String(pct));
       }
-      var blocks = getSectionBlocks();
-      if (blocks.length) {
+      var groups = getStepGroups();
+      if (groups.length) {
         var found = 0;
-        for (var i = 0; i < blocks.length; i++) {
-          var br = blocks[i].getBoundingClientRect();
-          if (br.top <= viewH * 0.42) found = i;
+        for (var i = 0; i < groups.length; i++) {
+          var firstCard = groups[i][0];
+          if (firstCard) {
+            var br = firstCard.getBoundingClientRect();
+            if (br.top <= viewH * 0.45) found = i;
+          }
         }
         activeIdx = found;
         if (currentSecNum) currentSecNum.textContent = String(activeIdx + 1);
@@ -272,11 +286,10 @@
     updateFocusView();
 
     document.addEventListener('ladder:updated', function () {
-      syncLockedSections();
       updateFocusView();
     });
 
-    // 4. Guided Step Mode / Show All Sections Toggle
+    // 3. Guided Step Mode / Show All Sections Toggle
     if (focusToggleBtn) {
       focusToggleBtn.addEventListener('click', function () {
         focusMode = !focusMode;
@@ -296,8 +309,8 @@
     }
     if (focusNextBtn) {
       focusNextBtn.addEventListener('click', function () {
-        var blocks = getSectionBlocks();
-        if (activeIdx < blocks.length - 1) {
+        var groups = getStepGroups();
+        if (activeIdx < groups.length - 1) {
           activeIdx++;
           updateFocusView();
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -309,8 +322,8 @@
     document.addEventListener('click', function (e) {
       var chip = e.target.closest && e.target.closest('[data-continue]');
       if (!chip || !focusMode) return;
-      var blocks = getSectionBlocks();
-      if (activeIdx < blocks.length - 1) {
+      var groups = getStepGroups();
+      if (activeIdx < groups.length - 1) {
         e.preventDefault();
         e.stopImmediatePropagation();
         activeIdx++;

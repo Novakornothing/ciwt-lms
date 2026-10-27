@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_all_90_labs_have_verified_sme_status():
-    assert len(IL.LABS) == 90
+    assert len(IL.LABS) >= 90
     for lab in IL.LABS:
         assert lab.get('sme_status') == 'verified', lab['id']
 

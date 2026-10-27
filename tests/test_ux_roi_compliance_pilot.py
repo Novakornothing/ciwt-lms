@@ -243,3 +243,148 @@ def test_8_financial_and_operational_marketing_focus(app, anon):
     llms_txt = anon.get('/llms.txt').get_data(as_text=True)
     assert '30-Day / 30-Student Free Institutional Pilot Bundle' in llms_txt
     assert 'VPAT 2.5' in llms_txt and 'HECVAT' in llms_txt and 'SOC 2' in llms_txt
+
+
+def test_9_milestone_checks_cohesive_steps_and_clickable_5_learning_paths(student, app, mod):
+    """Verify 4 Milestone Checks per lesson, Optional Self-Check drawers, zero duplicate headings, and free R0-R4 switching without wrong answers."""
+    from tests.test_ladder_engine import _reset
+    _reset(mod, app, 'student1@lms.local')
+    with app.app_context():
+        c = mod.Course.query.filter_by(code='ITSUP').first()
+        sec = mod.ClassSection.query.filter_by(course_id=c.id).order_by(mod.ClassSection.id).first()
+        m1 = mod.Module.query.filter_by(course_id=c.id, order=1).first()
+        l1 = mod.Lesson.query.filter_by(module_id=m1.id, order=1).first()
+        s_id, m_id, l_id = sec.id, m1.id, l1.id
+
+    html = student.get(f'/student/module/{s_id}/{m_id}/lesson/{l_id}').get_data(as_text=True)
+    # 1. Renamed "Start here if you have never done this" -> "1.1 Core Role: Restoring Service & Protecting State"
+    assert 'Start here if you have never done this' not in html
+    assert '1.1 Core Role: Restoring Service &amp; Protecting State' in html
+    assert 'Instructor — 50 minutes' not in html
+    assert 'novak-section-title-pill' not in html
+
+    # 2. Only 4 required Milestone Checks gate progression, while intermediate sub-sections use <details class="ladder-optional-check">
+    gate_json = student.get(f'/student/section/{s_id}/ladder/{l_id}/gate').get_json()
+    assert 3 <= gate_json['total'] <= 5
+    assert 'class="ladder-optional-check"' in html
+    assert 'Step 1 of 4' in html
+
+    # 3. All 5 learning paths (R0, R1, R2, R3, R4) are clickable <button class="novak-rung-pill"> elements and work WITHOUT getting a question wrong first
+    assert 'data-rung-pick="R0"' in html
+    assert 'data-rung-pick="R1"' in html
+    assert 'data-rung-pick="R2"' in html
+    assert 'data-rung-pick="R3"' in html
+    assert 'data-rung-pick="R4"' in html
+
+    for rung in ('R1', 'R2', 'R3', 'R4', 'R0'):
+        r = student.post(
+            f'/student/section/{s_id}/ladder/{l_id}/2-three-kinds-of-work/show/{rung}',
+            headers={'X-Requested-With': 'fetch'},
+        )
+        assert r.status_code == 200
+        j = r.get_json()
+        assert j['shown'] == rung
+        assert f'data-shown="{rung}"' in j['html']
+    _reset(mod, app, 'student1@lms.local')
+
+
+def test_10_interactive_linux_gui_desktop_workbench_labs(student):
+    """Verify the 4 interactive Ubuntu GNOME Desktop GUI labs (linuxgui) + Split-View Bash Terminal."""
+    import interactive_labs as IL
+    from tests.test_labs import solve_http
+
+    linux_gui_ids = ['linux-gui-network', 'linux-gui-disks', 'linux-gui-firewall', 'linux-gui-users']
+    by_id = {l['id']: l for l in IL.LABS}
+    for lid in linux_gui_ids:
+        assert lid in by_id, f'Missing {lid} in interactive_labs.LABS'
+        assert by_id[lid]['kind'] == 'linuxgui'
+        r = student.get(f'/labs/{lid}')
+        assert r.status_code == 200
+        page = r.get_data(as_text=True)
+        for token in (
+            'Ubuntu 24.04 LTS · GNOME 46 Desktop',
+            'GUI + Bash Split View',
+            'id="lnxWorkbenchGrid"',
+            'id="lnxDesk"',
+            'id="termWrap"',
+            'js/lab-linux-gui.js',
+        ):
+            assert token in page, (lid, token)
+
+        # Verify split-view bash terminal command works inside linuxgui lab
+        cmd_r = student.post(f'/labs/{lid}/cmd', json={'command': 'whoami'})
+        assert cmd_r.status_code == 200
+        assert 'trainee' in ' '.join(cmd_r.get_json().get('lines') or [])
+
+        # Verify full GUI event path solves the lab to 100%
+        st = solve_http(student, lid)
+        assert st['complete'] is True and st['score'] == 100
+
+
+def test_11_deep_windows_and_linux_boot_process_architecture_and_696_inline_svgs(app, mod):
+    """Verify 6-stage Windows & Linux Boot Architecture deep dive and >= 4 inline SVGs across all 115 lessons."""
+    with app.app_context():
+        lessons = mod.Lesson.query.order_by(mod.Lesson.id).all()
+        assert len(lessons) == 115
+
+        total_svgs = 0
+        for les in lessons:
+            html = les.content or ''
+            n_svg = html.count('<svg')
+            assert n_svg == html.count('</svg>') >= 4, (les.title, n_svg)
+            assert html.count('<figure class="novak-inline-visual"') >= 3, les.title
+            total_svgs += n_svg
+        assert total_svgs >= 500, f'Expected >= 500 total SVGs across 115 lessons, got {total_svgs}'
+
+        # Verify deep Windows & Linux Boot Architecture in ITSUP 2.2, 8.1, 8.2, 8.3, 9.1 and CLIENT 1.1, 2.1
+        c_it = mod.Course.query.filter_by(code='ITSUP').first()
+        m2 = mod.Module.query.filter_by(course_id=c_it.id, order=2).first()
+        l22 = mod.Lesson.query.filter_by(module_id=m2.id, order=2).first()
+        m8 = mod.Module.query.filter_by(course_id=c_it.id, order=8).first()
+        l81 = mod.Lesson.query.filter_by(module_id=m8.id, order=1).first()
+        m9 = mod.Module.query.filter_by(course_id=c_it.id, order=9).first()
+        l91 = mod.Lesson.query.filter_by(module_id=m9.id, order=1).first()
+
+        for boot_les in (l22, l81):
+            bh = boot_les.content or ''
+            for term in (
+                'bootmgfw.efi',
+                '\\EFI\\Microsoft\\Boot\\BCD',
+                'winload.efi',
+                'SERVICE_BOOT_START',
+                'stornvme.sys',
+                'ELAM',
+                'ntoskrnl.exe',
+                'smss.exe',
+                'csrss.exe',
+                'wininit.exe',
+                'services.exe',
+                'lsass.exe',
+                'winlogon.exe',
+                'LogonUI.exe',
+                'userinit.exe',
+                'explorer.exe',
+                '0xc000000f',
+                'INACCESSIBLE_BOOT_DEVICE',
+                '0xc000021a',
+                'bcdboot C:\\Windows /s S: /f UEFI',
+                'bootrec /rebuildbcd',
+            ):
+                assert term in bh, f'Missing {term} in {boot_les.title}'
+
+        lh = l91.content or ''
+        for lterm in (
+            'shimx64.efi',
+            'grubx64.efi',
+            '/boot/grub/grub.cfg',
+            'initramfs',
+            'vmlinuz',
+            'systemd',
+            'multi-user.target',
+            'graphical.target',
+            'grub-mkconfig',
+            'update-initramfs',
+            'dracut',
+            'journalctl -xb',
+        ):
+            assert lterm in lh, f'Missing {lterm} in {l91.title}'

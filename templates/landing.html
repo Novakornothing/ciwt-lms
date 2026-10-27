@@ -30,8 +30,15 @@
       line-height: 1.55;
     }
 
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
     .stage {
       position: fixed; inset: 0;
+      overflow: hidden;
+      max-width: 100vw;
+      pointer-events: none;
       background:
         radial-gradient(900px 500px at 50% 115%, rgba(12, 48, 110, 0.45), transparent 60%),
         radial-gradient(700px 400px at 80% 0%, rgba(20, 70, 160, 0.2), transparent 55%),
@@ -362,6 +369,32 @@
       border-right: 1px solid rgba(212, 180, 106, 0.25);
     }
     table.comp-table td { color: var(--muted); }
+
+    @media (max-width: 767.98px) {
+      .grid {
+        inset: 0 !important;
+        transform: none !important;
+        max-width: 100vw !important;
+      }
+      .comp-wrap {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+      }
+      table.comp-table {
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed !important;
+        font-size: 0.72rem !important;
+      }
+      table.comp-table th,
+      table.comp-table td {
+        padding: 0.35rem 0.3rem !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+        white-space: normal !important;
+      }
+    }
   </style>
   <script type="application/ld+json">
 {

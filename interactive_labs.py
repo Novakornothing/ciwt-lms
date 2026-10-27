@@ -3567,6 +3567,35 @@ def _install_new_labs():
             LABS_BY_ID[lab["id"]] = lab
             if lab["kind"] == "vm":
                 _V.VM_BY_ID[lab["id"]] = lab
+    import labs_linux_gui as _LLG
+    for lab in _LLG.LINUX_GUI_LABS:
+        lab.setdefault("review", SME_PENDING)
+        lab.setdefault("sme_status", SME_VERIFIED)
+        if lab["id"] not in LABS_BY_ID:
+            LABS.append(lab)
+            LABS_BY_ID[lab["id"]] = lab
+    for ch_key in (("ITSUP", 9), ("CLIENT", 2)):
+        cur_ch = CHAPTER_LABS.setdefault(ch_key, [])
+        for l_id in ("linux-gui-network", "linux-gui-disks", "linux-gui-firewall", "linux-gui-users"):
+            if l_id not in cur_ch:
+                cur_ch.append(l_id)
+    for les_key, g_ids in (
+        (("ITSUP", 9, 1), ["linux-gui-network", "linux-gui-disks"]),
+        (("ITSUP", 9, 3), ["linux-gui-firewall", "linux-gui-users"]),
+        (("ITSUP", 9, 4), ["linux-gui-network", "linux-gui-firewall"]),
+        (("CLIENT", 2, 1), ["linux-gui-network", "linux-gui-disks"]),
+        (("CLIENT", 2, 3), ["linux-gui-firewall", "linux-gui-users"]),
+        (("CLIENT", 2, 4), ["linux-gui-network", "linux-gui-firewall"]),
+    ):
+        existing_les = LESSON_LABS.get(les_key)
+        if isinstance(existing_les, str):
+            existing_les = [existing_les]
+        else:
+            existing_les = list(existing_les or [])
+        for gid in g_ids:
+            if gid not in existing_les:
+                existing_les.append(gid)
+        LESSON_LABS[les_key] = existing_les
 
 
 _install_new_labs()

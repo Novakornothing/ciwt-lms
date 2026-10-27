@@ -1,25 +1,28 @@
 {# Explanation ladder: one concept section for one student (pass 19). Needs L (mastery/ladder.py section_ctx). #}
 {%- set v = L.view -%}
 {%- set st = L.state -%}
-<div class="ladder novak-section-card{% if v %} ladder-swapped ladder-k-{{ v.kind }}{% endif %}{% if st.exhausted %} ladder-exhausted{% endif %}" id="ladder-{{ L.sid }}"
-     data-ladder-sid="{{ L.sid }}" data-shown="{{ L.shown }}" data-heading="{{ L.heading }}"
+{%- set d_head = L.display_heading|default(L.heading) -%}
+<div class="ladder novak-section-card{% if L.is_milestone %} is-milestone-card{% else %} is-reading-subcard{% endif %}{% if v %} ladder-swapped ladder-k-{{ v.kind }}{% endif %}{% if st.exhausted %} ladder-exhausted{% endif %}" id="ladder-{{ L.sid }}"
+     data-ladder-sid="{{ L.sid }}" data-shown="{{ L.shown }}" data-heading="{{ d_head }}"
      data-sec-index="{{ L.sec_index|default(1) }}" data-sec-total="{{ L.sec_total|default(1) }}"
+     data-step-group="{{ L.step_group|default(1) }}" data-step-total="{{ L.step_group_total|default(4) }}"
+     data-is-milestone="{{ 1 if L.is_milestone else 0 }}"
      data-event-url="{{ L.url_event }}" data-next="{{ 1 if L.next_available else 0 }}">
   <div class="novak-section-card-header">
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <span class="novak-section-badge">Step {{ L.sec_index|default(1) }} of {{ L.sec_total|default(1) }}</span>
-      <span class="novak-section-title-pill text-truncate">{{ L.heading }}</span>
+      <span class="novak-section-badge">{% if L.is_milestone %}Step {{ L.step_group|default(1) }} of {{ L.step_group_total|default(4) }} · Milestone {{ L.milestone_index|default(1) }}{% else %}Step {{ L.step_group|default(1) }} of {{ L.step_group_total|default(4) }} · Part {{ L.sec_index|default(1) }}{% endif %}</span>
       {% if st.resolved %}<span class="badge badge-live">✓ Verified</span>{% endif %}
     </div>
-    <div class="novak-adaptive-rung-bar novak-adaptive-bar ladder-rungs" role="group" aria-label="Adaptive explanation modes for {{ L.heading }}">
+    <div class="novak-adaptive-rung-bar novak-adaptive-bar ladder-rungs" role="group" aria-label="Adaptive explanation modes for {{ d_head }}">
       <span class="novak-rung-status visually-hidden">Current Rung: {{ L.shown }} {{ 'Standard' if L.shown == 'R0' else L.style }}</span>
-      <div class="novak-segmented-rungs">
-        <span class="novak-rung-pill {% if L.shown == 'R0' %}is-active{% endif %}"><span class="visually-hidden">R0 Standard</span><span aria-hidden="true">Standard</span></span>
-        <span class="novak-rung-pill {% if L.shown == 'R1' %}is-active{% endif %}"><span class="visually-hidden">R1 Plain Language</span><span aria-hidden="true">Plain English</span></span>
-        <span class="novak-rung-pill {% if L.shown == 'R2' %}is-active{% endif %}"><span class="visually-hidden">R2 Real-World Analogy</span><span aria-hidden="true">Real-World Analogy</span></span>
-        <span class="novak-rung-pill {% if L.shown == 'R3' %}is-active{% endif %}"><span class="visually-hidden">R3 Visual Diagram</span><span aria-hidden="true">Visual Map</span></span>
-        <span class="novak-rung-pill {% if L.shown == 'R4' %}is-active{% endif %}"><span class="visually-hidden">R4 Hands-On Try-It</span><span aria-hidden="true">Interactive Try-It</span></span>
-      </div>
+      <form method="post" action="{{ L.url_show('R0') }}" class="ladder-showform novak-segmented-rungs m-0">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {%- for r_code, r_sr, r_vis in [('R0','R0 Standard','Standard'),('R1','R1 Plain Language','Plain English'),('R2','R2 Real-World Analogy','Real-World Analogy'),('R3','R3 Visual Diagram','Visual Map'),('R4','R4 Hands-On Try-It','Interactive Try-It')] -%}
+        {%- if r_code == 'R0' or r_code in (L.allowed or ['R1','R2','R3','R4']) or r_code in (st.tried or []) -%}
+        <button type="submit" formaction="{{ L.url_show(r_code) }}" class="novak-rung-pill {% if L.shown == r_code %}is-active{% endif %}" data-rung-pick="{{ r_code }}" aria-pressed="{{ 'true' if L.shown == r_code else 'false' }}"><span class="visually-hidden">{{ r_sr }}</span><span aria-hidden="true">{{ r_vis }}</span></button>
+        {%- endif -%}
+        {%- endfor -%}
+      </form>
     </div>
   </div>
   {% if v %}
@@ -27,18 +30,24 @@
     <p class="ladder-label" tabindex="-1"{% if L.feedback and not L.feedback.ok %} aria-describedby="lf-{{ L.sid }}"{% endif %}><span class="ladder-badge ladder-swapbadge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Swapped to {{ L.shown }}: {{ L.style }}{% if L.step_no %} — step {{ L.step_no }} of {{ L.step_total }}{% endif %}</span>
       <span class="ladder-review visually-hidden">{{ L.review }}</span></p>
     {% if L.feedback and not L.feedback.ok %}<p class="ladder-feedback is-miss" id="lf-{{ L.sid }}">{{ L.feedback.text }}</p>{% endif %}
-    <h3 id="lh-{{ L.sid }}">{{ L.heading }}</h3>
+    <h3 id="lh-{{ L.sid }}">{{ d_head }}</h3>
     {% if v.title %}<p class="ladder-title">{{ v.title }}</p>{% endif %}
     <div class="ladder-content">{{ v.html|safe }}</div>
     {% if v.widget %}{% set w = v.widget %}{% include 'ladder/_widget.html' %}{% endif %}
     {% if v.lab %}<p class="ladder-lab"><a class="btn btn-sm btn-outline-navy" href="{{ v.lab.url }}"><i class="bi bi-terminal" aria-hidden="true"></i> Open the lab: {{ v.lab.title }}</a>{% if v.lab.note %} <span class="small">{{ v.lab.note }}</span>{% endif %}</p>{% endif %}
   </section>
-  <template class="ladder-original-tpl">{{ L.orig_html|safe }}</template>
+  <template class="ladder-original-tpl">{{ L.display_orig_html|default(L.orig_html)|safe }}</template>
   {% else %}
-  {{ L.orig_html|safe }}
+  {{ L.display_orig_html|default(L.orig_html)|safe }}
+  {% if L.is_milestone and L.r3_svg_html %}
+  <figure class="novak-inline-r3-preview my-3 p-2 rounded border" aria-label="Inline visual diagram for {{ d_head }}">
+    {{ L.r3_svg_html|safe }}
+    <figcaption class="small text-muted mt-1"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i><strong>Visual Concept Map:</strong> {{ d_head }}</figcaption>
+  </figure>
+  {% endif %}
   {% endif %}
   {% if L.steps|length > 1 and (v or st.tried|length > 1 or st.resolved) %}
-  <ol class="ladder-steps visually-hidden" aria-label="Explanations for {{ L.heading }}">{% for s in L.steps %}<li class="ls-{{ s.state }}"{% if s.state == 'current' %} aria-current="step"{% endif %} title="{{ s.short }}">{{ s.rung }}<span class="visually-hidden"> {{ s.short }}{{ ' (worked)' if s.state == 'resolved' else ' (seen)' if s.state == 'tried' else '' }}</span></li>{% endfor %}</ol>
+  <ol class="ladder-steps" hidden aria-label="Explanations for {{ d_head }}">{% for s in L.steps %}<li class="ls-{{ s.state }}"{% if s.state == 'current' %} aria-current="step"{% endif %} title="{{ s.short }}">{{ s.rung }}<span class="visually-hidden"> {{ s.short }}{{ ' (worked)' if s.state == 'resolved' else ' (seen)' if s.state == 'tried' else '' }}</span></li>{% endfor %}</ol>
   {% endif %}
   <div class="ladder-panel">
     {%- set fb_here = L.feedback and (L.feedback.ok or not v) %}
@@ -47,20 +56,40 @@
     <p class="ladder-note small mb-2"><i class="bi bi-person-raised-hand" aria-hidden="true"></i> You have seen every explanation of this section. Your instructor can see it needs a conversation. You can look back at any of them:</p>
     {% endif %}
     {% if L.check and not (st.resolved and st.resolved == L.shown) %}
-    <form class="ladder-check" method="post" action="{{ L.url_answer }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="check_id" value="{{ L.check.id }}">
-      <fieldset>
-        <legend><span class="ladder-check-tag">Quick check · not graded</span> <span class="ladder-q">{{ L.check.q }}</span></legend>
-        {% for opt in L.check.options %}
-        <div class="form-check ladder-opt">
-          <input class="form-check-input" type="radio" name="answer" id="lq-{{ L.sid }}-{{ loop.index0 }}" value="{{ opt }}" required>
-          <label class="form-check-label" for="lq-{{ L.sid }}-{{ loop.index0 }}">{{ opt }}</label>
-        </div>
-        {% endfor %}
-      </fieldset>
-      <button type="submit" class="btn btn-sm btn-brand ladder-submit">Check understanding</button>
-    </form>
+      {% if L.is_milestone or v or L.feedback %}
+      <form class="ladder-check" method="post" action="{{ L.url_answer }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="check_id" value="{{ L.check.id }}">
+        <fieldset>
+          <legend><span class="ladder-check-tag">Milestone check {{ L.milestone_index|default(1) }} of {{ L.step_group_total|default(4) }} · Quick check · not graded</span> <span class="ladder-q">{{ L.check.q }}</span></legend>
+          {% for opt in L.check.options %}
+          <div class="form-check ladder-opt">
+            <input class="form-check-input" type="radio" name="answer" id="lq-{{ L.sid }}-{{ loop.index0 }}" value="{{ opt }}" required>
+            <label class="form-check-label" for="lq-{{ L.sid }}-{{ loop.index0 }}">{{ opt }}</label>
+          </div>
+          {% endfor %}
+        </fieldset>
+        <button type="submit" class="btn btn-sm btn-brand ladder-submit">Check understanding</button>
+      </form>
+      {% else %}
+      <details class="ladder-optional-check">
+        <summary class="ladder-optional-summary small fw-semibold"><i class="bi bi-patch-question me-1" aria-hidden="true"></i>Optional Self-Check: Practice this sub-concept (not required to advance)</summary>
+        <form class="ladder-check mt-2" method="post" action="{{ L.url_answer }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="check_id" value="{{ L.check.id }}">
+          <fieldset>
+            <legend><span class="ladder-check-tag">Quick check · not graded</span> <span class="ladder-q">{{ L.check.q }}</span></legend>
+            {% for opt in L.check.options %}
+            <div class="form-check ladder-opt">
+              <input class="form-check-input" type="radio" name="answer" id="lq-{{ L.sid }}-{{ loop.index0 }}" value="{{ opt }}" required>
+              <label class="form-check-label" for="lq-{{ L.sid }}-{{ loop.index0 }}">{{ opt }}</label>
+            </div>
+            {% endfor %}
+          </fieldset>
+          <button type="submit" class="btn btn-sm btn-brand ladder-submit">Check understanding</button>
+        </form>
+      </details>
+      {% endif %}
     {% elif st.resolved and st.resolved == L.shown %}
     <p class="ladder-ok small mb-2"><i class="bi bi-check2-circle" aria-hidden="true"></i> You got the check on this section{% if L.shown != 'R0' %} with this explanation{% endif %}.</p>
     <a class="ladder-continue" data-continue="{{ L.sid }}" href="#ladderGate">Next section <span aria-hidden="true">↓</span></a>
@@ -70,12 +99,12 @@
       <form class="ladder-another" method="post" action="{{ L.url_another }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="source" value="button">
-        <button type="submit" class="btn btn-sm btn-outline-navy"><i class="bi bi-lightbulb" aria-hidden="true"></i> Explain it another way{% if L.next_style %} ({{ L.next_style }}){% endif %}<span class="visually-hidden"> ({{ L.heading }})</span></button>
+        <button type="submit" class="btn btn-sm btn-outline-navy"><i class="bi bi-lightbulb" aria-hidden="true"></i> Explain it another way{% if L.next_style %} ({{ L.next_style }}){% endif %}<span class="visually-hidden"> ({{ d_head }})</span></button>
       </form>
       {% endif %}
       {% if v %}
       <a class="btn btn-sm btn-link ladder-orig-toggle" role="button" href="?ladder_original={{ L.sid }}#ladder-{{ L.sid }}" aria-pressed="false"
-         data-back="Back to: {{ v.label }}">See the original explanation<span class="visually-hidden"> of {{ L.heading }}</span></a>
+         data-back="Back to: {{ v.label }}">See the original explanation<span class="visually-hidden"> of {{ d_head }}</span></a>
       {% elif L.shown == 'R0' and st.tried|length > 1 %}
       <a class="btn btn-sm btn-link" href="{{ L.lesson_url }}">Back to the explanation you were on</a>
       {% endif %}

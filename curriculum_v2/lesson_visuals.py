@@ -1497,7 +1497,7 @@ def render_visual_blueprint(course_code: str, ch_order: int, les_order: int, les
     for param, spec, cli, symptom in spec_rows:
         rows_html.append(
             f'<tr>'
-            f'<td style="padding:0.45rem 0.6rem;border-bottom:1px solid rgba(148,163,184,0.18);font-weight:600;white-space:nowrap">{escape(param)}</td>'
+            f'<td style="padding:0.45rem 0.6rem;border-bottom:1px solid rgba(148,163,184,0.18);font-weight:600">{escape(param)}</td>'
             f'<td style="padding:0.45rem 0.6rem;border-bottom:1px solid rgba(148,163,184,0.18)">{escape(spec)}</td>'
             f'<td style="padding:0.45rem 0.6rem;border-bottom:1px solid rgba(148,163,184,0.18);font-family:ui-monospace,Consolas,monospace;font-size:0.84rem"><code>{escape(cli)}</code></td>'
             f'<td style="padding:0.45rem 0.6rem;border-bottom:1px solid rgba(148,163,184,0.18)">{escape(symptom)}</td>'
@@ -1543,18 +1543,94 @@ def render_visual_blueprint(course_code: str, ch_order: int, les_order: int, les
     )
 
 
+_ASIDE_EXACT_RE = re.compile(
+    r'<aside\s+class="novak-visual-blueprint"[^>]*>.*?</aside>',
+    re.DOTALL | re.IGNORECASE,
+)
+_FIG_EXACT_RE = re.compile(
+    r'<figure\s+class="novak-inline-visual"[^>]*>.*?</figure>',
+    re.DOTALL | re.IGNORECASE,
+)
+_BOOT_EXACT_RE = re.compile(
+    r'<article\s+class="novak-boot-deep-dive"[^>]*>.*?</article>',
+    re.DOTALL | re.IGNORECASE,
+)
+
+
 def strip_lesson_visuals(html: str) -> str:
-    """Remove any existing `<aside class="novak-visual-blueprint" ...>...</aside>` blocks."""
+    """Remove any existing `<aside class="novak-visual-blueprint">`, `<figure class="novak-inline-visual">`, or `<article class="novak-boot-deep-dive">` blocks."""
     if not html:
         return ""
-    return _ASIDE_RE.sub("\n", html).rstrip()
+    s = _ASIDE_EXACT_RE.sub("", html)
+    s = _FIG_EXACT_RE.sub("", s)
+    s = _BOOT_EXACT_RE.sub("", s)
+    return s.rstrip()
 
 
 def inject_lesson_visual(html: str, course_code: str, ch_order: int, les_order: int, lesson_title: str = "") -> str:
-    """Idempotently strip any prior visual block and append the updated visual blueprint block."""
+    """Idempotently strip any prior visual blocks and inject top blueprint + 3 inline SVG schematics + boot deep dive."""
+    from .inline_section_diagrams import (
+        render_inline_spec_schematic_svg,
+        render_inline_sequence_flow_svg,
+        render_inline_triage_tree_svg,
+    )
+    from .boot_architecture_depth import (
+        WINDOWS_BOOT_DEEP_DIVE_HTML,
+        LINUX_BOOT_DEEP_DIVE_HTML,
+    )
+
     cleaned = strip_lesson_visuals(html or "")
-    aside = render_visual_blueprint(course_code, ch_order, les_order, lesson_title)
-    return cleaned + "\n" + aside.strip() + "\n"
+    code = (course_code or "ITSUP").upper()
+    ch_i, les_i = int(ch_order), int(les_order)
+    arch_title, stages, spec_rows, watch_title, _watch_body = get_lesson_blueprint(
+        code, ch_i, les_i, lesson_title
+    )
+    aside = render_visual_blueprint(code, ch_i, les_i, lesson_title).strip()
+    fig1 = render_inline_spec_schematic_svg(code, ch_i, les_i, arch_title, spec_rows).strip()
+    fig2 = render_inline_sequence_flow_svg(code, ch_i, les_i, arch_title, stages, spec_rows).strip()
+    fig3 = render_inline_triage_tree_svg(code, ch_i, les_i, arch_title, spec_rows, watch_title).strip()
+
+    boot_blocks = []
+    if (code == "ITSUP" and (ch_i, les_i) in ((2, 2), (8, 1), (8, 2), (8, 3))) or (
+        code == "CLIENT" and (ch_i, les_i) in ((1, 1), (1, 2), (1, 3))
+    ):
+        boot_blocks.append(WINDOWS_BOOT_DEEP_DIVE_HTML.strip())
+        if (code == "ITSUP" and (ch_i, les_i) in ((2, 2), (8, 1))) or (
+            code == "CLIENT" and (ch_i, les_i) == (1, 1)
+        ):
+            boot_blocks.append(LINUX_BOOT_DEEP_DIVE_HTML.strip())
+    elif (code == "ITSUP" and (ch_i, les_i) == (9, 1)) or (
+        code == "CLIENT" and (ch_i, les_i) == (2, 1)
+    ):
+        boot_blocks.append(LINUX_BOOT_DEEP_DIVE_HTML.strip())
+        boot_blocks.append(WINDOWS_BOOT_DEEP_DIVE_HTML.strip())
+    boot_str = "".join(boot_blocks)
+
+    closes = [m.end() for m in re.finditer(r"</section>", cleaned, flags=re.I)]
+    if len(closes) >= 6:
+        idx1 = closes[1]
+        idx2 = closes[len(closes) // 2]
+        idx3 = closes[min(len(closes) - 2, (len(closes) * 3) // 4)]
+        out = (
+            cleaned[:idx1]
+            + fig1
+            + boot_str
+            + cleaned[idx1:idx2]
+            + fig2
+            + cleaned[idx2:idx3]
+            + fig3
+            + cleaned[idx3:]
+        )
+    else:
+        out = cleaned + fig1 + boot_str + fig2 + fig3
+
+    first_sec = re.search(r"<section\b", out, flags=re.I)
+    if first_sec:
+        s_pos = first_sec.start()
+        out = out[:s_pos] + aside + out[s_pos:]
+    else:
+        out = aside + out
+    return out + "\n"
 
 
 def apply_lesson_visuals(db, Course, Chapter, Lesson) -> int:

@@ -653,6 +653,13 @@ KIND_EQUIPMENT = {
         'troubleshooting': ['Type the command exactly as shown; Windows commands are not case-sensitive but spaces and switches matter.',
                             'If output looks different from the expected result, compare adapter names and addresses with the lab scenario.'],
     },
+    'linuxgui': {
+        'equipment': 'LMS Ubuntu 24.04 GNOME Desktop + Bash Split Workbench (browser).',
+        'real': 'An Ubuntu 24.04 LTS desktop VM with GNOME Settings, Disks, GUFW, and terminal.',
+        'low_cost': 'Ubuntu 24.04 LTS Desktop VM on VirtualBox/Hyper-V or live USB.',
+        'reflection': ['Which CLI command verified the change you made in the GNOME GUI?', 'When is the GUI faster than the CLI, and when is the CLI safer?'],
+        'troubleshooting': ['Click Apply in GNOME NetworkManager or Mount in GNOME Disks after editing fields.', 'Use the right-hand bash terminal to verify state with ip addr, lsblk, or sudo ufw status.'],
+    },
     'win11gui': {
         'equipment': 'LMS Windows 11 Settings simulator (browser).',
         'real': 'A Windows 11 PC or VM (Settings app).',
