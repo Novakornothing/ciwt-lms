@@ -518,3 +518,56 @@ def test_14_legal_terms_dmca_liability_shield_oss_audit_and_no_official_comptia_
             prefix = txt[max(0, pos - 12):pos]
             assert "not " in prefix, f"Positive 'official comptia' found in {p} at {pos}: {txt[max(0,pos-30):pos+40]}"
             idx = pos + 16
+
+
+def test_15_wave7_commercial_value_metric_hero_demo_cta_security_posture_pricing_slas_and_consult(anon):
+    """Verify Wave 7 Commercial Enterprise Conversion Upgrades:
+    1. Economic Value Metric above the fold (80% cloud lab hosting savings, $0/hr VM burn, 52% instructor load reduction, $42,000+ saved per 100-student cohort).
+    2. Massive 1-click 'Launch Live Interactive Demo' CTA (#heroLaunchInteractiveDemo) in the main Hero.
+    3. Enterprise Security Posture Bar & /security (/compliance) covering SOC 2 Type II, GDPR & CCPA, Section 508 (VPAT 2.5), HECVAT v3.04, and SCORM/xAPI/Navy ILE.
+    4. Commercial Pricing Tiers ($0 Pilot, $39/seat/mo Academy Pro, Custom Enterprise), Onboarding SLAs (99.9% Uptime, < 24-Hour Onboarding, < 1-Hour P1 SLA), and /consult booking flow + .ics invite.
+    """
+    land = anon.get("/landing").get_data(as_text=True)
+    for token in (
+        "id=\"heroLaunchInteractiveDemo\"",
+        "Launch Live Interactive Demo",
+        "Up to 80%",
+        "$0/hr",
+        "52%",
+        "$42,000+",
+        "SOC 2 Type II Ready",
+        "Section 508 &amp; WCAG 2.2 AA",
+        "GDPR &amp; CCPA Compliant",
+        "HECVAT v3.04 &amp; FERPA",
+        "SCORM / xAPI / Navy ILE",
+        "id=\"pricing-slas\"",
+        "$39",
+        "99.9%",
+        "&lt; 24-Hour",
+        "Schedule a Technical Consult",
+    ):
+        assert token in land, f"Missing {token} in /landing"
+
+    sec_html = anon.get("/security").get_data(as_text=True)
+    assert "SOC 2 Type II" in sec_html and "GDPR (EU/UK Art. 5, 9, 17, 25, 28, 32)" in sec_html
+
+    con_get = anon.get("/consult")
+    assert con_get.status_code == 200
+    assert "Schedule a 25-Minute Technical &amp; Architecture Consult" in con_get.get_data(as_text=True)
+
+    con_post = anon.post("/consult", data={
+        "contact_name": "Director Sarah Chen",
+        "email": "schen@cyberbootcamp.edu",
+        "org_name": "Apex Cyber Bootcamp",
+        "org_type": "Coding / IT Bootcamp & Career Academy",
+        "seats": "100–500 Seats (Volume Tier)",
+        "lms_stack": "Canvas (LTI 1.3 / SCORM)",
+        "time_window": "Next Business Day — Morning (9am–12pm EST)",
+        "notes": "Cut AWS lab hosting spend by 80%",
+    })
+    assert con_post.status_code == 200
+    post_html = con_post.get_data(as_text=True)
+    assert "Technical Consult Request Confirmed" in post_html and "Apex Cyber Bootcamp" in post_html
+
+    ics = anon.get("/consult/invite.ics?org=Apex+Cyber+Bootcamp")
+    assert ics.status_code == 200 and "BEGIN:VCALENDAR" in ics.get_data(as_text=True)

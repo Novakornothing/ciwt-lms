@@ -5,7 +5,7 @@
   <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div>
       <div class="eyebrow">Institutional Trust, Accessibility &amp; Security Architecture</div>
-      <h1 class="h3 mb-1">VPAT® 2.5, SOC 2 &amp; HECVAT Compliance Center</h1>
+      <h1 class="h3 mb-1">Enterprise Security Posture: SOC 2 Type II, GDPR, Section 508 (VPAT® 2.5), HECVAT &amp; SCORM/ILE Trust Center</h1>
       <p class="mb-0">Verifiable accessibility conformance (WCAG 2.1 Level AA &amp; Revised Section 508), Higher Education Community Vendor Assessment Toolkit (HECVAT v3.04), and AICPA SOC 2 Trust Services Criteria (CC1–CC9) control matrix.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
@@ -32,7 +32,7 @@
   </div>
   <div class="kpi-card">
     <div class="kpi-label">Trust Services Criteria</div>
-    <div class="kpi-value">SOC 2 TSC</div>
+    <div class="kpi-value">SOC 2 Type II</div>
     <div class="kpi-sub">CC1–CC9, Availability, Confidentiality &amp; Privacy Controls</div>
   </div>
   <div class="kpi-card">
@@ -216,6 +216,38 @@
             <a class="btn btn-sm btn-brand" href="{{ url_for('scorm_package_download', course_code='CLIENT', version='1.2') }}"><i class="bi bi-download" aria-hidden="true"></i> SCORM 1.2 (.zip)</a>
             <a class="btn btn-sm btn-outline-navy" href="{{ url_for('scorm_package_download', course_code='CLIENT', version='2004') }}">SCORM 2004 (.zip)</a>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4" id="gdpr">
+  <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2 class="h6 mb-0">5. GDPR (EU/UK Art. 5, 9, 17, 25, 28, 32), CCPA/CPRA &amp; Zero-Server Biometric Privacy Architecture</h2>
+    <span class="badge badge-live">✓ 100% Client-Side RAM Gaze Processing · 0 Video Transmitted</span>
+  </div>
+  <div class="card-body small">
+    <p class="text-muted mb-3">
+      Engineered for multinational corporate training teams, EU/UK academies, and privacy-conscious institutions requiring strict <strong>GDPR (Regulation (EU) 2016/679)</strong>, <strong>UK GDPR</strong>, <strong>CCPA/CPRA</strong>, and <strong>FERPA</strong> data protection compliance:
+    </p>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="p-3 border rounded h-100">
+          <h3 class="h6 fw-bold mb-1"> GDPR Art. 9 &amp; Art. 25 Privacy by Design (Zero Biometric Transmission)</h3>
+          <p class="mb-0 text-muted">Helix™ attention telemetry executes 100% locally inside the learner's browser WebAssembly sandbox (`@mediapipe/tasks-vision` + `OneEuro1D`). Raw webcam frames never leave device RAM and are never uploaded, recorded, or stored on any server.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3 border rounded h-100">
+          <h3 class="h6 fw-bold mb-1"> GDPR Art. 15, 17 &amp; 20 Self-Service Data Portability &amp; Erasure</h3>
+          <p class="mb-0 text-muted">Every learner and administrator has 1-click access to `/my-data` for machine-readable JSON/CSV educational record portability (Art. 20) and cryptographic right-to-erasure / consent revocation (Art. 17) logged in our SHA-256 hash chain.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3 border rounded h-100">
+          <h3 class="h6 fw-bold mb-1"> GDPR Art. 28 Data Processing Addendum (DPA) &amp; Sub-Processor Isolation</h3>
+          <p class="mb-0 text-muted">Zero third-party ad trackers, zero external CDN font/script leaks, and zero cross-tenant data commingling. Standard Contractual Clauses (SCCs) and executed Enterprise DPAs are included with all Academy and Enterprise licenses.</p>
         </div>
       </div>
     </div>

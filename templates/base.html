@@ -197,7 +197,7 @@
       <span>{{ site_name }} · original curriculum, not a vendor exam product · <a href="{{ url_for('accessibility') }}">Accessibility</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
       {% else %}
       <span>© {{ copyright_year }} {{ brand_mark }}</span>
-      <span><a href="{{ url_for('terms_of_service') }}">Terms, DMCA &amp; Liability Shield</a> · <a href="https://novakornothing.com/terms.html">Legal &amp; ToS</a> · <a href="{{ url_for('specs_page') }}">Platform Specs</a> · <a href="{{ url_for('roi_dashboard') }}">ROI Calculator</a> · <a href="{{ url_for('compliance_center') }}">VPAT / SOC 2 / HECVAT</a> · <a href="{{ url_for('pilot_start') }}">30-Day Free Bundle</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
+      <span><a href="{{ url_for('terms_of_service') }}">Terms, DMCA &amp; Liability Shield</a> · <a href="https://novakornothing.com/terms.html">Legal &amp; ToS</a> · <a href="{{ url_for('specs_page') }}">Platform Specs</a> · <a href="{{ url_for('roi_dashboard') }}">ROI Calculator</a> · <a href="{{ url_for('compliance_center') }}">SOC 2 Type II / GDPR / 508</a> · <a href="{{ url_for('schedule_consult') }}">Schedule Technical Consult</a> · <a href="{{ url_for('pilot_start') }}">30-Day Free Bundle</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
       {% endif %}
     </div>
   </footer>

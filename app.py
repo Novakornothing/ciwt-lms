@@ -2270,6 +2270,8 @@ def _audit_chain_summary():
 
 
 @app.route('/compliance')
+@app.route('/security')
+@app.route('/security.html')
 def compliance_center():
     import compliance_roi_pilot as CRP
     return render_template(
@@ -2356,6 +2358,62 @@ def xapi_statements_endpoint():
 @app.route('/dmca')
 def terms_of_service():
     return render_template('terms.html')
+
+
+@app.route('/consult', methods=['GET', 'POST'])
+@app.route('/schedule-consult', methods=['GET', 'POST'])
+@app.route('/pricing', methods=['GET'])
+def schedule_consult():
+    import secrets as _secrets
+    selected_tier = (request.args.get('tier') or 'academy').lower().strip()
+    booked = None
+    if request.method == 'POST':
+        contact_name = (request.form.get('contact_name') or 'Enterprise Buyer').strip()[:120]
+        email = (request.form.get('email') or '').strip()[:120]
+        org_name = (request.form.get('org_name') or 'Enterprise Cohort').strip()[:120]
+        org_type = (request.form.get('org_type') or 'Coding / IT Bootcamp & Career Academy').strip()[:120]
+        seats = (request.form.get('seats') or '100–500 Seats (Volume Tier)').strip()[:120]
+        lms_stack = (request.form.get('lms_stack') or 'Standalone Novak LMS™ (Turnkey)').strip()[:120]
+        time_window = (request.form.get('time_window') or 'Next Business Day — Morning (9am–12pm EST)').strip()[:120]
+        ref = 'NVK-' + _secrets.token_hex(3).upper()
+        try:
+            audit('schedule_consult', f'{ref}:{org_name}:{email}:{seats}')
+        except Exception:
+            pass
+        booked = {
+            'ref': ref,
+            'contact_name': contact_name,
+            'email': email,
+            'org_name': org_name,
+            'org_type': org_type,
+            'seats': seats,
+            'lms_stack': lms_stack,
+            'time_window': time_window,
+        }
+    return render_template('consult.html', selected_tier=selected_tier, booked=booked)
+
+
+@app.route('/consult/invite.ics')
+def consult_ics():
+    org = (request.args.get('org') or 'Enterprise Cohort').strip()[:80]
+    ics_body = (
+        "BEGIN:VCALENDAR\r\n"
+        "VERSION:2.0\r\n"
+        "PRODID:-//Novak Learning//Novak LMS Enterprise Consult//EN\r\n"
+        "BEGIN:VEVENT\r\n"
+        "UID:consult-novak-lms@novakornothing.com\r\n"
+        "DTSTAMP:20261027T120000Z\r\n"
+        "DTSTART:20261028T140000Z\r\n"
+        "DTEND:20261028T143000Z\r\n"
+        f"SUMMARY:Novak LMS Technical & ROI Architecture Consult ({org})\r\n"
+        "DESCRIPTION:25-Minute Technical Architecture, 80% Cloud Lab Cost Reduction, SOC 2 Type II / GDPR / Section 508 & Turnkey LMS Onboarding Briefing.\r\n"
+        "LOCATION:https://novak-lms.onrender.com/demo/enter/student\r\n"
+        "END:VEVENT\r\n"
+        "END:VCALENDAR\r\n"
+    )
+    resp = Response(ics_body, status=200, mimetype='text/calendar')
+    resp.headers['Content-Disposition'] = 'attachment; filename="novak-lms-technical-consult.ics"'
+    return resp
 
 
 @app.route('/compliance/oss-licenses')
