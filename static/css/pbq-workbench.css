@@ -522,3 +522,48 @@
     border-top: 1px solid #1e293b;
   }
 }
+
+/* Bug #11 Fix: Hide duplicate legacy .es-tabs/.es-panel inside split-pane PBQ right dock
+   (while keeping them in the DOM so pbq-workbench.js can read their <template data-cmd> data) */
+.pbq-split-workspace .pbq-pane-right .es-sim > .es-tabs,
+.pbq-split-workspace .pbq-pane-right .es-sim > .es-panel {
+  display: none !important;
+}
+
+@media (max-width: 767.98px) {
+  .es-bar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 0.3rem 0.45rem !important;
+    padding: 0.45rem 0.6rem !important;
+    font-size: 0.78rem !important;
+  }
+  .es-bar > div:first-child {
+    width: 100%;
+    font-size: 0.76rem;
+    line-height: 1.25;
+  }
+  .es-bar .btn {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-height: 32px !important;
+    padding: 0.2rem 0.45rem !important;
+    font-size: 0.72rem !important;
+  }
+  .es-nav {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+    padding: 0.35rem 0.5rem !important;
+  }
+  .es-nav .btn {
+    min-height: 32px !important;
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.74rem !important;
+  }
+  .es-keys {
+    display: none !important;
+  }
+}

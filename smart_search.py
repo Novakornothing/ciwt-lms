@@ -356,12 +356,23 @@ def expand_query(raw_query: str, extra_vocab=None) -> dict:
     }
 
 
-def score_document(title: str, headings: str, body: str, qinfo: dict, code_or_meta: str = '') -> float:
+_DOC_CACHE = {}
+_LAB_CACHE = None
+
+
+def _norm_low(s: str) -> str:
+    return re.sub(r'\bwi-fi\b', 'wifi', (s or '').lower())
+
+
+def score_document(title: str, headings: str, body: str, qinfo: dict, code_or_meta: str = '', _pre_normalized: bool = False) -> float:
     """BM25-inspired multi-field relevance scorer."""
-    t_low = re.sub(r'\bwi-fi\b', 'wifi', (title or '').lower())
-    h_low = re.sub(r'\bwi-fi\b', 'wifi', (headings or '').lower())
-    b_low = re.sub(r'\bwi-fi\b', 'wifi', (body or '').lower())
-    m_low = (code_or_meta or '').lower()
+    if _pre_normalized:
+        t_low, h_low, b_low, m_low = title, headings, body, code_or_meta
+    else:
+        t_low = _norm_low(title)
+        h_low = _norm_low(headings)
+        b_low = _norm_low(body)
+        m_low = (code_or_meta or '').lower()
 
     raw_q = re.sub(r'\bwi-fi\b', 'wifi', (qinfo.get('raw_query') or '').lower().strip())
     corr_q = re.sub(r'\bwi-fi\b', 'wifi', (qinfo.get('corrected_query') or '').lower().strip())
@@ -505,7 +516,7 @@ def run_smart_search(
             'categories': {'lessons': [], 'labs': [], 'objectives': [], 'chapters': [], 'tests': []},
         }
 
-    # Gather dynamic vocabulary from lesson titles
+    # Gather dynamic vocabulary from lesson titles & cache normalized lesson text
     all_lessons = (
         Lesson.query.join(Module, Lesson.module_id == Module.id)
         .filter(Module.course_id.in_(course_ids))
@@ -520,33 +531,61 @@ def run_smart_search(
 
     qinfo = expand_query(q, extra_vocab=title_vocab)
 
+    sec_cache = {}
+    avail_cache = {}
+
+    def _get_sec(cid):
+        if cid not in sec_cache:
+            sec_cache[cid] = section_for_course_fn(cid)
+        return sec_cache[cid]
+
+    def _is_avail(sec_id, kind, obj_id, uid):
+        k = (sec_id, kind, obj_id, uid)
+        if k not in avail_cache:
+            avail_cache[k] = is_available_fn(sec_id, kind, obj_id, uid)
+        return avail_cache[k]
+
     scored_results = []
     categories = {'lessons': [], 'labs': [], 'objectives': [], 'chapters': [], 'tests': []}
 
-    # 1. Score Lessons
+    # 1. Score Lessons (using in-memory _DOC_CACHE keyed by (lesson.id, content_len))
+    lesson_hits = []
     for lesson in all_lessons:
+        raw_c = lesson.content or ''
+        ckey = (lesson.id, len(raw_c), lesson.title)
+        cached = _DOC_CACHE.get(ckey)
+        if cached is None:
+            module = lesson.module
+            course = module.course
+            plain_txt = strip_html(raw_c)
+            cached = (
+                _norm_low(lesson.title),
+                _norm_low(extract_headings(raw_c)),
+                _norm_low(plain_txt),
+                f"{course.code} {course.title} {module.title} {lesson.order}".lower(),
+                plain_txt,
+            )
+            _DOC_CACHE[ckey] = cached
+        sc = score_document(cached[0], cached[1], cached[2], qinfo, cached[3], _pre_normalized=True)
+        if sc > 0:
+            lesson_hits.append((sc, lesson, cached[4]))
+
+    lesson_hits.sort(key=lambda x: (-x[0], x[1].title or ''))
+    is_stu = getattr(current_user, 'is_authenticated', False) and getattr(current_user, 'role', '') == 'student'
+    uid = getattr(current_user, 'id', None)
+    for sc, lesson, plain_txt in lesson_hits[:max(limit, 20)]:
         module = lesson.module
         course = module.course
-        headings = extract_headings(lesson.content or '')
-        body_plain = strip_html(lesson.content or '')
-        meta_str = f"{course.code} {course.title} {module.title} {lesson.order}"
-        sc = score_document(lesson.title, headings, body_plain, qinfo, meta_str)
-        if sc <= 0:
-            continue
-        section = section_for_course_fn(course.id)
+        section = _get_sec(course.id)
         if not section:
             continue
-        locked = (
-            getattr(current_user, 'is_authenticated', False)
-            and getattr(current_user, 'role', '') == 'student'
-            and not is_available_fn(section.id, 'module', module.id, current_user.id)
-        )
+        locked = is_stu and not _is_avail(section.id, 'module', module.id, uid)
         url = (
             url_for_fn('view_lesson', section_id=section.id, module_id=module.id, lesson_id=lesson.id)
             if not locked
             else url_for_fn('student_section', section_id=section.id)
         )
-        Snippet_html = build_snippet(lesson.content or '', qinfo)
+        Snippet_html = build_snippet(plain_txt, qinfo)
         item = {
             'kind': 'Lesson',
             'title': lesson.title,
@@ -662,10 +701,11 @@ def run_smart_search(
                 url = url_for_fn('instructor_test_performance', section_id=section.id, test_id=test.id)
                 locked = False
             elif getattr(current_user, 'is_authenticated', False):
-                locked = not is_available_fn(section.id, 'test', test.id, current_user.id)
+                locked = not _is_avail(section.id, 'test', test.id, uid)
+                url = url_for_fn('take_test', section_id=section.id, test_id=test.id) if not locked else url_for_fn('student_section', section_id=section.id)
             else:
                 locked = False
-                url = url_for_fn('take_test', section_id=section.id, test_id=test.id) if not locked else url_for_fn('student_section', section_id=section.id)
+                url = url_for_fn('take_test', section_id=section.id, test_id=test.id)
             item = {
                 'kind': 'Test',
                 'title': test.title,

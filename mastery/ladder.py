@@ -323,27 +323,13 @@ def register_ladder(app, db, ctx):
         if not laddered:
             return {'milestones': [], 'milestone_set': set(), 'step_of': {}, 'milestone_idx': {}, 'total_steps': 1}
 
-        if course == 'ITSUP' and label == '1.1':
-            preferred = ['what-software-is', '1-what-the-role-actually-delivers', '2-three-kinds-of-work', '3-impact-and-identity']
-            avail = [s['sid'] for s in laddered]
-            ms = [sid for sid in preferred if sid in avail]
-            if not ms:
-                ms = avail[:4]
-        else:
-            core_cands = [
-                s['sid'] for s in laddered
-                if not any(s['sid'].startswith(p) for p in _META_SID_PREFIXES)
-            ]
-            if len(core_cands) < 4:
-                core_cands = [s['sid'] for s in laddered]
-            if len(core_cands) <= 4:
-                ms = list(core_cands)
-            else:
-                idxs = sorted({round(i * (len(core_cands) - 1) / 3) for i in range(4)})
-                ms = [core_cands[i] for i in idxs]
-
-        ms_set = set(ms)
-        ordered_ms = [s['sid'] for s in laddered if s['sid'] in ms_set]
+        # Partition laddered sections into up to 4 evenly balanced contiguous steps
+        # where each step ends on its Milestone Check section (zero trailing orphan cards).
+        n_lad = len(laddered)
+        target_steps = min(4, n_lad)
+        end_indices = sorted({max(0, min(n_lad - 1, round(step_i * n_lad / target_steps) - 1))
+                              for step_i in range(1, target_steps + 1)})
+        ordered_ms = [laddered[idx]['sid'] for idx in end_indices]
         if not ordered_ms:
             ordered_ms = [laddered[-1]['sid']]
 
@@ -439,7 +425,7 @@ def register_ladder(app, db, ctx):
             tried = _loads(r.tried_json, ['R0'])
             if not ((r.misses or 0) or (r.requests or 0) or len(tried) > 1):
                 continue
-            head = (LD.ladder().get((r.course, r.label, r.sid)) or {}).get('heading') or r.sid
+            head = (_all_lad().get((r.course, r.label, r.sid)) or {}).get('heading') or r.sid
             if r.resolved:
                 by[r.resolved] = by.get(r.resolved, 0) + 1
             secs.append({'label': r.label, 'sid': r.sid, 'heading': head, 'rung': r.resolved, 'misses': r.misses or 0,
@@ -464,8 +450,13 @@ def register_ladder(app, db, ctx):
     def render_section(c):
         return render_template('ladder/_section.html', L=c)
 
+    def _all_lad():
+        base = LD.ladder()
+        ext = LD.extended_ladder() if hasattr(LD, 'extended_ladder') else {}
+        return {**ext, **base} if ext else base
+
     def lesson_entries(course, label):
-        return {k[2]: v for k, v in LD.ladder().items() if k[0] == course and k[1] == label}
+        return {k[2]: v for k, v in _all_lad().items() if k[0] == course and k[1] == label}
 
     # ------------------------------------------------------------------ comprehension gate
     def bypassed(user_id, section_id, lesson_id):
@@ -501,7 +492,7 @@ def register_ladder(app, db, ctx):
             if r and (r.resolved or r.exhausted_at):
                 out['done'] += 1
             else:
-                raw_h = (LD.ladder().get((course, label, sec['sid'])) or {}).get('heading') or sec['sid']
+                raw_h = (_all_lad().get((course, label, sec['sid'])) or {}).get('heading') or sec['sid']
                 out['pending'].append({'sid': sec['sid'], 'heading': _clean_student_heading(raw_h)})
         out['on'] = out['total'] > 0
         out['first'] = out['pending'][0]['sid'] if out['pending'] else None
@@ -732,7 +723,7 @@ def register_ladder(app, db, ctx):
             q = q.filter_by(section_id=section_id)
         out = []
         for r in q.order_by(m.LadderState.updated_at.desc()).all():
-            raw = LD.ladder().get((r.course, r.label, r.sid)) or {}
+            raw = _all_lad().get((r.course, r.label, r.sid)) or {}
             st = as_state(r)
             out.append({'row': r, 'heading': raw.get('heading') or r.sid, 'state': st,
                         'tried': [LS.LABEL[x] for x in st['tried']],
@@ -778,18 +769,29 @@ def register_ladder(app, db, ctx):
         return out
 
     def analytics(section, ids=None):
+        import statistics
         course = course_code(section)
         ids = list(ids or [section.id])
         states = m.LadderState.query.filter(m.LadderState.section_id.in_(ids), m.LadderState.course == course).all()
         evs = m.LadderEvent.query.filter(m.LadderEvent.section_id.in_(ids), m.LadderEvent.course == course).all()
         users = {u.id: u for u in d.User.query.filter(d.User.id.in_({s.user_id for s in states} or {0})).all()}
         per = defaultdict(lambda: {'students': set(), 'escalated': set(), 'exhausted': set(), 'requests': 0,
-                                   'misses': 0, 'resolved': defaultdict(int), 'mcs': defaultdict(int)})
+                                   'misses': 0, 'resolved': defaultdict(int), 'mcs': defaultdict(int),
+                                   'resolve_seconds': [], 'resolve_attempts': [], 'helix_triggered': 0})
         reach = defaultdict(lambda: [0, 0])          # rung -> [students who saw it, resolved there]
+        sorted_evs = sorted(evs, key=lambda e: (e.created_at or utcnow(), e.id or 0))
+        evs_by_key = defaultdict(list)
+        for e in sorted_evs:
+            if e.label and e.sid:
+                evs_by_key[(e.section_id, e.user_id, e.label, e.sid)].append(e)
+        seen_state_keys = set()
         for s in states:
             k = (s.label, s.sid)
             p = per[k]
             st = as_state(s)
+            s_key = (s.section_id, s.user_id, s.label, s.sid)
+            seen_state_keys.add(s_key)
+            u_evs = evs_by_key.get(s_key, [])
             p['students'].add(s.user_id)
             if len([r for r in st['tried'] if r != 'R0']) > (1 if s.adapted else 0):
                 p['escalated'].add(s.user_id)
@@ -797,12 +799,41 @@ def register_ladder(app, db, ctx):
                 p['exhausted'].add(s.user_id)
             if s.resolved:
                 p['resolved'][s.resolved] += 1
+                start_cands = [ts for ts in ([s.created_at] + [e.created_at for e in u_evs]) if ts is not None]
+                res_cands = [e.created_at for e in u_evs
+                             if e.created_at is not None and (e.kind == 'resolved' or (e.kind == 'check' and e.correct is True))]
+                t0 = min(start_cands) if start_cands else None
+                t1 = min(res_cands) if res_cands else (s.updated_at or s.created_at)
+                if t0 is not None and t1 is not None:
+                    p['resolve_seconds'].append(max(0.0, (t1 - t0).total_seconds()))
+                chk_evs = [e for e in u_evs if e.kind == 'check']
+                if chk_evs:
+                    has_win = any(e.correct is True for e in chk_evs)
+                    att_n = len(chk_evs) + (0 if has_win else 1)
+                else:
+                    att_n = 1 + (s.misses or 0)
+                p['resolve_attempts'].append(max(1, att_n))
             for r in st['tried']:
                 reach[r][0] += 1
             if s.resolved:
                 reach[s.resolved][1] += 1
+        for s_key, u_evs in evs_by_key.items():
+            if s_key in seen_state_keys:
+                continue
+            _sec_id, uid, label, sid = s_key
+            res_cands = [e.created_at for e in u_evs
+                         if e.created_at is not None and (e.kind == 'resolved' or (e.kind == 'check' and e.correct is True))]
+            if res_cands:
+                p = per[(label, sid)]
+                p['students'].add(uid)
+                start_cands = [e.created_at for e in u_evs if e.created_at is not None]
+                t0, t1 = min(start_cands), min(res_cands)
+                p['resolve_seconds'].append(max(0.0, (t1 - t0).total_seconds()))
+                chk_evs = [e for e in u_evs if e.kind == 'check']
+                has_win = any(e.correct is True for e in chk_evs)
+                p['resolve_attempts'].append(max(1, len(chk_evs) + (0 if has_win else 1)))
         first_r0 = {}
-        for e in sorted(evs, key=lambda e: (e.created_at, e.id)):
+        for e in sorted_evs:
             if e.kind == 'check' and e.rung == 'R0' and (e.label, e.sid, e.user_id) not in first_r0:
                 first_r0[(e.label, e.sid, e.user_id)] = bool(e.correct)
         r0 = defaultdict(lambda: [0, 0])               # (label, sid) -> [first answers on the original, misses]
@@ -810,39 +841,66 @@ def register_ladder(app, db, ctx):
             r0[(label, sid)][0] += 1
             r0[(label, sid)][1] += 0 if ok else 1
         for e in evs:
+            if not e.label or not e.sid:
+                continue
             p = per[(e.label, e.sid)]
             if e.kind == 'request':
                 p['requests'] += 1
+                if e.source == 'helix':
+                    p['helix_triggered'] += 1
+            elif e.kind == 'helix_offer':
+                p['helix_triggered'] += 1
             elif e.kind == 'check' and e.correct is False:
                 p['misses'] += 1
                 if e.mc:
                     p['mcs'][e.mc] += 1
         rows = []
+        all_res_secs = []
+        all_res_atts = []
+        total_helix = 0
         for (label, sid), p in per.items():
-            raw = LD.ladder().get((course, label, sid)) or {}
+            raw = _all_lad().get((course, label, sid)) or {}
             n = len(p['students'])
             mcs = LD.misconceptions()
             top_mc = sorted(p['mcs'].items(), key=lambda x: (-x[1], x[0]))[:2]
             n0, miss0 = r0[(label, sid)]
+            r_secs = sorted(p['resolve_seconds'])
+            r_atts = p['resolve_attempts']
+            all_res_secs.extend(r_secs)
+            all_res_atts.extend(r_atts)
+            total_helix += p['helix_triggered']
+            med_s = round(float(statistics.median(r_secs)), 1) if r_secs else None
+            mean_s = round(sum(r_secs) / len(r_secs), 1) if r_secs else None
+            mean_a = round(sum(r_atts) / len(r_atts), 2) if r_atts else None
             rows.append({'label': label, 'sid': sid, 'heading': raw.get('heading') or sid, 'students': n,
                          'chapter': _lkey(label)[0], 'r0_answers': n0, 'r0_miss_rate': round(100 * miss0 / n0) if n0 else None,
                          'rewrite': n0 >= REWRITE_MIN and miss0 / n0 >= REWRITE_SHARE,
                          'escalated': len(p['escalated']), 'exhausted': len(p['exhausted']), 'requests': p['requests'],
                          'misses': p['misses'], 'resolved': dict(p['resolved']),
                          'escalation_rate': round(100 * len(p['escalated']) / n) if n else 0,
+                         'median_seconds_to_resolve': med_s,
+                         'mean_seconds_to_resolve': mean_s,
+                         'mean_attempts_to_resolve': mean_a,
+                         'helix_triggered': p['helix_triggered'],
                          'top_mc': [((mcs.get(k) or _global_mc(k) or {}).get('label', k), v) for k, v in top_mc]})
         rows.sort(key=lambda r: (-r['escalated'], -r['exhausted'], -r['escalation_rate'], _lkey(r['label']), r['sid']))
         rungs = [{'rung': r, 'label': LS.LABEL[r], 'reached': reach[r][0], 'resolved': reach[r][1],
                   'rate': round(100 * reach[r][1] / reach[r][0]) if reach[r][0] else None} for r in ('R0',) + LP.RUNGS]
         demo = any(is_demo_user(u) for u in users.values())
-        return {'rows': rows, 'rungs': rungs, 'students': len({s.user_id for s in states}), 'demo': demo,
-                'course': course}
+        return {
+            'rows': rows, 'rungs': rungs, 'students': len({s.user_id for s in states}), 'demo': demo,
+            'course': course,
+            'median_seconds_to_resolve': round(float(statistics.median(all_res_secs)), 1) if all_res_secs else None,
+            'mean_seconds_to_resolve': round(sum(all_res_secs) / len(all_res_secs), 1) if all_res_secs else None,
+            'mean_attempts_to_resolve': round(sum(all_res_atts) / len(all_res_atts), 2) if all_res_atts else None,
+            'helix_triggered': total_helix,
+        }
 
     def course_sections(section):
         """[(label, sid, heading, status)] for the class's course: every ladder entry, for the override list."""
         course = course_code(section)
         out = []
-        for (c, label, sid), e in sorted(LD.ladder().items(), key=lambda kv: (_lkey(kv[0][1]), kv[0][2])):
+        for (c, label, sid), e in sorted(_all_lad().items(), key=lambda kv: (_lkey(kv[0][1]), kv[0][2])):
             if c == course and e.get('type') in ('section', 'same_as'):
                 out.append({'label': label, 'sid': sid, 'heading': e.get('heading') or sid, 'type': e['type']})
         return out
@@ -851,7 +909,7 @@ def register_ladder(app, db, ctx):
         """Per lesson of the class's course: laddered / same_as / skip counts and rung + check totals (SME review)."""
         course = course_code(section)
         by = defaultdict(lambda: {'section': 0, 'same_as': 0, 'skip': 0, 'checks': 0})
-        for (c, label, _sid), e in LD.ladder().items():
+        for (c, label, _sid), e in _all_lad().items():
             if c != course:
                 continue
             b = by[label]
@@ -885,11 +943,16 @@ def register_ladder(app, db, ctx):
                 w.writerow([f'scope: all {len(peers)} {a["course"]} sections (curriculum average)'])
             w.writerow(['lesson', 'section', 'students', 'needed another way', 'rate %', 'saw every explanation',
                         'first answers on original', 'original miss %', 'original may need rewriting', 'requests',
+                        'median_seconds_to_resolve', 'mean_seconds_to_resolve', 'mean_attempts_to_resolve', 'helix_triggered',
                         'resolved by', 'top mix-ups', 'includes demo accounts'])
             for r in rows:
                 w.writerow([r['label'], r['heading'], r['students'], r['escalated'], r['escalation_rate'], r['exhausted'],
                             r['r0_answers'], r['r0_miss_rate'] if r['r0_miss_rate'] is not None else '',
                             'yes' if r['rewrite'] else '', r['requests'],
+                            r['median_seconds_to_resolve'] if r.get('median_seconds_to_resolve') is not None else '',
+                            r['mean_seconds_to_resolve'] if r.get('mean_seconds_to_resolve') is not None else '',
+                            r['mean_attempts_to_resolve'] if r.get('mean_attempts_to_resolve') is not None else '',
+                            r.get('helix_triggered', 0),
                             '; '.join(f'{LS.LABEL[k]}: {v}' for k, v in sorted(r['resolved'].items())),
                             '; '.join(f'{lbl} ({n})' for lbl, n in r['top_mc']), 'yes' if a['demo'] else 'no'])
             from flask import Response
@@ -959,7 +1022,7 @@ def register_ladder(app, db, ctx):
         section = ctx.staff_section(section_id)
         course = course_code(section)
         ents = []
-        for (c, lab, sid), e in LD.ladder().items():
+        for (c, lab, sid), e in _all_lad().items():
             if c == course and lab == label:
                 ents.append((sid, e))
         if not ents:
@@ -989,7 +1052,7 @@ def register_ladder(app, db, ctx):
         rows = (m.LadderState.query.filter_by(user_id=user.id, section_id=section.id)
                 .filter(m.LadderState.exhausted_at.isnot(None)).order_by(m.LadderState.exhausted_at.desc()).all())
         for r in rows[:3]:
-            raw = LD.ladder().get((r.course, r.label, r.sid)) or {}
+            raw = _all_lad().get((r.course, r.label, r.sid)) or {}
             ent = LD.entry(r.course, r.label, r.sid) or {}
             st = as_state(r)
             kinds = ', '.join(LS.LABEL[x].replace('Explained another way: ', '').replace('Explained ', '').lower()
@@ -1022,7 +1085,7 @@ def register_ladder(app, db, ctx):
             by[(r.course, r.label, r.sid)].append(r.user_id)
         out = []
         for (c, label, sid), uids in by.items():
-            raw = LD.ladder().get((c, label, sid)) or {}
+            raw = _all_lad().get((c, label, sid)) or {}
             out.append({'label': label, 'sid': sid, 'heading': raw.get('heading') or sid, 'users': sorted(uids)})
         out.sort(key=lambda x: (-len(x['users']), x['label'], x['sid']))
         return out
@@ -1043,7 +1106,7 @@ def register_ladder(app, db, ctx):
                 continue
             st = as_state(r)
             bucket = out.setdefault(ent['obj'], {'worked': [], 'open': []})
-            heading = (LD.ladder().get((course, label, sid)) or {}).get('heading') or sid
+            heading = (_all_lad().get((course, label, sid)) or {}).get('heading') or sid
             if st['resolved'] and st['resolved'] != 'R0':
                 bucket['worked'].append({'label': label, 'heading': heading, 'view': rung_view(ent, st['resolved'])})
             elif not st['resolved']:

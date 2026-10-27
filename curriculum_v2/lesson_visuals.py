@@ -1471,9 +1471,9 @@ def render_visual_blueprint(course_code: str, ch_order: int, les_order: int, les
             )
 
     svg_html = (
-        f'<svg viewBox="0 0 760 175" width="100%" height="auto" role="img" '
+        f'<svg viewBox="0 0 760 175" width="100%" role="img" '
         f'aria-label="{escape(arch_title)}" class="novak-arch-svg" '
-        f'style="display:block;max-width:100%;background:linear-gradient(180deg,#0b1120 0%,#111827 100%);border:1px solid rgba(56,189,248,0.28);border-radius:10px;margin:0.5rem 0 0.85rem 0">'
+        f'style="display:block;height:auto;max-width:100%;background:linear-gradient(180deg,#0b1120 0%,#111827 100%);border:1px solid rgba(56,189,248,0.28);border-radius:10px;margin:0.5rem 0 0.85rem 0">'
         f'<defs>'
         f'<linearGradient id="{grad_id}" x1="0%" y1="0%" x2="100%" y2="0%">'
         f'<stop offset="0%" stop-color="#38bdf8" stop-opacity="0.22"/>'

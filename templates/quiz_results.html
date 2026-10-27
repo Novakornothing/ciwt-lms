@@ -10,7 +10,7 @@
 
   <div class="kpi-row mb-4">
     <div class="kpi-card{% if pct < 80 %} kpi-alert{% endif %}"><div class="kpi-label">Score</div><div class="kpi-value">{{ pct }}<small>%</small></div></div>
-    <div class="kpi-card"><div class="kpi-label">Correct</div><div class="kpi-value">{{ correct }}<small>/ {{ total }}</small></div></div>
+    <div class="kpi-card"><div class="kpi-label">Correct</div><div class="kpi-value"><span class="visually-hidden">{{ correct }} of {{ total }}</span><span aria-hidden="true">{{ correct }}<small>/ {{ total }}</small></span></div></div>
     <div class="kpi-card"><div class="kpi-label">To review</div><div class="kpi-value">{{ focus_areas|length if focus_areas else 0 }}<small>areas</small></div></div>
   </div>
 

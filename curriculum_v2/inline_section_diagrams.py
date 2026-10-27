@@ -61,9 +61,9 @@ def render_inline_spec_schematic_svg(
             )
 
     svg = (
-        f'<svg viewBox="0 0 740 185" width="100%" height="auto" role="img" '
+        f'<svg viewBox="0 0 740 185" width="100%" role="img" '
         f'aria-label="{escape(arch_title)} — Technical Specification Schematic" '
-        f'class="novak-inline-svg" style="display:block;max-width:100%;background:#0b1120;border:1px solid rgba(56,189,248,0.28);border-radius:10px">'
+        f'class="novak-inline-svg" style="display:block;height:auto;max-width:100%;background:#0b1120;border:1px solid rgba(56,189,248,0.28);border-radius:10px">'
         f'<rect x="0" y="0" width="740" height="28" rx="10" fill="#1e293b"/>'
         f'<text x="16" y="18" fill="#e2e8f0" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700">'
         f'TECHNICAL SCHEMATIC 1 · {escape(code)} {ch_i}.{les_i} — {escape(_trunc(arch_title, 48))} (Parameters &amp; CLI)</text>'
@@ -117,9 +117,9 @@ def render_inline_sequence_flow_svg(
             )
 
     svg = (
-        f'<svg viewBox="0 0 740 190" width="100%" height="auto" role="img" '
+        f'<svg viewBox="0 0 740 190" width="100%" role="img" '
         f'aria-label="{escape(arch_title)} — Signal &amp; Execution Sequence Timeline" '
-        f'class="novak-inline-svg" style="display:block;max-width:100%;background:#0b1120;border:1px solid rgba(129,140,248,0.28);border-radius:10px">'
+        f'class="novak-inline-svg" style="display:block;height:auto;max-width:100%;background:#0b1120;border:1px solid rgba(129,140,248,0.28);border-radius:10px">'
         f'<rect x="0" y="0" width="740" height="28" rx="10" fill="#1e1b4b"/>'
         f'<text x="16" y="18" fill="#e2e8f0" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700">'
         f'SEQUENCE TIMELINE 2 · {escape(code)} {ch_i}.{les_i} — Step-by-Step Signal &amp; State Handshake</text>'
@@ -165,9 +165,9 @@ def render_inline_triage_tree_svg(
         )
 
     svg = (
-        f'<svg viewBox="0 0 740 185" width="100%" height="auto" role="img" '
+        f'<svg viewBox="0 0 740 185" width="100%" role="img" '
         f'aria-label="{escape(arch_title)} — Fault Isolation Decision Tree" '
-        f'class="novak-inline-svg" style="display:block;max-width:100%;background:#0b1120;border:1px solid rgba(52,211,153,0.28);border-radius:10px">'
+        f'class="novak-inline-svg" style="display:block;height:auto;max-width:100%;background:#0b1120;border:1px solid rgba(52,211,153,0.28);border-radius:10px">'
         f'<rect x="0" y="0" width="740" height="28" rx="10" fill="#064e3b"/>'
         f'<text x="16" y="18" fill="#e2e8f0" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700">'
         f'FAULT-ISOLATION TREE 3 · {escape(code)} {ch_i}.{les_i} — {escape(_trunc(watch_title, 48))}</text>'

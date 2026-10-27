@@ -347,8 +347,15 @@ def register(app, db, deps):
         ok, report = RT.verify_all_labs()
         return render_template('interactive_labs_verify.html', ok=ok, report=report)
 
+    _LAB_SLUG_ALIASES = {
+        'win-disk-mgmt': 'w11-disk',
+        'osi-tcpip-4': 'net-subnet',
+    }
+
     @login_required
     def interactive_lab(lab_id):
+        if lab_id in _LAB_SLUG_ALIASES:
+            return redirect(url_for('interactive_lab', lab_id=_LAB_SLUG_ALIASES[lab_id], **request.args))
         lab = lab_or_404(lab_id)
         if request.args.get('section_id'):
             session['lab_section_id'] = request.args.get('section_id')

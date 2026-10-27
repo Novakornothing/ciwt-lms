@@ -318,11 +318,24 @@
       });
     }
 
-    // Intercept "Next section ↓" chip clicks inside Guided Step mode to advance cleanly
+    // Intercept "Next section ↓" chip clicks inside Guided Step mode:
+    // scroll to the next sub-card within the current step, or advance to the next step only after the step milestone card
     document.addEventListener('click', function (e) {
       var chip = e.target.closest && e.target.closest('[data-continue]');
       if (!chip || !focusMode) return;
+      var card = chip.closest ? chip.closest('.novak-section-card') : null;
       var groups = getStepGroups();
+      var curGrp = groups[activeIdx] || [];
+      var posInGrp = card ? curGrp.indexOf(card) : -1;
+      if (posInGrp >= 0 && posInGrp < curGrp.length - 1) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        var nextCard = curGrp[posInGrp + 1];
+        if (nextCard && nextCard.scrollIntoView) {
+          nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return;
+      }
       if (activeIdx < groups.length - 1) {
         e.preventDefault();
         e.stopImmediatePropagation();

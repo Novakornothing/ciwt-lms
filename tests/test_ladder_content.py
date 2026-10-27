@@ -73,3 +73,30 @@ def test_schema_rejects_paraphrase_unsafe_html_and_untagged_checks():
     joined = '\n'.join(E)
     for needle in ('too similar', 'scripts', 'tag at least one', 'needs a widget', 'repeats another check', 'numbered <ol>'):
         assert needle in joined, (needle, joined)
+
+
+def test_netops_07_and_08_validate_and_cover_r1_to_r4():
+    sys.path.insert(0, ROOT)
+    import interactive_labs as IL
+    from curriculum_v2 import ladder as L
+    from curriculum_v2.ladder import schema as S
+    from curriculum_v2.ladder.netops import ch07, ch08, netops_07, netops_08
+    from curriculum_v2.misconceptions import MISCONCEPTIONS
+    from curriculum_v2.objectives import OBJECTIVES
+
+    labs = {lab["id"] for lab in IL.LABS}
+    for mod, ch_num in ((netops_07, 7), (netops_08, 8), (ch07, 7), (ch08, 8)):
+        assert mod.SCHEMA == 1 and mod.COURSE == "NETOPS" and mod.CHAPTER == ch_num
+        E, W = S.validate_module(mod, OBJECTIVES, MISCONCEPTIONS, labs)
+        assert E == [], (mod.__name__, E)
+        assert W == [], (mod.__name__, W)
+        assert len(mod.LESSONS) == 4
+        for lbl, secs in mod.LESSONS.items():
+            assert lbl.startswith(f"{ch_num}.")
+            for sid, ent in secs.items():
+                resolved = L.entry("NETOPS", lbl, sid)
+                assert resolved is not None and resolved["type"] == "section"
+                for r_code, r_kind in (("R1", "plain"), ("R2", "analogy"), ("R3", "visual"), ("R4", "try")):
+                    assert resolved["rungs"][r_code]["kind"] == r_kind
+                    chks = L.rung_checks(resolved, r_code)
+                    assert len(chks) >= 1 and chks[0]["mc"]

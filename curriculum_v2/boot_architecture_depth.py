@@ -24,9 +24,9 @@ _BOOT_ARTICLE_RE = re.compile(
 
 WIN_BOOT_6STAGE_SVG = (
     '<figure class="novak-boot-svg-figure" style="margin:0.9rem 0">'
-    '<svg viewBox="0 0 760 225" width="100%" height="auto" role="img" '
+    '<svg viewBox="0 0 760 225" width="100%" role="img" '
     'aria-label="Windows 10 and 11 6-Stage UEFI, GPT, BCD, Kernel, and Winlogon Boot Pipeline Diagram" '
-    'class="novak-boot-pipeline-svg" style="display:block;max-width:100%;background:#0b1120;border:1px solid rgba(56,189,248,0.35);border-radius:10px">'
+    'class="novak-boot-pipeline-svg" style="display:block;height:auto;max-width:100%;background:#0b1120;border:1px solid rgba(56,189,248,0.35);border-radius:10px">'
     '<rect x="0" y="0" width="760" height="30" rx="10" fill="#1e293b"/>'
     '<text x="16" y="19" fill="#f8fafc" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700">'
     'WINDOWS 10/11 6-STAGE UEFI/GPT BOOT PIPELINE &amp; FAULT ISOLATION MAP (220-1201 / 220-1202)</text>'
@@ -124,9 +124,9 @@ WIN_BOOT_6STAGE_SVG = (
 
 LINUX_BOOT_6STAGE_SVG = (
     '<figure class="novak-boot-svg-figure" style="margin:0.9rem 0">'
-    '<svg viewBox="0 0 760 215" width="100%" height="auto" role="img" '
+    '<svg viewBox="0 0 760 215" width="100%" role="img" '
     'aria-label="Linux 6-Stage UEFI, Shim, GRUB2, initramfs, vmlinuz Kernel, and systemd Target Pipeline Diagram" '
-    'class="novak-boot-pipeline-svg" style="display:block;max-width:100%;background:#0b1120;border:1px solid rgba(52,211,153,0.35);border-radius:10px">'
+    'class="novak-boot-pipeline-svg" style="display:block;height:auto;max-width:100%;background:#0b1120;border:1px solid rgba(52,211,153,0.35);border-radius:10px">'
     '<rect x="0" y="0" width="760" height="30" rx="10" fill="#064e3b"/>'
     '<text x="16" y="19" fill="#f8fafc" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700">'
     'LINUX 6-STAGE UEFI → SHIM → GRUB2 → INITRAMFS → VMLINUZ → SYSTEMD TARGET PIPELINE</text>'

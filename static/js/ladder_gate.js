@@ -49,6 +49,8 @@
     box.querySelector('[data-gate-count]').textContent = g.done + ' of ' + g.total;
     var top = document.querySelector('[data-gate-top-count]');
     if (top) top.textContent = g.done + ' of ' + g.total;
+    var pill = document.getElementById('checksPassedPill');
+    if (pill) pill.textContent = g.done + ' / ' + g.total;
     var bar = box.querySelector('[role="progressbar"]');
     bar.setAttribute('aria-valuenow', g.done);
     bar.firstElementChild.className = 'pf-w-' + Math.floor((100 * g.done / (g.total || 1)) / 5) * 5;

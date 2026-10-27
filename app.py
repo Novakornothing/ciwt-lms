@@ -1717,6 +1717,7 @@ def register_account():
     return render_template('register.html', errors=errors, form=form_data), (400 if errors else 200)
 
 
+@app.route('/demo/<role>', methods=['GET', 'POST'])
 @app.route('/demo/enter/<role>', methods=['GET', 'POST'])
 def demo_enter(role):
     demo_map = {
@@ -3360,6 +3361,62 @@ def view_module(section_id, module_id):
         course_modules=course_modules,
         class_home=class_home,
     )
+
+
+@app.route('/student/module/<int:module_id>/lesson/<label>')
+@login_required
+def view_lesson_shorthand(module_id, label):
+    sec = None
+    if current_user.role == 'student':
+        secs = get_student_sections(current_user)
+        sec = secs[0] if secs else None
+    if not sec:
+        sec = ClassSection.query.order_by(ClassSection.id).first()
+    if not sec:
+        abort(404)
+    lbl = (label or '').strip()
+    les = None
+    if lbl.isdigit():
+        les = db.session.get(Lesson, int(lbl))
+    if not les:
+        for cand in Lesson.query.join(Module, Module.id == Lesson.module_id).filter(Module.course_id == sec.course_id).order_by(Module.order, Lesson.order).all():
+            if (cand.title or '').strip().startswith(lbl + ' ') or f'{cand.module.order}.{cand.order}' == lbl:
+                les = cand
+                break
+    if not les:
+        m_obj = Module.query.filter_by(course_id=sec.course_id, order=module_id).first() or db.session.get(Module, module_id)
+        if m_obj:
+            les = Lesson.query.filter_by(module_id=m_obj.id).order_by(Lesson.order).first()
+    if not les:
+        abort(404)
+    return redirect(url_for('view_lesson', section_id=sec.id, module_id=les.module_id, lesson_id=les.id))
+
+
+@app.route('/exam-sim')
+@app.route('/exam-sim/pbq/<pbq_id>')
+@login_required
+def exam_sim_shorthand(pbq_id=None):
+    sec = None
+    if current_user.role == 'student':
+        secs = get_student_sections(current_user)
+        sec = secs[0] if secs else None
+    if not sec:
+        sec = ClassSection.query.order_by(ClassSection.id).first()
+    if not sec:
+        abort(404)
+    return redirect(url_for('exam_sim_home', section_id=sec.id))
+
+
+@app.route('/calibrate')
+def calibrate_shorthand():
+    return redirect(url_for('helix.try_page'))
+
+
+@app.route('/tqi.html')
+def tqi_html_shorthand():
+    if current_user.is_authenticated and current_user.role == 'admin':
+        return redirect(url_for('admin_tqi'))
+    return redirect(url_for('demo_enter', role='admin', next='/admin/tqi'))
 
 
 @app.route('/student/module/<int:section_id>/<int:module_id>/lesson/<int:lesson_id>')

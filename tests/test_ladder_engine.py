@@ -412,3 +412,56 @@ def test_lessons_without_ladder_content_are_unchanged(student, instructor, mod, 
     assert 'class="ladder' not in html and 'js/ladder.js' not in html and expected in html
     staff = instructor.get(f'/student/module/{s}/{m11}/lesson/{l11}').get_data(as_text=True)
     assert 'data-ladder-sid' not in staff and 'js/ladder.js' not in staff
+
+
+def test_analytics_csv_includes_time_and_attempts_to_resolve(student, instructor, mod, app, lesson11):
+    import csv
+    from io import StringIO
+    from datetime import timedelta
+    uid = _reset(mod, app, "student1@lms.local")
+    s, m, l = lesson11
+    with app.app_context():
+        lm = mod.mastery_api.ladder.models
+        t0 = mod.utcnow() - timedelta(seconds=95)
+        st_row = lm.LadderState(
+            user_id=uid, section_id=s, course="ITSUP", label="1.1", sid=SID,
+            lesson_id=l, current="R2", tried_json="['R0', 'R1', 'R2']",
+            resolved="R2", misses=2, requests=1, adapted=False,
+            created_at=t0, updated_at=t0 + timedelta(seconds=90),
+        )
+        mod.db.session.add(st_row)
+        mod.db.session.add(lm.LadderEvent(
+            user_id=uid, section_id=s, course="ITSUP", label="1.1", sid=SID,
+            kind="check", rung="R0", correct=False, created_at=t0 + timedelta(seconds=15),
+        ))
+        mod.db.session.add(lm.LadderEvent(
+            user_id=uid, section_id=s, course="ITSUP", label="1.1", sid=SID,
+            kind="helix_offer", source="helix", created_at=t0 + timedelta(seconds=30),
+        ))
+        mod.db.session.add(lm.LadderEvent(
+            user_id=uid, section_id=s, course="ITSUP", label="1.1", sid=SID,
+            kind="check", rung="R1", correct=False, created_at=t0 + timedelta(seconds=50),
+        ))
+        mod.db.session.add(lm.LadderEvent(
+            user_id=uid, section_id=s, course="ITSUP", label="1.1", sid=SID,
+            kind="check", rung="R2", correct=True, created_at=t0 + timedelta(seconds=90),
+        ))
+        mod.db.session.add(lm.LadderEvent(
+            user_id=uid, section_id=s, course="ITSUP", label="1.1", sid=SID,
+            kind="resolved", rung="R2", created_at=t0 + timedelta(seconds=90),
+        ))
+        mod.db.session.commit()
+
+    r = instructor.get(f"/instructor/section/{s}/ladder?format=csv")
+    assert r.status_code == 200
+    rows = list(csv.DictReader(StringIO(r.get_data(as_text=True))))
+    assert rows
+    target = next(row for row in rows if row["lesson"] == "1.1" and "three kinds" in row["section"].lower())
+    assert float(target["median_seconds_to_resolve"]) == 90.0
+    assert float(target["mean_seconds_to_resolve"]) == 90.0
+    assert float(target["mean_attempts_to_resolve"]) == 3.0
+    assert int(target["helix_triggered"]) >= 1
+
+    html = instructor.get(f"/instructor/section/{s}/ladder").get_data(as_text=True)
+    assert "Median time to resolve" in html and "Mean attempts" in html and "90.0s" in html
+    _reset(mod, app, "student1@lms.local")

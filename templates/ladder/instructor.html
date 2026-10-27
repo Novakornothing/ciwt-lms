@@ -82,13 +82,15 @@
   {% endif %}
   {% if rows %}
   <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
-    <thead><tr><th scope="col">Section</th><th scope="col">Students</th><th scope="col">Needed another way</th><th scope="col">Missed the original's check</th><th scope="col">Saw every explanation</th><th scope="col">Resolved by</th><th scope="col">Most-picked mix-up</th><th scope="col"><span class="visually-hidden">Review</span></th></tr></thead>
+    <thead><tr><th scope="col">Section</th><th scope="col">Students</th><th scope="col">Needed another way</th><th scope="col">Missed the original's check</th><th scope="col">Saw every explanation</th><th scope="col">Median time to resolve</th><th scope="col">Mean attempts</th><th scope="col">Resolved by</th><th scope="col">Most-picked mix-up</th><th scope="col"><span class="visually-hidden">Review</span></th></tr></thead>
     <tbody>{% for r in rows[:40] %}<tr>
       <td data-label="Section">{{ r.heading }} <span class="small mx-muted">(lesson {{ r.label }})</span></td>
       <td data-label="Students">{{ r.students }}</td>
       <td data-label="Needed another way">{{ r.escalated }} ({{ r.escalation_rate }}%)</td>
       <td data-label="Missed the original's check">{% if r.r0_miss_rate is not none %}{{ r.r0_miss_rate }}% of {{ r.r0_answers }}{% if r.rewrite %} <span class="mx-badge mx-badge-req">Original may need rewriting</span>{% endif %}{% else %}—{% endif %}</td>
       <td data-label="Saw every explanation">{% if r.exhausted %}<span class="mx-badge mx-badge-req">{{ r.exhausted }}</span>{% else %}0{% endif %}</td>
+      <td data-label="Median time to resolve">{% if r.median_seconds_to_resolve is not none %}{{ r.median_seconds_to_resolve }}s{% else %}—{% endif %}</td>
+      <td data-label="Mean attempts">{% if r.mean_attempts_to_resolve is not none %}{{ r.mean_attempts_to_resolve }}{% else %}—{% endif %}</td>
       <td data-label="Resolved by">{% for k, n in r.resolved|dictsort %}{{ LABEL[k] }}: {{ n }}{% if not loop.last %}; {% endif %}{% else %}—{% endfor %}</td>
       <td data-label="Mix-up">{% for lbl, n in r.top_mc %}{{ lbl }} ({{ n }}){% if not loop.last %}; {% endif %}{% else %}—{% endfor %}</td>
       <td data-label="Review"><a href="{{ url_for('ladder_preview', section_id=section.id, label=r.label) }}#pv-{{ r.sid }}">Read its explanations<span class="visually-hidden"> for {{ r.heading }}</span></a></td>

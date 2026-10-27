@@ -1285,14 +1285,14 @@ html[data-theme="dark"] input[type="text"]::placeholder {
 .novak-lesson-progress-bar {
   position: sticky;
   top: var(--topbar-h, 64px);
-  z-index: 1022;
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  z-index: 1030;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
   backdrop-filter: blur(12px);
   border: 1px solid var(--surface-3);
   border-radius: 12px;
   margin-bottom: 0.9rem;
   box-shadow: 0 4px 20px rgba(6, 13, 24, 0.08);
-  overflow: hidden;
+  overflow: visible;
 }
 [data-theme="dark"] .novak-lesson-progress-bar {
   background: rgba(15, 23, 42, 0.92);
@@ -2262,11 +2262,11 @@ figure.novak-inline-r3-preview svg {
 @media (max-width: 767.98px) {
   html, body {
     max-width: 100vw !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
   }
   main, .container, .container-fluid, .novak-lesson-workspace, .lesson-layout, .curriculum-stage, .curriculum-card, #lessonBody {
     max-width: 100vw !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
     box-sizing: border-box !important;
   }
   main {
@@ -2364,5 +2364,142 @@ figure.novak-inline-r3-preview svg {
     left: 12px !important;
     right: auto !important;
     max-width: 46vw !important;
+  }
+}
+
+/* ==========================================================================
+   Wave 5 Audit Fixes:
+   - Unclipped Listen Popover (Desktop & Mobile)
+   - True Sticky & Compact (<115px) Mobile Lesson Topbar
+   - Touch-Scrollable Readable SVGs on Mobile (>=620px inner SVG width)
+   - Wide (>=220px) Mobile Lab Terminal Input
+   - Desktop 1440px Table Fit on /roi, /compliance, /instructor, /admin/tqi
+   ========================================================================== */
+.novak-reading-progress-track {
+  border-radius: 12px 12px 0 0;
+}
+
+@media (min-width: 992px) and (max-width: 1520px) {
+  .app-main .table th,
+  .app-main .table td {
+    padding: 0.38rem 0.45rem;
+    font-size: 0.81rem;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .novak-lesson-progress-bar {
+    top: 4px !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* Bug #1: Desktop & Mobile Listen Popover aligned to left of button on Desktop and below bar on Mobile */
+  .novak-listen-panel {
+    left: 0 !important;
+    right: auto !important;
+    top: calc(100% + 0.35rem) !important;
+    bottom: auto !important;
+    min-width: 0 !important;
+    width: min(310px, calc(100vw - 40px)) !important;
+    max-width: calc(100vw - 40px) !important;
+    z-index: 1085 !important;
+  }
+
+  /* Bug #7: Compact Sticky Lesson Header (<115px height on 390x844 mobile) */
+  .novak-lesson-progress-bar {
+    top: 0 !important;
+    border-radius: 0 0 10px 10px !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .novak-progress-inner {
+    padding: 0.32rem 0.55rem !important;
+    gap: 0.22rem 0.4rem !important;
+  }
+  .novak-where-am-i nav[aria-label="breadcrumb"],
+  .novak-report-issue-link {
+    display: none !important;
+  }
+  .novak-where-am-i {
+    width: 100%;
+    gap: 0.1rem !important;
+  }
+  .novak-lesson-topbar-title {
+    font-size: 0.88rem !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+  .novak-stepper-pill,
+  .novak-checks-pill {
+    font-size: 0.68rem !important;
+    padding: 0.1rem 0.45rem !important;
+  }
+  .novak-view-controls {
+    width: 100%;
+    flex-wrap: nowrap !important;
+    justify-content: space-between;
+    gap: 0.2rem !important;
+  }
+  .novak-view-controls .btn,
+  .novak-view-controls .btn-sm,
+  .novak-view-controls summary.btn {
+    min-height: 28px !important;
+    padding: 0.12rem 0.38rem !important;
+    font-size: 0.68rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* Bug #9: Touch-scrollable SVG diagrams on mobile so text renders at >=8.5px instead of 3.3px */
+  aside.novak-visual-blueprint,
+  figure.novak-inline-visual,
+  figure.novak-inline-r3-preview,
+  figure.novak-boot-svg-figure,
+  figure.novak-tech-diagram,
+  .pbq-wb-svg-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-width: 100% !important;
+  }
+  aside.novak-visual-blueprint svg.novak-arch-svg,
+  figure.novak-inline-visual svg.novak-inline-svg,
+  figure.novak-inline-r3-preview svg,
+  figure.novak-boot-svg-figure svg,
+  figure.novak-tech-diagram svg,
+  .pbq-wb-svg-wrap svg {
+    min-width: 620px !important;
+    width: 620px !important;
+    max-width: none !important;
+    height: auto !important;
+  }
+
+  /* Bug #12: Wide (>=220px) Terminal Input Box on Mobile Labs */
+  form.term-input-row,
+  #termForm.term-input-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 6px 8px !important;
+  }
+  .term-input-row .term-prompt,
+  #termPrompt {
+    font-size: 0.72rem !important;
+    max-width: 82px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+  }
+  #termInput,
+  input.term-input {
+    flex: 1 1 220px !important;
+    min-width: 220px !important;
+    width: auto !important;
+    font-size: 0.85rem !important;
   }
 }

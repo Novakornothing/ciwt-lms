@@ -56,7 +56,7 @@
     <p class="ladder-note small mb-2"><i class="bi bi-person-raised-hand" aria-hidden="true"></i> You have seen every explanation of this section. Your instructor can see it needs a conversation. You can look back at any of them:</p>
     {% endif %}
     {% if L.check and not (st.resolved and st.resolved == L.shown) %}
-      {% if L.is_milestone or v or L.feedback %}
+      {% if L.is_milestone %}
       <form class="ladder-check" method="post" action="{{ L.url_answer }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="check_id" value="{{ L.check.id }}">
@@ -72,13 +72,13 @@
         <button type="submit" class="btn btn-sm btn-brand ladder-submit">Check understanding</button>
       </form>
       {% else %}
-      <details class="ladder-optional-check">
+      <details class="ladder-optional-check"{% if v or L.feedback %} open{% endif %}>
         <summary class="ladder-optional-summary small fw-semibold"><i class="bi bi-patch-question me-1" aria-hidden="true"></i>Optional Self-Check: Practice this sub-concept (not required to advance)</summary>
         <form class="ladder-check mt-2" method="post" action="{{ L.url_answer }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="check_id" value="{{ L.check.id }}">
           <fieldset>
-            <legend><span class="ladder-check-tag">Quick check · not graded</span> <span class="ladder-q">{{ L.check.q }}</span></legend>
+            <legend><span class="ladder-check-tag">Optional sub-concept check · Quick check · not graded</span> <span class="ladder-q">{{ L.check.q }}</span></legend>
             {% for opt in L.check.options %}
             <div class="form-check ladder-opt">
               <input class="form-check-input" type="radio" name="answer" id="lq-{{ L.sid }}-{{ loop.index0 }}" value="{{ opt }}" required>
