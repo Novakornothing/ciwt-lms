@@ -51,6 +51,18 @@
     if (top) top.textContent = g.done + ' of ' + g.total;
     var pill = document.getElementById('checksPassedPill');
     if (pill) pill.textContent = g.done + ' / ' + g.total;
+    try {
+      var scormScore = g.total ? Math.round((g.done / g.total) * 100) : 100;
+      var scormStatus = (!g.blocked && g.done >= g.total) ? 'passed' : 'incomplete';
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'NOVAK_LMS_SCORM_EVENT',
+          status: scormStatus,
+          score: scormScore,
+          location: location.pathname
+        }, '*');
+      }
+    } catch (e) {}
     var bar = box.querySelector('[role="progressbar"]');
     bar.setAttribute('aria-valuenow', g.done);
     bar.firstElementChild.className = 'pf-w-' + Math.floor((100 * g.done / (g.total || 1)) / 5) * 5;

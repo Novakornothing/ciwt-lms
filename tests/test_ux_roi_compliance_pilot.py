@@ -388,3 +388,133 @@ def test_11_deep_windows_and_linux_boot_process_architecture_and_696_inline_svgs
             'journalctl -xb',
         ):
             assert lterm in lh, f'Missing {lterm} in {l91.title}'
+
+
+def test_12_wave6_ux_refinements_spec_drawer_step_style_lab_fullwidth_filter_and_dashboard(student, app, mod):
+    """Verify Wave 6 UX refinements:
+    1. Collapsible <details class="novak-spec-drawer"> + #novakStepStyleBar + collapsible <details class="novak-boot-quickcard">
+    2. Auto-collapsed #staffRail (is-lab-workbench staff-rail-collapsed) + top nav on /labs/<lab_id>
+    3. Live interactive filter bar (#labsFilterBar, #labsFilterSearch, course/kind/status pills) on /labs
+    4. De-duplicated /student dashboard with gp-hero-checklist and All 105 Live Labs.
+    """
+    with app.app_context():
+        c = mod.Course.query.filter_by(code="ITSUP").first()
+        sec = mod.ClassSection.query.filter_by(course_id=c.id).order_by(mod.ClassSection.id).first()
+        m1 = mod.Module.query.filter_by(course_id=c.id, order=1).first()
+        l1 = mod.Lesson.query.filter_by(module_id=m1.id, order=1).first()
+        m2 = mod.Module.query.filter_by(course_id=c.id, order=2).first()
+        l_boot = mod.Lesson.query.filter_by(module_id=m2.id, order=2).first()
+        url_1 = f"/student/module/{sec.id}/{m1.id}/lesson/{l1.id}"
+        url_boot = f"/student/module/{sec.id}/{m2.id}/lesson/{l_boot.id}"
+
+    les_html = student.get(url_1).get_data(as_text=True)
+    assert "<details class=\"novak-spec-drawer\">" in les_html
+    assert "id=\"novakStepStyleBar\"" in les_html
+    assert "data-step-rung=\"R1\"" in les_html
+
+    boot_html = student.get(url_boot).get_data(as_text=True)
+    assert "<details class=\"novak-boot-quickcard" in boot_html
+
+    lab_html = student.get("/labs/linux-gui-logs").get_data(as_text=True)
+    assert "is-lab-workbench staff-rail-collapsed" in lab_html
+    assert "All 105 Live Labs" in lab_html
+
+    catalog_html = student.get("/labs").get_data(as_text=True)
+    assert "id=\"labsFilterBar\"" in catalog_html
+    assert "id=\"labsFilterSearch\"" in catalog_html
+    assert "data-filter-course=\"ITSUP\"" in catalog_html
+    assert "data-filter-kind=\"linuxgui\"" in catalog_html
+    assert "data-filter-status=\"completed\"" in catalog_html
+
+    dash_html = student.get("/student").get_data(as_text=True)
+    assert "All 105 Live Labs" in dash_html
+    assert "gp-hero-checklist" in dash_html
+    assert dash_html.count("Continue where you left off") == 1
+
+
+def test_13_scorm_12_2004_zip_packages_and_adl_xapi_telemetry(anon, student):
+    """Verify SCORM 1.2 & 2004 .zip dispatch packages (/compliance/scorm/<course>.zip) and ADL xAPI 1.0.3 (/api/xapi/statements)."""
+    import io
+    import zipfile
+
+    for code in ("ITSUP", "NETOPS", "CLIENT", "ALL"):
+        r12 = anon.get(f"/compliance/scorm/{code}.zip?version=1.2")
+        assert r12.status_code == 200 and r12.mimetype == "application/zip"
+        with zipfile.ZipFile(io.BytesIO(r12.data), "r") as zf:
+            names = set(zf.namelist())
+            assert {"imsmanifest.xml", "index.html", "scorm_driver.js", "ile_metadata.json"} <= names
+            manifest = zf.read("imsmanifest.xml").decode("utf-8")
+            assert "<schemaversion>1.2</schemaversion>" in manifest
+            assert "adlcp:scormtype=\"sco\"" in manifest
+            drv = zf.read("scorm_driver.js").decode("utf-8")
+            assert "LMSInitialize" in drv and "NOVAK_LMS_SCORM_EVENT" in drv
+
+        r2004 = anon.get(f"/compliance/scorm/{code}.zip?version=2004")
+        assert r2004.status_code == 200 and r2004.mimetype == "application/zip"
+        with zipfile.ZipFile(io.BytesIO(r2004.data), "r") as zf:
+            manifest2004 = zf.read("imsmanifest.xml").decode("utf-8")
+            assert "<schemaversion>2004 4th Edition</schemaversion>" in manifest2004
+            assert "adlcp:scormType=\"sco\"" in manifest2004
+
+    rx = anon.get("/api/xapi/statements?limit=10")
+    assert rx.status_code == 200
+    assert rx.headers.get("X-Experience-API-Version") == "1.0.3"
+    data = rx.get_json()
+    assert data["version"] == "1.0.3"
+    assert len(data["statements"]) >= 1
+    st0 = data["statements"][0]
+    assert "actor" in st0 and "verb" in st0 and "object" in st0 and "result" in st0
+
+    comp_html = anon.get("/compliance").get_data(as_text=True)
+    assert "SCORM 1.2" in comp_html and "SCORM 2004" in comp_html and "ADL xAPI" in comp_html
+
+
+def test_14_legal_terms_dmca_liability_shield_oss_audit_and_no_official_comptia_claim(anon, student):
+    """Verify:
+    1. Zero positive 'Official CompTIA Practice Exam' or 'Official CompTIA' claims anywhere in active templates/modules.
+    2. WebAssembly & VM Emulation Layer OSS License Audit (/compliance/oss-licenses) verifies MIT/Apache-2.0/BSD-2-Clause and zero GPLv3 in static/vendor/webgazer.js.
+    3. Terms of Service (/terms, /terms.html, /dmca) includes the Enterprise Account & Instructor Content Liability Shield and DMCA Safe Harbor Take-Down Protocol (17 U.S.C. § 512).
+    """
+    # 1. Check /terms and /dmca
+    for route in ("/terms", "/terms.html", "/dmca"):
+        r = anon.get(route)
+        assert r.status_code == 200
+        html = r.get_data(as_text=True)
+        for token in (
+            "Enterprise Account &amp; Uploading Instructor Content Liability Shield",
+            "exclusively on the individual Enterprise Account and the uploading Instructor",
+            "defend, indemnify, and hold harmless Novak Learning",
+            "17 U.S.C. § 512",
+            "Standardized DMCA Notice &amp; Take-Down Protocol",
+            "dmca@novakornothing.com",
+            "BSD-2-Clause",
+            "Apache-2.0",
+            "Independent Trademark &amp; Non-Affiliation Disclaimer",
+        ):
+            assert token in html, f"Missing {token} in {route}"
+
+    # 2. Check /compliance/oss-licenses
+    ross = anon.get("/compliance/oss-licenses")
+    assert ross.status_code == 200
+    oss = ross.get_json()
+    assert oss["zero_gpl_host_runtime"] is True
+    assert "BSD-2-Clause" in oss["commercial_whitelabel_status"]
+    wg_text = (ROOT / "static/vendor/webgazer.js").read_text(encoding="utf-8")
+    assert "Licensed under GPLv3" not in wg_text
+    assert "MIT / Novak Learning Proprietary" in wg_text
+    assert (ROOT / "THIRD_PARTY_LICENSES.md").exists()
+    assert (ROOT / "static/vendor/v86/SOURCES.txt").exists()
+
+    # 3. Verify nothing says "Official CompTIA Practice Exam" or positive "Official CompTIA"
+    for p in list((ROOT / "templates").rglob("*.html")) + list((ROOT / "curriculum_v2").rglob("*.py")):
+        txt = p.read_text(encoding="utf-8", errors="ignore").lower()
+        assert "official comptia practice exam" not in txt, f"Found forbidden phrase in {p}"
+        # Any occurrence of 'official comptia' must be preceded by 'not an ' or 'not '
+        idx = 0
+        while True:
+            pos = txt.find("official comptia", idx)
+            if pos == -1:
+                break
+            prefix = txt[max(0, pos - 12):pos]
+            assert "not " in prefix, f"Positive 'official comptia' found in {p} at {pos}: {txt[max(0,pos-30):pos+40]}"
+            idx = pos + 16

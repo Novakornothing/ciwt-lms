@@ -12,6 +12,8 @@
       <a class="btn btn-brand btn-sm" href="{{ url_for('compliance_export', standard='vpat', format='json') }}"><i class="bi bi-download" aria-hidden="true"></i> Export VPAT 2.5 (JSON)</a>
       <a class="btn btn-outline-light btn-sm" href="{{ url_for('compliance_export', standard='hecvat', format='json') }}"><i class="bi bi-download" aria-hidden="true"></i> Export HECVAT (JSON)</a>
       <a class="btn btn-outline-light btn-sm" href="{{ url_for('compliance_export', standard='soc2', format='json') }}"><i class="bi bi-download" aria-hidden="true"></i> Export SOC 2 Matrix (JSON)</a>
+      <a class="btn btn-outline-light btn-sm" href="{{ url_for('terms_of_service') }}"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Terms, DMCA &amp; Liability Shield</a>
+      <a class="btn btn-outline-light btn-sm" href="{{ url_for('oss_licenses_json') }}"><i class="bi bi-code-slash" aria-hidden="true"></i> WASM/OSS License Audit (JSON)</a>
       <a class="btn btn-outline-gold btn-sm" href="{{ url_for('pilot_start') }}"><i class="bi bi-rocket-takeoff" aria-hidden="true"></i> Start 30-Day / 30-Student Free Bundle</a>
     </div>
   </div>
@@ -157,6 +159,65 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4" id="scorm-xapi-ile">
+  <div class="card-header navy d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2 class="h6 mb-0">4. DoD Navy ILE, SCORM 1.2 / 2004 (4th Ed), ADL xAPI (IEEE 9274.1.1 / cmi5) &amp; LTI 1.3 Interoperability Bridge</h2>
+    <div class="d-flex flex-wrap gap-1">
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('xapi_statements_endpoint') }}">Live xAPI 1.0.3 Telemetry (JSON)</a>
+      <a class="btn btn-sm btn-outline-gold" href="{{ url_for('scorm_package_download', course_code='ALL', version='2004') }}"><i class="bi bi-file-earmark-zip" aria-hidden="true"></i> All Courses SCORM 2004 (.zip)</a>
+    </div>
+  </div>
+  <div class="card-body">
+    <p class="small text-muted mb-3">
+      Engineered for zero-friction deployment across <strong>DoD / U.S. Navy Integrated Learning Environment (ILE)</strong>, <strong>Ready Relevant Learning (RRL)</strong>, <strong>JKO</strong>, <strong>Canvas</strong>, <strong>Blackboard Learn Ultra</strong>, <strong>Moodle</strong>, <strong>D2L Brightspace</strong>, and enterprise LMS platforms. Download ready-to-import SCORM 1.2 or SCORM 2004 (4th Edition) dispatch packages with real-time <code>NOVAK_LMS_SCORM_EVENT</code> score/completion synchronization and official <strong>ADL xAPI 1.0.3 (`IEEE 9274.1.1-2023` / `cmi5`)</strong> Learning Record Store (LRS) telemetry.
+    </p>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="p-3 border rounded h-100">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="badge text-bg-primary">ITSUP · CompTIA A+</span>
+            <code class="small">CIN: A-150-2201</code>
+          </div>
+          <h3 class="h6 fw-bold mb-1">IT Support (220-1201 / 220-1202)</h3>
+          <p class="small text-muted mb-2">13 chapters · 58 visual lessons · Ubuntu GNOME GUI &amp; Windows 11 workbenches.</p>
+          <div class="d-flex flex-wrap gap-1">
+            <a class="btn btn-sm btn-brand" href="{{ url_for('scorm_package_download', course_code='ITSUP', version='1.2') }}"><i class="bi bi-download" aria-hidden="true"></i> SCORM 1.2 (.zip)</a>
+            <a class="btn btn-sm btn-outline-navy" href="{{ url_for('scorm_package_download', course_code='ITSUP', version='2004') }}">SCORM 2004 (.zip)</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3 border rounded h-100">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="badge text-bg-primary">NETOPS · Network+</span>
+            <code class="small">CIN: A-150-0009</code>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Network Operations (N10-009)</h3>
+          <p class="small text-muted mb-2">7 chapters · 33 visual lessons · Cisco IOS Switch/Router CLI &amp; 24 Linux VMs.</p>
+          <div class="d-flex flex-wrap gap-1">
+            <a class="btn btn-sm btn-brand" href="{{ url_for('scorm_package_download', course_code='NETOPS', version='1.2') }}"><i class="bi bi-download" aria-hidden="true"></i> SCORM 1.2 (.zip)</a>
+            <a class="btn btn-sm btn-outline-navy" href="{{ url_for('scorm_package_download', course_code='NETOPS', version='2004') }}">SCORM 2004 (.zip)</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3 border rounded h-100">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="badge text-bg-primary">CLIENT · Tech+ / OS</span>
+            <code class="small">CIN: A-150-0071</code>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Client Systems (FC0-U71)</h3>
+          <p class="small text-muted mb-2">6 chapters · 24 visual lessons · Windows 11 GUI &amp; Ubuntu GNOME desktop labs.</p>
+          <div class="d-flex flex-wrap gap-1">
+            <a class="btn btn-sm btn-brand" href="{{ url_for('scorm_package_download', course_code='CLIENT', version='1.2') }}"><i class="bi bi-download" aria-hidden="true"></i> SCORM 1.2 (.zip)</a>
+            <a class="btn btn-sm btn-outline-navy" href="{{ url_for('scorm_package_download', course_code='CLIENT', version='2004') }}">SCORM 2004 (.zip)</a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

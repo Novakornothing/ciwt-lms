@@ -4347,12 +4347,12 @@
     "linux-vm-perf",
     "linux-vm-services",
     "linux-vm-ssh",
+    "linux-gui-disks",
     "linux-vm-shell",
     "linux-shell",
     "linux-vm-perms",
     "linux-vm-cron",
-    "linux-vm-script",
-    "linux-gui-disks"
+    "linux-vm-script"
    ],
    "lessons": [
     "ITSUP 8.1",
@@ -4719,9 +4719,9 @@
     "w11-firewall",
     "gui-renew",
     "print-trouble",
-    "linux-vm-perms",
     "linux-gui-network",
-    "linux-gui-firewall"
+    "linux-gui-firewall",
+    "linux-vm-perms"
    ],
    "lessons": [
     "ITSUP 13.5",
@@ -4793,14 +4793,18 @@
    "labs": [
     "linux-vm-web",
     "linux-vm-logs",
-    "linux-vm-shell",
-    "linux-shell",
-    "linux-vm-cron",
-    "linux-vm-script",
     "linux-gui-network",
     "linux-gui-disks",
     "linux-gui-firewall",
-    "linux-gui-users"
+    "linux-gui-users",
+    "linux-gui-logs",
+    "linux-gui-processes",
+    "linux-gui-packages",
+    "linux-gui-ssh",
+    "linux-vm-shell",
+    "linux-shell",
+    "linux-vm-cron",
+    "linux-vm-script"
    ],
    "lessons": [
     "ITSUP 9.2",
@@ -4850,15 +4854,19 @@
     "rtr-trace",
     "linux-vm-services",
     "linux-vm-ssh",
+    "linux-gui-network",
+    "linux-gui-disks",
+    "linux-gui-firewall",
+    "linux-gui-users",
+    "linux-gui-logs",
+    "linux-gui-processes",
+    "linux-gui-packages",
+    "linux-gui-ssh",
     "linux-vm-shell",
     "linux-shell",
     "linux-vm-perms",
     "linux-vm-cron",
     "linux-vm-script",
-    "linux-gui-network",
-    "linux-gui-disks",
-    "linux-gui-firewall",
-    "linux-gui-users",
     "linux-vm-restore"
    ],
    "lessons": [
@@ -5015,9 +5023,9 @@
     "linux-vm-firewall",
     "linux-vm-perf",
     "linux-vm-ssh",
-    "linux-vm-shell",
     "linux-gui-firewall",
-    "linux-gui-users"
+    "linux-gui-users",
+    "linux-vm-shell"
    ],
    "lessons": [
     "ITSUP 8.2",
@@ -5799,7 +5807,9 @@
    "labs": [
     "linux-vm-logs",
     "linux-vm-ssh",
-    "linux-gui-firewall"
+    "linux-gui-firewall",
+    "linux-gui-logs",
+    "linux-gui-ssh"
    ],
    "lessons": [
     "ITSUP 9.3",

@@ -21,7 +21,7 @@ readiness badge.</p>
   <fieldset class="mb-3"><legend class="h6">Length</legend>
     {% for k, m in modes.items() if not m.hidden %}
     <div class="form-check"><input class="form-check-input" type="radio" name="mode" id="mode-{{ k }}" value="{{ k }}" {% if k == 'full' %}checked{% endif %}>
-      <label class="form-check-label" for="mode-{{ k }}">{{ m.name }} — {{ minutes_for(k, mult) }} min, {{ m.questions }} questions, {{ m.pbqs }} PBQs first</label></div>
+      <label class="form-check-label" for="mode-{{ k }}">{{ ('Full 90-question exam-length sitting' if k == 'max' else m.name) }} — {{ minutes_for(k, mult) }} min, {{ m.questions }} questions, {{ m.pbqs }} PBQs first</label></div>
     {% endfor %}
   </fieldset>
   <fieldset class="mb-3"><legend class="h6">Timing</legend>
@@ -42,5 +42,7 @@ readiness badge.</p>
   <td><a href="{{ url_for('exam_sim_result' if a.submitted_at else 'exam_sim_take', section_id=section.id, attempt_id=a.id) }}">{{ 'Results' if a.submitted_at else 'Resume' }}</a></td>
 </tr>{% endfor %}</tbody></table>
 {% endif %}
-<p class="small text-muted">{{ disclaimer }} Scaled scores are simulated (CompTIA does not publish its scaling).</p>
+<div class="alert alert-secondary small mt-3 mb-0" role="note">
+  <strong>Independent Readiness Simulator &amp; Non-Affiliation Notice:</strong> {{ disclaimer }} Scaled scores (100–900) are simulated for readiness planning only — <strong>not an official CompTIA exam or vendor score report</strong>. Novak LMS™ is an independent training platform; CompTIA®, A+®, Network+®, Security+®, Tech+®, Cisco®, and Microsoft® are registered trademarks of their respective owners, which do not sponsor, authorize, or endorse this platform.
+</div>
 {% endblock %}

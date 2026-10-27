@@ -158,26 +158,59 @@
       return groupKeys.map(function (k) { return groupsMap[k]; });
     }
 
-    // 1. Keep <aside class="novak-visual-blueprint"> open and visible at the top of the lesson
+    // 1. Streamline <aside class="novak-visual-blueprint"> & <article class="novak-boot-deep-dive">
+    //    so the SVG diagram is visible while reference tables/watchouts sit in a clean collapsible drawer
     var blueprint = lessonBody.querySelector('aside.novak-visual-blueprint');
     if (blueprint && !blueprint.hasAttribute('data-ux-enhanced')) {
       blueprint.setAttribute('data-ux-enhanced', '1');
-      var specWrap = blueprint.querySelector('.novak-spec-table-wrap');
-      var header = blueprint.querySelector('.novak-visual-header');
-      if (specWrap && header) {
-        var toggleSpecBtn = document.createElement('button');
-        toggleSpecBtn.type = 'button';
-        toggleSpecBtn.className = 'btn btn-sm btn-outline-navy ms-auto';
-        toggleSpecBtn.setAttribute('aria-expanded', 'true');
-        toggleSpecBtn.textContent = 'Compact Spec Table';
-        toggleSpecBtn.addEventListener('click', function () {
-          var hidden = specWrap.classList.toggle('d-none');
-          toggleSpecBtn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
-          toggleSpecBtn.textContent = hidden ? 'Expand 5-Row Spec Table' : 'Compact Spec Table';
-        });
-        header.appendChild(toggleSpecBtn);
+      if (!blueprint.querySelector('details.novak-spec-drawer')) {
+        var specWrap = blueprint.querySelector('.novak-spec-table-wrap');
+        var watchout = blueprint.querySelector('details.novak-field-watchout');
+        if (specWrap) {
+          var drawer = document.createElement('details');
+          drawer.className = 'novak-spec-drawer';
+          var sum = document.createElement('summary');
+          sum.className = 'novak-spec-drawer-summary';
+          sum.innerHTML = '<i class="bi bi-table me-1" aria-hidden="true"></i><strong>Technical Specification Table &amp; Field Watchout</strong> <span class="novak-spec-drawer-hint">Expand 5-row spec reference &amp; field watchout ▾</span>';
+          var bodyDiv = document.createElement('div');
+          bodyDiv.className = 'novak-spec-drawer-body pt-2';
+          specWrap.parentNode.insertBefore(drawer, specWrap);
+          bodyDiv.appendChild(specWrap);
+          if (watchout) {
+            watchout.setAttribute('open', '');
+            bodyDiv.appendChild(watchout);
+          }
+          drawer.appendChild(sum);
+          drawer.appendChild(bodyDiv);
+        }
       }
     }
+
+    Array.prototype.slice.call(lessonBody.querySelectorAll('article.novak-boot-deep-dive')).forEach(function (art) {
+      if (art.hasAttribute('data-ux-enhanced')) return;
+      art.setAttribute('data-ux-enhanced', '1');
+      var bootFig = art.querySelector('figure.novak-boot-svg-figure');
+      if (!bootFig) return;
+      var rest = [];
+      var sib = bootFig.nextElementSibling;
+      while (sib) {
+        rest.push(sib);
+        sib = sib.nextElementSibling;
+      }
+      if (rest.length) {
+        var bDrawer = document.createElement('details');
+        bDrawer.className = 'novak-spec-drawer mt-2';
+        var bSum = document.createElement('summary');
+        bSum.className = 'novak-spec-drawer-summary';
+        bSum.innerHTML = '<i class="bi bi-cpu me-1" aria-hidden="true"></i><strong>6-Stage Boot Pipeline Deep-Dive Table, Fault Codes &amp; WinRE/GRUB Recovery Commands</strong> <span class="novak-spec-drawer-hint">Click to expand full reference ▾</span>';
+        var bBody = document.createElement('div');
+        bBody.className = 'novak-spec-drawer-body pt-2';
+        rest.forEach(function (el) { bBody.appendChild(el); });
+        bDrawer.appendChild(bSum);
+        bDrawer.appendChild(bBody);
+        art.appendChild(bDrawer);
+      }
+    });
 
     // 2. Guided Step Flow (Default ON: 4 Cohesive Concept Steps per lesson, each showing 3-5 sub-sections + inline visuals + 1 Milestone Check)
     var activeIdx = 0;
@@ -213,11 +246,21 @@
         });
       });
 
-      // Keep inline visual figures & boot deep dive visible on their corresponding steps (or always visible in Full mode)
+      if (blueprint) {
+        blueprint.classList.toggle('d-none', focusMode && activeIdx !== 0);
+      }
+
+      // Show inline visual figures on their corresponding steps (Step 2 -> fig 0, Step 3 -> fig 1, Step 4 -> fig 2)
       var inlineFigs = Array.prototype.slice.call(lessonBody.querySelectorAll('figure.novak-inline-visual'));
       inlineFigs.forEach(function (fig, fIdx) {
-        var targetStep = Math.min(totalSteps - 1, fIdx);
-        fig.classList.toggle('d-none', focusMode && activeIdx !== targetStep && activeIdx !== 0);
+        var targetStep = Math.min(totalSteps - 1, fIdx + 1);
+        fig.classList.toggle('d-none', focusMode && activeIdx !== targetStep);
+      });
+
+      var bootArticles = Array.prototype.slice.call(lessonBody.querySelectorAll('article.novak-boot-deep-dive'));
+      bootArticles.forEach(function (art, aIdx) {
+        var targetStep = Math.min(totalSteps - 1, aIdx + 1);
+        art.classList.toggle('d-none', focusMode && activeIdx !== targetStep);
       });
 
       var labSec = document.getElementById('chapter-lab');
@@ -360,6 +403,31 @@
         }
       });
     });
+
+    // 4b. Step-Level Learning Style Switcher (#novakStepStyleBar)
+    var stepStyleBar = document.getElementById('novakStepStyleBar');
+    if (stepStyleBar) {
+      var styleBtns = Array.prototype.slice.call(stepStyleBar.querySelectorAll('[data-step-rung]'));
+      styleBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var rung = btn.getAttribute('data-step-rung') || 'R0';
+          styleBtns.forEach(function (b) {
+            var act = b === btn;
+            b.classList.toggle('is-active', act);
+            b.setAttribute('aria-pressed', act ? 'true' : 'false');
+          });
+          var groups = getStepGroups();
+          var targetCards = (focusMode && groups[activeIdx]) ? groups[activeIdx] : getSectionBlocks();
+          targetCards.forEach(function (card, idx) {
+            if (card.getAttribute('data-shown') === rung) return;
+            var pill = card.querySelector('.novak-rung-pill[data-rung-pick="' + rung + '"]');
+            if (pill) {
+              setTimeout(function () { pill.click(); }, idx * 45);
+            }
+          });
+        });
+      });
+    }
 
     // 5. Windows Boot Process Streamlined Summary Mode button
     var bootBtn = document.getElementById('toggleBootConciseBtn');

@@ -1,10 +1,20 @@
 {# Shared lab list row: kind tag, title, one-line purpose, progress, chevron.
    Import with: {% from '_lab_row.html' import lab_row %}  — pass prog (lab_progress row or None) to show progress. #}
 {% macro lab_row(lab, sub=None, show_kind=True, prog=None, href=None, sme=None) %}
-  <a class="list-group-item list-group-item-action lab-row{{ ' no-kind' if not show_kind }}" href="{{ href or url_for('interactive_lab', lab_id=lab.id) }}">
-    {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ {'win11gui': 'GUI', 'activity': 'ACTIVITY', 'classroom': 'CLASSROOM', 'vm': 'REAL VM'}.get(lab.kind, lab.kind|upper) }}</span>{% endif %}
+  {% set s = sub or lab.align or lab.blurb or '' %}
+  {% set is_done = true if (prog and prog.completed_at) else false %}
+  {% set courses_csv = (lab.courses|join(',')) if lab.courses is defined and lab.courses else 'ITSUP,NETOPS,CLIENT' %}
+  {% set objs_csv = (lab.course_objectives|join(' ')) if lab.course_objectives is defined and lab.course_objectives else '' %}
+  <a class="list-group-item list-group-item-action lab-row{{ ' no-kind' if not show_kind }}"
+     href="{{ href or url_for('interactive_lab', lab_id=lab.id) }}"
+     data-lab-id="{{ lab.id }}"
+     data-lab-kind="{{ lab.kind }}"
+     data-lab-courses="{{ courses_csv }}"
+     data-lab-status="{{ 'completed' if is_done else 'remaining' }}"
+     data-lab-search="{{ (lab.id ~ ' ' ~ lab.title ~ ' ' ~ s ~ ' ' ~ objs_csv ~ ' ' ~ (lab.kind_label or lab.kind))|lower }}">
+    {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ {'win11gui': 'WIN11 GUI', 'linuxgui': 'UBUNTU GUI + BASH', 'activity': 'ACTIVITY', 'classroom': 'CLASSROOM', 'vm': 'REAL VM'}.get(lab.kind, lab.kind|upper) }}</span>{% endif %}
     <span class="lab-row-main"><span class="lab-row-title">{{ lab.title }}{% if sme %} <span class="badge text-bg-success ms-1">Verified</span> <span class="lab-sme-tag visually-hidden">{{ sme }}</span>{% endif %}</span>
-      {% set s = sub or lab.align or lab.blurb %}{% if s %}<span class="lab-row-sub">{{ s }}</span>{% endif %}</span>
+      {% if s %}<span class="lab-row-sub">{{ s }}</span>{% endif %}</span>
     {% if prog %}
       {% set pct = [prog.best_score or 0, prog.score or 0]|max %}
       {% if prog.completed_at %}<span class="lab-row-prog done"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Done{% if pct < 100 %} · {{ pct|round|int }}%{% endif %}</span>

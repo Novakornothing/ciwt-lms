@@ -1473,7 +1473,7 @@ def render_visual_blueprint(course_code: str, ch_order: int, les_order: int, les
     svg_html = (
         f'<svg viewBox="0 0 760 175" width="100%" role="img" '
         f'aria-label="{escape(arch_title)}" class="novak-arch-svg" '
-        f'style="display:block;height:auto;max-width:100%;background:linear-gradient(180deg,#0b1120 0%,#111827 100%);border:1px solid rgba(56,189,248,0.28);border-radius:10px;margin:0.5rem 0 0.85rem 0">'
+        f'style="display:block;height:auto;max-width:100%;background:linear-gradient(180deg,#0b1120 0%,#111827 100%);border:1px solid rgba(56,189,248,0.28);border-radius:10px;margin:0.35rem 0 0.45rem 0">'
         f'<defs>'
         f'<linearGradient id="{grad_id}" x1="0%" y1="0%" x2="100%" y2="0%">'
         f'<stop offset="0%" stop-color="#38bdf8" stop-opacity="0.22"/>'
@@ -1521,7 +1521,7 @@ def render_visual_blueprint(course_code: str, ch_order: int, les_order: int, les
     )
 
     watchout_html = (
-        f'<details class="novak-field-watchout" style="margin-top:0.65rem;padding:0.6rem 0.85rem;background:rgba(251,191,36,0.09);border-left:4px solid #fbbf24;border-radius:0 8px 8px 0">'
+        f'<details class="novak-field-watchout" open style="margin-top:0.65rem;padding:0.6rem 0.85rem;background:rgba(251,191,36,0.09);border-left:4px solid #fbbf24;border-radius:0 8px 8px 0">'
         f'<summary style="cursor:pointer;font-weight:700;font-size:0.9rem">'
         f'Exam &amp; Field Watchout — {escape(watch_title)}</summary>'
         f'<p style="margin:0.45rem 0 0 0;font-size:0.88rem;line-height:1.5">{escape(watch_body)}</p>'
@@ -1531,14 +1531,19 @@ def render_visual_blueprint(course_code: str, ch_order: int, les_order: int, les
     return (
         f'\n<aside class="novak-visual-blueprint" id="{aside_id}" '
         f'aria-label="Visual Architecture &amp; Technical Reference" '
-        f'style="margin:1.25rem 0;padding:1rem 1.15rem;border:1px solid rgba(56,189,248,0.3);border-radius:12px;background:rgba(15,23,42,0.04)">'
-        f'<div class="novak-visual-header" style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem">'
-        f'<h4 style="margin:0;font-size:1rem;font-weight:700">Visual Architecture &amp; Technical Spec Reference — {escape(arch_title)}</h4>'
-        f'<span class="badge" style="font-family:ui-monospace,Consolas,monospace;font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:6px;background:rgba(56,189,248,0.15);color:#0284c7">{escape(code)} · Ch {ch_i} · Lesson {les_i}</span>'
+        f'style="margin:0.65rem 0 0.85rem 0;padding:0.75rem 1rem;border:1px solid rgba(56,189,248,0.3);border-radius:12px;background:rgba(15,23,42,0.03)">'
+        f'<div class="novak-visual-header" style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.25rem">'
+        f'<h4 style="margin:0;font-size:0.95rem;font-weight:700">Visual Architecture &amp; Technical Spec Reference — {escape(arch_title)}</h4>'
+        f'<span class="badge" style="font-family:ui-monospace,Consolas,monospace;font-size:0.72rem;padding:0.18rem 0.48rem;border-radius:6px;background:rgba(56,189,248,0.15);color:#0284c7">{escape(code)} · Ch {ch_i} · Lesson {les_i}</span>'
         f'</div>'
         f'{svg_html}'
+        f'<details class="novak-spec-drawer">'
+        f'<summary class="novak-spec-drawer-summary"><i class="bi bi-table me-1" aria-hidden="true"></i><strong>Technical Specification Table &amp; Field Watchout</strong> <span class="novak-spec-drawer-hint">Expand 5-row spec reference &amp; field watchout ▾</span></summary>'
+        f'<div class="novak-spec-drawer-body pt-2">'
         f'{table_html}'
         f'{watchout_html}'
+        f'</div>'
+        f'</details>'
         f'</aside>\n'
     )
 

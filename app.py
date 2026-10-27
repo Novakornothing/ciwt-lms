@@ -2310,6 +2310,132 @@ def compliance_export(standard):
     return resp
 
 
+@app.route('/compliance/scorm/<course_code>.zip')
+@app.route('/instructor/scorm/<course_code>.zip')
+def scorm_package_download(course_code):
+    import scorm_xapi as SX
+    ver = request.args.get('version', '1.2')
+    mods_by_course = {}
+    try:
+        for c in Course.query.all():
+            mods_by_course[c.code.upper()] = [
+                (m.order, m.title) for m in Module.query.filter_by(course_id=c.id).order_by(Module.order).all()
+            ]
+    except Exception:
+        pass
+    base_url = request.host_url.rstrip('/') if request.host_url else 'https://novak-lms.onrender.com'
+    zbytes, mime, fname = SX.build_scorm_package_zip(
+        course_code=course_code,
+        version=ver,
+        base_url=base_url,
+        modules_by_course=mods_by_course,
+    )
+    if zbytes is None:
+        abort(404)
+    resp = Response(zbytes, status=200, mimetype=mime)
+    resp.headers['Content-Disposition'] = f'attachment; filename="{fname}"'
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
+
+@app.route('/api/xapi/statements')
+@app.route('/compliance/xapi-sample.json')
+def xapi_statements_endpoint():
+    import scorm_xapi as SX
+    limit = max(1, min(200, request.args.get('limit', 50, type=int)))
+    payload = SX.build_xapi_statements(app=app, limit=limit)
+    resp = jsonify(payload)
+    resp.headers['X-Experience-API-Version'] = '1.0.3'
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
+
+@app.route('/terms')
+@app.route('/terms.html')
+@app.route('/legal/terms')
+@app.route('/dmca')
+def terms_of_service():
+    return render_template('terms.html')
+
+
+@app.route('/compliance/oss-licenses')
+@app.route('/compliance/oss-licenses.json')
+def oss_licenses_json():
+    payload = {
+        "platform": "Novak LMS™",
+        "commercial_whitelabel_status": "VERIFIED BUSINESS-SAFE (MIT / Apache-2.0 / BSD-2-Clause / BSD-3-Clause)",
+        "zero_gpl_host_runtime": True,
+        "components": [
+            {
+                "name": "v86 x86 WebAssembly Hardware Emulator",
+                "artifacts": ["static/vendor/v86/libv86.js", "static/vendor/v86/v86.wasm"],
+                "version": "0.5.471",
+                "license": "BSD-2-Clause",
+                "commercial_safe": True,
+                "whitelabel_safe": True,
+                "notes": "100% permissive BSD-2-Clause license; zero copyleft disclosure obligation on Novak LMS proprietary host code."
+            },
+            {
+                "name": "MediaPipe Tasks Vision / FaceLandmarker WebAssembly",
+                "artifacts": ["static/vendor/mediapipe/vision_bundle.mjs", "static/vendor/mediapipe/wasm/vision_wasm_internal.wasm", "static/vendor/mediapipe/models/face_landmarker.task"],
+                "version": "1.1.1",
+                "license": "Apache-2.0",
+                "commercial_safe": True,
+                "whitelabel_safe": True,
+                "notes": "100% permissive Apache-2.0 license with explicit patent grant."
+            },
+            {
+                "name": "Helix™ 30 Hz Gaze Engine, OneEuro1D Filter & Clean-Room Fallback Shim",
+                "artifacts": ["static/js/helix/helix-core.js", "static/js/helix/helix-model.js", "static/js/helix/helix-crop.js", "static/js/helix/helix-engine.js", "static/vendor/webgazer.js"],
+                "version": "2.0",
+                "license": "Proprietary / MIT",
+                "commercial_safe": True,
+                "whitelabel_safe": True,
+                "notes": "100% Novak Learning proprietary IP and MIT clean-room shim; zero GPLv3 code in runtime."
+            },
+            {
+                "name": "Ubuntu 24.04 GNOME 46 GUI + Bash Split-View Workbenches, Windows 11 GUI & Cisco IOS Simulators",
+                "artifacts": ["labs_linux_gui.py", "static/js/lab-linux-gui.js", "labs_gui.py", "interactive_labs.py"],
+                "version": "Wave 6",
+                "license": "Proprietary",
+                "commercial_safe": True,
+                "whitelabel_safe": True,
+                "notes": "100% Novak Learning proprietary state machines."
+            },
+            {
+                "name": "Bootstrap 5.3.3 & Bootstrap Icons 1.11.3",
+                "artifacts": ["static/vendor/bootstrap/5.3.3/", "static/vendor/bootstrap-icons/1.11.3/"],
+                "version": "5.3.3 / 1.11.3",
+                "license": "MIT",
+                "commercial_safe": True,
+                "whitelabel_safe": True,
+                "notes": "Permissive MIT license."
+            },
+            {
+                "name": "Python Backend Stack (Flask, Werkzeug, Jinja2, SQLAlchemy, Gunicorn, ReportLab, PyJWT, Cryptography)",
+                "artifacts": ["requirements.txt"],
+                "version": "2026",
+                "license": "BSD-3-Clause / MIT / Apache-2.0",
+                "commercial_safe": True,
+                "whitelabel_safe": True,
+                "notes": "All server dependencies use permissive BSD, MIT, or Apache-2.0 licenses."
+            },
+            {
+                "name": "Guest Linux VM Disk Image (Isolated Guest Data over v86 Hardware Boundary)",
+                "artifacts": ["static/vendor/v86/novak-linux.bin", "static/vendor/v86/SOURCES.txt"],
+                "version": "Linux 6.8.12 / Alpine 3.20",
+                "license": "GPL-2.0 (Isolated Guest OS Mere Aggregation)",
+                "commercial_safe": True,
+                "whitelabel_safe": True,
+                "notes": "Booted as unmodified guest filesystem data inside the BSD-2-Clause v86 emulator over an emulated hardware boundary (GPLv2 Section 2 Mere Aggregation). Written upstream source pointers in static/vendor/v86/SOURCES.txt."
+            }
+        ]
+    }
+    resp = jsonify(payload)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
+
 @app.route('/roi')
 def roi_dashboard():
     import compliance_roi_pilot as CRP

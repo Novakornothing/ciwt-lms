@@ -36,6 +36,33 @@ def get_lab(lab_id):
     return IL.get_lab(lab_id)
 
 
+def _courses_for_lab(lab):
+    courses = set()
+    lid = lab.get("id", "")
+    for (cc, _ch), lids in getattr(IL, "CHAPTER_LABS", {}).items():
+        if lid in (lids or []):
+            courses.add(cc)
+    for (cc, _ch, _les), lids in getattr(IL, "LESSON_LABS", {}).items():
+        if lid in (lids or []):
+            courses.add(cc)
+    for code in lab.get("course_objectives") or []:
+        cu = str(code).upper()
+        if cu.startswith("IT"):
+            courses.add("ITSUP")
+        elif cu.startswith("NET") or cu.startswith("N10"):
+            courses.add("NETOPS")
+        elif cu.startswith("CS") or cu.startswith("FC0") or cu.startswith("CLI"):
+            courses.add("CLIENT")
+    kind = lab.get("kind", "")
+    if kind in ("switch", "router"):
+        courses.add("NETOPS")
+    elif kind in ("win11gui", "linuxgui", "windows", "linux"):
+        courses.update(("ITSUP", "CLIENT"))
+    if not courses:
+        courses.add("ITSUP")
+    return sorted(courses)
+
+
 def list_labs():
     out = []
     for lab in IL.LABS:
@@ -44,7 +71,8 @@ def list_labs():
         out.append({"id": lab["id"], "title": lab["title"], "kind": lab["kind"], "kind_label": KIND_LABEL.get(lab["kind"], lab["kind"]),
                     "blurb": lab.get("blurb") or "", "builds_on": lab.get("builds_on") or [],
                     "objectives": len(lab["objectives"]), "minutes": lab.get("minutes") or 10 + 3 * len(lab["objectives"]),
-                    "course_objectives": lab.get("course_objectives") or [], "review": lab.get("review") or ""})
+                    "course_objectives": lab.get("course_objectives") or [], "review": lab.get("review") or "",
+                    "courses": _courses_for_lab(lab)})
     return out
 
 

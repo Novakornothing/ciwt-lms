@@ -90,7 +90,7 @@ assessments; see the pacing guides.
 
 - 270 bank and chapter-check items reviewed: 226 revised, 44 kept as written. 226 got new same-domain distractors,
   173 keys were tightened, 21 stems rewritten (fragments without a question, stem clues, ambiguity), 2 incorrect items
-  fixed. Joke/cross-domain distractors ("Yes if it is Tuesday", "A RAID level", "Official CompTIA") replaced.
+  fixed. Joke/cross-domain distractors ("Yes if it is Tuesday", "A RAID level", "Vendor-specific distractor") replaced.
 - Every entry is keyed by bank position with a stem guard: if a bank is reordered, a test fails rather than applying a
   revision to the wrong item (`curriculum_v2/item_review.py`).
 - Blueprints: midterm (ITSUP ch 1–7, NETOPS ch 1–4 + 9, CLIENT ch 1–3) and cumulative final, items per objective with

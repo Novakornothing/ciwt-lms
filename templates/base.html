@@ -41,7 +41,7 @@
   {% block head %}{% endblock %}
 </head>
 {% set ui_role = acting_role if acting_role is defined and acting_role else (current_user.role if current_user.is_authenticated else 'student') %}
-<body data-role="{{ ui_role }}" class="{% if current_user.is_authenticated %}has-staff-rail has-mobile-tabbar{% endif %}{% if request.endpoint == 'view_lesson' %} is-lesson-route staff-rail-collapsed{% endif %}">
+<body data-role="{{ ui_role }}" class="{% if current_user.is_authenticated %}has-staff-rail has-mobile-tabbar{% endif %}{% if request.endpoint == 'view_lesson' %} is-lesson-route staff-rail-collapsed{% elif request.endpoint in ('interactive_lab', 'scenario_lab', 'classroom_lab') %} is-lab-workbench staff-rail-collapsed{% endif %}">
   <a class="skip-link" href="#main">Skip to main content</a>
   <header class="topbar"{% if current_user.is_authenticated %} data-role-label="{{ ui_role|upper }}"{% endif %}>
     <nav class="navbar navbar-expand-lg navbar-dark" aria-label="Primary">
@@ -197,7 +197,7 @@
       <span>{{ site_name }} · original curriculum, not a vendor exam product · <a href="{{ url_for('accessibility') }}">Accessibility</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
       {% else %}
       <span>© {{ copyright_year }} {{ brand_mark }}</span>
-      <span><a href="https://novakornothing.com/#legal">Legal &amp; FAQ</a> · <a href="{{ url_for('specs_page') }}">Platform Specs</a> · <a href="{{ url_for('roi_dashboard') }}">ROI Calculator</a> · <a href="{{ url_for('compliance_center') }}">VPAT / SOC 2 / HECVAT</a> · <a href="{{ url_for('pilot_start') }}">30-Day Free Bundle</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
+      <span><a href="{{ url_for('terms_of_service') }}">Terms, DMCA &amp; Liability Shield</a> · <a href="https://novakornothing.com/terms.html">Legal &amp; ToS</a> · <a href="{{ url_for('specs_page') }}">Platform Specs</a> · <a href="{{ url_for('roi_dashboard') }}">ROI Calculator</a> · <a href="{{ url_for('compliance_center') }}">VPAT / SOC 2 / HECVAT</a> · <a href="{{ url_for('pilot_start') }}">30-Day Free Bundle</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
       {% endif %}
     </div>
   </footer>

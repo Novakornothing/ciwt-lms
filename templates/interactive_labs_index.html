@@ -8,43 +8,207 @@
   </ol>
 </nav>
 {% set n_done = progress.values()|selectattr('completed_at')|list|length %}
+{% set total_catalog_items = (labs|length) + (scenarios|length) + (classroom|length) %}
 <div class="page-hero">
-  <h1 class="h3 mb-1">Live labs</h1>
-  <p class="mb-0">{{ labs|length }} hands-on labs that run in the browser on a phone or a desktop, plus {{ classroom|length }} classroom labs your instructor signs off.
-    Work saves automatically. {% if n_done %}You have completed {{ n_done }}.{% endif %}</p>
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+    <div>
+      <div class="eyebrow">Hands-On Browser Workbenches · Diagnose → Fix → Verify</div>
+      <h1 class="h3 mb-1">105+ Hands-On Live Labs</h1>
+      <p class="mb-0">103 browser-native labs ({{ labs|length }} standalone workbenches + 9 PBQ stages across {{ scenarios|length }} multi-stage tickets) that run in your browser on desktop or mobile, plus {{ classroom|length }} instructor-signed classroom hardware labs.
+        Work saves automatically. {% if n_done %}<strong>You have completed {{ n_done }}.</strong>{% endif %}</p>
+    </div>
+    {% if current_user.role in ('admin', 'instructor') %}
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('interactive_labs_verify') }}"><i class="bi bi-check2-circle" aria-hidden="true"></i> Self-test all labs</a>
+    {% endif %}
+  </div>
 </div>
+
 {% from '_lab_row.html' import lab_row with context %}
-<nav class="chip-scroll mb-3" aria-label="Jump to lab type">
-  {% for kind, heading, _ in groups %}{% set n = labs|selectattr('kind', 'equalto', kind)|list|length %}{% if n %}<a class="chip-link" href="#k-{{ kind }}">{{ heading }} <span class="chip-count">{{ n }}</span></a>{% endif %}{% endfor %}
-  {% if scenarios %}<a class="chip-link" href="#k-scenario">Lab scenarios (PBQ) <span class="chip-count">{{ scenarios|length }}</span></a>{% endif %}
-  <a class="chip-link" href="#k-classroom">Classroom labs <span class="chip-count">{{ classroom|length }}</span></a>
-  {% if current_user.role in ('admin', 'instructor') %}<a class="chip-link" href="{{ url_for('interactive_labs_verify') }}"><i class="bi bi-check2-circle" aria-hidden="true"></i> Self-test</a>{% endif %}
-</nav>
+
+<section class="novak-labs-filter-bar card mb-3" id="labsFilterBar" aria-label="Filter live labs">
+  <div class="card-body py-3 px-3">
+    <div class="row g-2 align-items-center mb-2">
+      <div class="col-md-6">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+          <input type="search" id="labsFilterSearch" class="form-control" placeholder="Filter labs by title, tool, command (journalctl, ufw, vlan, ospf, diskpart, gnome)..." aria-label="Filter labs by keyword">
+        </div>
+      </div>
+      <div class="col-md-6 d-flex flex-wrap align-items-center justify-content-md-end gap-2">
+        <div class="novak-filter-group d-flex flex-wrap gap-1" role="group" aria-label="Filter by course">
+          <button type="button" class="btn btn-sm novak-filter-pill is-active" data-filter-course="all">All Courses</button>
+          <button type="button" class="btn btn-sm novak-filter-pill" data-filter-course="ITSUP">IT Support (A+)</button>
+          <button type="button" class="btn btn-sm novak-filter-pill" data-filter-course="NETOPS">Network Ops (N+)</button>
+          <button type="button" class="btn btn-sm novak-filter-pill" data-filter-course="CLIENT">Client Systems</button>
+        </div>
+        <div class="novak-filter-group d-flex flex-wrap gap-1" role="group" aria-label="Filter by completion status">
+          <button type="button" class="btn btn-sm novak-filter-pill is-active" data-filter-status="all">All</button>
+          <button type="button" class="btn btn-sm novak-filter-pill" data-filter-status="completed">Completed</button>
+          <button type="button" class="btn btn-sm novak-filter-pill" data-filter-status="remaining">Remaining</button>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-1 border-top">
+      <nav class="chip-scroll mb-0" aria-label="Filter by lab environment">
+        <button type="button" class="chip-link novak-env-pill is-active" data-filter-kind="all">All Environments <span class="chip-count">{{ total_catalog_items }}</span></button>
+        {% for kind, heading, _ in groups %}{% set n = labs|selectattr('kind', 'equalto', kind)|list|length %}{% if n %}<a class="chip-link novak-env-pill" href="#k-{{ kind }}" data-filter-kind="{{ kind }}">{{ heading }} <span class="chip-count">{{ n }}</span></a>{% endif %}{% endfor %}
+        {% if scenarios %}<a class="chip-link novak-env-pill" href="#k-scenario" data-filter-kind="scenario">Lab scenarios (PBQ) <span class="chip-count">{{ scenarios|length }}</span></a>{% endif %}
+        <a class="chip-link novak-env-pill" href="#k-classroom" data-filter-kind="classroom">Classroom labs <span class="chip-count">{{ classroom|length }}</span></a>
+      </nav>
+      <div class="d-flex align-items-center gap-2 small text-muted ms-auto">
+        <span id="labsShowingCount" aria-live="polite">Showing {{ total_catalog_items }} of {{ total_catalog_items }} labs</span>
+        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none d-none" id="labsFilterReset">Reset filters</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="labsEmptyState" class="card mb-4 d-none">
+  <div class="card-body text-center py-4">
+    <p class="fw-semibold mb-1">No labs match your current filter combination.</p>
+    <p class="small text-muted mb-2">Try clearing the keyword search or switching back to All Courses / All Environments.</p>
+    <button type="button" class="btn btn-sm btn-brand" id="labsEmptyResetBtn">Show all labs</button>
+  </div>
+</div>
+
 {% for kind, heading, sub in groups %}
 {% set group = labs|selectattr('kind', 'equalto', kind)|list %}
 {% if group %}
-<section class="mb-4" aria-labelledby="k-{{ kind }}">
+<section class="mb-4 lab-group-section" data-group-kind="{{ kind }}" aria-labelledby="k-{{ kind }}">
   <h2 class="h6 section-label" id="k-{{ kind }}">{{ heading }} <span class="fw-normal text-muted">· {{ sub }}</span></h2>
   <div class="list-group">{% for lab in group %}{{ lab_row(lab, lab.blurb, false, progress.get(lab.id), sme=lab.review if current_user.role in ('admin', 'instructor') else None) }}{% endfor %}</div>
 </section>
 {% endif %}
 {% endfor %}
 {% if scenarios %}
-<section class="mb-4" aria-labelledby="k-scenario">
+<section class="mb-4 lab-group-section" data-group-kind="scenario" aria-labelledby="k-scenario">
   <h2 class="h6 section-label" id="k-scenario">Lab scenarios <span class="fw-normal text-muted">· performance-based tickets that chain a real VM lab and a simulation; no step list up front</span></h2>
   <div class="list-group">{% for s in scenarios %}
-    <a class="list-group-item list-group-item-action lab-row no-kind" href="{{ url_for('scenario_lab', sid=s.id) }}">
+    {% set ns = namespace(n=0) %}{% for x in s.stages %}{% if progress.get(x.id) and progress.get(x.id).completed_at %}{% set ns.n = ns.n + 1 %}{% endif %}{% endfor %}
+    {% set nres = ns.n %}
+    {% set scn_done = (nres == s.stages|length) %}
+    <a class="list-group-item list-group-item-action lab-row no-kind"
+       href="{{ url_for('scenario_lab', sid=s.id) }}"
+       data-lab-id="{{ s.id }}"
+       data-lab-kind="scenario"
+       data-lab-courses="ITSUP,NETOPS,CLIENT"
+       data-lab-status="{{ 'completed' if scn_done else 'remaining' }}"
+       data-lab-search="{{ (s.id ~ ' ' ~ s.title ~ ' ' ~ s.blurb ~ ' pbq scenario ticket')|lower }}">
       <span class="lab-row-main"><span class="lab-row-title">{{ s.title }}{% if s.review and current_user.role in ('admin', 'instructor') %} <span class="lab-sme-tag">{{ s.review }}</span>{% endif %}</span><span class="lab-row-sub">{{ s.blurb }}</span></span>
-      {% set ns = namespace(n=0) %}{% for x in s.stages %}{% if progress.get(x.id) and progress.get(x.id).completed_at %}{% set ns.n = ns.n + 1 %}{% endif %}{% endfor %}
-      {% set nres = ns.n %}
-      {% if nres %}<span class="lab-row-prog{{ ' done' if nres == s.stages|length }}">{{ nres }}/{{ s.stages|length }} stages</span>{% endif %}
+      {% if nres %}<span class="lab-row-prog{{ ' done' if scn_done }}">{{ nres }}/{{ s.stages|length }} stages</span>{% endif %}
       <span class="lab-row-go" aria-hidden="true">Open ticket <i class="bi bi-chevron-right"></i></span>
     </a>{% endfor %}
   </div>
 </section>
 {% endif %}
-<section class="mb-4" aria-labelledby="k-classroom">
+<section class="mb-4 lab-group-section" data-group-kind="classroom" aria-labelledby="k-classroom">
   <h2 class="h6 section-label" id="k-classroom">Classroom labs <span class="fw-normal text-muted">· real or low-cost equipment, signed off by your instructor with the lab rubric</span></h2>
   <div class="list-group">{% for cl in classroom %}{{ lab_row(cl, cl.objective, false, progress.get(cl.id), url_for('classroom_lab', cl_id=cl.id)) }}{% endfor %}</div>
 </section>
+
+<script>
+(function () {
+  var bar = document.getElementById("labsFilterBar");
+  if (!bar) return;
+  var searchInput = document.getElementById("labsFilterSearch");
+  var courseBtns = Array.prototype.slice.call(bar.querySelectorAll("[data-filter-course]"));
+  var statusBtns = Array.prototype.slice.call(bar.querySelectorAll("[data-filter-status]"));
+  var kindBtns = Array.prototype.slice.call(bar.querySelectorAll("[data-filter-kind]"));
+  var sections = Array.prototype.slice.call(document.querySelectorAll(".lab-group-section"));
+  var rows = Array.prototype.slice.call(document.querySelectorAll(".lab-group-section .lab-row"));
+  var countEl = document.getElementById("labsShowingCount");
+  var resetBtn = document.getElementById("labsFilterReset");
+  var emptyState = document.getElementById("labsEmptyState");
+  var emptyResetBtn = document.getElementById("labsEmptyResetBtn");
+
+  var state = { q: "", course: "all", status: "all", kind: "all" };
+  var total = rows.length;
+
+  function applyFilters() {
+    var q = (state.q || "").trim().toLowerCase();
+    var shown = 0;
+    rows.forEach(function (row) {
+      var rKind = row.getAttribute("data-lab-kind") || "";
+      var rCourses = (row.getAttribute("data-lab-courses") || "").split(",");
+      var rStatus = row.getAttribute("data-lab-status") || "remaining";
+      var rSearch = row.getAttribute("data-lab-search") || "";
+
+      var matchKind = state.kind === "all" || rKind === state.kind;
+      var matchCourse = state.course === "all" || rCourses.indexOf(state.course) !== -1;
+      var matchStatus = state.status === "all" || rStatus === state.status;
+      var matchQ = !q || rSearch.indexOf(q) !== -1;
+
+      var vis = matchKind && matchCourse && matchStatus && matchQ;
+      row.classList.toggle("d-none", !vis);
+      if (vis) shown++;
+    });
+
+    sections.forEach(function (sec) {
+      var visRows = sec.querySelectorAll(".lab-row:not(.d-none)").length;
+      sec.classList.toggle("d-none", visRows === 0);
+    });
+
+    if (countEl) {
+      countEl.textContent = "Showing " + shown + " of " + total + " labs";
+    }
+    var isFiltered = Boolean(q || state.course !== "all" || state.status !== "all" || state.kind !== "all");
+    if (resetBtn) resetBtn.classList.toggle("d-none", !isFiltered);
+    if (emptyState) emptyState.classList.toggle("d-none", shown > 0);
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      state.q = searchInput.value || "";
+      applyFilters();
+    });
+  }
+
+  courseBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      state.course = btn.getAttribute("data-filter-course") || "all";
+      courseBtns.forEach(function (b) { b.classList.toggle("is-active", b === btn); });
+      applyFilters();
+    });
+  });
+
+  statusBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      state.status = btn.getAttribute("data-filter-status") || "all";
+      statusBtns.forEach(function (b) { b.classList.toggle("is-active", b === btn); });
+      applyFilters();
+    });
+  });
+
+  kindBtns.forEach(function (btn) {
+    btn.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      var k = btn.getAttribute("data-filter-kind") || "all";
+      state.kind = (state.kind === k && k !== "all") ? "all" : k;
+      kindBtns.forEach(function (b) {
+        b.classList.toggle("is-active", (b.getAttribute("data-filter-kind") || "all") === state.kind);
+      });
+      applyFilters();
+    });
+  });
+
+  function resetAll() {
+    state = { q: "", course: "all", status: "all", kind: "all" };
+    if (searchInput) searchInput.value = "";
+    courseBtns.forEach(function (b) { b.classList.toggle("is-active", b.getAttribute("data-filter-course") === "all"); });
+    statusBtns.forEach(function (b) { b.classList.toggle("is-active", b.getAttribute("data-filter-status") === "all"); });
+    kindBtns.forEach(function (b) { b.classList.toggle("is-active", b.getAttribute("data-filter-kind") === "all"); });
+    applyFilters();
+  }
+
+  if (resetBtn) resetBtn.addEventListener("click", resetAll);
+  if (emptyResetBtn) emptyResetBtn.addEventListener("click", resetAll);
+
+  // Support URL hash like #windows, #switch, #router, #k-linuxgui
+  if (location.hash) {
+    var h = location.hash.replace(/^#k-/, "").replace(/^#/, "");
+    var matchingKindBtn = bar.querySelector("[data-filter-kind=\"" + h + "\"]");
+    if (matchingKindBtn) matchingKindBtn.click();
+  }
+})();
+</script>
 {% endblock %}

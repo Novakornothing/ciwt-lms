@@ -195,41 +195,58 @@
           <span class="visually-hidden">Curriculum Map (☰)</span>
         </div>
       </div>
+      {% if ladder_html %}
+      <div class="novak-step-style-bar" id="novakStepStyleBar" role="group" aria-label="Apply learning style to all cards in this step">
+        <span class="novak-step-style-label"><i class="bi bi-layers me-1" aria-hidden="true"></i>Step learning style:</span>
+        <div class="novak-step-style-pills">
+          <button type="button" class="novak-step-style-btn is-active" data-step-rung="R0" aria-pressed="true">Standard</button>
+          <button type="button" class="novak-step-style-btn" data-step-rung="R1" aria-pressed="false">Plain English</button>
+          <button type="button" class="novak-step-style-btn" data-step-rung="R2" aria-pressed="false">Real-World Analogy</button>
+          <button type="button" class="novak-step-style-btn" data-step-rung="R3" aria-pressed="false">Visual Map</button>
+          <button type="button" class="novak-step-style-btn" data-step-rung="R4" aria-pressed="false">Interactive Try-It</button>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
     {% if mastery_gate is defined %}{% include 'mastery/_lesson_banner.html' %}{% endif %}
 
     {% if is_windows_boot_lesson is defined and is_windows_boot_lesson %}
-    <section class="novak-boot-quickcard mb-3" aria-label="Windows Boot Process 3-Minute Quick Reference">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-        <div>
+    <details class="novak-boot-quickcard mb-2" aria-label="Windows Boot Process 3-Minute Quick Reference">
+      <summary class="novak-boot-quickcard-summary">
+        <span>
           <span class="badge badge-gold me-1">220-1202 1.9 Exam Quick-Mastery</span>
           <strong>Windows UEFI/GPT Boot Sequence &amp; Recovery Chain (Master in &lt; 3 Min)</strong>
+        </span>
+        <span class="small text-muted ms-auto">Expand 6-stage flow &amp; WinRE commands ▾</span>
+      </summary>
+      <div class="pt-2 mt-2 border-top">
+        <div class="d-flex justify-content-end mb-2">
+          <button type="button" class="btn btn-sm btn-outline-navy" id="toggleBootConciseBtn" aria-pressed="false">
+            Streamlined Exam Summary Mode
+          </button>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-navy" id="toggleBootConciseBtn" aria-pressed="false">
-          Streamlined Exam Summary Mode
-        </button>
+        <div class="novak-boot-flow-strip">
+          <span class="novak-boot-step"><strong>1. UEFI / POST</strong><small>Hardware init &amp; Secure Boot key check</small></span>
+          <span class="novak-boot-arrow" aria-hidden="true">→</span>
+          <span class="novak-boot-step"><strong>2. FAT32 ESP</strong><small><code>\EFI\Microsoft\Boot\bootmgfw.efi</code></small></span>
+          <span class="novak-boot-arrow" aria-hidden="true">→</span>
+          <span class="novak-boot-step"><strong>3. BCD Store</strong><small><code>\EFI\Microsoft\Boot\BCD</code></small></span>
+          <span class="novak-boot-arrow" aria-hidden="true">→</span>
+          <span class="novak-boot-step"><strong>4. winload.efi</strong><small>Loads kernel &amp; BOOT_START drivers</small></span>
+          <span class="novak-boot-arrow" aria-hidden="true">→</span>
+          <span class="novak-boot-step"><strong>5. ntoskrnl.exe</strong><small>Kernel, HAL &amp; registry hives</small></span>
+          <span class="novak-boot-arrow" aria-hidden="true">→</span>
+          <span class="novak-boot-step"><strong>6. winlogon.exe</strong><small><code>smss → wininit → services/lsass</code></small></span>
+        </div>
+        <div class="small mt-2 text-muted">
+          <strong>Key WinRE Recovery Commands:</strong>
+          <code>bootrec /rebuildbcd</code> (scan &amp; rebuild BCD) ·
+          <code>bcdedit /enum</code> (inspect boot entries) ·
+          <code>DISM /Online /Cleanup-Image /RestoreHealth</code> → <code>sfc /scannow</code> (repair corrupted system files).
+        </div>
       </div>
-      <div class="novak-boot-flow-strip">
-        <span class="novak-boot-step"><strong>1. UEFI / POST</strong><small>Hardware init &amp; Secure Boot key check</small></span>
-        <span class="novak-boot-arrow" aria-hidden="true">→</span>
-        <span class="novak-boot-step"><strong>2. FAT32 ESP</strong><small><code>\EFI\Microsoft\Boot\bootmgfw.efi</code></small></span>
-        <span class="novak-boot-arrow" aria-hidden="true">→</span>
-        <span class="novak-boot-step"><strong>3. BCD Store</strong><small><code>\EFI\Microsoft\Boot\BCD</code></small></span>
-        <span class="novak-boot-arrow" aria-hidden="true">→</span>
-        <span class="novak-boot-step"><strong>4. winload.efi</strong><small>Loads kernel &amp; BOOT_START drivers</small></span>
-        <span class="novak-boot-arrow" aria-hidden="true">→</span>
-        <span class="novak-boot-step"><strong>5. ntoskrnl.exe</strong><small>Kernel, HAL &amp; registry hives</small></span>
-        <span class="novak-boot-arrow" aria-hidden="true">→</span>
-        <span class="novak-boot-step"><strong>6. winlogon.exe</strong><small><code>smss → wininit → services/lsass</code></small></span>
-      </div>
-      <div class="small mt-2 text-muted">
-        <strong>Key WinRE Recovery Commands:</strong>
-        <code>bootrec /rebuildbcd</code> (scan &amp; rebuild BCD) ·
-        <code>bcdedit /enum</code> (inspect boot entries) ·
-        <code>DISM /Online /Cleanup-Image /RestoreHealth</code> → <code>sfc /scannow</code> (repair corrupted system files).
-      </div>
-    </section>
+    </details>
     {% endif %}
 
     <div class="curriculum-stage" id="curriculumStage">

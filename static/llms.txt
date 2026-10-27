@@ -14,6 +14,9 @@
 - **Self-Service Account Creation (`/register`)**: [https://novak-lms.onrender.com/register](https://novak-lms.onrender.com/register)
 - **Helix Browser-Local Gaze & Head-Pose Bench (`/helix/try`)**: [https://novak-lms.onrender.com/helix/try](https://novak-lms.onrender.com/helix/try)
 - **Full Technical Reference (`/llms-full.txt`)**: [https://novakornothing.com/llms-full.txt](https://novakornothing.com/llms-full.txt) · [https://novak-lms.onrender.com/llms-full.txt](https://novak-lms.onrender.com/llms-full.txt)
+- **Terms of Service, DMCA Safe Harbor Protocol & Enterprise Content Liability Shield (`/terms`)**: [https://novakornothing.com/terms.html](https://novakornothing.com/terms.html) · [https://novak-lms.onrender.com/terms](https://novak-lms.onrender.com/terms)
+- **SCORM 1.2 / 2004 Dispatch Packages & Live ADL xAPI 1.0.3 (`cmi5`) Telemetry**: [https://novak-lms.onrender.com/compliance#scorm-xapi-ile](https://novak-lms.onrender.com/compliance#scorm-xapi-ile) · [https://novak-lms.onrender.com/api/xapi/statements](https://novak-lms.onrender.com/api/xapi/statements)
+- **WebAssembly Toolchain & Permissive OSS License Audit (MIT / Apache 2.0 / BSD-2-Clause)**: [https://novak-lms.onrender.com/compliance/oss-licenses](https://novak-lms.onrender.com/compliance/oss-licenses)
 - **Privacy, FERPA & Student Data Controls (`/privacy`)**: [https://novak-lms.onrender.com/privacy](https://novak-lms.onrender.com/privacy)
 - **Contact & Pilot Support (`/contact`)**: [https://novak-lms.onrender.com/contact](https://novak-lms.onrender.com/contact) (`novakornothing@gmail.com`)
 

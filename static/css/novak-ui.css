@@ -2503,3 +2503,219 @@ figure.novak-inline-r3-preview svg {
     font-size: 0.85rem !important;
   }
 }
+
+/* ==========================================================================
+   Wave 6 UX Refinements:
+   1. Streamlined Above-the-Fold Lesson Blueprint Drawer & Step Learning Style Bar
+   2. Full-Width Lab Workbench (Auto-Collapsed #staffRail on /labs/<id>)
+   3. Live Interactive Filter Bar on /labs Catalog
+   4. De-Duplicated Student Dashboard Hierarchy
+   ========================================================================== */
+
+/* 1A. Collapsible Spec Table & Field Watchout Drawer inside aside.novak-visual-blueprint */
+details.novak-spec-drawer {
+  margin-top: 0.35rem;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+html[data-theme="dark"] details.novak-spec-drawer {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+.novak-spec-drawer-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.42rem 0.75rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  color: #0284c7;
+}
+.novak-spec-drawer-summary::-webkit-details-marker {
+  display: none;
+}
+html[data-theme="dark"] .novak-spec-drawer-summary {
+  color: #38bdf8;
+}
+.novak-spec-drawer-hint {
+  font-size: 0.76rem;
+  font-weight: 500;
+  opacity: 0.85;
+  margin-left: auto;
+}
+.novak-spec-drawer-body {
+  padding: 0.25rem 0.75rem 0.65rem 0.75rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Compact Collapsible Boot Quickcard */
+details.novak-boot-quickcard {
+  padding: 0.45rem 0.85rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.novak-boot-quickcard-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.85rem;
+}
+.novak-boot-quickcard-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Tighten top lesson chrome so Step 1 Part 1 sits cleanly above the fold on 1440x900 */
+.novak-slim-lesson-header {
+  margin-bottom: 0.45rem !important;
+  padding-bottom: 0.35rem !important;
+}
+.novak-lesson-progress-bar {
+  padding: 0.45rem 0.85rem !important;
+  margin-bottom: 0.55rem !important;
+}
+aside.novak-visual-blueprint {
+  margin: 0.45rem 0 0.65rem 0 !important;
+  padding: 0.6rem 0.9rem !important;
+}
+aside.novak-visual-blueprint > svg {
+  max-height: 132px !important;
+  width: 100% !important;
+  margin: 0.25rem 0 0.35rem 0 !important;
+}
+
+/* 1B. Step-Level Learning Style Bar (#novakStepStyleBar) */
+.novak-step-style-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+  padding-top: 0.38rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+.novak-step-style-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+html[data-theme="dark"] .novak-step-style-label {
+  color: #94a3b8;
+}
+.novak-step-style-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.novak-step-style-btn {
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: rgba(15, 23, 42, 0.04);
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.18rem 0.58rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+html[data-theme="dark"] .novak-step-style-btn {
+  background: rgba(30, 41, 59, 0.7);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.25);
+}
+.novak-step-style-btn:hover {
+  border-color: #38bdf8;
+  color: #0284c7;
+}
+html[data-theme="dark"] .novak-step-style-btn:hover {
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+.novak-step-style-btn.is-active {
+  background: #0284c7 !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+/* Keep per-card rung bars subtle on Standard (R0) reading subcards until hovered/focused */
+.novak-section-card.is-reading-subcard[data-shown="R0"] .novak-adaptive-rung-bar {
+  opacity: 0.72;
+  transition: opacity 0.15s ease;
+}
+.novak-section-card.is-reading-subcard:hover .novak-adaptive-rung-bar,
+.novak-section-card.is-reading-subcard:focus-within .novak-adaptive-rung-bar {
+  opacity: 1;
+}
+
+/* 2. Auto-Collapse Global Left #staffRail on /labs/<lab_id> Workbench Pages */
+body.is-lab-workbench .staff-rail {
+  transform: translateX(-100%) !important;
+  width: 260px !important;
+  z-index: 1055 !important;
+}
+body.is-lab-workbench .staff-rail:not(.staff-rail-open) {
+  display: none !important;
+}
+body.is-lab-workbench.staff-rail-open .staff-rail {
+  display: flex !important;
+  transform: translateX(0) !important;
+}
+body.is-lab-workbench.staff-rail-open .rail-scrim {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+body.is-lab-workbench .topbar,
+body.is-lab-workbench header.topbar,
+body.is-lab-workbench .app-main,
+body.is-lab-workbench footer,
+body.is-lab-workbench.staff-rail-collapsed .topbar,
+body.is-lab-workbench.staff-rail-collapsed header.topbar,
+body.is-lab-workbench.staff-rail-collapsed .app-main,
+body.is-lab-workbench.staff-rail-collapsed footer {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+body.is-lab-workbench .staff-rail-expand {
+  display: none !important;
+}
+body.is-lab-workbench #mobileStaffMenuBtn {
+  display: inline-grid !important;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 8px;
+  margin-right: 0.5rem;
+}
+
+/* 3. Live Interactive Filter Bar on /labs Catalog */
+.novak-labs-filter-bar {
+  border: 1px solid rgba(56, 189, 248, 0.28);
+}
+.novak-filter-pill {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.22rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: transparent;
+  color: inherit;
+}
+.novak-filter-pill.is-active,
+.novak-env-pill.is-active {
+  background: #0284c7 !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+.novak-env-pill {
+  cursor: pointer;
+}

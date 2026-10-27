@@ -1,0 +1,13 @@
+Novak LMS™ Virtual Machine Guest Image Upstream Source Pointer
+==============================================================
+1. Hardware Emulator Runtime (libv86.js, v86.wasm):
+   - Project: copy/v86 v0.5.471
+   - License: BSD-2-Clause (permissive, commercial & OEM whitelabel safe)
+   - Upstream Repository: https://github.com/copy/v86
+
+2. Unmodified Guest Linux VM Disk Image (novak-linux.bin / ciwt-linux.bin):
+   - Loaded as an isolated guest filesystem binary over the BSD-2-Clause v86 hardware virtualization boundary (GPLv2 Section 2 Mere Aggregation).
+   - Linux Kernel 6.8.12 source: https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.8.12.tar.xz
+   - BusyBox 1.36.1 source: https://busybox.net/downloads/busybox-1.36.1.tar.bz2
+   - Alpine Linux v3.20 x86 packages: https://dl-cdn.alpinelinux.org/alpine/v3.20/main/x86/
+   - Complete reproducible build script & config: tools/vm_image/build.sh
