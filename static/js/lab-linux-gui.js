@@ -14,13 +14,32 @@
   var termPane = document.getElementById('termWrap');
   if (!winHost) return;
 
+  var defaultWinByLab = {
+    'linux-gui-network': 'network',
+    'linux-gui-disks': 'disks',
+    'linux-gui-firewall': 'firewall',
+    'linux-gui-users': 'users',
+    'linux-gui-logs': 'logs',
+    'linux-gui-processes': 'processes',
+    'linux-gui-packages': 'packages',
+    'linux-gui-ssh': 'ssh'
+  };
+
   var gui = (cfg.boot && cfg.boot.linuxgui) || {
-    win: 'network',
+    win: defaultWinByLab[cfg.lab_id] || 'network',
     net: { iface: 'eth0', connected: true, method: 'dhcp', ipv4: '10.20.40.120', prefix: '24', gateway: '10.20.40.1', dns: '10.20.40.10', applied: false },
     disks: { selected_disk: '/dev/nvme0n1', smart_checked: false, smart_status: 'PASSED (34°C)', sdb1_mounted: false, sdb1_mountpoint: '/srv/data', fstab_opts: 'defaults,noatime,nofail' },
     firewall: { ufw_enabled: false, default_incoming: 'deny', default_outgoing: 'allow', rules: [], services: {} },
-    users: { selected_user: 'tech1', accounts: {}, files: {} }
+    users: { selected_user: 'tech1', accounts: {}, files: {} },
+    logs: { unit_filter: 'all', severity_filter: 'all', filtered_ssh: false, banned_ip: null, journal_usage_mb: 640, vacuumed: false },
+    processes: { runaway_pid: 4412, runaway_name: 'stress-ng-worker', runaway_cpu: 98.4, runaway_nice: 0, runaway_state: 'R (running)', killed: false, swappiness: 60, swappiness_tuned: false },
+    packages: { apt_updated: false, last_update: '42 days ago (stale cache)', unattended_installed: false, cron_schedule: '0 2 * * * /usr/local/bin/backup-verify.sh', cron_enabled: false },
+    ssh: { ed25519_generated: false, ed25519_fp: 'SHA256:9xK4mP8vR2nL7qW3cT6yB1zF5jH0dG8sA4eU2iO6pY', permit_root_login: 'yes', password_auth: 'yes', hardened: false, sshd_reloaded: false }
   };
+
+  if (cfg.lab_id && defaultWinByLab[cfg.lab_id] && (!cfg.boot || !cfg.boot.linuxgui || !cfg.boot.linuxgui.log || !cfg.boot.linuxgui.log.length)) {
+    gui.win = defaultWinByLab[cfg.lab_id];
+  }
 
   function send(ev, data) {
     return kit.post(cfg.urls.event, { ev: ev, data: data || {} }).then(function (p) {
@@ -254,6 +273,139 @@
     return wrap;
   }
 
+  function renderLogs() {
+    var lg = gui.logs || { unit_filter: 'all', severity_filter: 'all', filtered_ssh: false, banned_ip: null, journal_usage_mb: 640, vacuumed: false };
+    var wrap = el('div', { class: 'lnx-pane' });
+    wrap.innerHTML =
+      '<div class="mb-2 pb-2 border-bottom border-secondary">' +
+        '<h3 class="h6 mb-0 text-danger"><i class="bi bi-journal-code me-1"></i>GNOME Logs — systemd-journald &amp; Security Audit (gnome-logs)</h3>' +
+        '<div class="small text-secondary">Filter: Unit=<code>' + lg.unit_filter + '</code> · Priority=<code>' + lg.severity_filter + '</code> · Archive Size: <code>' + lg.journal_usage_mb + ' MB</code></div>' +
+      '</div>' +
+      '<div class="d-flex flex-wrap gap-2 mb-2">' +
+        '<button type="button" class="btn btn-sm btn-brand" id="lnxFilterSshBtn"><i class="bi bi-funnel me-1"></i>Filter ssh.service Errors (journalctl -u ssh -p err)</button>' +
+        '<button type="button" class="btn btn-sm btn-danger" id="lnxBanIpBtn"><i class="bi bi-shield-slash me-1"></i>' + (lg.banned_ip ? '✓ Blocked ' + lg.banned_ip : 'Block Attacker IP 198.51.100.77 (UFW / Fail2Ban)') + '</button>' +
+        '<button type="button" class="btn btn-sm btn-outline-warning" id="lnxVacuumBtn"><i class="bi bi-trash3 me-1"></i>' + (lg.vacuumed ? '✓ Vacuumed to 92 MB' : 'Vacuum Journal to 100 MB') + '</button>' +
+      '</div>' +
+      '<pre class="p-2 rounded small mb-0 font-monospace" style="background:#090d16;color:#e2e8f0;border:1px solid rgba(248,113,113,0.3);max-height:210px;overflow-y:auto">' +
+        (lg.filtered_ssh
+          ? 'Oct 27 09:38:11 novak-lnx-01 sshd[3902]: error: PAM: Authentication failure for root from 198.51.100.77 port 51924 ssh2\n' +
+            'Oct 27 09:38:14 novak-lnx-01 sshd[3908]: Failed password for invalid user admin from 198.51.100.77 port 51988 ssh2\n' +
+            'Oct 27 09:38:19 novak-lnx-01 sshd[3915]: error: maximum authentication attempts exceeded for root from 198.51.100.77 port 52010 ssh2 [preauth]\n' +
+            (lg.banned_ip ? 'Oct 27 09:41:02 novak-lnx-01 fail2ban.actions[1120]: NOTICE [sshd] Ban 198.51.100.77 via ufw\n' : '')
+          : 'Oct 27 09:35:01 novak-lnx-01 systemd[1]: Started Run anacron jobs.\n' +
+            'Oct 27 09:38:11 novak-lnx-01 sshd[3902]: error: PAM: Authentication failure for root from 198.51.100.77 port 51924 ssh2\n' +
+            'Oct 27 09:39:00 novak-lnx-01 NetworkManager[814]: <info>  [1793064000] manager: NetworkManager state is now CONNECTED_GLOBAL\n' +
+            'Click "Filter ssh.service Errors" above to isolate security authentication failures.') +
+      '</pre>';
+
+    setTimeout(function () {
+      var fb = document.getElementById('lnxFilterSshBtn');
+      if (fb) fb.onclick = function () { send('logs:filter_ssh'); };
+      var bb = document.getElementById('lnxBanIpBtn');
+      if (bb) bb.onclick = function () { send('logs:ban:198.51.100.77'); };
+      var vb = document.getElementById('lnxVacuumBtn');
+      if (vb) vb.onclick = function () { send('logs:vacuum'); };
+    }, 0);
+    return wrap;
+  }
+
+  function renderProcesses() {
+    var pr = gui.processes || { runaway_pid: 4412, runaway_name: 'stress-ng-worker', runaway_cpu: 98.4, runaway_nice: 0, runaway_state: 'R (running)', killed: false, swappiness: 60, swappiness_tuned: false };
+    var wrap = el('div', { class: 'lnx-pane' });
+    wrap.innerHTML =
+      '<div class="mb-2 pb-2 border-bottom border-secondary">' +
+        '<h3 class="h6 mb-0 text-info"><i class="bi bi-cpu me-1"></i>GNOME System Monitor — Processes, CPU &amp; Memory Pressure</h3>' +
+        '<div class="small text-secondary">CPU Load: <strong class="' + (pr.killed ? 'text-success' : 'text-danger') + '">' + (pr.killed ? '4.2% (Normal)' : '98.4% (Pegged by PID 4412)') + '</strong> · Kernel <code>vm.swappiness</code>: <code>' + pr.swappiness + '</code></div>' +
+      '</div>' +
+      '<div class="table-responsive mb-2"><table class="table table-sm table-dark mb-0 small"><thead><tr><th>PID</th><th>Process</th><th>User</th><th>%CPU</th><th>Nice</th><th>State</th><th>Action</th></tr></thead><tbody>' +
+        '<tr><td><code>4412</code></td><td><strong>' + pr.runaway_name + '</strong></td><td>trainee</td><td><span class="badge ' + (pr.killed ? 'text-bg-secondary' : 'text-bg-danger') + '">' + pr.runaway_cpu + '%</span></td><td>' + pr.runaway_nice + '</td><td>' + pr.runaway_state + '</td>' +
+          '<td><button type="button" class="btn btn-sm btn-danger py-0" id="lnxKillPidBtn"' + (pr.killed ? ' disabled' : '') + '>' + (pr.killed ? 'Terminated' : 'Terminate PID 4412') + '</button></td></tr>' +
+        '<tr><td><code>1042</code></td><td>nginx: master</td><td>root</td><td>0.4%</td><td>0</td><td>S (sleeping)</td><td><span class="text-secondary small">Healthy</span></td></tr>' +
+        '<tr><td><code>814</code></td><td>NetworkManager</td><td>root</td><td>0.3%</td><td>0</td><td>S (sleeping)</td><td><span class="text-secondary small">Healthy</span></td></tr>' +
+      '</tbody></table></div>' +
+      '<div class="p-2 rounded d-flex justify-content-between align-items-center flex-wrap gap-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12)">' +
+        '<div class="small"><strong>Kernel Swap Pressure (<code>vm.swappiness</code>):</strong> Current = <code>' + pr.swappiness + '</code> (Default 60 swaps aggressively; workstation target is <code>10</code>)</div>' +
+        '<button type="button" class="btn btn-sm btn-brand" id="lnxSwappinessBtn"><i class="bi bi-sliders me-1"></i>' + (pr.swappiness_tuned ? '✓ vm.swappiness=10 Applied' : 'Apply vm.swappiness=10') + '</button>' +
+      '</div>';
+
+    setTimeout(function () {
+      var kb = document.getElementById('lnxKillPidBtn');
+      if (kb) kb.onclick = function () { send('proc:kill:4412'); };
+      var sb = document.getElementById('lnxSwappinessBtn');
+      if (sb) sb.onclick = function () { send('proc:swappiness:10'); };
+    }, 0);
+    return wrap;
+  }
+
+  function renderPackages() {
+    var pk = gui.packages || { apt_updated: false, last_update: '42 days ago (stale cache)', unattended_installed: false, cron_schedule: '0 2 * * * /usr/local/bin/backup-verify.sh', cron_enabled: false };
+    var wrap = el('div', { class: 'lnx-pane' });
+    wrap.innerHTML =
+      '<div class="mb-2 pb-2 border-bottom border-secondary">' +
+        '<h3 class="h6 mb-0 text-warning"><i class="bi bi-box-seam me-1"></i>Ubuntu Software &amp; Updates (APT) + Cron Task Scheduler</h3>' +
+        '<div class="small text-secondary">APT Repository Cache: <code>' + pk.last_update + '</code></div>' +
+      '</div>' +
+      '<div class="p-2 rounded mb-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12)">' +
+        '<div class="fw-bold mb-1">1. APT Package Lists &amp; Unattended Security Upgrades</div>' +
+        '<div class="small mb-2">Status: <span class="badge ' + (pk.apt_updated ? 'text-bg-success' : 'text-bg-warning') + '">' + (pk.apt_updated ? 'APT Synced' : 'Stale Cache') + '</span> · ' +
+          '<code>unattended-upgrades</code>: <span class="badge ' + (pk.unattended_installed ? 'text-bg-success' : 'text-bg-secondary') + '">' + (pk.unattended_installed ? 'Installed &amp; Active' : 'Not Installed') + '</span></div>' +
+        '<div class="d-flex flex-wrap gap-2">' +
+          '<button type="button" class="btn btn-sm btn-brand" id="lnxAptUpdateBtn"><i class="bi bi-arrow-repeat me-1"></i>Refresh APT Cache (apt update)</button>' +
+          '<button type="button" class="btn btn-sm btn-outline-info" id="lnxInstallUnattendedBtn"><i class="bi bi-shield-check me-1"></i>Install unattended-upgrades</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="p-2 rounded" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12)">' +
+        '<div class="fw-bold mb-1">2. Scheduled Maintenance (<code>/etc/crontab</code> &amp; <code>cron.service</code>)</div>' +
+        '<div class="small mb-2">Job: <code>' + pk.cron_schedule + '</code> · State: <span class="badge ' + (pk.cron_enabled ? 'text-bg-success' : 'text-bg-secondary') + '">' + (pk.cron_enabled ? 'Enabled (02:00 Daily)' : 'Disabled (Commented Out)') + '</span></div>' +
+        '<button type="button" class="btn btn-sm btn-brand" id="lnxCronEnableBtn"><i class="bi bi-clock-history me-1"></i>Enable Nightly Cron Job (0 2 * * *)</button>' +
+      '</div>';
+
+    setTimeout(function () {
+      var ab = document.getElementById('lnxAptUpdateBtn');
+      if (ab) ab.onclick = function () { send('pkg:apt_update'); };
+      var ib = document.getElementById('lnxInstallUnattendedBtn');
+      if (ib) ib.onclick = function () { send('pkg:install:unattended-upgrades'); };
+      var cb = document.getElementById('lnxCronEnableBtn');
+      if (cb) cb.onclick = function () { send('pkg:cron_enable'); };
+    }, 0);
+    return wrap;
+  }
+
+  function renderSsh() {
+    var sh = gui.ssh || { ed25519_generated: false, ed25519_fp: 'SHA256:9xK4mP8vR2nL7qW3cT6yB1zF5jH0dG8sA4eU2iO6pY', permit_root_login: 'yes', password_auth: 'yes', hardened: false, sshd_reloaded: false };
+    var wrap = el('div', { class: 'lnx-pane' });
+    wrap.innerHTML =
+      '<div class="mb-2 pb-2 border-bottom border-secondary">' +
+        '<h3 class="h6 mb-0" style="color:#f472b6"><i class="bi bi-key me-1"></i>GNOME Passwords &amp; Keys (Seahorse) + OpenSSH Hardening</h3>' +
+        '<div class="small text-secondary">Keyring: <code>~/.ssh/id_ed25519</code> · Daemon Config: <code>/etc/ssh/sshd_config</code></div>' +
+      '</div>' +
+      '<div class="p-2 rounded mb-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12)">' +
+        '<div class="fw-bold mb-1">1. OpenSSH Ed25519 Keypair (<code>ssh-keygen -t ed25519</code>)</div>' +
+        '<div class="small mb-2">' + (sh.ed25519_generated ? '<span class="text-success">✓ Keypair Active: <code>' + sh.ed25519_fp + '</code></span>' : 'No Ed25519 keypair in <code>~/.ssh</code> yet.') + '</div>' +
+        '<button type="button" class="btn btn-sm btn-brand" id="lnxKeygenBtn"><i class="bi bi-key-fill me-1"></i>Generate Ed25519 Keypair &amp; Authorize</button>' +
+      '</div>' +
+      '<div class="p-2 rounded" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12)">' +
+        '<div class="fw-bold mb-1">2. OpenSSH Server Security Policy (<code>/etc/ssh/sshd_config</code>)</div>' +
+        '<div class="small mb-2"><code>PermitRootLogin</code>: <span class="badge ' + (sh.permit_root_login === 'no' ? 'text-bg-success' : 'text-bg-danger') + '">' + sh.permit_root_login + '</span> · ' +
+          '<code>PasswordAuthentication</code>: <span class="badge ' + (sh.password_auth === 'no' ? 'text-bg-success' : 'text-bg-danger') + '">' + sh.password_auth + '</span> · ' +
+          '<code>ssh.service</code>: <span class="badge ' + (sh.sshd_reloaded ? 'text-bg-success' : 'text-bg-secondary') + '">' + (sh.sshd_reloaded ? 'Reloaded &amp; Verified' : 'Pending Reload') + '</span></div>' +
+        '<div class="d-flex flex-wrap gap-2">' +
+          '<button type="button" class="btn btn-sm btn-brand" id="lnxHardenSshBtn"><i class="bi bi-lock-fill me-1"></i>Apply Hardened sshd_config (Disable Root &amp; Password Auth)</button>' +
+          '<button type="button" class="btn btn-sm btn-outline-info" id="lnxReloadSshBtn"><i class="bi bi-arrow-repeat me-1"></i>Validate sshd -t &amp; Reload ssh.service</button>' +
+        '</div>' +
+      '</div>';
+
+    setTimeout(function () {
+      var kb = document.getElementById('lnxKeygenBtn');
+      if (kb) kb.onclick = function () { send('ssh:keygen'); };
+      var hb = document.getElementById('lnxHardenSshBtn');
+      if (hb) hb.onclick = function () { send('ssh:harden'); };
+      var rb = document.getElementById('lnxReloadSshBtn');
+      if (rb) rb.onclick = function () { send('ssh:reload'); };
+    }, 0);
+    return wrap;
+  }
+
   function render() {
     var w = (gui && gui.win) || 'network';
     document.querySelectorAll('[data-lnx-app]').forEach(function (b) {
@@ -265,8 +417,12 @@
         network: 'GNOME Settings — Network',
         disks: 'GNOME Disks & GParted',
         firewall: 'GUFW Firewall & Systemd',
-        users: 'GNOME Users & Sudo',
-        files: 'Nautilus Files & Permissions'
+        users: 'GNOME Users & Nautilus Permissions',
+        files: 'Nautilus Files & Permissions',
+        logs: 'GNOME Logs (journalctl)',
+        processes: 'GNOME System Monitor',
+        packages: 'Ubuntu Software & Cron',
+        ssh: 'Passwords & SSH Keys (Seahorse)'
       };
       activeAppLabel.textContent = names[w] || 'GNOME Settings';
     }
@@ -277,6 +433,10 @@
     if (w === 'disks') winHost.appendChild(renderDisks());
     else if (w === 'firewall') winHost.appendChild(renderFirewall());
     else if (w === 'users' || w === 'files') winHost.appendChild(renderUsersAndFiles());
+    else if (w === 'logs') winHost.appendChild(renderLogs());
+    else if (w === 'processes') winHost.appendChild(renderProcesses());
+    else if (w === 'packages') winHost.appendChild(renderPackages());
+    else if (w === 'ssh') winHost.appendChild(renderSsh());
     else winHost.appendChild(renderNetwork());
   }
 

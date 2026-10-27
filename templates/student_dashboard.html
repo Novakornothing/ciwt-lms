@@ -20,7 +20,7 @@
       {% elif mastery_path and mastery_path.next %}
       <div class="home-progress"><a class="btn btn-brand" href="{{ mastery_path.next.url }}">Continue: {{ mastery_path.next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div>
       {% else %}
-      <p class="mb-0">Your classes, 90 browser labs, Exam-Day Simulator, and grades are below.</p>
+      <p class="mb-0">Your classes, 98 browser labs (including 8 Ubuntu GNOME GUI & 24 Linux VMs), Exam-Day Simulator, and grades are below.</p>
       {% endif %}
     </div>
     {% if sections %}
@@ -28,7 +28,7 @@
     <div class="d-flex flex-wrap gap-2">
       <a class="btn btn-outline-light btn-sm" href="{{ url_for('exam_sim_home', section_id=first_sec.id) }}"><i class="bi bi-stopwatch" aria-hidden="true"></i> Exam-Day Simulator</a>
       <a class="btn btn-outline-light btn-sm" href="{{ url_for('speed_drill', section_id=first_sec.id) }}"><i class="bi bi-lightning-charge" aria-hidden="true"></i> Speed-Drill</a>
-      <a class="btn btn-outline-gold btn-sm" href="{{ url_for('interactive_labs_index') }}"><i class="bi bi-terminal" aria-hidden="true"></i> All 90 Live Labs</a>
+      <a class="btn btn-outline-gold btn-sm" href="{{ url_for('interactive_labs_index') }}"><i class="bi bi-terminal" aria-hidden="true"></i> All 98 Live Labs</a>
     </div>
     {% endif %}
   </div>

@@ -9,6 +9,7 @@
 {% set mem = (ms|sum(attribute='memory_mb')) + 90 * ms|length %}
 <div class="lab-shell">
   <div class="lab-main">
+    {% include '_linux_gnome_companion.html' %}
     <div class="vm-start card mb-2" id="vmStart">
       <div class="card-body">
         <p class="mb-2"><strong>{{ 'These are real computers.' if multi else 'This is a real computer.' }}</strong> Linux 6.8 with BusyBox boots inside this page (x86 emulated in WebAssembly){% if multi %} — {{ ms|length }} machines: {{ ms|map(attribute='label')|join(', ') }}{% endif %}. Every command really runs — on your device, not on our server.</p>

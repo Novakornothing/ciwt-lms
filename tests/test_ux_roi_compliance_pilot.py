@@ -293,7 +293,7 @@ def test_10_interactive_linux_gui_desktop_workbench_labs(student):
     import interactive_labs as IL
     from tests.test_labs import solve_http
 
-    linux_gui_ids = ['linux-gui-network', 'linux-gui-disks', 'linux-gui-firewall', 'linux-gui-users']
+    linux_gui_ids = ['linux-gui-network', 'linux-gui-disks', 'linux-gui-firewall', 'linux-gui-users', 'linux-gui-logs', 'linux-gui-processes', 'linux-gui-packages', 'linux-gui-ssh']
     by_id = {l['id']: l for l in IL.LABS}
     for lid in linux_gui_ids:
         assert lid in by_id, f'Missing {lid} in interactive_labs.LABS'

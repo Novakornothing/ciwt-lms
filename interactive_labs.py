@@ -3574,28 +3574,33 @@ def _install_new_labs():
         if lab["id"] not in LABS_BY_ID:
             LABS.append(lab)
             LABS_BY_ID[lab["id"]] = lab
+    all_lnx_gui = [
+        "linux-gui-network", "linux-gui-disks", "linux-gui-firewall", "linux-gui-users",
+        "linux-gui-logs", "linux-gui-processes", "linux-gui-packages", "linux-gui-ssh",
+    ]
     for ch_key in (("ITSUP", 9), ("CLIENT", 2)):
         cur_ch = CHAPTER_LABS.setdefault(ch_key, [])
-        for l_id in ("linux-gui-network", "linux-gui-disks", "linux-gui-firewall", "linux-gui-users"):
-            if l_id not in cur_ch:
-                cur_ch.append(l_id)
+        # Lead chapter labs with the Ubuntu GNOME GUI + Bash Split-View workbenches
+        reordered = list(all_lnx_gui) + [x for x in cur_ch if x not in all_lnx_gui]
+        CHAPTER_LABS[ch_key] = reordered
     for les_key, g_ids in (
-        (("ITSUP", 9, 1), ["linux-gui-network", "linux-gui-disks"]),
-        (("ITSUP", 9, 3), ["linux-gui-firewall", "linux-gui-users"]),
-        (("ITSUP", 9, 4), ["linux-gui-network", "linux-gui-firewall"]),
-        (("CLIENT", 2, 1), ["linux-gui-network", "linux-gui-disks"]),
-        (("CLIENT", 2, 3), ["linux-gui-firewall", "linux-gui-users"]),
-        (("CLIENT", 2, 4), ["linux-gui-network", "linux-gui-firewall"]),
+        (("ITSUP", 9, 1), ["linux-gui-network", "linux-gui-disks", "linux-gui-processes", "linux-gui-packages"]),
+        (("ITSUP", 9, 2), ["linux-gui-logs", "linux-gui-processes"]),
+        (("ITSUP", 9, 3), ["linux-gui-users", "linux-gui-firewall", "linux-gui-ssh"]),
+        (("ITSUP", 9, 4), ["linux-gui-network", "linux-gui-disks", "linux-gui-firewall", "linux-gui-ssh"]),
+        (("CLIENT", 2, 1), ["linux-gui-network", "linux-gui-disks", "linux-gui-processes", "linux-gui-packages"]),
+        (("CLIENT", 2, 2), ["linux-gui-logs", "linux-gui-processes"]),
+        (("CLIENT", 2, 3), ["linux-gui-users", "linux-gui-firewall", "linux-gui-ssh"]),
+        (("CLIENT", 2, 4), ["linux-gui-network", "linux-gui-disks", "linux-gui-firewall", "linux-gui-ssh"]),
     ):
         existing_les = LESSON_LABS.get(les_key)
         if isinstance(existing_les, str):
             existing_les = [existing_les]
         else:
             existing_les = list(existing_les or [])
-        for gid in g_ids:
-            if gid not in existing_les:
-                existing_les.append(gid)
-        LESSON_LABS[les_key] = existing_les
+        # Place the Ubuntu GNOME GUI + Bash Split-View labs FIRST so every Linux lesson leads with GUI + CLI
+        merged = list(g_ids) + [x for x in existing_les if x not in g_ids]
+        LESSON_LABS[les_key] = merged
 
 
 _install_new_labs()

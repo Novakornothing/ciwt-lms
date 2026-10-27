@@ -24,12 +24,14 @@
 ### 1. Curriculum Depth (`639,146` Total Instructional Words)
 - **Courses**: `3` full certification-aligned courses (`Client Systems / FC0-U71`, `IT Support / 220-1201 & 220-1202`, and `Network Operations / N10-009`).
 - **Structure**: `26` chapters, `115` lessons, **`242,549` base lesson words**, and **`639,146` total instructional words** including `396,597` words across **`539` bespoke 4-rung adaptive explanation ladders**.
-- **In-Place 4-Rung Adaptive Explanation Ladders (`R0 → R1 → R2 → R3 → R4`)**:
-  - `R0 Standard`: Primary technical exposition with embedded visual blueprint and RFC/IEEE reference table.
-  - `R1 Plain Language`: Zero-jargon operational rewrite triggered automatically on a missed section check.
-  - `R2 Analogy`: Concrete physical-world mental model mapping abstract protocol or hardware state transitions.
-  - `R3 Visual Diagram`: Step-by-step annotated signal/state walk-through.
-  - `R4 Interactive Hands-On Try-It`: Micro-simulation or CLI/fault isolation exercise inside the lesson flow.
+- **5 Freely Clickable Learning Paths & In-Place 4-Rung Adaptive Explanation Ladders (`R0 → R1 → R2 → R3 → R4`)**:
+  - Students can click any of the 5 learning paths on demand at any time on desktop or mobile (without waiting to fail a quiz), and automatic remediation escalates in place when a check is missed across 4 balanced Concept Steps per lesson:
+  - `R0 Standard`: Primary technical exposition with embedded visual blueprint and RFC/IEEE reference table (`242,549` base words; `860,000+` total instructional words across all modalities & inline visual deep dives, `639,146` core curriculum words).
+  - `R1 Plain Language` (`Plain English`): Zero-jargon operational rewrite clickable on demand or triggered automatically on a missed check.
+  - `R2 Analogy` (`Real-World Analogy`): Concrete physical-world mental model mapping abstract protocol or hardware state transitions.
+  - `R3 Visual Diagram` (`Visual Map`): Step-by-step annotated SVG signal/state walk-through (`696+` total inline SVGs across all 115 lessons).
+  - `R4 Interactive Hands-On Try-It`: Micro-simulation widget (order/sort/reveal) or live lab launch inside the lesson flow.
+  - **Instructor Time-to-Mastery Telemetry**: `/instructor/section/<id>/ladder` tracks and exports per-section `median_seconds_to_resolve`, `mean_seconds_to_resolve`, `mean_attempts_to_resolve`, and `helix_triggered` counts to CSV.
 
 ### 2. 100% Visual Architecture Coverage (`115/115` Lessons)
 - Every single lesson (`115/115`, `100%`) embeds a custom `<aside class="novak-visual-blueprint">` containing:
@@ -38,10 +40,11 @@
   3. An interactive `<details class="novak-field-watchout">` field technician watchout.
 - Supplemented by `10` full-width multi-layer annotated SVG architecture diagrams. Zero plain-text walls.
 
-### 3. Hands-On Browser Labs (`90` Total Labs, `24` Real Linux VMs)
-- **`90` browser-based interactive labs** requiring zero local installation or external cloud VM popups:
-  - **`24` real in-browser Linux VMs** (Alpine/x86 WebAssembly VM with a live root shell, filesystem, `/proc`, and networking utilities).
-  - **`66` stateful labs** spanning Windows 11 Settings/Event Viewer/PowerShell/CMD, Cisco IOS Switch & Router CLI (`VLANs`, `802.1Q trunks`, `ROAS`, `OSPF`, `ACLs`, `NAT`), interactive packet-flow visualizers, and SVG PC hardware workbenches.
+### 3. Hands-On Browser Labs (`105` Total Labs / `98` Interactive Browser Labs, `8` Ubuntu 24.04 GNOME GUI + Bash Split-View Workbenches, `24` Real Linux VMs, `90` Core Catalog Baseline)
+- **`105` total hands-on labs (`98` interactive browser labs + `9` classroom labs, expanding the `90` browser-based interactive labs baseline)** requiring zero local installation or external cloud VM popups:
+  - **`8` Ubuntu 24.04 LTS GNOME 46 Desktop + Bash Split-View Workbenches (`linuxgui`)**: `linux-gui-network` (NetworkManager IPv4/DNS), `linux-gui-disks` (GNOME Disks, SMART & `/etc/fstab`), `linux-gui-firewall` (GUFW Firewall & systemd daemons), `linux-gui-users` (GNOME Users, sudo & Nautilus permissions), `linux-gui-logs` (GNOME Logs / `journalctl` brute-force triage & Fail2Ban), `linux-gui-processes` (GNOME System Monitor runaway PID & `vm.swappiness`), `linux-gui-packages` (Ubuntu Software APT & `/etc/crontab` scheduler), and `linux-gui-ssh` (GNOME Passwords & Keys `seahorse` Ed25519 + `sshd_config` hardening). Every Linux lesson leads with a GUI + Bash Split-View workbench.
+  - **`24` real in-browser Linux VMs** (Alpine/x86 WebAssembly Linux 6.8 VM with a live root shell, filesystem, `/proc`, networking utilities, and an embedded Ubuntu GNOME GUI Split-View Companion bar).
+  - **`66` stateful Windows 11, Cisco IOS & Hardware labs** (`8` Windows 11 GUI desktop labs, `27` Windows PowerShell/CMD labs, `19` Cisco IOS Switch & Router CLI labs covering `VLANs`, `802.1Q trunks`, `ROAS`, `OSPF`, `ACLs`, `NAT`, and `9` interactive drag-and-drop hardware/subnetting workbenches).
 - **Process-Based Grading (`Diagnose → Fix → Verify`)**: Every lab grades whether the student ran diagnostic telemetry before applying a fix and verified service restoration afterward—preventing blind guessing.
 
 ### 4. Exam-Day Simulator & 3-Tab Interactive Visual PBQ Workbench

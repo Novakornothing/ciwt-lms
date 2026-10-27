@@ -7,10 +7,12 @@
     <div class="list-group-item">
       <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
         <div>
-          <div class="fw-semibold"><span class="badge text-bg-dark me-1">{{ lab.kind|upper }}</span>{{ lab.title }}</div>
+          <div class="fw-semibold">
+            <span class="badge {{ 'text-bg-primary' if lab.kind == 'linuxgui' else 'text-bg-dark' }} me-1">{{ 'UBUNTU GNOME GUI + BASH' if lab.kind == 'linuxgui' else lab.kind|upper }}</span>{{ lab.title }}
+          </div>
           <div class="small text-muted mt-1">{{ lab.align or lab.blurb }}</div>
         </div>
-        <a class="btn btn-sm btn-brand" href="{{ url_for('interactive_lab', lab_id=lab.id) }}">Launch terminal</a>
+        <a class="btn btn-sm btn-brand" href="{{ url_for('interactive_lab', lab_id=lab.id) }}">{% if lab.kind == 'linuxgui' %}Launch GUI + Bash Workbench{% elif lab.kind == 'win11gui' %}Launch Windows 11 GUI{% else %}Launch terminal{% endif %}</a>
       </div>
     </div>
     {% endfor %}

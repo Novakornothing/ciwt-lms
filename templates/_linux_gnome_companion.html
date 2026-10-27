@@ -1,0 +1,150 @@
+{# Synchronized Ubuntu 24.04 GNOME Desktop Companion Panel for Linux Shell & Real Linux VM Labs #}
+{% set lnx_paired = {
+  'linux-shell': ('linux-gui-users', 'users', 'GNOME Users & Nautilus Permissions'),
+  'linux-vm-perms': ('linux-gui-users', 'users', 'GNOME Users & Nautilus Permissions'),
+  'linux-vm-shell': ('linux-gui-logs', 'logs', 'GNOME Logs (journalctl)'),
+  'linux-vm-services': ('linux-gui-processes', 'processes', 'GNOME System Monitor & Disks'),
+  'linux-vm-netclient': ('linux-gui-network', 'network', 'GNOME Settings → Network'),
+  'linux-vm-routing': ('linux-gui-network', 'network', 'GNOME Settings → Network'),
+  'linux-vm-logs': ('linux-gui-logs', 'logs', 'GNOME Logs (journalctl Security)'),
+  'linux-vm-cron': ('linux-gui-packages', 'packages', 'Ubuntu Software & Cron Scheduler'),
+  'linux-vm-users': ('linux-gui-users', 'users', 'GNOME Users & Sudo Groups'),
+  'linux-vm-packages': ('linux-gui-packages', 'packages', 'Ubuntu Software & APT Manager'),
+  'linux-vm-firewall': ('linux-gui-firewall', 'firewall', 'GUFW Firewall & Systemd'),
+  'linux-vm-dns': ('linux-gui-network', 'network', 'GNOME Settings → Network & DNS'),
+  'linux-vm-dhcp': ('linux-gui-network', 'network', 'GNOME Settings → Network & DHCP'),
+  'linux-vm-nat': ('linux-gui-firewall', 'firewall', 'GUFW Firewall & NAT'),
+  'linux-vm-ssh': ('linux-gui-ssh', 'ssh', 'GNOME Passwords & SSH Keys'),
+  'linux-vm-tls': ('linux-gui-ssh', 'ssh', 'GNOME Passwords & Certificates'),
+  'linux-vm-storage': ('linux-gui-disks', 'disks', 'GNOME Disks & /etc/fstab'),
+  'linux-vm-restore': ('linux-gui-disks', 'disks', 'GNOME Disks & Backup Restore'),
+  'linux-vm-incident': ('linux-gui-logs', 'logs', 'GNOME Logs & Incident Response'),
+  'linux-vm-capstone': ('linux-gui-network', 'network', 'GNOME Full Admin Workbench'),
+}.get(lab.id, ('linux-gui-network', 'network', 'GNOME Settings → Network')) %}
+
+<div class="card mb-2 border-info" id="lnxGnomeCompanionBar" style="background:linear-gradient(90deg,rgba(44,0,30,0.92),rgba(15,23,42,0.95));color:#f8fafc">
+  <div class="card-body py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <span class="badge text-bg-primary"><i class="bi bi-ubuntu me-1" aria-hidden="true"></i>Ubuntu 24.04 GNOME 46 + CLI Dual Mode</span>
+      <span class="small text-light">Every Linux lab supports both <strong>GNOME Desktop GUI</strong> and <strong>Terminal CLI</strong>.</span>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <button type="button" class="btn btn-sm btn-brand" id="toggleGnomeCompanionBtn" aria-expanded="false" aria-controls="lnxCompanionCollapse">
+        <i class="bi bi-layout-split me-1" aria-hidden="true"></i><span>Toggle GNOME GUI Split Inspector</span>
+      </button>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('interactive_lab', lab_id=lnx_paired[0]) }}">
+        <i class="bi bi-window-desktop me-1" aria-hidden="true"></i>Open Full {{ lnx_paired[2] }} Workbench →
+      </a>
+    </div>
+  </div>
+  <div class="d-none border-top border-secondary p-3" id="lnxCompanionCollapse" style="background:rgba(9,13,22,0.94)">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <div class="small fw-bold text-info"><i class="bi bi-window-desktop me-1" aria-hidden="true"></i>Interactive Ubuntu GNOME 46 Quick-Inspector (Synced Command Helper)</div>
+      <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="GNOME Quick Inspector Tools">
+        <button type="button" class="btn btn-outline-info active" data-gnome-qtab="network">Network</button>
+        <button type="button" class="btn btn-outline-info" data-gnome-qtab="disks">Disks</button>
+        <button type="button" class="btn btn-outline-info" data-gnome-qtab="firewall">Firewall</button>
+        <button type="button" class="btn btn-outline-info" data-gnome-qtab="users">Users/Perms</button>
+        <button type="button" class="btn btn-outline-info" data-gnome-qtab="logs">Logs</button>
+        <button type="button" class="btn btn-outline-info" data-gnome-qtab="processes">Processes</button>
+        <button type="button" class="btn btn-outline-info" data-gnome-qtab="packages">APT/Cron</button>
+        <button type="button" class="btn btn-outline-info" data-gnome-qtab="ssh">SSH Keys</button>
+      </div>
+    </div>
+    <div id="lnxCompanionTabBody" class="p-2 rounded small" style="background:rgba(15,23,42,0.9);border:1px solid rgba(56,189,248,0.28)">
+      <div data-gnome-qpane="network">
+        <strong>GNOME Settings → Network (<code>nm-connection-editor</code>)</strong> · Click any GUI action to insert the equivalent command into your terminal:
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ip -br addr">Inspect IPv4/IPv6 (ip -br addr)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ip route">Routing Table (ip route)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="cat /etc/resolv.conf">DNS Resolver (/etc/resolv.conf)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ping -c 2 10.20.40.1">Ping Gateway</button>
+        </div>
+      </div>
+      <div data-gnome-qpane="disks" class="d-none">
+        <strong>GNOME Disks &amp; Partition Manager (<code>gnome-disks</code>)</strong> · Inspect block devices, mounts, and <code>/etc/fstab</code>:
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="df -h">Disk Free (df -h)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="mount">Active Mounts (mount)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="cat /etc/fstab">Inspect /etc/fstab</button>
+        </div>
+      </div>
+      <div data-gnome-qpane="firewall" class="d-none">
+        <strong>GUFW Firewall &amp; Systemd Daemons (<code>gufw</code> / <code>systemctl</code>)</strong> · Inspect firewall rules and service state:
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="iptables -L -n">Firewall Rules (iptables -L -n)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ps aux">Running Daemons (ps aux)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ss -tulnp">Listening Sockets (ss -tulnp)</button>
+        </div>
+      </div>
+      <div data-gnome-qpane="users" class="d-none">
+        <strong>GNOME Users &amp; Nautilus File Permissions (<code>gnome-users</code> / <code>nautilus</code>)</strong> · Inspect accounts, groups, and POSIX bits:
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="id">Current Identity (id)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ls -la">List Permissions (ls -la)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="chmod 750 ">Set Mode 750 (chmod 750)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="grep sudo /etc/group">Check sudo Group</button>
+        </div>
+      </div>
+      <div data-gnome-qpane="logs" class="d-none">
+        <strong>GNOME Logs (<code>gnome-logs</code> / <code>journalctl</code> / <code>/var/log</code>)</strong> · Filter authentication and system logs:
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ls -la /var/log">Inspect /var/log</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="grep -i fail /var/log/auth.log">Auth Failures (grep fail)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="tail -n 25 /var/log/messages">Tail System Log</button>
+        </div>
+      </div>
+      <div data-gnome-qpane="processes" class="d-none">
+        <strong>GNOME System Monitor (<code>gnome-system-monitor</code>)</strong> · Inspect CPU/RAM consumers and terminate runaway PIDs:
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ps aux">Process Table (ps aux)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="free -m">Memory &amp; Swap (free -m)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="kill -15 ">Terminate PID (kill -15)</button>
+        </div>
+      </div>
+      <div data-gnome-qpane="packages" class="d-none">
+        <strong>Ubuntu Software &amp; Cron Scheduler (<code>apt</code> / <code>apk</code> / <code>crontab</code>)</strong> · Inspect packages and scheduled jobs:
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="crontab -l">User Crontab (crontab -l)</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="cat /etc/crontab">System Crontab (/etc/crontab)</button>
+        </div>
+      </div>
+      <div data-gnome-qpane="ssh" class="d-none">
+        <strong>GNOME Passwords &amp; Keys (<code>seahorse</code> / <code>sshd_config</code>)</strong> · Inspect SSH keys and daemon hardening:
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ls -la ~/.ssh">Inspect ~/.ssh Keys</button>
+          <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="grep -E 'PermitRootLogin|PasswordAuthentication' /etc/ssh/sshd_config">Audit sshd_config</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById('toggleGnomeCompanionBtn');
+  var box = document.getElementById('lnxCompanionCollapse');
+  if (!btn || !box) return;
+  btn.addEventListener('click', function () {
+    var hidden = box.classList.toggle('d-none');
+    btn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+  });
+  box.querySelectorAll('[data-gnome-qtab]').forEach(function (tb) {
+    tb.addEventListener('click', function () {
+      var target = tb.getAttribute('data-gnome-qtab');
+      box.querySelectorAll('[data-gnome-qtab]').forEach(function (b) { b.classList.toggle('active', b === tb); });
+      box.querySelectorAll('[data-gnome-qpane]').forEach(function (p) {
+        p.classList.toggle('d-none', p.getAttribute('data-gnome-qpane') !== target);
+      });
+    });
+  });
+  box.querySelectorAll('.tchip[data-chip]').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var inp = document.getElementById('termInput');
+      if (inp) {
+        inp.value = chip.getAttribute('data-chip') || '';
+        inp.focus();
+      }
+    });
+  });
+})();
+</script>
