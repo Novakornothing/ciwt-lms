@@ -841,7 +841,7 @@ def ensure_rich_demo_telemetry(app):
                  'Hi Student6,\n\nOn the Chapter 1 check, remember that each router hop rewrites the Layer-2 frame MAC addresses and decrements TTL while keeping the source and destination IPv4 addresses intact (unless NAT is configured). Try the Packet-Flow Visualizer in Lab 1 to watch each hop live.',
                  'Got it, opening the Packet-Flow Visualizer now!'),
                 (admin_user, s1, sec1.id, 'Welcome to Novak LMS™ — 5 Ways to Learn, Eye Tracking & Live VMs',
-                 'Welcome to Novak LMS™! Every lesson includes 5 Ways to Learn (Standard, Plain English, Analogy, Visual, Try-It), opt-in Eye Tracking, 90 interactive & real Linux VM labs, and the Practice Exams.',
+                 'Welcome to Novak LMS™! Every lesson includes 5 Ways to Learn (Standard, Plain English, Analogy, Visual, Try-It), opt-in Eye Tracking, 114 interactive & real Linux VM labs, and the Practice Exams.',
                  None),
             ]
             for idx_m, (sender, recip, sid_m, subj, body_txt, reply_txt) in enumerate(threads_spec):

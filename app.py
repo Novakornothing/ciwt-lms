@@ -2673,7 +2673,7 @@ def roi_export_csv():
     w.writerow(['Annual Direct License Savings ($/yr)', roi['license_savings'], f"{roi['license_reduction_pct']}% cost reduction"])
     w.writerow(['Instructor Triage & Grading Hours Saved (hrs/yr)', roi['total_faculty_hours_saved'], f"${roi['faculty_dollar_value']}/yr faculty capacity value"])
     w.writerow(['Avoided Exam Retake Voucher Waste ($/yr)', roi['voucher_savings'], f"{roi['avoided_retakes']} avoided retakes (61% -> 89% pass rate)"])
-    w.writerow(['Avoided VDI / Lab Server Overhead ($/yr)', roi['infra_savings'], '90 browser-native labs including 24 WebAssembly Linux VMs'])
+    w.writerow(['Avoided VDI / Lab Server Overhead ($/yr)', roi['infra_savings'], '114 browser-native labs including 32 WebAssembly Linux VMs'])
     w.writerow(['Total Annual Institutional Net Savings ($/yr)', roi['total_annual_net_savings'], f"{roi['roi_multiple']}x Year-1 ROI"])
     w.writerow(['3-Year Net Institutional Savings ($)', roi['three_year_net_savings'], '36-month cumulative savings'])
     resp = Response(buf.getvalue(), status=200, mimetype='text/csv')

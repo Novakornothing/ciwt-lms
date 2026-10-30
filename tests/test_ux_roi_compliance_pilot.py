@@ -405,7 +405,7 @@ def test_12_wave6_ux_refinements_spec_drawer_step_style_lab_fullwidth_filter_and
     1. Collapsible <details class="novak-spec-drawer"> + #novakStepStyleBar + collapsible <details class="novak-boot-quickcard">
     2. Auto-collapsed #staffRail (is-lab-workbench staff-rail-collapsed) + top nav on /labs/<lab_id>
     3. Live interactive filter bar (#labsFilterBar, #labsFilterSearch, course/kind/status pills) on /labs
-    4. De-duplicated /student dashboard with gp-hero-checklist and All 105 Live Labs.
+    4. De-duplicated /student dashboard with gp-hero-checklist and All 114 Live Labs.
     """
     with app.app_context():
         c = mod.Course.query.filter_by(code="ITSUP").first()
@@ -427,7 +427,7 @@ def test_12_wave6_ux_refinements_spec_drawer_step_style_lab_fullwidth_filter_and
 
     lab_html = student.get("/labs/linux-gui-logs").get_data(as_text=True)
     assert "is-lab-workbench staff-rail-collapsed" in lab_html
-    assert "All 105 Live Labs" in lab_html
+    assert "All 114 Live Labs" in lab_html
 
     catalog_html = student.get("/labs").get_data(as_text=True)
     assert "id=\"labsFilterBar\"" in catalog_html
@@ -438,7 +438,7 @@ def test_12_wave6_ux_refinements_spec_drawer_step_style_lab_fullwidth_filter_and
 
     # Phase 1 student home: one continue card + three tabs
     dash_html = student.get("/student").get_data(as_text=True)
-    assert "Every lab (105)" in dash_html
+    assert "Every lab (114)" in dash_html
     assert dash_html.count("Continue where you left off") == 1
     assert dash_html.count("continue-btn") == 1
     for tab in ("Course Chapters", "Hands-On Labs", "Practice Exams"):

@@ -341,7 +341,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
         "telemetry_capabilities": [
             "5-Path Adaptive Learning Modality Tracking (R0 Standard, R1 Plain English, R2 Analogy, R3 Visual Map, R4 Interactive Try-It)",
             "Per-Section Time-to-Mastery (median_seconds_to_resolve & mean_attempts_to_resolve)",
-            "105 Browser-Native Hands-On Labs (8 Ubuntu 24.04 GNOME GUI + Bash Split-View, 8 Windows 11 GUI, 24 Real WebAssembly Linux VMs, 19 Cisco IOS Switch/Router CLI)",
+            "114 Browser-Native Hands-On Labs (8 Ubuntu 24.04 GNOME GUI + Bash Split-View, 8 Windows 11 GUI, 32 Real WebAssembly Linux VMs, 19 Cisco IOS Switch/Router CLI)",
             "Diagnose -> Fix -> Verify Engineering Process Grading",
             "100% Browser-Local Helix Gaze-Assisted Intervention Telemetry (Zero Video Transmitted)",
         ],

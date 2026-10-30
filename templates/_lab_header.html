@@ -26,7 +26,7 @@
     {% if request.referrer and '/lesson/' in request.referrer %}
     <a class="btn btn-sm btn-brand" href="{{ request.referrer }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to Lesson</a>
     {% endif %}
-    <a class="btn btn-sm btn-outline-navy" href="{{ url_for('interactive_labs_index') }}"><i class="bi bi-terminal" aria-hidden="true"></i> All 105 Live Labs</a>
+    <a class="btn btn-sm btn-outline-navy" href="{{ url_for('interactive_labs_index') }}"><i class="bi bi-terminal" aria-hidden="true"></i> All 114 Live Labs</a>
     <a class="btn btn-sm btn-outline-navy" href="{{ url_for('student_dashboard') if current_user.is_authenticated and current_user.role == 'student' else url_for('index') }}"><i class="bi bi-house-door" aria-hidden="true"></i> Dashboard</a>
     <button type="button" class="btn btn-sm btn-outline-navy" onclick="document.getElementById('mobileStaffMenuBtn')?.click()" aria-label="Toggle global navigation menu">
       <i class="bi bi-list" aria-hidden="true"></i> Menu

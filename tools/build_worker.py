@@ -22,7 +22,8 @@ WORKER_PATHS = ('/terms', '/terms.html', '/legal/terms', '/dmca', '/security', '
 REDIRECTS = ('/consult', '/schedule-consult', '/pricing', '/roi', '/pilot/start', '/demo', '/demo/tour', '/register',
              '/login', '/privacy', '/my-data', '/helix/try', '/contact', '/demo/enter/student', '/demo/enter/instructor',
              '/demo/enter/admin')
-FORBIDDEN = ('ciwt', 'soc 2', 'soc2', 'hecvat', 'not built yet', 'not in this prototype', 'official comptia practice exam')
+FORBIDDEN = ('ciwt', 'soc 2', 'soc2', 'hecvat', 'not built yet', 'not in this prototype', 'official comptia practice exam',
+             'cmi5 compliant', 'cmi5 conformant', '(cmi5)', '9274', 'roadmap')
 
 
 def rewrite(html):
