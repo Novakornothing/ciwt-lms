@@ -69,7 +69,7 @@
 {% if (learn_home and learn_home.has_placement) or mastery_daily %}
 <p class="class-also small mt-2 mb-0" id="homeAlso">
   {% if learn_home and learn_home.has_placement %}<span><a href="{{ learn_home.placement_url }}">Skip What You Know</a>{% if learn_home.skip %} <span class="text-muted">({{ learn_home.skip|length }} chapter{{ 's' if learn_home.skip|length != 1 }} tested out)</span>{% endif %}</span>{% endif %}
-  {% if mastery_daily %}<span><a href="{{ mastery_daily.url }}" id="masteryReviewLink">Review topics you’ve learned</a> <span class="text-muted">{% if mastery_daily.done_today %}(done today){% elif mastery_daily.n %}({{ mastery_daily.n }} question{{ 's' if mastery_daily.n != 1 }}, about {{ mastery_daily.minutes }} min){% else %}(starts after your first answers){% endif %}</span></span>{% endif %}
+  {% if mastery_daily %}<span><a href="{{ mastery_daily.url }}" id="masteryReviewLink">Review topics you’ve learned</a> <span class="text-muted">{% if mastery_daily.done_today %}(Done for today){% elif mastery_daily.n %}({{ mastery_daily.n }} question{{ 's' if mastery_daily.n != 1 }}, about {{ mastery_daily.minutes }} min){% else %}(starts after your first answers){% endif %}</span></span>{% endif %}
 </p>
 {% endif %}
 {% endif %}
