@@ -9,7 +9,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { V86 } = require(ROOT + "/static/vendor/v86/libv86.js");
 const D = ROOT + "/static/vendor/v86";
 const spec = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
-const raw = zlib.gunzipSync(fs.readFileSync(D + "/novak-gui.state.gz"));
+const manifest = JSON.parse(fs.readFileSync(D + "/novak-gui.state.json", "utf8"));
+const raw = Buffer.concat(manifest.parts.map((p) => zlib.gunzipSync(fs.readFileSync(D + "/" + p))));
 const buf = raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength);
 const e = new V86({
   wasm_path: D + "/v86.wasm",

@@ -30,26 +30,66 @@
     var ds = new DecompressionStream('gzip');
     return new Response(new Blob([buf]).stream().pipeThrough(ds)).arrayBuffer();
   }
-  function fetchBuf(url, onprog) {
-    return fetch(url, { credentials: 'same-origin' }).then(function (r) {
-      if (!r.ok) throw new Error('download failed');
-      var total = +r.headers.get('content-length') || 0, got = 0, chunks = [];
-      var reader = r.body.getReader();
-      function step() {
-        return reader.read().then(function (x) {
-          if (x.done) {
-            var len = chunks.reduce(function (a, c) { return a + c.length; }, 0);
-            var out = new Uint8Array(len), o = 0;
-            chunks.forEach(function (c) { out.set(c, o); o += c.length; });
-            return out.buffer;
-          }
-          chunks.push(x.value); got += x.value.length;
-          if (onprog) onprog(got, total);
-          return step();
+  var CACHE = 'novak-desktop-v1';
+  function readBody(r, onprog) {
+    var total = +r.headers.get('content-length') || 0, got = 0, chunks = [];
+    var reader = r.body.getReader();
+    function step() {
+      return reader.read().then(function (x) {
+        if (x.done) {
+          var len = chunks.reduce(function (a, c) { return a + c.length; }, 0);
+          var out = new Uint8Array(len), o = 0;
+          chunks.forEach(function (c) { out.set(c, o); o += c.length; });
+          return out.buffer;
+        }
+        chunks.push(x.value); got += x.value.length;
+        if (onprog) onprog(got, total);
+        return step();
+      });
+    }
+    return step();
+  }
+  function loadPart(url, onprog) {
+    var open = window.caches ? caches.open(CACHE) : Promise.resolve(null);
+    return open.then(function (cache) {
+      var hit = cache ? cache.match(url) : Promise.resolve(null);
+      return Promise.resolve(hit).then(function (cached) {
+        if (cached) {
+          return cached.arrayBuffer().then(function (buf) {
+            if (onprog) onprog(buf.byteLength, buf.byteLength);
+            return buf;
+          });
+        }
+        return fetch(url, { credentials: 'same-origin' }).then(function (r) {
+          if (!r.ok) throw new Error('download failed');
+          return readBody(r, onprog).then(function (buf) {
+            if (cache) cache.put(url, new Response(buf.slice(0), { headers: { 'Content-Type': 'application/gzip' } }));
+            return buf;
+          });
         });
-      }
-      return step();
+      });
     });
+  }
+  function loadParts(urls, onprog) {
+    var pieces = [], done = 0, known = 0;
+    function next(i) {
+      if (i >= urls.length) {
+        var len = pieces.reduce(function (a, b) { return a + b.byteLength; }, 0);
+        var out = new Uint8Array(len), o = 0;
+        pieces.forEach(function (b) { out.set(new Uint8Array(b), o); o += b.byteLength; });
+        return Promise.resolve(out.buffer);
+      }
+      return loadPart(urls[i], function (got, total) {
+        if (total && !pieces[i]) known = Math.max(known, done + total);
+        if (onprog) onprog(done + got, known || (done + got));
+      }).then(gunzip).then(function (buf) {
+        pieces[i] = buf;
+        done += buf.byteLength;
+        if (onprog) onprog(done, Math.max(known, done));
+        return next(i + 1);
+      });
+    }
+    return next(0);
   }
 
   function waitPrompt(ms) {
@@ -128,16 +168,20 @@
     s.src = cfg.assets.lib;
     s.onload = function () {
       setStatus('Downloading the desktop…', 8);
-      fetchBuf(cfg.assets.state, function (got, total) {
-        var pct = total ? 8 + 70 * got / total : 20;
-        setStatus('Downloading the desktop — ' + (got / 1048576).toFixed(1) + (total ? ' of ' + (total / 1048576).toFixed(1) : '') + ' MB', pct);
-      }).then(gunzip).then(function (buf) {
+      var urls = (cfg.assets && cfg.assets.parts) || [];
+      if (!urls.length) {
+        setStatus('The desktop snapshot is not on this server.', 0);
+        return;
+      }
+      loadParts(urls, function (got, total) {
+        var pct = total ? 8 + 78 * got / total : 20;
+        var mb = (got / 1048576).toFixed(1);
+        var of = total ? ' of ' + (total / 1048576).toFixed(1) : '';
+        setStatus('Downloading the desktop — ' + mb + of + ' MB', pct);
+      }).then(function (buf) {
         clean = buf.slice(0);
         return boot(buf);
-      }).then(arm).catch(function () {
-        setStatus('Snapshot unavailable — booting the image…', 40);
-        return boot(null).then(arm);
-      }).catch(function (e) {
+      }).then(arm).catch(function (e) {
         setStatus('Could not start the desktop: ' + (e.message || e) + '. Try a current Chrome, Edge, Firefox, or Safari.', 0);
       });
     };
@@ -244,5 +288,5 @@
     }
   });
 
-  if (cfg.assets && cfg.assets.state) start();
+  if (cfg.assets && cfg.assets.parts && cfg.assets.parts.length) start();
 })();

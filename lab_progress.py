@@ -383,7 +383,7 @@ def register(app, db, deps):
             vdir = os.path.join(app.static_folder, 'vendor', 'v86')
             need = ['libv86.js', 'v86.wasm', 'seabios.bin', 'vgabios.bin']
             if lab.get('kind') == 'linuxgui':
-                need.append(lab['vm'].get('state') or lab['vm']['image'])
+                need.extend(lab['vm'].get('state_parts') or [lab['vm'].get('state') or lab['vm']['image']])
             else:
                 need.append(lab['vm']['image'])
             vm_ok = all(os.path.isfile(os.path.join(vdir, f)) for f in need)

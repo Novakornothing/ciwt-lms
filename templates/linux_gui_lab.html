@@ -39,7 +39,7 @@
     <div class="lab-feedback mt-2" id="lguiFeedback" role="status" aria-live="polite"></div>
     <p class="small text-muted mt-2 mb-3" id="lguiPerf"></p>
     <details class="small mb-3"><summary>How grading works</summary>
-      <p class="mb-0 mt-1">Check my work runs a read-only script inside the desktop and sends the result here. It looks at files, permissions, addresses, firewall rules, and processes. The desktop is Linux with Fluxbox, not a simulated window. First load downloads about {{ lab.vm.download_mb }} MB from this LMS, then the browser caches it. Credits: <a href="https://github.com/copy/v86">v86</a> (BSD-2-Clause). Guest licences are listed with the VM files.</p>
+      <p class="mb-0 mt-1">Check my work runs a read-only script inside the desktop and sends the result here. It looks at files, permissions, addresses, firewall rules, and processes. The desktop is Linux with Fluxbox. First load downloads about {{ lab.vm.download_mb }} MB in pieces, then this browser keeps them. Credits: <a href="https://github.com/copy/v86">v86</a> (BSD-2-Clause). Guest licences are listed with the VM files.</p>
     </details>
     {% else %}
     <div class="alert alert-warning" role="alert">The desktop files are not on this server. An administrator runs <code>tools/fetch_v86.sh</code> and ships <code>novak-gui.bin</code> with its state snapshot.</div>
@@ -49,7 +49,7 @@
 </div>
 {% if vm_assets_ok %}
 {% set cfg = {'kind': lab.kind, 'boot': boot, 'lab_id': lab.id, 'vm': lab.vm,
-  'assets': {'lib': url_for('static', filename='vendor/v86/libv86.js'), 'wasm': url_for('static', filename='vendor/v86/v86.wasm'), 'bios': url_for('static', filename='vendor/v86/seabios.bin'), 'vga_bios': url_for('static', filename='vendor/v86/vgabios.bin'), 'state': url_for('static', filename='vendor/v86/' ~ lab.vm.state), 'bzimage': url_for('static', filename='vendor/v86/' ~ lab.vm.image)},
+  'assets': {'lib': url_for('static', filename='vendor/v86/libv86.js'), 'wasm': url_for('static', filename='vendor/v86/v86.wasm'), 'bios': url_for('static', filename='vendor/v86/seabios.bin'), 'vga_bios': url_for('static', filename='vendor/v86/vgabios.bin'), 'parts': [url_for('static', filename='vendor/v86/novak-gui.state.0.part'), url_for('static', filename='vendor/v86/novak-gui.state.1.part'), url_for('static', filename='vendor/v86/novak-gui.state.2.part')]},
   'urls': {'log': url_for('interactive_lab_vm_log', lab_id=lab.id), 'vmcheck': url_for('interactive_lab_vm_check', lab_id=lab.id), 'probe': url_for('interactive_lab_vm_probe', lab_id=lab.id), 'hint': url_for('interactive_lab_hint', lab_id=lab.id), 'undo': url_for('interactive_lab_undo', lab_id=lab.id), 'reset': url_for('interactive_lab_reset', lab_id=lab.id), 'check': url_for('interactive_lab_check', lab_id=lab.id), 'state': url_for('interactive_lab_state', lab_id=lab.id)}} %}
 <script type="application/json" id="labConfig">{{ cfg|tojson }}</script>
 <script src="{{ url_for('static', filename='js/lab-common.js') }}"></script>

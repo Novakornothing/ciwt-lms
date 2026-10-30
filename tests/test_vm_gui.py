@@ -14,7 +14,8 @@ import labs_linux_gui as G
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "static" / "vendor" / "v86"
 READY = shutil.which("node") and all((ASSETS / f).is_file() for f in (
-    "libv86.js", "v86.wasm", "seabios.bin", "vgabios.bin", "novak-gui.state.gz", "novak-gui.bin"))
+    "libv86.js", "v86.wasm", "seabios.bin", "vgabios.bin", "novak-gui.state.json",
+    "novak-gui.state.0.part", "novak-gui.state.1.part", "novak-gui.state.2.part", "novak-gui.bin"))
 
 # Values the page is allowed to teach in Stage 1. Later stages must not contain the session's own values.
 SECRET = (

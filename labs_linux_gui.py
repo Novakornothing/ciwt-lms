@@ -31,8 +31,9 @@ def apply(lab: dict, state: dict, done: list, ev: str, data: dict):
 
 GUI_VM = {
     "image": "novak-gui.bin",
-    "state": "novak-gui.state.gz",
-    "download_mb": 48,
+    # Concatenate these gzip pieces and decompress. Each piece is under 20 MiB.
+    "state_parts": ["novak-gui.state.0.part", "novak-gui.state.1.part", "novak-gui.state.2.part"],
+    "download_mb": 50,
     "memory_mb": 192,
     "vga_mb": 8,
     "prompt_re": r"[#%$] $",

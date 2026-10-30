@@ -9,7 +9,7 @@ emulator and BIOS files are fetched by `tools/fetch_v86.sh` (pinned and sha256-c
 | seabios.bin | [SeaBIOS](https://www.seabios.org/) (from the v86 repo, rev 94faf3d) | LGPL-3.0 | unmodified binary; source at seabios.org |
 | vgabios.bin | SeaVGABIOS / v86 repo | LGPL-3.0 | unmodified binary |
 | **ciwt-linux.bin** / **novak-linux.bin** | Our build (`tools/vm_image/`): Linux 6.8.12 + BusyBox 1.36.1 + Alpine v3.20 x86 packages | GPL-2.0 kernel and BusyBox, plus the package licences below | terminal labs; see "GPL source offer" |
-| **novak-gui.bin** + **novak-gui.state.gz** | Desktop guest (`tools/vm_gui/`, `docs/VM_GUI.md`): same base plus an X11 desktop | guest programs only; not linked into the LMS | see the desktop table |
+| **novak-gui.bin** + **novak-gui.state.*.part** | Desktop guest (`tools/vm_gui/`, `docs/VM_GUI.md`): same base plus an X11 desktop | guest programs only; not linked into the LMS | see the desktop table |
 | buildroot-bzImage68.bin | Upstream v86 image (fetched, no longer used by any lab) | GPL-2.0 and others | kept only for comparison |
 
 Package licences in `ciwt-linux.bin` (exact versions are in `tools/vm_image/packages.txt` and `repo.txt`):
@@ -47,4 +47,4 @@ and BusyBox. Alpine package versions are the v3.20 x86 builds named in `docs/VM_
 | Mesa libGL / libEGL (pulled in by the X server package) | MIT | X.Org's GL dependency. No Gallium/LLVM drivers are in the image. The LMS does not link Mesa. |
 | iptables, e2fsprogs, OpenSSH, sudo, shadow, apk-tools | same table as the terminal image | firewall, disks, SSH, accounts, packages |
 
-`novak-gui.state.gz` is a memory snapshot of this guest after the desktop is up. It is data, not a separate program.
+`novak-gui.state.*.part` is a memory snapshot of this guest after the desktop is up, split so each file stays under 25 MiB. It is data, not a separate program.

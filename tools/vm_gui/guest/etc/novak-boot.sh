@@ -38,6 +38,7 @@ if [ ! -x /usr/local/bin/backup-verify.sh ]; then
   printf '%s\n' '#!/bin/sh' 'echo backup-verify ok' > /usr/local/bin/backup-verify.sh
   chmod 755 /usr/local/bin/backup-verify.sh
 fi
+[ -s /root/notes.txt ] || printf '%s\n' 'Novak Linux notes' > /root/notes.txt
 # Desktop on the framebuffer. The serial shell stays free for grading.
 /etc/novak-desktop.sh >/var/log/desktop.log 2>&1 &
 : > /dev/.novak-boot-done
