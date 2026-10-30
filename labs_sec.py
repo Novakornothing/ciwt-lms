@@ -1,4 +1,4 @@
-"""Cybersecurity labs for course SEC.
+"""Security labs for course SEC.
 
 Linux stations are real v86 VMs graded on the final system state. Windows, phishing,
 certificate, MFA, ACL, and GPG stations are graded activities in the same lab runner.
@@ -67,7 +67,7 @@ SEC_VM_IPTABLES = _vm({
     ],
     'intro': 'Ticket FW-19 is on the VM in /root/TICKET. The tool on this image is iptables (the same idea as ufw on Ubuntu). Grade checks the live rules.',
     'success_msg': 'The host is default-deny, with loopback, established flows, a narrow SSH allow, and TCP 8443.',
-    'course_objectives': ['SEC-6.1'],
+    'course_objectives': ['SEC-14.1'],
     'minutes': 30,
     'palette': ['iptables -S', 'iptables -L INPUT -n -v', 'iptables -A INPUT ', 'iptables -P INPUT ', 'iptables-save'],
     'hints': [
@@ -144,7 +144,7 @@ SEC_VM_PERMS = _vm({
     ],
     'intro': 'The file /srv/secrets/payroll.csv is world-writable. The payroll group already exists or can be created. Do not delete the file.',
     'success_msg': 'The payroll file is group-readable and closed to everyone else.',
-    'course_objectives': ['SEC-7.1'],
+    'course_objectives': ['SEC-14.3'],
     'minutes': 20,
     'palette': ['ls -l ', 'chgrp ', 'chmod ', 'id '],
     'hints': ['List the file with a long listing before you change it.', 'The group name is the department that may read payroll.', 'Others should have no permissions at all.'],
@@ -200,7 +200,7 @@ SEC_VM_SUID = _vm({
     ],
     'intro': 'A baseline says the only setuid tools should be the ones the OS shipped. Look under /usr/local. Record the path before you change the bit.',
     'success_msg': 'The surprise setuid bit is gone and the path is in the audit note.',
-    'course_objectives': ['SEC-7.1', 'SEC-7.4'],
+    'course_objectives': ['SEC-19.4'],
     'minutes': 20,
     'palette': ['find /usr/local ', 'ls -l ', 'chmod u-s '],
     'hints': ['Setuid shows up as an s in the owner execute column, or as a special find test.', 'Write the path down before you change the mode.', 'Only the unexpected program should lose the bit.'],
@@ -253,7 +253,7 @@ SEC_VM_USERS = _vm({
     ],
     'intro': 'HR says intern left today. Do not delete the home directory. The sudo exception is a file under /etc/sudoers.d.',
     'success_msg': 'The leaver cannot log in, the files remain, and the blanket sudo rule is gone.',
-    'course_objectives': ['SEC-5.2', 'SEC-7.2'],
+    'course_objectives': ['SEC-24.1'],
     'minutes': 25,
     'palette': ['id ', 'chage -l ', 'ls /etc/sudoers.d', 'usermod ', 'rm ', 'visudo -c'],
     'hints': ['Locking a password is not the same as deleting the user.', 'Look for a drop-in that grants every command.', 'Check sudoers syntax after you remove a file.'],
@@ -313,7 +313,7 @@ SEC_VM_SSH = _vm({
     ],
     'intro': 'ops can still sign in with a password, and root login is allowed. Put a key in place and prove the config is valid before you rely on it.',
     'success_msg': 'Key login is installed with safe modes, and password and root login are closed in a config sshd accepts.',
-    'course_objectives': ['SEC-5.4', 'SEC-7.2'],
+    'course_objectives': ['SEC-19.1'],
     'minutes': 30,
     'palette': ['ssh-keygen -t ed25519 ', 'ls -ld ', 'chmod ', 'chown ', 'sshd -t'],
     'hints': ['Create the key for the ops account, not only for root.', 'Directory and file modes matter or sshd will ignore the key.', 'Ask sshd to test the config before you walk away.'],
@@ -382,7 +382,7 @@ SEC_VM_AUTH = _vm({
     ],
     'intro': 'Security asked who is being guessed, and from where. The log is /var/log/auth.log. One successful login is not the pattern.',
     'success_msg': 'You named the noisy source and the account it targeted.',
-    'course_objectives': ['SEC-8.1', 'SEC-8.3'],
+    'course_objectives': ['SEC-22.1'],
     'minutes': 20,
     'palette': ['ls /var/log', 'grep ', 'journalctl ', 'wc '],
     'hints': ['Failed lines and accepted lines are different stories.', 'Count repeats instead of stopping at the first line.', 'Write the two answers into the two files under /root/ir.'],
@@ -440,7 +440,7 @@ SEC_VM_CRON = _vm({
     ],
     'intro': 'A baseline says root runs one nightly rotate. Anything else in the crontab, especially under a dot directory, is suspect.',
     'success_msg': 'The nightly job remains. The hidden job and its program are gone.',
-    'course_objectives': ['SEC-9.2'],
+    'course_objectives': ['SEC-12.1'],
     'minutes': 25,
     'palette': ['crontab -l', 'ls -la /var/tmp', 'rm '],
     'hints': ['List the scheduled jobs before you replace the table.', 'Keep the job that matches the baseline name.', 'Remove the program the surprise job points at, not only the schedule line.'],
@@ -495,7 +495,7 @@ SEC_VM_PROC = _vm({
     ],
     'intro': 'A normal system does not run long-lived programs from /var/tmp/.cache. Find it, stop it, and remove the file so it cannot be started again by hand.',
     'success_msg': 'The beacon is stopped and the program file is gone.',
-    'course_objectives': ['SEC-3.3', 'SEC-3.4'],
+    'course_objectives': ['SEC-12.1'],
     'minutes': 20,
     'palette': ['ps w', 'ss -tulpn', 'ls -la /var/tmp', 'kill ', 'rm '],
     'hints': ['A long process listing shows the path, not only the short name.', 'Stop the running copy and also delete the file.', 'Do not delete unrelated programs in /usr/bin.'],
@@ -549,7 +549,7 @@ SEC_VM_HASH = _vm({
     ],
     'intro': 'Publishers ship a fingerprint so you can see tampering. The good bytes are beside the live file. The sums file expects the name build.bin.',
     'success_msg': 'The live file matches the published fingerprint.',
-    'course_objectives': ['SEC-4.1', 'SEC-9.4'],
+    'course_objectives': ['SEC-6.3'],
     'minutes': 20,
     'palette': ['sha256sum ', 'ls -l /opt/app', 'cp '],
     'hints': ['A sums check fails when the bytes differ, even if the name is right.', 'A known-good copy is in the same directory with a different name.', 'Check from the directory that matches the name inside the sums file.'],
@@ -603,7 +603,7 @@ SEC_VM_GREP = _vm({
     ],
     'intro': 'The case folder is /root/case. The log is /var/log/app.log. Incident SR-4419 is the only identifier you should extract.',
     'success_msg': 'The case file has the incident lines and not the unrelated warning.',
-    'course_objectives': ['SEC-8.4', 'SEC-9.4'],
+    'course_objectives': ['SEC-22.3'],
     'minutes': 15,
     'palette': ['ls /var/log', 'grep ', 'wc -l '],
     'hints': ['Match the incident identifier, not every ERROR.', 'Write the matches into the case file.', 'The original log should still be there afterward.'],
@@ -688,7 +688,7 @@ def _activity(lid, title, blurb, skill, prompts):
 SEC_GPG = _activity(
     'sec-gpg', 'GPG decisions — encrypt and decrypt',
     'GnuPG is not in the browser Linux image, so this station grades the decisions: who holds which key, and which action hides or reveals a file.',
-    'SEC-4.2',
+    'SEC-6.5',
     [
         ('You must send payroll.csv so only the finance lead can read it. What do you use?',
          ['Encrypt to the finance lead public key', 'Encode the file as Base64', 'Hash the file and send the hash instead', 'Email your private key with the file'],
@@ -712,7 +712,7 @@ SEC_GPG = _activity(
 SEC_WIN_FW = _activity(
     'sec-win-fw', 'Windows firewall — which allow is safe',
     'A simulated Windows host. Choose firewall decisions. Nothing is changed on a real PC.',
-    'SEC-7.3',
+    'SEC-23.1',
     [
         ('Remote Desktop must work for two admin laptops and nobody else. Which inbound rule matches?',
          ['Allow TCP 3389 only from the admin subnet', 'Allow TCP 3389 from any address', 'Turn the firewall off', 'Allow every inbound TCP port from the admin subnet'],
@@ -736,7 +736,7 @@ SEC_WIN_FW = _activity(
 SEC_WIN_POL = _activity(
     'sec-win-policy', 'Local security policy — account rules',
     'Choose local policy settings for a standalone Windows lab PC. This is a decision station, not a domain controller.',
-    'SEC-7.3',
+    'SEC-23.2',
     [
         ('Which password policy matches least privilege and hygiene?',
          ['Long minimum length, and refuse reuse of recent passwords', 'Blank passwords allowed for speed', 'Maximum length of 6 characters', 'One shared password for every local account'],
@@ -760,7 +760,7 @@ SEC_WIN_POL = _activity(
 SEC_WIN_EVT = _activity(
     'sec-win-events', 'Event Viewer — triage a logon alert',
     'Read a described Windows Security event and sort it. No live Windows machine is required.',
-    'SEC-8.3',
+    'SEC-22.4',
     [
         ('Event 4625 repeats for one account from one external address. First bucket?',
          ['Needs containment review: repeated failures against one account', 'Ignore because 4625 means success', 'Wipe the domain controller', 'Treat it as a printer jam'],
@@ -784,7 +784,7 @@ SEC_WIN_EVT = _activity(
 SEC_ACL = _activity(
     'sec-acl', 'Firewall ACL — which packet passes',
     'A small rule list is in each question. Decide what the packet does. This grader checks your decision, not a device CLI.',
-    'SEC-6.2',
+    'SEC-14.1',
     [
         ('Rules, top to bottom: allow TCP 443 from anywhere; deny all. A packet is TCP 443 from a guest. Result?',
          ['Allowed by the first rule', 'Denied because guests are never allowed', 'Allowed because deny all is first', 'Dropped because 443 is encrypted'],
@@ -808,7 +808,7 @@ SEC_ACL = _activity(
 SEC_PHISH = _activity(
     'sec-phish', 'Phishing email — what do you do',
     'Analyze a described message. Do not build or send anything. The safe action is the point.',
-    'SEC-2.2',
+    'SEC-10.1',
     [
         ('The display name is Payroll. The address is payroll@pay-roll-example.com. The link host is not your company. You:',
          ['Report it and do not enter credentials', 'Sign in because the display name matches', 'Forward your password to the sender to confirm', 'Click to see where it goes, using your admin account'],
@@ -832,7 +832,7 @@ SEC_PHISH = _activity(
 SEC_MFA = _activity(
     'sec-mfa', 'MFA — which pair counts',
     'Decide which combinations are actually multi-factor. No codes are sent.',
-    'SEC-5.1',
+    'SEC-24.4',
     [
         ('Which pair is MFA?',
          ['Password and a prompt on a phone you have', 'Password and a PIN', 'Two different passwords', 'A fingerprint used twice'],
@@ -856,7 +856,7 @@ SEC_MFA = _activity(
 SEC_CERT = _activity(
     'sec-cert', 'Certificate warning — what failed',
     'Name the TLS problem. Do not click through.',
-    'SEC-4.4',
+    'SEC-7.3',
     [
         ('You asked for mail.example.edu. The certificate name is www.example.edu. The warning is:',
          ['Name mismatch', 'A hash failure', 'Proof the site is offline', 'Proof the password is short'],
@@ -880,7 +880,7 @@ SEC_CERT = _activity(
 SEC_IR = _activity(
     'sec-ir', 'Incident response — order and first moves',
     'Choose the response habit. This station does not attack anything.',
-    'SEC-9.1',
+    'SEC-25.4',
     [
         ('What comes before you reimage the only suspicious host?',
          ['Identify, contain, and record what you have', 'Reimage so the queue is clear', 'Pay the note', 'Post the disk image publicly'],
@@ -904,7 +904,7 @@ SEC_IR = _activity(
 SEC_RISK = _activity(
     'sec-risk', 'Risk language — likelihood and impact',
     'Sort workplace risks without calling everything critical. No scoring formula is required.',
-    'SEC-1.4',
+    'SEC-27.4',
     [
         ('The customer list is:',
          ['An asset', 'A threat', 'A patch', 'A certificate'],
@@ -929,45 +929,64 @@ SEC_ACTIVITY_LABS = [
     SEC_GPG, SEC_WIN_FW, SEC_WIN_POL, SEC_WIN_EVT, SEC_ACL, SEC_PHISH, SEC_MFA, SEC_CERT, SEC_IR, SEC_RISK,
 ]
 
+from curriculum_sec.labs_more import MORE_ACT as _MORE_ACT, MORE_VM as _MORE_VM  # noqa: E402
+
+SEC_VM_LABS += _MORE_VM
+SEC_ACTIVITY_LABS += _MORE_ACT
+
 SEC_CHAPTER_LABS = {
-    ('SEC', 1): ['sec-risk'],
-    ('SEC', 2): ['sec-phish'],
-    ('SEC', 3): ['sec-vm-proc'],
-    ('SEC', 4): ['sec-vm-hash', 'sec-gpg', 'sec-cert'],
-    ('SEC', 5): ['sec-mfa', 'sec-vm-users', 'sec-vm-ssh'],
-    ('SEC', 6): ['sec-vm-iptables', 'sec-acl', 'sec-win-fw'],
-    ('SEC', 7): ['sec-vm-perms', 'sec-vm-suid', 'sec-vm-users', 'sec-vm-ssh', 'sec-win-policy'],
-    ('SEC', 8): ['sec-vm-authlog', 'sec-win-events', 'sec-vm-grep'],
-    ('SEC', 9): ['sec-ir', 'sec-vm-cron', 'sec-vm-proc', 'sec-vm-hash', 'sec-vm-grep'],
-    ('SEC', 10): ['sec-risk'],
+    ('SEC', 3): ['sec-zt-choice'],
+    ('SEC', 6): ['sec-vm-hash', 'sec-vm-integrity', 'sec-gpg'],
+    ('SEC', 7): ['sec-cert'],
+    ('SEC', 10): ['sec-phish', 'sec-bec'],
+    ('SEC', 12): ['sec-vm-proc', 'sec-vm-cron'],
+    ('SEC', 14): ['sec-vm-iptables', 'sec-acl', 'sec-vm-perms', 'sec-vm-path', 'sec-vm-umask'],
+    ('SEC', 18): ['sec-vm-backup', 'sec-backup-dec'],
+    ('SEC', 19): ['sec-vm-ssh', 'sec-vm-baseline', 'sec-vm-banner', 'sec-vm-listener', 'sec-vm-suid'],
+    ('SEC', 20): ['sec-vm-wipe'],
+    ('SEC', 21): ['sec-vuln', 'sec-fp'],
+    ('SEC', 22): ['sec-vm-authlog', 'sec-win-events', 'sec-vm-grep', 'sec-siem'],
+    ('SEC', 23): ['sec-win-fw', 'sec-win-policy', 'sec-ports'],
+    ('SEC', 24): ['sec-vm-users', 'sec-mfa', 'sec-vm-sudo', 'sec-vm-shadow', 'sec-vm-group', 'sec-passwords'],
+    ('SEC', 25): ['sec-ir', 'sec-ir-choice'],
+    ('SEC', 26): ['sec-vm-timeline'],
+    ('SEC', 27): ['sec-risk'],
+    ('SEC', 28): ['sec-privacy', 'sec-audit'],
 }
 
 SEC_LESSON_LABS = {
-    ('SEC', 1, 4): ['sec-risk'],
-    ('SEC', 2, 2): ['sec-phish'],
-    ('SEC', 3, 3): ['sec-vm-proc'],
-    ('SEC', 3, 4): ['sec-vm-proc'],
-    ('SEC', 4, 1): ['sec-vm-hash'],
-    ('SEC', 4, 2): ['sec-gpg'],
-    ('SEC', 4, 3): ['sec-cert'],
-    ('SEC', 4, 4): ['sec-cert'],
-    ('SEC', 5, 1): ['sec-mfa'],
-    ('SEC', 5, 2): ['sec-vm-users'],
-    ('SEC', 5, 4): ['sec-vm-ssh'],
-    ('SEC', 6, 1): ['sec-vm-iptables'],
-    ('SEC', 6, 2): ['sec-acl'],
-    ('SEC', 6, 4): ['sec-win-fw'],
-    ('SEC', 7, 1): ['sec-vm-perms'],
-    ('SEC', 7, 2): ['sec-vm-ssh'],
-    ('SEC', 7, 3): ['sec-win-policy'],
-    ('SEC', 7, 4): ['sec-vm-suid'],
-    ('SEC', 8, 1): ['sec-vm-authlog'],
-    ('SEC', 8, 3): ['sec-win-events'],
-    ('SEC', 8, 4): ['sec-vm-grep'],
-    ('SEC', 9, 1): ['sec-ir'],
-    ('SEC', 9, 2): ['sec-vm-cron'],
-    ('SEC', 9, 4): ['sec-vm-hash'],
-    ('SEC', 10, 2): ['sec-risk'],
+    ('SEC', 3, 4): ['sec-zt-choice'],
+    ('SEC', 6, 3): ['sec-vm-hash', 'sec-vm-integrity'],
+    ('SEC', 6, 5): ['sec-gpg'],
+    ('SEC', 7, 3): ['sec-cert'],
+    ('SEC', 10, 1): ['sec-phish'],
+    ('SEC', 10, 2): ['sec-bec'],
+    ('SEC', 12, 1): ['sec-vm-proc'],
+    ('SEC', 14, 1): ['sec-vm-iptables', 'sec-acl'],
+    ('SEC', 14, 3): ['sec-vm-perms'],
+    ('SEC', 14, 4): ['sec-vm-path', 'sec-vm-umask'],
+    ('SEC', 18, 3): ['sec-vm-backup', 'sec-backup-dec'],
+    ('SEC', 19, 1): ['sec-vm-ssh', 'sec-vm-baseline'],
+    ('SEC', 19, 2): ['sec-vm-banner'],
+    ('SEC', 19, 4): ['sec-vm-suid'],
+    ('SEC', 19, 5): ['sec-vm-listener'],
+    ('SEC', 20, 3): ['sec-vm-wipe'],
+    ('SEC', 21, 3): ['sec-vuln', 'sec-fp'],
+    ('SEC', 22, 1): ['sec-vm-authlog'],
+    ('SEC', 22, 3): ['sec-vm-grep', 'sec-siem'],
+    ('SEC', 22, 4): ['sec-win-events'],
+    ('SEC', 23, 1): ['sec-win-fw', 'sec-ports'],
+    ('SEC', 23, 2): ['sec-win-policy'],
+    ('SEC', 24, 1): ['sec-vm-users'],
+    ('SEC', 24, 2): ['sec-vm-group'],
+    ('SEC', 24, 4): ['sec-mfa'],
+    ('SEC', 24, 5): ['sec-vm-shadow', 'sec-passwords'],
+    ('SEC', 24, 6): ['sec-vm-sudo'],
+    ('SEC', 25, 4): ['sec-ir', 'sec-ir-choice'],
+    ('SEC', 26, 2): ['sec-vm-timeline'],
+    ('SEC', 27, 4): ['sec-risk'],
+    ('SEC', 28, 4): ['sec-privacy'],
+    ('SEC', 28, 5): ['sec-audit'],
 }
 
 SEC_LAB_ALIGN = {lab['id']: lab['blurb'] for lab in SEC_VM_LABS + SEC_ACTIVITY_LABS}

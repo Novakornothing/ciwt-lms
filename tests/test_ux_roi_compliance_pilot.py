@@ -399,7 +399,7 @@ def test_12_wave6_ux_refinements_spec_drawer_step_style_lab_fullwidth_filter_and
     1. Collapsible <details class="novak-spec-drawer"> + #novakStepStyleBar + collapsible <details class="novak-boot-quickcard">
     2. Auto-collapsed #staffRail (is-lab-workbench staff-rail-collapsed) + top nav on /labs/<lab_id>
     3. Live interactive filter bar (#labsFilterBar, #labsFilterSearch, course/kind/status pills) on /labs
-    4. De-duplicated /student dashboard with gp-hero-checklist and All 114 Live Labs.
+    4. De-duplicated /student dashboard with gp-hero-checklist and All 138 Live Labs.
     """
     with app.app_context():
         c = mod.Course.query.filter_by(code="ITSUP").first()
@@ -421,7 +421,7 @@ def test_12_wave6_ux_refinements_spec_drawer_step_style_lab_fullwidth_filter_and
 
     lab_html = student.get("/labs/linux-gui-logs").get_data(as_text=True)
     assert "is-lab-workbench staff-rail-collapsed" in lab_html
-    assert "All 114 Live Labs" in lab_html
+    assert "All 138 Live Labs" in lab_html
 
     catalog_html = student.get("/labs").get_data(as_text=True)
     assert "id=\"labsFilterBar\"" in catalog_html

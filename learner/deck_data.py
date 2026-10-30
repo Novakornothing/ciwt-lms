@@ -1,11 +1,11 @@
 """Source rows for the Daily Review deck. Cards are built in deck.build_cards.
 
-Courses: ITSUP (IT Support), NETOPS (Basic Networking), CLIENT (Operating Systems).
+Courses: ITSUP (IT Support), NETOPS (Basic Networking), CLIENT (Operating Systems), SEC (Security).
 A row can belong to more than one course. Facts are standard published protocol and OS behavior.
 """
 
 IT, NO, CL = ('ITSUP',), ('NETOPS',), ('CLIENT',)
-ALL = ('ITSUP', 'NETOPS', 'CLIENT')
+ALL = ('ITSUP', 'NETOPS', 'CLIENT', 'SEC')
 ITCL = ('ITSUP', 'CLIENT')
 ITNO = ('ITSUP', 'NETOPS')
 NOCL = ('NETOPS', 'CLIENT')
@@ -378,3 +378,28 @@ TERMS = [
     ('What is an authoritative server?', 'The server that owns the zone and its records', 'net', NO),
     ('What is a forwarder?', 'A resolver you send queries to instead of chasing them yourself', 'net', NO),
 ]
+
+# Security review: shared ports gain SEC, plus attack, framework, and acronym cards.
+_SEC_PORT_NAMES = {
+    'HTTPS', 'HTTP', 'SSH', 'DNS queries', 'DNS zone transfer', 'LDAP', 'LDAPS', 'Kerberos', 'RDP',
+    'SMTP', 'SMTP submission', 'IMAPS', 'POP3S', 'SMTPS', 'NTP', 'SNMP', 'SNMP traps', 'Syslog',
+    'Syslog over TLS', 'IKE', 'IPsec NAT-T', 'RADIUS authentication', 'RADIUS accounting', 'TACACS+', 'SMB',
+}
+PORTS[:] = [
+    (name, answer, tuple(dict.fromkeys((*courses, 'SEC')))) if name in _SEC_PORT_NAMES else (name, answer, courses)
+    for name, answer, courses in PORTS
+]
+if not any(name == 'FTPS' for name, _answer, _courses in PORTS):
+    PORTS.append(('FTPS', 'TCP 990', ('SEC',)))
+
+from curriculum_sec.review_cards import TERMS as _SEC_TERMS
+
+_sec_left = {prompt: answer.rstrip('.') for prompt, answer in _SEC_TERMS}
+for i, (prompt, answer, topic, courses) in enumerate(TERMS):
+    if prompt in _sec_left and 'SEC' not in courses:
+        TERMS[i] = (prompt, answer, topic, tuple(dict.fromkeys((*courses, 'SEC'))))
+        _sec_left.pop(prompt)
+    elif prompt in _sec_left:
+        _sec_left.pop(prompt)
+for prompt, answer in _sec_left.items():
+    TERMS.append((prompt, answer, 'security', ('SEC',)))

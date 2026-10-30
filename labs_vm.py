@@ -27,6 +27,7 @@ are formative practice; for summative use pair them with the event-log review or
 Licences: static/vendor/v86/LICENSES.md.  Image notes: docs/VM_IMAGE.md.
 """
 import hashlib
+import json
 import re
 
 VM_ASSETS = {
@@ -515,18 +516,38 @@ _v(){ echo "v_$1 $( ( eval "$2" ) </dev/null 2>&1 | head -c 200 | tr '\n\t' '  '
 """
 
 
+TOKEN_MARK = '@@TOK@@'
+
+
+def session_code(nonce):
+    """Short per-attempt code embedded in a VM scenario. Learners read it from the VM, not from the walkthrough."""
+    return hashlib.sha256(f'sec-session:{nonce or ""}'.encode()).hexdigest()[:6]
+
+
+def personalize(vm, nonce):
+    """Replace @@TOK@@ in a VM spec. Returns the same object when the lab has no per-session value."""
+    if not vm:
+        return vm
+    blob = json.dumps(vm)
+    if TOKEN_MARK not in blob:
+        return vm
+    return json.loads(blob.replace(TOKEN_MARK, session_code(nonce)))
+
+
 def probe_script(state, lab=None, machine=None):
     """The probe for one machine: POSIX sh, BusyBox-only, runs each shell check with a watchdog."""
     lab = lab or PERMS
     names = machines(lab)
     machine = machine or names[0]
     lines = ["{", f"echo \"nonce {state.get('nonce') or ''}\"", f"echo \"m {machine}\""]
+    code = session_code(state.get('nonce'))
     for c in lab["vm_checks"]:
         if not c.get("sh") or (c.get("on") or names[0]) != machine:
             continue
-        lines.append(f"_c {c['id']} {_shq(fill(c['sh'], state))} {int(c.get('secs') or 3)}")
+        sh = fill(c['sh'].replace(TOKEN_MARK, code), state)
+        lines.append(f"_c {c['id']} {_shq(sh)} {int(c.get('secs') or 3)}")
         if c.get("show"):
-            lines.append(f"_v {c['id']} {_shq(fill(c['show'], state))}")
+            lines.append(f"_v {c['id']} {_shq(fill(c['show'].replace(TOKEN_MARK, code), state))}")
     lines += ["echo end", "} > /mnt/.ciwt-result 2>&1"]
     return _HELPERS + "\n".join(lines) + "\n"
 

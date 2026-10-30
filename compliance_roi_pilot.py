@@ -156,9 +156,9 @@ PRIVACY_CONTROLS = [
     {
         'domain': 'SANDBOX — Browser-Sandboxed Lab Isolation',
         'id': 'SEC-LAB-03',
-        'question': 'How are the 114 hands-on Linux, Windows, and Cisco labs isolated from the host machine and external network?',
+        'question': 'How are the 138 hands-on Linux, Windows, and Cisco labs isolated from the host machine and external network?',
         'response': '100% Browser-Sandboxed Execution',
-        'evidence': 'All 114 hands-on labs (including 32 WebAssembly v86 Linux VMs and 8 Ubuntu GNOME GUI + Bash workbenches) execute inside isolated client-side browser sandboxes with zero external network attack surface.',
+        'evidence': 'All 138 hands-on labs (including 44 WebAssembly v86 Linux VMs and 8 Ubuntu GNOME GUI + Bash workbenches) execute inside isolated client-side browser sandboxes with zero external network attack surface.',
     },
     {
         'domain': 'AI — Grounded Course Tutor Controls',
@@ -242,7 +242,7 @@ def calculate_institutional_roi(
     # Legacy 4-tool itemized breakdown per student
     legacy_breakdown = [
         {'tool': '1. Static eBook / Certware License', 'legacy_per_student': round(legacy_spend_per_student * 0.34), 'novak_included': 'Included (115 Visual Lessons + 5 Ways to Learn)'},
-        {'tool': '2. External Cloud VM / Lab Seat Subscription', 'legacy_per_student': round(legacy_spend_per_student * 0.33), 'novak_included': 'Included (114 Browser Labs + 32 WebAssembly Linux VMs)'},
+        {'tool': '2. External Cloud VM / Lab Seat Subscription', 'legacy_per_student': round(legacy_spend_per_student * 0.33), 'novak_included': 'Included (138 Browser Labs + 44 WebAssembly Linux VMs)'},
         {'tool': '3. Practice Exam & Hands-On Challenge Prep Engine', 'legacy_per_student': round(legacy_spend_per_student * 0.21), 'novak_included': 'Included (1,400 Practice Exam Items + 36 Hands-On Challenges)'},
         {'tool': '4. Analytics, Readiness & Proctoring Add-On', 'legacy_per_student': round(legacy_spend_per_student * 0.12), 'novak_included': 'Included (Skill Mastery + Students Needing Help + Eye Tracking)'},
     ]

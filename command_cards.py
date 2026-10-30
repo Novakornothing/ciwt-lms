@@ -61,7 +61,7 @@ ALIASES = {
     'sha256': 'sha256sum', 'setuid': 'find', 'perm': 'find',
 }
 
-# Command cards that should list Cybersecurity labs before older matches.
+# Command cards that should list Security labs before older matches.
 PREFER_LAB_PREFIX = {
     'iptables': 'sec-', 'sha256sum': 'sec-', 'chage': 'sec-', 'find': 'sec-',
     'ss': 'sec-', 'journalctl': 'sec-', 'grep': 'sec-',

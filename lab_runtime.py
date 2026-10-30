@@ -51,6 +51,8 @@ def _courses_for_lab(lab):
             courses.add("ITSUP")
         elif cu.startswith("NET") or cu.startswith("N10"):
             courses.add("NETOPS")
+        elif cu.startswith("SEC"):
+            courses.add("SEC")
         elif cu.startswith("CS") or cu.startswith("FC0") or cu.startswith("CLI"):
             courses.add("CLIENT")
     kind = lab.get("kind", "")

@@ -26,7 +26,7 @@ from . import sim_pbq
 from .exams import ALL_DOMAINS as DOMAINS, ALL_EXAMS as EXAMS, ALL_OBJECTIVES as OBJECTIVES, DISCLAIMER, label, sort_key
 
 REVIEW = 'Pending SME review'
-PASS_SCORE = {'A1': 675, 'A2': 700, 'N': 720}
+PASS_SCORE = {'A1': 675, 'A2': 700, 'N': 720, 'S': 750, 'T': 650}
 MODES = {
     'max': {'name': 'Official 90-question sitting', 'minutes': 90, 'questions': 90, 'pbqs': 5},
     'full': {'name': 'Standard 45-question sitting', 'minutes': 90, 'questions': 45, 'pbqs': 4},
