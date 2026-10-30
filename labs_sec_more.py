@@ -472,39 +472,69 @@ def _decide(lid, title, blurb, skill, prompts):
     return lab
 
 
-SEC_OPENSSL = _decide(
-    'sec-openssl', 'Certificate decisions — keys and requests',
-    'The browser Linux image has no openssl binary, so this station grades the decisions. Stage 1 names the commands. Later stages do not.',
-    'SEC-7.1',
-    [
-        ('You need a certificate for mail.example.edu. What do you send to the authority?',
-         ['A signing request, and you keep the private key', 'The private key', 'Only a hash of the hostname', 'A self-signed certificate for a different name'],
-         0, {1: 'The private key stays on the server.', 2: 'A hash is not a request.', 3: 'The name has to be the name you serve.'},
-         'Send the request. Keep the private key.'),
-        ('Which command family creates the key pair on the server before the request?',
-         ['The key-generation command, on the server that will use the key', 'Email the private key to the authority first', 'Download a private key from a website', 'Reuse last year\'s private key from a chat log'],
-         0, {1: 'The authority never needs the private key.', 2: 'A downloaded private key is not yours.', 3: 'A key from a chat is already exposed.'},
-         'Generate the key where it will live.'),
-        ('The returned certificate name does not match the site. You:',
-         ['Stop and ask for a certificate with the right name', 'Click through and add a permanent exception', 'Turn off TLS', 'Replace the site name with the certificate name without telling anyone'],
-         0, {1: 'A permanent exception hides the next mismatch.', 2: 'Clear text is not the fix.', 3: 'Renaming the service to fit a bad certificate hides the mistake.'},
-         'The name must match. Do not click through.'),
-        ('A wildcard certificate is:',
-         ['Broader than a single name, so a leaked key hurts more names', 'Safer than a single name because it is shorter', 'A private key', 'A hash'],
-         0, {1: 'Broader is not safer.', 2: 'It is not the private key.', 3: 'It is not a fingerprint.'},
-         'A wildcard covers many names. Treat the key with extra care.'),
+_OSSL = _prelude('sec-ossl-7') + r"""
+mkdir -p /root
+cat > /root/TICKET << 'EOF'
+Ticket CERT-7.
+Create a private key and a certificate signing request on this server.
+The name to request is on the first line of /root/WHICH.
+Write the key to /root/server.key and the request to /root/server.csr.
+The key must not be readable by other users. Do not send the key anywhere.
+EOF
+printf '%s\n' '{{CN}}' > /root/WHICH
+"""
+
+SEC_OPENSSL = _vm({
+    'id': 'sec-openssl',
+    'title': 'Real Linux VM — Certificate key and request',
+    'blurb': 'Create a private key and a signing request for the name on this ticket. The key stays on the server.',
+    'session_vars': {'CN': ['mail.example.edu', 'vpn.example.edu', 'files.example.edu']},
+    'objectives': [
+        {'id': 'boot', 'text': 'Boot and read /root/WHICH'},
+        {'id': 'key', 'text': 'server.key is a private key'},
+        {'id': 'csr', 'text': 'server.csr asks for the name in WHICH'},
+        {'id': 'mode', 'text': 'The private key is not readable by other users'},
     ],
-)
-SEC_OPENSSL['coaching'] = _coach(
-    '<p><strong>Stage 1 — guided.</strong> On a machine that has the tool, <code>openssl genrsa</code> creates a private key, '
-    '<code>openssl req -new</code> builds a signing request from that key, and you send only the request. '
-    '<code>openssl x509 -req</code> is what an authority uses to sign. <code>openssl verify</code> checks a chain. '
-    'The private key stays on the server. This station has no openssl binary, so you will be graded on the decisions.</p>',
-    '<p><strong>Stage 2 — assisted.</strong> Each prompt is a certificate decision. '
-    'Keep the secret half at home. Match the name. Treat a broad name as a broader blast radius.</p>',
-    '<p><strong>Stage 3 — ticket CERT-7.</strong> You are the person who requests the certificate. '
-    'Choose the action you can defend. There is no command line on this station.</p>',
-)
+    'intro': 'The name to put on the request is in /root/WHICH. Keep the private key on this machine.',
+    'success_msg': 'The request names the ticket host, and the private key is locked down.',
+    'course_objectives': ['SEC-7.1'],
+    'minutes': 25,
+    'palette': ['cat /root/WHICH', 'openssl genrsa ', 'openssl req -new ', 'chmod 600 '],
+    'hints': ['Read WHICH before you build the request.', 'The request leaves the server. The key does not.', 'Other users should not be able to read the key file.'],
+    'obj_hints': {
+        'boot': ['The scenario names the host in a small text file.', 'Open it and use that name.'],
+        'key': ['The key is created on this server.', 'A short teaching key is enough for this station.'],
+        'csr': ['The request has to carry the name from the ticket.', 'Do not invent a different name.'],
+        'mode': ['A private key that other accounts can read is not private.', 'Tighten the file after you create it.'],
+    },
+    'coaching': _coach(
+        '<p><strong>Stage 1 — guided.</strong> <code>openssl genrsa</code> writes a private key. '
+        '<code>openssl req -new</code> builds a signing request from that key. '
+        'A sample name, lab.example.edu, is not the live name. '
+        '<code>chmod 600</code> leaves the key readable only by its owner. '
+        'This station uses a short teaching key so the browser VM can finish.</p>',
+        '<p><strong>Stage 2 — assisted.</strong> Discover the live name on the system. '
+        'Create the key and the request for that name. Leave the key where the ticket says, and stop other users from reading it.</p>',
+        '<p><strong>Stage 3 — ticket CERT-7.</strong> Counsel wants a signing request for one host. '
+        'The private key stays on the server, and other accounts cannot read it.</p>',
+    ),
+    'vm': dict(IMAGE, machines=[_m('vm', 'sec-ossl-7', 'sec-ossl-7')], setup={'vm': _OSSL}),
+    'vm_checks': [
+        {'id': 'boot'},
+        {'id': 'key', 'sh': "openssl rsa -in /root/server.key -check -noout >/dev/null 2>&1",
+         'why': 'server.key is missing or is not a private key.'},
+        {'id': 'csr', 'sh': "cn=$(awk 'NR==1{print; exit}' /root/WHICH); openssl req -in /root/server.csr -noout -subject 2>/dev/null | grep -q \"CN=$cn\"",
+         'why': 'The request is missing or does not name the host in WHICH.'},
+        {'id': 'mode', 'sh': "ls -l /root/server.key | grep -q '^-rw-------'",
+         'why': 'Other users can still read the private key.'},
+    ],
+    'solution': {'vm_commands': [
+        'cat /root/WHICH',
+        'openssl genrsa -out /root/server.key 512',
+        'openssl req -new -key /root/server.key -subj /CN=$(cat /root/WHICH) -out /root/server.csr',
+        'chmod 600 /root/server.key',
+    ]},
+})
 
 SEC_VULN = _decide(
     'sec-vuln', 'Read a vulnerability scan',
@@ -844,10 +874,10 @@ SEC_LOGS = _decide(
 
 MORE_VM = [
     SEC_VM_BACKUP, SEC_VM_WORLD, SEC_VM_SUDO, SEC_VM_CAPTURE, SEC_VM_TIMELINE,
-    SEC_VM_FIM, SEC_VM_HARDEN, SEC_VM_AGE,
+    SEC_VM_FIM, SEC_VM_HARDEN, SEC_VM_AGE, SEC_OPENSSL,
 ]
 MORE_ACTIVITY = [
-    SEC_OPENSSL, SEC_VULN, SEC_CLASSIFY, SEC_ARCH, SEC_VENDOR, SEC_ZT, SEC_AWARE,
+    SEC_VULN, SEC_CLASSIFY, SEC_ARCH, SEC_VENDOR, SEC_ZT, SEC_AWARE,
     SEC_IAM, SEC_CHANGE, SEC_INDICATORS, SEC_DLP, SEC_PRIVACY, SEC_PENTEST,
     SEC_WIRELESS, SEC_LOGS,
 ]

@@ -22,7 +22,7 @@ def test_landing_and_register_advertise_90_labs(anon):
     assert '66 labs' not in landing
     # Phase 1: lab counts live on the specs page; the hub stays short.
     specs = anon.get('/specs').get_data(as_text=True)
-    assert '137 labs' in specs and '40 real Linux VMs' in specs
+    assert '137 labs' in specs and '41 real Linux VMs' in specs
     assert '66 labs' not in specs
     reg = anon.get('/register').get_data(as_text=True)
     assert '137 interactive labs' in reg and '66 interactive labs' not in reg
