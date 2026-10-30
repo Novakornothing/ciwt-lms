@@ -3491,6 +3491,13 @@ def student_dashboard():
         except Exception as exc:
             db.session.rollback()
             print('student dashboard chapters:', exc)
+    learn_home = None
+    if sections and current_user.role == 'student' and learner_api:
+        try:
+            learn_home = learner_api.home(current_user, sections[0])
+        except Exception as exc:
+            db.session.rollback()
+            print('learn home:', exc)
     return render_template(
         'student_dashboard.html',
         chapters=chapters,
@@ -3501,6 +3508,7 @@ def student_dashboard():
         mastery_path=mastery_path,
         mastery_daily=mastery_daily,
         mastery_section_id=sections[0].id if sections else None,
+        learn_home=learn_home,
     )
 
 
@@ -8278,6 +8286,14 @@ def handle_csrf_error(e):
         return jsonify({'ok': False, 'error': 'csrf', 'detail': e.description}), 400
     return render_template('csrf_error.html', reason=e.description), 400
 
+
+learner_api = None
+import learner as learner_mod  # noqa: E402
+learner_api = learner_mod.register(app, db, dict(
+    User=User, Course=Course, ClassSection=ClassSection, Enrollment=Enrollment, Module=Module,
+    can_access_section=lambda user, section: instructor_can_access_section(user, section),
+    audit=lambda action, detail='': audit(action, detail),
+))
 
 with app.app_context():
     init_db()
