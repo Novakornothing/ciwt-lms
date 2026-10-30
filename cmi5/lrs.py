@@ -20,8 +20,9 @@ from .rules import check_au_statement
 from .util import (
     SUPPORTED_VERSIONS, VOIDED, XAPI_VERSION, ApiError, agent_key, agents_match,
     canonical_statement, category_ids, grouping_ids, is_iri, is_uuid, iso,
-    new_uuid, parse_iso, session_id_of, sha256_etag, utcnow,
+    new_uuid, parse_iso, session_id_of, sha1_etag, utcnow,
 )
+from .xapi_schema import SIGNATURE_USAGE, statement_version_ok, validate_agent, validate_statement
 
 _db = None
 _m = None
@@ -46,6 +47,15 @@ def set_after_store(fn):
 
 def M(name):
     return _m[name]
+
+
+def _statement_row(sid):
+    if not sid:
+        return None
+    row = _db.session.get(M('XapiStatement'), sid)
+    if row is not None:
+        return row
+    return M('XapiStatement').query.filter(M('XapiStatement').id.ilike(sid)).first()
 
 
 # -------------------------------------------------------------------------------------------- HTTP
@@ -117,32 +127,83 @@ def _method():
     return request.method
 
 
+_FORM_HEADERS = (
+    'Authorization', 'X-Experience-API-Version', 'Content-Type',
+    'If-Match', 'If-None-Match',
+)
+
+
+def _form_values():
+    """Read an alternate-request form even when the client omits the form content type."""
+    if request.form:
+        return request.form
+    raw = request.get_data(cache=True) or b''
+    if not raw or raw[:1] in (b'{', b'['):
+        return {}
+    from urllib.parse import parse_qs
+    try:
+        parsed = parse_qs(raw.decode('utf-8'), keep_blank_values=True)
+    except Exception as exc:
+        raise ApiError(400, 'alternate request must be form-urlencoded') from exc
+    return {key: values[0] for key, values in parsed.items() if values}
+
+
+def _apply_form_header(name, value):
+    headers = getattr(g, 'xapi_form_headers', None)
+    if headers is None:
+        headers = {}
+        g.xapi_form_headers = headers
+    headers[name.lower()] = value
+
+
+def _header(name):
+    headers = getattr(g, 'xapi_form_headers', None) or {}
+    if name.lower() in headers:
+        return headers[name.lower()]
+    return request.headers.get(name)
+
+
 def _prepare_alternate():
-    """xAPI alternate request syntax: POST form with method + content."""
-    ctype = request.content_type or ''
-    if request.method != 'POST' or 'application/x-www-form-urlencoded' not in ctype:
+    """xAPI alternate request syntax: a POST whose form carries the real method."""
+    if request.method != 'POST':
+        if 'method' in request.args:
+            raise ApiError(400, 'The alternate request syntax is only accepted as POST')
         return
-    if 'method' not in request.form:
+    form = _form_values()
+    if 'method' not in request.args and 'method' not in form:
         return
-    method = (request.form.get('method') or '').upper()
+    extra = [key for key in request.args.keys() if key != 'method']
+    if extra:
+        raise ApiError(400, 'An alternate request cannot repeat parameters in the query string')
+    ctype = (request.content_type or '').split(';')[0].strip().lower()
+    raw = request.get_data(cache=True) or b''
+    if raw[:1] in (b'{', b'['):
+        raise ApiError(400, 'alternate request must be form-urlencoded')
+    if ctype and ctype not in ('application/x-www-form-urlencoded', 'text/plain', 'application/octet-stream'):
+        raise ApiError(400, 'alternate request must be form-urlencoded')
+    method = (form.get('method') or request.args.get('method') or '').upper()
     if method not in ('GET', 'PUT', 'POST', 'DELETE'):
         raise ApiError(400, 'alternate method is not supported')
+    for name in _FORM_HEADERS:
+        if form.get(name):
+            _apply_form_header(name, form.get(name))
+    if method in ('PUT', 'POST') and 'content' not in form:
+        raise ApiError(400, 'content is required')
+    skip = {'method', 'content', * _FORM_HEADERS, 'contentType', 'Content-Length'}
     g.xapi_method = method
-    skip = {'method', 'content', 'Content-Type', 'contentType'}
-    g.xapi_args = {k: v for k, v in request.form.items() if k not in skip}
-    content = request.form.get('content')
-    g.xapi_body = (content or '').encode('utf-8')
-    g.xapi_content_type = request.form.get('Content-Type') or request.form.get('contentType') or 'application/json'
+    g.xapi_args = {key: value for key, value in form.items() if key not in skip}
+    g.xapi_body = (form.get('content') or '').encode('utf-8')
+    g.xapi_content_type = form.get('Content-Type') or form.get('contentType') or 'application/json'
 
 
 def _check_version():
-    version = (request.headers.get('X-Experience-API-Version') or '').strip()
+    version = (_header('X-Experience-API-Version') or '').strip()
     if version not in SUPPORTED_VERSIONS:
         raise ApiError(400, 'X-Experience-API-Version must be 1.0.0, 1.0.1, 1.0.2, or 1.0.3')
 
 
 def _authenticate():
-    header = request.headers.get('Authorization') or ''
+    header = _header('Authorization') or ''
     if not header.startswith('Basic '):
         raise ApiError(401, 'Basic authentication is required')
     try:
@@ -199,41 +260,10 @@ def _guard(fn, about=False):
 
 
 # -------------------------------------------------------------------------------------------- agents
-def _check_ifi_shape(actor):
-    if actor.get('mbox') and not str(actor['mbox']).lower().startswith('mailto:'):
-        raise ApiError(400, 'mbox must be a mailto IRI')
-    account = actor.get('account')
-    if account is not None:
-        if not isinstance(account, dict) or not is_iri(str(account.get('homePage') or '')) or account.get('name') in (None, ''):
-            raise ApiError(400, 'account must include homePage and name')
-
-
 def _validate_actor(actor, label):
     if not isinstance(actor, dict):
         raise ApiError(400, f'{label} is required')
-    kind = actor.get('objectType') or 'Agent'
-    if kind not in ('Agent', 'Group'):
-        raise ApiError(400, f'{label} objectType must be Agent or Group')
-    from .util import agent_ifis
-    ifis = agent_ifis(actor)
-    if kind == 'Agent':
-        if len(ifis) != 1:
-            raise ApiError(400, f'{label} must have exactly one inverse functional identifier')
-        _check_ifi_shape(actor)
-    else:
-        if len(ifis) > 1:
-            raise ApiError(400, 'A group must have at most one inverse functional identifier')
-        members = actor.get('member') or []
-        if not ifis and not members:
-            raise ApiError(400, 'An anonymous group must list its members')
-        if not isinstance(members, list):
-            raise ApiError(400, 'group member must be an array')
-        for member in members:
-            _validate_actor(member, 'group member')
-            if (member.get('objectType') or 'Agent') != 'Agent':
-                raise ApiError(400, 'Group members must be Agents')
-        if ifis:
-            _check_ifi_shape(actor)
+    validate_agent(actor, label)
 
 
 def _validate_object(obj, allow_sub=True):
@@ -266,38 +296,52 @@ def _validate_object(obj, allow_sub=True):
         raise ApiError(400, 'objectType is not supported')
 
 
+def _b64url(segment):
+    pad = '=' * (-len(segment) % 4)
+    return base64.urlsafe_b64decode(segment + pad)
+
+
+def _check_signatures(stmt):
+    """A signature attachment must be an RS256/384/512 JWS of the unsigned statement."""
+    for attachment in stmt.get('attachments') or []:
+        if not isinstance(attachment, dict) or attachment.get('usageType') != SIGNATURE_USAGE:
+            continue
+        row = _db.session.get(M('XapiAttachment'), attachment.get('sha2'))
+        if row is None:
+            raise ApiError(400, 'A statement signature attachment is missing')
+        try:
+            header_b, payload_b, sig_b = bytes(row.content).decode('ascii').split('.')
+            header = json.loads(_b64url(header_b))
+            payload = json.loads(_b64url(payload_b))
+        except Exception as exc:
+            raise ApiError(400, 'A statement signature must be a JWS') from exc
+        if not header_b or not payload_b or not sig_b:
+            raise ApiError(400, 'A statement signature must be a JWS')
+        if not isinstance(header, dict) or header.get('alg') not in ('RS256', 'RS384', 'RS512'):
+            raise ApiError(400, 'A statement signature must use RS256, RS384, or RS512')
+        unsigned = {key: value for key, value in stmt.items() if key != 'attachments'}
+        if payload != unsigned:
+            raise ApiError(400, 'A statement signature does not match the statement')
+
+
 def normalize_statement(stmt):
     if not isinstance(stmt, dict):
         raise ApiError(400, 'A statement must be a JSON object.')
     stmt = json.loads(json.dumps(stmt))
-    if stmt.get('id'):
-        if not is_uuid(stmt['id']):
-            raise ApiError(400, 'statement id must be a UUID')
-        stmt['id'] = stmt['id'].lower()
-    else:
+    _check_signatures(stmt)
+    validate_statement(stmt)
+    if not stmt.get('id'):
         stmt['id'] = new_uuid()
     actor = stmt.get('actor')
-    _validate_actor(actor, 'actor')
     if isinstance(actor, dict) and 'objectType' not in actor:
         actor['objectType'] = 'Agent'
-    verb = stmt.get('verb')
-    if not isinstance(verb, dict) or not is_iri(verb.get('id')):
-        raise ApiError(400, 'verb.id must be an IRI')
-    _validate_object(stmt.get('object'))
-    if (stmt.get('object') or {}).get('objectType') is None:
-        stmt['object']['objectType'] = 'Activity'
-    if stmt.get('timestamp'):
-        parse_iso(stmt['timestamp'])
-    else:
+    obj = stmt.get('object')
+    if isinstance(obj, dict) and obj.get('objectType') is None:
+        obj['objectType'] = 'Activity'
+    if not stmt.get('timestamp'):
         stmt['timestamp'] = iso(utcnow())
-    ctx = stmt.get('context')
-    if ctx is not None:
-        if not isinstance(ctx, dict):
-            raise ApiError(400, 'context must be an object')
-        if ctx.get('registration') is not None and not is_uuid(str(ctx.get('registration'))):
-            raise ApiError(400, 'registration must be a UUID')
     version = stmt.get('version') or XAPI_VERSION
-    if version not in SUPPORTED_VERSIONS:
+    if not statement_version_ok(version):
         raise ApiError(400, 'statement version is not supported')
     stmt['version'] = version
     stmt.pop('stored', None)
@@ -306,7 +350,7 @@ def normalize_statement(stmt):
 
 
 # -------------------------------------------------------------------------------------------- store
-def _parse_statements(body, content_type):
+def _parse_statements(body, content_type, bind_attachments=True):
     ctype = (content_type or '').split(';')[0].strip().lower()
     if ctype == 'multipart/mixed':
         return _parse_multipart(body, content_type)
@@ -317,10 +361,33 @@ def _parse_statements(body, content_type):
     except Exception as exc:
         raise ApiError(400, 'Statement body must be JSON.') from exc
     if isinstance(data, dict):
-        return [data]
-    if isinstance(data, list):
-        return data
-    raise ApiError(400, 'Statement body must be a statement or an array.')
+        statements = [data]
+    elif isinstance(data, list):
+        statements = data
+    else:
+        raise ApiError(400, 'Statement body must be a statement or an array.')
+    if bind_attachments and ctype == 'application/json':
+        _bind_attachments(statements, [])
+    return statements
+
+
+def _bind_attachments(statements, hashes):
+    """Every non-fileUrl attachment needs a part. A part must match some attachment."""
+    needed = []
+    declared = []
+    for stmt in statements:
+        if not isinstance(stmt, dict):
+            continue
+        for attachment in stmt.get('attachments') or []:
+            if not isinstance(attachment, dict):
+                continue
+            declared.append(attachment.get('sha2'))
+            if not attachment.get('fileUrl'):
+                needed.append(attachment.get('sha2'))
+    if any(sha not in hashes for sha in needed):
+        raise ApiError(400, 'attachment content is missing')
+    if any(sha not in declared for sha in hashes):
+        raise ApiError(400, 'multipart section is not an attachment of the statement')
 
 
 def _parse_multipart(body, content_type):
@@ -328,7 +395,11 @@ def _parse_multipart(body, content_type):
     if not match:
         raise ApiError(400, 'multipart boundary is missing')
     boundary = match.group(1).strip().strip('"').encode('utf-8')
+    raw = body.lstrip()
+    if not raw.startswith(b'--' + boundary):
+        raise ApiError(400, 'multipart body must start with the boundary')
     json_part = None
+    hashes = []
     for part in body.split(b'--' + boundary):
         if not part or part.strip() in (b'', b'--'):
             continue
@@ -344,22 +415,29 @@ def _parse_multipart(body, content_type):
             if ':' in line:
                 key, value = line.split(':', 1)
                 headers[key.strip().lower()] = value.strip()
-        if json_part is None and 'json' in headers.get('content-type', 'application/json'):
+        if json_part is None and 'json' in headers.get('content-type', ''):
             json_part = data
             continue
+        if 'json' in headers.get('content-type', ''):
+            raise ApiError(400, 'multipart request has more than one statement part')
         sha = headers.get('x-experience-api-hash')
         if not sha:
-            continue
+            raise ApiError(400, 'attachment part is missing X-Experience-API-Hash')
+        if headers.get('content-transfer-encoding', '').lower() != 'binary':
+            raise ApiError(400, 'attachment transfer encoding must be binary')
         digest = hashlib.sha256(data).hexdigest()
         if digest != sha:
             raise ApiError(400, 'Attachment hash does not match the content.')
+        hashes.append(sha)
         if _db.session.get(M('XapiAttachment'), sha) is None:
             _db.session.add(M('XapiAttachment')(
                 sha2=sha, content_type=headers.get('content-type') or 'application/octet-stream', content=data,
             ))
     if json_part is None:
         raise ApiError(400, 'multipart statement is missing the JSON part')
-    return _parse_statements(json_part, 'application/json')
+    statements = _parse_statements(json_part, 'application/json', bind_attachments=False)
+    _bind_attachments(statements, hashes)
+    return statements
 
 
 def _template_grouping(au, actor, registration):
@@ -432,7 +510,7 @@ def store_statements(raw_statements, auth, bypass_cmi5=False):
     touched_sessions = []
     batch = []
     for stmt in normalized:
-        existing = _db.session.get(M('XapiStatement'), stmt['id'])
+        existing = _statement_row(stmt['id'])
         if existing:
             if canonical_statement(json.loads(existing.body)) != canonical_statement(stmt):
                 raise ApiError(409, 'A different statement is already stored with this id.')
@@ -447,8 +525,8 @@ def store_statements(raw_statements, auth, bypass_cmi5=False):
             obj = stmt.get('object') or {}
             if obj.get('objectType') != 'StatementRef':
                 raise ApiError(400, 'A voiding statement object must be a StatementRef.')
-            void_target = str(obj.get('id') or '').lower()
-            target = _db.session.get(M('XapiStatement'), void_target)
+            void_target = str(obj.get('id') or '')
+            target = _statement_row(void_target)
             if target is not None and target.is_voiding:
                 raise ApiError(400, 'A voiding statement cannot be voided.')
         session_row = None
@@ -458,10 +536,12 @@ def store_statements(raw_statements, auth, bypass_cmi5=False):
         stmt['stored'] = iso(now)
         stmt['authority'] = authority
         voided = False
-        if not is_voiding and M('XapiStatement').query.filter_by(is_voiding=True, void_target=stmt['id']).first():
+        if not is_voiding and M('XapiStatement').query.filter(
+                M('XapiStatement').is_voiding.is_(True),
+                M('XapiStatement').void_target.ilike(stmt['id'])).first():
             voided = True
         if is_voiding and void_target:
-            target = _db.session.get(M('XapiStatement'), void_target)
+            target = _statement_row(void_target)
             if target is not None:
                 target.voided = True
         row = M('XapiStatement')(
@@ -529,22 +609,44 @@ def _limit_arg(raw):
 
 def _activity_ids(stmt, related):
     found = set()
-    obj = stmt.get('object') or {}
+    if not isinstance(stmt, dict):
+        return found
+    obj = stmt.get('object') if isinstance(stmt.get('object'), dict) else {}
     kind = obj.get('objectType') or 'Activity'
-    if kind == 'Activity' and obj.get('id'):
+    if kind == 'Activity' and isinstance(obj.get('id'), str):
         found.add(obj['id'])
     if kind == 'SubStatement':
         found |= _activity_ids(obj, True)
     if related:
-        groups = (stmt.get('context') or {}).get('contextActivities') or {}
+        ctx = stmt.get('context') if isinstance(stmt.get('context'), dict) else {}
+        groups = ctx.get('contextActivities') if isinstance(ctx.get('contextActivities'), dict) else {}
         for key in ('parent', 'grouping', 'category', 'other'):
             items = groups.get(key) or []
             if isinstance(items, dict):
                 items = [items]
+            if not isinstance(items, list):
+                continue
             for item in items:
-                if isinstance(item, dict) and item.get('id'):
+                if isinstance(item, dict) and isinstance(item.get('id'), str):
                     found.add(item['id'])
     return found
+
+
+def _stmt_matches(stmt, params, agent, related_activities, related_agents):
+    if not isinstance(stmt, dict):
+        return False
+    verb = stmt.get('verb') if isinstance(stmt.get('verb'), dict) else {}
+    if params.get('verb') and verb.get('id') != params['verb']:
+        return False
+    if params.get('registration'):
+        ctx = stmt.get('context') if isinstance(stmt.get('context'), dict) else {}
+        if str(ctx.get('registration') or '').lower() != str(params['registration']).lower():
+            return False
+    if params.get('activity') and params['activity'] not in _activity_ids(stmt, related_activities):
+        return False
+    if agent is not None and not any(agents_match(agent, item) for item in _collect_agents(stmt, related_agents)):
+        return False
+    return True
 
 
 def _collect_agents(stmt, related):
@@ -599,7 +701,7 @@ def _ids_object(obj):
         return obj
     kind = obj.get('objectType') or 'Activity'
     if kind == 'Activity':
-        return {'objectType': 'Activity', 'id': obj.get('id')}
+        return {'id': obj.get('id')}
     if kind in ('Agent', 'Group'):
         return _ids_agent(obj)
     if kind == 'StatementRef':
@@ -714,7 +816,7 @@ def _query_statements(params):
     since = parse_iso(params['since']) if params.get('since') else None
     until = parse_iso(params['until']) if params.get('until') else None
 
-    query = M('XapiStatement').query.filter_by(voided=False, is_voiding=False)
+    query = M('XapiStatement').query
     if params.get('verb'):
         query = query.filter_by(verb_id=params['verb'])
     if params.get('registration'):
@@ -726,23 +828,35 @@ def _query_statements(params):
     if since is not None:
         query = query.filter(M('XapiStatement').stored > since)
     if until is not None:
-        query = query.filter(M('XapiStatement').stored < until)
-    if ascending:
-        query = query.order_by(M('XapiStatement').stored.asc(), M('XapiStatement').id.asc())
-    else:
-        query = query.order_by(M('XapiStatement').stored.desc(), M('XapiStatement').id.desc())
+        query = query.filter(M('XapiStatement').stored <= until)
     rows = query.all()
     matched = []
+    voided_hits = set()
     for row in rows:
         stmt = json.loads(row.body)
-        if params.get('activity') and params['activity'] not in _activity_ids(stmt, related_activities):
+        if not _stmt_matches(stmt, params, agent, related_activities, related_agents):
             continue
-        if agent is not None and not any(agents_match(agent, item) for item in _collect_agents(stmt, related_agents)):
-            continue
-        matched.append(stmt)
-    page = matched[offset:offset + limit]
+        if row.voided:
+            voided_hits.add((row.id or '').lower())
+        else:
+            matched.append((row, stmt))
+    if voided_hits:
+        seen = {row.id for row, _stmt in matched}
+        voiding = M('XapiStatement').query.filter_by(is_voiding=True, voided=False)
+        if since is not None:
+            voiding = voiding.filter(M('XapiStatement').stored > since)
+        if until is not None:
+            voiding = voiding.filter(M('XapiStatement').stored <= until)
+        for row in voiding.all():
+            target = (row.void_target or '').lower()
+            if target in voided_hits and row.id not in seen:
+                matched.append((row, json.loads(row.body)))
+                seen.add(row.id)
+    matched.sort(key=lambda pair: (pair[0].stored, pair[0].id), reverse=not ascending)
+    statements = [stmt for _row, stmt in matched]
+    page = statements[offset:offset + limit]
     result = {'statements': [_format_statement(item, fmt) for item in page]}
-    if offset + limit < len(matched):
+    if offset + limit < len(statements):
         nxt = dict(params)
         nxt['offset'] = offset + limit
         nxt['limit'] = limit
@@ -750,6 +864,8 @@ def _query_statements(params):
         nxt['ascending'] = 'true' if ascending else 'false'
         token = _more_token(nxt)
         result['more'] = request.host_url.rstrip('/') + '/xAPI/statements?' + urlencode({'more': token})
+    else:
+        result['more'] = ''
     extra = {'X-Experience-API-Consistent-Through': iso(utcnow())}
     if attachments:
         payload, ctype = _multipart_result(result, page)
@@ -795,8 +911,8 @@ def _etag_values(header):
 
 
 def _precondition(doc, write=True):
-    if_match = request.headers.get('If-Match')
-    if_none = request.headers.get('If-None-Match')
+    if_match = _header('If-Match')
+    if_none = _header('If-None-Match')
     if if_match is not None:
         tags = _etag_values(if_match)
         if doc is None or ('*' not in tags and doc.etag not in tags):
@@ -816,7 +932,7 @@ def _find_doc(kind, activity_id, agent, registration, doc_id):
 
 def _write_doc(kind, activity_id, agent, registration, doc_id, content, content_type):
     now = utcnow()
-    etag = sha256_etag(content)
+    etag = sha1_etag(content)
     row = _find_doc(kind, activity_id, agent, registration, doc_id)
     if row is None:
         row = M('XapiDocument')(
@@ -835,7 +951,7 @@ def _write_doc(kind, activity_id, agent, registration, doc_id, content, content_
 
 
 def _doc_response(row):
-    if_none = request.headers.get('If-None-Match')
+    if_none = _header('If-None-Match')
     if if_none:
         tags = _etag_values(if_none)
         if '*' in tags or row.etag in tags:
@@ -928,13 +1044,24 @@ def _state_or_profile(kind):
             raise ApiError(404, 'Document not found')
         return _doc_response(row)
     if method == 'DELETE':
-        if row is None:
-            raise ApiError(404, 'Document not found')
-        _db.session.delete(row)
-        _db.session.commit()
+        if row is not None:
+            _db.session.delete(row)
+            _db.session.commit()
         return xapi_response(None, status=204)
     content_type = (_content_type() or '').split(';')[0].strip() or 'application/octet-stream'
+    if 'application/json' in content_type:
+        try:
+            json.loads(_body_bytes().decode('utf-8') if _body_bytes() else '')
+        except Exception as exc:
+            raise ApiError(400, 'JSON document is invalid') from exc
     if method == 'PUT':
+        if_match = _header('If-Match')
+        if_none = _header('If-None-Match')
+        # State documents are created with a plain PUT. Profile resources require a precondition.
+        if kind != 'state' and if_match is None and if_none is None:
+            if row is None:
+                raise ApiError(400, 'If-Match or If-None-Match is required')
+            raise ApiError(409, 'The document already exists. Send If-Match or If-None-Match.')
         _precondition(row, write=True)
         if not _content_type():
             raise ApiError(400, 'Content-Type is required')
@@ -982,6 +1109,67 @@ def delete_state_many():
 
 
 # -------------------------------------------------------------------------------------------- routes
+def _agent_person():
+    raw = _args().get('agent')
+    if not raw:
+        raise ApiError(400, 'agent is required')
+    try:
+        agent = json.loads(raw)
+    except Exception as exc:
+        raise ApiError(400, 'agent must be a JSON agent') from exc
+    _validate_actor(agent, 'agent')
+    person = {'objectType': 'Person'}
+    for key in ('name', 'mbox', 'mbox_sha1sum', 'openid'):
+        if agent.get(key):
+            person[key] = [agent[key]] if key != 'name' or isinstance(agent[key], str) else agent[key]
+            if key == 'name' and isinstance(agent[key], str):
+                person['name'] = [agent[key]]
+    if isinstance(agent.get('account'), dict):
+        person['account'] = [agent['account']]
+    return xapi_response(person)
+
+
+def _merge_definition(base, extra):
+    if not isinstance(extra, dict):
+        return base
+    if not isinstance(base, dict):
+        return json.loads(json.dumps(extra))
+    out = dict(base)
+    for key, value in extra.items():
+        if key in ('name', 'description') and isinstance(value, dict):
+            merged = dict(out.get(key) or {})
+            for lang, text in value.items():
+                merged.setdefault(lang, text)
+            out[key] = merged
+        elif key == 'extensions' and isinstance(value, dict):
+            merged = dict(out.get('extensions') or {})
+            for ext_key, ext_value in value.items():
+                merged.setdefault(ext_key, ext_value)
+            out['extensions'] = merged
+        elif key not in out:
+            out[key] = value
+    return out
+
+
+def _activity_definition():
+    activity_id = _args().get('activityId')
+    if not activity_id or not is_iri(activity_id):
+        raise ApiError(400, 'activityId is required')
+    found = {'objectType': 'Activity', 'id': activity_id}
+    rows = M('XapiStatement').query.filter_by(object_id=activity_id).order_by(
+        M('XapiStatement').stored.asc()).all()
+    definition = None
+    for row in rows:
+        body = json.loads(row.body)
+        obj = body.get('object') if isinstance(body.get('object'), dict) else {}
+        if obj.get('id') != activity_id:
+            continue
+        definition = _merge_definition(definition, obj.get('definition'))
+    if definition:
+        found['definition'] = definition
+    return xapi_response(found)
+
+
 def mount(bp, csrf):
     methods = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS']
 
@@ -1011,10 +1199,20 @@ def mount(bp, csrf):
                 return _guard(lambda: None)()
             if request.method == 'HEAD':
                 g.xapi_head = True
+            _prepare_alternate()
             _check_version()
             g.xapi_auth = _authenticate()
-            _prepare_alternate()
             method = _method()
+            if method == 'GET':
+                _check_params({
+                    'statementId', 'voidedStatementId', 'agent', 'verb', 'activity', 'registration',
+                    'related_activities', 'related_agents', 'since', 'until', 'limit', 'ascending',
+                    'format', 'attachments', 'more',
+                })
+            elif method == 'PUT':
+                _check_params({'statementId'})
+            elif method == 'POST':
+                _check_params(set())
             if method in ('POST', 'PUT'):
                 _require_prefs(g.xapi_auth)
             if method == 'PUT':
@@ -1027,7 +1225,9 @@ def mount(bp, csrf):
             raise ApiError(405, 'Method not allowed')
         except ApiError as exc:
             _db.session.rollback()
-            return xapi_error(exc.status, exc.message, www=exc.status == 401)
+            resp = xapi_error(exc.status, exc.message, www=exc.status == 401)
+            resp.headers['X-Experience-API-Consistent-Through'] = iso(utcnow())
+            return resp
 
     @bp.route('/xAPI/activities/state', methods=methods)
     @csrf.exempt
@@ -1037,9 +1237,10 @@ def mount(bp, csrf):
                 return _guard(lambda: None)()
             if request.method == 'HEAD':
                 g.xapi_head = True
+            _prepare_alternate()
             _check_version()
             g.xapi_auth = _authenticate()
-            _prepare_alternate()
+            _check_params({'activityId', 'agent', 'registration', 'stateId', 'since'})
             if _method() == 'DELETE' and not _args().get('stateId'):
                 return delete_state_many()
             return _state_or_profile('state')
@@ -1055,10 +1256,45 @@ def mount(bp, csrf):
                 return _guard(lambda: None)()
             if request.method == 'HEAD':
                 g.xapi_head = True
+            _prepare_alternate()
             _check_version()
             g.xapi_auth = _authenticate()
-            _prepare_alternate()
+            _check_params({'activityId', 'profileId', 'since'})
             return _state_or_profile('activity')
+        except ApiError as exc:
+            _db.session.rollback()
+            return xapi_error(exc.status, exc.message, www=exc.status == 401)
+
+    @bp.route('/xAPI/agents', methods=['GET', 'HEAD', 'OPTIONS'])
+    @csrf.exempt
+    def xapi_agents():
+        try:
+            if request.method == 'OPTIONS':
+                return _guard(lambda: None)()
+            if request.method == 'HEAD':
+                g.xapi_head = True
+            _prepare_alternate()
+            _check_version()
+            g.xapi_auth = _authenticate()
+            _check_params({'agent'})
+            return _agent_person()
+        except ApiError as exc:
+            _db.session.rollback()
+            return xapi_error(exc.status, exc.message, www=exc.status == 401)
+
+    @bp.route('/xAPI/activities', methods=['GET', 'HEAD', 'OPTIONS'])
+    @csrf.exempt
+    def xapi_activities():
+        try:
+            if request.method == 'OPTIONS':
+                return _guard(lambda: None)()
+            if request.method == 'HEAD':
+                g.xapi_head = True
+            _prepare_alternate()
+            _check_version()
+            g.xapi_auth = _authenticate()
+            _check_params({'activityId'})
+            return _activity_definition()
         except ApiError as exc:
             _db.session.rollback()
             return xapi_error(exc.status, exc.message, www=exc.status == 401)
@@ -1071,9 +1307,10 @@ def mount(bp, csrf):
                 return _guard(lambda: None)()
             if request.method == 'HEAD':
                 g.xapi_head = True
+            _prepare_alternate()
             _check_version()
             g.xapi_auth = _authenticate()
-            _prepare_alternate()
+            _check_params({'agent', 'profileId', 'since'})
             return _state_or_profile('agent')
         except ApiError as exc:
             _db.session.rollback()
@@ -1128,9 +1365,17 @@ def _put_statement():
     return xapi_response(None, status=204)
 
 
+def _check_params(allowed):
+    for key in _args().keys():
+        if key not in allowed:
+            raise ApiError(400, 'unrecognized parameter')
+
+
 def _get_statements():
     args = _args()
     if args.get('more'):
+        if set(args.keys()) != {'more'}:
+            raise ApiError(400, 'more cannot be combined with other parameters')
         params = _read_more(args.get('more'))
         return _query_statements(params)
     statement_id = args.get('statementId')
@@ -1144,8 +1389,8 @@ def _get_statements():
         target = statement_id or voided_id
         if not is_uuid(target):
             raise ApiError(400, 'statement id must be a UUID')
-        row = _db.session.get(M('XapiStatement'), target.lower())
-        if row is None or (voided_id and not row.voided):
+        row = _statement_row(target)
+        if row is None or (statement_id and row.voided) or (voided_id and not row.voided):
             raise ApiError(404, 'Statement not found')
         fmt = args.get('format') or 'exact'
         if fmt not in ('exact', 'ids', 'canonical'):

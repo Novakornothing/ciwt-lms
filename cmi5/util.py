@@ -176,6 +176,11 @@ def sha256_etag(content):
     return digest
 
 
+def sha1_etag(content):
+    """Document concurrency tag. The 1.0.3 suite requires a 40-character SHA-1."""
+    return hashlib.sha1(content).hexdigest()
+
+
 def category_ids(stmt):
     ctx = (stmt or {}).get('context') or {}
     activities = (ctx.get('contextActivities') or {}).get('category') or []

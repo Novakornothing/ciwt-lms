@@ -115,12 +115,35 @@ def test_admin_overview_cards_exports_and_tools(admin, instructor):
     assert instructor.get('/admin/exports').status_code in (302, 403)
 
 
+VERIFIED_PUBLIC_CLAIMS = (
+    'cmi5 support verified with the adl catapult test suite',
+    'xapi 1.0.3 learning record store',
+    'passes the adl lrs conformance suite',
+)
+UNVERIFIED_PUBLIC_CLAIMS = (
+    'cmi5 compliant', 'cmi5 conformant', 'cmi5 certified', 'cmi5)', '9274',
+)
+
+
+def _without_verified_claims(body):
+    text = body.lower()
+    for phrase in VERIFIED_PUBLIC_CLAIMS:
+        text = text.replace(phrase, ' ')
+    return text
+
+
 def test_no_unbacked_cmi5_or_ieee_claims(anon):
-    """Novak LMS exports xAPI 1.0.3 statements; it is not a cmi5 LMS/LRS yet, so public copy must not say so."""
-    for path in ('/landing', '/compliance', '/security', '/specs', '/gaps', '/consult', '/llms.txt', '/llms-full.txt'):
-        body = anon.get(path).get_data(as_text=True).lower()
-        for bad in ('cmi5 compliant', 'cmi5 conformant', 'cmi5)', '9274'):
-            assert bad not in body, (path, bad)
+    """Verified suite wording is allowed. Unverified conformance wording is not."""
+    pages = ('/landing', '/compliance', '/security', '/specs', '/compare', '/gaps', '/consult', '/llms.txt', '/llms-full.txt')
+    for path in pages:
+        body = anon.get(path).get_data(as_text=True)
+        scrubbed = _without_verified_claims(body)
+        for bad in UNVERIFIED_PUBLIC_CLAIMS:
+            assert bad not in scrubbed, (path, bad)
+    for path in ('/specs', '/compliance', '/compare', '/llms.txt', '/llms-full.txt'):
+        lowered = anon.get(path).get_data(as_text=True).lower()
+        for phrase in VERIFIED_PUBLIC_CLAIMS:
+            assert phrase in lowered, (path, phrase)
 
 
 PUBLIC_PAGES = ('/', '/landing', '/login', '/register', '/compliance', '/security', '/specs', '/compare', '/consult',

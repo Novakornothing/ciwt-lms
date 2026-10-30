@@ -6287,7 +6287,7 @@ def _admin_overview_cards(sections):
             'lab_savings': seats * LAB_SEAT_COST_PER_YEAR, 'lab_seat_cost': LAB_SEAT_COST_PER_YEAR}
 
 
-@app.route('/admin/exports')
+@app.route('/admin/exports', methods=['GET', 'POST'])
 @login_required
 @role_required('admin')
 def admin_exports():

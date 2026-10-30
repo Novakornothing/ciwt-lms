@@ -241,7 +241,7 @@ def test_state_activity_profile_and_agent_profile(anon, admin):
     activity = 'https://novakornothing.com/xapi/activities/state-' + uuid.uuid4().hex
     common = {'activityId': activity, 'agent': agent, 'stateId': 'bookmark'}
     first = anon.put('/xAPI/activities/state', query_string=common, data=b'{"place":1}',
-                     headers={**headers, 'Content-Type': 'application/json'})
+                     headers={**headers, 'Content-Type': 'application/json', 'If-None-Match': '*'})
     assert first.status_code == 204
     etag = first.headers['ETag']
     blocked = anon.put('/xAPI/activities/state', query_string=common, data=b'{"place":9}',
@@ -257,12 +257,12 @@ def test_state_activity_profile_and_agent_profile(anon, admin):
 
     profile = {'activityId': activity, 'profileId': 'cmi5'}
     assert anon.put('/xAPI/activities/profile', query_string=profile, data=b'{"n":1}',
-                    headers={**headers, 'Content-Type': 'application/json'}).status_code == 204
+                    headers={**headers, 'Content-Type': 'application/json', 'If-None-Match': '*'}).status_code == 204
     assert anon.get('/xAPI/activities/profile', query_string=profile, headers=headers).get_json()['n'] == 1
 
     agent_q = {'agent': agent, 'profileId': 'cmi5LearnerPreferences'}
     assert anon.put('/xAPI/agents/profile', query_string=agent_q, data=b'{"languagePreference":"en-US","audioPreference":"off"}',
-                    headers={**headers, 'Content-Type': 'application/json'}).status_code == 204
+                    headers={**headers, 'Content-Type': 'application/json', 'If-None-Match': '*'}).status_code == 204
     prefs = anon.get('/xAPI/agents/profile', query_string=agent_q, headers=headers)
     assert prefs.get_json()['audioPreference'] == 'off'
 
@@ -472,17 +472,18 @@ def test_admin_exports_page_and_public_wording(admin, anon):
         assert text in html
     assert anon.get('/admin/exports').status_code in (302, 401, 403)
 
+    from tests.test_phase1_simplify import VERIFIED_PUBLIC_CLAIMS, _without_verified_claims
     for path in ('/landing', '/compliance', '/specs', '/compare', '/gaps', '/consult', '/llms.txt', '/llms-full.txt'):
         body = anon.get(path).get_data(as_text=True)
-        lowered = body.lower()
-        assert 'cmi5 compliant' not in lowered, path
-        assert 'cmi5 conformant' not in lowered, path
-        assert '(cmi5)' not in lowered, path
-        assert '9274' not in body, path
-        if path in ('/specs', '/compare', '/compliance', '/llms.txt'):
-            assert 'cmi5 package export and launch' in lowered
-        if path in ('/compliance', '/llms.txt'):
-            assert '87 of 87' in body
+        scrubbed = _without_verified_claims(body)
+        assert 'cmi5 compliant' not in scrubbed, path
+        assert 'cmi5 conformant' not in scrubbed, path
+        assert '(cmi5)' not in scrubbed, path
+        assert '9274' not in scrubbed, path
+    for path in ('/specs', '/compliance', '/compare', '/llms.txt'):
+        lowered = anon.get(path).get_data(as_text=True).lower()
+        for phrase in VERIFIED_PUBLIC_CLAIMS:
+            assert phrase in lowered, (path, phrase)
 
 
 def test_relaunch_abandons_the_open_session(admin, anon):
