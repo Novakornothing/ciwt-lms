@@ -931,7 +931,7 @@ def is_content_available(section_id, content_type, content_id, user_id=None):
 def get_student_sections(user):
     return ClassSection.query.join(Enrollment).filter(
         Enrollment.user_id == user.id, ClassSection.is_active == True
-    ).all()
+    ).order_by(ClassSection.id).all()
 
 
 def _safe_gold_path(user, section):
@@ -1783,17 +1783,35 @@ DEMO_TOUR_CONTENT = {
                 'ok': 'Correct. deploy.sh is now -rwxr-xr-x.', 'miss': 'Not quite. Try chmod 755 deploy.sh.'},
     },
 }
+DEMO_TOUR_CONTENT['SEC'] = {
+    'blurb': 'Threats, access, firewalls, logs, and first response.',
+    'question': 'Concept: what does a default-deny firewall do?',
+    'ways': [
+        '<p>A default-deny firewall blocks traffic unless an explicit rule allows it. On Linux, <b>iptables</b> is one tool that writes those rules. Allow only the source, port, and direction you can name, then keep replies for connections you already allowed.</p>',
+        '<p>The door stays shut unless a name is on the list. A rule that says yes is the only way in.</p>',
+        '<p>It is a clinic door. Visitors do not wander in. The desk checks the list, then lets the right person through.</p>',
+        _TOUR_VISUAL_DNS.format(label='Packet arrives, a rule allows it, otherwise it is dropped', a='Packet', b='Allow rule', c='Or drop'),
+        '',
+    ],
+    'tryOk': 'Correct. Default deny blocks traffic until a rule allows it.',
+    'tryMiss': 'Not quite. An accept policy leaves the door open.',
+    'lab': {'task': 'Task: list the host firewall rules.', 'prompt': 'root@fw:~#', 'accept': ['iptables -S', 'iptables -L', 'iptables -L -n'],
+            'hint': 'the command is iptables, then -S or -L.',
+            'output': '-P INPUT DROP\n-A INPUT -i lo -j ACCEPT\n-A INPUT -p tcp -s 10.9.1.40 --dport 22 -j ACCEPT',
+            'ok': 'Correct. iptables -S shows the policy and the allows.', 'miss': 'Not quite. Try iptables -S.'},
+}
 DEMO_TOUR_CONTENT['ITSUP']['ways'][4] = _tour_try('A PC beeps three times and the screen stays black. What failed first?', [('The operating system', False), ('A POST hardware check', True), ('The network', False)])
 DEMO_TOUR_CONTENT['NETOPS']['ways'][4] = _tour_try('Which DNS record maps a name to an IPv4 address?', [('MX', False), ('A', True), ('CNAME', False)])
 DEMO_TOUR_CONTENT['CLIENT']['ways'][4] = _tour_try('What does the 7 in chmod 755 give the owner?', [('Read only', False), ('Read, write, execute', True), ('Execute only', False)])
+DEMO_TOUR_CONTENT['SEC']['ways'][4] = _tour_try('A firewall policy is still accept, and a few block rules were added. What is wrong?', [('Nothing, block rules are enough', False), ('Default deny should come first', True), ('The host needs more ports open', False)])
 
 
 @app.route('/demo/tour')
 def demo_tour():
     """60-second guided demo (Phase 1). Works without login and without a camera."""
-    order = ['ITSUP', 'NETOPS', 'CLIENT']
+    order = ['ITSUP', 'NETOPS', 'CLIENT', 'SEC']
     titles = {c.code: c.title for c in Course.query.filter(Course.code.in_(order)).all()}
-    fallback = {'ITSUP': 'IT Support', 'NETOPS': 'Basic Networking', 'CLIENT': 'Operating Systems'}
+    fallback = {'ITSUP': 'IT Support', 'NETOPS': 'Basic Networking', 'CLIENT': 'Operating Systems', 'SEC': 'Cybersecurity'}
     courses = [{'code': k, 'title': titles.get(k) or fallback[k], 'blurb': DEMO_TOUR_CONTENT[k]['blurb']} for k in order]
     stats = {'section_name': 'Section A', 'students': 0, 'need_help': 0, 'seats': 0, 'instructors': 0, 'courses': len(courses)}
     try:
@@ -6294,7 +6312,7 @@ def admin_exports():
     r = _admin_instructor_mode_redirect()
     if r:
         return r
-    courses = Course.query.filter(Course.code.in_(['ITSUP', 'NETOPS', 'CLIENT'])).order_by(Course.id).all()
+    courses = Course.query.filter(Course.code.in_(['ITSUP', 'NETOPS', 'CLIENT', 'SEC'])).order_by(Course.id).all()
     return render_template('admin_exports.html', admin_tab='admin_exports', courses=courses)
 
 
@@ -7912,6 +7930,12 @@ def sync_curriculum():
             changed = True
         if changed:
             qz.questions = json.dumps(items)
+    from curriculum_sec.sync_course import ensure_sec
+    ensure_sec(db, {
+        'Course': Course, 'Module': Module, 'Lesson': Lesson, 'Quiz': Quiz,
+        'KnowledgeTest': KnowledgeTest, 'ClassSection': ClassSection, 'Enrollment': Enrollment,
+        'User': User, 'CourseInstructor': CourseInstructor, 'ContentRelease': ContentRelease,
+    }, utcnow, grant=grant_section_instructor_access)
     db.session.commit()
     from curriculum_v2.lesson_visuals import apply_lesson_visuals
     apply_lesson_visuals(db, Course, Module, Lesson)

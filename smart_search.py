@@ -741,7 +741,11 @@ def run_smart_search(
             seen = set()
             try:
                 import interactive_labs as IL
-                for lab in CC.labs_using(command_card['search_term'], getattr(IL, 'LABS', []))[:3]:
+                matched = CC.labs_using(command_card['search_term'], getattr(IL, 'LABS', []))
+                pref = getattr(CC, 'PREFER_LAB_PREFIX', {}).get(command_card['key'])
+                if pref:
+                    matched = sorted(matched, key=lambda lab: 0 if str(lab.get('id') or '').startswith(pref) else 1)
+                for lab in matched[:3]:
                     seen.add(lab.get('id'))
                     practice.append({'kind': 'Lab', 'title': lab.get('title') or lab.get('id'), 'url': url_for_fn('interactive_lab', lab_id=lab['id']), 'locked': False})
             except Exception:

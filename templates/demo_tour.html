@@ -23,7 +23,7 @@
     .panel { background:#fff; border:1px solid #d6e0ee; border-radius:16px; padding:1.5rem; }
     h1 { font-size:clamp(1.35rem,3vw,1.8rem); line-height:1.2; margin-bottom:.4rem; }
     .lede { color:var(--muted); margin-bottom:1.1rem; }
-    .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:.8rem; }
+    .grid3 { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:.8rem; }
     .pick { font:inherit; text-align:left; background:#f8fbff; border:2px solid #d6e0ee; border-radius:12px; padding:1rem; cursor:pointer; color:var(--ink); }
     .pick strong { display:block; font-size:1.02rem; } .pick span { color:var(--muted); font-size:.88rem; }
     .pick[aria-pressed="true"] { border-color:var(--navy2); background:#eaf1fb; }

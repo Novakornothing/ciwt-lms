@@ -43,9 +43,10 @@ def test_demo_tour_page_and_data(anon):
               'id="tourCreate"', 'id="tourEnter"', 'js/demo_tour.js'):
         assert s in h, s
     data = json.loads(re.search(r'<script type="application/json" id="tourData">(.*?)</script>', h, re.S).group(1))
-    assert [c['code'] for c in data['courses']] == ['ITSUP', 'NETOPS', 'CLIENT']
-    assert [c['title'] for c in data['courses']] == list(NEW_TITLES.values())
-    assert set(data['content']) == set(NEW_TITLES)
+    assert [c['code'] for c in data['courses']] == ['ITSUP', 'NETOPS', 'CLIENT', 'SEC']
+    assert [c['title'] for c in data['courses']] == list(NEW_TITLES.values()) + ['Cybersecurity']
+    assert set(data['content']) == set(NEW_TITLES) | {'SEC'}
+    assert 'SEC' not in ' '.join(c['title'] for c in data['courses'])
 
 
 def test_landing_budget_links_and_brand(anon):
@@ -218,7 +219,7 @@ def test_lesson_visuals_and_exports_use_course_names():
     assert _bad_course_names(_visible_strings(html)) == []
     assert 'Basic Networking' in html
     import scorm_xapi
-    for code in ('ITSUP', 'NETOPS', 'CLIENT', 'ALL'):
+    for code in ('ITSUP', 'NETOPS', 'CLIENT', 'SEC', 'ALL'):
         res = scorm_xapi.build_scorm_package_zip(code, '1.2')
         data = next(x for x in (res if isinstance(res, tuple) else (res,)) if isinstance(x, (bytes, bytearray)) or hasattr(x, 'getvalue'))
         data = data.getvalue() if hasattr(data, 'getvalue') else data

@@ -30,6 +30,13 @@ COURSE_CATALOG = {
         "chapters": 6,
         "lessons": 24,
     },
+    "SEC": {
+        "code": "SEC",
+        "title": "Cybersecurity",
+        "cert": "Foundational cybersecurity practice comparable to Security+ (SY0-701). Not an official exam.",
+        "chapters": 10,
+        "lessons": 40,
+    },
 }
 
 
@@ -206,14 +213,14 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
     code = (course_code or "NETOPS").upper().strip()
     if code.endswith(".ZIP"):
         code = code[:-4]
-    if code not in ("ITSUP", "NETOPS", "CLIENT", "ALL"):
+    if code not in ("ITSUP", "NETOPS", "CLIENT", "SEC", "ALL"):
         return None, None, None
 
     ver = "2004" if "2004" in str(version) else "1.2"
-    target_codes = ["ITSUP", "NETOPS", "CLIENT"] if code == "ALL" else [code]
+    target_codes = ["ITSUP", "NETOPS", "CLIENT", "SEC"] if code == "ALL" else [code]
     primary_meta = COURSE_CATALOG.get(code, {
         "code": "ALL",
-        "title": "Novak LMS™ Complete Course Suite (IT Support, Basic Networking, Operating Systems)",
+        "title": "Novak LMS™ Complete Course Suite (IT Support, Basic Networking, Operating Systems, and Cybersecurity)",
         "cert": "CompTIA A+ (220-1201/1202), Network+ (N10-009), Tech+ (FC0-U71)",
         "chapters": 26,
         "lessons": 115,

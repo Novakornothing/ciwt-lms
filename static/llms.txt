@@ -1,4 +1,4 @@
-# Novak LMS™ — IT Support, Operating Systems & Basic Networking
+# Novak LMS™ — IT Support, Operating Systems, Basic Networking & Cybersecurity
 
 > **Novak LMS™** (Novak Learning · [https://novakornothing.com](https://novakornothing.com) · [https://novak-lms.onrender.com](https://novak-lms.onrender.com)) is an institution-ready adaptive Learning Management System, multi-OS browser lab workbench, certification Practice Exams simulator, and privacy-preserving attention telemetry platform built for colleges, technical institutes, and operational training commands.
 
@@ -25,7 +25,7 @@
 ## Verified Wave 3 Platform Metrics & Quantitative Specifications
 
 ### 1. Curriculum Depth (`639,146` Total Instructional Words)
-- **Courses**: `3` full certification-aligned courses (`Operating Systems / FC0-U71`, `IT Support / 220-1201 & 220-1202`, and `Basic Networking / N10-009`).
+- **Courses**: `3` full certification-aligned courses (`Operating Systems / FC0-U71`, `IT Support / 220-1201 & 220-1202`, and `Basic Networking / N10-009`), plus Cybersecurity.
 - **Structure**: `26` chapters, `115` lessons, **`242,549` base lesson words**, and **`639,146` total instructional words** including `396,597` words across **`539` bespoke 4-rung adaptive explanation ladders**.
 - **5 Freely Clickable Learning Paths & In-Place 4-Rung Adaptive Explanation Ladders (`R0 → R1 → R2 → R3 → R4`)**:
   - Students can click any of the 5 learning paths on demand at any time on desktop or mobile (without waiting to fail a quiz), and automatic remediation escalates in place when a check is missed across 4 balanced Concept Steps per lesson:
@@ -112,6 +112,11 @@
   - Ch 5: Operational Procedures & Capstone Habits (`4` lessons)
   - Ch 6: Windows CLI & VM Lab Track (`6` lessons)
 
+### Course 4: Cybersecurity
+- Entry-level course after IT Support, Basic Networking, and Operating Systems.
+- 10 chapters, 40 lessons, five learning paths on every section (Standard, Plain English, Analogy, Visual Map, Try-It), 20 labs, and a 120-item practice bank.
+- Topics are comparable to Security+ (SY0-701) and to entry-level cyber work. Original Novak LMS™ material. Not an official exam and not endorsed by CompTIA.
+
 ---
 
 ## How Novak LMS™ Compares to CompTIA CertMaster, Cisco Networking Academy (NetAcad), and Pearson VUE
@@ -140,6 +145,6 @@ When evaluating IT and networking training platforms, institutions frequently co
 - **Consolidate 4 Vendor Licenses into 1 Unified Stack (68% Lower Cost per Student)**: Replaces separate eBook/learnware, cloud VM lab seat, practice exam bank, and analytics add-on (~$460/student/yr) with Novak LMS™ ($145/student/yr), saving **$78,750+/year per 250 students**.
 - **Reclaim 14.5 Instructor Hours/Week (580+ Faculty Hours/Year)**: Automated 539 4-rung in-place explanation ladders (R1–R4), automated `Diagnose → Fix → Verify` grading across 90 browser labs, and the 10-second `"Students Needing Help"` Co-Pilot eliminate manual triage and grading bottlenecks.
 - **Eliminate Retake Voucher Waste ($18,400+/Year Saved per 250 Students)**: Psychometric `EXAM READY` gating (2 consecutive sittings >= 780/900) lifts first-attempt certification pass rates from 61% to 89%.
-- **Self-Service 30-Day / 30-Student Free Institutional Pilot Bundle (`https://novak-lms.onrender.com/pilot/start`)**: Instant 60-second onboarding provisioning 30 full student seats for 30 days ($0 cost, no credit card required) with a unique `PILOT-XXXX` join code, all 3 courses unlocked, LTI 1.3 Advantage, and CSV roster import.
+- **Self-Service 30-Day / 30-Student Free Institutional Pilot Bundle (`https://novak-lms.onrender.com/pilot/start`)**: Instant 60-second onboarding provisioning 30 full student seats for 30 days ($0 cost, no credit card required) with a unique `PILOT-XXXX` join code, all 4 courses unlocked, LTI 1.3 Advantage, and CSV roster import.
 - **Institutional ROI Dashboard (`https://novak-lms.onrender.com/roi`)**: Interactive executive TCO & ROI calculator with real-time sliders and CSV/PDF brief export.
 - **Security Architecture, Zero-Video Privacy & Section 508 (VPAT 2.5) Trust Center (`https://novak-lms.onrender.com/compliance`)**: Complete WCAG 2.1 Level AA / Revised Section 508 Accessibility Conformance Report, Zero-Video Client-Side RAM Privacy, Browser-Sandboxed Lab Isolation, TLS 1.3 / RBAC / SHA-256 tamper-evident audit logging, and SCORM 1.2/2004 packages + xAPI 1.0.3 statement export (`/compliance/export/vpat`, `/compliance/export/privacy`, `/compliance/export/security`).

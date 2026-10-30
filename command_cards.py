@@ -10,16 +10,19 @@ CARDS = {
     'chmod': ('chmod', 'Linux / macOS', 'chmod [ugoa][+-=][rwx] FILE  ·  chmod 755 FILE', 'Change who can read, write, or run a file.', 'chmod 755 deploy.sh'),
     'chown': ('chown', 'Linux / macOS', 'chown USER[:GROUP] FILE', 'Change the owner (and group) of a file.', 'sudo chown alice:staff report.txt'),
     'ls': ('ls', 'Linux / macOS', 'ls [-l] [-a] [-h] [PATH]', 'List files; -l shows permissions and owners.', 'ls -la /etc'),
-    'grep': ('grep', 'Linux / macOS', 'grep [-i] [-r] PATTERN [FILE]', 'Find lines that match text.', 'grep -i error /var/log/syslog'),
+    'grep': ('grep', 'Linux / macOS', 'grep [-i] [-r] PATTERN [FILE]', 'Find lines that match text, including failed logins in auth.log.', 'grep Failed /var/log/auth.log'),
     'sudo': ('sudo', 'Linux / macOS', 'sudo COMMAND', 'Run one command as the administrator (root).', 'sudo apt update'),
     'ps': ('ps', 'Linux / macOS', 'ps aux', 'List running processes.', 'ps aux | grep nginx'),
     'kill': ('kill', 'Linux / macOS', 'kill [-9] PID', 'Stop a process by its ID.', 'kill 4211'),
     'df': ('df', 'Linux / macOS', 'df -h', 'Show free disk space per filesystem.', 'df -h /'),
     'systemctl': ('systemctl', 'Linux', 'systemctl status|start|stop|restart|enable SERVICE', 'Manage background services.', 'sudo systemctl restart ssh'),
-    'journalctl': ('journalctl', 'Linux', 'journalctl [-u SERVICE] [-f]', 'Read system and service logs.', 'journalctl -u ssh -f'),
+    'journalctl': ('journalctl', 'Linux', 'journalctl [-u SERVICE] [-f]  ·  grep PATTERN /var/log/auth.log', 'Read system and service logs. On hosts without journald, search auth.log with grep.', 'journalctl -u ssh --since today'),
     'apt': ('apt', 'Ubuntu / Debian', 'apt update  ·  apt install PACKAGE', 'Install and update software packages.', 'sudo apt install htop'),
     'ufw': ('ufw', 'Ubuntu', 'ufw allow|deny PORT[/tcp]  ·  ufw enable  ·  ufw status', 'Turn on the host firewall and open or close ports.', 'sudo ufw allow 22/tcp'),
-    'iptables': ('iptables', 'Linux', 'iptables -A INPUT -p tcp --dport PORT -j ACCEPT|DROP', 'Low-level firewall rules.', 'sudo iptables -L -n'),
+    'iptables': ('iptables', 'Linux', 'iptables -S  ·  iptables -A INPUT -p tcp --dport PORT -j ACCEPT|DROP', 'Low-level firewall rules. Default deny, then named allows.', 'iptables -S'),
+    'sha256sum': ('sha256sum', 'Linux / macOS', 'sha256sum FILE  ·  sha256sum -c SUMS', 'Fingerprint a file, or check it against a saved hash.', 'sha256sum -c SHA256SUMS'),
+    'chage': ('chage', 'Linux', 'chage -l USER  ·  chage -M DAYS USER  ·  chage -E DATE USER', 'Show or set how long a password stays valid.', 'chage -l intern'),
+    'find': ('find', 'Linux / macOS', 'find PATH -perm -4000 -type f  ·  find PATH -perm -2000 -type f', 'List files, including ones with setuid or setgid bits.', 'find /usr/local -perm -4000 -type f'),
     'ip': ('ip', 'Linux', 'ip addr  ·  ip route  ·  ip link set DEV up', 'Show or change addresses, routes, and interfaces.', 'ip addr show eth0'),
     'ifconfig': ('ifconfig', 'Linux / macOS (legacy)', 'ifconfig [INTERFACE]', 'Show interface addresses (older tool; use ip on Linux).', 'ifconfig en0'),
     'ss': ('ss', 'Linux', 'ss -tulpn', 'Show listening ports and the programs using them.', 'sudo ss -tulpn'),
@@ -55,6 +58,13 @@ ALIASES = {
     'taskkill': 'tasklist', 'sh': 'show', 'ospf': 'router', 'acl': 'access-list', 'wr': 'write', 'copy': 'write',
     'flushdns': 'ipconfig', 'scannow': 'sfc', 'firewall': 'ufw', 'vlans': 'vlan', 'trunk': 'switchport',
     'chmod755': 'chmod', 'permissions': 'chmod', 'netsh': 'ipconfig',
+    'sha256': 'sha256sum', 'setuid': 'find', 'perm': 'find',
+}
+
+# Command cards that should list Cybersecurity labs before older matches.
+PREFER_LAB_PREFIX = {
+    'iptables': 'sec-', 'sha256sum': 'sec-', 'chage': 'sec-', 'find': 'sec-',
+    'ss': 'sec-', 'journalctl': 'sec-', 'grep': 'sec-',
 }
 
 _NEEDS_FULL = {'router', 'write', 'net'}

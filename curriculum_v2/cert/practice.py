@@ -76,6 +76,9 @@ def bank():
             _cache['bank'][it['id']] = it
         # Option B pass 4: interactive simulation PBQs (exam simulator only; not in the alignment pools)
         _cache['bank'].update({it['id']: it for it in sim_items()})
+        from curriculum_sec.exam_bank import as_bank_items
+        for it in as_bank_items():
+            _cache['bank'][it['id']] = it
     return _cache['bank']
 
 
@@ -84,6 +87,10 @@ def pool(exam, domain=None):
     if exam == 'T':
         tpool = build_tech_pool(bank())
         return {oid: ids for oid, ids in tpool.items()
+                if ids and (not domain or ALL_OBJECTIVES[oid]['domain'] == domain)}
+    if exam == 'S':
+        from curriculum_sec.exam_bank import pool_map
+        return {oid: ids for oid, ids in pool_map().items()
                 if ids and (not domain or ALL_OBJECTIVES[oid]['domain'] == domain)}
     objs = alignment()['objectives']
     out = {}
@@ -305,9 +312,11 @@ def register(app, db, deps):
             abort(403)
         a, b = alignment(), baseline()
         t_objs, t_sum, t_bef = tech_coverage_rows(bank())
-        all_obj_rows = dict(a['objectives'], **t_objs)
-        all_sum = dict(a['summary'], T=t_sum)
-        all_bef = dict(b['summary'], T=t_bef)
+        from curriculum_sec.exam_bank import coverage_rows
+        s_objs, s_sum, s_bef = coverage_rows()
+        all_obj_rows = dict(a['objectives'], **t_objs, **s_objs)
+        all_sum = dict(a['summary'], T=t_sum, S=s_sum)
+        all_bef = dict(b['summary'], T=t_bef, S=s_bef)
         exam = request.args.get('exam') if request.args.get('exam') in ALL_EXAMS else None
         status = request.args.get('status') if request.args.get('status') in ('covered', 'partial', 'gap') else None
         rows = []

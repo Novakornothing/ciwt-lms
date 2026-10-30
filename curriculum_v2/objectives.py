@@ -114,6 +114,9 @@ CLIENT_CHAPTER_TO_ITSUP = {n: n + 7 for n in range(1, 7)}
 
 
 def objectives_for(course_code, chapter=None):
+    if course_code == 'SEC':
+        from curriculum_sec.objectives import rows_for
+        return rows_for(chapter)
     code = 'ITSUP' if course_code == 'CLIENT' else course_code
     rows = [(k, v) for k, v in OBJECTIVES.items() if v['course'] == code]
     if course_code == 'CLIENT':

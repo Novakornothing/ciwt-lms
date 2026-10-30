@@ -402,7 +402,7 @@ def register(app, db, deps):
         past = (ExamSimAttempt.query.filter_by(user_id=current_user.id, section_id=sec.id)
                 .order_by(ExamSimAttempt.id.desc()).limit(10).all())
         mult = multiplier(sec.id, current_user.id)
-        return render_template('exam_sim/home.html', section=sec, exams=EXAMS, modes=MODES, pass_score=dict(PASS_SCORE, T=650),
+        return render_template('exam_sim/home.html', section=sec, exams=EXAMS, modes=MODES, pass_score=dict(PASS_SCORE, T=650, S=750),
                                mult=mult, mult_label=ACCOMMODATIONS.get(mult), minutes_for=minutes_for,
                                default_exam=default_exam(sec), past=past, badges=BADGES, disclaimer=DISCLAIMER,
                                review=REVIEW)
@@ -621,7 +621,7 @@ def register(app, db, deps):
                                students=students, acc=acc, accommodations=ACCOMMODATIONS, can_grade=can_grade(sec),
                                last_sync=synced.synced_at if synced else None, minutes_for=minutes_for,
                                exams=EXAMS, modes=MODES, badges=BADGES, counts=counts, weak=weak_rows,
-                               pass_score=dict(PASS_SCORE, T=650), disclaimer=DISCLAIMER)
+                               pass_score=dict(PASS_SCORE, T=650, S=750), disclaimer=DISCLAIMER)
 
     def staff_section(section_id):
         sec = db.get_or_404(ClassSection, section_id)

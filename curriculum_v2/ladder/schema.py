@@ -19,7 +19,7 @@ import re
 
 SCHEMA = 1
 REVIEW = 'Pending SME review'
-COURSES = ('ITSUP', 'NETOPS', 'CLIENT')
+COURSES = ('ITSUP', 'NETOPS', 'CLIENT', 'SEC')
 RUNGS = ('R1', 'R2', 'R3', 'R4')
 KIND = {'R1': 'plain', 'R2': 'analogy', 'R3': 'visual', 'R4': 'try'}
 LABEL = {'R0': 'Original explanation', 'R1': 'Explained more simply', 'R2': 'Explained another way: analogy',

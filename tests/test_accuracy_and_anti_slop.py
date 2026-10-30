@@ -109,7 +109,9 @@ def test_all_115_lessons_visuals_svgs_ladders_and_assessments(app, mod):
         assert 'ciwt' not in svg_fig.lower(), key
 
     with app.app_context():
-        lessons = mod.Lesson.query.order_by(mod.Lesson.id).all()
+        lessons = (mod.Lesson.query.join(mod.Module).join(mod.Course)
+                   .filter(mod.Course.code.in_(('ITSUP', 'NETOPS', 'CLIENT')))
+                   .order_by(mod.Lesson.id).all())
         assert len(lessons) == 115
 
         lad = LD.ladder()
@@ -133,7 +135,8 @@ def test_all_115_lessons_visuals_svgs_ladders_and_assessments(app, mod):
         assert netops_words >= 55000, f'Expected 55,000+ NETOPS words, got {netops_words}'
 
         # Verify 26 course quizzes (and 7 NETOPS 12-item quizzes = 84 items)
-        quizzes = mod.Quiz.query.all()
+        quizzes = (mod.Quiz.query.join(mod.Module).join(mod.Course)
+                   .filter(mod.Course.code.in_(('ITSUP', 'NETOPS', 'CLIENT'))).all())
         assert len(quizzes) == 26
         for c in mod.Course.query.filter(mod.Course.code.in_(('ITSUP', 'NETOPS', 'CLIENT'))).all():
             seen_q = set()
