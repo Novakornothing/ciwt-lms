@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Students — {{ site_name }}{% endblock %}
+{% block content %}
+<header class="page-intro">
+  <nav aria-label="Breadcrumb">
+    <ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Students</li>
+    </ol>
+  </nav>
+  <h1 class="page-intro-title">Students</h1>
+  <p class="page-intro-purpose">Everyone enrolled in your classes, with progress and test scores.</p>
+</header>
+<div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+  <label class="visually-hidden" for="rosterFilter">Filter students</label>
+  <input type="search" id="rosterFilter" class="form-control form-control-sm" style="max-width:18rem" placeholder="Filter by name, class, or course">
+  <a class="btn btn-sm btn-outline-navy ms-auto" href="{{ url_for('instructor_roster_csv') }}"><i class="bi bi-download" aria-hidden="true"></i> Export CSV</a>
+</div>
+<div class="table-responsive">
+  <table class="table table-sm align-middle" id="rosterTable">
+    <thead><tr><th scope="col">Student</th><th scope="col">Class</th><th scope="col">Progress</th><th scope="col">Avg test</th><th scope="col">Passed</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead>
+    <tbody>
+      {% for r in roster %}
+      <tr data-filter="{{ (r.user.full_name ~ ' ' ~ r.user.email ~ ' ' ~ r.section.name ~ ' ' ~ r.course)|lower }}">
+        <td><strong>{{ r.user.full_name }}</strong><br><span class="small text-muted">{{ r.user.email }}</span></td>
+        <td>{{ r.section.name }}<br><span class="small text-muted">{{ r.course }}</span></td>
+        <td>{{ r.progress }}%</td>
+        <td>{{ r.avg if r.avg is not none else '—' }}{% if r.avg is not none %}%{% endif %}</td>
+        <td>{{ r.tests_passed }} / {{ r.tests_taken }}</td>
+        <td><a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_gradebook_student', section_id=r.section.id, user_id=r.user.id) }}">Open<span class="visually-hidden"> {{ r.user.full_name }}</span></a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-muted">No students enrolled yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+(function () {
+  var f = document.getElementById('rosterFilter'); if (!f) return;
+  f.addEventListener('input', function () {
+    var q = f.value.trim().toLowerCase();
+    document.querySelectorAll('#rosterTable tbody tr[data-filter]').forEach(function (tr) { tr.hidden = q && tr.getAttribute('data-filter').indexOf(q) === -1; });
+  });
+})();
+</script>
+{% endblock %}

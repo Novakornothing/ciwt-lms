@@ -112,7 +112,7 @@ def test_sec_seed_enroll_lesson_lab_and_practice(student, instructor, admin, ano
     assert 'Cybersecurity foundations practice' in body
     assert 'id="assessQuestions"' in body
     dash_html = dash.get_data(as_text=True)
-    assert 'Course Chapters' in dash_html and 'Hands-On Labs' in dash_html and 'Practice Exams' in dash_html
+    assert 'Course Chapters' in dash_html and 'Hands-On Labs' in dash_html and 'Practice' in dash_html
     assert '>SEC<' not in dash_html and 'SEC ·' not in dash_html
     assert 'Cybersecurity' in instructor.get('/instructor').get_data(as_text=True)
     exports = admin.get('/admin/exports').get_data(as_text=True)

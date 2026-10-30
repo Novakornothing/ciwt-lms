@@ -196,7 +196,7 @@ a.gb-chip:hover { filter: brightness(.95); text-decoration: underline; }
 }
 
 .mobile-tabbar { display: none; }
-@media (max-width: 767.98px) {
+@media (max-width: 991.98px) {
   body.has-mobile-tabbar { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
   .mobile-tabbar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-tabbar);
     height: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
@@ -2846,3 +2846,50 @@ body.is-lab-workbench #mobileStaffMenuBtn {
 /* Phase 1b: every text block in the lesson shares the same ~68ch centre column; diagrams may run wider */
 #lessonBody > :not(aside):not(figure):not(.novak-visual-blueprint):not(.novak-boot-quickcard) { max-width: 68ch; margin-left: auto; margin-right: auto; }
 #lessonBody > .novak-focus-nav-bar { max-width: 68ch; }
+
+/* Logged-in shell: one sidebar, one avatar menu, four mobile tabs. */
+.topbar .navbar > .container-fluid { display: flex; align-items: center; gap: .5rem; flex-wrap: nowrap; min-width: 0; }
+.topbar .navbar-brand { min-width: 0; flex: 0 1 auto; }
+.topbar .novak-search-form { min-width: 0; width: auto; flex: 1 1 8rem; max-width: 32rem; margin: 0; }
+.topbar .novak-search-input-wrap { min-width: 0; }
+.topbar .novak-search-input { min-width: 0; width: 100%; }
+#mobileStaffMenuBtn { display: none !important; }
+body.is-lab-workbench #mobileStaffMenuBtn,
+body.is-lesson-route #mobileStaffMenuBtn { display: inline-grid !important; }
+.avatar-btn {
+  width: 44px; height: 44px; border-radius: 50%; border: 0; flex: 0 0 44px;
+  background: var(--accent-bright); color: #06101f; font-weight: 800; letter-spacing: .02em;
+}
+.avatar-btn:hover { filter: brightness(1.05); }
+.account-menu { min-width: 16rem; padding: .35rem; }
+.account-menu-id { display: flex; flex-direction: column; gap: .2rem; padding: .45rem .65rem .55rem; }
+.account-menu-label { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); padding: .45rem .65rem .15rem; }
+.account-menu-item {
+  display: flex; align-items: center; gap: .45rem; width: 100%; min-height: 44px;
+  padding: .4rem .65rem; border: 0; border-radius: 8px; background: transparent;
+  color: var(--ink); text-decoration: none; font-weight: 700; text-align: left;
+}
+.account-menu-item:hover { background: var(--surface-3); color: var(--ink); }
+.account-menu-block { padding: .35rem .65rem .5rem; display: grid; gap: .4rem; }
+.teach-panel { display: grid; gap: .4rem; }
+.rail-link { min-height: 44px; padding: .55rem .7rem; font-size: .95rem; }
+.home-course { min-height: 44px; display: inline-flex; align-items: center; }
+.page-intro { margin: 0 0 1rem; }
+.page-intro-title { font-size: clamp(1.45rem, 2vw, 1.85rem); font-weight: 800; letter-spacing: -.02em; margin: 0 0 .25rem; line-height: 1.2; }
+.page-intro-purpose { margin: 0; max-width: 42rem; color: var(--ink-secondary); }
+.home-next, .home-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: .75rem; margin-top: .75rem; }
+.home-next-card, .home-fact {
+  display: flex; flex-direction: column; gap: .15rem; min-height: 44px;
+  padding: .9rem 1rem; border-radius: 12px; text-decoration: none; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--surface-3); box-shadow: var(--shadow);
+}
+.home-next-card:hover, .home-fact:hover { border-color: var(--accent-border); color: var(--ink); }
+.home-next-kicker { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-secondary); }
+.home-next-title { font-weight: 800; }
+.home-next-meta { color: var(--ink-secondary); font-size: .875rem; }
+.home-side { display: grid; gap: .75rem; align-content: start; }
+.class-also { display: flex; flex-wrap: wrap; gap: .35rem .7rem; }
+.class-also a { min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 390px) {
+  .topbar .brand-title-line { font-size: .85rem; }
+}

@@ -131,7 +131,7 @@ def test_lti_auto_passback_and_exempt_full(app, mod, env, instructor, monkeypatc
 def test_hub_clone_roster_import_transfer_drop_and_join(app, mod, instructor, student2, instructor2):
     h = instructor.get('/instructor/sections').get_data(as_text=True)
     assert 'Your sections' in h and 'Ladder resolution' in h and 'Clone' in h
-    assert 'id="secSwitch"' in instructor.get('/instructor/sections').get_data(as_text=True)
+    assert 'id="appNav"' in instructor.get('/instructor/sections').get_data(as_text=True)
     r = instructor.post('/instructor/section/1/clone')
     assert r.status_code == 303
     new_id = int(r.headers['Location'].rstrip('/').split('/')[-2])

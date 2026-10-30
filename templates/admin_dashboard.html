@@ -1,26 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Admin — {{ site_name }}{% endblock %}
+{% block title %}Home — {{ site_name }}{% endblock %}
 {% block content %}
-{% with title='Admin overview', lede='Seats, staff, readiness, and savings at a glance.' %}{% include '_admin_nav.html' %}{% endwith %}
+<header class="page-intro">
+  <h1 class="page-intro-title">Home</h1>
+  <p class="page-intro-purpose">Is everything set up and healthy?</p>
+</header>
 
-<section aria-labelledby="admin-glance-h" class="mb-4">
-  <h2 id="admin-glance-h" class="visually-hidden">At a glance</h2>
-  <div class="kpi-grid admin-kpi-4">
-    <a class="kpi-card kpi-link" href="{{ url_for('admin_people', role='student') }}"><div class="kpi-label">Active seats</div><div class="kpi-value" id="kpiSeats">{{ stats.seats }}</div><div class="kpi-sub">students in {{ stats.classes_active }} active class{{ 'es' if stats.classes_active != 1 }}</div></a>
-    <a class="kpi-card kpi-link" href="{{ url_for('admin_people', role='instructor') }}"><div class="kpi-label">Instructors</div><div class="kpi-value">{{ stats.instructors }}</div><div class="kpi-sub">{{ stats.admins }} admin{{ 's' if stats.admins != 1 }}</div></a>
-    <a class="kpi-card kpi-link" href="{{ url_for('admin_outcomes') }}"><div class="kpi-label">Cohort Exam Readiness</div><div class="kpi-value">{{ stats.ready_pct if stats.ready_pct is not none else '—' }}{% if stats.ready_pct is not none %}%{% endif %}</div><div class="kpi-sub">{{ stats.ready_candidates }} student{{ 's' if stats.ready_candidates != 1 }} with a Practice Exam</div></a>
-    <a class="kpi-card kpi-link" href="{{ url_for('admin_roi') }}"><div class="kpi-label">Estimated lab savings / yr</div><div class="kpi-value">${{ '{:,}'.format(stats.lab_savings) }}</div><div class="kpi-sub">vs. ${{ stats.lab_seat_cost }}/seat cloud lab (estimate)</div></a>
-  </div>
+{% if setup %}
+<section class="card mb-3" aria-labelledby="setupH">
+  <div class="card-header"><h2 class="h6 mb-0" id="setupH">Setup checklist</h2></div>
+  <ul class="list-group list-group-flush" id="adminSetup">
+    {% for item in setup %}
+    <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+      <span>{% if item.done %}<i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i> {{ item.label }}{% else %}<i class="bi bi-circle" aria-hidden="true"></i> {{ item.label }}{% endif %}</span>
+      {% if not item.done %}<a href="{{ item.href }}">Set up</a>{% else %}<span class="small text-muted">Done</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
 </section>
+{% endif %}
 
-<section aria-labelledby="admin-areas-h" class="mb-4">
-  <h2 id="admin-areas-h" class="section-label">Go to</h2>
-  <div class="admin-hub">
-    <a class="admin-hub-card" href="{{ url_for('admin_people') }}"><i class="bi bi-people" aria-hidden="true"></i><span><strong>Users &amp; Sections</strong><span>Add people, create classes, assign instructors.</span></span></a>
-    <a class="admin-hub-card" href="{{ url_for('admin_exports') }}"><i class="bi bi-box-arrow-down" aria-hidden="true"></i><span><strong>Exports</strong><span>SCORM packages, xAPI statements, audit log CSV.</span></span></a>
-    <a class="admin-hub-card" href="{{ url_for('admin_tools') }}"><i class="bi bi-tools" aria-hidden="true"></i><span><strong>More tools</strong><span>Curriculum, outcomes, privacy, and system health.</span></span></a>
-  </div>
-</section>
+<div class="home-split">
+  <a class="card home-fact" href="{{ url_for('admin_people', role='student') }}">
+    <span class="home-next-kicker">People</span>
+    <span class="display-6 fw-bold" id="kpiSeats">{{ stats.seats }}</span>
+    <span class="home-next-title">Active seats</span>
+    <span class="home-next-meta">{{ stats.students }} student account{{ 's' if stats.students != 1 }} · {{ stats.instructors }} instructor{{ 's' if stats.instructors != 1 }} · {{ stats.admins }} admin{{ 's' if stats.admins != 1 }}</span>
+  </a>
+  <section class="card" aria-labelledby="coursesH">
+    <div class="card-body">
+      <h2 class="h6" id="coursesH">Courses</h2>
+      <p class="mb-2">{{ stats.courses }} course{{ 's' if stats.courses != 1 }} · {{ stats.classes_active }} active class{{ 'es' if stats.classes_active != 1 }}.</p>
+      {% if courses %}
+      <ul class="list-unstyled mb-2">
+        {% for c in courses %}<li>{{ c.title }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      <a class="btn btn-brand" href="{{ url_for('admin_classes') }}">Open courses</a>
+    </div>
+  </section>
+</div>
 {% endblock %}
 {% block head %}
 <script>

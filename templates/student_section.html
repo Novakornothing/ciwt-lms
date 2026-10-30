@@ -1,16 +1,23 @@
 {% extends "base.html" %}
 {% block title %}{{ section.name }} — {{ site_name }}{% endblock %}
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-2">
-  <ol class="breadcrumb mb-0">
-    <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}">My classes</a></li>
-    <li class="breadcrumb-item active">{{ section.name }}</li>
-  </ol>
+<header class="page-intro">
+  <nav aria-label="Breadcrumb">
+    <ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') }}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Course Chapters</li>
+    </ol>
+  </nav>
+  <h1 class="page-intro-title">Course Chapters</h1>
+  <p class="page-intro-purpose">{{ section.course.title }} · {{ section.name }}{% if section.instructor %} · {{ section.instructor.full_name }}{% endif %}</p>
+</header>
+{% if student_nav_sections|default([])|length > 1 %}
+<nav class="home-courses mb-3" aria-label="My courses">
+  {% for s in student_nav_sections %}{% set cur = (s.id == section.id) %}<a class="home-course{% if cur %} is-current{% endif %}" href="{{ url_for('student_section', section_id=s.id) }}"{% if cur %} aria-current="true"{% endif %}>{{ s.course.title if s.course else s.name }}</a>{% endfor %}
 </nav>
+{% endif %}
 <div class="class-head mb-3">
   <div class="class-head-main">
-    <h1 class="h3 mb-1">{{ section.name }}</h1>
-    <p class="text-muted mb-0">{{ section.course.title }}{% if section.instructor %} · Instructor {{ section.instructor.full_name }}{% endif %}</p>
     {% if enrollment %}
     {% set pp = enrollment.progress_percent|round(0)|int %}
     <div class="class-progress" role="group" aria-label="Lesson progress">
@@ -19,23 +26,13 @@
     {% endif %}
   </div>
   <div class="class-head-actions">
-    <a class="btn btn-brand" href="{{ url_for('course_labs', section_id=section.id) }}"><i class="bi bi-terminal" aria-hidden="true"></i> All labs</a>
-    <a class="btn btn-outline-navy" href="{{ url_for('exam_sim_home', section_id=section.id) }}"><i class="bi bi-stopwatch" aria-hidden="true"></i> Practice Exams</a>
-    <a class="btn btn-outline-navy" href="{{ url_for('speed_drill', section_id=section.id) }}"><i class="bi bi-lightning-charge" aria-hidden="true"></i> Speed-Drill</a>
-    <a class="btn btn-outline-navy" href="{{ url_for('student_section_grades', section_id=section.id) }}"><i class="bi bi-journal-check" aria-hidden="true"></i> My grades</a>
-    <details class="action-more-menu">
-      <summary class="btn btn-outline-navy"><i class="bi bi-sliders" aria-hidden="true"></i> Course tools &amp; info</summary>
-      <div class="action-more-panel">
-        {% if section.course and section.course.code in ('ITSUP', 'APLUS', 'NETOPS', 'NETPLUS', 'CLIENT') %}
-        <a class="action-more-item" href="{{ url_for('section_material', section_id=section.id, kind='syllabus') }}"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Syllabus</a>
-        {% endif %}
-        {% if current_user.role == 'student' %}
-        <a class="action-more-item" href="{{ url_for('mastery_student', section_id=section.id) }}"><i class="bi bi-signpost-split" aria-hidden="true"></i> My mastery</a>
-        <a class="action-more-item" href="{{ url_for('ladder_profile', section_id=section.id) }}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> What helps you learn</a>
-        <a class="action-more-item" href="{{ url_for('mastery_plan', section_id=section.id) }}"><i class="bi bi-book" aria-hidden="true"></i> My plan</a>
-        {% endif %}
-      </div>
-    </details>
+    {% if gold_path and gold_path.next %}
+    <a class="btn btn-brand" href="{{ gold_path.next.url }}">Continue</a>
+    {% elif modules %}
+    {% set opener = (modules|selectattr('available')|list|first) %}
+    {% if opener %}<a class="btn btn-brand" href="{{ url_for('view_module', section_id=section.id, module_id=opener.module.id) }}">Continue</a>{% endif %}
+    {% endif %}
+    <p class="class-also mb-0"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Practice</a> · <a href="{{ url_for('speed_drill', section_id=section.id) }}">Speed drill</a>{% if current_user.role == 'student' %} · <a href="{{ url_for('mastery_student', section_id=section.id) }}">Skip What You Know</a> · <a href="{{ url_for('mastery_plan', section_id=section.id) }}">My plan</a> · <a href="{{ url_for('ladder_profile', section_id=section.id) }}">What helps you learn</a>{% endif %}{% if section.course and section.course.code in ('ITSUP', 'APLUS', 'NETOPS', 'NETPLUS', 'CLIENT') %} · <a href="{{ url_for('section_material', section_id=section.id, kind='syllabus') }}">Syllabus</a>{% endif %}</p>
   </div>
 </div>
 {% include "_student_intro.html" %}

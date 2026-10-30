@@ -4,13 +4,13 @@
 <div class="page-hero">
   <div class="d-flex flex-wrap justify-content-between gap-3">
     <div>
-      <div class="eyebrow">Eye Tracking · your data</div>
-      <h1 class="h3 mb-1">My eye-tracking data</h1>
-      <p class="mb-0">Everything Helix has stored about you. Not a grade — and yours to delete.</p>
+      <div class="eyebrow">Eye Tracking</div>
+      <h1 class="h3 mb-1">Eye Tracking</h1>
+      <p class="mb-0">What is stored from your camera. It is not a grade, and you can delete it.</p>
     </div>
-    <div class="d-flex flex-wrap gap-2 align-items-start">
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.policy') }}">Policy</a>
-      <a class="btn btn-sm btn-brand" href="{{ url_for('helix.consent_page', next=request.path) }}">{{ 'Manage consent' if consent else 'Give consent' }}</a>
+    <div>
+      <a class="btn btn-brand" href="{{ url_for('helix.consent_page', next=request.path) }}">{{ 'Manage consent' if consent else 'Give consent' }}</a>
+      <p class="small mb-0 mt-2"><a href="{{ url_for('helix.policy') }}">Eye Tracking policy</a></p>
     </div>
   </div>
 </div>

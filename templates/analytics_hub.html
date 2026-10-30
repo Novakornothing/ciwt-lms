@@ -7,10 +7,16 @@
   [data-theme="dark"] .list-unstyled { color: var(--ink); }
 </style>
 
-<div class="page-hero">
-  <h1 class="h3 mb-1">Curriculum analytics</h1>
-  <p class="mb-0">Compare class sections within each curriculum set. Drill into a class for item-level detail.</p>
-</div>
+<header class="page-intro">
+  <nav aria-label="Breadcrumb">
+    <ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Reports</li>
+    </ol>
+  </nav>
+  <h1 class="page-intro-title">Reports</h1>
+  <p class="page-intro-purpose">Compare classes in each course. Open a class for item-level detail.</p>
+</header>
 
 <div class="row g-4">
 {% for card in cards %}

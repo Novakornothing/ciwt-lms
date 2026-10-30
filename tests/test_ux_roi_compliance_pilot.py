@@ -430,13 +430,12 @@ def test_12_wave6_ux_refinements_spec_drawer_step_style_lab_fullwidth_filter_and
     assert "data-filter-kind=\"linuxgui\"" in catalog_html
     assert "data-filter-status=\"completed\"" in catalog_html
 
-    # Phase 1 student home: one continue card + three tabs
+    # Student home: one continue card. Chapters, labs, and practice are the sidebar.
     dash_html = student.get("/student").get_data(as_text=True)
-    assert "Every lab (114)" in dash_html
     assert dash_html.count("Continue where you left off") == 1
     assert dash_html.count("continue-btn") == 1
-    for tab in ("Course Chapters", "Hands-On Labs", "Practice Exams"):
-        assert f">{tab}</button>" in dash_html, tab
+    for label in ("Course Chapters", "Hands-On Labs", "Practice"):
+        assert label in dash_html, label
 
 
 def test_13_scorm_12_2004_zip_packages_and_adl_xapi_telemetry(anon, student):

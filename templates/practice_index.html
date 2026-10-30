@@ -2,10 +2,16 @@
 {% block title %}Practice exams — {{ site_name }}{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
 {% block content %}
-<div class="page-hero">
-  <h1 class="h3 mb-1">Practice exams</h1>
-  <p class="mb-0">Timed practice drawn from the Novak LMS™ question bank and weighted by the published exam domains, with a score report by domain and links back to the lessons.</p>
-</div>
+<header class="page-intro">
+  <nav aria-label="Breadcrumb">
+    <ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') if current_user.role == 'student' else url_for('instructor_dashboard') }}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Practice</li>
+    </ol>
+  </nav>
+  <h1 class="page-intro-title">Practice</h1>
+  <p class="page-intro-purpose">Timed practice drawn from the Novak LMS™ question bank, with a score report by domain and links back to the lessons.</p>
+</header>
 <p class="practice-label"><strong>{{ label }}.</strong> {{ disclaimer }} Questions are original Novak LMS™ items, not taken from CompTIA exams, and a practice score does not predict an exam result.</p>
 
 <div class="practice-grid">

@@ -95,9 +95,11 @@ def test_cmdk_command_card(student):
 
 def test_instructor_tabs_roster_and_csv(instructor, student):
     h = instructor.get('/instructor').get_data(as_text=True)
-    for s in ('id="classPassRate"', 'Students Needing Help', 'id="rosterTable"', 'id="rosterFilter"',
-              '/instructor/roster.csv', 'Labs &amp; Assignments', 'Students &amp; Grades'):
+    for s in ('id="classPassRate"', 'Students Needing Help', 'Who needs help'):
         assert s in h, s
+    roster = instructor.get('/instructor/students').get_data(as_text=True)
+    for s in ('id="rosterTable"', 'id="rosterFilter"', '/instructor/roster.csv'):
+        assert s in roster, s
     r = instructor.get('/instructor/roster.csv')
     assert r.status_code == 200 and r.mimetype == 'text/csv'
     assert r.get_data(as_text=True).splitlines()[0].startswith('student,email,course,class,progress_percent')
@@ -106,9 +108,10 @@ def test_instructor_tabs_roster_and_csv(instructor, student):
 
 def test_admin_overview_cards_exports_and_tools(admin, instructor):
     h = admin.get('/admin').get_data(as_text=True)
-    for s in ('admin-kpi-4', 'Active seats', 'Instructors', 'Exam Readiness', 'Estimated lab savings',
-              'Users &amp; Sections', 'Exports'):
+    for s in ('id="kpiSeats"', 'Active seats', 'Open courses', 'Is everything set up and healthy?'):
         assert s in h, s
+    reports = admin.get('/admin/reports').get_data(as_text=True)
+    assert 'Exam Readiness' in reports and 'Savings estimate' in reports
     e = admin.get('/admin/exports').get_data(as_text=True)
     assert 'SCORM' in e and 'xAPI' in e and 'CSV' in e
     assert admin.get('/admin/tools').status_code == 200

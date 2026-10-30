@@ -4,69 +4,60 @@
 {% set first_sec = sections[0] if sections else none %}
 {% set mx_first = mastery_path.next if (mastery_path and mastery_path.next and mastery_path.next.kind in ('review', 'alt_review', 'misconception')) else none %}
 {% set cont = mx_first or (gold_path.next if gold_path and gold_path.next else none) or (mastery_path.next if mastery_path and mastery_path.next else none) %}
-<section class="page-hero home-hero continue-card" aria-labelledby="continueH">
-  <p class="eyebrow mb-1">Welcome back, {{ current_user.first_name }}</p>
-  {% if cont %}
-  <h1 class="h3 mb-1" id="continueH">Continue where you left off</h1>
-  <p class="mb-3 continue-sub">{{ first_sec.course.title if first_sec and first_sec.course else '' }}{% if first_sec %} · {{ first_sec.name }}{% endif %}</p>
-  <div class="d-flex flex-wrap align-items-center gap-3">
-    <a class="btn btn-brand btn-lg continue-btn" href="{{ cont.url }}">Continue: {{ cont.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-    {% if gold_path and gold_path.steps %}{% set done_n = gold_path.steps|selectattr('done')|list|length %}
-    <span class="home-progress small"><span class="home-meter" role="progressbar" aria-label="Path progress" aria-valuemin="0" aria-valuemax="{{ gold_path.steps|length }}" aria-valuenow="{{ done_n }}"><span style="width:{{ (100 * done_n / gold_path.steps|length)|round|int }}%"></span></span> {{ done_n }} of {{ gold_path.steps|length }} steps done</span>{% endif %}
-  </div>
-  {% elif sections %}
-  <h1 class="h3 mb-1" id="continueH">Start your course</h1>
-  <p class="mb-3">{{ first_sec.course.title }} · {{ first_sec.name }}</p>
-  <a class="btn btn-brand btn-lg" href="{{ url_for('student_section', section_id=first_sec.id) }}">Open course <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-  {% else %}
-  <h1 class="h3 mb-1" id="continueH">You are not enrolled yet</h1>
-  <p class="mb-0">Ask your instructor to add you, or use a join code.</p>
-  {% endif %}
-  {% if mastery_daily %}
-  <p class="small mb-0 mt-3 continue-daily"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Daily review: {% if mastery_daily.done_today %}Done for today.{% elif mastery_daily.n %}{{ mastery_daily.n }} question{{ 's' if mastery_daily.n != 1 }}, about {{ mastery_daily.minutes }} min. <a href="{{ mastery_daily.url }}">Start</a>{% else %}starts after your first answers.{% endif %}</p>
-  {% endif %}
-</section>
+<header class="page-intro">
+  <h1 class="page-intro-title" id="homeH">Home</h1>
+  <p class="page-intro-purpose">What do I do next?</p>
+</header>
 
-{% if sections %}
-{% if sections|length > 1 %}
+{% if sections and sections|length > 1 %}
 <nav class="home-courses mb-3" aria-label="My courses">
   {% for s in sections|sort(attribute='course_id') %}{% set cur = (s.id == first_sec.id) %}<a class="home-course{% if cur %} is-current{% endif %}" href="{{ url_for('student_section', section_id=s.id) }}"{% if cur %} aria-current="true"{% endif %} title="{{ s.name }}">{{ s.course.title if s.course else s.name }}</a>{% endfor %}
 </nav>
 {% endif %}
-<ul class="nav nav-tabs student-tabs mb-3" role="tablist" aria-label="My course">
-  <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-ch" data-bs-toggle="tab" data-bs-target="#pane-ch" type="button" role="tab" aria-controls="pane-ch" aria-selected="true">Course Chapters</button></li>
-  <li class="nav-item" role="presentation"><button class="nav-link" id="tab-labs" data-bs-toggle="tab" data-bs-target="#pane-labs" type="button" role="tab" aria-controls="pane-labs" aria-selected="false">Hands-On Labs</button></li>
-  <li class="nav-item" role="presentation"><button class="nav-link" id="tab-exams" data-bs-toggle="tab" data-bs-target="#pane-exams" type="button" role="tab" aria-controls="pane-exams" aria-selected="false">Practice Exams</button></li>
-</ul>
-<div class="tab-content">
-  <div class="tab-pane fade show active" id="pane-ch" role="tabpanel" aria-labelledby="tab-ch">
-    <ol class="list-group list-group-numbered student-chapters">
-      {% for ch in chapters %}
-      <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
-        <span class="ms-1 me-auto">{{ ch.module.title }}</span>
-        {% if ch.available %}<a class="btn btn-sm btn-outline-navy" href="{{ url_for('view_module', section_id=first_sec.id, module_id=ch.module.id) }}">Open</a>{% else %}<span class="small text-muted"><i class="bi bi-lock" aria-hidden="true"></i> Not open yet</span>{% endif %}
-      </li>
-      {% else %}
-      <li class="list-group-item">Chapters appear here when your class starts. <a href="{{ url_for('student_section', section_id=first_sec.id) }}">Open class page</a></li>
-      {% endfor %}
-    </ol>
-    <p class="small mt-2 mb-0"><a href="{{ url_for('student_section', section_id=first_sec.id) }}">Class page: tests, grades, and feedback →</a></p>
+
+<section class="page-hero home-hero continue-card" aria-labelledby="continueH">
+  <p class="eyebrow mb-1">Welcome back, {{ current_user.first_name }}</p>
+  {% if cont %}
+  <h2 class="h3 mb-1" id="continueH">Continue where you left off</h2>
+  <p class="mb-3 continue-sub">{{ first_sec.course.title if first_sec and first_sec.course else '' }}{% if first_sec %} · {{ first_sec.name }}{% endif %}{% if cont.title %} · {{ cont.title }}{% endif %}</p>
+  <div class="d-flex flex-wrap align-items-center gap-3">
+    <a class="btn btn-brand btn-lg continue-btn" href="{{ cont.url }}">Continue: {{ cont.title|truncate(48) }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    {% if gold_path and gold_path.steps %}{% set done_n = gold_path.steps|selectattr('done')|list|length %}
+    <span class="home-progress small"><span class="home-meter" role="progressbar" aria-label="Path progress" aria-valuemin="0" aria-valuemax="{{ gold_path.steps|length }}" aria-valuenow="{{ done_n }}"><span style="width:{{ (100 * done_n / gold_path.steps|length)|round|int }}%"></span></span> {{ done_n }} of {{ gold_path.steps|length }} steps done</span>{% endif %}
   </div>
-  <div class="tab-pane fade" id="pane-labs" role="tabpanel" aria-labelledby="tab-labs">
-    <div class="list-group">
-      {% for lab in course_labs_list[:8] %}
-      <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="{{ url_for('interactive_lab', lab_id=lab.id) }}"><span>{{ lab.title }}</span><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
-      {% endfor %}
-    </div>
-    <p class="small mt-2 mb-0"><a href="{{ url_for('course_labs', section_id=first_sec.id) }}">All labs for this course</a> · <a href="{{ url_for('interactive_labs_index') }}">Every lab (114)</a></p>
-  </div>
-  <div class="tab-pane fade" id="pane-exams" role="tabpanel" aria-labelledby="tab-exams">
-    <div class="list-group">
-      <a class="list-group-item list-group-item-action" href="{{ url_for('exam_sim_home', section_id=first_sec.id) }}"><strong>Practice Exams</strong><br><span class="small text-muted">Timed sittings with a score report and Exam Readiness by objective.</span></a>
-      <a class="list-group-item list-group-item-action" href="{{ url_for('speed_drill', section_id=first_sec.id) }}"><strong>Speed-Drill</strong><br><span class="small text-muted">Quick flashcards: ports, commands, and standards.</span></a>
-      <a class="list-group-item list-group-item-action" href="{{ url_for('mastery_student', section_id=first_sec.id) }}"><strong>Skill Mastery</strong><br><span class="small text-muted">Which objectives you have down and which need review.</span></a>
-    </div>
-  </div>
+  {% elif sections %}
+  <h2 class="h3 mb-1" id="continueH">Continue where you left off</h2>
+  <p class="mb-3 continue-sub">{{ first_sec.course.title }} · {{ first_sec.name }}</p>
+  <a class="btn btn-brand btn-lg continue-btn" href="{{ url_for('student_section', section_id=first_sec.id) }}">Continue <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+  {% else %}
+  <h2 class="h3 mb-1" id="continueH">You are not enrolled yet</h2>
+  <p class="mb-0">Ask your instructor to add you, or use a join code on your account.</p>
+  {% endif %}
+</section>
+
+{% if sections %}
+<div class="home-next" aria-label="Also on your plate">
+  {% if mastery_daily %}
+  <a class="home-next-card" href="{{ mastery_daily.url }}">
+    <span class="home-next-kicker">Daily Review</span>
+    <span class="home-next-title">{% if mastery_daily.done_today %}Done for today{% elif mastery_daily.n %}{{ mastery_daily.n }} question{{ 's' if mastery_daily.n != 1 }} due{% else %}Starts after your first answers{% endif %}</span>
+    <span class="home-next-meta">{% if mastery_daily.done_today %}Come back tomorrow.{% elif mastery_daily.n %}About {{ mastery_daily.minutes }} min.{% else %}A short set, once a day.{% endif %}</span>
+  </a>
+  {% endif %}
+  {% if next_lab %}
+  <a class="home-next-card" href="{{ url_for('interactive_lab', lab_id=next_lab.id) }}">
+    <span class="home-next-kicker">Hands-On Labs</span>
+    <span class="home-next-title">{{ next_lab.title }}</span>
+    <span class="home-next-meta">Next lab in {{ first_sec.course.title if first_sec and first_sec.course else 'this course' }}.</span>
+  </a>
+  {% endif %}
+  {% if practice_href %}
+  <a class="home-next-card" href="{{ practice_href }}">
+    <span class="home-next-kicker">Practice</span>
+    <span class="home-next-title">Practice exam</span>
+    <span class="home-next-meta">Timed sitting and a score by objective.</span>
+  </a>
+  {% endif %}
 </div>
 {% endif %}
 {% endblock %}

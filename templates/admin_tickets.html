@@ -4,13 +4,12 @@
 {% from '_ui.html' import empty_state %}
 <div class="page-hero d-flex flex-wrap justify-content-between align-items-start gap-2">
   <div>
-    <h1 class="h3 mb-1">Curriculum tickets</h1>
-    <p class="mb-0">Open a ticket to edit the linked lesson. Pending tickets never alter curriculum; a saved fix updates every class.</p>
+    <h1 class="h3 mb-1">Help Desk Queue</h1>
+    <p class="mb-0">Open a ticket to edit the linked lesson. A saved fix updates every class.</p>
   </div>
-  <div class="d-flex gap-2">
-    <a class="btn btn-brand btn-sm" href="{{ url_for('tickets_new') }}">New ticket</a>
-    <a class="btn btn-outline-navy btn-sm" href="{{ url_for('admin_curriculum_log') }}">Change log</a>
-    <a class="btn btn-outline-navy btn-sm" href="{{ url_for('admin_dashboard') }}">Admin tools</a>
+  <div>
+    <a class="btn btn-brand" href="{{ url_for('tickets_new') }}">New ticket</a>
+    <p class="small mb-0 mt-2"><a href="{{ url_for('admin_curriculum_log') }}">Change log</a></p>
   </div>
 </div>
 

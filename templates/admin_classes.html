@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Classes — Admin — {{ site_name }}{% endblock %}
 {% block content %}
-{% with title='Classes', lede='Every class section, who teaches it, and how full it is.' %}{% include '_admin_nav.html' %}{% endwith %}
+{% with title='Courses', lede='Every class, who teaches it, and how full it is.' %}{% include '_admin_nav.html' %}{% endwith %}
+<p class="small mb-3"><a href="{{ url_for('admin_curriculum') }}">What each course contains</a></p>
 
 <div class="row g-4">
   <div class="col-lg-7 order-lg-2">

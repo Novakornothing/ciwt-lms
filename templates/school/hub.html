@@ -1,8 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Sections — {{ site_name }}{% endblock %}
 {% block content %}
-<div class="page-hero"><h1 class="h3 mb-1">Your sections</h1>
-  <p class="mb-0">Each section has its own roster. Clone a section to start a new term with the same settings, schedule and grading weights.</p></div>
+<header class="page-intro">
+  <nav aria-label="Breadcrumb">
+    <ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Classes</li>
+    </ol>
+  </nav>
+  <h1 class="page-intro-title">Classes</h1>
+  <p class="page-intro-purpose">Your sections. Each class has its own roster. Clone a class to start a new term with the same settings.</p>
+</header>
 {% for course, rows in groups %}
 <section class="card mb-4" aria-labelledby="hubC{{ loop.index }}">
   <div class="card-header"><h2 class="h6 mb-0" id="hubC{{ loop.index }}">{{ course.title if course else 'Course' }}</h2></div>
@@ -16,9 +24,9 @@
       <td data-label="Mastered">{% if r.mastery == 'pending' %}<span title="Still calculating; refresh in a moment">…</span>{% else %}{{ r.mastery ~ '%' if r.mastery is not none else '—' }}{% endif %}</td>
       <td data-label="Ladder">{{ r.resolved ~ '%' if r.resolved is not none else '—' }}</td>
       <td data-label="Struggles">{{ r.struggles }}{% if r.exhausted %} <span class="small">({{ r.exhausted }} need you)</span>{% endif %}</td>
-      <td data-label="Actions"><div class="d-flex flex-wrap gap-1">
-        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('section_setup', section_id=r.section.id) }}">Setup<span class="visually-hidden"> {{ r.section.name }}</span></a>
-        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('section_roster', section_id=r.section.id) }}">Roster<span class="visually-hidden"> {{ r.section.name }}</span></a>
+      <td data-label="Actions"><div class="d-flex flex-wrap gap-2 align-items-center">
+        <a href="{{ url_for('section_setup', section_id=r.section.id) }}">Setup<span class="visually-hidden"> {{ r.section.name }}</span></a>
+        <a href="{{ url_for('section_roster', section_id=r.section.id) }}">Roster<span class="visually-hidden"> {{ r.section.name }}</span></a>
         {% if roles[r.section.id] == 'lead' %}<form method="post" action="{{ url_for('section_clone', section_id=r.section.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button class="btn btn-sm btn-brand" type="submit">Clone<span class="visually-hidden"> {{ r.section.name }}</span></button></form>{% endif %}
       </div></td></tr>{% endfor %}</tbody>
