@@ -30,7 +30,7 @@
 {% if sections %}
 {% if sections|length > 1 %}
 <nav class="home-courses mb-3" aria-label="My courses">
-  {% for s in sections %}<a class="home-course{% if loop.first %} is-current{% endif %}" href="{{ url_for('student_section', section_id=s.id) }}"{% if loop.first %} aria-current="true"{% endif %} title="{{ s.name }}">{{ s.course.title if s.course else s.name }}</a>{% endfor %}
+  {% for s in sections|sort(attribute='course_id') %}{% set cur = (s.id == first_sec.id) %}<a class="home-course{% if cur %} is-current{% endif %}" href="{{ url_for('student_section', section_id=s.id) }}"{% if cur %} aria-current="true"{% endif %} title="{{ s.name }}">{{ s.course.title if s.course else s.name }}</a>{% endfor %}
 </nav>
 {% endif %}
 <ul class="nav nav-tabs student-tabs mb-3" role="tablist" aria-label="My course">
