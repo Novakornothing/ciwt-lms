@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Assignable unit — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h1 class="h3">{{ au.title if au else 'Assignable unit' }}</h1>
+  <p class="mb-0">You can close this window and return to the course.</p>
+</div>
+{% endblock %}

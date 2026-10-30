@@ -332,7 +332,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
     package_metadata = {
         "schema": "Novak LMS course package metadata v1",
         "scorm_version": f"SCORM {ver}",
-        "xapi_profile": "xAPI 1.0.3 statement export (not cmi5)",
+        "xapi_profile": "xAPI 1.0.3 statement export",
         "lti_advantage": "1EdTech LTI 1.3 + NRPS + AGS 2.0",
         "course_code": code,
         "course_title": primary_meta["title"],

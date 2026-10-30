@@ -6215,7 +6215,7 @@ ADMIN_TABS = [
 ]
 # Pages reached from "More tools" keep that tab highlighted; Users & Sections covers people + classes.
 ADMIN_TAB_GROUP = {'admin_classes': 'admin_people', 'admin_people': 'admin_people', 'admin_dashboard': 'admin_dashboard',
-                   'admin_exports': 'admin_exports'}
+                   'admin_exports': 'admin_exports', 'cmi5.admin_cmi5_registration': 'admin_exports'}
 ADMIN_MORE_TOOLS = [
     ('admin_curriculum', 'Curriculum', 'What each course contains and who can teach it.'),
     ('admin_tqi', 'Results & ROI', 'Training quality packets by class.'),
@@ -6317,15 +6317,19 @@ def _admin_overview_cards(sections):
             'lab_savings': seats * LAB_SEAT_COST_PER_YEAR, 'lab_seat_cost': LAB_SEAT_COST_PER_YEAR}
 
 
-@app.route('/admin/exports')
+@app.route('/admin/exports', methods=['GET', 'POST'])
 @login_required
 @role_required('admin')
 def admin_exports():
     r = _admin_instructor_mode_redirect()
     if r:
         return r
+    from cmi5.admin import exports_context
+    extra = exports_context()
+    if not isinstance(extra, dict):
+        return extra
     courses = Course.query.filter(Course.code.in_(['ITSUP', 'NETOPS', 'CLIENT', 'SEC'])).order_by(Course.id).all()
-    return render_template('admin_exports.html', admin_tab='admin_exports', courses=courses)
+    return render_template('admin_exports.html', admin_tab='admin_exports', courses=courses, **extra)
 
 
 @app.route('/admin/tools')
@@ -8314,6 +8318,11 @@ def handle_csrf_error(e):
         return jsonify({'ok': False, 'error': 'csrf', 'detail': e.description}), 400
     return render_template('csrf_error.html', reason=e.description), 400
 
+
+import cmi5 as cmi5_pkg  # noqa: E402
+cmi5_pkg.register(app, db, dict(
+    Course=Course, Module=Module, Lesson=Lesson, Quiz=Quiz, ClassSection=ClassSection,
+), csrf)
 
 with app.app_context():
     init_db()

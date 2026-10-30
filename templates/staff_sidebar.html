@@ -131,7 +131,7 @@
           <a class="rail-link {% if ep in ('admin_people','admin_classes') %}active{% endif %}" href="{{ url_for('admin_people') }}">
             <i class="bi bi-people"></i><span>Users &amp; Sections</span>
           </a>
-          <a class="rail-link {% if ep == 'admin_exports' %}active{% endif %}" href="{{ url_for('admin_exports') }}">
+          <a class="rail-link {% if ep == 'admin_exports' or (ep is string and ep.startswith('cmi5.admin_cmi5')) %}active{% endif %}" href="{{ url_for('admin_exports') }}">
             <i class="bi bi-box-arrow-down"></i><span>Exports</span>
           </a>
           <a class="rail-link {% if ep is string and ep.startswith('admin_') and ep not in ('admin_dashboard','admin_people','admin_classes','admin_exports','admin_tickets','admin_ticket_detail','admin_teaching_time','admin_test_analytics','admin_backup_db') %}active{% endif %}" href="{{ url_for('admin_tools') }}">
