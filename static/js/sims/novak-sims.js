@@ -1028,14 +1028,15 @@
       var res = widget.evaluate(spec, state);
       if (fb) fb.textContent = res.message;
       var url = node.getAttribute('data-evidence-url');
-      if (!url || !root.fetch) return;
+      var fetchFn = typeof fetch === 'function' ? fetch : null;
+      if (!url || !fetchFn) return;
       var tok = '';
       try { tok = (document.querySelector('meta[name="csrf-token"]') || {}).content || ''; } catch (err) { tok = ''; }
       var data = new FormData();
       data.set('kind', 'sim_check');
       data.set('correct', res.ok ? '1' : '0');
       data.set('answer', String(res.message || '').slice(0, 300));
-      root.fetch(url, { method: 'POST', credentials: 'same-origin', body: data,
+      fetchFn(url, { method: 'POST', credentials: 'same-origin', body: data,
         headers: { 'X-Requested-With': 'fetch', Accept: 'application/json', 'X-CSRFToken': tok } }).catch(function () {});
     });
     if (reset) reset.addEventListener('click', function () {

@@ -111,3 +111,21 @@ def test_switcher_still_pins_the_reader():
     assert "box.hasAttribute('data-swap-quiet')) moveFocus = false" in lad
     assert 'mountSims(box)' in lad
     assert 'scrollIntoView' not in (ROOT / 'static/js/sims/novak-sims.js').read_text()
+
+
+def test_sim_check_posts_without_reference_error():
+    """Check sends its evidence with the global fetch; the factory has no `root` in scope."""
+    from pathlib import Path
+    js = (Path(__file__).resolve().parents[1] / 'static/js/sims/novak-sims.js').read_text(encoding='utf-8')
+    body = js.split('function mount(node)', 1)[1].split('function mountAll', 1)[0]
+    assert 'root.' not in body
+    assert "typeof fetch === 'function'" in body
+
+
+def test_path_switch_holds_reader_ignoring_swap_animation():
+    """The 5 Ways to Learn switch pins the in-view section by layout top (no translateY from the entry animation)."""
+    from pathlib import Path
+    js = (Path(__file__).resolve().parents[1] / 'static/js/novak-ui.js').read_text(encoding='utf-8')
+    assert 'function layoutTop(el)' in js
+    assert 'var d = layoutTop(el) - keeper.top;' in js
+    assert 'Math.abs(d) >= 0.5' in js

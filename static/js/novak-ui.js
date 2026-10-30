@@ -440,6 +440,16 @@
     // Swapping explanations changes section heights. Pin the section at the top of the viewport
     // (by its stable data-ladder-sid, since swapped boxes are replaced) and hold it there.
     var keeper = null;
+    // Layout top, ignoring the swap animation's translateY so the reader is held where the box will settle.
+    function layoutTop(el) {
+      var top = el.getBoundingClientRect().top;
+      var t = window.getComputedStyle(el).transform;
+      if (t && t !== 'none') {
+        var m = t.match(/matrix(3d)?\(([^)]+)\)/);
+        if (m) { var v = m[2].split(','); top -= parseFloat(v[m[1] ? 13 : 5]) || 0; }
+      }
+      return top;
+    }
     function readerAnchor() {
       var top = 0;
       var tl = document.querySelector('.lesson-topline');
@@ -447,7 +457,7 @@
       var boxes = lessonBody.querySelectorAll('[data-ladder-sid]');
       for (var i = 0; i < boxes.length; i++) {
         var r = boxes[i].getBoundingClientRect();
-        if (r.height && r.bottom > top + 1) return { sid: boxes[i].getAttribute('data-ladder-sid'), top: r.top };
+        if (r.height && r.bottom > top + 1) return { sid: boxes[i].getAttribute('data-ladder-sid'), top: layoutTop(boxes[i]) };
       }
       return null;
     }
@@ -455,8 +465,8 @@
       if (!keeper) return;
       var el = lessonBody.querySelector('[data-ladder-sid="' + keeper.sid + '"]');
       if (!el) return;
-      var d = el.getBoundingClientRect().top - keeper.top;
-      if (Math.abs(d) > 1) window.scrollBy({ top: d, left: 0, behavior: 'instant' });
+      var d = layoutTop(el) - keeper.top;
+      if (Math.abs(d) >= 0.5) window.scrollBy({ top: d, left: 0, behavior: 'instant' });
     }
     function keepReaderInPlace() {
       var a = readerAnchor();
@@ -479,6 +489,7 @@
     document.addEventListener('ladder:updated', function () {
       restoreAnchor();
       requestAnimationFrame(restoreAnchor);
+      setTimeout(restoreAnchor, 420);
       if (keeper && keeper.pending > 0) {
         keeper.pending -= 1;
         if (keeper.pending === 0) { var k = keeper; clearTimeout(k.timer); k.timer = setTimeout(k.stop, 1500); }
