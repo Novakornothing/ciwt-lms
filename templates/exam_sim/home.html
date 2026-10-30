@@ -21,7 +21,7 @@ readiness badge.</p>
   <fieldset class="mb-3"><legend class="h6">Length</legend>
     {% for k, m in modes.items() if not m.hidden %}
     <div class="form-check"><input class="form-check-input" type="radio" name="mode" id="mode-{{ k }}" value="{{ k }}" {% if k == 'full' %}checked{% endif %}>
-      <label class="form-check-label" for="mode-{{ k }}">{{ ('Full 90-question exam-length sitting' if k == 'max' else m.name) }} — {{ minutes_for(k, mult) }} min, {{ m.questions }} questions, {{ m.pbqs }} Hands-On Challenges first</label></div>
+      <label class="form-check-label" for="mode-{{ k }}">{{ m.name }} — {{ minutes_for(k, mult) }} min, {{ m.questions }} questions, {{ m.pbqs }} Hands-On Challenges first</label></div>
     {% endfor %}
   </fieldset>
   <fieldset class="mb-3"><legend class="h6">Timing</legend>

@@ -365,7 +365,10 @@ def register(app, db, deps):
         return att
 
     def _title(att):
-        base = f'{ALL_EXAMS[att.exam]["name"]} ({ALL_EXAMS[att.exam]["code"]})'
+        meta = ALL_EXAMS[att.exam]
+        code = meta['code'] or ''
+        # SEC-FOUND is an internal bank id. Public series codes (220-1201, N10-009, FC0-U71) stay.
+        base = meta['name'] if code.startswith('SEC') else f'{meta["name"]} ({code})'
         if att.domain:
             name = {d: n for d, n, _w in ALL_DOMAINS[att.exam]}[att.domain]
             return f'{base} — domain {att.domain} {name} drill'

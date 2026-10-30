@@ -8,6 +8,7 @@ from html import escape
 from curriculum_v2.ladder.schema import analogy, check, order, plain, reveal, section, sort, tryit, visual
 from curriculum_v2.ladder.sections import sections
 
+from curriculum_sec import depth as D
 from curriculum_sec import specs as SP
 
 REVIEW = 'Pending SME review'
@@ -71,10 +72,11 @@ def _five(topic, key, bad, why, mc_id):
 
 def _section_html(sec):
     svg = _svg(sec['diagram'], sec['boxes'])
+    r0 = list(sec['r0']) + D.r0_sentences(sec['heading'])
     return (
         f'<section class="sublesson core"><h3>{escape(sec["heading"])}</h3>'
-        f'{svg}{_p(sec["r0"])}'
-        f'<div class="analogy-box"><div class="analogy-label">Workplace note</div>'
+        f'{svg}{_p(r0)}'
+        f'<div class="analogy-box"><div class="analogy-label">{escape(sec["heading"])} note</div>'
         f'<p>{escape(sec["note"])}</p></div>'
         '</section>'
     )
@@ -92,8 +94,27 @@ def _lesson_html(lesson, first):
         f'<div class="live-demo"><h4>Live demonstration habit</h4>'
         f'<p>{escape(lesson["sections"][0]["heading"])}: {escape(lesson["sections"][0]["note"])}</p></div>',
     ]
+    headings = [sec['heading'] for sec in lesson['sections']]
+    if D.lesson_ready(headings):
+        core_bits = []
+        for chunk in D.core_chunks(headings):
+            if chunk in headings:
+                core_bits.append(f'<h4>{escape(chunk)}</h4>')
+            else:
+                core_bits.append(f'<p>{escape(chunk)}</p>')
+        body.append(
+            '<section class="sublesson core-content"><h3>Core content</h3>'
+            + ''.join(core_bits)
+            + '</section>'
+        )
     for sec in lesson['sections']:
         body.append(_section_html(sec))
+    if D.lesson_ready(headings):
+        body.append(
+            '<div class="worked"><h4>Exam focus</h4>'
+            + _p(D.exam_sentences(headings))
+            + '</div>'
+        )
     body.append(
         '<div class="practice-standard"><h4>Practice standard for this lesson</h4>'
         f'<p>{escape(lesson["sections"][0]["heading"])}. {escape(lesson["sections"][0]["note"])}</p></div>'
@@ -103,36 +124,37 @@ def _lesson_html(lesson, first):
 
 _SALTS = {
     'R1': [
-        'Use short everyday words a brand-new coworker already knows.',
-        'Speak one calm line. Pause. Let the other person repeat it.',
-        'Skip fancy vocabulary until the point feels steady.',
-        'Point at the thing itself, not at a product name.',
+        'in short everyday words.',
+        'one calm line at a time.',
+        'without a product name yet.',
+        'easy to say back.',
     ],
     'R2': [
-        'The hallway, the badge, and the locked cupboard are only stand-ins.',
-        'Map every story piece back to a single real job.',
-        'If the tale wobbles, keep the job and drop the tale.',
-        'A metaphor never replaces the measured fact.',
+        'only as a stand-in story.',
+        'mapped to the real job.',
+        'dropped if the tale wobbles.',
+        'not a measured fact.',
     ],
     'R3': [
-        'Read the numbered trace from the left box toward the right box.',
-        'Arrows mean sequence. They do not rank importance.',
-        'Cover the picture and say the trace from memory.',
-        'The drawing is a map of order, nothing more.',
+        'read from the left box.',
+        'arrows show order only.',
+        'then said from memory.',
+        'a map of order only.',
     ],
     'R4': [
-        'Drag each card one time. The two piles are the whole exercise.',
-        'When the piles look settled, open the hands-on station.',
-        'Do the sort before you hunt for a command to copy.',
-        'The cards train judgment. The station trains your hands.',
+        'sorted before the station.',
+        'one card, then the next.',
+        'hands after the label.',
+        'judgment before commands.',
     ],
 }
 
 
-def _force_distinct(section_html, htmls):
+def _force_distinct(section_html, htmls, heading=''):
     """Add a short extra sentence until rung texts are genuinely different."""
     from curriculum_v2.ladder.schema import similarity
     used = {k: 0 for k in htmls}
+    anchor = heading or 'This idea'
 
     def offenders():
         bad = set()
@@ -157,19 +179,25 @@ def _force_distinct(section_html, htmls):
             raise RuntimeError('rungs stayed too similar: ' + ', '.join(sorted(bad)))
         for k in sorted(bad):
             pool = _SALTS[k]
-            htmls[k] += f'<p>{escape(pool[used[k] % len(pool)])}</p>'
+            tail = _SALTS[k][used[k] % len(_SALTS[k])]
+            htmls[k] += f'<p>{escape(anchor)} {escape(tail)}</p>'
             used[k] += 1
+
+
+def _path_or(sec, field):
+    custom = D.path_sentences(sec['heading'], field)
+    return custom if custom else sec[field]
 
 
 def _rungs(sec, lab_id, checks, section_html):
     items = ''.join(f'<li>{escape(s)}</li>' for s in sec['steps'])
     htmls = {
-        'R1': _p(sec['r1']),
-        'R2': _p(sec['r2']),
+        'R1': _p(_path_or(sec, 'r1')),
+        'R2': _p(_path_or(sec, 'r2')),
         'R3': _svg(sec['diagram_r3'], sec['boxes_r3']) + f'<p>Follow the numbered trace.</p><ol>{items}</ol>',
-        'R4': _p(sec['r4']),
+        'R4': _p(_path_or(sec, 'r4')),
     }
-    htmls = _force_distinct(section_html, htmls)
+    htmls = _force_distinct(section_html, htmls, sec['heading'])
     r1 = plain(htmls['R1'], SOURCE, [checks[1]])
     r2 = analogy(htmls['R2'], SOURCE, [checks[2]])
     r3 = visual(htmls['R3'], SOURCE, [checks[3]])
@@ -183,6 +211,63 @@ def _rungs(sec, lab_id, checks, section_html):
     lab = {'id': lab_id, 'note': sec['lab_note']} if lab_id else None
     r4 = tryit(htmls['R4'], SOURCE, [checks[4]], widget=widget, lab=lab)
     return r1, r2, r3, r4
+
+
+def _core_entry(lesson, headings, block, mc_id):
+    """Ladder for the long core essay. The try-it sorts the lesson's own labels."""
+    from curriculum_sec.gloss import GLOSS
+    first, second = headings[0], headings[1] if len(headings) > 1 else headings[0]
+    key = GLOSS[first][2].strip().rstrip('.')
+    wrongs = [GLOSS[second][2].strip().rstrip('.')]
+    if len(headings) > 2:
+        wrongs.append(GLOSS[headings[2]][2].strip().rstrip('.'))
+    else:
+        wrongs.append(f'Treat the ticket as {second} and skip the note')
+    wrongs = _balance(key, wrongs)
+    why = D.core_why(headings)
+    stems = [
+        f'Which line matches {first} rather than {second}?',
+        f'In everyday words, which line is {first}?',
+        f'Which picture caption fits {first} and not {second}?',
+        f'After the trace, which label belongs on {first}?',
+        f'After the try-it, which result shows {first}?',
+    ]
+    checks = [check(q, key, list(wrongs), why, mc={wrongs[0]: mc_id}) for q in stems]
+    r1_bits, r2_bits, r4_bits = [], [], []
+    for heading in headings:
+        r1_bits.extend(D.path_sentences(heading, 'r1') or [])
+        r2_bits.extend(D.path_sentences(heading, 'r2') or [])
+        r4_bits.extend(D.path_sentences(heading, 'r4') or [])
+    boxes = [(heading[:22], 'label') for heading in headings[:4]]
+    while len(boxes) < 3:
+        boxes.append(('Label', 'ticket'))
+    third = headings[2] if len(headings) > 2 else first
+    steps = [f'{first} evidence first', f'{second} stays off', f'{third} checked last', f'{first} label written']
+    items = ''.join(f'<li>{escape(s)}</li>' for s in steps)
+    htmls = {
+        'R1': _p(r1_bits),
+        'R2': _p(r2_bits),
+        'R3': _svg(f'{first} trace', boxes) + (
+            f'<p>{escape(first)} trace. {escape(second)} stays separate. '
+            f'{escape(third)} is checked third before the ticket.</p><ol>{items}</ol>'
+        ),
+        'R4': _p(r4_bits),
+    }
+    htmls = _force_distinct(block['html'], htmls, 'Core content')
+    sort_buckets = {
+        first: [f'{first}: {key[:80]}', f'{first} evidence: {GLOSS[first][1][:80]}'],
+        second: [f'{second}: {wrongs[0][:80]}', f'{second} evidence: {GLOSS[second][1][:80]}'],
+    }
+    widget = sort(f'Which cards belong with {first}?', sort_buckets, f'The fitting pile is the {first} decision.')
+    lab = {'id': lesson.get('lab'), 'note': f'Open the linked station and compare it with the {first} decision.'} if lesson.get('lab') else None
+    return section(
+        'Core content', lesson['skill'], [checks[0]],
+        plain(htmls['R1'], SOURCE, [checks[1]]),
+        analogy(htmls['R2'], SOURCE, [checks[2]]),
+        visual(htmls['R3'], SOURCE, [checks[3]]),
+        tryit(htmls['R4'], SOURCE, [checks[4]], widget=widget, lab=lab),
+        r0_sha=block['r0_sha'],
+    )
 
 
 def build():
@@ -220,6 +305,10 @@ def build():
                     sec['heading'], lesson['skill'], [checks[0]], r1, r2, r3, r4, r0_sha=block['r0_sha'],
                 )
                 lad[block['sid']] = ent
+            core = parsed.get('Core content')
+            if core:
+                headings = [sec['heading'] for sec in lesson['sections']]
+                lad[core['sid']] = _core_entry(lesson, headings, core, mc_id)
             lad_lessons[f"{ch['order']}.{lesson['order']}"] = lad
         chapters.append({
             'order': ch['order'],

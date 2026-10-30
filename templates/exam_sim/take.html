@@ -8,7 +8,7 @@
      data-begin="{{ url_for('exam_sim_begin', section_id=section.id, attempt_id=att.id) }}"
      data-autosave="{{ url_for('exam_sim_autosave', section_id=section.id, attempt_id=att.id) }}"
      data-pause-url="{{ url_for('exam_sim_pause', section_id=section.id, attempt_id=att.id) }}">
-  <div><strong>{{ exam.name }} ({{ exam.code }})</strong> · {{ mode.name }} · {{ 'Exam mode' if att.strict else 'Practice mode' }}</div>
+  <div><strong>{{ exam.name }}{% if exam.code and not exam.code.startswith('SEC') %} ({{ exam.code }}){% endif %}</strong> · {{ mode.name }} · {{ 'Exam mode' if att.strict else 'Practice mode' }}</div>
   <div class="es-timer" role="timer" aria-live="off"><i class="bi bi-clock" aria-hidden="true"></i> <span id="esClock">--:--</span></div>
   {% if not att.strict %}<button type="button" class="btn btn-sm btn-outline-navy" id="esPause" aria-pressed="{{ 'true' if paused else 'false' }}">{{ 'Resume timer' if paused else 'Pause timer' }}</button>{% endif %}
   {% if n_pbq %}<button type="button" class="btn btn-sm btn-outline-gold" id="esSkipPbq">Skip Hands-On Challenges &amp; return later</button>{% endif %}
@@ -20,7 +20,7 @@
 {% if pre %}<section class="card card-body mb-3 es-agreement" id="esAgreement" aria-labelledby="esAgreeH">
   <h2 class="h5" id="esAgreeH">Candidate Agreement &amp; Exam Instructions</h2>
   <dl class="es-agree-facts">
-    <dt>Exam</dt><dd>{{ exam.name }} ({{ exam.code }}) · {{ mode.name }}</dd>
+    <dt>Exam</dt><dd>{{ exam.name }}{% if exam.code and not exam.code.startswith('SEC') %} ({{ exam.code }}){% endif %} · {{ mode.name }}</dd>
     <dt>Questions</dt><dd>{{ questions|length }} ({{ n_pbq }} performance-based, shown first)</dd>
     <dt>Time allowed</dt><dd>{{ minutes }} minutes{% if mult != 1.0 %} ({{ mult_label }} accommodation){% endif %} · {{ 'Exam mode: no pause' if att.strict else 'Practice mode: pause allowed' }}</dd>
     <dt>Passing score</dt><dd>{{ bar }} on the simulated 100–900 scale</dd>
@@ -69,7 +69,7 @@
       <div class="pbq-wb-header">
         <div class="pbq-wb-title">
           <span>Interactive Hands-On Challenge Simulation Workbench</span>
-          <span class="pbq-wb-mode-pill" data-wb-mode-pill>{{ exam.code }} Lab Environment</span>
+          <span class="pbq-wb-mode-pill" data-wb-mode-pill>{{ exam.short if exam.code.startswith('SEC') else exam.code }} Lab Environment</span>
         </div>
         <span class="pbq-wb-progress" data-wb-progress-mirror>Simulation Tasks Configured: {{ pbq_done }} / {{ pbq_total }}</span>
       </div>
