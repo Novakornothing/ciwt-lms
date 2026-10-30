@@ -35,7 +35,7 @@
     {% for dm in e.domains %}<div class="small">{{ dm.domain }} {{ dm.name }}: {{ dm.level }} ({{ dm.pct }}%, {{ dm.objectives }} estimates)</div>
     <div class="pf-bar mb-1" role="img" aria-label="{{ dm.name }} {{ dm.pct }} percent"><span class="pf-w-{{ (dm.pct // 5) * 5 }}"></span></div>{% endfor %}
   {% else %}<p class="mb-0">No mastery evidence on exam-mapped objectives yet.</p>{% endfor %}
-  <p class="small text-body-secondary mt-2 mb-0">Mean mastery estimate on objectives mapped to each domain. Not a predicted exam score; not endorsed by CompTIA.</p></section>
+  <p class="small text-body-secondary mt-2 mb-0">Mean mastery estimate on objectives mapped to each domain. Not a predicted exam score. Independent of CompTIA.</p></section>
 <section class="card card-body" aria-labelledby="oc-g"><h2 class="h5" id="oc-g">Grades and time on task</h2>
   {% if rep.grades.n %}<p class="mb-1">Course grade: mean {{ rep.grades.mean }}, median {{ rep.grades.median }} ({{ rep.grades.n }} students graded)</p>
   {% for h in rep.grades.histogram %}<div class="small">{{ h.label }}: {{ h.n }}</div><div class="pf-bar mb-1" role="img" aria-label="{{ h.label }}: {{ h.n }} students"><span class="pf-w-{{ (h.pct // 5) * 5 }}"></span></div>{% endfor %}
