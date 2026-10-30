@@ -98,13 +98,6 @@ def core_chunks(headings):
         _check_banned(body, heading)
         chunks.append(heading)
         chunks.extend(_paragraphs(body))
-    # A few lessons sit just under the floor. Their technical path is a different
-    # block, so folding it in here adds words without a shared sentence.
-    if len(_words(' '.join(chunks))) < 1520:
-        for heading in headings:
-            chunks.extend(_paragraphs(pack(heading).get('r0') or ''))
-    while len(_words(' '.join(chunks))) > 2480 and len(chunks) > 4:
-        chunks.pop()
     return chunks
 
 
