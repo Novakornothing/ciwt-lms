@@ -809,4 +809,7 @@ window.HELIX = {
 {% include 'helix/_engine_assets.html' %}
 <script src="{{ url_for('static', filename='js/helix/helix-gaze.js') }}" defer></script>
 {% endif %}
+{% if request.args.get('endpoint') and request.args.get('fetch') %}
+<script src="{{ url_for('static', filename='cmi5-au.js') }}"></script>
+{% endif %}
 {% endblock %}

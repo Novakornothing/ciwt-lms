@@ -4,7 +4,7 @@
 {% with title='Exports', lede='Download course packages and records for your LMS or auditors.' %}{% include '_admin_nav.html' %}{% endwith %}
 <div class="row g-3">
   <div class="col-lg-6">
-    <section class="card h-100" aria-labelledby="exScormH">
+    <section class="card mb-3" aria-labelledby="exScormH">
       <div class="card-header"><h2 class="h6 mb-0" id="exScormH">SCORM packages</h2></div>
       <ul class="list-group list-group-flush">
         {% for c in courses %}
@@ -18,6 +18,60 @@
         {% endfor %}
       </ul>
     </section>
+    <section class="card mb-3" aria-labelledby="exCmiH">
+      <div class="card-header"><h2 class="h6 mb-0" id="exCmiH">cmi5 packages</h2></div>
+      <div class="card-body">
+        <p class="small text-muted">Each chapter is a block. Each lesson and lab is an assignable unit.</p>
+        <ul class="list-unstyled mb-0">
+          {% for c in courses %}
+          <li class="d-flex flex-wrap gap-2 align-items-center mb-2">
+            <span class="me-auto">{{ c.title }}</span>
+            <a class="btn btn-sm btn-outline-navy" href="{{ url_for('cmi5.admin_cmi5_download', course_code=c.code) }}">Download cmi5 package</a>
+            <form method="post" class="d-flex gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="live">
+              <input type="hidden" name="course_code" value="{{ c.code }}">
+              <label class="visually-hidden" for="live-{{ c.code }}">Learner for {{ c.title }}</label>
+              <input class="form-control form-control-sm" id="live-{{ c.code }}" name="learner" placeholder="Learner label" value="Learner">
+              <button class="btn btn-sm btn-outline-navy">Launch in the lesson player</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+    <section class="card" aria-labelledby="exImportH">
+      <div class="card-header"><h2 class="h6 mb-0" id="exImportH">Import a cmi5 package</h2></div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-end">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="import">
+          <div class="flex-grow-1">
+            <label class="form-label small mb-1" for="cmi5-file">cmi5.xml, or a zip with cmi5.xml at the root</label>
+            <input class="form-control form-control-sm" id="cmi5-file" type="file" name="package" accept=".xml,.zip,application/zip,text/xml" required>
+          </div>
+          <button class="btn btn-sm btn-outline-navy">Import</button>
+        </form>
+        {% if imported %}
+        <h3 class="h6 mt-3">Imported courses</h3>
+        <ul class="list-unstyled small mb-0">
+          {% for course in imported %}
+          <li class="mb-2">
+            <strong>{{ course.title }}</strong>
+            <form method="post" class="d-inline-flex gap-2 ms-1">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="register">
+              <input type="hidden" name="course_id" value="{{ course.id }}">
+              <label class="visually-hidden" for="learner-{{ course.id }}">Learner</label>
+              <input class="form-control form-control-sm" id="learner-{{ course.id }}" name="learner" placeholder="Learner label" value="Learner">
+              <button class="btn btn-sm btn-outline-navy">Create registration</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </section>
   </div>
   <div class="col-lg-6">
     <section class="card mb-3" aria-labelledby="exXapiH">
@@ -27,13 +81,64 @@
         <a class="btn btn-sm btn-outline-navy" href="{{ url_for('xapi_statements_endpoint') }}?limit=200">Download xAPI JSON</a>
       </div>
     </section>
-    <section class="card" aria-labelledby="exAuditH">
+    <section class="card mb-3" aria-labelledby="exAuditH">
       <div class="card-body">
         <h2 class="h6" id="exAuditH">Audit log</h2>
         <p class="small text-muted mb-2">Tamper-evident log of sensitive actions (up to 5,000 rows).</p>
         <a class="btn btn-sm btn-outline-navy" href="{{ url_for('admin_audit_log', format='csv') }}">Download audit log CSV</a>
         <a class="btn btn-sm btn-link" href="{{ url_for('admin_audit_log') }}">View log</a>
       </div>
+    </section>
+    <section class="card mb-3" aria-labelledby="exLrsH">
+      <div class="card-body">
+        <h2 class="h6" id="exLrsH">Learning record store</h2>
+        <p class="small mb-1">Endpoint: <code id="lrs-endpoint">{{ endpoint }}</code></p>
+        <p class="small text-muted">Clients sign in with HTTP Basic. A cmi5 launch uses a one-time fetch token instead.</p>
+        {% if new_credential %}
+        <div class="alert alert-warning small">
+          <strong>{{ new_credential.name }}</strong><br>
+          Key <code>{{ new_credential.key }}</code><br>
+          Secret <code>{{ new_credential.secret }}</code>
+        </div>
+        {% endif %}
+        <form method="post" class="d-flex gap-2 mb-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="credential">
+          <label class="visually-hidden" for="cred-name">Credential name</label>
+          <input class="form-control form-control-sm" id="cred-name" name="name" placeholder="Name, such as the campus client" required>
+          <button class="btn btn-sm btn-outline-navy">Create credential</button>
+        </form>
+        <ul class="list-unstyled small mb-0">
+          {% for client in clients %}
+          <li class="d-flex gap-2 align-items-center mb-1">
+            <span class="me-auto">{{ client.name }} · <code>{{ client.key }}</code>{% if not client.active %} · revoked{% endif %}</span>
+            {% if client.active %}
+            <form method="post">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="revoke">
+              <input type="hidden" name="client_id" value="{{ client.id }}">
+              <button class="btn btn-sm btn-outline-danger">Revoke</button>
+            </form>
+            {% endif %}
+          </li>
+          {% else %}
+          <li class="text-muted">No credentials yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+    <section class="card" aria-labelledby="exRegH">
+      <div class="card-header"><h2 class="h6 mb-0" id="exRegH">Registrations</h2></div>
+      <ul class="list-group list-group-flush small">
+        {% for reg in registrations %}
+        <li class="list-group-item">
+          <a href="{{ url_for('cmi5.admin_cmi5_registration', registration_id=reg.id) }}">{{ reg.learner_label }}</a>
+          · {{ course_titles.get(reg.course_id, 'Course') }}
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted">No registrations yet.</li>
+        {% endfor %}
+      </ul>
     </section>
   </div>
 </div>

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Registration — {{ site_name }}{% endblock %}
+{% block content %}
+{% with title=registration.learner_label, lede=course.title %}{% include '_admin_nav.html' %}{% endwith %}
+<p class="small"><a href="{{ url_for('admin_exports') }}">Back to exports</a> · Registration <code>{{ registration.uuid }}</code></p>
+
+<div class="card mb-3">
+  <div class="card-header"><h2 class="h6 mb-0">Assignable units</h2></div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Unit</th><th>Block</th><th>Move on</th><th>State</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.au.title }}</td>
+          <td>{{ row.block.title if row.block else '—' }}</td>
+          <td>{{ row.au.move_on }}{% if row.au.mastery_score %} · {{ row.au.mastery_score }}{% endif %}</td>
+          <td>{% if row.waived %}Waived{% elif row.met %}Satisfied{% else %}Not yet{% endif %}</td>
+          <td class="text-nowrap">
+            <form method="post" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="launch">
+              <input type="hidden" name="au_id" value="{{ row.au.id }}">
+              <input type="hidden" name="launch_mode" value="Normal">
+              <button class="btn btn-sm btn-brand">Launch</button>
+            </form>
+            {% if not row.waived %}
+            <form method="post" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="waive">
+              <input type="hidden" name="au_id" value="{{ row.au.id }}">
+              <button class="btn btn-sm btn-outline-navy">Waive</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2 class="h6 mb-0">Statements for this registration</h2></div>
+  <ul class="list-group list-group-flush small">
+    {% for row in statements %}
+    <li class="list-group-item">
+      <strong>{{ row.verb }}</strong>
+      {% if row.voided %}· voided{% endif %}
+      <span class="text-muted">· {{ row.stored }} · {{ row.activity }}</span>
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted">None yet. Satisfied statements for blocks marked Not applicable appear as soon as the registration is created.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
