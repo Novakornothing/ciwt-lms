@@ -1,5 +1,9 @@
 {# Objectives, hint / undo / reset and assessment — shared by every live lab page. #}
-<aside class="lab-side" aria-label="Objectives and help">
+<button type="button" class="lab-sheet-btn" id="labSheetBtn" aria-controls="labSide" aria-expanded="false">
+  <i class="bi bi-list-check" aria-hidden="true"></i> Objectives
+</button>
+<div class="lab-sheet-scrim" id="labSheetScrim" hidden></div>
+<aside class="lab-side" id="labSide" aria-label="Objectives and help">
   <div class="card">
     {% set pbq_hidden = lab.pbq and not (boot and boot.complete) %}
     <div class="card-header navy"><h2 class="h6 mb-0">{{ 'Checks' if lab.pbq else 'Objectives' }}</h2></div>

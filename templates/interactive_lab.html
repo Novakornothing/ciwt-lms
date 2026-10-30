@@ -5,6 +5,7 @@
 {% include '_lab_header.html' %}
 <div class="lab-shell">
   <div class="lab-main">
+    {% include '_lab_stages.html' %}
     {% if lab.kind == 'linux' %}{% include '_linux_gnome_companion.html' %}{% endif %}
     <div class="term-wrap term-{{ lab.kind }}" id="termWrap">
       <div class="term-bar">

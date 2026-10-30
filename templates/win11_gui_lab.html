@@ -6,6 +6,7 @@
 {% set has_ad = boot.gui and boot.gui.ad %}
 <div class="lab-shell lab-shell-gui">
   <div class="lab-main">
+    {% include '_lab_stages.html' %}
     <div class="w11-desk" id="w11Desk" aria-label="Windows 11 desktop simulator ({{ boot.facts.hostname }})" role="application">
       <div class="w11-icons" role="group" aria-label="Desktop">
         <button type="button" class="w11-icon" data-app="settings"><i class="bi bi-gear" aria-hidden="true"></i><span>Settings</span></button>

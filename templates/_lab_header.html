@@ -40,7 +40,7 @@
       {% if lab.minutes %}<span class="text-muted small">· about {{ lab.minutes }} min</span>{% endif %}</p>
     <h1 class="h4 mb-1">{{ lab.title }}</h1>
     <p class="mb-0 lab-scenario">{{ lab.intro }}</p>
-    {% if lab.coaching %}
+    {% if lab.coaching and (boot is not defined or not boot.progression) %}
     <div class="lab-coaching mt-3">
       <details open>
         <summary><strong>Stage 1 — Guided walkthrough</strong></summary>

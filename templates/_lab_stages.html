@@ -1,0 +1,107 @@
+{% if boot.progression %}
+<section class="lab-stages" id="labStages" aria-label="Three stages"
+  data-note-url="{{ url_for('interactive_lab_note', lab_id=lab.id) }}"
+  data-cmd-url="{{ url_for('interactive_lab_cmd', lab_id=lab.id) }}"
+  data-stage-url="{{ url_for('interactive_lab_stage', lab_id=lab.id) }}">
+  <div class="stage-switch" role="tablist" aria-label="Lab stages">
+    {% for stage in boot.progression.stages %}
+    <button type="button" class="stage-tab{% if loop.first %} is-active{% endif %}" role="tab" id="stageTab-{{ stage.id }}"
+      data-stage="{{ stage.id }}" aria-selected="{{ 'true' if loop.first else 'false' }}" aria-controls="stagePanel-{{ stage.id }}">
+      {{ stage.title }}{% if stage.passed %} <span class="visually-hidden">complete</span>{% endif %}
+    </button>
+    {% endfor %}
+  </div>
+  {% for stage in boot.progression.stages %}
+  <article class="stage-panel" id="stagePanel-{{ stage.id }}" role="tabpanel" aria-labelledby="stageTab-{{ stage.id }}" data-stage-panel="{{ stage.id }}"{% if not loop.first %} hidden{% endif %}>
+    <h2 class="h5">{{ stage.title }}</h2>
+    {% if stage.passed %}<p class="stage-flag">This stage matches the machine.</p>{% endif %}
+    <div class="stage-body">{{ stage.html|safe }}</div>
+  </article>
+  {% endfor %}
+</section>
+{% set show_win = lab.kind in ('windows', 'win11gui') %}
+{% set show_ios = lab.kind in ('switch', 'router') %}
+{% set show_net = lab.kind in ('switch', 'router') or (lab.id or '').startswith('sec-') or (lab.vm is defined and lab.vm and lab.vm.net) %}
+{% if show_win %}
+<section class="client-sim" id="winSim" data-sim="windows" aria-label="Windows simulation">
+  <p class="sim-banner">Simulation. This is not a Windows PC. PowerShell, Command Prompt, Settings, Event Viewer, and accounts run in the page.</p>
+  <div class="sim-tabs" role="tablist">
+    <button type="button" class="sim-tab is-active" data-sim-tab="shell">PowerShell</button>
+    <button type="button" class="sim-tab" data-sim-tab="settings">Settings</button>
+    <button type="button" class="sim-tab" data-sim-tab="events">Event Viewer</button>
+    <button type="button" class="sim-tab" data-sim-tab="users">Users</button>
+  </div>
+  <div class="sim-panel" data-sim-panel="shell">
+    <div class="sim-out" id="winSimOut" role="log" aria-live="polite"></div>
+    <form class="sim-form" id="winSimForm">
+      <label class="visually-hidden" for="winSimIn">Command</label>
+      <input id="winSimIn" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send">
+      <button type="submit" class="btn btn-sm btn-brand">Run</button>
+    </form>
+  </div>
+  <div class="sim-panel" data-sim-panel="settings" hidden>
+    <p>System → About shows the computer name. Network shows DNS. Change them only after you have read the desk note.</p>
+    <form id="winSettingsForm">
+      <label>Computer name <input name="name" autocomplete="off"></label>
+      <label>DNS server <input name="dns" autocomplete="off" inputmode="decimal"></label>
+      <button type="submit" class="btn btn-sm btn-brand">Apply in the simulation</button>
+    </form>
+  </div>
+  <div class="sim-panel" data-sim-panel="events" hidden>
+    <table class="sim-table">
+      <caption>Sample System log</caption>
+      <thead><tr><th>Time</th><th>Source</th><th>Event</th></tr></thead>
+      <tbody>
+        <tr><td>08:12</td><td>Dhcp-Client</td><td>Lease renewed on Ethernet.</td></tr>
+        <tr><td>08:14</td><td>DNS Client Events</td><td>Name lookup timed out.</td></tr>
+        <tr><td>09:01</td><td>Service Control Manager</td><td>The Print Spooler entered the running state.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="sim-panel" data-sim-panel="users" hidden>
+    <ul class="sim-users" id="winUsers">
+      <li data-user="Trainee">Trainee <button type="button" data-user-toggle="Trainee">Disable</button></li>
+      <li data-user="labtech">labtech <button type="button" data-user-toggle="labtech">Disable</button></li>
+    </ul>
+    <p class="small">Account changes stay in this browser. They are labeled as a simulation.</p>
+  </div>
+</section>
+{% endif %}
+{% if show_ios %}
+<section class="client-sim" id="iosSim" data-sim="ios" data-kind="{{ lab.kind }}" aria-label="Cisco IOS-style simulation">
+  <p class="sim-banner">Simulation. Cisco IOS-style command line: user, privileged, and configuration modes. This is not Cisco software.</p>
+  <div class="sim-out" id="iosSimOut" role="log" aria-live="polite"></div>
+  <form class="sim-form" id="iosSimForm">
+    <label class="prompt" id="iosPrompt" for="iosSimIn">&gt;</label>
+    <input id="iosSimIn" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send">
+    <button type="submit" class="btn btn-sm btn-brand">Run</button>
+  </form>
+</section>
+{% endif %}
+{% if show_net %}
+<section class="client-sim" id="netCanvas" data-sim="net" aria-label="Network view">
+  <p class="sim-banner">Network view. Nodes and the packet list are drawn in the page. Headers here are a teaching model of the path.</p>
+  <div class="net-layout">
+    <svg id="netSvg" viewBox="0 0 640 180" role="img" aria-label="PC, switch, router, and server connected in a line">
+      <line x1="90" y1="90" x2="230" y2="90" class="net-link"/>
+      <line x1="270" y1="90" x2="390" y2="90" class="net-link"/>
+      <line x1="430" y1="90" x2="540" y2="90" class="net-link"/>
+      <g class="net-node" data-node="pc"><rect x="20" y="60" width="70" height="60" rx="8"/><text x="55" y="94">PC</text></g>
+      <g class="net-node" data-node="sw"><rect x="230" y="60" width="80" height="60" rx="8"/><text x="270" y="94">Switch</text></g>
+      <g class="net-node" data-node="rtr"><rect x="390" y="60" width="80" height="60" rx="8"/><text x="430" y="94">Router</text></g>
+      <g class="net-node" data-node="srv"><rect x="540" y="60" width="80" height="60" rx="8"/><text x="580" y="94">Server</text></g>
+      <circle id="netPacket" cx="55" cy="90" r="6" hidden/>
+    </svg>
+    <div>
+      <button type="button" class="btn btn-sm btn-brand" id="netSend">Send a test packet</button>
+      <table class="sim-table" id="netTable">
+        <caption>Packet list</caption>
+        <thead><tr><th>Hop</th><th>Header</th><th>Ports</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
+<script src="{{ url_for('static', filename='js/sims/lab-stages.js') }}" defer></script>
+{% endif %}
