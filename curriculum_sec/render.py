@@ -11,7 +11,7 @@ from curriculum_v2.ladder.sections import sections
 from curriculum_sec import specs as SP
 
 REVIEW = 'Pending SME review'
-SOURCE = 'Novak LMS™ Cybersecurity lesson (original). Pending SME review.'
+SOURCE = 'Novak LMS™ Security lesson (original). Pending SME review.'
 
 
 def _p(sentences):
