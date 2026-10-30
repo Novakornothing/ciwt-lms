@@ -1,0 +1,76 @@
+/* Try-It simulations. They sit in the lesson column: no card chrome, no horizontal scroll. */
+.novak-sim,
+.novak-sim * { box-sizing: border-box; }
+.novak-sim {
+  margin: .75rem 0 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+.novak-sim-spec { display: none !important; }
+.novak-sim-instr { margin: 0 0 .5rem; font-weight: 600; }
+.novak-sim-stage { max-width: 100%; overflow-x: hidden; }
+.novak-sim-stage svg { width: 100%; height: auto; max-width: 100%; display: block; }
+.novak-sim-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.novak-sim-actions .btn { min-height: 44px; }
+.novak-sim-fb:empty { display: none; }
+.novak-sim-fb { margin: .5rem 0 0; padding: .45rem .6rem; border-radius: 8px; background: var(--surface-2, #f4f7fb); }
+.sim-row, .sim-note, .sim-read { margin: .45rem 0; max-width: 100%; overflow-wrap: anywhere; }
+.sim-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.sim-row input[type="text"], .sim-shell input[type="text"] {
+  flex: 1 1 10rem;
+  min-width: 0;
+  min-height: 44px;
+  max-width: 100%;
+}
+.sim-choices, .sim-moves, .sim-shell { display: flex; flex-wrap: wrap; gap: .35rem; max-width: 100%; }
+.sim-choice, .sim-bit, .novak-sim .sim-choices button, .novak-sim .sim-bits button, .novak-sim .sim-logs button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: .35rem .6rem;
+}
+.sim-choice[aria-pressed="true"], .novak-sim button[aria-pressed="true"] { outline: 2px solid #0b2a55; outline-offset: 1px; }
+.sim-order, .sim-sort, .sim-rules { list-style: none; margin: 0; padding: 0; max-width: 100%; }
+.sim-order li, .sim-sort li, .sim-rules li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  align-items: center;
+  padding: .35rem 0;
+  border-bottom: 1px solid var(--surface-3, #e2e8f0);
+  max-width: 100%;
+}
+.sim-order-text { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+.sim-sort label, .sim-clues label, .sim-perm-col label, .sim-perm { display: flex; gap: .4rem; align-items: center; min-height: 44px; flex: 1 1 12rem; min-width: 0; }
+.sim-sort select { min-height: 44px; max-width: 100%; }
+.sim-bits { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: .25rem; max-width: 100%; }
+.sim-bits button { padding: .2rem; font-variant-numeric: tabular-nums; }
+.sim-chmod { display: flex; flex-wrap: wrap; gap: .75rem; }
+.sim-perm-col { border: 0; margin: 0; padding: 0; min-width: 0; }
+.novak-sim input[type="checkbox"] { width: 1.35rem; height: 1.35rem; margin: 0; }
+.sim-perm-col legend { font-weight: 700; font-size: .85rem; }
+.sim-mail { max-width: 100%; overflow-wrap: anywhere; padding: .25rem 0 .5rem; }
+.sim-mail p { margin: .2rem 0; }
+.sim-clues label, .sim-logs { max-width: 100%; }
+.sim-logs { display: flex; flex-direction: column; gap: .35rem; }
+.sim-logs button { text-align: left; white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+.sim-out {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  margin: .4rem 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .85rem;
+}
+.sim-rules li.is-hit { font-weight: 700; }
+@media (max-width: 420px) {
+  .sim-bits { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .novak-sim, .novak-sim * { transition: none !important; animation: none !important; }
+}
+[data-theme="dark"] .novak-sim-fb { background: #1b2433; }
+[data-theme="dark"] .sim-choice[aria-pressed="true"], [data-theme="dark"] .novak-sim button[aria-pressed="true"] { outline-color: #9fdcff; }

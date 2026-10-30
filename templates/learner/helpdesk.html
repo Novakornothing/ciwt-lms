@@ -47,7 +47,7 @@
     <div class="card-header">Conversation</div>
     <div class="card-body">
       {% for line in lines %}
-      <p class="mb-2"><strong>{% if line.who == 'you' %}You{% else %}{{ line.name }}{% endif %}.</strong> {{ line.text }}</p>
+      <p class="mb-2"><strong>{% if line.who == 'you' %}You.{% else %}{{ line.name }}{{ '' if line.name.endswith('.') else '.' }}{% endif %}</strong> {{ line.text }}</p>
       {% endfor %}
     </div>
   </article>

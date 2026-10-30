@@ -168,7 +168,9 @@ def test_helpdesk_route_grades_and_lists_for_instructor(app, mod, student, instr
     queue = student.get(f'/student/section/{sid}/helpdesk').get_data(as_text=True)
     assert 'Help Desk Queue' in queue and 'Laptop will not power on' in queue
     url = f'/student/section/{sid}/helpdesk/hd-it-01'
-    assert 'How urgent' in student.get(url).get_data(as_text=True)
+    page = student.get(url).get_data(as_text=True)
+    assert 'How urgent' in page
+    assert 'Priya N..' not in page and 'Priya N.</strong>' in page
     student.post(url, data={'action': 'priority', 'priority': 'high'})
     asked = student.post(url, data={'action': 'ask', 'qid': 'brick'}, follow_redirects=True).get_data(as_text=True)
     assert 'brick stays dark' in asked

@@ -33,7 +33,7 @@
   - `R1 Plain Language` (`Plain English`): Zero-jargon operational rewrite clickable on demand or triggered automatically on a missed check.
   - `R2 Analogy` (`Real-World Analogy`): Concrete physical-world mental model mapping abstract protocol or hardware state transitions.
   - `R3 Visual Diagram` (`Visual Map`): Step-by-step annotated SVG signal/state walk-through (`696+` total inline SVGs across all 115 lessons).
-  - `R4 Interactive Hands-On Try-It`: Micro-simulation widget (order/sort/reveal) or live lab launch inside the lesson flow.
+  - `R4 Interactive Hands-On Try-It`: a hands-on simulation for every concept (client-side HTML/SVG widget or live lab launch inside the lesson flow).
   - **Instructor Time-to-Mastery Telemetry**: `/instructor/section/<id>/ladder` tracks and exports per-section `median_seconds_to_resolve`, `mean_seconds_to_resolve`, `mean_attempts_to_resolve`, and `helix_triggered` counts to CSV.
 
 ### 2. 100% Visual Architecture Coverage (`115/115` Lessons)

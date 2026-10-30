@@ -268,8 +268,15 @@ def register_ladder(app, db, ctx):
             except Exception:
                 title = lab['id']
             lab_info = dict(lab, title=title, url=url_for('interactive_lab', lab_id=lab['id']))
+        sim = None
+        if rung == 'R4':
+            try:
+                from curriculum_v2.sims import sim_for
+                sim = sim_for(ent)
+            except Exception:
+                sim = None
         return {'rung': rung, 'kind': r['kind'], 'title': r.get('title'), 'html': r['html'], 'widget': widget,
-                'lab': lab_info, 'label': LS.LABEL[rung]}
+                'lab': lab_info, 'sim': sim, 'label': LS.LABEL[rung]}
 
     def pick_check(ent, rung, user_id, section_id, label, sid):
         chks = LD.rung_checks(ent, rung)
@@ -700,6 +707,34 @@ def register_ladder(app, db, ctx):
         save_state(row, st)
         return reply(section, lesson, sec, ent, st, cfg, None, 'show', show_rung=rung)
 
+    def _record_sim_mastery(section, ent, ok):
+        """One inline mastery observation per section. Retries update that row; they do not stack."""
+        obj = (ent or {}).get('obj') or ''
+        if not obj or len(obj) > 20:
+            return False
+        from mastery.models import define_models as define_mastery
+        mm = define_mastery(db)
+        variant = 'sim:' + hashlib.sha256(f"{ent.get('course')}|{ent.get('label')}|{ent.get('sid')}".encode()).hexdigest()[:12]
+        item = {'obj': obj, 'text': 'Try-It simulation check', 'options': ['met', 'not-yet'], 'correct': 'met',
+                'bank_id': 'sim-' + variant[4:], 'src': 'sim'}
+        ans = 'met' if ok else 'not-yet'
+        row = mm.MasteryCheck.query.filter_by(section_id=section.id, user_id=current_user.id, kind='inline',
+                                              target=obj, variant=variant).first()
+        now = utcnow()
+        if row is None:
+            row = mm.MasteryCheck(section_id=section.id, user_id=current_user.id, kind='inline', target=obj,
+                                  variant=variant, total=1, items_json=json.dumps([item]),
+                                  answers_json=json.dumps({'0': ans}), correct=1 if ok else 0, completed_at=now)
+            db.session.add(row)
+        else:
+            row.items_json = json.dumps([item])
+            row.answers_json = json.dumps({'0': ans})
+            row.correct = 1 if ok else 0
+            row.total = 1
+            row.completed_at = now
+            row.skipped = False
+        return True
+
     @login_required
     def ladder_event(section_id, lesson_id, sid):
         """Light-weight logging from the page: see_original toggles and Helix offers shown (consent re-checked)."""
@@ -711,6 +746,18 @@ def register_ladder(app, db, ctx):
             log(current_user.id, section.id, course, label, sid, 'helix_offer', source='helix')
         elif kind == 'see_original':
             log(current_user.id, section.id, course, label, sid, 'see_original', rung='R0')
+        elif kind == 'sim_check':
+            ok = (request.form.get('correct') or '') in ('1', 'true', 'True', 'yes')
+            answer = (request.form.get('answer') or '')[:400]
+            log(current_user.id, section.id, course, label, sid, 'sim_check', rung='R4', correct=ok,
+                answer=answer, source='sim')
+            recorded = False
+            try:
+                recorded = _record_sim_mastery(section, ent, ok)
+            except Exception:
+                recorded = False
+            db.session.commit()
+            return jsonify({'ok': True, 'correct': ok, 'mastery': recorded})
         else:
             abort(400)
         db.session.commit()

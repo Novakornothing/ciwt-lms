@@ -33,7 +33,7 @@
     <h3 id="lh-{{ L.sid }}">{{ d_head }}</h3>
     {% if v.title %}<p class="ladder-title">{{ v.title }}</p>{% endif %}
     <div class="ladder-content">{{ v.html|safe }}</div>
-    {% if v.widget %}{% set w = v.widget %}{% include 'ladder/_widget.html' %}{% endif %}
+    {% if v.sim %}{% set sim = v.sim %}{% include 'ladder/_sim.html' %}{% elif v.widget %}{% set w = v.widget %}{% include 'ladder/_widget.html' %}{% endif %}
     {% if v.lab %}<p class="ladder-lab"><a class="btn btn-sm btn-outline-navy" href="{{ v.lab.url }}"><i class="bi bi-terminal" aria-hidden="true"></i> Open the lab: {{ v.lab.title }}</a>{% if v.lab.note %} <span class="small">{{ v.lab.note }}</span>{% endif %}</p>{% endif %}
   </section>
   <template class="ladder-original-tpl">{{ L.display_orig_html|default(L.orig_html)|safe }}</template>
