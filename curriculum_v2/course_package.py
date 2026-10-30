@@ -28,7 +28,7 @@ CREDIT_HOUR_SOURCE = ('U.S. federal definition of a credit hour, 34 CFR 600.2: o
 
 COURSES = {
     'ITSUP': {
-        'title': 'IT Support Fundamentals',
+        'title': 'IT Support',
         'catalog_number': '[e.g., CIT 110]',
         'description': (
             'An introduction to supporting computer users and their devices in a workplace. Students practise safe '
@@ -45,7 +45,7 @@ COURSES = {
         'tests': ('IT Support Knowledge Test A', 'IT Support Knowledge Test B', 'IT Support Knowledge Test C'),
     },
     'NETOPS': {
-        'title': 'Network Operations',
+        'title': 'Basic Networking',
         'catalog_number': '[e.g., CIT 140]',
         'description': (
             'How enterprise networks are built, run and repaired. Students map protocols and faults to network '
@@ -55,11 +55,11 @@ COURSES = {
         'prerequisites': 'IT Support Fundamentals or equivalent experience (client IP configuration, ping/ipconfig). [Institution: confirm]',
         'credits': {'total': 4, 'lecture': 3, 'lab': 1, 'lecture_contact_per_week': 3, 'lab_contact_per_week': 2,
                     'note': 'Chapter 9 (CLI lab track) is designed to run in the weekly lab session alongside Chapters 2–4.'},
-        'skills_exams': ('Skills Midterm — Network Operations', 'Skills Final — Network Operations'),
+        'skills_exams': ('Skills Midterm — Basic Networking', 'Skills Final — Basic Networking'),
         'tests': ('Network Operations Knowledge Test A', 'Network Operations Knowledge Test B', 'Network Operations Knowledge Test C'),
     },
     'CLIENT': {
-        'title': 'Client Systems Support',
+        'title': 'Operating Systems',
         'catalog_number': '[e.g., CIT 115]',
         'description': (
             'A focused course on supporting Windows, Linux and macOS clients: installation and configuration, repair '
@@ -68,7 +68,7 @@ COURSES = {
         'prerequisites': 'Basic computer literacy. [Institution: confirm whether IT Support Fundamentals is required]',
         'credits': {'total': 3, 'lecture': 2, 'lab': 1, 'lecture_contact_per_week': 2, 'lab_contact_per_week': 2,
                     'note': 'Fits an 8-week term at double weekly contact hours.'},
-        'skills_exams': ('Skills Midterm — Client Systems', 'Skills Final — Client Systems'),
+        'skills_exams': ('Skills Midterm — Operating Systems', 'Skills Final — Operating Systems'),
         'tests': (),
     },
 }

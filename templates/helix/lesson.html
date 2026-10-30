@@ -5,14 +5,14 @@
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
-    <li class="breadcrumb-item"><a href="{{ url_for('helix.instructor_attention', section_id=section.id) }}">Attention</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('helix.instructor_attention', section_id=section.id) }}">Eye Tracking</a></li>
     <li class="breadcrumb-item active" aria-current="page">{{ lesson.title }}</li>
   </ol>
 </nav>
 <div class="page-hero">
   <div class="d-flex flex-wrap justify-content-between gap-3">
     <div>
-      <div class="eyebrow">Helix attention · lesson view</div>
+      <div class="eyebrow">Eye Tracking · lesson view</div>
       <h1 class="h3 mb-1">{{ lesson.title }}</h1>
       <p class="mb-0">{{ n_sessions }} session{{ 's' if n_sessions != 1 }} · {{ students|length }} student{{ 's' if students|length != 1 }} · {{ (total_ms/60000)|round(1) }} reading min</p>
     </div>

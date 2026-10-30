@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Quality / TQI — Admin — {{ site_name }}{% endblock %}
+{% block title %}Results &amp; ROI — Admin — {{ site_name }}{% endblock %}
 {% block content %}
-{% with title='Quality / TQI', lede='Training quality packets for every class, most urgent first. Open a packet to see what is still missing.' %}{% include '_admin_nav.html' %}{% endwith %}
+{% with title='Results &amp; ROI', lede='Training quality packets for every class, most urgent first. Open a packet to see what is still missing.' %}{% include '_admin_nav.html' %}{% endwith %}
 <nav class="chip-links mb-3" aria-label="Quality tools">
-  <a class="chip-link" href="https://novakornothing.com/tqi" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> TQI site<span class="visually-hidden"> (opens in a new tab)</span></a>
+  <a class="chip-link" href="https://novakornothing.com/tqi" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Results &amp; ROI site<span class="visually-hidden"> (opens in a new tab)</span></a>
   <a class="chip-link" href="{{ url_for('admin_test_analytics') }}"><i class="bi bi-bar-chart" aria-hidden="true"></i> Test analytics</a>
   <a class="chip-link" href="{{ url_for('admin_readiness') }}"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Product readiness</a>
 </nav>
@@ -34,7 +34,7 @@
       <tr class="tqi-row" data-href="{{ packet_url }}">
         <th scope="row" class="fw-normal">
           <a class="fw-semibold row-title-link" href="{{ packet_url }}">{{ s.name }}</a>
-          <div class="small text-muted">{{ s.course.code if s.course else '' }} · {{ st.n_enrolled }} enrolled</div>
+          <div class="small text-muted">{{ s.course.title if s.course else '' }} · {{ st.n_enrolled }} enrolled</div>
         </th>
         <td class="small">
           {{ s.start_date or '—' }} → {{ s.end_date or '—' }}

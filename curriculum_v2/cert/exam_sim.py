@@ -36,7 +36,7 @@ MODES = {
 }
 PBQ_TYPES = ('sim_pbq', 'order', 'match')      # sim_pbq first: every sitting opens with interactive simulations
 DRILL_QUESTIONS = 10
-VOUCHER_STATUS = {'ready': 'VOUCHER READY', 'borderline': 'BORDERLINE', 'remediate': 'REMEDIATION REQUIRED'}
+VOUCHER_STATUS = {'ready': 'EXAM READY', 'borderline': 'BORDERLINE', 'remediate': 'REMEDIATION REQUIRED'}
 # ADA / Section 504 extended-time accommodations an instructor can set per student and class
 ACCOMMODATIONS = {1.0: '1.0× Standard', 1.25: '1.25× Time + 25%', 1.5: '1.5× Time-and-a-half', 2.0: '2.0× Double time'}
 CANDIDATE_RULES = (
@@ -688,7 +688,7 @@ def register(app, db, deps):
         if lti is not None and getattr(lti, 'send_line_scores', None):
             sent = failed = 0
             for ex, scores in by_exam.items():
-                s_, f_, _n = lti.send_line_scores(sec, current_user, f'Exam-Day Simulator — {EXAMS[ex]["code"]}',
+                s_, f_, _n = lti.send_line_scores(sec, current_user, f'Practice Exam — {EXAMS[ex]["code"]}',
                                                   f'novak-exam-sim-{ex}', scores)
                 sent, failed = sent + s_, failed + f_
             if sent or failed:

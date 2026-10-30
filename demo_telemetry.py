@@ -4,10 +4,10 @@ Ensures that when an evaluator enters the 1-Click Student, Instructor, or Admin 
 Novak LMS™ (either locally or on Render's persistent /var/data/ciwt/ciwt_lms.db disk),
 every flagship dashboard across ALL 5 sections (Sections 1, 2, 3, 4, and 5 CLIENT-101)
 is populated with realistic, up-to-date activity:
-1. Active ClassSection for Course 3 (CLIENT — Client Systems & Shop Procedures — CLIENT-101)
+1. Active ClassSection for Course 3 (CLIENT — Operating Systems — CLIENT-101)
 2. "Who Needs Me" Co-Pilot (/instructor/section/<1..5>/who-needs-me) with active students needing
    attention today (exhausted ladder, repeated mix-up, lab habit) and recent activity timestamps.
-3. Exam-Day Simulator & Speed-Drill (/instructor/section/<1..5>/exam-sim, /student/section/<1..5>/exam-sim,
+3. Practice Exam & Speed-Drill (/instructor/section/<1..5>/exam-sim, /student/section/<1..5>/exam-sim,
    /portfolio) with Voucher Ready, Borderline, and Remediation sittings across FC0-U71, 220-1201, 220-1202,
    and N10-009, synced gradebook rows, and Leitner spaced-repetition Speed-Drill stats.
 4. Institutional Outcomes (/admin/outcomes) & Gradebook across all 5 sections.
@@ -17,6 +17,43 @@ is populated with realistic, up-to-date activity:
 import json
 import random
 from datetime import timedelta
+
+
+# Phase 1 plain-English names: existing demo rows were seeded with older feature names.
+CLIENT_SECTION_NAME = 'Operating Systems Fall 2026 — Section E'
+
+DEMO_TEXT_RENAMES = [('CLIENT-101 Lab & CompTIA Tech+', 'Operating Systems Lab & CompTIA Tech+'), ('Your CLIENT-101 Windows 11', 'Your Operating Systems Windows 11'), ('NETOPS Linux VM Routing', 'Basic Networking Linux VM Routing'), ('submitting the NETOPS labs', 'submitting the Basic Networking labs'), ('Demo EOC reaction for TQI packet.', 'Demo end-of-course survey comment.'), ('Exhausted explanation ladder on section 2', 'Tried all 5 ways on section 2'), ('Walk through Rung 2 analogy', 'Walk through the Analogy view'), ('Exam-Day Simulator — CompTIA A+ Core 1 & Core 2 Voucher Readiness', 'Practice Exams — CompTIA A+ Core 1 & Core 2 Exam Readiness'), ('in the Exam-Day Simulator', 'in Practice Exams'), ('Exam-Day Readiness Simulator', 'Practice Exams'), ('Exam-Day Simulator', 'Practice Exam'), ('Adaptive 4-Rung Ladders, Helix Attention & Live VMs', '5 Ways to Learn, Eye Tracking & Live VMs'), ('our 4-rung adaptive explanation ladder (Plain Language -> Analogy -> Visual Diagram -> Interactive Try-It)', '5 Ways to Learn (Standard, Plain English, Analogy, Visual, Try-It)'), ('opt-in Helix 478-landmark attention tracking', 'opt-in Eye Tracking'), ('The 4-rung adaptive explanations', 'The 5 Ways to Learn explanations'), ('The 4-rung explanation ladder (especially Rung 2 analogies and Rung 3 visual traces)', 'The 5 Ways to Learn (especially the Analogy and Visual views)'), ('Who Needs Me co-pilot and Helix attention heatmaps', 'Students Needing Help and Eye Tracking heatmaps'), ('took a few extra tries on the explanation ladder', 'took a few extra tries across the 5 Ways to Learn'), ('walking through Rung 3 (Visual step-by-step)', 'walking through the Visual view'), ('The Rung 2 analogies', 'The Analogy views'), ('Great work reaching Voucher Ready', 'Great work reaching Exam Ready'), ('final proctored voucher sitting', 'final proctored exam'), ('mastery and voucher-readiness benchmarks', 'mastery and exam-readiness benchmarks')]
+
+
+def _plain(text):
+    if not text:
+        return text
+    for a, b in DEMO_TEXT_RENAMES:
+        text = text.replace(a, b)
+    return text
+
+
+def _mastery_models(A):
+    mx = A.app.extensions.get('ciwt_mastery')
+    if mx and hasattr(mx, 'models'):
+        yield mx.models.MasteryCheckin, ('note', 'reasons_json')
+
+
+def refresh_demo_text_names(A):
+    """Rewrite seeded demo messages / critiques / survey comments to the current feature names. Idempotent."""
+    n = 0
+    for model, cols in ((A.StaffMessage, ('subject', 'body')), (A.TqiCritique, ('body',)),
+                        (A.TqiAction, ('body',)), (A.TqiEocResponse, ('comment',))) + tuple(_mastery_models(A)):
+        for row in model.query.all():
+            for col in cols:
+                old = getattr(row, col, None)
+                new = _plain(old)
+                if new != old:
+                    setattr(row, col, new)
+                    n += 1
+    if n:
+        A.db.session.commit()
+    return n
 
 
 def ensure_rich_demo_telemetry(app):
@@ -86,12 +123,12 @@ def ensure_rich_demo_telemetry(app):
         sec_client = None
         if client_course:
             sec_client = ClassSection.query.filter_by(course_id=client_course.id).first()
-            if sec_client and 'CLIENT-101' not in (sec_client.name or ''):
-                sec_client.name = 'Client Systems & Shop Procedures — CLIENT-101'
+            if sec_client and sec_client.name != CLIENT_SECTION_NAME:
+                sec_client.name = CLIENT_SECTION_NAME
                 db.session.commit()
             if not sec_client:
                 sec_client = ClassSection(
-                    name='Client Systems & Shop Procedures — CLIENT-101',
+                    name=CLIENT_SECTION_NAME,
                     course_id=client_course.id,
                     instructor_id=instr1.id,
                     max_students=25,
@@ -170,9 +207,9 @@ def ensure_rich_demo_telemetry(app):
                     if q.get('text') not in {x.get('text') for x in cl_pool}:
                         cl_pool.append(dict(q))
             forms = [
-                ('Client Systems Knowledge Test A', 'Scenario-based items across Windows client OS, cross-platform Linux/macOS, endpoint security, software troubleshooting, and shop procedures. 45 questions. Passing score 80%.', 1, cl_pool[:45]),
-                ('Client Systems Knowledge Test B', 'Scenario-based items across Windows client OS, cross-platform Linux/macOS, endpoint security, software troubleshooting, and shop procedures. 45 questions. Passing score 80%.', 2, cl_pool[15:60]),
-                ('Client Systems Knowledge Test C', 'Scenario-based items across Windows client OS, cross-platform Linux/macOS, endpoint security, software troubleshooting, and shop procedures. 45 questions. Passing score 80%.', 3, cl_pool[30:75]),
+                ('Operating Systems Knowledge Test A', 'Scenario-based items across Windows client OS, cross-platform Linux/macOS, endpoint security, and software troubleshooting. 45 questions. Passing score 80%.', 1, cl_pool[:45]),
+                ('Operating Systems Knowledge Test B', 'Scenario-based items across Windows client OS, cross-platform Linux/macOS, endpoint security, and software troubleshooting. 45 questions. Passing score 80%.', 2, cl_pool[15:60]),
+                ('Operating Systems Knowledge Test C', 'Scenario-based items across Windows client OS, cross-platform Linux/macOS, endpoint security, and software troubleshooting. 45 questions. Passing score 80%.', 3, cl_pool[30:75]),
             ]
             for title, desc, order, qs_form in forms:
                 db.session.add(KnowledgeTest(
@@ -555,7 +592,7 @@ def ensure_rich_demo_telemetry(app):
                             ))
             db.session.commit()
 
-        # ------------------------------------------------------------------ 6. Exam-Day Simulator & Speed-Drill across ALL 5 sections
+        # ------------------------------------------------------------------ 6. Practice Exam & Speed-Drill across ALL 5 sections
         es_api = app.extensions.get('ciwt_exam_sim')
         if es_api:
             from curriculum_v2.cert import exam_sim as ES, speed_drill as SD
@@ -709,9 +746,9 @@ def ensure_rich_demo_telemetry(app):
         # ------------------------------------------------------------------ 7. TQI Packets, EOC Surveys & Critiques for ALL 5 sections
         keys = [k for k, _g, _l in TQI_EOC_ITEMS]
         eoc_comments = [
-            'The 4-rung adaptive explanations and real Linux VM labs made troubleshooting click immediately.',
+            'The 5 Ways to Learn explanations and real Linux VM labs made troubleshooting click immediately.',
             'Hands-on Windows 11 PowerShell and Cisco IOS labs matched the daily objectives well.',
-            'Exam-Day Simulator PBQs and the 98-card Speed-Drill were great preparation for certification.',
+            'Practice Exam PBQs and the 98-card Speed-Drill were great preparation for certification.',
             'Clear pacing and strong lab feedback on Diagnose -> Fix -> Verify habits.',
         ]
         for sec in all_secs:
@@ -753,13 +790,13 @@ def ensure_rich_demo_telemetry(app):
                     (sec_students[0] if sec_students else sec_instr, 'student', 'labs', 5,
                      'Real Linux VM (v86) and stateful CLI labs matched the lesson objectives and reinforced verification before submit.'),
                     (sec_students[1] if len(sec_students) > 1 else sec_instr, 'student', 'curriculum', 4,
-                     'The 4-rung explanation ladder (especially Rung 2 analogies and Rung 3 visual traces) resolved tricky concepts quickly.'),
+                     'The 5 Ways to Learn (especially the Analogy and Visual views) resolved tricky concepts quickly.'),
                     (sec_students[2] if len(sec_students) > 2 else sec_instr, 'student', 'test', 4,
-                     'Exam-Day Simulator multi-part PBQs were realistic and the missed-objective drill pinpointed weak domains.'),
+                     'Practice Exam multi-part PBQs were realistic and the missed-objective drill pinpointed weak domains.'),
                     (sec_instr, 'instructor', 'instruction', 5,
-                     'Who Needs Me co-pilot and Helix attention heatmaps highlighted struggling students early for targeted 1-on-1 check-ins.'),
+                     'Students Needing Help and Eye Tracking heatmaps highlighted struggling students early for targeted 1-on-1 check-ins.'),
                     (sec_instr, 'instructor', 'closeout', 5,
-                     'Convening closeout: class met mastery and voucher-readiness benchmarks; keep emphasizing Diagnose -> Fix -> Verify in lab blocks.'),
+                     'Convening closeout: class met mastery and exam-readiness benchmarks; keep emphasizing Diagnose -> Fix -> Verify in lab blocks.'),
                 ]
                 for u_obj, role, kind, rating, body in samples:
                     if not u_obj:
@@ -788,23 +825,23 @@ def ensure_rich_demo_telemetry(app):
             s5_stu = User.query.filter_by(email='student5@lms.local').first() or s1
             s6_stu = User.query.filter_by(email='student6@lms.local').first() or s1
             threads_spec = [
-                (instr1, s1, sec1.id, 'Exam-Day Simulator — CompTIA A+ Core 1 & Core 2 Voucher Readiness',
-                 'Hi Student1,\n\nGreat work reaching Voucher Ready (829/900 on 220-1201 and 802/900 on 220-1202) in the Exam-Day Simulator. Your Diagnose -> Fix -> Verify habits on the Linux VM permissions and DNS labs were spot-on. Let me know when you want to schedule your final proctored voucher sitting.',
-                 'Thanks Jordan! The Rung 2 analogies and the 60-second port/protocol Speed-Drill really helped lock in the networking objectives. I am ready to sit Core 1 this Friday.'),
-                (instr1, s1, sec_client.id if sec_client else sec1.id, 'CLIENT-101 Lab & CompTIA Tech+ (FC0-U71) Readiness Check',
-                 'Hi Student1,\n\nYour CLIENT-101 Windows 11 service recovery and Linux account/sudo labs are 100% verified, and your CompTIA Tech+ (FC0-U71) sitting hit 836/900. Keep up the daily spaced review!',
+                (instr1, s1, sec1.id, 'Practice Exams — CompTIA A+ Core 1 & Core 2 Exam Readiness',
+                 'Hi Student1,\n\nGreat work reaching Exam Ready (829/900 on 220-1201 and 802/900 on 220-1202) in Practice Exams. Your Diagnose -> Fix -> Verify habits on the Linux VM permissions and DNS labs were spot-on. Let me know when you want to schedule your final proctored exam.',
+                 'Thanks Jordan! The Analogy views and the 60-second port/protocol Speed-Drill really helped lock in the networking objectives. I am ready to sit Core 1 this Friday.'),
+                (instr1, s1, sec_client.id if sec_client else sec1.id, 'Operating Systems Lab & CompTIA Tech+ (FC0-U71) Readiness Check',
+                 'Hi Student1,\n\nYour Operating Systems Windows 11 service recovery and Linux account/sudo labs are 100% verified, and your CompTIA Tech+ (FC0-U71) sitting hit 836/900. Keep up the daily spaced review!',
                  'Will do — the instant-boot Linux VM snapshot made practicing the user/group permissions lab super fast.'),
-                (instr1, s1, sec2.id, 'NETOPS Linux VM Routing & VLAN Trunking Follow-up',
-                 'Hi Student1,\n\nNice job verifying both `show interfaces trunk` and `ip neigh` before submitting the NETOPS labs. You are on track for the Network+ (N10-009) full simulation this week.',
+                (instr1, s1, sec2.id, 'Basic Networking Linux VM Routing & VLAN Trunking Follow-up',
+                 'Hi Student1,\n\nNice job verifying both `show interfaces trunk` and `ip neigh` before submitting the Basic Networking labs. You are on track for the Network+ (N10-009) full simulation this week.',
                  None),
                 (instr1, s5_stu, sec1.id, 'Let us go through "Three kinds of work" & ESD Safety (IT-1.1 / IT-1.2) together',
-                 'Hi Student5,\n\nI noticed Lesson 1.1 ("Three kinds of work") and the ESD power-off sequence took a few extra tries on the explanation ladder. That is useful signal for me, not a mark against you. Can we spend 10 minutes walking through Rung 3 (Visual step-by-step) before tomorrow\'s lab?',
+                 'Hi Student5,\n\nI noticed Lesson 1.1 ("Three kinds of work") and the ESD power-off sequence took a few extra tries across the 5 Ways to Learn. That is useful signal for me, not a mark against you. Can we spend 10 minutes walking through the Visual view before tomorrow\'s lab?',
                  'Yes please — I kept mixing up service requests vs planned changes. Ten minutes before lab tomorrow works great.'),
                 (instr1, s6_stu, sec2.id, 'Check-in on Layer-2 vs Layer-3 Hop Addressing (NO-1.1 / NO-1.2)',
                  'Hi Student6,\n\nOn the Chapter 1 check, remember that each router hop rewrites the Layer-2 frame MAC addresses and decrements TTL while keeping the source and destination IPv4 addresses intact (unless NAT is configured). Try the Packet-Flow Visualizer in Lab 1 to watch each hop live.',
                  'Got it, opening the Packet-Flow Visualizer now!'),
-                (admin_user, s1, sec1.id, 'Welcome to Novak LMS™ — Adaptive 4-Rung Ladders, Helix Attention & Live VMs',
-                 'Welcome to Novak LMS™! Every lesson includes our 4-rung adaptive explanation ladder (Plain Language -> Analogy -> Visual Diagram -> Interactive Try-It), opt-in Helix 478-landmark attention tracking, 90 interactive & real Linux VM labs, and the Exam-Day Readiness Simulator.',
+                (admin_user, s1, sec1.id, 'Welcome to Novak LMS™ — 5 Ways to Learn, Eye Tracking & Live VMs',
+                 'Welcome to Novak LMS™! Every lesson includes 5 Ways to Learn (Standard, Plain English, Analogy, Visual, Try-It), opt-in Eye Tracking, 90 interactive & real Linux VM labs, and the Practice Exams.',
                  None),
             ]
             for idx_m, (sender, recip, sid_m, subj, body_txt, reply_txt) in enumerate(threads_spec):
@@ -852,8 +889,8 @@ def ensure_rich_demo_telemetry(app):
                         db.session.add(MC_checkin(
                             section_id=sec.id, user_id=stu.id,
                             on_date=(now + timedelta(days=1 + idx_c)).date(),
-                            note='Walk through Rung 2 analogy and verify with one diagnostic command before making changes in lab.',
-                            reasons_json=json.dumps(['Repeated misconception on chapter check', 'Exhausted explanation ladder on section 2']),
+                            note='Walk through the Analogy view and verify with one diagnostic command before making changes in lab.',
+                            reasons_json=json.dumps(['Repeated misconception on chapter check', 'Tried all 5 ways on section 2']),
                             created_by=sec.instructor_id or instr1.id,
                             created_at=now - timedelta(hours=3 + idx_c),
                         ))
@@ -981,7 +1018,7 @@ def ensure_rich_demo_telemetry(app):
                 if not g:
                     g = es_api.Grade(section_id=sec2.id, user_id=s1.id, exam='N')
                     db.session.add(g)
-                g.attempt_id, g.score, g.pct, g.status, g.synced_at = att.id, att.score, round(max(0, (att.score - 100)) / 8, 1), 'VOUCHER READY', sub_at
+                g.attempt_id, g.score, g.pct, g.status, g.synced_at = att.id, att.score, round(max(0, (att.score - 100)) / 8, 1), 'EXAM READY', sub_at
             db.session.commit()
             if gb_api and hasattr(gb_api, 'invalidate'):
                 gb_api.invalidate(sec2.id)
@@ -1084,4 +1121,9 @@ def ensure_rich_demo_telemetry(app):
                 pkt.auto_ready_at = pkt.auto_ready_at or (now - timedelta(hours=3))
         db.session.commit()
 
+        try:
+            refresh_demo_text_names(A)
+        except Exception as e:  # pragma: no cover - never block startup on copy edits
+            db.session.rollback()
+            print('Demo text rename note:', e)
         return {'ok': True}

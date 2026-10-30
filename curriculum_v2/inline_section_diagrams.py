@@ -29,6 +29,11 @@ def _trunc(text: str, max_len: int = 34) -> str:
     return s[: max_len - 1].rstrip() + "…"
 
 
+def _course_display(code):
+    from .lesson_visuals import course_display
+    return course_display(code)
+
+
 def render_inline_spec_schematic_svg(
     code: str, ch_i: int, les_i: int, arch_title: str, spec_rows: list
 ) -> str:
@@ -66,7 +71,7 @@ def render_inline_spec_schematic_svg(
         f'class="novak-inline-svg" style="display:block;height:auto;max-width:100%;background:#0b1120;border:1px solid rgba(56,189,248,0.28);border-radius:10px">'
         f'<rect x="0" y="0" width="740" height="28" rx="10" fill="#1e293b"/>'
         f'<text x="16" y="18" fill="#e2e8f0" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700">'
-        f'TECHNICAL SCHEMATIC 1 · {escape(code)} {ch_i}.{les_i} — {escape(_trunc(arch_title, 48))} (Parameters &amp; CLI)</text>'
+        f'TECHNICAL SCHEMATIC 1 · {escape(_course_display(code))} {ch_i}.{les_i} — {escape(_trunc(arch_title, 48))} (Parameters &amp; CLI)</text>'
         f'<text x="724" y="18" text-anchor="end" fill="#38bdf8" font-family="ui-monospace,Consolas,monospace" font-size="9" font-weight="600">SPEC MATRIX</text>'
         + "".join(cards)
         + f'<text x="16" y="177" fill="#94a3b8" font-family="ui-monospace,Consolas,monospace" font-size="8.5">'
@@ -122,7 +127,7 @@ def render_inline_sequence_flow_svg(
         f'class="novak-inline-svg" style="display:block;height:auto;max-width:100%;background:#0b1120;border:1px solid rgba(129,140,248,0.28);border-radius:10px">'
         f'<rect x="0" y="0" width="740" height="28" rx="10" fill="#1e1b4b"/>'
         f'<text x="16" y="18" fill="#e2e8f0" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700">'
-        f'SEQUENCE TIMELINE 2 · {escape(code)} {ch_i}.{les_i} — Step-by-Step Signal &amp; State Handshake</text>'
+        f'SEQUENCE TIMELINE 2 · {escape(_course_display(code))} {ch_i}.{les_i} — Step-by-Step Signal &amp; State Handshake</text>'
         f'<text x="724" y="18" text-anchor="end" fill="#818cf8" font-family="ui-monospace,Consolas,monospace" font-size="9" font-weight="600">STATE LADDER</text>'
         + "".join(lanes)
         + f'<text x="16" y="181" fill="#94a3b8" font-family="ui-monospace,Consolas,monospace" font-size="8.5">'
@@ -170,7 +175,7 @@ def render_inline_triage_tree_svg(
         f'class="novak-inline-svg" style="display:block;height:auto;max-width:100%;background:#0b1120;border:1px solid rgba(52,211,153,0.28);border-radius:10px">'
         f'<rect x="0" y="0" width="740" height="28" rx="10" fill="#064e3b"/>'
         f'<text x="16" y="18" fill="#e2e8f0" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700">'
-        f'FAULT-ISOLATION TREE 3 · {escape(code)} {ch_i}.{les_i} — {escape(_trunc(watch_title, 48))}</text>'
+        f'FAULT-ISOLATION TREE 3 · {escape(_course_display(code))} {ch_i}.{les_i} — {escape(_trunc(watch_title, 48))}</text>'
         f'<text x="724" y="18" text-anchor="end" fill="#34d399" font-family="ui-monospace,Consolas,monospace" font-size="9" font-weight="600">DECISION TREE</text>'
         f'<rect x="16" y="72" width="152" height="52" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1.8"/>'
         f'<text x="92" y="92" text-anchor="middle" fill="#fbbf24" font-family="ui-monospace,Consolas,monospace" font-size="9" font-weight="700">FAULT DOMAIN</text>'

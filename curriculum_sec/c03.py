@@ -100,7 +100,7 @@ CHAPTER = Ch(
           [
               S('The host starts doing work nobody asked for',
                 'host signs',
-                'unexpected processes, new listening ports, or files appearing in odd places',
+                'unexpected processes, new listening ports shown by ss, or files appearing in odd places',
                 'a process named like a system tool runs from a temporary folder',
                 'The computer is busy with a job you did not start.',
                 'The office copier runs at midnight when nobody is in the building.',

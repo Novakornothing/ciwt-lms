@@ -36,7 +36,7 @@ CHAPTER = Ch(
                 'World-writable means any account can change the contents. That fails integrity even before you talk about secrecy.'),
               S('Unexpected SUID is a spare master key',
                 'SUID',
-                'a program that runs as its owner, often root, regardless of who launched it',
+                'a program that runs as its owner, often root, regardless of who launched it; find -perm -4000 lists those files',
                 'a helper binary under /usr/local is setuid root and nobody can say why',
                 'Whoever runs it borrows the owner power.',
                 'A stamp that signs papers as the manager, left on the counter, lets any clerk sign.',

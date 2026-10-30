@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Exam-Day Simulator — {{ section.name }} — {{ site_name }}{% endblock %}
+{% block title %}Practice Exams — {{ section.name }} — {{ site_name }}{% endblock %}
 {% block content %}
-<h1 class="h3">Exam-Day Simulator — {{ section.name }}</h1>
+<h1 class="h3">Practice Exams — {{ section.name }}</h1>
 <p class="text-muted">Latest sitting per student and exam. Ready to sit: {{ counts.ready }} · Borderline: {{ counts.borderline }} · Needs remediation: {{ counts.remediate }}.</p>
 {% if weak %}<h2 class="h5">Weak domains across the class</h2>
 <ul>{% for w in weak %}<li>{{ w.exam }} {{ w.domain }} {{ w.name }} — {{ w.n }} student{{ 's' if w.n != 1 }} under 60%</li>{% endfor %}</ul>{% endif %}
@@ -9,7 +9,7 @@
   <a class="btn btn-outline-navy btn-sm" href="{{ url_for('instructor_exam_sim_csv', section_id=section.id) }}"><i class="bi bi-download" aria-hidden="true"></i> Export Scores CSV</a>
   {% if can_grade %}<form method="post" action="{{ url_for('instructor_exam_sim_sync', section_id=section.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button class="btn btn-navy btn-sm" type="submit"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Sync Latest Exam-Sim Scores to Gradebook / LTI</button>
+    <button class="btn btn-navy btn-sm" type="submit"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Sync Latest Practice Exam Scores to Gradebook / LTI</button>
   </form>{% endif %}
   {% if last_sync %}<span class="small text-muted align-self-center">Last synced {{ last_sync.strftime('%Y-%m-%d %H:%M') }} UTC</span>{% endif %}
 </div>

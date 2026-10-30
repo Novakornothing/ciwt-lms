@@ -11,7 +11,7 @@
   <div><strong>{{ exam.name }} ({{ exam.code }})</strong> · {{ mode.name }} · {{ 'Exam mode' if att.strict else 'Practice mode' }}</div>
   <div class="es-timer" role="timer" aria-live="off"><i class="bi bi-clock" aria-hidden="true"></i> <span id="esClock">--:--</span></div>
   {% if not att.strict %}<button type="button" class="btn btn-sm btn-outline-navy" id="esPause" aria-pressed="{{ 'true' if paused else 'false' }}">{{ 'Resume timer' if paused else 'Pause timer' }}</button>{% endif %}
-  {% if n_pbq %}<button type="button" class="btn btn-sm btn-outline-gold" id="esSkipPbq">Skip PBQs &amp; return later</button>{% endif %}
+  {% if n_pbq %}<button type="button" class="btn btn-sm btn-outline-gold" id="esSkipPbq">Skip Hands-On Challenges &amp; return later</button>{% endif %}
   <button type="button" class="btn btn-sm btn-outline-navy" id="esWbToggle" aria-controls="esWhiteboard" aria-expanded="false"><i class="bi bi-pencil-square" aria-hidden="true"></i> Whiteboard / Scratchpad</button>
   {% if not att.strict %}<button type="button" class="btn btn-sm btn-outline-secondary" id="esViewToggle" aria-pressed="false" data-single="Single-question view" data-scroll="All-questions scroll view">All-questions scroll view</button>{% endif %}
   {% if mult != 1.0 %}<span class="badge text-bg-info" id="esAccBadge">{{ mult }}× time accommodation applied — {{ minutes }} min</span>{% endif %}
@@ -58,7 +58,7 @@
   {% for q in questions %}{% set i = q.n %}{% set pbq_total = (q.parts|length) if q.type == 'sim_pbq' else ((q.prompts|length) if q.type == 'match' else (q.slots if q.type == 'order' else 0)) %}{% set pbq_done = (q.saved | select | list | length) if (q.pbq and q.saved) else 0 %}
   <section class="card card-body mb-3 es-q{% if q.pbq %} es-pbq{% endif %}" id="esq{{ i }}" data-n="{{ i }}" data-pos="{{ loop.index }}" aria-labelledby="esqh{{ i }}"{% if q.pbq %} data-pbq-type="{{ q.type }}" data-exam-code="{{ exam.code }}" data-lo="{{ q.lo }}"{% endif %}>
     <div class="d-flex justify-content-between align-items-start gap-2">
-      <h2 class="h6 mb-2" id="esqh{{ i }}">Question {{ loop.index }}{% if q.pbq %} <span class="badge text-bg-warning">PBQ</span>{% endif %}{% if q.type == 'sim_pbq' %} <span class="badge text-bg-info">Simulation</span>{% endif %} <span class="small text-muted">{{ q.lo }}</span>{% if q.pbq %} <span class="badge pbq-wb-progress" data-pbq-progress>Simulation Tasks Configured: {{ pbq_done }} / {{ pbq_total }}</span>{% endif %}</h2>
+      <h2 class="h6 mb-2" id="esqh{{ i }}">Question {{ loop.index }}{% if q.pbq %} <span class="badge text-bg-warning">Hands-On Challenge</span>{% endif %}{% if q.type == 'sim_pbq' %} <span class="badge text-bg-info">Simulation</span>{% endif %} <span class="small text-muted">{{ q.lo }}</span>{% if q.pbq %} <span class="badge pbq-wb-progress" data-pbq-progress>Simulation Tasks Configured: {{ pbq_done }} / {{ pbq_total }}</span>{% endif %}</h2>
       <label class="es-flag"><input type="checkbox" name="flag{{ i }}" value="1" class="es-flag-box"{% if q.flagged %} checked{% endif %}> <i class="bi bi-flag" aria-hidden="true"></i> Flag for review</label>
     </div>
     <p>{{ q.text }}</p>
@@ -68,12 +68,12 @@
     <div class="pbq-wb pbq-split-pane" data-pbq-workbench data-pbq-kind="{{ q.type }}" data-q="{{ i }}" data-wb-layout="split">
       <div class="pbq-wb-header">
         <div class="pbq-wb-title">
-          <span>Interactive PBQ Simulation Workbench</span>
+          <span>Interactive Hands-On Challenge Simulation Workbench</span>
           <span class="pbq-wb-mode-pill" data-wb-mode-pill>{{ exam.code }} Lab Environment</span>
         </div>
         <span class="pbq-wb-progress" data-wb-progress-mirror>Simulation Tasks Configured: {{ pbq_done }} / {{ pbq_total }}</span>
       </div>
-      <div class="pbq-wb-tabs" role="tablist" aria-label="PBQ Workbench Views">
+      <div class="pbq-wb-tabs" role="tablist" aria-label="Hands-On Challenge Views">
         <button type="button" role="tab" class="pbq-wb-tab is-active" id="pbqWbTab_{{ i }}_visualizer" data-wb-tab="visualizer" aria-controls="pbqWbPanel_{{ i }}_visualizer" aria-selected="true">Topology &amp; Hardware Visualizer</button>
         <button type="button" role="tab" class="pbq-wb-tab" id="pbqWbTab_{{ i }}_inspector" data-wb-tab="inspector" aria-controls="pbqWbPanel_{{ i }}_inspector" aria-selected="false">Live Device Inspector / Logs</button>
         <button type="button" role="tab" class="pbq-wb-tab" id="pbqWbTab_{{ i }}_terminal" data-wb-tab="terminal" aria-controls="pbqWbPanel_{{ i }}_terminal" aria-selected="false">Diagnostic Terminal</button>

@@ -23,7 +23,7 @@
 {% endif %}
 <div class="pf-grid">
   <section class="card card-body" aria-labelledby="pf-c"><h2 class="h5" id="pf-c">Courses</h2>
-    {% for c in pf.courses %}<p class="mb-1"><strong>{{ c.code }}</strong> {{ c.title }} — {{ c.mastered }} of {{ c.objectives }} competencies mastered</p>{% else %}<p class="mb-0">No courses yet.</p>{% endfor %}</section>
+    {% for c in pf.courses %}<p class="mb-1"><strong>{{ c.title }}</strong> — {{ c.mastered }} of {{ c.objectives }} competencies mastered</p>{% else %}<p class="mb-0">No courses yet.</p>{% endfor %}</section>
   <section class="card card-body" aria-labelledby="pf-x"><h2 class="h5" id="pf-x">Certification domain readiness</h2>
     {% for e in pf.certifications %}<h3 class="h6 mt-2">{{ e.name }} — {{ e.pct }}%</h3>
       {% for dm in e.domains %}<div class="small">{{ dm.domain }} {{ dm.name }}: {{ dm.level }} ({{ dm.pct }}%)</div>
@@ -31,14 +31,14 @@
     {% else %}<p class="mb-0">No evidence yet.</p>{% endfor %}
     <p class="small text-body-secondary mt-2 mb-0">Readiness is an estimate from course objectives mapped to exam domains; it does not predict an exam score. Not endorsed by CompTIA.</p></section>
 </div>
-<section class="card card-body mt-3" aria-labelledby="pf-e"><h2 class="h5" id="pf-e">Exam-Day Simulator sittings</h2>
+<section class="card card-body mt-3" aria-labelledby="pf-e"><h2 class="h5" id="pf-e">Practice exam sittings</h2>
   {% if pf.exam_sittings %}<div class="table-responsive"><table class="table table-sm pf-table"><thead><tr><th scope="col">Exam</th><th scope="col">Simulated score</th><th scope="col">Status</th><th scope="col">Date · mode</th></tr></thead><tbody>
   {% for x in pf.exam_sittings %}<tr><td>{{ x.name }} ({{ x.code }})</td><td>{{ x.score }}/900 · pass bar {{ x.bar }}</td>
   <td>{% if x.ready %}<span class="pf-badge"><i class="bi bi-patch-check" aria-hidden="true"></i> {{ x.status }}</span>{% else %}{{ x.status }}{% endif %}</td><td>{{ x.date }} · {{ x.mode }}</td></tr>{% endfor %}</tbody></table></div>
   <p class="small text-body-secondary mb-0">Simulated scores (CompTIA does not publish its scaling); not an official exam result.</p>
   {% else %}<p class="mb-0">No simulator sittings yet.</p>{% endif %}</section>
 <section class="card card-body mt-3" aria-labelledby="pf-m"><h2 class="h5" id="pf-m">Verified competencies</h2>
-  {% if pf.competencies %}<div class="table-responsive"><table class="table table-sm pf-table"><thead><tr><th scope="col">Objective</th><th scope="col">Competency</th><th scope="col">Mastery</th></tr></thead><tbody>
+  {% if pf.competencies %}<div class="table-responsive"><table class="table table-sm pf-table"><thead><tr><th scope="col">Objective</th><th scope="col">Competency</th><th scope="col">Skill Mastery</th></tr></thead><tbody>
   {% for c in pf.competencies %}<tr><td>{{ c.id }}</td><td>{{ c.text }}</td><td>{{ c.pct }}%</td></tr>{% endfor %}</tbody></table></div>
   {% else %}<p class="mb-0">None verified yet. Competencies appear once the mastery engine rates an objective mastered.</p>{% endif %}</section>
 <section class="card card-body mt-3" aria-labelledby="pf-l"><h2 class="h5" id="pf-l">Labs completed</h2>

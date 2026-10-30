@@ -7,8 +7,7 @@ from curriculum_sec.render import CHAPTERS
 
 DISCLAIMER = (
     'Original Novak LMS™ curriculum. Covers foundational topics comparable to CompTIA Security+ (SY0-701) '
-    'and to entry-level cyber work. Not affiliated with, endorsed by, or a substitute for any vendor '
-    'certification or for the Department of Defense.'
+    'and to entry-level cyber work. Not affiliated with, endorsed by, or a substitute for any vendor certification.'
 )
 TITLE = 'Cybersecurity'
 DESCRIPTION = (
@@ -168,7 +167,7 @@ def ensure_sec(db, models, utcnow, grant=None):
         try:
             db.session.execute(
                 db.text('INSERT OR REPLACE INTO section_join_code (section_id, code) VALUES (:sid, :c)'),
-                {'sid': section.id, 'c': 'SEC-DEMO'},
+                {'sid': section.id, 'c': 'CYBER-DEMO'},
             )
         except Exception:
             pass

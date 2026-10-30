@@ -74,7 +74,7 @@ def test_practice_bank_size():
     assert len({it['id'] for it in items}) == len(items)
 
 
-def test_sec_seed_enroll_lesson_lab_and_practice(student, mod):
+def test_sec_seed_enroll_lesson_lab_and_practice(student, instructor, admin, anon, mod):
     with mod.app.app_context():
         course = mod.Course.query.filter_by(code='SEC').one()
         assert course.title == 'Cybersecurity'
@@ -93,8 +93,10 @@ def test_sec_seed_enroll_lesson_lab_and_practice(student, mod):
     page = student.get(f'/student/module/{sec_id}/{mod_id}/lesson/{les_id}')
     assert page.status_code == 200
     html = page.get_data(as_text=True)
-    assert 'Plain English' in html and 'Interactive Try-It' in html
+    assert 'Plain English' in html and 'Try-It' in html
     assert 'data-step-rung="R1"' in html
+    assert html.count('id="novakStepStyleBar"') == 1 and '5 Ways to Learn:' in html
+    assert 'id="lessonRail"' in html and html.count('data-rail-rung=') == 5
     lab = student.get('/labs/sec-vm-perms')
     assert lab.status_code == 200
     assert 'Stage 2' in lab.get_data(as_text=True)
@@ -109,3 +111,38 @@ def test_sec_seed_enroll_lesson_lab_and_practice(student, mod):
     body = take.get_data(as_text=True)
     assert 'Cybersecurity foundations practice' in body
     assert 'id="assessQuestions"' in body
+    dash_html = dash.get_data(as_text=True)
+    assert 'Course Chapters' in dash_html and 'Hands-On Labs' in dash_html and 'Practice Exams' in dash_html
+    assert '>SEC<' not in dash_html and 'SEC ·' not in dash_html
+    assert 'Cybersecurity' in instructor.get('/instructor').get_data(as_text=True)
+    exports = admin.get('/admin/exports').get_data(as_text=True)
+    assert 'Cybersecurity' in exports and '>SEC<' not in exports
+    tour = anon.get('/demo/tour').get_data(as_text=True)
+    assert 'Cybersecurity' in tour and 'Threats, access, firewalls' in tour
+    found = student.get('/api/search?q=iptables').get_json()['command_card']
+    assert found and any('sec-vm-iptables' in (p.get('url') or '') for p in found.get('practice') or [])
+    aged = student.get('/api/search?q=chage').get_json()['command_card']
+    assert aged and any('sec-vm-users' in (p.get('url') or '') for p in aged.get('practice') or [])
+    hashed = student.get('/api/search?q=sha256sum').get_json()['command_card']
+    assert hashed and any('sec-vm-hash' in (p.get('url') or '') for p in hashed.get('practice') or [])
+    import command_cards as CC
+    for query in ('iptables', 'sha256sum', 'chage', 'find -perm', 'ss', 'journalctl', 'grep Failed /var/log/auth.log'):
+        card = CC.card_for(query)
+        assert card, query
+    import interactive_labs as IL
+    ipt = CC.labs_using('iptables', IL.LABS)
+    assert any(lab.get('id') == 'sec-vm-iptables' for lab in ipt)
+    assert any(lab.get('id') == 'sec-vm-hash' for lab in CC.labs_using('sha256sum', IL.LABS))
+    assert any(lab.get('id') == 'sec-vm-users' for lab in CC.labs_using('chage', IL.LABS))
+    assert any(lab.get('id') == 'sec-vm-suid' for lab in CC.labs_using('find', IL.LABS))
+    assert any(lab.get('id') == 'sec-vm-proc' for lab in CC.labs_using('ss', IL.LABS))
+    assert any(lab.get('id') == 'sec-vm-authlog' for lab in CC.labs_using('journalctl', IL.LABS))
+    assert any(lab.get('id') == 'sec-vm-authlog' for lab in CC.labs_using('grep', IL.LABS))
+    import io
+    import zipfile
+    import scorm_xapi
+    data, _mime, name = scorm_xapi.build_scorm_package_zip('SEC', '1.2')
+    assert name.startswith('novak-lms-sec-')
+    manifest = zipfile.ZipFile(io.BytesIO(data)).read('imsmanifest.xml').decode()
+    assert '<title>Cybersecurity</title>' in manifest
+    assert 'ile_cin' not in manifest and 'A-150' not in manifest and '>SEC<' not in manifest

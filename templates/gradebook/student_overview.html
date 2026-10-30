@@ -16,7 +16,7 @@
         <div class="d-flex gap-3 align-items-center mb-3">
           {{ ring(r.grade, 'Course grade', 84) }}
           <div class="min-w-0">
-            <div class="small text-muted text-truncate">{{ c.section.course.code }} · {{ c.section.course.title }}</div>
+            <div class="small text-muted text-truncate">{{ c.section.course.title }}</div>
             <h2 class="h6 mb-1">{{ c.section.name }}</h2>
             {{ grade_badge(r, c.gb.settings.pass_mark) }} {% if r.grade is not none %}<span class="fw-bold ms-1">{{ r.letter }}</span>{% endif %}
           </div>

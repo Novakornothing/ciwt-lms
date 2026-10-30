@@ -14,11 +14,11 @@
         <span class="badge text-bg-light">Learn</span>
       </div>
       <div class="card-body d-flex flex-column">
-        <p class="small text-muted mb-3">Experience the 4-rung in-lesson explanation ladder (539 bespoke sections), in-browser Linux VM + Windows 11/Cisco IOS labs, 90-question Exam-Day Simulator, and 98-card Speed-Drill.</p>
+        <p class="small text-muted mb-3">Experience the 5 Ways to Learn (539 bespoke sections), in-browser Linux VM + Windows 11/Cisco IOS labs, Practice Exams, and 98-card Speed-Drill.</p>
         <div class="d-grid gap-2 mt-auto">
           <a href="{{ url_for('demo_enter', role='student') }}" class="btn btn-brand">Launch Student Dashboard →</a>
-          <a href="{{ url_for('demo_enter', role='student', next='/student/module/1/1/lesson/1') }}" class="btn btn-sm btn-outline-navy">Jump to 4-Rung Adaptive Lesson</a>
-          <a href="{{ url_for('demo_enter', role='student', next='/student/section/1/exam-sim') }}" class="btn btn-sm btn-outline-navy">Jump to Exam-Day Simulator &amp; PBQs</a>
+          <a href="{{ url_for('demo_enter', role='student', next='/student/module/1/1/lesson/1') }}" class="btn btn-sm btn-outline-navy">Jump to 5 Ways to Learn</a>
+          <a href="{{ url_for('demo_enter', role='student', next='/student/section/1/exam-sim') }}" class="btn btn-sm btn-outline-navy">Jump to Practice Exams &amp; Hands-On Challenges</a>
           <a href="{{ url_for('demo_enter', role='student', next='/student/section/1/speed-drill') }}" class="btn btn-sm btn-outline-navy">Jump to 60s Port/Acronym Speed-Drill</a>
         </div>
       </div>
@@ -31,12 +31,12 @@
         <span class="badge text-bg-light">Teach</span>
       </div>
       <div class="card-body d-flex flex-column">
-        <p class="small text-muted mb-3">See "Who Needs Me" in 10 seconds, Helix webcam attention signals, full Gradebook with Exam-Sim score sync, and per-student ADA 1.25×–2.0× time accommodations.</p>
+        <p class="small text-muted mb-3">See Students Needing Help in 10 seconds, Eye Tracking signals, full Gradebook with Practice Exam score sync, and per-student ADA 1.25×–2.0× time accommodations.</p>
         <div class="d-grid gap-2 mt-auto">
           <a href="{{ url_for('demo_enter', role='instructor') }}" class="btn btn-brand">Launch Instructor Co-Pilot →</a>
-          <a href="{{ url_for('demo_enter', role='instructor', next='/instructor/section/1/who-needs-me') }}" class="btn btn-sm btn-outline-navy">Jump to "Who Needs Me" Briefing</a>
-          <a href="{{ url_for('demo_enter', role='instructor', next='/instructor/section/1/attention') }}" class="btn btn-sm btn-outline-navy">Jump to Helix Attention Dashboard</a>
-          <a href="{{ url_for('demo_enter', role='instructor', next='/instructor/section/1/exam-sim') }}" class="btn btn-sm btn-outline-navy">Jump to Exam-Sim &amp; ADA Accommodations</a>
+          <a href="{{ url_for('demo_enter', role='instructor', next='/instructor/section/1/who-needs-me') }}" class="btn btn-sm btn-outline-navy">Jump to Students Needing Help Briefing</a>
+          <a href="{{ url_for('demo_enter', role='instructor', next='/instructor/section/1/attention') }}" class="btn btn-sm btn-outline-navy">Jump to Eye Tracking Dashboard</a>
+          <a href="{{ url_for('demo_enter', role='instructor', next='/instructor/section/1/exam-sim') }}" class="btn btn-sm btn-outline-navy">Jump to Practice Exam &amp; ADA Accommodations</a>
         </div>
       </div>
     </div>
@@ -48,11 +48,11 @@
         <span class="badge text-bg-light">Admin</span>
       </div>
       <div class="card-body d-flex flex-column">
-        <p class="small text-muted mb-3">Inspect Institutional Outcomes &amp; Voucher-Readiness metrics, Training Quality Indicator (TQI) packets, LTI 1.3 / Campus SSO, and the tamper-evident FERPA audit chain.</p>
+        <p class="small text-muted mb-3">Inspect Institutional Outcomes &amp; Exam Readiness metrics, Results &amp; ROI packets, LTI 1.3 / Campus SSO, and the tamper-evident FERPA audit chain.</p>
         <div class="d-grid gap-2 mt-auto">
           <a href="{{ url_for('demo_enter', role='admin') }}" class="btn btn-brand">Launch Admin Command →</a>
           <a href="{{ url_for('demo_enter', role='admin', next='/admin/outcomes') }}" class="btn btn-sm btn-outline-navy">Jump to Institutional Outcomes Report</a>
-          <a href="{{ url_for('demo_enter', role='admin', next='/admin/tqi') }}" class="btn btn-sm btn-outline-navy">Jump to TQI Command Board</a>
+          <a href="{{ url_for('demo_enter', role='admin', next='/admin/tqi') }}" class="btn btn-sm btn-outline-navy">Jump to Results &amp; ROI Board</a>
           <a href="{{ url_for('demo_enter', role='admin', next='/admin/institutions') }}" class="btn btn-sm btn-outline-navy">Jump to Multi-Tenant &amp; LTI 1.3</a>
         </div>
       </div>
@@ -77,11 +77,11 @@
 <div class="card mb-4">
   <div class="card-header navy">Suggested 10-minute briefing walkthrough</div>
   <ol class="list-group list-group-numbered list-group-flush">
-    <li class="list-group-item"><strong>Adaptive 4-Rung Explanation Ladder:</strong> Launch the Student demo → open Lesson 1.1 → click <em>Explain it another way</em> to swap in place through Plain Language (R1), Real-World Analogy (R2), Visual Diagram (R3), and Interactive Try-It (R4).</li>
+    <li class="list-group-item"><strong>5 Ways to Learn:</strong> Launch the Student demo → open Lesson 1.1 → click <em>Explain it another way</em> to swap in place through Plain Language (R1), Real-World Analogy (R2), Visual Diagram (R3), and Interactive Try-It (R4).</li>
     <li class="list-group-item"><strong>Real-VM &amp; Stateful Simulation Labs:</strong> Open the Labs hub to run the in-browser Linux VM (<code>v86</code>), stateful Windows 11 PowerShell/CMD &amp; Cisco IOS CLI labs, Packet-Flow Visualizer, and SVG Hardware Bench.</li>
-    <li class="list-group-item"><strong>Exam-Day Readiness Simulator &amp; Speed-Drill:</strong> Start a CompTIA FC0-U71, 220-1201, 220-1202, or N10-009 sitting with Candidate Agreement, interactive multi-part PBQs, Digital Whiteboard, Option Strikethrough, Printable Score Report, and 1-Click Missed-Objectives Drill.</li>
-    <li class="list-group-item"><strong>Helix Eye-Tracking &amp; Instructor Co-Pilot:</strong> Enable the opt-in Helix dock on a lesson, then switch to Instructor → Attention Dashboard &amp; "Who Needs Me" briefing.</li>
-    <li class="list-group-item"><strong>Institutional Outcomes &amp; TQI:</strong> Switch to Admin → Outcomes Report to view Voucher-Readiness metrics, CSV/JSON exports, and TQI critiques.</li>
+    <li class="list-group-item"><strong>Practice Exams &amp; Speed-Drill:</strong> Start a CompTIA FC0-U71, 220-1201, 220-1202, or N10-009 sitting with Candidate Agreement, Hands-On Challenges, Digital Whiteboard, Option Strikethrough, Printable Score Report, and 1-Click Missed-Objectives Drill.</li>
+    <li class="list-group-item"><strong>Eye Tracking &amp; Instructor Co-Pilot:</strong> Enable the opt-in Eye Tracking dock on a lesson, then switch to Instructor → Eye Tracking dashboard &amp; Students Needing Help briefing.</li>
+    <li class="list-group-item"><strong>Results &amp; ROI:</strong> Switch to Admin → Outcomes Report to view Exam Readiness metrics, CSV/JSON exports, and course critiques.</li>
   </ol>
 </div>
 

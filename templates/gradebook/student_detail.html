@@ -43,7 +43,7 @@
 
 {% if es_grades %}
 <div class="card mb-4" id="gbExamSim">
-  <div class="card-header navy d-flex justify-content-between"><span>Exam-Day Simulator</span><span class="small opacity-75">synced by your instructor · not part of the course grade</span></div>
+  <div class="card-header navy d-flex justify-content-between"><span>Practice Exams</span><span class="small opacity-75">synced by your instructor · not part of the course grade</span></div>
   <ul class="list-group list-group-flush">{% for g in es_grades %}<li class="list-group-item d-flex flex-wrap justify-content-between gap-2"><span>{{ g.code }}</span><strong>{{ g.score }}/900 ({{ g.status }})</strong><span class="small text-muted">{{ g.pct }}% · synced {{ g.synced.strftime('%Y-%m-%d') if g.synced else '' }}</span></li>{% endfor %}</ul>
 </div>
 {% endif %}
@@ -102,5 +102,5 @@
 </div>
 {% endif %}
 {% endfor %}
-<p class="small text-muted">{{ st.policy|capitalize }} attempt counts. Course grade = weighted average of categories with scores ({% for key, label in categories if gb.weights[key] %}{{ label }} {{ gb.weights[key] }}%{{ ', ' if not loop.last }}{% endfor %}). Helix attention data is never part of a grade.</p>
+<p class="small text-muted">{{ st.policy|capitalize }} attempt counts. Course grade = weighted average of categories with scores ({% for key, label in categories if gb.weights[key] %}{{ label }} {{ gb.weights[key] }}%{{ ', ' if not loop.last }}{% endfor %}). Eye Tracking data is never part of a grade.</p>
 {% endblock %}

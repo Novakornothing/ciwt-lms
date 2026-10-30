@@ -9,7 +9,7 @@
   <fieldset><legend class="h6">Your classes</legend>
   {% for s in sections %}
   <div class="form-check"><input class="form-check-input" type="radio" name="section_id" id="cm{{ s.id }}" value="{{ s.id }}" {% if ctx.section_id == s.id or (not ctx.section_id and loop.first) %}checked{% endif %}>
-    <label class="form-check-label" for="cm{{ s.id }}">{{ s.name }} <span class="small mx-muted">({{ s.course.code }})</span></label></div>
+    <label class="form-check-label" for="cm{{ s.id }}">{{ s.name }}</label></div>
   {% else %}<p>You do not teach any classes here yet.</p>{% endfor %}
   </fieldset>
   {% if sections %}<button class="btn btn-brand mt-3" type="submit">Connect</button>{% endif %}

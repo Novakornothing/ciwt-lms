@@ -591,7 +591,7 @@ def tests_netplus():
     form2 = _balance_select(pool[15:] + pool[:15], 50, categories=cats)
     form3 = _balance_select(pool[30:] + pool[:30], 50, categories=cats)
     return [
-        ("Network Operations Knowledge Test A", "Scenario-based networking, infrastructure, security, and operations. 50 questions. Passing score 80%.", 1, form1),
-        ("Network Operations Knowledge Test B", "Scenario-based networking, infrastructure, security, and operations. 50 questions. Passing score 80%.", 2, form2),
-        ("Network Operations Knowledge Test C", "Scenario-based networking, infrastructure, security, and operations. 50 questions. Passing score 80%.", 3, form3),
+        ("Basic Networking Knowledge Test A", "Scenario-based networking, infrastructure, security, and operations. 50 questions. Passing score 80%.", 1, form1),
+        ("Basic Networking Knowledge Test B", "Scenario-based networking, infrastructure, security, and operations. 50 questions. Passing score 80%.", 2, form2),
+        ("Basic Networking Knowledge Test C", "Scenario-based networking, infrastructure, security, and operations. 50 questions. Passing score 80%.", 3, form3),
     ]

@@ -173,13 +173,13 @@ def test_student_sitting_end_to_end(student, instructor, app, mod):
     home = student.get('/student/section/1').get_data(as_text=True)
     assert '/student/section/1/exam-sim' in home
     html = student.get('/student/section/1/exam-sim').get_data(as_text=True)
-    assert 'Exam-Day Readiness Simulator' in html and '220-1201' in html and '220-1202' in html and 'N10-009' in html
+    assert 'Practice Exams' in html and '220-1201' in html and '220-1202' in html and 'N10-009' in html
     r = student.post('/student/section/1/exam-sim/start', data={'exam': 'N', 'mode': 'sprint', 'timing': 'practice'})
     assert r.status_code == 302
     take_url = r.headers['Location']
     att_id = int(re.search(r'/exam-sim/(\d+)', take_url).group(1))
     page = student.get(take_url).get_data(as_text=True)
-    assert 'Skip PBQs &amp; return later' in page and 'id="esPause"' in page and 'Flag for review' in page
+    assert 'Skip Hands-On Challenges &amp; return later' in page and 'id="esPause"' in page and 'Flag for review' in page
     assert 'Answered' in page and 'Unanswered' in page and 'Flagged' in page and 'exam_sim.js' in page
     assert page.count('class="card card-body mb-3 es-q') == 15 and page.count('es-q es-pbq') == 2
     assert page.index('es-pbq') < page.index('es-q"')

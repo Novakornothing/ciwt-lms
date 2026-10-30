@@ -18,7 +18,7 @@
           <tr class="{% if not s.is_active %}is-inactive{% endif %}">
             <th scope="row" class="fw-normal">
               <a class="fw-semibold row-title-link" href="{{ url_for('instructor_section', section_id=s.id) }}">{{ s.name }}</a>
-              <div class="small text-muted">{{ s.course.code }}{% if s.start_date %} · {{ s.start_date }} → {{ s.end_date or '…' }}{% endif %}{% if not s.is_active %} · <span class="badge badge-closed">inactive</span>{% endif %}</div>
+              <div class="small text-muted">{{ s.course.title }}{% if s.start_date %} · {{ s.start_date }} → {{ s.end_date or '…' }}{% endif %}{% if not s.is_active %} · <span class="badge badge-closed">inactive</span>{% endif %}</div>
             </th>
             <td data-label="Instructor">
               <form method="post" action="{{ url_for('admin_assign_instructor') }}" class="d-flex gap-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -61,7 +61,7 @@
           <div class="mb-3">
             <label class="form-label" for="f-course_id">Course</label>
             <select id="f-course_id" name="course_id" class="form-select" required>
-              {% for c in courses %}<option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>{% endfor %}
+              {% for c in courses %}<option value="{{ c.id }}">{{ c.title }}</option>{% endfor %}
             </select>
           </div>
           <div class="mb-3">

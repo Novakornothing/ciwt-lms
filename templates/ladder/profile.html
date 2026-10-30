@@ -13,7 +13,7 @@
   </ol>
 </nav>
 <div class="page-hero">
-  <div class="eyebrow">Explanation ladder</div>
+  <div class="eyebrow">5 Ways to Learn</div>
   <h1 class="h3 mb-1">What helps {{ student.full_name if staff else 'you' }} learn</h1>
   {% if staff %}{% set ck = ladder_clicked(student.id, section.id) %}{% if ck and ck.struggles %}
   <div class="clicked-box mt-2"><span class="clicked-badge"><i class="bi bi-lightbulb" aria-hidden="true"></i> What finally clicked: {{ ck.best_text or 'not resolved yet' }}</span>

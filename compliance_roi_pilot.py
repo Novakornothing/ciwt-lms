@@ -18,7 +18,7 @@ VPAT_CRITERIA = [
         'name': 'Non-text Content',
         'level': 'A',
         'status': 'Supports',
-        'remarks': 'All 115 inline lesson SVG architecture blueprints, 10 multi-layer SVG diagrams, and 36 PBQ Workbench topologies include descriptive role="img", aria-label, title/caption text, and accompanying HTML technical specification tables.',
+        'remarks': 'All 115 inline lesson SVG architecture blueprints, 10 multi-layer SVG diagrams, and 36 Hands-On Challenge topologies include descriptive role="img", aria-label, title/caption text, and accompanying HTML technical specification tables.',
     },
     {
         'code': '1.2.1–1.2.5',
@@ -39,14 +39,14 @@ VPAT_CRITERIA = [
         'name': 'Meaningful Sequence',
         'level': 'A',
         'status': 'Supports',
-        'remarks': 'DOM reading order matches visual layout across lessons, 4-rung adaptive ladders (R0–R4), Split-Pane PBQ Workbenches, and mobile responsive stacked tables.',
+        'remarks': 'DOM reading order matches visual layout across lessons, 5 Ways to Learn, Hands-On Challenges, and mobile responsive stacked tables.',
     },
     {
         'code': '1.3.3',
         'name': 'Sensory Characteristics',
         'level': 'A',
         'status': 'Supports',
-        'remarks': 'Instructions and status indicators never rely solely on shape, size, or visual location; all PBQ nodes, mastery cells, and section steppers include explicit text badges and ARIA labels.',
+        'remarks': 'Instructions and status indicators never rely solely on shape, size, or visual location; all Hands-On Challenge nodes, mastery cells, and section steppers include explicit text badges and ARIA labels.',
     },
     {
         'code': '1.3.4–1.3.5',
@@ -60,7 +60,7 @@ VPAT_CRITERIA = [
         'name': 'Use of Color',
         'level': 'A',
         'status': 'Supports',
-        'remarks': 'Mastery heatmaps, exam review grids, and PBQ configuration badges pair color with text symbols (✓, ●, ○, S flag) and screen-reader status strings.',
+        'remarks': 'Mastery heatmaps, exam review grids, and Hands-On Challenge configuration badges pair color with text symbols (✓, ●, ○, S flag) and screen-reader status strings.',
     },
     {
         'code': '1.4.3',
@@ -88,14 +88,14 @@ VPAT_CRITERIA = [
         'name': 'Keyboard & No Keyboard Trap',
         'level': 'A',
         'status': 'Supports',
-        'remarks': '100% keyboard operable across lessons, 4-rung ladders, Exam-Sim shortcuts (←/→, 1–6, F, W), Speed-Drill flashcards, Split-Pane PBQ SVG nodes (Tab/Enter/Space), and CLI consoles.',
+        'remarks': '100% keyboard operable across lessons, 5 Ways to Learn, Practice Exam shortcuts (←/→, 1–6, F, W), Speed-Drill flashcards, Hands-On Challenge SVG nodes (Tab/Enter/Space), and CLI consoles.',
     },
     {
         'code': '2.2.1 & 2.2.2',
         'name': 'Timing Adjustable (ADA Exam Accommodations)',
         'level': 'A',
         'status': 'Supports',
-        'remarks': 'Instructors and administrators can grant per-student ADA time accommodations (1.25x, 1.5x, 2.0x) on Knowledge Tests and Exam-Day Simulator sittings, plus practice-mode server-side pause.',
+        'remarks': 'Instructors and administrators can grant per-student ADA time accommodations (1.25x, 1.5x, 2.0x) on Knowledge Tests and Practice Exams sittings, plus practice-mode server-side pause.',
     },
     {
         'code': '2.3.1',
@@ -123,7 +123,7 @@ VPAT_CRITERIA = [
         'name': 'Compatible & Status Messages (ARIA Live Regions)',
         'level': 'A / AA',
         'status': 'Supports',
-        'remarks': 'Dynamic updates in ladder checks, Exam-Sim timers/autosave, Speed-Drill feedback, PBQ CLI/Inspector outputs, and AI Tutor responses announce via role="status" and aria-live="polite".',
+        'remarks': 'Dynamic updates in section checks, Practice Exam timers/autosave, Speed-Drill feedback, Hands-On Challenge CLI/Inspector outputs, and AI Tutor responses announce via role="status" and aria-live="polite".',
     },
     {
         'code': 'Section 508 Ch. 3, 5 & 6',
@@ -144,7 +144,7 @@ PRIVACY_CONTROLS = [
         'id': 'PRIV-RAM-01',
         'question': 'Does the platform transmit or store student webcam video, images, or raw biometric recordings on external servers?',
         'response': 'No Video Ever Transmitted — 100% Client-Side RAM',
-        'evidence': 'Helix™ 478-landmark MediaPipe FaceMesh gaze tracking is strictly opt-in per session, executes 100% locally in volatile browser RAM via WebAssembly, and transmits only aggregate numerical dwell summaries. Saying no never affects grades.',
+        'evidence': 'Helix™ 478-landmark MediaPipe FaceMesh eye tracking is strictly opt-in per session, executes 100% locally in volatile browser RAM via WebAssembly, and transmits only aggregate numerical dwell summaries. Saying no never affects grades.',
     },
     {
         'domain': 'DATA — FERPA & GDPR Student Record Ownership',
@@ -165,7 +165,7 @@ PRIVACY_CONTROLS = [
         'id': 'PRIV-AI-04',
         'question': 'Are AI tutoring features grounded in course curriculum with instructor controls and zero training on student PII?',
         'response': 'Yes — Active & Verified',
-        'evidence': 'The Course Tutor retrieves strictly from course lessons, 5-path ladders, lab guides, and glossaries with source citations, refuses to hand out graded test answers, and can be toggled on/off per section by the instructor.',
+        'evidence': 'The Course Tutor retrieves strictly from course lessons, 5 Ways to Learn, lab guides, and glossaries with source citations, refuses to hand out graded test answers, and can be toggled on/off per section by the instructor.',
     },
 ]
 
@@ -241,10 +241,10 @@ def calculate_institutional_roi(
 
     # Legacy 4-tool itemized breakdown per student
     legacy_breakdown = [
-        {'tool': '1. Static eBook / Certware License', 'legacy_per_student': round(legacy_spend_per_student * 0.34), 'novak_included': 'Included (115 Visual Lessons + 539 Adaptive Ladders)'},
+        {'tool': '1. Static eBook / Certware License', 'legacy_per_student': round(legacy_spend_per_student * 0.34), 'novak_included': 'Included (115 Visual Lessons + 5 Ways to Learn)'},
         {'tool': '2. External Cloud VM / Lab Seat Subscription', 'legacy_per_student': round(legacy_spend_per_student * 0.33), 'novak_included': 'Included (90 Browser Labs + 24 WebAssembly Linux VMs)'},
-        {'tool': '3. Practice Exam & PBQ Prep Engine', 'legacy_per_student': round(legacy_spend_per_student * 0.21), 'novak_included': 'Included (1,400 Exam-Sim Items + 36 Split-Pane PBQs)'},
-        {'tool': '4. Analytics, Readiness & Proctoring Add-On', 'legacy_per_student': round(legacy_spend_per_student * 0.12), 'novak_included': 'Included (BKT Mastery + Who Needs Me + Local Helix)'},
+        {'tool': '3. Practice Exam & Hands-On Challenge Prep Engine', 'legacy_per_student': round(legacy_spend_per_student * 0.21), 'novak_included': 'Included (1,400 Practice Exam Items + 36 Hands-On Challenges)'},
+        {'tool': '4. Analytics, Readiness & Proctoring Add-On', 'legacy_per_student': round(legacy_spend_per_student * 0.12), 'novak_included': 'Included (Skill Mastery + Students Needing Help + Eye Tracking)'},
     ]
 
     # 2. Instructor Triage & Grading Hours Saved (14.5 hrs/week x 40 academic weeks = 145 hrs/instructor/term -> 580 hrs for 4 instructors)

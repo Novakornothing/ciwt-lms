@@ -57,11 +57,15 @@ def test_2_curriculum_3_zone_ux_progress_bar_stepper_and_focus_mode(student, app
         'novak-section-card',
         'novak-section-card-header',
         'novak-adaptive-rung-bar',
-        'R0 Standard',
-        'R1 Plain Language',
-        'R2 Real-World Analogy',
-        'R3 Visual Diagram',
-        'R4 Hands-On Try-It',
+        # Phase 1: one "5 Ways to Learn" bar with plain-English names
+        'id="novakStepStyleBar"',
+        '5 Ways to Learn:',
+        '>Standard<',
+        '>Plain English<',
+        '>Analogy<',
+        '>Visual<',
+        '>Try-It<',
+        'id="readerPrefs"',
         'id="focusModeNavBar"',
     ):
         assert expected in html, f'Missing {expected} in student lesson page'
@@ -169,7 +173,7 @@ def test_6_institutional_roi_dashboard_and_csv_export(anon, admin):
             'Instructor Triage &amp; Grading Reclaimed',
             'Avoided Retake Voucher Waste',
             '68%',
-            'VOUCHER READY',
+            'Exam Readiness',
         ):
             assert expected in html, f'Missing {expected} on {path}'
 
@@ -225,17 +229,20 @@ def test_8_financial_and_operational_marketing_focus(app, anon):
     """Verify financial & operational savings copy and 30-Day/30-Student Free Bundle CTAs on landing, specs, and llms.txt."""
     land_html = app.test_client().get('/', base_url='http://novakornothing.com').get_data(as_text=True)
     assert 'ciwt' not in land_html.lower()
+    # Phase 1: the hub shows three short cost cards; the full savings model lives on /roi and /specs.
     for phrase in (
-        'Financial &amp; Operational Impact: Cut Training TCO by 68%',
-        'Consolidate 4 Vendor Licenses into 1 Unified Stack',
-        'Eliminate Retake Voucher Waste',
-        'Reclaim 14.5 Instructor Hours Every Week',
-        '30-Day / 30-Student Free Bundle',
+        'id="savings"',
+        '$0 lab servers',
+        'Less re-teaching',
+        'Fewer retakes',
+        '$0 <small>for 30 days</small>',
         '/pilot/start',
-        '/roi',
-        '/compliance',
+        'href="/roi"',
+        'Schedule a Technical Consult',
     ):
         assert phrase in land_html, f'Missing {phrase} in landing.html'
+    roi_html = anon.get('/roi').get_data(as_text=True)
+    assert 'Avoided Retake Voucher Waste' in roi_html and '68%' in roi_html
 
     specs_html = anon.get('/specs').get_data(as_text=True)
     assert 'Cut Institutional Training TCO by 68%' in specs_html
@@ -429,10 +436,13 @@ def test_12_wave6_ux_refinements_spec_drawer_step_style_lab_fullwidth_filter_and
     assert "data-filter-kind=\"linuxgui\"" in catalog_html
     assert "data-filter-status=\"completed\"" in catalog_html
 
+    # Phase 1 student home: one continue card + three tabs
     dash_html = student.get("/student").get_data(as_text=True)
-    assert "All 105 Live Labs" in dash_html
-    assert "gp-hero-checklist" in dash_html
+    assert "Every lab (105)" in dash_html
     assert dash_html.count("Continue where you left off") == 1
+    assert dash_html.count("continue-btn") == 1
+    for tab in ("Course Chapters", "Hands-On Labs", "Practice Exams"):
+        assert f">{tab}</button>" in dash_html, tab
 
 
 def test_13_scorm_12_2004_zip_packages_and_adl_xapi_telemetry(anon, student):
@@ -445,7 +455,7 @@ def test_13_scorm_12_2004_zip_packages_and_adl_xapi_telemetry(anon, student):
         assert r12.status_code == 200 and r12.mimetype == "application/zip"
         with zipfile.ZipFile(io.BytesIO(r12.data), "r") as zf:
             names = set(zf.namelist())
-            assert {"imsmanifest.xml", "index.html", "scorm_driver.js", "ile_metadata.json"} <= names
+            assert {"imsmanifest.xml", "index.html", "scorm_driver.js", "package_metadata.json"} <= names
             manifest = zf.read("imsmanifest.xml").decode("utf-8")
             assert "<schemaversion>1.2</schemaversion>" in manifest
             assert "adlcp:scormtype=\"sco\"" in manifest
@@ -467,9 +477,13 @@ def test_13_scorm_12_2004_zip_packages_and_adl_xapi_telemetry(anon, student):
     assert len(data["statements"]) >= 1
     st0 = data["statements"][0]
     assert "actor" in st0 and "verb" in st0 and "object" in st0 and "result" in st0
+    # Public URL is a synthetic sample only; real learner statements need a staff login
+    assert data["sample_only"] is True and len(data["statements"]) == 1
+    assert data["statements"][0]["actor"]["account"]["name"] == "learner-demo"
+    assert student.get("/api/xapi/statements").get_json()["sample_only"] is True
 
     comp_html = anon.get("/compliance").get_data(as_text=True)
-    assert "SCORM 1.2" in comp_html and "SCORM 2004" in comp_html and "ADL xAPI" in comp_html
+    assert "SCORM 1.2" in comp_html and "SCORM 2004" in comp_html and "xAPI 1.0.3 statement export" in comp_html
 
 
 def test_14_legal_terms_dmca_liability_shield_oss_audit_and_no_official_comptia_claim(anon, student):
@@ -531,28 +545,35 @@ def test_15_wave7_and_wave8_clean_hub_economic_metric_demo_cta_factual_security_
     4. Factual Technical Security & Privacy Architecture (#heroSecurityPostureBar & /security) with ZERO 'SOC 2', 'HECVAT', or 'not built yet' claims anywhere.
     5. Commercial Pricing Tiers ($0 Pilot, $39/seat/mo Academy Pro, Custom Enterprise), Onboarding SLAs (99.9% Uptime, < 24-Hour Onboarding, < 1-Hour P1 SLA), and /consult booking flow + .ics invite.
     """
+    import re as _re
     land = anon.get("/landing").get_data(as_text=True)
-    for token in (
-        "class=\"hub-topnav\"",
-        "class=\"mark\"",
-        "id=\"heroLaunchInteractiveDemo\"",
-        "Launch Live Interactive Demo",
-        "Up to 80% Lower",
-        "$0/hr",
-        "52% Reduction",
-        "$42,000+ Saved",
-        "Zero-Video Client-Side Privacy (100% RAM)",
-        "Browser-Sandboxed Lab Isolation (105 Labs)",
-        "TLS 1.3 · RBAC · SHA-256 Audit Log",
-        "WCAG 2.2 AA &amp; Section 508 (VPAT 2.5)",
-        "SCORM 1.2/2004, ADL xAPI &amp; Navy ILE",
-        "id=\"pricing-slas\"",
-        "$39",
-        "99.9%",
-        "&lt; 24-Hour",
-        "Schedule a Technical Consult",
-    ):
-        assert token in land, f"Missing {token} in /landing"
+    body_html = land.split("<body", 1)[1]
+    # Phase 1 hub budget: logo + wordmark, <=3 top links, Sign In + Create Account
+    top = body_html.split('<nav class="topbar"', 1)[1].split("</nav>", 1)[0]
+    assert 'class="nav-mark"' in top and "NOVAK LMS™" in top
+    toplinks = top.split('class="toplinks"', 1)[1].split("</div>", 1)[0]
+    assert _re.findall(r">([^<]+)</a>", toplinks) == ["How It Works", "Pricing", "FAQ"]
+    assert 'href="/login">Sign In</a>' in top and 'href="/register">Create Account</a>' in top
+    hero = body_html.split('<header class="hero"', 1)[1].split("</header>", 1)[0]
+    assert 'class="mark"' in hero
+    assert "Every Mind Learns Differently.<br>Now the Course Does Too." in hero
+    sub = _re.search(r'<p class="sub">(.*?)</p>', hero, _re.S).group(1)
+    assert len(sub.split()) <= 25
+    assert 'id="heroTryDemo" href="/demo/tour">Try the 60-Second Demo</a>' in hero
+    assert 'id="heroEnter" href="/">Enter Novak LMS™</a>' in hero
+    roles = _re.findall(r'<a class="role"[^>]*>\s*<strong>[^<]+</strong>\s*<span>([^<]+)</span>', hero)
+    assert len(roles) == 3 and all(len(r.split()) <= 20 for r in roles)
+    # <=3 sections below the fold before the short FAQ; one gold button in the hero
+    main = body_html.split("</header>", 1)[1].split('id="faq"', 1)[0]
+    assert main.count("</section>") == 3
+    assert hero.count('class="btn-gold"') == 1
+    assert "$0" in land and "$39" in land and "Custom" in land and "Schedule a Technical Consult" in land
+    assert 'id="waysPreview"' in land
+    # Deep material moved to dedicated pages, still reachable
+    consult = anon.get("/consult").get_data(as_text=True)
+    assert "99.9%" in consult and "&lt; 24-Hour" in consult
+    comp = anon.get("/compliance").get_data(as_text=True)
+    assert "Zero-Video Client-Side Privacy" in comp and "TLS 1.3" in comp
 
     for route in ("/landing", "/security", "/compliance", "/specs", "/gaps", "/consult"):
         body = anon.get(route).get_data(as_text=True).lower()

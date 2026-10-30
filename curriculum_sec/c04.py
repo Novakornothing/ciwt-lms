@@ -14,7 +14,7 @@ CHAPTER = Ch(
           [
               S('A hash is a fingerprint, not a lock',
                 'hashing',
-                'a one-way fingerprint used to detect change',
+                'a one-way fingerprint used to detect change, such as the digest from sha256sum',
                 'two copies of a release file should produce the same fingerprint, and a tampered copy should not',
                 'It is a fingerprint. You cannot rebuild the person from the print.',
                 'A luggage tag number tells you if you have the same bag. It does not hide the clothes.',

@@ -514,6 +514,7 @@ def run_smart_search(
             'expanded_terms': [],
             'results': [],
             'categories': {'lessons': [], 'labs': [], 'objectives': [], 'chapters': [], 'tests': []},
+            'command_card': None,
         }
 
     # Gather dynamic vocabulary from lesson titles & cache normalized lesson text
@@ -725,8 +726,42 @@ def run_smart_search(
         categories[k].sort(key=lambda r: (-r['score'], r['title']))
         categories[k] = categories[k][:8]
 
+    command_card = None
+    try:
+        import command_cards as CC
+        command_card = CC.card_for(q)
+        if command_card:
+            practice = []
+            _seen_titles = set()
+            for r in categories['lessons'][:6]:
+                if r['title'] in _seen_titles or len(_seen_titles) >= 3:
+                    continue
+                _seen_titles.add(r['title'])
+                practice.append({'kind': 'Lesson', 'title': r['title'], 'url': r['url'], 'locked': r.get('locked', False)})
+            seen = set()
+            try:
+                import interactive_labs as IL
+                matched = CC.labs_using(command_card['search_term'], getattr(IL, 'LABS', []))
+                pref = getattr(CC, 'PREFER_LAB_PREFIX', {}).get(command_card['key'])
+                if pref:
+                    matched = sorted(matched, key=lambda lab: 0 if str(lab.get('id') or '').startswith(pref) else 1)
+                for lab in matched[:3]:
+                    seen.add(lab.get('id'))
+                    practice.append({'kind': 'Lab', 'title': lab.get('title') or lab.get('id'), 'url': url_for_fn('interactive_lab', lab_id=lab['id']), 'locked': False})
+            except Exception:
+                pass
+            for r in categories['labs'][:3]:
+                if len([p for p in practice if p['kind'] == 'Lab']) >= 3:
+                    break
+                if r['url'] not in {p['url'] for p in practice}:
+                    practice.append({'kind': 'Lab', 'title': r['title'], 'url': r['url'], 'locked': False})
+            command_card['practice'] = practice
+    except Exception:
+        command_card = None
+
     return {
         'query': q,
+        'command_card': command_card,
         'corrected_query': qinfo['corrected_query'],
         'did_you_mean': qinfo['did_you_mean'],
         'expanded_terms': qinfo['expanded_terms'],

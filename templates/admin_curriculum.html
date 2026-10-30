@@ -13,7 +13,7 @@
   {% for r in rows %}
   <section class="card" aria-labelledby="cs-{{ r.course.id }}">
     <div class="card-header">
-      <h2 id="cs-{{ r.course.id }}" class="h6 mb-0">{{ r.course.title }} <span class="chip-count">{{ r.course.code }}</span></h2>
+      <h2 id="cs-{{ r.course.id }}" class="h6 mb-0">{{ r.course.title }}</h2>
     </div>
     <div class="card-body">
       <ul class="meta-pills mb-3" aria-label="Contents">
@@ -60,7 +60,7 @@
       <div class="col-md-5">
         <label class="form-label" for="f-course_id-2">Curriculum set</label>
         <select id="f-course_id-2" name="course_id" class="form-select" required>
-          {% for c in courses %}<option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>{% endfor %}
+          {% for c in courses %}<option value="{{ c.id }}">{{ c.title }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-md-5">

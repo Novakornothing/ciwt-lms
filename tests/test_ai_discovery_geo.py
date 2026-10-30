@@ -53,41 +53,38 @@ def test_llms_txt_and_llms_full_txt(anon):
 
 
 def test_landing_comparison_matrix_and_faq(app):
+    """Phase 1: the hub stays short; the comparison matrix lives on /compare."""
     for host in ('novakornothing.com', 'www.novakornothing.com'):
         r = app.test_client().get('/', base_url=f'http://{host}')
         assert r.status_code == 200
         html = r.get_data(as_text=True)
         assert 'ciwt' not in html.lower()
-        # Keep top hero & 5 primary navigation cards intact
-        for nav_card in ('NOVAK LMS™', 'Eye Tracking', 'OPs', 'Demo', 'Create Account'):
-            assert f'<strong>{nav_card}</strong>' in html
-        # Wave 3 metrics in What Sets Novak LMS™ Apart
-        for m in ('639,146', '242,549', '396,597', '539', '115', '90', '24', '1,400', '36', '405', '325', 'pbq-cli'):
-            assert m in html, f'Missing {m} in landing.html'
-        # Deliverable 2: <section class="panel" id="comparison"> and 10 dimensions
-        assert 'id="comparison"' in html
-        assert 'How Novak LMS™ Compares Across the Stack' in html
-        for dim in (
-            'Platform Unification',
-            'Remediation When a Student Struggles',
-            'Curriculum &amp; Visual Depth',
-            'Hands-On Lab Execution',
-            'Performance-Based Questions (PBQs)',
-            'Practice Bank &amp; Proctored Assessment Scale',
-            'Attention &amp; Cognitive Friction Telemetry',
-            'Real-Time Instructor Triage',
-            'Adaptive Mastery Modeling',
-            'Institution &amp; LMS Interoperability',
-        ):
-            assert dim in html, f'Missing dimension {dim} in landing comparison table'
-        # Deliverable 4: 4 high-signal FAQ <details> entries
+        # Footer hub links survive the redesign (OPs is now labelled Results & ROI)
+        for nav_card in ('NOVAK LMS™', 'Eye Tracking', 'Results &amp; ROI', 'Demo', 'Create Account'):
+            assert f'<strong>{nav_card}</strong>' in html, nav_card
+        assert 'n74-ops.jesse-novak.workers.dev' in html
+        # Deep material moved off the hub, but stays one click away
+        assert 'id="comparison"' not in html
+        assert 'href="/specs"' in html and 'href="/roi"' in html
         for faq_q in (
-            'How does Novak LMS™ compare to CompTIA CertMaster, Cisco NetAcad, and Pearson VUE-style platforms?',
-            'How do the 3-Tab Interactive Visual PBQ Workbench and 90 hands-on labs work?',
-            'How deep is the Novak LMS™ curriculum and exam question bank?',
-            'How does Novak LMS™ combine Helix eye tracking and Bayesian Knowledge Tracing (BKT) for instructors?',
+            'What is Novak LMS™?',
+            'Does Eye Tracking record video?',
+            'Is Novak LMS™ affiliated with CompTIA?',
+            'How do colleges or training commands run a pilot?',
+            'Where is the privacy note?',
         ):
             assert f'<summary>{faq_q}</summary>' in html, f'Missing FAQ summary: {faq_q}'
+    html = app.test_client().get('/compare').get_data(as_text=True)
+    assert 'How Novak LMS™ Compares Across the Stack' in html
+    for dim in (
+        'Platform Unification',
+        'Remediation When a Student Struggles',
+        'Hands-On Lab Execution',
+        'Attention &amp; Cognitive Friction Telemetry',
+        'Adaptive Mastery Modeling',
+        'Institution &amp; LMS Interoperability',
+    ):
+        assert dim in html, f'Missing dimension {dim} on /compare'
 
 
 def test_public_specs_and_compare_routes(anon):
@@ -134,8 +131,10 @@ def test_schema_org_json_ld_on_landing_login_and_specs(app, anon):
         assert [c['courseCode'] for c in courses] == ['ITSUP', 'NETOPS', 'CLIENT', 'SEC']
         faq_page = next(n for n in graph if n.get('@type') == 'FAQPage')
         faq_qs = {q['name'] for q in faq_page['mainEntity']}
-        assert 'How does Novak LMS™ compare to CompTIA CertMaster, Cisco NetAcad, and Pearson VUE-style platforms?' in faq_qs
-        assert 'How do the 3-Tab Interactive Visual PBQ Workbench and 90 hands-on labs work?' in faq_qs
+        assert len(faq_qs) >= 3
+        if html is pages[0]:
+            assert 'Is Novak LMS™ affiliated with CompTIA?' in faq_qs
+            assert 'Does Eye Tracking record video?' in faq_qs
 
 
 def test_robots_txt_and_sitemap_xml(anon):

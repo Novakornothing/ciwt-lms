@@ -36,7 +36,7 @@ def test_gate_progression_lesson_to_check_and_lab(student, mod, app, lesson11):
     cnt = re.compile(r'(\d+) of (\d+)</span> sections verified')
     done, total = map(int, cnt.search(html).groups())
     assert sids and done == 0 and total > 0
-    assert 'Check understanding' in html and 'Explain it another way (Plain language)' in html
+    assert 'Check understanding' in html and 'Explain it another way (Plain English)' in html
     assert 'What to do next' in html
     for sid in sids:
         cid, _ = _check_ids(student.get(url).get_data(as_text=True), sid)
@@ -76,7 +76,7 @@ def test_who_needs_me_empty_state_and_helix_note(instructor, mod, app):
         mod.db.session.add(sec); mod.db.session.commit(); sid = sec.id
     h = instructor.get(f'/instructor/section/{sid}/who-needs-me').get_data(as_text=True)
     assert 'No students are struggling in this class right now.' in h
-    assert 'Helix attention signals: 0 students opted in for this section' in h
+    assert 'Eye Tracking signals: 0 students opted in for this section' in h
     with app.app_context():
         mod.db.session.delete(mod.db.session.get(mod.ClassSection, sid)); mod.db.session.commit()
 
@@ -95,9 +95,9 @@ def test_privacy_page_and_brand_footer(app, anon, student):
 
 def test_register_and_demo_enter(app, mod):
     c = app.test_client()
-    # 1. Landing page has NOVAK LMS™, Eye Tracking, OPs, Demo, Create Account, FAQ, and Legal & Privacy note
+    # 1. Landing page keeps the hub links (OPs is labelled Results & ROI), FAQ, and the privacy note
     h = c.get("/landing").get_data(as_text=True)
-    for expected in ("NOVAK LMS™", "Eye Tracking", "OPs", "Demo", "Create Account", "FAQ", "Legal Information &amp; Privacy note"):
+    for expected in ("NOVAK LMS™", "Eye Tracking", "Results &amp; ROI", "Demo", "Create Account", "FAQ", "Privacy note", "Try the 60-Second Demo", "Enter Novak LMS™"):
         assert expected in h, f"Missing {expected} in /landing"
 
     # 2. 1-click demo enter for student, instructor, admin

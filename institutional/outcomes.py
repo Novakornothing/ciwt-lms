@@ -236,7 +236,7 @@ def write_csv(rep, w):
     for x in rep['exam_sim']['exams'] + [rep['exam_sim']['overall']]:
         w.writerow(['exam_sim_attempts', x['code'], x['attempts'], x['candidates'], x['name']])
         w.writerow(['exam_sim_voucher_ready_pct', x['code'], x['voucher_ready_pct'], x['candidates'],
-                    f"{x['voucher_ready']} candidates VOUCHER READY (simulated)"])
+                    f"{x['voucher_ready']} candidates exam-ready (simulated)"])
         w.writerow(['exam_sim_mean_scaled_score', x['code'], x['mean_score'], x['candidates'], 'latest sitting, 100-900'])
     t = rep['time']
     w.writerow(['study_hours_total', 'all', t['total_hours'], t['students'], 'logged study time'])

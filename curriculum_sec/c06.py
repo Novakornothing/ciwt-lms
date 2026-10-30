@@ -14,7 +14,7 @@ CHAPTER = Ch(
           [
               S('Default deny means no unless a rule says yes',
                 'default deny',
-                'a firewall that blocks traffic unless an explicit rule allows it',
+                'a firewall that blocks traffic unless an explicit rule allows it, which Linux writes with iptables',
                 'a host answers on every port because the policy is still accept',
                 'Silence unless you wrote an allow.',
                 'A club door stays shut unless your name is on the list.',

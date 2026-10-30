@@ -1,5 +1,5 @@
-"""SCORM 1.2, SCORM 2004 (4th Edition), ADL xAPI (IEEE 9274.1.1 / cmi5),
-and DoD Navy Integrated Learning Environment (ILE / RRL / JKO) Interoperability Bridge for Novak LMS™.
+"""SCORM 1.2, SCORM 2004 (4th Edition), xAPI 1.0.3 statement export,
+packages for Novak LMS™ (works with any SCORM-compatible LMS).
 """
 import io
 import json
@@ -11,25 +11,22 @@ from xml.sax.saxutils import escape
 COURSE_CATALOG = {
     "ITSUP": {
         "code": "ITSUP",
-        "title": "IT Support Specialist (CompTIA A+ 220-1201 & 220-1202)",
+        "title": "IT Support (CompTIA A+ 220-1201 & 220-1202)",
         "cert": "CompTIA A+ Core 1 (220-1201) & Core 2 (220-1202)",
-        "ile_cin": "A-150-2201",
         "chapters": 13,
         "lessons": 58,
     },
     "NETOPS": {
         "code": "NETOPS",
-        "title": "Network Operations (CompTIA Network+ N10-009)",
+        "title": "Basic Networking (CompTIA Network+ N10-009)",
         "cert": "CompTIA Network+ (N10-009)",
-        "ile_cin": "A-150-0009",
         "chapters": 7,
         "lessons": 33,
     },
     "CLIENT": {
         "code": "CLIENT",
-        "title": "Client Systems & OS Administration (CompTIA Tech+ FC0-U71 & Core 2)",
-        "cert": "CompTIA Tech+ (FC0-U71) / Client Systems",
-        "ile_cin": "A-150-0071",
+        "title": "Operating Systems (CompTIA Tech+ FC0-U71 & Core 2)",
+        "cert": "CompTIA Tech+ (FC0-U71) / Operating Systems",
         "chapters": 6,
         "lessons": 24,
     },
@@ -37,7 +34,6 @@ COURSE_CATALOG = {
         "code": "SEC",
         "title": "Cybersecurity",
         "cert": "Foundational cybersecurity practice comparable to Security+ (SY0-701). Not an official exam.",
-        "ile_cin": "A-150-0701",
         "chapters": 10,
         "lessons": 40,
     },
@@ -45,7 +41,7 @@ COURSE_CATALOG = {
 
 
 SCORM_DRIVER_JS = r"""/**
- * Novak LMS™ Dual-Standard SCORM 1.2 + SCORM 2004 (4th Edition) + ADL xAPI / DoD ILE Runtime Driver
+ * Novak LMS™ Dual-Standard SCORM 1.2 + SCORM 2004 (4th Edition) Runtime Driver
  * Supports:
  *   - SCORM 1.2 (window.API: LMSInitialize, LMSGetValue, LMSSetValue, LMSCommit, LMSFinish)
  *   - SCORM 2004 4th Ed (window.API_1484_11: Initialize, GetValue, SetValue, Commit, Terminate)
@@ -224,9 +220,8 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
     target_codes = ["ITSUP", "NETOPS", "CLIENT", "SEC"] if code == "ALL" else [code]
     primary_meta = COURSE_CATALOG.get(code, {
         "code": "ALL",
-        "title": "Novak LMS™ Complete Certification Suite (ITSUP A+, NETOPS Network+, CLIENT Tech+)",
+        "title": "Novak LMS™ Complete Course Suite (IT Support, Basic Networking, Operating Systems, and Cybersecurity)",
         "cert": "CompTIA A+ (220-1201/1202), Network+ (N10-009), Tech+ (FC0-U71)",
-        "ile_cin": "A-150-NOVAK-ALL",
         "chapters": 26,
         "lessons": 115,
     })
@@ -235,7 +230,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
     for c_code in target_codes:
         c_info = COURSE_CATALOG[c_code]
         ch_list = (modules_by_course or {}).get(c_code) or [
-            (idx, f"{c_code} Chapter {idx}") for idx in range(1, c_info["chapters"] + 1)
+            (idx, f"{c_info['title'].split(' (')[0]} Chapter {idx}") for idx in range(1, c_info["chapters"] + 1)
         ]
         sub_items = []
         for ch_order, ch_title in ch_list:
@@ -273,7 +268,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
     <resource identifier="RES-SCO-1" type="webcontent" adlcp:scormType="sco" href="index.html">
       <file href="index.html"/>
       <file href="scorm_driver.js"/>
-      <file href="ile_metadata.json"/>
+      <file href="package_metadata.json"/>
     </resource>
   </resources>
 </manifest>
@@ -297,7 +292,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
     <resource identifier="RES-SCO-1" type="webcontent" adlcp:scormtype="sco" href="index.html">
       <file href="index.html"/>
       <file href="scorm_driver.js"/>
-      <file href="ile_metadata.json"/>
+      <file href="package_metadata.json"/>
     </resource>
   </resources>
 </manifest>
@@ -309,7 +304,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{escape(primary_meta["title"])} — Novak LMS™ SCORM {ver} / DoD ILE Dispatch</title>
+  <title>{escape(primary_meta["title"])} — Novak LMS™ SCORM {ver} package</title>
   <script src="scorm_driver.js"></script>
   <style>
     html, body {{ margin: 0; padding: 0; height: 100%; font-family: system-ui, -apple-system, sans-serif; background: #0b1324; color: #f8fafc; display: flex; flex-direction: column; }}
@@ -322,7 +317,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
 <body onload="NovakScormDriver.init()">
   <div class="scorm-bar">
     <div>
-      <strong>Novak LMS™ SCORM {ver} / DoD Navy ILE Bridge</strong> · {escape(primary_meta["title"])} ({escape(primary_meta["ile_cin"])})
+      <strong>Novak LMS™ SCORM {ver}</strong> · {escape(primary_meta["title"])}
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <span id="scormStatusBadge" class="scorm-badge">SCORM {ver} Initialized</span>
@@ -334,15 +329,14 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
 </html>
 """
 
-    ile_metadata = {
-        "schema": "DoD ADL Total Learning Architecture (TLA) / Navy ILE & Ready Relevant Learning (RRL) v2.1",
+    package_metadata = {
+        "schema": "Novak LMS course package metadata v1",
         "scorm_version": f"SCORM {ver}",
-        "xapi_profile": "IEEE 9274.1.1-2023 (xAPI 1.0.3 / cmi5)",
+        "xapi_profile": "xAPI 1.0.3 statement export (not cmi5)",
         "lti_advantage": "1EdTech LTI 1.3 + NRPS + AGS 2.0",
         "course_code": code,
         "course_title": primary_meta["title"],
         "certification_alignment": primary_meta["cert"],
-        "navy_ile_cin": primary_meta["ile_cin"],
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "telemetry_capabilities": [
             "5-Path Adaptive Learning Modality Tracking (R0 Standard, R1 Plain English, R2 Analogy, R3 Visual Map, R4 Interactive Try-It)",
@@ -358,14 +352,14 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
         zf.writestr("imsmanifest.xml", manifest_xml.strip() + "\n")
         zf.writestr("index.html", index_html.strip() + "\n")
         zf.writestr("scorm_driver.js", SCORM_DRIVER_JS.strip() + "\n")
-        zf.writestr("ile_metadata.json", json.dumps(ile_metadata, indent=2) + "\n")
+        zf.writestr("package_metadata.json", json.dumps(package_metadata, indent=2) + "\n")
 
     fname = f"novak-lms-{code.lower()}-scorm-{ver.replace('.', '_')}.zip"
     return buf.getvalue(), "application/zip", fname
 
 
 def build_xapi_statements(app=None, limit=50):
-    """Generate official ADL xAPI 1.0.3 (IEEE 9274.1.1) / cmi5 statements from live Novak LMS telemetry."""
+    """Build xAPI 1.0.3-shaped statements from Novak LMS ladder telemetry (read-only export; not a cmi5 AU/LRS)."""
     statements = []
     now_iso = datetime.now(timezone.utc).isoformat()
 
@@ -434,7 +428,7 @@ def build_xapi_statements(app=None, limit=50):
                     },
                     "result": result,
                     "context": {
-                        "platform": "Novak LMS™ (SCORM / ADL xAPI / DoD Navy ILE Bridge)",
+                        "platform": "Novak LMS™",
                         "extensions": {
                             "https://novakornothing.com/xapi/ext/event_kind": ev.kind,
                             "https://novakornothing.com/xapi/ext/learning_path_rung": ev.rung or "R0",
@@ -464,7 +458,7 @@ def build_xapi_statements(app=None, limit=50):
                 "objectType": "Activity",
                 "id": "https://novakornothing.com/activities/course/NETOPS/lesson/7.1/section/sec_0",
                 "definition": {
-                    "name": {"en-US": "NETOPS 7.1 · Wireless Standards & 802.11ax/be"},
+                    "name": {"en-US": "Basic Networking 7.1 · Wireless Standards & 802.11ax/be"},
                     "type": "http://adlnet.gov/expapi/activities/lesson",
                 },
             },
@@ -475,7 +469,7 @@ def build_xapi_statements(app=None, limit=50):
                 "duration": "PT84S",
             },
             "context": {
-                "platform": "Novak LMS™ (SCORM / ADL xAPI / DoD Navy ILE Bridge)",
+                "platform": "Novak LMS™",
                 "extensions": {
                     "https://novakornothing.com/xapi/ext/learning_path_rung": "R2",
                     "https://novakornothing.com/xapi/ext/time_to_resolve_sec": 84,
@@ -486,7 +480,7 @@ def build_xapi_statements(app=None, limit=50):
 
     return {
         "version": "1.0.3",
-        "standard": "IEEE 9274.1.1-2023 (ADL xAPI 1.0.3 / cmi5 / DoD TLA & Navy ILE)",
+        "standard": "xAPI 1.0.3 statement export",
         "generated_at": now_iso,
         "count": len(statements),
         "statements": statements[:limit],

@@ -255,7 +255,7 @@ SEC_VM_USERS = _vm({
     'success_msg': 'The leaver cannot log in, the files remain, and the blanket sudo rule is gone.',
     'course_objectives': ['SEC-5.2', 'SEC-7.2'],
     'minutes': 25,
-    'palette': ['id ', 'ls /etc/sudoers.d', 'usermod ', 'rm ', 'visudo -c'],
+    'palette': ['id ', 'chage -l ', 'ls /etc/sudoers.d', 'usermod ', 'rm ', 'visudo -c'],
     'hints': ['Locking a password is not the same as deleting the user.', 'Look for a drop-in that grants every command.', 'Check sudoers syntax after you remove a file.'],
     'obj_hints': {
         'boot': ['The account name is the role in the ticket, not root.', 'Confirm the account exists before you change it.'],
@@ -264,6 +264,7 @@ SEC_VM_USERS = _vm({
     },
     'coaching': _coach(
         '<p><strong>Stage 1 — guided.</strong> <code>id USER</code> shows an account. '
+        '<code>chage -l USER</code> shows password aging when the command is installed. '
         '<code>usermod -L USER</code> locks the password (shadow packages also accept <code>passwd -l</code>). '
         '<code>userdel</code> would remove the account; do not use it when files must remain. '
         'A file in <code>/etc/sudoers.d</code> is an extra sudo rule. <code>visudo -c</code> checks syntax.</p>',
@@ -383,7 +384,7 @@ SEC_VM_AUTH = _vm({
     'success_msg': 'You named the noisy source and the account it targeted.',
     'course_objectives': ['SEC-8.1', 'SEC-8.3'],
     'minutes': 20,
-    'palette': ['ls /var/log', 'grep ', 'wc '],
+    'palette': ['ls /var/log', 'grep ', 'journalctl ', 'wc '],
     'hints': ['Failed lines and accepted lines are different stories.', 'Count repeats instead of stopping at the first line.', 'Write the two answers into the two files under /root/ir.'],
     'obj_hints': {
         'boot': ['The log is a text file under /var/log.', 'Read it before you write the answer files.'],
@@ -392,6 +393,7 @@ SEC_VM_AUTH = _vm({
     },
     'coaching': _coach(
         '<p><strong>Stage 1 — guided.</strong> <code>grep Failed /var/log/auth.log</code> shows failures. '
+        'On a systemd host the same events are in <code>journalctl</code>. '
         'A successful line says Accepted. Count which address and which account repeat. '
         'This walkthrough uses a sample address, 198.51.100.9, that is not the live answer.</p>',
         '<p><strong>Stage 2 — assisted.</strong> The live log mixes a single failure, a burst of failures, and one success. '
@@ -495,7 +497,7 @@ SEC_VM_PROC = _vm({
     'success_msg': 'The beacon is stopped and the program file is gone.',
     'course_objectives': ['SEC-3.3', 'SEC-3.4'],
     'minutes': 20,
-    'palette': ['ps w', 'ls -la /var/tmp', 'kill ', 'rm '],
+    'palette': ['ps w', 'ss -tulpn', 'ls -la /var/tmp', 'kill ', 'rm '],
     'hints': ['A long process listing shows the path, not only the short name.', 'Stop the running copy and also delete the file.', 'Do not delete unrelated programs in /usr/bin.'],
     'obj_hints': {
         'boot': ['Look at running programs and at hidden directories under temporary space.', 'The path will look out of place.'],
@@ -504,6 +506,7 @@ SEC_VM_PROC = _vm({
     },
     'coaching': _coach(
         '<p><strong>Stage 1 — guided.</strong> <code>ps w</code> shows arguments. '
+        '<code>ss -tulpn</code> lists listening sockets when you are hunting a port instead of a path. '
         '<code>kill PID</code> stops a process. <code>rm</code> removes a file. '
         'Identify the path before you signal anything. A sample name like debugdump is not the live program.</p>',
         '<p><strong>Stage 2 — assisted.</strong> Something is looping under a hidden cache directory. '

@@ -10,21 +10,21 @@
 </style>
 <nav aria-label="breadcrumb" class="d-print-none">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{{ url_for('tqi_class', section_id=section.id) }}">TQI</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('tqi_class', section_id=section.id) }}">Results &amp; ROI</a></li>
     <li class="breadcrumb-item active">Official report</li>
   </ol>
 </nav>
 
 <div class="page-hero">
-  <div class="small text-uppercase mb-1 u-eyebrow">Novak LMS™ TQI packet — not NETC LAS</div>
-  <h1 class="h3 mb-1">{{ section.course.code if section.course else 'COURSE' }} — {{ section.name }}</h1>
+  <div class="small text-uppercase mb-1 u-eyebrow">Novak LMS™ Results &amp; ROI packet — not NETC LAS</div>
+  <h1 class="h3 mb-1">{{ section.name }}</h1>
   <p class="mb-0">Generated {{ generated.strftime('%d %b %Y %H:%M') }} UTC · Packet {{ status.packet.status }} · Student identities withheld</p>
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-3 d-print-none">
   <button type="button" class="btn btn-brand" onclick="window.print()">Print / save PDF</button>
   <a class="btn btn-outline-navy" href="{{ url_for('tqi_official_txt', section_id=section.id) }}">Download .txt packet</a>
-  <a class="btn btn-outline-navy" href="{{ url_for('tqi_class', section_id=section.id) }}">Back to class TQI</a>
+  <a class="btn btn-outline-navy" href="{{ url_for('tqi_class', section_id=section.id) }}">Back to class Results &amp; ROI</a>
 </div>
 
 <div class="card mb-3">
@@ -32,7 +32,7 @@
   <div class="card-body">
     <div class="row">
       <div class="col-md-6">
-        <div><strong>Course</strong> {{ section.course.title if section.course else '—' }} ({{ section.course.code if section.course else '—' }})</div>
+        <div><strong>Course</strong> {{ section.course.title if section.course else '—' }}</div>
         <div><strong>Class / convening</strong> {{ section.name }}</div>
         <div><strong>Schedule</strong> {{ section.start_date or 'not dated' }} → {{ section.end_date or 'not dated' }}</div>
       </div>
@@ -46,7 +46,7 @@
 </div>
 
 <div class="card mb-3">
-  <div class="card-header navy">2. TQI completeness (M-142.5 monitored functions)</div>
+  <div class="card-header navy">2. Packet completeness (M-142.5 monitored functions)</div>
   <table class="table table-sm mb-0">
     <thead><tr><th>Function</th><th>State</th><th>Evidence</th></tr></thead>
     <tbody>
@@ -204,7 +204,7 @@
 <div class="card mb-3">
   <div class="card-header navy">9. Authentication</div>
   <div class="card-body">
-    <p>Novak LMS™ TQI packet. Student reaction is aggregated; comments are anonymous. Aligned to NAVEDTRA M-142.5 <em>functions</em> (critique program, instructor closeout, item analysis). <strong>This is not the official NETC LAS instrument or export.</strong></p>
+    <p>Novak LMS™ Results &amp; ROI packet. Student reaction is aggregated; comments are anonymous. Aligned to NAVEDTRA M-142.5 <em>functions</em> (critique program, instructor closeout, item analysis). <strong>This is not the official NETC LAS instrument or export.</strong></p>
     <div class="row mt-3">
       <div class="col-md-6">Instructor: {{ status.instructor.full_name if status.instructor else '________________' }}</div>
       <div class="col-md-6">Date: {{ generated.strftime('%Y-%m-%d') }}</div>

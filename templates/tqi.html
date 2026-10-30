@@ -8,13 +8,13 @@
     {% else %}
     <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
     {% endif %}
-    <li class="breadcrumb-item active">TQI</li>
+    <li class="breadcrumb-item active">Results &amp; ROI</li>
   </ol>
 </nav>
 
 <div class="page-hero">
-  <div class="small text-uppercase mb-1 u-eyebrow">Novak LMS™ TQI packet</div>
-  <h1 class="h3 mb-1">TQI — {{ section.name }}</h1>
+  <div class="small text-uppercase mb-1 u-eyebrow">Novak LMS™ Results &amp; ROI packet</div>
+  <h1 class="h3 mb-1">Results &amp; ROI — {{ section.name }}</h1>
   <p class="mb-0">
     Schedule {{ section.start_date or '—' }} → {{ section.end_date or '—' }}
     · Instructor {{ status.instructor.full_name if status.instructor else 'unassigned' }}
@@ -31,7 +31,7 @@
   <a class="btn btn-sm btn-outline-navy" href="{{ url_for('tqi_official_txt', section_id=section.id) }}">Download .txt</a>
   <a class="btn btn-sm btn-outline-navy" href="{{ url_for('tqi_report', section_id=section.id) }}">Working copy</a>
   {% if current_user.role == 'admin' %}
-  <a class="btn btn-sm btn-outline-navy" href="{{ url_for('admin_tqi') }}">All-class TQI board</a>
+  <a class="btn btn-sm btn-outline-navy" href="{{ url_for('admin_tqi') }}">All-class Results &amp; ROI board</a>
   {% endif %}
   {% endif %}
 </div>
@@ -53,7 +53,7 @@
   {% if status.packet.status != 'complete' %}
   <div class="card-body">
     <form method="post" action="{{ url_for('tqi_mark_complete', section_id=section.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button class="btn btn-brand" {% if not status.all_ok and current_user.role != 'admin' %}disabled{% endif %}>Mark TQI complete</button>
+      <button class="btn btn-brand" {% if not status.all_ok and current_user.role != 'admin' %}disabled{% endif %}>Mark packet complete</button>
       <span class="small text-muted ms-2">
         {% if status.all_ok and status.ended %}Auto-completes after the scheduled end date.{% elif status.all_ok %}All artifacts present — ready to close.{% else %}Finish missing items or an admin can close.{% endif %}
       </span>
@@ -119,7 +119,7 @@
             <textarea id="f-body-2" name="body" class="form-control" rows="5" required minlength="8" placeholder="What the EOC and item analysis showed, what happened in class, and what you will change next convening.">{{ status.packet.closeout_note or '' }}</textarea>
           </div>
           {% endif %}
-          <button class="btn btn-brand">Save to TQI</button>
+          <button class="btn btn-brand">Save to packet</button>
         </form>
       </div>
     </div>

@@ -11,7 +11,7 @@ def test_swap_badge_pill_and_continue_chip(student, mod, app, lesson11):
         wrong = _ans(cid, False)
     j = student.post(f'/student/section/{s}/ladder/{l}/{SID}/answer', data={'check_id': cid, 'answer': wrong},
                      headers={'X-Requested-With': 'fetch'}).get_json()
-    assert 'Swapped to R1: Plain language — step 1 of' in j['html'] and 'class="ladder-steps"' in j['html']
+    assert 'Now showing: Plain English — step 1 of' in j['html'] and 'class="ladder-steps"' in j['html']
     assert 'aria-current="step"' in j['html']
     cid2, _ = _check_ids(j['html'], SID)
     with app.app_context():
@@ -30,7 +30,7 @@ def test_deep_link_opens_section_on_rung(student, mod, app, lesson11):
     assert r.status_code == 302 and 'rung=R2' in r.headers['Location'] and f'sid={SID}' in r.headers['Location']
     html = student.get(r.headers['Location']).get_data(as_text=True)
     box = html.split(f'id="ladder-{SID}"', 1)[1][:3000]
-    assert 'data-shown="R2"' in html.split(f'id="ladder-{SID}"', 1)[1][:200] and 'Swapped to R2: Analogy' in box
+    assert 'data-shown="R2"' in html.split(f'id="ladder-{SID}"', 1)[1][:200] and 'Now showing: Analogy' in box
     _reset(mod, app, 'student1@lms.local')
 
 
@@ -50,10 +50,10 @@ def test_what_clicked_and_why_struggling(student2, instructor, mod, app, lesson1
     student2.post(f'/student/section/{s}/ladder/{l}/{SID}/answer', data={'check_id': cid2, 'answer': right})
     with app.app_context():
         c = mod.mastery_api.ladder.clicked(uid, s)
-        assert c['best'] == 'R1' and c['best_text'].startswith('Best style: Plain language (resolved 1/')
-        assert any(x['text'].startswith('Clicked on R1: Plain language after 1 miss') for x in c['sections'])
+        assert c['best'] == 'R1' and c['best_text'].startswith('Best way to learn: Plain English (resolved 1/')
+        assert any(x['text'].startswith('Clicked with Plain English after 1 miss') for x in c['sections'])
     h = instructor.get(f'/instructor/section/{s}/ladder/student/{uid}').get_data(as_text=True)
-    assert 'What finally clicked' in h and 'Clicked on R1' in h
+    assert 'What finally clicked' in h and 'Clicked with Plain English' in h
     assert 'What finally clicked for this class' in instructor.get(f'/instructor/section/{s}/ladder').get_data(as_text=True)
     h = instructor.get(f'/instructor/section/{s}').get_data(as_text=True)
     assert 'Why these students are struggling' in h and 'Draft message' in h and 'Where stuck' in h

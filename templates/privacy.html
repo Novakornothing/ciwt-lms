@@ -9,7 +9,7 @@
 <section class="card mb-3" aria-labelledby="privSummaryH"><div class="card-body">
   <h2 class="h5" id="privSummaryH">{{ brand_mark }} privacy in plain words</h2>
   <ul class="mb-2">
-    <li><strong>What we collect:</strong> your account (name, email, role, classes) and your learning progress: lessons, section checks, quizzes, tests and labs. Helix attention metrics are collected only if you consent.</li>
+    <li><strong>What we collect:</strong> your account (name, email, role, classes) and your learning progress: lessons, section checks, quizzes, tests and labs. Eye Tracking metrics are collected only if you consent.</li>
     <li><strong>Helix is opt-in, every session.</strong> The camera is processed locally in your browser; video and images never leave your device. Only summary numbers are sent, and saying no never affects grades.</li>
     <li><strong>Never sold.</strong> Student data is never sold or shared with third-party advertisers.</li>
     <li><strong>Built with FERPA in mind:</strong> role-based access (students see their own records; staff only their classes), each institution’s data kept separate, self-service export and deletion requests at <a href="{{ url_for('my_data') }}">/my-data</a>, and a tamper-evident audit log of sensitive actions.</li>
@@ -27,7 +27,7 @@
         <li><strong>Lesson study time</strong>: while a lesson tab is visible and you have used it in the last minute, the page records the seconds you spend on it (sent every 30 seconds). It is never graded.</li>
         <li><strong>Mastery estimates</strong>: per learning objective, worked out from your quiz, test, lab and review answers plus lesson study time. Reviews, test-out checks, instructor overrides and every recommendation are logged with their reasons, which you can read under “My mastery” in each class. Estimates never change a grade. Helix data, only with your current consent, can at most offer an optional review.</li>
         <li>An audit log of sign-ins and administrative actions.</li>
-        <li><strong>Helix attention data</strong>, only if you opt in: see the <a href="{{ url_for('helix.policy') }}">Helix attention policy</a>. Camera video never leaves your browser.
+        <li><strong>Eye Tracking data</strong>, only if you opt in: see the <a href="{{ url_for('helix.policy') }}">Eye Tracking policy</a>. Camera video never leaves your browser.
           {% if helix_days > 0 %}Helix sessions, attention events and accuracy-study records are deleted after <strong>{{ helix_days }} days</strong>.{% else %}This server keeps Helix data until you or an administrator delete it.{% endif %}</li>
       </ul>
     </div></div>
@@ -46,7 +46,7 @@
     <div class="card"><div class="card-body">
       <h2 class="h5">Your choices</h2>
       <ul class="mb-0">
-        <li>Helix: stop, withdraw consent and delete your sessions from <a href="{{ url_for('helix.my_data') }}">My attention data</a>; the optional <a href="{{ url_for('helix.study_page') }}">accuracy study</a> has its own leave-and-delete button.</li>
+        <li>Helix: stop, withdraw consent and delete your sessions from <a href="{{ url_for('helix.my_data') }}">My eye-tracking data</a>; the optional <a href="{{ url_for('helix.study_page') }}">accuracy study</a> has its own leave-and-delete button.</li>
         <li>You can download a copy of your records or request deletion anytime from <a href="{{ url_for('my_data') }}">My data (/my-data)</a> when signed in, or by asking an administrator (every export and deletion is logged).</li>
       </ul>
     </div></div>

@@ -11,7 +11,7 @@
           <option value="">Select class…</option>
           {% for s in staff_nav_sections %}
           <option value="{{ s.id }}" {% if section is defined and section.id == s.id %}selected{% endif %}>
-            {{ s.name }}{% if s.course %} · {{ s.course.code }}{% endif %}
+            {{ s.name }}{% if s.course %} · {{ s.course.title }}{% endif %}
           </option>
           {% endfor %}
         </select>

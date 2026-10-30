@@ -1,4 +1,4 @@
-"""Network Operations Fundamentals — core teaching content for chapters 1–6 (pass 8).
+"""Basic Networking — core teaching content for chapters 1–6 (pass 8).
 
 The original NETOPS lessons were mostly a shared template around two or three lines of topic text.
 Each entry below gives a teaching lesson measurable objectives, a specific plain-English summary and a

@@ -14,7 +14,7 @@
     <div>
       <div class="eyebrow">Hands-On Browser Workbenches · Diagnose → Fix → Verify</div>
       <h1 class="h3 mb-1">105+ Hands-On Live Labs</h1>
-      <p class="mb-0">103 browser-native labs ({{ labs|length }} standalone workbenches + 9 PBQ stages across {{ scenarios|length }} multi-stage tickets) that run in your browser on desktop or mobile, plus {{ classroom|length }} instructor-signed classroom hardware labs.
+      <p class="mb-0">103 browser-native labs ({{ labs|length }} standalone workbenches + 9 Hands-On Challenge stages across {{ scenarios|length }} multi-stage tickets) that run in your browser on desktop or mobile, plus {{ classroom|length }} instructor-signed classroom hardware labs.
         Work saves automatically. {% if n_done %}<strong>You have completed {{ n_done }}.</strong>{% endif %}</p>
     </div>
     {% if current_user.role in ('admin', 'instructor') %}
@@ -38,8 +38,8 @@
         <div class="novak-filter-group d-flex flex-wrap gap-1" role="group" aria-label="Filter by course">
           <button type="button" class="btn btn-sm novak-filter-pill is-active" data-filter-course="all">All Courses</button>
           <button type="button" class="btn btn-sm novak-filter-pill" data-filter-course="ITSUP">IT Support (A+)</button>
-          <button type="button" class="btn btn-sm novak-filter-pill" data-filter-course="NETOPS">Network Ops (N+)</button>
-          <button type="button" class="btn btn-sm novak-filter-pill" data-filter-course="CLIENT">Client Systems</button>
+          <button type="button" class="btn btn-sm novak-filter-pill" data-filter-course="NETOPS">Basic Networking</button>
+          <button type="button" class="btn btn-sm novak-filter-pill" data-filter-course="CLIENT">Operating Systems</button>
           <button type="button" class="btn btn-sm novak-filter-pill" data-filter-course="SEC">Cybersecurity</button>
         </div>
         <div class="novak-filter-group d-flex flex-wrap gap-1" role="group" aria-label="Filter by completion status">
@@ -53,7 +53,7 @@
       <nav class="chip-scroll mb-0" aria-label="Filter by lab environment">
         <button type="button" class="chip-link novak-env-pill is-active" data-filter-kind="all">All Environments <span class="chip-count">{{ total_catalog_items }}</span></button>
         {% for kind, heading, _ in groups %}{% set n = labs|selectattr('kind', 'equalto', kind)|list|length %}{% if n %}<a class="chip-link novak-env-pill" href="#k-{{ kind }}" data-filter-kind="{{ kind }}">{{ heading }} <span class="chip-count">{{ n }}</span></a>{% endif %}{% endfor %}
-        {% if scenarios %}<a class="chip-link novak-env-pill" href="#k-scenario" data-filter-kind="scenario">Lab scenarios (PBQ) <span class="chip-count">{{ scenarios|length }}</span></a>{% endif %}
+        {% if scenarios %}<a class="chip-link novak-env-pill" href="#k-scenario" data-filter-kind="scenario">Lab scenarios (Hands-On Challenge) <span class="chip-count">{{ scenarios|length }}</span></a>{% endif %}
         <a class="chip-link novak-env-pill" href="#k-classroom" data-filter-kind="classroom">Classroom labs <span class="chip-count">{{ classroom|length }}</span></a>
       </nav>
       <div class="d-flex align-items-center gap-2 small text-muted ms-auto">

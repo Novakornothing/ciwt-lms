@@ -14,7 +14,7 @@ CHAPTER = Ch(
           [
               S('Linux auth clues are text lines',
                 'Linux logs',
-                'authentication lines in a file such as auth.log or the syslog messages file',
+                'authentication lines in a file such as auth.log or the syslog messages file, read with grep or journalctl',
                 'repeated failures for one account from one address are sitting in the auth file',
                 'Read the text file the host already wrote.',
                 'The clinic sign-in clipboard is a stack of lines with times and names.',

@@ -183,7 +183,7 @@
     {% set cur_sec = section if section is defined and section and section.id is defined else ((staff_nav_sections|default([]))|first) %}
     {% if cur_sec %}
     <a href="{{ url_for('instructor_gradebook', section_id=cur_sec.id) }}" class="{{ 'active' if ep_.startswith('instructor_gradebook') }}"><i class="bi bi-table" aria-hidden="true"></i>Grades</a>
-    <a href="{{ url_for('helix.instructor_attention', section_id=cur_sec.id) }}" class="{{ 'active' if ep_.startswith('helix.instructor_attention') }}"><i class="bi bi-eye" aria-hidden="true"></i>Attention</a>
+    <a href="{{ url_for('helix.instructor_attention', section_id=cur_sec.id) }}" class="{{ 'active' if ep_.startswith('helix.instructor_attention') }}"><i class="bi bi-eye" aria-hidden="true"></i>Eye Tracking</a>
     {% endif %}
     <a href="{{ url_for('messages_inbox') }}" class="{{ 'active' if ep_.startswith('messages') }}"><i class="bi bi-envelope" aria-hidden="true"></i>Messages</a>
     {% endif %}

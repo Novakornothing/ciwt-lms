@@ -20,7 +20,7 @@
         <div class="small text-muted">
           {{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '' }}
           · {{ t.category }}
-          {% if t.course %} · {{ t.course.code }}{% endif %}
+          {% if t.course %} · {{ t.course.title }}{% endif %}
           {% if t.lesson %} · Lesson: {{ t.lesson.title }}{% endif %}{% if t.quiz %} · Quiz: {{ t.quiz.title }}{% endif %}{% if t.test %} · Test: {{ t.test.title }}{% endif %}
         </div>
       </div>

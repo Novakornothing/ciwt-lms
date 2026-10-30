@@ -5,7 +5,7 @@
   <p class="mb-0">Each section has its own roster. Clone a section to start a new term with the same settings, schedule and grading weights.</p></div>
 {% for course, rows in groups %}
 <section class="card mb-4" aria-labelledby="hubC{{ loop.index }}">
-  <div class="card-header"><h2 class="h6 mb-0" id="hubC{{ loop.index }}">{{ course.title if course else 'Course' }}{% if course and course.code %} <span class="small mx-muted">· {{ course.code }}</span>{% endif %}</h2></div>
+  <div class="card-header"><h2 class="h6 mb-0" id="hubC{{ loop.index }}">{{ course.title if course else 'Course' }}</h2></div>
   <div class="table-responsive"><table class="table table-sm mb-0 table-stack">
     <caption class="visually-hidden">Cross-section comparison for {{ course.title if course else 'this course' }}</caption>
     <thead><tr><th scope="col">Section</th><th scope="col">Your role</th><th scope="col">Students</th><th scope="col">Objectives mastered</th><th scope="col">Ladder resolution</th><th scope="col">Active struggles</th><th scope="col">Actions</th></tr></thead>

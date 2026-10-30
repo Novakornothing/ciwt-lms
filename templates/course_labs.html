@@ -14,8 +14,8 @@
   </ol>
 </nav>
 <div class="page-hero">
-  <h1 class="h3 mb-1">Labs in {{ section.course.code }}</h1>
-  <p class="mb-0">Live labs mapped to Novak LMS™ IT Support and Network Operations skill areas. Knowledge-only topics stay in the chapter.</p>
+  <h1 class="h3 mb-1">Labs in {{ section.course.title }}</h1>
+  <p class="mb-0">Live labs mapped to Novak LMS™ IT Support and Basic Networking skill areas. Knowledge-only topics stay in the chapter.</p>
   {% if current_user.role != 'student' %}
   <div class="d-flex flex-wrap gap-2 mt-2">
     <a class="btn btn-sm btn-light" href="{{ url_for('instructor_lab_results', section_id=section.id) }}"><i class="bi bi-clipboard-data" aria-hidden="true"></i> Lab results &amp; sign-off</a>

@@ -22,6 +22,8 @@
     var tmp = document.createElement('div');
     tmp.innerHTML = html.trim();
     var fresh = tmp.firstElementChild;
+    // A bulk swap from the 5 Ways to Learn switcher: keep the reader where they are (no focus jump, no scroll).
+    if (box.hasAttribute('data-swap-quiet')) moveFocus = false;
     function put() {
       box.replaceWith(fresh);
       document.dispatchEvent(new CustomEvent('ladder:updated', { detail: { sid: fresh.getAttribute('data-ladder-sid') } }));
@@ -127,16 +129,15 @@
 
   function nextRungLabel(box) {
     var shown = box.getAttribute('data-shown') || 'R0';
-    var map = { R0: 'Rung 1: Plain Language', R1: 'Rung 2: Analogy', R2: 'Rung 3: Visual / Step-by-Step', R3: 'Rung 4: Interactive Try-It' };
+    var map = { R0: 'Plain English', R1: 'Analogy', R2: 'Visual', R3: 'Try-It' };
     var anotherBtn = box.querySelector('form.ladder-another button');
     if (anotherBtn) {
       var m = /\(([^)]+)\)/.exec(anotherBtn.textContent || '');
       if (m && m[1]) {
-        var nextNum = shown === 'R0' ? 'Rung 1' : (shown === 'R1' ? 'Rung 2' : (shown === 'R2' ? 'Rung 3' : 'Rung 4'));
-        return nextNum + ': ' + m[1];
+        return m[1];
       }
     }
-    return map[shown] || 'Next Rung';
+    return map[shown] || 'another way';
   }
 
   function renderHelixNudge(box, stats, force) {

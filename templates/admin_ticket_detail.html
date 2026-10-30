@@ -28,7 +28,7 @@
           · <span class="badge badge-live">{{ ticket.status }}</span>
           {% if ticket.resolution %}<span class="badge badge-closed">{{ ticket.resolution }}</span>{% endif %}
         </div>
-        {% if ticket.course %}<div class="small">Course: {{ ticket.course.code }} — {{ ticket.course.title }}</div>{% endif %}
+        {% if ticket.course %}<div class="small">Course: {{ ticket.course.title }}</div>{% endif %}
         {% if ticket.section %}<div class="small">Class: {{ ticket.section.name }}</div>{% endif %}
         {% if ticket.lesson %}<div class="small">Lesson: {{ ticket.lesson.title }}</div>{% endif %}
         {% if ticket.quiz %}<div class="small">Quiz: {{ ticket.quiz.title }}</div>{% endif %}

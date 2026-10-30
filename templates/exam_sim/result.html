@@ -4,7 +4,7 @@
 {% block content %}
 <nav aria-label="breadcrumb"><ol class="breadcrumb small">
   <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
-  <li class="breadcrumb-item"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Exam-Day Simulator</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Practice Exams</a></li>
   <li class="breadcrumb-item active" aria-current="page">Results</li></ol></nav>
 <h1 class="h3">{{ exam.name }} ({{ exam.code }}) — {{ mode.name }}</h1>
 <section class="card card-body mb-3 es-report" id="esReport" aria-labelledby="esReportH">
@@ -17,7 +17,7 @@
     <dt>Mode</dt><dd>{{ 'Exam mode' if att.strict else 'Practice mode' }} · {{ mode.name }}</dd>
     <dt>Simulated Scaled Score</dt><dd><strong>{{ att.score }}</strong> (100–900)</dd>
     <dt>Pass Bar</dt><dd>{{ bar }}</dd>
-    <dt>Voucher Readiness Status</dt><dd class="es-status es-badge-{{ att.badge }}" id="esStatus">{{ status }}</dd>
+    <dt>Exam Readiness Status</dt><dd class="es-status es-badge-{{ att.badge }}" id="esStatus">{{ status }}</dd>
   </dl>
   <h3 class="h6">Domain performance</h3>
   {% for d in domains %}<div class="es-dombar"><span>{{ d.id }} {{ d.name }}</span><meter min="0" max="100" low="{{ 60 }}" optimum="100" value="{{ d.pct }}" aria-label="{{ d.name }} {{ d.pct }}%">{{ d.pct }}%</meter><span>{{ d.pct }}%</span></div>{% endfor %}
@@ -48,7 +48,7 @@
 </tr>{% endfor %}</tbody></table>
 <h2 class="h5">Question review</h2>
 <ol class="es-review">{% for r in review %}<li class="{{ 'es-ok' if r.ok else 'es-bad' }}">
-  <div>{% if r.pbq %}<span class="badge text-bg-warning">PBQ</span> {% endif %}{% if r.sim %}<span class="badge text-bg-info">Interactive Workbench</span> {% endif %}{% if r.flagged %}<span class="badge text-bg-info">Flagged</span> {% endif %}{% if not r.answered %}<span class="badge text-bg-secondary">Unanswered</span> {% endif %}{{ r.text }} <span class="small text-muted">{{ r.lo }}</span></div>
+  <div>{% if r.pbq %}<span class="badge text-bg-warning">Hands-On Challenge</span> {% endif %}{% if r.sim %}<span class="badge text-bg-info">Interactive Workbench</span> {% endif %}{% if r.flagged %}<span class="badge text-bg-info">Flagged</span> {% endif %}{% if not r.answered %}<span class="badge text-bg-secondary">Unanswered</span> {% endif %}{{ r.text }} <span class="small text-muted">{{ r.lo }}</span></div>
   <div class="small">Your answer: {{ r.yours }} · Key: {{ r.key }}{% if r.parts > 1 %} · <strong>{{ r.parts_right }}/{{ r.parts }} parts right</strong>{% endif %}</div>
   {% if r.why %}<div class="small text-muted">{{ r.why }}</div>{% endif %}
 </li>{% endfor %}</ol>

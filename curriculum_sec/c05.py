@@ -145,7 +145,7 @@ CHAPTER = Ch(
           [
               S('Passwords should be long, unique, and stored properly',
                 'password hygiene',
-                'a unique passphrase stored in a manager, checked only as a slow hash on the server',
+                'a unique passphrase stored in a manager, checked only as a slow hash on the server, with lifetime shown by chage',
                 'the same short password is reused on email and on the admin panel',
                 'Long, unique, and not written on the screen.',
                 'You do not use the same house key for your bike, your locker, and your car.',

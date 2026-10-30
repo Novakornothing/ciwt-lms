@@ -1,7 +1,7 @@
 """Original practice-exam bank for the Cybersecurity course.
 
 Topics are comparable to Security+ (SY0-701) and to entry-level cyber work.
-This is not an official CompTIA exam and not a Department of Defense product.
+This is not an official CompTIA exam.
 """
 
 SEC_EXAM = {
