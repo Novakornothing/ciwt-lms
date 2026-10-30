@@ -654,11 +654,11 @@ KIND_EQUIPMENT = {
                             'If output looks different from the expected result, compare adapter names and addresses with the lab scenario.'],
     },
     'linuxgui': {
-        'equipment': 'LMS Ubuntu 24.04 GNOME Desktop + Bash Split Workbench (browser).',
-        'real': 'An Ubuntu 24.04 LTS desktop VM with GNOME Settings, Disks, GUFW, and terminal.',
-        'low_cost': 'Ubuntu 24.04 LTS Desktop VM on VirtualBox/Hyper-V or live USB.',
-        'reflection': ['Which CLI command verified the change you made in the GNOME GUI?', 'When is the GUI faster than the CLI, and when is the CLI safer?'],
-        'troubleshooting': ['Click Apply in GNOME NetworkManager or Mount in GNOME Disks after editing fields.', 'Use the right-hand bash terminal to verify state with ip addr, lsblk, or sudo ufw status.'],
+        'equipment': 'Live Linux desktop in the browser (file manager, editor, terminal, and settings).',
+        'real': 'A Linux desktop with a window manager, file manager, text editor, terminal, and a way to change network, disk, firewall, and account settings.',
+        'low_cost': 'Any current desktop browser. The machine runs on the student device.',
+        'reflection': ['Which command in the terminal confirmed the change you made in Settings or Files?', 'When is the desktop faster than the terminal, and when is the terminal the better check?'],
+        'troubleshooting': ['Right-click the desktop if the menu is not open.', 'After a settings change, confirm it in the terminal before you press Check my work.'],
     },
     'win11gui': {
         'equipment': 'LMS Windows 11 Settings simulator (browser).',

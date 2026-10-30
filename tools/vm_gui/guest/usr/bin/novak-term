@@ -1,0 +1,5 @@
+#!/bin/sh
+# Open a terminal. 7x14 is the guest bitmap font; "fixed" is built into X.
+DISPLAY="${DISPLAY:-:0}"
+export DISPLAY
+xterm -fn 7x14 -geometry 80x24 "$@" || exec xterm -fn fixed -geometry 80x24 "$@"

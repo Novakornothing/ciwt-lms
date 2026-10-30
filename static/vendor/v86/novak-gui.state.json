@@ -1,0 +1,9 @@
+{
+  "format": "gzip-parts",
+  "raw_bytes": 143998104,
+  "parts": [
+    "novak-gui.state.0.part",
+    "novak-gui.state.1.part",
+    "novak-gui.state.2.part"
+  ]
+}

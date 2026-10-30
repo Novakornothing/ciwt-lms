@@ -1,0 +1,46 @@
+#!/bin/sh
+# novak-fw enable | allow PORT | ban IP | ssh
+set -e
+save() { mkdir -p /etc/iptables /etc/novak; iptables-save > /etc/iptables/rules.v4; }
+cmd=$1
+case "$cmd" in
+  enable)
+    iptables -P INPUT DROP
+    iptables -P FORWARD DROP
+    iptables -P OUTPUT ACCEPT
+    iptables -C INPUT -i lo -j ACCEPT 2>/dev/null || iptables -A INPUT -i lo -j ACCEPT
+    iptables -C INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null || iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+    save
+    echo "policy: INPUT DROP, OUTPUT ACCEPT, loopback and established allowed"
+    ;;
+  allow)
+    port=$2
+    [ -n "$port" ] || { echo "usage: novak-fw allow PORT"; exit 1; }
+    iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null || iptables -A INPUT -p tcp --dport "$port" -j ACCEPT
+    save
+    echo "allowed tcp/$port"
+    ;;
+  ban)
+    ip=$2
+    [ -n "$ip" ] || { echo "usage: novak-fw ban IP"; exit 1; }
+    iptables -C INPUT -s "$ip" -j DROP 2>/dev/null || iptables -I INPUT 1 -s "$ip" -j DROP
+    touch /etc/novak/banned.list
+    grep -qx "$ip" /etc/novak/banned.list || echo "$ip" >> /etc/novak/banned.list
+    save
+    echo "banned $ip"
+    ;;
+  ssh)
+    if ! pidof sshd >/dev/null 2>&1; then
+      mkdir -p /var/run /etc/ssh
+      if [ ! -s /etc/ssh/ssh_host_ed25519_key ]; then
+        ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N '' -q
+      fi
+      /usr/sbin/sshd
+    fi
+    echo "sshd running"
+    ;;
+  *)
+    echo "usage: novak-fw enable|allow|ban|ssh"
+    exit 1
+    ;;
+esac

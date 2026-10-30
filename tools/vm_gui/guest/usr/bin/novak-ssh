@@ -1,0 +1,50 @@
+#!/bin/sh
+# novak-ssh keygen | harden | allow USER | port N | check
+set -e
+cfg=/etc/ssh/sshd_config
+set_kv() {
+  key=$1; val=$2
+  if grep -q "^$key " "$cfg"; then
+    sed -i "s/^$key .*/$key $val/" "$cfg"
+  else
+    echo "$key $val" >> "$cfg"
+  fi
+}
+case "$1" in
+  keygen)
+    mkdir -p /root/.ssh
+    chmod 700 /root/.ssh
+    if [ ! -s /root/.ssh/id_ed25519 ]; then
+      ssh-keygen -t ed25519 -f /root/.ssh/id_ed25519 -N '' -q
+    fi
+    touch /root/.ssh/authorized_keys
+    pub=$(cat /root/.ssh/id_ed25519.pub)
+    grep -qxF "$pub" /root/.ssh/authorized_keys || echo "$pub" >> /root/.ssh/authorized_keys
+    chmod 600 /root/.ssh/authorized_keys
+    echo "ed25519 key ready"
+    ;;
+  harden)
+    set_kv PermitRootLogin no
+    set_kv PasswordAuthentication no
+    echo "PermitRootLogin no, PasswordAuthentication no"
+    ;;
+  allow)
+    user=$2
+    [ -n "$user" ] || { echo "usage: novak-ssh allow USER"; exit 1; }
+    set_kv AllowUsers "$user"
+    echo "AllowUsers $user"
+    ;;
+  port)
+    port=$2
+    [ -n "$port" ] || { echo "usage: novak-ssh port N"; exit 1; }
+    set_kv Port "$port"
+    echo "Port $port"
+    ;;
+  check)
+    sshd -t && echo "sshd config ok"
+    ;;
+  *)
+    echo "usage: novak-ssh keygen|harden|allow|port|check"
+    exit 1
+    ;;
+esac

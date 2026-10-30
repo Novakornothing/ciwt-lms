@@ -13,7 +13,7 @@
       <div class="lab-success" id="labSuccess" hidden role="status"><strong>Lab complete.</strong> {{ lab.success_msg }}</div>
       <div class="lab-tools">
         <button type="button" class="btn btn-sm btn-brand" id="btnHint"><i class="bi bi-lightbulb" aria-hidden="true"></i> Hint</button>
-        {% if lab.kind not in ('activity', 'vm') %}<button type="button" class="btn btn-sm btn-outline-navy" id="btnUndo"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Undo</button>{% endif %}
+        {% if lab.kind not in ('activity', 'vm', 'linuxgui') %}<button type="button" class="btn btn-sm btn-outline-navy" id="btnUndo"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Undo</button>{% endif %}
         <button type="button" class="btn btn-sm btn-outline-navy" id="btnReset"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Start over</button>
       </div>
       <div class="lab-hint" id="hintBox" hidden></div>

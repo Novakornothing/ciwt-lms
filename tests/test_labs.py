@@ -41,9 +41,13 @@ def solve_http(client, lab_id, mod=None):
         st = _j(client.post(f"/labs/{lab_id}/cmd", json={"command": c}))
     for ev, data in sol.get("events") or RT._default_events(lab):
         st = _j(client.post(f"/labs/{lab_id}/event", json={"ev": ev, "data": data}))
-    if lab["kind"] == "vm":
+    if lab.get("vm_checks"):
+        cmds = sol.get("vm_commands") or []
+        if lab["kind"] == "linuxgui":
+            cmds = RT.LLG.solution_commands(lab, _server_state(lab_id))
         _j(client.post(f"/labs/{lab_id}/vm-log", json={"lines": [], "booted": True, "boot_ms": 1}))
-        _j(client.post(f"/labs/{lab_id}/vm-log", json={"lines": sol["vm_commands"]}))
+        if cmds:
+            _j(client.post(f"/labs/{lab_id}/vm-log", json={"lines": cmds}))
         st = _j(client.post(f"/labs/{lab_id}/vm-check", json={"probes": RT.VM.solved_probes(_server_state(lab_id), lab),
                                                               "fabric": sol.get("fabric")}))
     if lab.get("steps"):

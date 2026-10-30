@@ -22,7 +22,7 @@ KIND_GROUPS = [
     ("windows", "Windows command line", "cmd and PowerShell on a Windows 11 VM."),
     ("win11gui", "Windows 11 desktop", "Settings, Services, Device Manager, Network Connections and Active Directory."),
     ("linux", "Linux shell", "bash on a support server."),
-    ("linuxgui", "Ubuntu Linux GUI desktop", "GNOME Settings (NetworkManager), GNOME Disks, GUFW Firewall, Systemd Services, Users & Nautilus Permissions + Bash Split View."),
+    ("linuxgui", "Live Linux desktop", "A Linux desktop in your browser: file manager, editor, terminal, and settings, graded from the live system."),
     ("switch", "Switch (IOS)", "VLANs, access ports, trunks, port security."),
     ("router", "Router (IOS)", "Interfaces, routes, inter-VLAN routing and ACLs."),
     ("vm", "Real Linux VM (runs in your browser)", "A genuine Linux machine boots on your device — real commands, graded by inspecting the VM."),
@@ -93,14 +93,20 @@ def fresh_state(lab_id, uid=0, reseed=0):
     if not lab:
         return None
     st = deepcopy(lab["initial_state"])
-    if lab["kind"] in ("linux", "linuxgui") and "fs" not in st:
-        st.update(LX.linux_state())
+    if lab["kind"] == "linux" or (lab["kind"] == "linuxgui" and not lab.get("vm_checks")):
+        if "fs" not in st:
+            st.update(LX.linux_state())
     if lab["kind"] == "win11gui" and not st.get("gui"):
         st["gui"] = LG.gui_state()
-    if lab["kind"] in ("linuxgui", "linux") and not st.get("linuxgui"):
+    if lab["kind"] == "linux" and not st.get("linuxgui"):
+        st["linuxgui"] = LLG.linux_gui_state()
+    if lab["kind"] == "linuxgui" and not lab.get("vm_checks") and not st.get("linuxgui"):
         st["linuxgui"] = LLG.linux_gui_state()
     st["seed"] = _seed(lab_id, uid, reseed)
-    if lab["kind"] == "vm":
+    if lab.get("vm_checks") and lab["kind"] == "linuxgui":
+        st.update(VM.fresh(lab, st["seed"]))
+        st["gui_vars"] = LLG.gui_vars(st["seed"])
+    elif lab["kind"] == "vm":
         st.update(VM.fresh(lab, st["seed"]))
     st["objectives"] = [o["id"] for o in lab["objectives"]]
     if lab.get("steps"):
@@ -154,7 +160,7 @@ def view(lab, state, done):
         g.pop("seen", None)
         out["gui"] = g
         out["facts"] = {k: state.get(k) for k in ("hostname", "ipv4", "mask", "gateway", "dns", "edition", "version", "build", "user", "domain")}
-    if lab["kind"] in ("linuxgui", "linux"):
+    if lab["kind"] == "linux" or (lab["kind"] == "linuxgui" and not lab.get("vm_checks")):
         out["linuxgui"] = LLG.public_gui(state)
         out["facts"] = {"hostname": state.get("hostname") or state.get("host") or "novak-lnx-01", "user": state.get("user") or "trainee", "ipv4": state.get("ip") or "10.20.40.15"}
     if lab.get("steps"):
@@ -215,6 +221,8 @@ def run_command(lab_id, state, done, command):
     if cmd.lower() in ("clear", "cls") or cmd == "\x0c":
         return {"lines": [], "clear": True}, state, done
     extra = []
+    if kind == "linuxgui" and lab.get("vm_checks"):
+        return {"lines": ["Use the desktop in this page. Check my work looks at the live system."]}, state, done
     if kind in ("linux", "linuxgui"):
         def mark(oid):
             if oid not in done:
@@ -500,8 +508,9 @@ def solve(lab_id, uid=0):
     for ev, data in sol.get("events") or _default_events(lab):
         res, state, done = apply_event(lab_id, state, done, ev, data)
         log.append((ev, res))
-    if lab["kind"] == "vm":
-        state, done = vm_log(lab_id, state, done, sol.get("vm_commands") or [])
+    if lab.get("vm_checks"):
+        cmds = LLG.solution_commands(lab, state) if lab["kind"] == "linuxgui" else (sol.get("vm_commands") or [])
+        state, done = vm_log(lab_id, state, done, cmds)
         res, state, done = vm_check(lab_id, state, done, VM.solved_probes(state, lab), fabric=sol.get("fabric"))
         log.append(("vm-check", res))
     answers = sol.get("answers") or {}

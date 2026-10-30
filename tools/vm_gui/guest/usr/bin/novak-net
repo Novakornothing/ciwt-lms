@@ -1,0 +1,35 @@
+#!/bin/sh
+# novak-net save PROFILE ADDR PREFIX GATEWAY DNS
+# novak-net apply ADDR PREFIX GATEWAY DNS
+# Writes real interface state. Profiles live in /etc/novak/profiles.
+set -e
+cmd=$1
+write_conf() {
+  printf 'address=%s\nprefix=%s\ngateway=%s\ndns=%s\n' "$1" "$2" "$3" "$4"
+}
+case "$cmd" in
+  save)
+    name=$2; addr=$3; prefix=$4; gw=$5; dns=$6
+    [ -n "$name" ] && [ -n "$addr" ] && [ -n "$prefix" ] && [ -n "$gw" ] && [ -n "$dns" ] || { echo "usage: novak-net save PROFILE ADDR PREFIX GATEWAY DNS"; exit 1; }
+    mkdir -p /etc/novak/profiles
+    write_conf "$addr" "$prefix" "$gw" "$dns" > "/etc/novak/profiles/$name.conf"
+    echo "saved profile $name ($addr/$prefix via $gw dns $dns)"
+    ;;
+  apply)
+    addr=$2; prefix=$3; gw=$4; dns=$5
+    [ -n "$addr" ] && [ -n "$prefix" ] && [ -n "$gw" ] && [ -n "$dns" ] || { echo "usage: novak-net apply ADDR PREFIX GATEWAY DNS"; exit 1; }
+    mkdir -p /etc/novak
+    write_conf "$addr" "$prefix" "$gw" "$dns" > /etc/novak/network.conf
+    ip link set eth0 up
+    ip addr flush dev eth0
+    ip addr add "$addr/$prefix" dev eth0
+    ip route del default 2>/dev/null || true
+    ip route add default via "$gw" dev eth0
+    printf 'nameserver %s\n' "$dns" > /etc/resolv.conf
+    echo "applied $addr/$prefix via $gw dns $dns"
+    ;;
+  *)
+    echo "usage: novak-net save|apply ..."
+    exit 1
+    ;;
+esac

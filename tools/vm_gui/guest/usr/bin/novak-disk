@@ -1,0 +1,34 @@
+#!/bin/sh
+# novak-disk report IMAGE
+# novak-disk mount IMAGE MOUNTPOINT OPTIONS
+set -e
+cmd=$1
+case "$cmd" in
+  report)
+    img=${2:-/var/lib/novak/data.img}
+    [ -f "$img" ] || { echo "no image $img"; exit 1; }
+    bytes=$(wc -c < "$img")
+    bytes=$(echo "$bytes")
+    mkdir -p /var/lib/novak
+    printf 'image=%s\nbytes=%s\nreadonly=0\n' "$img" "$bytes" > /var/lib/novak/smart-report.txt
+    echo "health report: $img $bytes bytes"
+    cat /var/lib/novak/smart-report.txt
+    ;;
+  mount)
+    img=$2; mnt=$3; opts=$4
+    [ -n "$img" ] && [ -n "$mnt" ] && [ -n "$opts" ] || { echo "usage: novak-disk mount IMAGE MOUNT OPTIONS"; exit 1; }
+    [ -f "$img" ] || { echo "no image $img"; exit 1; }
+    mkdir -p "$mnt"
+    if ! grep -q " $mnt " /proc/mounts 2>/dev/null; then
+      mount -o loop,"$opts" "$img" "$mnt"
+    fi
+    grep -v " $mnt " /etc/fstab > /tmp/fstab.novak || true
+    echo "$img $mnt ext4 loop,$opts 0 0" >> /tmp/fstab.novak
+    mv /tmp/fstab.novak /etc/fstab
+    echo "mounted $img on $mnt ($opts)"
+    ;;
+  *)
+    echo "usage: novak-disk report|mount ..."
+    exit 1
+    ;;
+esac

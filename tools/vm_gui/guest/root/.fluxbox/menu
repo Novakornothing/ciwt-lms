@@ -1,0 +1,6 @@
+[begin] (Novak Linux)
+  [exec] (Terminal) {novak-term}
+  [exec] (Files) {nfiles /root}
+  [exec] (Editor) {nedit /root/notes.txt}
+  [exec] (Settings) {nsettings}
+[end]

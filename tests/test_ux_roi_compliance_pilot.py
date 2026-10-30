@@ -310,21 +310,15 @@ def test_10_interactive_linux_gui_desktop_workbench_labs(student):
         assert r.status_code == 200
         page = r.get_data(as_text=True)
         for token in (
-            'Ubuntu 24.04 LTS · GNOME 46 Desktop',
-            'GUI + Bash Split View',
-            'id="lnxWorkbenchGrid"',
-            'id="lnxDesk"',
-            'id="termWrap"',
+            'Live Linux desktop',
+            'id="lguiScreen"',
+            'Stage 1',
+            'Stage 2',
+            'Stage 3',
             'js/lab-linux-gui.js',
         ):
             assert token in page, (lid, token)
-
-        # Verify split-view bash terminal command works inside linuxgui lab
-        cmd_r = student.post(f'/labs/{lid}/cmd', json={'command': 'whoami'})
-        assert cmd_r.status_code == 200
-        assert 'trainee' in ' '.join(cmd_r.get_json().get('lines') or [])
-
-        # Verify full GUI event path solves the lab to 100%
+        assert 'Ubuntu 24.04' not in page
         st = solve_http(student, lid)
         assert st['complete'] is True and st['score'] == 100
 
