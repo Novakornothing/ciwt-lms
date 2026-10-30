@@ -73,7 +73,7 @@ def exam_sim_signal(db, section, user):
     worst = weak[0] if weak else None
     code = EXAMS[att.exam]['code']
     label = {'ready': 'Voucher ready', 'borderline': 'Borderline'}.get(att.badge, 'Needs remediation')
-    pill = f'Exam Sim ({code}): {att.score}/900 · {label}' + (f' (weak: {worst[1]} {names.get(worst[1], "")})' if worst else '')
+    pill = f'Practice Exam ({code}): {att.score}/900 · {label}' + (f' (weak: {worst[1]} {names.get(worst[1], "")})' if worst else '')
     flagged = att.badge == 'remediate' or bool(weak)
     return {'att': att, 'pill': pill, 'flagged': flagged, 'worst': worst and {'domain': worst[1], 'name': names.get(worst[1], ''),
                                                                               'pct': worst[0]},
@@ -99,7 +99,7 @@ def why(app, db, section, user):
         parts.append(hx['text'].lower())
     es = exam_sim_signal(db, section, user)
     if es and es['flagged']:
-        parts.append(f'scored {es["att"].score}/900 on the {es["code"]} exam simulator'
+        parts.append(f'scored {es["att"].score}/900 on the {es["code"]} practice exam'
                      + (f', weakest in {es["worst"]["domain"]} {es["worst"]["name"]} ({es["worst"]["pct"]}%)' if es['worst'] else ''))
     style = lad.STYLE.get(c['best']) if c['best'] else None
     sentence = (f'{user.first_name or user.full_name} ' + '; '.join(parts) + '.' if parts else
@@ -129,13 +129,13 @@ def why(app, db, section, user):
     if es and es['flagged']:
         res_url = url_for('exam_sim_result', section_id=section.id, attempt_id=es['att'].id)
         if es['worst']:
-            stuck.append({'text': f'Exam Sim {es["code"]} · {es["worst"]["domain"]} {es["worst"]["name"]}',
+            stuck.append({'text': f'Practice Exam {es["code"]} · {es["worst"]["domain"]} {es["worst"]["name"]}',
                           'detail': f'{es["worst"]["pct"]}% in the latest sitting ({es["att"].score}/900, {es["label"].lower()})',
                           'url': res_url})
         actions.append({'kind': 'exam_sim', 'text': 'Open Exam-Day Simulator result', 'url': res_url})
         actions.append({'kind': 'exam_sim_class', 'text': 'Class simulator overview',
                         'url': url_for('instructor_exam_sim', section_id=section.id)})
-    best_badge = f'✓ Best style: {style} ({c["best"]})' if style else None
+    best_badge = f'✓ Best way to learn: {style}' if style else None
     return {'user': user, 'sentence': sentence, 'stuck': stuck, 'best_badge': best_badge,
             'lab_tags': [{'text': f'Lab: {k} ×{n}' if n > 1 else f'Lab: {k}', 'url': next(f['url'] for f in flags if f['label'] == k)}
                          for k, n in fcount.most_common(2)], 'pills': pills, 'flags': flags[:4], 'clicked': c, 'helix': hx,

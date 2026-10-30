@@ -1717,6 +1717,100 @@ def register_account():
     return render_template('register.html', errors=errors, form=form_data), (400 if errors else 200)
 
 
+_TOUR_VISUAL_DNS = ('<svg viewBox="0 0 520 90" role="img" aria-label="{label}">'
+    '<rect x="6" y="24" width="130" height="42" rx="8" fill="#e8f0fb" stroke="#0b2a55"/><text x="71" y="50" text-anchor="middle" font-size="13" fill="#0b2a55">{a}</text>'
+    '<rect x="196" y="24" width="130" height="42" rx="8" fill="#e8f0fb" stroke="#0b2a55"/><text x="261" y="50" text-anchor="middle" font-size="13" fill="#0b2a55">{b}</text>'
+    '<rect x="384" y="24" width="130" height="42" rx="8" fill="#fdf3d8" stroke="#9a7a2c"/><text x="449" y="50" text-anchor="middle" font-size="13" fill="#5a4310">{c}</text>'
+    '<path d="M138 45 H190" stroke="#0b2a55" stroke-width="2.5"/><path d="M182 39 L192 45 L182 51z" fill="#0b2a55"/>'
+    '<path d="M328 45 H378" stroke="#0b2a55" stroke-width="2.5"/><path d="M370 39 L380 45 L370 51z" fill="#0b2a55"/></svg>')
+
+
+def _tour_try(q, opts):
+    btns = ''.join(f'<button type="button" data-try="{"yes" if ok else "no"}">{t}</button>' for t, ok in opts)
+    return f'<p>{q}</p><div class="chips">{btns}</div><p class="msg" role="status"></p>'
+
+
+DEMO_TOUR_CONTENT = {
+    'ITSUP': {
+        'blurb': 'Hardware, troubleshooting, and help-desk tickets.',
+        'question': 'Concept: why does a PC beep and show nothing at power-on?',
+        'ways': [
+            '<p>At power-on the firmware runs <b>POST</b> (power-on self-test). If RAM, CPU, or video fails the check, it stops and reports the fault with beep codes before any operating system loads.</p>',
+            '<p>Before Windows starts, the PC checks its own parts. If one part is broken, it beeps instead of starting.</p>',
+            '<p>POST is a pilot\u2019s pre-flight checklist. If a gauge fails, the plane stays on the ground and the pilot hears an alarm.</p>',
+            _TOUR_VISUAL_DNS.format(label='Power on, then POST checks hardware, then the OS loads', a='Power on', b='POST checks', c='OS loads'),
+            '',
+        ],
+        'tryOk': 'Correct. A failed RAM check stops POST and beeps.',
+        'tryMiss': 'Not quite. The fault happens before the OS starts.',
+        'lab': {'task': 'Task: show this Windows PC\u2019s IP configuration.', 'prompt': 'C:\\>', 'accept': ['ipconfig', 'ipconfig /all'],
+                'hint': 'the command starts with "ip" and ends with "config".',
+                'output': 'Ethernet adapter Ethernet:\n   IPv4 Address. . . : 192.168.1.42\n   Default Gateway . : 192.168.1.1',
+                'ok': 'Correct. ipconfig shows the address and gateway.', 'miss': 'Not quite. On Windows, use ipconfig.'},
+    },
+    'NETOPS': {
+        'blurb': 'IP addressing, switching, routing, and DNS.',
+        'question': 'Concept: what does DNS do?',
+        'ways': [
+            '<p>DNS resolves a hostname such as <code>example.com</code> to an IP address. The client asks a resolver, which queries root, TLD, and authoritative servers, then caches the answer for its TTL.</p>',
+            '<p>Computers find each other by number, not by name. DNS turns the name you type into the number the computer needs.</p>',
+            '<p>DNS is your phone\u2019s contact list. You tap \u201cMom\u201d; the phone dials the number saved under that name.</p>',
+            _TOUR_VISUAL_DNS.format(label='Laptop asks resolver, resolver returns an IP address', a='Laptop', b='DNS resolver', c='93.184.215.14'),
+            '',
+        ],
+        'tryOk': 'Correct. An A record maps a name to an IPv4 address.',
+        'tryMiss': 'Not quite. MX is for mail; CNAME is an alias.',
+        'lab': {'task': 'Task: on the switch, list every VLAN and its ports.', 'prompt': 'SW1#', 'accept': ['show vlan brief', 'sh vlan brief', 'show vlan', 'sh vlan br'],
+                'hint': 'start with "show vlan".',
+                'output': 'VLAN Name     Status    Ports\n1    default  active    Gi0/1, Gi0/2\n10   STAFF    active    Gi0/3\n20   LAB      active    Gi0/4',
+                'ok': 'Correct. show vlan brief lists VLANs and ports.', 'miss': 'Not quite. Try show vlan brief.'},
+    },
+    'CLIENT': {
+        'blurb': 'Windows, Linux, and macOS: install, secure, repair.',
+        'question': 'Concept: what does chmod 755 do on Linux?',
+        'ways': [
+            '<p><code>chmod 755 file</code> sets permissions to <b>rwx</b> for the owner and <b>r-x</b> for group and others. Each digit adds read (4), write (2), and execute (1).</p>',
+            '<p>You can read, change, and run the file. Everyone else can read and run it, but not change it.</p>',
+            '<p>It is a shared recipe card: you can edit it; your housemates can read it and cook from it, but not rewrite it.</p>',
+            _TOUR_VISUAL_DNS.format(label='Owner 7 rwx, group 5 r-x, others 5 r-x', a='Owner 7 = rwx', b='Group 5 = r-x', c='Others 5 = r-x'),
+            '',
+        ],
+        'tryOk': 'Correct. 7 = 4 + 2 + 1 = read, write, execute.',
+        'tryMiss': 'Not quite. Add read 4 + write 2 + execute 1.',
+        'lab': {'task': 'Task: make deploy.sh runnable by everyone, editable only by you.', 'prompt': 'student@ubuntu:~$', 'accept': ['chmod 755 deploy.sh', 'chmod u=rwx,go=rx deploy.sh'],
+                'hint': 'use chmod with three digits: owner, group, others.',
+                'output': '-rwxr-xr-x 1 student student 214 deploy.sh',
+                'ok': 'Correct. deploy.sh is now -rwxr-xr-x.', 'miss': 'Not quite. Try chmod 755 deploy.sh.'},
+    },
+}
+DEMO_TOUR_CONTENT['ITSUP']['ways'][4] = _tour_try('A PC beeps three times and the screen stays black. What failed first?', [('The operating system', False), ('A POST hardware check', True), ('The network', False)])
+DEMO_TOUR_CONTENT['NETOPS']['ways'][4] = _tour_try('Which DNS record maps a name to an IPv4 address?', [('MX', False), ('A', True), ('CNAME', False)])
+DEMO_TOUR_CONTENT['CLIENT']['ways'][4] = _tour_try('What does the 7 in chmod 755 give the owner?', [('Read only', False), ('Read, write, execute', True), ('Execute only', False)])
+
+
+@app.route('/demo/tour')
+def demo_tour():
+    """60-second guided demo (Phase 1). Works without login and without a camera."""
+    order = ['ITSUP', 'NETOPS', 'CLIENT']
+    titles = {c.code: c.title for c in Course.query.filter(Course.code.in_(order)).all()}
+    fallback = {'ITSUP': 'IT Support', 'NETOPS': 'Basic Networking', 'CLIENT': 'Operating Systems'}
+    courses = [{'code': k, 'title': titles.get(k) or fallback[k], 'blurb': DEMO_TOUR_CONTENT[k]['blurb']} for k in order]
+    stats = {'section_name': 'Section A', 'students': 0, 'need_help': 0, 'seats': 0, 'instructors': 0, 'courses': len(courses)}
+    try:
+        sec = db.session.get(ClassSection, 1)
+        if sec:
+            stats['section_name'] = sec.name
+            stats['students'] = Enrollment.query.filter_by(section_id=sec.id).count()
+        stats['seats'] = User.query.filter_by(role='student').count()
+        stats['instructors'] = User.query.filter_by(role='instructor').count()
+        _ws = app.jinja_env.globals.get('why_section')
+        stats['need_help'] = len((_ws(sec) or []) if (_ws and sec) else [])
+    except Exception as exc:
+        print('demo tour stats:', exc)
+    data = {'courses': courses, 'content': {k: {kk: vv for kk, vv in v.items() if kk != 'blurb'} for k, v in DEMO_TOUR_CONTENT.items()}}
+    return render_template('demo_tour.html', courses=courses, stats=stats, tour_data=data)
+
+
 @app.route('/demo/<role>', methods=['GET', 'POST'])
 @app.route('/demo/enter/<role>', methods=['GET', 'POST'])
 def demo_enter(role):
@@ -1967,7 +2061,7 @@ def sync_pilot_slice():
                 qz.title = title
                 qz.questions = payload
             n += 1
-    # Network Operations (pass 8): chapter-specific checks replace the three generic seed sets
+    # Basic Networking (pass 8): chapter-specific checks replace the three generic seed sets
     # that were rotated across the seven chapters (curriculum_v2/netops_checks.py).
     from curriculum_v2.netops_checks import NETOPS_CHECKS, netops_quiz_payload
     net = Course.query.filter_by(code='NETOPS').first() or Course.query.filter_by(code='NETPLUS').first()
@@ -2230,6 +2324,7 @@ def curriculum_search():
         did_you_mean=payload['did_you_mean'],
         expanded_terms=payload['expanded_terms'],
         categories=payload['categories'],
+        command_card=payload.get('command_card'),
     )
 
 
@@ -2345,10 +2440,15 @@ def scorm_package_download(course_code):
 def xapi_statements_endpoint():
     import scorm_xapi as SX
     limit = max(1, min(200, request.args.get('limit', 50, type=int)))
-    payload = SX.build_xapi_statements(app=app, limit=limit)
+    # Real learner statements are staff-only; the public URL returns one synthetic sample statement.
+    staff = current_user.is_authenticated and current_user.role in ('admin', 'instructor')
+    payload = SX.build_xapi_statements(app=app if staff else None, limit=limit)
+    payload['sample_only'] = not staff
     resp = jsonify(payload)
+    resp.headers['Cache-Control'] = 'private, no-store' if staff else 'public, max-age=300'
     resp.headers['X-Experience-API-Version'] = '1.0.3'
-    resp.headers['Access-Control-Allow-Origin'] = '*'
+    if not staff:
+        resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
 
 
@@ -3380,8 +3480,21 @@ def student_dashboard():
         except Exception as exc:
             db.session.rollback()
             print('mastery daily:', exc)
+    chapters = []
+    course_labs_list = []
+    if sections:
+        try:
+            sec0 = sections[0]
+            for m in Module.query.filter_by(course_id=sec0.course_id).order_by(Module.order).all():
+                chapters.append({'module': m, 'available': is_content_available(sec0.id, 'module', m.id, current_user.id)})
+            course_labs_list = labs_for_course(sec0.course) if sec0.course else []
+        except Exception as exc:
+            db.session.rollback()
+            print('student dashboard chapters:', exc)
     return render_template(
         'student_dashboard.html',
+        chapters=chapters,
+        course_labs_list=course_labs_list,
         sections=sections,
         progress=progress,
         gold_path=gold_path,
@@ -4945,7 +5058,80 @@ def instructor_dashboard():
         except Exception as exc:
             db.session.rollback()
             print('briefing card', s.id, exc)
-    return render_template('instructor_dashboard.html', sections=sections, courses=courses, tqi_by_id=tqi_by_id, briefs=briefs)
+    overview = _instructor_overview(sections)
+    return render_template('instructor_dashboard.html', sections=sections, courses=courses, tqi_by_id=tqi_by_id, briefs=briefs,
+                           **overview)
+
+
+def _instructor_roster(sections):
+    """One row per enrolled student across these classes (Phase 1 Students & Grades table + CSV)."""
+    rows = []
+    sec_ids = [s.id for s in sections]
+    if not sec_ids:
+        return rows
+    sec_by_id = {s.id: s for s in sections}
+    att = {}
+    for a in TestAttempt.query.filter(TestAttempt.section_id.in_(sec_ids), TestAttempt.completed_at.isnot(None)).all():
+        att.setdefault((a.section_id, a.user_id), []).append(a)
+    for enr, u in (db.session.query(Enrollment, User).join(User, User.id == Enrollment.user_id)
+                   .filter(Enrollment.section_id.in_(sec_ids), User.role == 'student')
+                   .order_by(User.last_name, User.first_name).all()):
+        a = att.get((enr.section_id, u.id), [])
+        scores = [x.score for x in a if x.score is not None]
+        last = max((x.completed_at for x in a if x.completed_at), default=None)
+        sec = sec_by_id[enr.section_id]
+        rows.append({
+            'user': u, 'section': sec, 'course': sec.course.title if sec.course else '',
+            'progress': round(enr.progress_percent or 0),
+            'avg': round(sum(scores) / len(scores)) if scores else None,
+            'tests_taken': len(a), 'tests_passed': sum(1 for x in a if x.passed),
+            'last': last,
+        })
+    return rows
+
+
+def _instructor_overview(sections):
+    roster = _instructor_roster(sections)
+    taken = sum(r['tests_taken'] for r in roster)
+    passed = sum(r['tests_passed'] for r in roster)
+    need = []
+    ws = app.jinja_env.globals.get('why_section')
+    for s in sections[:6]:
+        for w in ((ws(s, 10) if ws else None) or []):
+            need.append({'user': w['user'], 'section': s, 'sentence': w.get('sentence') or ''})
+    return {
+        'roster': roster,
+        'pass_rate': round(100 * passed / taken) if taken else None,
+        'tests_taken': taken,
+        'need_help': need[:8],
+        'n_students': len({r['user'].id for r in roster}),
+    }
+
+
+@app.route('/instructor/roster.csv')
+@login_required
+def instructor_roster_csv():
+    if current_user.role not in ('instructor', 'admin'):
+        abort(403)
+    if current_user.role == 'admin':
+        sections = ClassSection.query.filter_by(is_active=True).all()
+    else:
+        cids = instructor_course_ids(current_user.id)
+        sections = ClassSection.query.filter(ClassSection.is_active.is_(True), db.or_(
+            ClassSection.instructor_id == current_user.id, ClassSection.course_id.in_(cids or [0]))).all()
+    buf = StringIO()
+    w = csv.writer(buf)
+    w.writerow(['student', 'email', 'course', 'class', 'progress_percent', 'average_test_score', 'tests_taken', 'tests_passed', 'last_test'])
+    def cell(v):  # names are self-entered; keep spreadsheet apps from treating them as formulas
+        v = '' if v is None else str(v)
+        return "'" + v if v[:1] in ('=', '+', '-', '@') else v
+    for r in _instructor_roster(sections):
+        w.writerow([cell(r['user'].full_name), cell(r['user'].email), r['course'], cell(r['section'].name), r['progress'],
+                    '' if r['avg'] is None else r['avg'], r['tests_taken'], r['tests_passed'],
+                    r['last'].strftime('%Y-%m-%d') if r['last'] else ''])
+    audit('roster_csv', f'{len(sections)} classes')
+    return Response(buf.getvalue(), mimetype='text/csv',
+                    headers={'Content-Disposition': 'attachment; filename=novak-roster.csv'})
 
 
 @app.route('/instructor/section/<int:section_id>')
@@ -5993,22 +6179,36 @@ def admin_test_analytics():
 # forwards those anchors to the matching sub-page, so bookmarks keep working.
 ADMIN_TABS = [
     ('admin_dashboard', 'Overview', 'bi-speedometer2'),
-    ('admin_classes', 'Classes', 'bi-collection'),
-    ('admin_people', 'People', 'bi-people'),
-    ('admin_curriculum', 'Curriculum', 'bi-journal-bookmark'),
-    ('admin_tqi', 'Quality / TQI', 'bi-clipboard2-pulse'),
-    ('admin_privacy', 'Privacy', 'bi-shield-lock'),
-    ('admin_institutions', 'Institutions', 'bi-building'),
-    ('admin_outcomes', 'Outcomes', 'bi-graph-up-arrow'),
-    ('admin_ferpa', 'FERPA', 'bi-shield-check'),
-    ('admin_audit_log', 'Audit log', 'bi-journal-text'),
+    ('admin_people', 'Users & Sections', 'bi-people'),
+    ('admin_exports', 'Exports', 'bi-box-arrow-down'),
+    ('admin_tools', 'More tools', 'bi-tools'),
+]
+# Pages reached from "More tools" keep that tab highlighted; Users & Sections covers people + classes.
+ADMIN_TAB_GROUP = {'admin_classes': 'admin_people', 'admin_people': 'admin_people', 'admin_dashboard': 'admin_dashboard',
+                   'admin_exports': 'admin_exports'}
+ADMIN_MORE_TOOLS = [
+    ('admin_curriculum', 'Curriculum', 'What each course contains and who can teach it.'),
+    ('admin_tqi', 'Results & ROI', 'Training quality packets by class.'),
+    ('admin_roi', 'ROI calculator', 'Estimate savings for your seat count.'),
+    ('admin_outcomes', 'Outcomes', 'Pass rates, Exam Readiness, and Skill Mastery by class.'),
+    ('admin_institutions', 'Institutions', 'Campuses and single sign-on.'),
+    ('admin_lti', 'LMS connections (LTI 1.3)', 'Connect Canvas, Moodle, Blackboard, or D2L.'),
+    ('admin_privacy', 'Privacy', 'Export or delete a student record.'),
+    ('admin_ferpa', 'FERPA', 'Directory information and disclosures.'),
+    ('admin_audit_log', 'Audit log', 'Tamper-evident record of sensitive actions.'),
+    ('admin_audit', 'Recent activity', 'The last 300 audit events, newest first.'),
+    ('admin_tickets', 'Content tickets', 'Reported lesson issues.'),
+    ('admin_teaching_time', 'Teaching time', 'Instructor time by class.'),
+    ('admin_test_analytics', 'Test analytics', 'Item difficulty and flags.'),
+    ('admin_compliance', 'Security & Section 508', 'Security, privacy, and accessibility packet.'),
+    ('admin_readiness', 'System health', 'Developer diagnostics and production checks.'),
 ]
 
 
 
 @app.context_processor
 def _admin_tabs_ctx():
-    return {'admin_tabs': ADMIN_TABS}
+    return {'admin_tabs': ADMIN_TABS, 'admin_tab_group': ADMIN_TAB_GROUP}
 
 def _admin_instructor_mode_redirect():
     if session.get('view_as') == 'instructor':
@@ -6057,7 +6257,61 @@ def admin_dashboard():
         'tqi_complete': sum(1 for t in tqi if t['packet'].status == 'complete'),
         'tickets_open': CurriculumTicket.query.filter(CurriculumTicket.status.in_(('open', 'in_progress'))).count(),
     }
-    return render_template('admin_dashboard.html', admin_tab='admin_dashboard', stats=stats,
+    stats.update(_admin_overview_cards(sections))
+    return render_template('admin_dashboard.html', admin_tab='admin_dashboard', stats=stats)
+
+
+LAB_SEAT_COST_PER_YEAR = round(460 * 0.33)   # cloud VM lab seat in the ROI model (compliance_roi_pilot)
+
+
+def _admin_overview_cards(sections):
+    """Phase 1 admin overview: active seats, instructors, cohort Exam Readiness, estimated lab savings."""
+    active_ids = [x.id for x in sections if x.is_active]
+    seats = 0
+    students = set()
+    if active_ids:
+        for (uid,) in (db.session.query(Enrollment.user_id).join(User, User.id == Enrollment.user_id)
+                       .filter(Enrollment.section_id.in_(active_ids), User.role == 'student').all()):
+            students.add(uid)
+        seats = len(students)
+    ready_pct, candidates = None, 0
+    try:
+        from institutional.outcomes import exam_sim_summary
+        ov = exam_sim_summary(app, active_ids, students)['overall']
+        candidates = ov['candidates']
+        ready_pct = ov['voucher_ready_pct'] if candidates else None
+    except Exception as exc:
+        db.session.rollback()
+        print('admin exam readiness:', exc)
+    return {'seats': seats, 'ready_pct': ready_pct, 'ready_candidates': candidates,
+            'lab_savings': seats * LAB_SEAT_COST_PER_YEAR, 'lab_seat_cost': LAB_SEAT_COST_PER_YEAR}
+
+
+@app.route('/admin/exports')
+@login_required
+@role_required('admin')
+def admin_exports():
+    r = _admin_instructor_mode_redirect()
+    if r:
+        return r
+    courses = Course.query.filter(Course.code.in_(['ITSUP', 'NETOPS', 'CLIENT'])).order_by(Course.id).all()
+    return render_template('admin_exports.html', admin_tab='admin_exports', courses=courses)
+
+
+@app.route('/admin/tools')
+@login_required
+@role_required('admin')
+def admin_tools():
+    r = _admin_instructor_mode_redirect()
+    if r:
+        return r
+    tools = []
+    for ep, label, desc in ADMIN_MORE_TOOLS:
+        try:
+            tools.append({'url': url_for(ep), 'label': label, 'desc': desc})
+        except Exception:
+            continue
+    return render_template('admin_tools.html', admin_tab='admin_tools', tools=tools,
                            teach_by_class=_teaching_by_class()[:5], fmt_seconds=_fmt_seconds)
 
 
@@ -6904,18 +7158,18 @@ def seed_database():
 
     aplus = Course(
         code='ITSUP',
-        title='IT Support Technician Fundamentals',
+        title='IT Support',
         description='Hardware, software, networking, security, and operational procedures for IT support technicians.',
     )
     netplus = Course(
         code='NETOPS',
-        title='Network Operations Fundamentals',
+        title='Basic Networking',
         description='Networking concepts, infrastructure, operations, security, and troubleshooting.',
     )
     client = Course(
         code='CLIENT',
-        title='Client Systems & Shop Procedures',
-        description='Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary Novak LMS™ course — not a vendor exam product.',
+        title='Operating Systems',
+        description='Windows and mixed-OS clients, endpoint security, and software repair on Windows, Linux, and macOS. Proprietary Novak LMS™ course — not a vendor exam product.',
     )
     db.session.add_all([aplus, netplus, client])
     db.session.commit()
@@ -7486,7 +7740,7 @@ def _seed_tqi_demo():
             section_id=section.id,
             user_id=stu.id,
             answers_json=json.dumps(answers),
-            comment='Demo EOC reaction for TQI packet.',
+            comment='Demo end-of-course survey comment.',
         ))
     pkt = TqiPacket.query.filter_by(section_id=section.id).first()
     if not pkt:
@@ -7550,22 +7804,31 @@ def sync_curriculum():
     client = Course.query.filter_by(code='CLIENT').first()
     if not aplus or not netplus:
         return False
-    aplus.code, aplus.title = 'ITSUP', 'IT Support Technician Fundamentals'
+    aplus.code, aplus.title = 'ITSUP', 'IT Support'
     aplus.description = 'Hardware, client networking, virtualization, and ticket habits for IT support technicians. Proprietary Novak LMS™ course.'
-    netplus.code, netplus.title = 'NETOPS', 'Network Operations Fundamentals'
+    netplus.code, netplus.title = 'NETOPS', 'Basic Networking'
     netplus.description = 'Networking concepts, infrastructure, operations, security, and troubleshooting.'
     if not client:
         client = Course(
             code='CLIENT',
-            title='Client Systems & Shop Procedures',
-            description='Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary Novak LMS™ course — not a vendor exam product.',
+            title='Operating Systems',
+            description='Windows and mixed-OS clients, endpoint security, and software repair on Windows, Linux, and macOS. Proprietary Novak LMS™ course — not a vendor exam product.',
         )
         db.session.add(client)
         db.session.flush()
     else:
-        client.title = 'Client Systems & Shop Procedures'
-        client.description = 'Windows and mixed-OS clients, endpoint security, software repair, and shop procedures. Proprietary Novak LMS™ course — not a vendor exam product.'
+        client.title = 'Operating Systems'
+        client.description = 'Windows and mixed-OS clients, endpoint security, and software repair on Windows, Linux, and macOS. Proprietary Novak LMS™ course — not a vendor exam product.'
 
+    # Phase 1 course renames: carry the new titles into existing class section names on live databases.
+    _renames = (('Client Systems & Shop Procedures', 'Operating Systems'), ('IT Support Technician Fundamentals', 'IT Support'),
+                ('Network Operations Fundamentals', 'Basic Networking'))
+    for _sec in ClassSection.query.all():
+        _nm = _sec.name or ''
+        for _old, _new in _renames:
+            _nm = _nm.replace(_old, _new)
+        if _nm != (_sec.name or ''):
+            _sec.name = _nm
     for course, pack in ((aplus, APLUS_LESSONS), (netplus, NETPLUS_LESSONS), (client, CLIENT_LESSONS)):
         for ch in pack:
             if isinstance(ch, dict):
@@ -7806,6 +8069,16 @@ def _sync_content():
             print('Opened first knowledge test on', n, 'classes for the student gold path.')
     except Exception as e:
         print('Gold path release note:', e)
+    try:
+        # Phase 1 plain-English rename: stored practice-exam statuses read "EXAM READY".
+        r = db.session.execute(db.text(
+            "UPDATE exam_sim_grade SET status='EXAM READY' WHERE status='VOUCHER READY'"))
+        db.session.commit()
+        if r.rowcount:
+            print('Renamed', r.rowcount, 'practice exam statuses to EXAM READY.')
+    except Exception as e:
+        db.session.rollback()
+        print('Exam status rename note:', e)
 
 
 import gradebook as gradebook_mod

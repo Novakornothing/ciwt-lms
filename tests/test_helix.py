@@ -244,7 +244,7 @@ def test_printable_report_and_dashboard_pagination(instructor, ids):
     r = instructor.get(f'/instructor/section/{sid}/attention/report')
     assert r.status_code == 200
     html = r.get_data(as_text=True)
-    assert 'Helix attention report' in html and 'window.print()' in html and 'Signal, not an assessment' in html
+    assert 'Eye Tracking report' in html and 'window.print()' in html and 'Signal, not an assessment' in html
     d = instructor.get(f'/instructor/section/{sid}/attention?per=25&spage=99')
     assert d.status_code == 200 and 'Printable report' in d.get_data(as_text=True)
 

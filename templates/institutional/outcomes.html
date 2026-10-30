@@ -12,12 +12,12 @@
     <select class="form-select form-select-sm" id="oc-inst" name="institution"><option value="">All institutions</option>{% for i in institutions %}<option value="{{ i.id }}"{% if sel == i.id %} selected{% endif %}>{{ i.name }}</option>{% endfor %}</select>
     <button class="btn btn-sm btn-outline-secondary" type="submit">Show</button></form>{% endif %}
 </div>
-{% if rep.demo %}<div class="alert alert-warning" role="note"><strong>Contains demo seed data.</strong> {{ rep.demo_students }} of {{ rep.students }} students are seeded demo accounts{% if rep.helix_demo %}, and Helix attention data includes demo sessions{% endif %}. Do not report these figures as real outcomes.</div>{% endif %}
+{% if rep.demo %}<div class="alert alert-warning" role="note"><strong>Contains demo seed data.</strong> {{ rep.demo_students }} of {{ rep.students }} students are seeded demo accounts{% if rep.helix_demo %}, and Eye Tracking data includes demo sessions{% endif %}. Do not report these figures as real outcomes.</div>{% endif %}
 <p class="small">{{ rep.students }} students in {{ rep.sections|length }} class{{ '' if rep.sections|length == 1 else 'es' }}. Every percentage shows its denominator; "—" means no data was recorded. Nothing is estimated or filled in.</p>
 <div class="oc-kpis mb-3">
   <div class="card card-body"><div class="small">Objectives right first time</div><div class="oc-num">{{ rep.mastery.pre_pct if rep.mastery.pre_pct is not none else '—' }}{% if rep.mastery.pre_pct is not none %}%{% endif %}</div><div class="small text-body-secondary">of {{ rep.mastery.pairs }} student-objective pairs</div></div>
   <div class="card card-body"><div class="small">Objectives mastered now</div><div class="oc-num">{{ rep.mastery.cur_pct if rep.mastery.cur_pct is not none else '—' }}{% if rep.mastery.cur_pct is not none %}%{% endif %}</div><div class="small text-body-secondary">same {{ rep.mastery.pairs }} pairs</div></div>
-  <div class="card card-body"><div class="small">Struggles resolved by the explanation ladder</div><div class="oc-num">{{ rep.ladder.resolved_pct if rep.ladder.resolved_pct is not none else '—' }}{% if rep.ladder.resolved_pct is not none %}%{% endif %}</div><div class="small text-body-secondary">of {{ rep.ladder.struggles }} struggles</div></div>
+  <div class="card card-body"><div class="small">Struggles resolved by the 5 Ways to Learn</div><div class="oc-num">{{ rep.ladder.resolved_pct if rep.ladder.resolved_pct is not none else '—' }}{% if rep.ladder.resolved_pct is not none %}%{% endif %}</div><div class="small text-body-secondary">of {{ rep.ladder.struggles }} struggles</div></div>
   <div class="card card-body"><div class="small">Labs: diagnosed before changing</div><div class="oc-num">{{ rep.labs.diagnosed_first_pct if rep.labs.diagnosed_first_pct is not none else '—' }}{% if rep.labs.diagnosed_first_pct is not none %}%{% endif %}</div><div class="small text-body-secondary">of {{ rep.labs.analysed }} analysed labs</div></div>
 </div>
 <div class="oc-grid">
@@ -42,12 +42,12 @@
   {% else %}<p class="mb-1">No graded work yet.</p>{% endif %}
   <p class="mb-0 mt-2">Study time logged: {{ rep.time.total_hours }} h across {{ rep.time.students }} students{% if rep.time.median_hours is not none %} (median {{ rep.time.median_hours }} h each){% endif %}.</p></section>
 </div>
-<section class="card card-body mt-3" aria-labelledby="oc-es"><h2 class="h5" id="oc-es">Exam-Day Simulator &amp; Voucher Readiness</h2>
-<div class="table-responsive"><table class="table table-sm mb-0" id="ocExamSim"><thead><tr><th scope="col">Exam</th><th scope="col">Sittings</th><th scope="col">Candidates</th><th scope="col">VOUCHER READY</th><th scope="col">Mean scaled score (latest)</th></tr></thead><tbody>
+<section class="card card-body mt-3" aria-labelledby="oc-es"><h2 class="h5" id="oc-es">Practice Exams &amp; Exam Readiness</h2>
+<div class="table-responsive"><table class="table table-sm mb-0" id="ocExamSim"><thead><tr><th scope="col">Exam</th><th scope="col">Sittings</th><th scope="col">Candidates</th><th scope="col">Exam Readiness</th><th scope="col">Mean scaled score (latest)</th></tr></thead><tbody>
 {% for x in rep.exam_sim.exams + [rep.exam_sim.overall] %}<tr{% if x.exam == 'all' %} class="fw-semibold"{% endif %}><td>{{ x.name }}{% if x.exam != 'all' %} ({{ x.code }}){% endif %}</td><td>{{ x.attempts }}</td><td>{{ x.candidates }}</td>
 <td>{{ x.voucher_ready }}{% if x.voucher_ready_pct is not none %} ({{ x.voucher_ready_pct }}%){% endif %}</td><td>{{ x.mean_score if x.mean_score is not none else '—' }}</td></tr>{% endfor %}
 </tbody></table></div>
-<p class="small text-body-secondary mt-2 mb-0">Simulated scaled scores (CompTIA does not publish its scaling). VOUCHER READY = passing score with every domain at 60% or more in the student's best sitting. Missed-objective drills are excluded.</p></section>
+<p class="small text-body-secondary mt-2 mb-0">Simulated scaled scores (CompTIA does not publish its scaling). Exam Readiness = passing score with every domain at 60% or more in the student's best sitting. Missed-objective drills are excluded.</p></section>
 {% if rep.sections|length > 1 %}
 <section class="card card-body mt-3" aria-labelledby="oc-s"><h2 class="h5" id="oc-s">By class</h2>
 <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th scope="col">Class</th><th scope="col">Students</th><th scope="col">Objectives mastered</th><th scope="col">Mean grade</th></tr></thead><tbody>

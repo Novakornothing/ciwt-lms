@@ -1,4 +1,4 @@
-"""IT Support Technician Fundamentals — reference/depth sections and objective revisions (pass 8).
+"""IT Support — reference/depth sections and objective revisions (pass 8).
 
 Each REFERENCE entry is appended to a lesson as a clearly headed "Reference" section so the original
 teaching flow is untouched. Facts were checked against the issuing bodies' current publications

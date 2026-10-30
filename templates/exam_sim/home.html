@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Exam-Day Readiness Simulator — {{ site_name }}{% endblock %}
+{% block title %}Practice Exams — {{ site_name }}{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
 {% block content %}
 <nav aria-label="breadcrumb"><ol class="breadcrumb small">
   <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
-  <li class="breadcrumb-item active" aria-current="page">Exam-Day Simulator</li></ol></nav>
-<h1 class="h3">Exam-Day Readiness Simulator</h1>
-<p class="text-muted">Rehearse a real sitting: performance-based questions (PBQs) come first, the clock runs, and you can flag
-questions and skip the PBQs to come back to them. You get a simulated scaled score (100–900), a per-domain breakdown and a
+  <li class="breadcrumb-item active" aria-current="page">Practice Exams</li></ol></nav>
+<h1 class="h3">Practice Exams</h1>
+<p class="text-muted">Rehearse a real sitting: hands-on challenges come first, the clock runs, and you can flag
+questions and skip the Hands-On Challenges to come back to them. You get a simulated scaled score (100–900), a per-domain breakdown and a
 readiness badge.</p>
 <form method="post" action="{{ url_for('exam_sim_start', section_id=section.id) }}" class="card card-body mb-4 es-start" id="examSimStart">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -21,7 +21,7 @@ readiness badge.</p>
   <fieldset class="mb-3"><legend class="h6">Length</legend>
     {% for k, m in modes.items() if not m.hidden %}
     <div class="form-check"><input class="form-check-input" type="radio" name="mode" id="mode-{{ k }}" value="{{ k }}" {% if k == 'full' %}checked{% endif %}>
-      <label class="form-check-label" for="mode-{{ k }}">{{ ('Full 90-question exam-length sitting' if k == 'max' else m.name) }} — {{ minutes_for(k, mult) }} min, {{ m.questions }} questions, {{ m.pbqs }} PBQs first</label></div>
+      <label class="form-check-label" for="mode-{{ k }}">{{ ('Full 90-question exam-length sitting' if k == 'max' else m.name) }} — {{ minutes_for(k, mult) }} min, {{ m.questions }} questions, {{ m.pbqs }} Hands-On Challenges first</label></div>
     {% endfor %}
   </fieldset>
   <fieldset class="mb-3"><legend class="h6">Timing</legend>

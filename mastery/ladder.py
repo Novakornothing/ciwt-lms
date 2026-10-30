@@ -36,7 +36,7 @@ REWRITE_SHARE = 0.5      # ... and at least half of them wrong on the original's
 HOW = {'R1': 'said more simply', 'R2': 'as an analogy', 'R3': 'as a picture or step by step', 'R4': 'as something to try'}
 
 
-STYLE = {'R0': 'Original', 'R1': 'Plain language', 'R2': 'Analogy', 'R3': 'Visual / step by step', 'R4': 'Try it'}
+STYLE = {'R0': 'Standard', 'R1': 'Plain English', 'R2': 'Analogy', 'R3': 'Visual', 'R4': 'Try-It'}
 
 def utcnow():
     return datetime.now(timezone.utc).replace(tzinfo=None)
@@ -430,11 +430,11 @@ def register_ladder(app, db, ctx):
                 by[r.resolved] = by.get(r.resolved, 0) + 1
             secs.append({'label': r.label, 'sid': r.sid, 'heading': head, 'rung': r.resolved, 'misses': r.misses or 0,
                          'exhausted': bool(r.exhausted_at), 'style': STYLE.get(r.resolved or '', ''),
-                         'text': (f"Clicked on {r.resolved}: {STYLE[r.resolved]} after {r.misses or 0} miss{'es' if (r.misses or 0) != 1 else ''}"
+                         'text': (f"Clicked with {STYLE[r.resolved]} after {r.misses or 0} miss{'es' if (r.misses or 0) != 1 else ''}"
                                   if r.resolved else 'Every explanation tried, still open' if r.exhausted_at else 'Still working on it')})
         best = max(by, key=lambda k: (by[k], k != 'R0'), default=None)
         return {'struggles': len(secs), 'resolved': sum(by.values()), 'by': by, 'best': best,
-                'best_text': (f'Best style: {STYLE[best]} (resolved {by[best]}/{len(secs)} struggles)' if best else None),
+                'best_text': (f'Best way to learn: {STYLE[best]} (resolved {by[best]}/{len(secs)} struggles)' if best else None),
                 'sections': sorted(secs, key=lambda s: (_lkey(s['label']), s['sid']))}
 
     def class_clicked(section_id):

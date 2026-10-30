@@ -1,4 +1,4 @@
-"""SCORM 1.2, SCORM 2004 (4th Edition), ADL xAPI (IEEE 9274.1.1 / cmi5),
+"""SCORM 1.2, SCORM 2004 (4th Edition), xAPI 1.0.3 statement export,
 and DoD Navy Integrated Learning Environment (ILE / RRL / JKO) Interoperability Bridge for Novak LMS™.
 """
 import io
@@ -19,7 +19,7 @@ COURSE_CATALOG = {
     },
     "NETOPS": {
         "code": "NETOPS",
-        "title": "Network Operations (CompTIA Network+ N10-009)",
+        "title": "Basic Networking (CompTIA Network+ N10-009)",
         "cert": "CompTIA Network+ (N10-009)",
         "ile_cin": "A-150-0009",
         "chapters": 7,
@@ -27,8 +27,8 @@ COURSE_CATALOG = {
     },
     "CLIENT": {
         "code": "CLIENT",
-        "title": "Client Systems & OS Administration (CompTIA Tech+ FC0-U71 & Core 2)",
-        "cert": "CompTIA Tech+ (FC0-U71) / Client Systems",
+        "title": "Operating Systems (CompTIA Tech+ FC0-U71 & Core 2)",
+        "cert": "CompTIA Tech+ (FC0-U71) / Operating Systems",
         "ile_cin": "A-150-0071",
         "chapters": 6,
         "lessons": 24,
@@ -329,7 +329,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
     ile_metadata = {
         "schema": "DoD ADL Total Learning Architecture (TLA) / Navy ILE & Ready Relevant Learning (RRL) v2.1",
         "scorm_version": f"SCORM {ver}",
-        "xapi_profile": "IEEE 9274.1.1-2023 (xAPI 1.0.3 / cmi5)",
+        "xapi_profile": "xAPI 1.0.3 statement export (not cmi5)",
         "lti_advantage": "1EdTech LTI 1.3 + NRPS + AGS 2.0",
         "course_code": code,
         "course_title": primary_meta["title"],
@@ -357,7 +357,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
 
 
 def build_xapi_statements(app=None, limit=50):
-    """Generate official ADL xAPI 1.0.3 (IEEE 9274.1.1) / cmi5 statements from live Novak LMS telemetry."""
+    """Build xAPI 1.0.3-shaped statements from Novak LMS ladder telemetry (read-only export; not a cmi5 AU/LRS)."""
     statements = []
     now_iso = datetime.now(timezone.utc).isoformat()
 
@@ -478,7 +478,7 @@ def build_xapi_statements(app=None, limit=50):
 
     return {
         "version": "1.0.3",
-        "standard": "IEEE 9274.1.1-2023 (ADL xAPI 1.0.3 / cmi5 / DoD TLA & Navy ILE)",
+        "standard": "xAPI 1.0.3 statement export",
         "generated_at": now_iso,
         "count": len(statements),
         "statements": statements[:limit],

@@ -357,7 +357,7 @@ class Engine:
                     if ans in (None, ''):
                         continue
                     ev[obj].append({'kind': 'exam_sim', 'correct': bool(grade(it, ans)), 'when': a.submitted_at,
-                                    'ref': it['id'], 'source': 'Exam-Day Simulator', 'mc': MCS.tag_for(dict(it, bank_id=it['id']), ans)
+                                    'ref': it['id'], 'source': 'Practice Exam', 'mc': MCS.tag_for(dict(it, bank_id=it['id']), ans)
                                     if (it.get('type') or 'single') == 'single' else None, 'bank_id': it['id']})
                     sources['exam_sim'] += 1
         # interactive lab completions (all lab objectives met)

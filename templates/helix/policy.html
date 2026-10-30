@@ -4,12 +4,12 @@
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Attention policy</li>
+    <li class="breadcrumb-item active" aria-current="page">Eye tracking policy</li>
   </ol>
 </nav>
 <div class="page-hero">
   <div class="eyebrow">Written product policy · v{{ policy_version }}</div>
-  <h1 class="h3 mb-1">Helix attention is a signal, not an assessment</h1>
+  <h1 class="h3 mb-1">Eye Tracking is a signal, not an assessment</h1>
   <p class="mb-0">Opt-in · camera video never leaves the browser · you can stop, withdraw, and delete at any time</p>
 </div>
 
@@ -71,7 +71,7 @@
           <li>Do not put dwell or attention percentages on a score sheet, promotion package, or counseling record.</li>
           <li>Do not require Helix to sit any quiz or test.</li>
           <li>Treat thin dwell as a prompt to ask a question or revisit a heading.</li>
-          <li>Students may stop any session, withdraw consent, and delete their stored sessions from <a href="{{ url_for('helix.my_data') }}">My attention data</a>.</li>
+          <li>Students may stop any session, withdraw consent, and delete their stored sessions from <a href="{{ url_for('helix.my_data') }}">My eye-tracking data</a>.</li>
           <li>Retention: {% if config.HELIX_RETENTION_DAYS and config.HELIX_RETENTION_DAYS > 0 %}sessions and attention data are deleted after {{ config.HELIX_RETENTION_DAYS }} days{% else %}kept until deleted by the student or an administrator{% endif %}. See also the site <a href="{{ url_for('privacy_page') }}">privacy page</a>.</li>
         </ol>
         <p class="mb-0 small text-muted">If a command or contract requires a different rule, write it down and keep this page as the product default until it is replaced.</p>
@@ -103,7 +103,7 @@
     {% if current_user.is_authenticated %}
     <div class="card"><div class="card-body d-grid gap-2">
       {% if current_user.role == 'student' %}
-      <a class="btn btn-brand" href="{{ url_for('helix.my_data') }}">My attention data &amp; consent</a>
+      <a class="btn btn-brand" href="{{ url_for('helix.my_data') }}">My eye-tracking data &amp; consent</a>
       <a class="btn btn-outline-navy" href="{{ url_for('student_dashboard') }}">Back to training</a>
       {% else %}
       <a class="btn btn-brand" href="{{ url_for('instructor_dashboard') }}">Back to classes</a>

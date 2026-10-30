@@ -5,13 +5,13 @@
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
-    <li class="breadcrumb-item"><a href="{{ url_for('mastery_class', section_id=section.id) }}">Mastery</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Who needs me</li>
+    <li class="breadcrumb-item"><a href="{{ url_for('mastery_class', section_id=section.id) }}">Skill Mastery</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Students needing help</li>
   </ol>
 </nav>
 <div class="page-hero">
   <div class="eyebrow">Today, {{ today.strftime('%a %d %b') }}</div>
-  <h1 class="h3 mb-1">Who needs me</h1>
+  <h1 class="h3 mb-1">Students needing help</h1>
   <p class="mb-0">{{ focus|length }} of {{ n_students }} students have a reason to look at them today. No risk score: every reason is shown.</p>
 </div>
 <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">{{ demo_ribbon(demo) }}
@@ -59,7 +59,7 @@
 </div></div>
 {% endif %}
 {% set hx = helix_optins(section) %}{% if hx == 0 %}
-<p class="small mb-3" data-helix-note>Helix attention signals: 0 students opted in for this section — struggling cards use ladder checks and lab process logs.</p>
+<p class="small mb-3" data-helix-note>Eye Tracking signals: 0 students opted in for this section — struggling cards use ladder checks and lab process logs.</p>
 {% endif %}
 
 {% if inactive %}

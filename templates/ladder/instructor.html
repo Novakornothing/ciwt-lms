@@ -5,12 +5,12 @@
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
-    <li class="breadcrumb-item"><a href="{{ url_for('mastery_class', section_id=section.id) }}">Mastery</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('mastery_class', section_id=section.id) }}">Skill Mastery</a></li>
     <li class="breadcrumb-item active" aria-current="page">Explanations</li>
   </ol>
 </nav>
 <div class="page-hero">
-  <div class="eyebrow">Explanation ladder · {{ a.course }}</div>
+  <div class="eyebrow">5 Ways to Learn · {{ a.course }}</div>
   <h1 class="h3 mb-1">Explanations: what students needed explained another way</h1>
   {% set cc = class_clicked(section.id) %}{% if cc and cc[1] %}{% set top = cc[0]|sort(attribute='n', reverse=True)|first %}
   <p class="mb-2"><span class="clicked-badge"><i class="bi bi-lightbulb" aria-hidden="true"></i> What finally clicked for this class: {{ top.style }} ({{ top.n }}/{{ cc[1] }} resolved struggles)</span></p>
@@ -46,7 +46,7 @@
           <input type="hidden" name="gate_form" value="1">
           <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ladGate" name="require_check_to_advance"{% if cfg.require_check %} checked{% endif %}>
             <label class="form-check-label" for="ladGate">Comprehension gate: verify each section before moving on</label>
-            <div class="form-text">On (default): “Next lesson” waits until every section's quick check is answered correctly, or every explanation was tried (then you are flagged in Who needs me, and the student can continue). Never graded.</div></div>
+            <div class="form-text">On (default): “Next lesson” waits until every section's quick check is answered correctly, or every explanation was tried (then you are flagged in Students needing help, and the student can continue). Never graded.</div></div>
           <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="ladGateQ" name="gate_quiz_on_ladder"{% if cfg.gate_quiz %} checked{% endif %}>
             <label class="form-check-label" for="ladGateQ">Strict: the chapter quiz also waits for the section checks</label></div>
           <div class="mb-3"><label class="form-label" for="ladMax">Explanations before the instructor is flagged</label>

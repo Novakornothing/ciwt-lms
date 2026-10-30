@@ -28,6 +28,17 @@
 </form>
 
 {% if q %}
+  {% if command_card %}
+  <section class="card mb-3 novak-cmd-card" aria-labelledby="cmdCardH" data-command-card="{{ command_card.key }}">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2"><h2 class="h5 mb-0" id="cmdCardH"><code>{{ command_card.command }}</code></h2><span class="small text-muted">{{ command_card.platform }}</span></div>
+      <p class="mb-1 mt-1">{{ command_card.what }}</p>
+      <p class="mb-1 novak-cmd-syntax"><code>{{ command_card.syntax }}</code></p>
+      <p class="small text-muted mb-2">Example: <code>{{ command_card.example }}</code></p>
+      {% if command_card.practice %}<p class="small fw-bold mb-1">Practice it</p><ul class="list-unstyled mb-0 d-grid gap-1">{% for p in command_card.practice %}<li><span class="badge text-bg-secondary me-1">{{ p.kind }}</span><a href="{{ p.url }}">{{ p.title }}</a></li>{% endfor %}</ul>{% endif %}
+    </div>
+  </section>
+  {% endif %}
   <p class="text-muted">{{ results|length }} result{{ 's' if results|length != 1 else '' }} for “{{ q }}”{% if did_you_mean and did_you_mean|lower != q|lower %} (matched <strong>{{ did_you_mean }}</strong>){% endif %}</p>
   {% if results %}
   <div class="list-group mb-3">

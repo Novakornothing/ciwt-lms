@@ -68,8 +68,8 @@ python smoke_test.py http://127.0.0.1:5050
 
 ## Courses
 
-- IT Support Technician Fundamentals
-- Network Operations Fundamentals
+- IT Support
+- Basic Networking
 
 Original instructional content for demonstration only.
 

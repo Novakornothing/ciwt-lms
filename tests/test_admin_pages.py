@@ -2,6 +2,8 @@
 import pytest
 
 PAGES = ['/admin', '/admin/classes', '/admin/people', '/admin/curriculum', '/admin/tqi']
+# Phase 1: four admin tabs; every other admin page is one click away under More tools.
+NAV = ['/admin', '/admin/people', '/admin/exports', '/admin/tools']
 
 
 @pytest.mark.parametrize('path', PAGES)
@@ -10,7 +12,7 @@ def test_admin_subpages_render_with_shared_nav(admin, path):
     assert r.status_code == 200, path
     body = r.get_data(as_text=True)
     assert 'class="admin-tabs' in body
-    for href in PAGES:
+    for href in NAV:
         assert f'href="{href}"' in body, (path, href)
     assert body.count('aria-current="page"') >= 1
     assert '<style>' not in body.split('<main', 1)[-1]          # no page-level style blocks
@@ -104,3 +106,11 @@ def test_people_list_is_paginated_and_keeps_filters(admin, mod, monkeypatch):
     assert f'Showing 1–5 of {n_all}' in allp
     q = admin.get('/admin/people?q=student1%40').get_data(as_text=True)
     assert 'Showing 1–1 of 1' in q and 'People list pages' not in q                     # a single page needs no pager
+
+
+def test_more_tools_lists_every_other_admin_page(admin):
+    body = admin.get('/admin/tools').get_data(as_text=True)
+    for href in ('/admin/curriculum', '/admin/tqi', '/admin/roi', '/admin/lti', '/admin/audit-log', '/admin/audit', '/admin/compliance', '/admin/readiness'):
+        assert f'href="{href}"' in body, href
+    people = admin.get('/admin/people').get_data(as_text=True)
+    assert 'href="/admin/classes"' in people

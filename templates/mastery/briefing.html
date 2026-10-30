@@ -17,7 +17,7 @@
     <button type="button" class="btn btn-brand" data-mx-print><i class="bi bi-printer" aria-hidden="true"></i> Print</button>
     <a class="btn btn-outline-gold" href="{{ url_for('mastery_briefing_txt', section_id=section.id) }}"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Text (.txt)</a>
     <a class="btn btn-outline-gold" href="{{ url_for('mastery_briefing_csv', section_id=section.id) }}"><i class="bi bi-filetype-csv" aria-hidden="true"></i> CSV</a>
-    <a class="btn btn-outline-gold" href="{{ url_for('mastery_today', section_id=section.id) }}"><i class="bi bi-people" aria-hidden="true"></i> Who needs me</a>
+    <a class="btn btn-outline-gold" href="{{ url_for('mastery_today', section_id=section.id) }}"><i class="bi bi-people" aria-hidden="true"></i> Students needing help</a>
   </div>
 </div>
 <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">{{ demo_ribbon(b.demo) }}
@@ -182,7 +182,7 @@
 </details>
 <details class="mx-why mb-4">
   <summary>How this briefing is made</summary>
-  <div class="mx-why-body small"><p>Everything comes from data already in Novak LMS™: mastery estimates and the decision log, “Who needs me”, mix-ups from tagged wrong answers, lab event logs, consented Helix reading data, recent chapter checks and tests, releases and check-ins. Fixed rules rank the to-do list; each item shows its priority and how it was counted. The same data always gives the same briefing. No AI model writes any of it.</p></div>
+  <div class="mx-why-body small"><p>Everything comes from data already in Novak LMS™: mastery estimates and the decision log, “Students needing help”, mix-ups from tagged wrong answers, lab event logs, consented Helix reading data, recent chapter checks and tests, releases and check-ins. Fixed rules rank the to-do list; each item shows its priority and how it was counted. The same data always gives the same briefing. No AI model writes any of it.</p></div>
 </details>
 </div>
 {% endblock %}

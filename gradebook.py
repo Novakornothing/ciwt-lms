@@ -719,7 +719,7 @@ def register(app, db, deps):
         head += [f"{it['title']} ({it['type']} {it['id']})" for it in data['columns']]
         esg = exam_sim_grades(section)
         es_exams = sorted({g['code'] for rows in esg.values() for g in rows})
-        head += [f'Exam-Day Simulator {c} (scaled /900, synced)' for c in es_exams]
+        head += [f'Practice Exam {c} (scaled /900, synced)' for c in es_exams]
         wtr.writerow(head)
         for r in data['rows']:
             u = r['user']

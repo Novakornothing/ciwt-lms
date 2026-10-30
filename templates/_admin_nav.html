@@ -1,12 +1,21 @@
-{# Admin page header + sub-navigation. Set admin_tab (endpoint) in the view; pass title/lede with
-   {% with title=..., lede=... %}{% include '_admin_nav.html' %}{% endwith %}. On phones the tabs scroll sideways. #}
+{# Admin page header + sub-navigation (Phase 1: Overview · Users & Sections · Exports · More tools).
+   Set admin_tab (endpoint) in the view; pass title/lede with {% with title=..., lede=... %}{% include '_admin_nav.html' %}{% endwith %}. #}
+{% set _grp = (admin_tab_group or {}).get(admin_tab, 'admin_tools') if admin_tab else none %}
 <div class="page-hero admin-hero">
   <div class="u-eyebrow small text-uppercase mb-1">Admin</div>
   <h1 class="h3 mb-1">{{ title }}</h1>
   {% if lede %}<p class="mb-0">{{ lede }}</p>{% endif %}
 </div>
-<nav class="admin-tabs chip-scroll mb-3" aria-label="Admin sections">
+<nav class="admin-tabs chip-scroll mb-2" aria-label="Admin sections">
   {% for ep, label, icon in admin_tabs %}
-  <a class="chip-link" href="{{ url_for(ep) }}"{% if admin_tab == ep %} aria-current="page"{% endif %}><i class="bi {{ icon }}" aria-hidden="true"></i> {% if label == 'Quality / TQI' %}<span class="d-none d-sm-inline">Quality / </span>TQI{% else %}{{ label }}{% endif %}</a>
+  <a class="chip-link" href="{{ url_for(ep) }}"{% if _grp == ep %} aria-current="page"{% endif %}><i class="bi {{ icon }}" aria-hidden="true"></i> {{ label }}</a>
   {% endfor %}
 </nav>
+{% if _grp == 'admin_people' %}
+<nav class="admin-subtabs chip-scroll mb-3" aria-label="Users and sections">
+  <a class="chip-link" href="{{ url_for('admin_people') }}"{% if admin_tab == 'admin_people' %} aria-current="true"{% endif %}>Users</a>
+  <a class="chip-link" href="{{ url_for('admin_classes') }}"{% if admin_tab == 'admin_classes' %} aria-current="true"{% endif %}>Sections</a>
+</nav>
+{% elif _grp == 'admin_tools' and admin_tab != 'admin_tools' %}
+<p class="small mb-3"><a href="{{ url_for('admin_tools') }}">← All tools</a></p>
+{% else %}<div class="mb-3"></div>{% endif %}

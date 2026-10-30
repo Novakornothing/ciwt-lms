@@ -183,11 +183,18 @@
             </div>
           </details>
 
-          {% if lesson_labs %}
-          <a href="#chapter-lab" class="btn btn-sm btn-brand">
-            <i class="bi bi-terminal" aria-hidden="true"></i> Launch Lab
-          </a>
-          {% endif %}
+          <details class="novak-reader-prefs" id="readerPrefs">
+            <summary class="btn btn-sm novak-listen-btn" title="Reader preferences"><i class="bi bi-type" aria-hidden="true"></i> <span>Reading</span></summary>
+            <div class="novak-reader-panel" role="group" aria-label="Reader preferences">
+              <div class="rp-row"><span>Text size</span>
+                <span class="rp-seg"><button type="button" data-rp="fs" data-val="-1" aria-label="Smaller text">A−</button><button type="button" data-rp="fs" data-val="1" aria-label="Larger text">A+</button></span></div>
+              <label class="rp-row"><span>Line spacing</span><select data-rp="lh" class="form-select form-select-sm w-auto"><option value="normal">Normal</option><option value="relaxed">Relaxed</option><option value="loose">Loose</option></select></label>
+              <label class="rp-row"><span>High contrast</span><input type="checkbox" class="form-check-input" data-rp="contrast"></label>
+              <label class="rp-row"><span>Dyslexia-friendly font</span><input type="checkbox" class="form-check-input" data-rp="dys"></label>
+              <button type="button" class="btn btn-sm btn-outline-navy w-100 mt-1" data-rp="reset">Reset</button>
+            </div>
+          </details>
+
 
           <button type="button" class="btn btn-sm btn-outline-navy d-xl-none" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer">
             <i class="bi bi-list" aria-hidden="true"></i> <span class="visually-hidden">Curriculum Map (☰)</span><span aria-hidden="true">Chapters</span>
@@ -196,14 +203,14 @@
         </div>
       </div>
       {% if ladder_html %}
-      <div class="novak-step-style-bar" id="novakStepStyleBar" role="group" aria-label="Apply learning style to all cards in this step">
-        <span class="novak-step-style-label"><i class="bi bi-layers me-1" aria-hidden="true"></i>Step learning style:</span>
+      <div class="novak-step-style-bar" id="novakStepStyleBar" role="group" aria-label="5 Ways to Learn for this step">
+        <span class="novak-step-style-label">5 Ways to Learn:</span>
         <div class="novak-step-style-pills">
           <button type="button" class="novak-step-style-btn is-active" data-step-rung="R0" aria-pressed="true">Standard</button>
           <button type="button" class="novak-step-style-btn" data-step-rung="R1" aria-pressed="false">Plain English</button>
-          <button type="button" class="novak-step-style-btn" data-step-rung="R2" aria-pressed="false">Real-World Analogy</button>
-          <button type="button" class="novak-step-style-btn" data-step-rung="R3" aria-pressed="false">Visual Map</button>
-          <button type="button" class="novak-step-style-btn" data-step-rung="R4" aria-pressed="false">Interactive Try-It</button>
+          <button type="button" class="novak-step-style-btn" data-step-rung="R2" aria-pressed="false">Analogy</button>
+          <button type="button" class="novak-step-style-btn" data-step-rung="R3" aria-pressed="false">Visual</button>
+          <button type="button" class="novak-step-style-btn" data-step-rung="R4" aria-pressed="false">Try-It</button>
         </div>
       </div>
       {% endif %}
@@ -308,7 +315,51 @@
       </div>
     </div>
   </div>
+
+  {# Phase 1 lesson rail: a slim right column on desktop (collapsible to an icon strip), a bottom sheet on tablet/mobile #}
+  <aside class="novak-lesson-rail" id="lessonRail" aria-label="Lesson menu" data-steps="{{ sec_count }}">
+    <div class="rail-head">
+      <span class="rail-title">This lesson</span>
+      <button type="button" class="rail-collapse" id="lessonRailToggle" aria-expanded="true" aria-controls="lessonRail" title="Collapse lesson menu">
+        <i class="bi bi-chevron-right" aria-hidden="true"></i><span class="visually-hidden">Collapse or expand lesson menu</span>
+      </button>
+      <button type="button" class="rail-close" id="lessonSheetClose" aria-label="Close lesson menu"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </div>
+    <div class="rail-progress">
+      <div class="rail-step"><span class="rail-full-only">Step </span><span data-rail-step>1</span><span class="rail-full-only"> of </span><span class="rail-mini-only">/</span><span data-rail-total>{{ sec_count }}</span></div>
+      <div class="rail-bar" aria-hidden="true"><span data-rail-fill></span></div>
+    </div>
+    <div class="rail-full-only">
+      {% if ladder_html %}
+      <div class="rail-block">
+        <p class="rail-label">5 Ways to Learn</p>
+        <div class="rail-ways" role="group" aria-label="5 Ways to Learn">
+          {% for code, name in (('R0','Standard'),('R1','Plain English'),('R2','Analogy'),('R3','Visual'),('R4','Try-It')) %}
+          <button type="button" class="rail-way{% if loop.first %} is-active{% endif %}" data-rail-rung="{{ code }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">{{ name }}</button>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      <div class="rail-block">
+        <p class="rail-label">Steps</p>
+        <ol class="rail-steps" id="lessonRailSteps"></ol>
+        <button type="button" class="rail-link-btn" id="lessonRailAll" aria-pressed="false">Show all steps on one page</button>
+      </div>
+      {% if lesson_labs %}
+      <a href="#chapter-lab" class="btn btn-sm btn-brand w-100" id="lessonRailLab"><i class="bi bi-terminal" aria-hidden="true"></i> Launch Lab</a>
+      {% endif %}
+      <div class="rail-extra" id="lessonRailExtra">
+        <button type="button" class="btn btn-sm btn-outline-navy d-xl-none w-100" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer"><i class="bi bi-list" aria-hidden="true"></i> All chapters</button>
+      </div>
+    </div>
+    <div class="rail-mini-only rail-mini">
+      {% if lesson_labs %}<a href="#chapter-lab" class="rail-mini-btn" data-rail-lab title="Launch Lab"><i class="bi bi-terminal" aria-hidden="true"></i><span class="visually-hidden">Launch Lab</span></a>{% endif %}
+    </div>
+  </aside>
 </div>
+<div class="lesson-topline" id="lessonTopLine" aria-hidden="true"><span></span></div>
+<button type="button" class="lesson-fab" id="lessonSheetBtn" aria-controls="lessonRail" aria-expanded="false"><i class="bi bi-list-check" aria-hidden="true"></i><span class="visually-hidden">Lesson menu: steps, Launch Lab, 5 Ways to Learn</span></button>
+<div class="lesson-sheet-scrim" id="lessonSheetScrim" hidden></div>
 
 {% if current_user.is_authenticated %}
 <style>

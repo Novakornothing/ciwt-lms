@@ -1,6 +1,6 @@
 """CompTIA Tech+ (FC0-U71) exam specification, domains, objectives, and objective-aligned pool builder.
 
-Aligned to Course 3 (CLIENT — Client Systems & Shop Procedures) and cross-mapped ITSUP/NETOPS fundamentals.
+Aligned to Course 3 (CLIENT — Operating Systems) and cross-mapped ITSUP/NETOPS fundamentals.
 Published CompTIA Tech+ (FC0-U71) exam domains:
   1.0 IT Concepts and Terminology (13%)
   2.0 Infrastructure (24%)

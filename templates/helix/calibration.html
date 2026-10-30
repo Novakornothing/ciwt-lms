@@ -5,11 +5,11 @@
 <nav aria-label="breadcrumb"><ol class="breadcrumb">
   <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My classes</a></li>
   <li class="breadcrumb-item"><a href="{{ url_for('instructor_section', section_id=section.id) }}">{{ section.name }}</a></li>
-  <li class="breadcrumb-item"><a href="{{ url_for('helix.instructor_attention', section_id=section.id) }}">Attention</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('helix.instructor_attention', section_id=section.id) }}">Eye Tracking</a></li>
   <li class="breadcrumb-item active" aria-current="page">Calibration</li></ol></nav>
 
 <div class="page-hero">
-  <div class="eyebrow">Helix attention · calibration quality</div>
+  <div class="eyebrow">Eye Tracking · calibration quality</div>
   <h1 class="h3 mb-1">How well the camera worked for each student</h1>
   <p class="mb-0">Use this to judge how far to trust the attention data and who might need help setting up (lighting, camera position). It says nothing about how well anyone learns.</p>
 </div>

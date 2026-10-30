@@ -20,7 +20,7 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
       <a class="btn btn-sm btn-brand" href="{{ url_for('gradebook_csv', section_id=section.id) }}"><i class="bi bi-filetype-csv" aria-hidden="true"></i> Export CSV</a>
-      <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.instructor_attention', section_id=section.id) }}"><i class="bi bi-eye" aria-hidden="true"></i> Attention</a>
+      <a class="btn btn-sm btn-outline-light" href="{{ url_for('helix.instructor_attention', section_id=section.id) }}"><i class="bi bi-eye" aria-hidden="true"></i> Eye Tracking</a>
       <a class="btn btn-sm btn-outline-light" href="{{ url_for('instructor_section', section_id=section.id) }}">Class home</a>
     </div>
   </div>
@@ -161,7 +161,7 @@
             {% if it.type == 'test' %}<div class="gb-collinks"><a href="{{ url_for('instructor_test_performance', section_id=section.id, test_id=it.id) }}" title="Section performance">perf</a> · <a href="{{ url_for('test_item_analysis', test_id=it.id) }}" title="Item analysis">items</a></div>{% endif %}
           </th>
           {% endif %}{% endfor %}
-          {% if es_grades %}<th scope="col" class="gb-item" title="Synced Exam-Day Simulator scores (not part of the course grade)">Exam Sim<div class="gb-colstat">synced · /900</div></th>{% endif %}
+          {% if es_grades %}<th scope="col" class="gb-item" title="Synced Practice Exams scores (not part of the course grade)">Practice Exam<div class="gb-colstat">synced · /900</div></th>{% endif %}
         </tr>
       </thead>
       <tbody>

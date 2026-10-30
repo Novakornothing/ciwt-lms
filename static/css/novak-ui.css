@@ -2066,26 +2066,27 @@ html[data-theme="dark"] .novak-search-kbd {
 }
 
 .novak-section-card {
-  max-width: 760px !important;
+  max-width: 68ch !important;
   margin-left: auto !important;
   margin-right: auto !important;
-  padding: 32px !important;
-  border-radius: 16px !important;
-  background: var(--bg-surface) !important;
-  border: 1px solid var(--border-subtle) !important;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.05) !important;
-  font-size: 17px !important;
+  padding: 0 0 1.5rem !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  box-shadow: none !important;
+  font-size: calc(17px * var(--reader-scale, 1)) !important;
   line-height: 1.75 !important;
 }
 html[data-theme="dark"] .novak-section-card {
-  background: #0f172a !important;
+  background: transparent !important;
   border-color: #1e293b !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: none !important;
 }
 .novak-section-card p,
 .novak-section-card li {
-  font-size: 17px !important;
-  line-height: 1.75 !important;
+  font-size: calc(17px * var(--reader-scale, 1)) !important;
+  line-height: inherit !important;
   color: var(--text-secondary) !important;
 }
 .novak-section-card h2,
@@ -2719,3 +2720,125 @@ body.is-lab-workbench #mobileStaffMenuBtn {
 .novak-env-pill {
   cursor: pointer;
 }
+
+/* Phase 1: student home */
+.continue-card { padding: 1.5rem 1.6rem; }
+.continue-card .continue-btn { font-weight: 800; }
+.continue-card .continue-daily a { color: inherit; font-weight: 700; text-decoration: underline; }
+.student-tabs .nav-link { font-weight: 700; }
+.student-chapters .list-group-item { padding: .7rem 1rem; }
+
+/* Phase 1: lesson reader — one sticky bar, 68ch column, flat sections, reader preferences */
+.novak-step-style-bar { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem .6rem; padding:.35rem .9rem .5rem; border-top:1px solid var(--surface-3); }
+.novak-step-style-label { font-weight:700; font-size:.82rem; white-space:nowrap; }
+.novak-step-style-pills { display:flex; flex-wrap:wrap; gap:.3rem; }
+.novak-step-style-btn { font-size:.8rem; font-weight:700; padding:.2rem .7rem; border-radius:999px; }
+#lessonBody .novak-section-card-header .novak-adaptive-rung-bar { position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+#lessonBody .novak-section-card:hover { border-color:var(--surface-3); }
+[data-theme="dark"] #lessonBody .novak-section-card { background:transparent; box-shadow:none; }
+#lessonBody .novak-section-card .card, #lessonBody .novak-section-card .novak-section-card { border:0; box-shadow:none; }
+#lessonBody { font-size:calc(1rem * var(--reader-scale, 1)); }
+#lessonBody figure, #lessonBody svg, #lessonBody table, #lessonBody pre { max-width:100%; }
+.reader-lh-relaxed #lessonBody, .reader-lh-relaxed #lessonBody .novak-section-card { line-height:1.95 !important; }
+.reader-lh-loose #lessonBody, .reader-lh-loose #lessonBody .novak-section-card { line-height:2.25 !important; }
+.reader-contrast #lessonBody, .reader-contrast #lessonBody p, .reader-contrast #lessonBody li { color:#000 !important; background:#fff; }
+[data-theme="dark"].reader-contrast #lessonBody, [data-theme="dark"].reader-contrast #lessonBody p, [data-theme="dark"].reader-contrast #lessonBody li { color:#fff !important; background:#000; }
+.reader-contrast #lessonBody a { text-decoration:underline; }
+.reader-dys #lessonBody { font-family:"OpenDyslexic","Atkinson Hyperlegible","Comic Sans MS","Verdana",sans-serif; letter-spacing:.04em; word-spacing:.16em; }
+.novak-reader-prefs { position:relative; }
+.novak-reader-prefs > summary { list-style:none; } .novak-reader-prefs > summary::-webkit-details-marker { display:none; }
+.novak-reader-panel { position:absolute; right:0; top:calc(100% + .35rem); z-index:1040; width:16rem; background:var(--surface); border:1px solid var(--surface-3); border-radius:10px; padding:.7rem; box-shadow:0 10px 28px rgba(0,0,0,.18); display:grid; gap:.45rem; }
+[data-theme="dark"] .novak-reader-panel { background:#0f172a; }
+.rp-row { display:flex; justify-content:space-between; align-items:center; gap:.5rem; font-size:.85rem; margin:0; }
+.rp-seg button { font-weight:800; border:1px solid var(--surface-4, #c3d0e3); background:transparent; color:inherit; padding:.1rem .55rem; }
+.rp-seg button:first-child { border-radius:6px 0 0 6px; } .rp-seg button:last-child { border-radius:0 6px 6px 0; border-left:0; }
+@media (max-width: 575.98px) { .novak-reader-panel { position:fixed; left:.75rem; right:.75rem; width:auto; top:auto; bottom:4.5rem; } }
+
+/* Phase 1: command syntax cards in search */
+.novak-cmd-card { padding:.6rem .75rem; border-bottom:1px solid var(--surface-3); }
+.novak-cmd-name code { font-size:1rem; }
+.novak-cmd-syntax code { display:block; white-space:pre-wrap; background:var(--surface-2, rgba(127,127,127,.08)); padding:.3rem .5rem; border-radius:6px; margin:.35rem 0; font-size:.82rem; }
+.novak-cmd-practice { display:block; font-size:.85rem; padding:.25rem .3rem; }
+
+/* Phase 1: admin overview 4 cards + subtabs */
+.admin-kpi-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 991.98px) { .admin-kpi-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 479.98px) { .admin-kpi-4 { grid-template-columns: 1fr; } }
+.admin-subtabs .chip-link[aria-current="true"] { font-weight: 800; text-decoration: underline; }
+/* Phase 1: lesson visuals sit on the same centre line as the 68ch reading column */
+#lessonBody > .novak-visual-blueprint, #lessonBody > .novak-boot-quickcard { margin-left:auto !important; margin-right:auto !important; }
+
+/* Phase 1b: lesson rail (desktop) + bottom sheet (tablet/mobile). Nothing large stays pinned over the text. */
+.novak-lesson-progress-bar { position: static !important; top: auto !important; }
+.novak-lesson-rail { font-size: .85rem; color: var(--ink); }
+.rail-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.rail-title { font-weight: 800; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-secondary); }
+.rail-collapse, .rail-close { border: 0; background: transparent; color: inherit; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+.rail-collapse:hover, .rail-close:hover { background: var(--surface-2, rgba(127,127,127,.1)); }
+.rail-progress { margin: .4rem 0 .2rem; }
+.rail-step { font-weight: 700; }
+.rail-bar { height: 4px; border-radius: 4px; background: var(--surface-3, #e2e8f0); overflow: hidden; margin-top: .3rem; }
+.rail-bar > span { display: block; height: 100%; width: 0; background: var(--accent, #0ea5e9); transition: width .2s; }
+.rail-label { margin: .85rem 0 .35rem; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-secondary); }
+.rail-ways { display: flex; flex-direction: column; gap: .25rem; }
+.rail-way { text-align: left; border: 1px solid var(--surface-3, #d7e0ec); background: transparent; color: inherit; border-radius: 8px; padding: .3rem .6rem; font-weight: 600; min-height: 32px; }
+.rail-way.is-active { background: var(--navy-900, #0a1628); border-color: var(--navy-900, #0a1628); color: #fff; }
+.rail-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: .15rem; }
+.rail-stepbtn { width: 100%; text-align: left; border: 0; border-left: 3px solid transparent; background: transparent; color: inherit; padding: .3rem .5rem; border-radius: 0 6px 6px 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+.rail-stepbtn:hover { background: var(--surface-2, rgba(127,127,127,.08)); }
+.rail-stepbtn.is-active { border-left-color: var(--accent, #0ea5e9); background: var(--surface-2, rgba(14,165,233,.08)); font-weight: 700; }
+.rail-link-btn { border: 0; background: transparent; padding: .35rem .5rem; color: var(--link, #0b62a4); text-decoration: underline; font-size: .8rem; }
+#lessonRailLab { margin-top: .85rem; }
+.rail-extra { display: grid; gap: .4rem; margin-top: .5rem; }
+.rail-extra:empty { display: none; }
+.rail-mini-only { display: none; }
+[data-theme="dark"] .novak-lesson-rail { background: #0f172a; border-color: #1e293b; }
+[data-theme="dark"] .rail-way.is-active { background: #e2e8f0; color: #0a1628; }
+
+@media (min-width: 1024px) {
+  .novak-lesson-rail { flex: 0 0 240px; width: 240px; position: sticky; top: calc(var(--topbar-h, 64px) + 16px);
+    max-height: calc(100vh - var(--topbar-h, 64px) - 32px); overflow-y: auto; background: var(--surface, #fff);
+    border: 1px solid var(--surface-3, #e2e8f0); border-radius: 12px; padding: .7rem .75rem; scrollbar-width: thin; }
+  .novak-lesson-rail.is-collapsed { flex-basis: 48px; width: 48px; padding: .5rem .25rem; text-align: center; }
+  .novak-lesson-rail.is-collapsed .rail-full-only, .novak-lesson-rail.is-collapsed .rail-title { display: none; }
+  .novak-lesson-rail.is-collapsed .rail-head { justify-content: center; }
+  .novak-lesson-rail.is-collapsed .rail-collapse i { transform: rotate(180deg); }
+  .novak-lesson-rail.is-collapsed span.rail-mini-only { display: inline; }
+  .novak-lesson-rail.is-collapsed div.rail-mini-only { display: flex; flex-direction: column; align-items: center; gap: .4rem; margin-top: .5rem; }
+  .novak-lesson-rail.is-collapsed .rail-step { font-size: .75rem; }
+  .rail-mini-btn { width: 36px; height: 36px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--navy-900, #0a1628); color: #fff; }
+  .rail-close, .rail-sheet-only, .lesson-fab, .lesson-topline, .lesson-sheet-scrim { display: none !important; }
+  /* the rail now owns step navigation, the switcher and Launch Lab */
+  #novakLessonProgressBar #novakStepStyleBar, #novakLessonProgressBar #toggle-focus-mode,
+  #novakLessonProgressBar .novak-section-stepper-pills { display: none !important; }
+}
+
+@media (max-width: 1023.98px) {
+  body.is-lesson-route .topbar { position: relative !important; }
+  body.is-lesson-route .mobile-tabbar { display: none !important; }
+  body.is-lesson-route.has-mobile-tabbar { padding-bottom: 0 !important; }
+  body.is-lesson-route .tutor-fab { display: none !important; }
+  body.is-lesson-route .helix-dock[data-phase="idle"] { display: none !important; }
+  body.is-lesson-route .helix-dock { bottom: 70px !important; right: 14px !important; }
+  #novakLessonProgressBar #toggle-focus-mode, #novakLessonProgressBar .novak-section-stepper-pills { display: none !important; }
+  .lesson-topline { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 1070; pointer-events: none; }
+  .lesson-topline > span { display: block; height: 100%; width: 0; background: var(--accent, #0ea5e9); transition: width .2s; }
+  .lesson-fab { position: fixed; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); width: 44px; height: 44px; border-radius: 50%;
+    z-index: 1065; display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem;
+    background: var(--navy-900, #0a1628); color: #fff; border: 1px solid var(--accent-border, #3ec7ff); box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  .novak-lesson-rail { position: fixed; left: 0; right: 0; bottom: 0; max-height: 78vh; overflow-y: auto; z-index: 1080;
+    background: var(--surface, #fff); border-radius: 16px 16px 0 0; padding: .75rem 1rem calc(1rem + env(safe-area-inset-bottom));
+    box-shadow: 0 -12px 32px rgba(0,0,0,.25); transform: translateY(105%); visibility: hidden; transition: transform .22s ease, visibility 0s .22s; }
+  .novak-lesson-rail.is-open { transform: none; visibility: visible; transition: transform .22s ease; }
+  .lesson-sheet-scrim { position: fixed; inset: 0; background: rgba(2,6,13,.5); z-index: 1075; }
+  .rail-collapse { display: none; }
+  .rail-ways { flex-direction: row; flex-wrap: wrap; }
+  .rail-way { border-radius: 999px; }
+  .rail-stepbtn { min-height: 40px; }
+  body.lesson-sheet-open { overflow: hidden; }
+}
+@media (prefers-reduced-motion: reduce) { .novak-lesson-rail, .rail-bar > span, .lesson-topline > span { transition: none !important; } }
+/* Phase 1b: every text block in the lesson shares the same ~68ch centre column; diagrams may run wider */
+#lessonBody > :not(aside):not(figure):not(.novak-visual-blueprint):not(.novak-boot-quickcard) { max-width: 68ch; margin-left: auto; margin-right: auto; }
+#lessonBody > .novak-focus-nav-bar { max-width: 68ch; }

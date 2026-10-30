@@ -91,7 +91,7 @@ def test_take_page_testing_centre_chrome(student):
     aid = _start(student)
     html = student.get(f'{BASE}/{aid}').get_data(as_text=True)
     for s in ('id="esPrev"', 'id="esNext"', 'Question 1 of 15', 'id="esReviewBtn"', 'Review Screen',
-              'Skip PBQs &amp; return later', 'id="esViewToggle"', 'All-questions scroll view', 'id="esWhiteboard"',
+              'Skip Hands-On Challenges &amp; return later', 'id="esViewToggle"', 'All-questions scroll view', 'id="esWhiteboard"',
               'Whiteboard / Scratchpad', 'Insert CIDR / Binary Grid', 'class="es-strike"', 'es-sim', 'role="tablist"',
               'es-cmd', 'Simulation', '/autosave', '/pause'):
         assert s in html, s
@@ -183,10 +183,10 @@ def test_candidate_score_report_and_missed_objective_drill(student, app, mod):
     student.post(f'{BASE}/{aid}', data=_form_for(items, 7))
     html = student.get(f'{BASE}/{aid}/result').get_data(as_text=True)
     for s in ('Candidate Score Report', 'Candidate Name', 'Exam Code &amp; Version', '220-1201', 'Practice mode',
-              'Simulated Scaled Score', 'Pass Bar', 'Voucher Readiness Status', '<meter', 'Print / Save Candidate Score Report',
+              'Simulated Scaled Score', 'Pass Bar', 'Exam Readiness Status', '<meter', 'Print / Save Candidate Score Report',
               'Drill My Missed Objectives Now (10 questions)', '/remediate-drill', 'Core 1 '):
         assert s in html, s
-    assert any(x in html for x in ('VOUCHER READY', 'BORDERLINE', 'REMEDIATION REQUIRED'))
+    assert any(x in html for x in ('EXAM READY', 'BORDERLINE', 'REMEDIATION REQUIRED'))
     css = open('static/css/cert.css').read()
     assert '@media print' in css
     r = student.post(f'{BASE}/{aid}/remediate-drill')
@@ -326,16 +326,16 @@ def test_csv_export_and_gradebook_sync(student, instructor, app, mod):
     r = instructor.get('/instructor/section/1/exam-sim/export.csv')
     assert r.status_code == 200 and r.mimetype == 'text/csv'
     body = r.get_data(as_text=True)
-    assert body.splitlines()[0].startswith('student,email,exam,exam_code') and '220-1202' in body and 'VOUCHER READY' in body
+    assert body.splitlines()[0].startswith('student,email,exam,exam_code') and '220-1202' in body and 'EXAM READY' in body
     assert student.get('/instructor/section/1/exam-sim/export.csv').status_code == 403
     page = instructor.get('/instructor/section/1/exam-sim').get_data(as_text=True)
-    assert 'Export Scores CSV' in page and 'Sync Latest Exam-Sim Scores to Gradebook / LTI' in page
+    assert 'Export Scores CSV' in page and 'Sync Latest Practice Exam Scores to Gradebook / LTI' in page
     r = instructor.post('/instructor/section/1/exam-sim/sync-gradebook')
     assert r.status_code == 302
     G = app.extensions['ciwt_exam_sim'].Grade
     with app.app_context():
         g = G.query.filter_by(section_id=1, user_id=_user_id(app, mod, 'student1@lms.local'), exam='A2').first()
-        assert g and g.score == 900 and g.pct == 100.0 and g.status == 'VOUCHER READY'
+        assert g and g.score == 900 and g.pct == 100.0 and g.status == 'EXAM READY'
     assert 'Last synced' in instructor.get('/instructor/section/1/exam-sim').get_data(as_text=True)
 
 
@@ -364,17 +364,17 @@ def test_mastery_why_and_portfolio_integration(student, instructor, app, mod):
         from mastery.why import why
         with app.test_request_context():
             w = why(app, mod.db, mod.db.session.get(mod.ClassSection, 1), mod.db.session.get(mod.User, uid))
-    assert any('Exam Sim (220-1201): 100/900 · Needs remediation (weak:' in p for p in w['pills']['exam_sim'])
-    assert any(s['text'].startswith('Exam Sim 220-1201') for s in w['stuck'])
+    assert any('Practice Exam (220-1201): 100/900 · Needs remediation (weak:' in p for p in w['pills']['exam_sim'])
+    assert any(s['text'].startswith('Practice Exam 220-1201') for s in w['stuck'])
     assert any(a['kind'] == 'exam_sim' and f'/exam-sim/{aid}/result' in a['url'] for a in w['actions'])
     assert w['severity'] >= 3
     r = instructor.get(f'{BASE}/{aid}/result')
     assert r.status_code == 200 and 'Candidate Score Report' in r.get_data(as_text=True)
     # portfolio: best ready sitting per exam + OpenBadges assertion
     html = student.get('/portfolio').get_data(as_text=True)
-    assert 'Exam-Day Simulator sittings' in html and 'VOUCHER READY' in html and '220-1201' in html
+    assert 'Practice exam sittings' in html and 'EXAM READY' in html and '220-1201' in html
     j = json.loads(student.get('/portfolio/export.json').get_data(as_text=True))
-    assert any(a['badge']['name'].startswith('VOUCHER READY: CompTIA A+ Core 1') for a in j['assertions'])
+    assert any(a['badge']['name'].startswith('EXAM READY: CompTIA A+ Core 1') for a in j['assertions'])
     assert j['portfolio']['exam_sittings']
 
 
@@ -434,15 +434,15 @@ def test_gradebook_shows_synced_exam_sim_without_changing_grade(student, instruc
     student.post(f'{BASE}/{aid}', data=_form_for(items, 15))
     instructor.post('/instructor/section/1/exam-sim/sync-gradebook')
     html = instructor.get('/instructor/section/1/gradebook').get_data(as_text=True)
-    assert 'Exam Sim' in html and '220-1202: 900/900 (VOUCHER READY)' in html
+    assert 'Practice Exam' in html and '220-1202: 900/900 (EXAM READY)' in html
     csv_after = instructor.get('/instructor/section/1/gradebook.csv').get_data(as_text=True)
     head = csv_after.splitlines()[0]
-    assert 'Exam-Day Simulator 220-1202' in head and '900/900 100% VOUCHER READY' in csv_after
+    assert 'Practice Exam 220-1202' in head and '900/900 100% EXAM READY' in csv_after
     # weighted course grade unchanged: first columns of each row identical
     strip = lambda t: [ln.split(',')[:4] for ln in t.splitlines()[1:]]
     assert strip(before) == strip(csv_after)
     page = student.get('/student/section/1/grades').get_data(as_text=True)
-    assert 'Exam-Day Simulator' in page and '900/900 (VOUCHER READY)' in page
+    assert 'Practice Exam' in page and '900/900 (EXAM READY)' in page
 
 
 def test_outcomes_exam_sim_metrics(student, instructor, admin, app, mod):
@@ -457,7 +457,7 @@ def test_outcomes_exam_sim_metrics(student, instructor, admin, app, mod):
     assert a2['voucher_ready_pct'] == 100.0 and a2['mean_score'] == 900
     assert {'A1', 'A2', 'N'} <= {x['exam'] for x in es['exams']} and es['overall']['attempts'] >= 1
     html = instructor.get('/instructor/section/1/outcomes').get_data(as_text=True)
-    assert 'Exam-Day Simulator &amp; Voucher Readiness' in html and 'id="ocExamSim"' in html
+    assert 'Practice Exams &amp; Exam Readiness' in html and 'id="ocExamSim"' in html
     assert admin.get('/admin/outcomes').status_code == 200
     body = instructor.get('/instructor/section/1/outcomes?format=csv').get_data(as_text=True)
     assert 'exam_sim_voucher_ready_pct,220-1202' in body and 'exam_sim_mean_scaled_score' in body
@@ -488,11 +488,16 @@ def test_keyboard_shortcut_hint_and_script(student):
 
 
 def test_landing_page_pillars(anon):
+    # Phase 1: the hub is short and plain-English; detail lives on /specs.
     html = anon.get('/landing').get_data(as_text=True)
-    assert 'What Sets Novak LMS™ Apart' in html
-    for s in ('539 bespoke', '90 labs', 'Diagnose → Fix → Verify', 'VOUCHER READY', '325-card Speed-Drill',
-              'Who Needs Me', 'LTI 1.3 Advantage', 'SAML 2.0', 'WCAG 2.1 AA', 'FERPA', 'novakornothing@gmail.com'):
+    for s in ('Exam Readiness', 'Students Needing Help', 'LTI 1.3 Advantage', 'SAML 2.0', 'WCAG 2.1 AA',
+              'FERPA', 'novakornothing@gmail.com'):
         assert s in html, s
+    for old in ('EXAM READY', 'Who Needs Me', 'What Sets Novak LMS™ Apart'):
+        assert old not in html, old
+    specs = anon.get('/specs').get_data(as_text=True)
+    for s in ('90 labs', 'Diagnose → Fix → Verify', 'Exam Readiness', 'Students Needing Help'):
+        assert s in specs, s
 
 
 # ------------------------------------------------------------------ pass 7 audit fixes

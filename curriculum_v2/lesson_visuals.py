@@ -1384,7 +1384,7 @@ for _lbl, _spec in BLUEPRINTS_ITSUP.items():
     # CLIENT chapters 1..6 correspond to lessons 8.1 .. 13.6
     if 8 <= _ch_i <= 13:
         _c_ch = _ch_i - 7
-        _c_title = f"{_spec[0]} (Client Systems Track)"
+        _c_title = f"{_spec[0]} (Operating Systems Track)"
         LESSON_VISUALS[("CLIENT", _c_ch, _les_i)] = (
             _c_title,
             _spec[1],

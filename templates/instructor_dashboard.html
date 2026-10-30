@@ -1,62 +1,100 @@
 {% extends "base.html" %}
-{% block title %}My classes{% endblock %}
+{% block title %}Instructor — {{ site_name }}{% endblock %}
 {% block content %}
 <div class="page-hero">
-  <h1 class="h3 mb-1">My classes</h1>
-  <p class="mb-0">Open a class to enroll students, open a test, and read scores.</p>
+  <h1 class="h3 mb-1">Instructor</h1>
+  <p class="mb-0">{{ sections|length }} class{{ 'es' if sections|length != 1 }} · {{ n_students }} student{{ 's' if n_students != 1 }}</p>
 </div>
 
-{% if briefs %}
-<section class="card mb-4 mx-home-brief" aria-labelledby="hbH">
-  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <h2 class="h6 mb-0" id="hbH"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Today’s briefing</h2>
-    {% if briefs|selectattr('demo')|list %}<span class="small">Includes demo seed data</span>{% endif %}
-  </div>
-  <ul class="list-group list-group-flush">
-    {% for b in briefs %}
-    <li class="list-group-item">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <div><strong>{{ b.section.name }}</strong>
-          <div class="small">{% if b.todo %}First: {{ b.todo[0].title }} <span class="text-muted">— {{ b.todo[0].why[0]|truncate(110) }}</span>{% else %}Nothing stands out today.{% endif %}</div></div>
-        <a class="btn btn-sm btn-brand" href="{{ url_for('mastery_briefing', section_id=b.section.id) }}">Open briefing{% if b.n_todo %} ({{ b.n_todo }} to do){% endif %}<span class="visually-hidden"> for {{ b.section.name }}</span></a>
-      </div>
-    </li>
-    {% endfor %}
-  </ul>
-</section>
-{% endif %}
-
-{% if sections %}
-  {% for s in sections %}
-    {% if loop.first or (sections[loop.index0-1].course_id if loop.index0 else none) != s.course_id %}
-      {% if not loop.first %}</div></div>{% endif %}
-      <div class="card mb-3">
-        <div class="card-header navy d-flex justify-content-between align-items-center">
-          <span>{{ s.course.title if s.course else 'Curriculum' }}</span>
-          {% if s.course %}
-          <a class="btn btn-sm btn-outline-gold" href="{{ url_for('course_performance', course_id=s.course_id) }}">Course scores</a>
-          {% endif %}
-        </div>
-        <div class="list-group list-group-flush">
-    {% endif %}
-        <div class="list-group-item">
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-              <strong>{{ s.name }}</strong>
-              <div class="small text-muted">{{ s.enrollments|length }} enrolled{% if s.instructor %} · {{ s.instructor.full_name }}{% endif %}
-                · {{ s.start_date or '—' }} → {{ s.end_date or '—' }}
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              <a class="btn btn-sm btn-brand" href="{{ url_for('instructor_section', section_id=s.id) }}">Open class</a>
-            </div>
-          </div>
-        </div>
-    {% if loop.last %}</div></div>{% endif %}
-  {% endfor %}
+{% if not sections %}
+<div class="card card-body text-muted">No classes assigned. An administrator must create the class and assign you as instructor.</div>
 {% else %}
-<div class="card card-body text-muted">
-  No classes assigned. An administrator must create the class and assign you as instructor.
+<ul class="nav nav-tabs mb-3 staff-tabs" role="tablist" aria-label="Instructor">
+  <li class="nav-item" role="presentation"><button class="nav-link active" id="itab-ov" data-bs-toggle="tab" data-bs-target="#ipane-ov" type="button" role="tab" aria-controls="ipane-ov" aria-selected="true">Overview</button></li>
+  <li class="nav-item" role="presentation"><button class="nav-link" id="itab-st" data-bs-toggle="tab" data-bs-target="#ipane-st" type="button" role="tab" aria-controls="ipane-st" aria-selected="false">Students &amp; Grades</button></li>
+  <li class="nav-item" role="presentation"><button class="nav-link" id="itab-labs" data-bs-toggle="tab" data-bs-target="#ipane-labs" type="button" role="tab" aria-controls="ipane-labs" aria-selected="false">Labs &amp; Assignments</button></li>
+</ul>
+<div class="tab-content">
+  <div class="tab-pane fade show active" id="ipane-ov" role="tabpanel" aria-labelledby="itab-ov">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+          <div class="small text-muted">Class pass rate</div>
+          <div class="display-6 fw-bold" id="classPassRate">{{ pass_rate if pass_rate is not none else '—' }}{% if pass_rate is not none %}%{% endif %}</div>
+          <div class="small text-muted">{{ tests_taken }} test attempt{{ 's' if tests_taken != 1 }}</div>
+          {% if briefs %}<hr><div class="small fw-bold mb-1">Today’s briefing</div>
+          {% for b in briefs %}<a class="d-block small" href="{{ url_for('mastery_briefing', section_id=b.section.id) }}">{{ b.section.name }}{% if b.n_todo %} ({{ b.n_todo }} to do){% endif %}</a>{% endfor %}{% endif %}
+        </div></div>
+      </div>
+      <div class="col-md-8">
+        <section class="card h-100" aria-labelledby="needH">
+          <div class="card-header d-flex justify-content-between align-items-center"><h2 class="h6 mb-0" id="needH">Students Needing Help today</h2><span class="badge text-bg-warning">{{ need_help|length }}</span></div>
+          <ul class="list-group list-group-flush">
+            {% for n in need_help %}
+            <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+              <span class="min-w-0"><strong>{{ n.user.full_name }}</strong> <span class="small text-muted">· {{ n.section.name }}</span>{% if n.sentence %}<br><span class="small">{{ n.sentence|truncate(110) }}</span>{% endif %}</span>
+              <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_gradebook_student', section_id=n.section.id, user_id=n.user.id) }}">View<span class="visually-hidden"> {{ n.user.full_name }}</span></a>
+            </li>
+            {% else %}
+            <li class="list-group-item text-muted">No one is stuck right now.</li>
+            {% endfor %}
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="ipane-st" role="tabpanel" aria-labelledby="itab-st">
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+      <label class="visually-hidden" for="rosterFilter">Filter students</label>
+      <input type="search" id="rosterFilter" class="form-control form-control-sm" style="max-width:18rem" placeholder="Filter by name, class, or course">
+      <a class="btn btn-sm btn-outline-navy ms-auto" href="{{ url_for('instructor_roster_csv') }}"><i class="bi bi-download" aria-hidden="true"></i> Export CSV</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle" id="rosterTable">
+        <thead><tr><th scope="col">Student</th><th scope="col">Class</th><th scope="col">Progress</th><th scope="col">Avg test</th><th scope="col">Passed</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead>
+        <tbody>
+          {% for r in roster %}
+          <tr data-filter="{{ (r.user.full_name ~ ' ' ~ r.user.email ~ ' ' ~ r.section.name ~ ' ' ~ r.course)|lower }}">
+            <td><strong>{{ r.user.full_name }}</strong><br><span class="small text-muted">{{ r.user.email }}</span></td>
+            <td>{{ r.section.name }}<br><span class="small text-muted">{{ r.course }}</span></td>
+            <td>{{ r.progress }}%</td>
+            <td>{{ r.avg if r.avg is not none else '—' }}{% if r.avg is not none %}%{% endif %}</td>
+            <td>{{ r.tests_passed }} / {{ r.tests_taken }}</td>
+            <td><a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_gradebook_student', section_id=r.section.id, user_id=r.user.id) }}">View<span class="visually-hidden"> {{ r.user.full_name }}</span></a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-muted">No students enrolled yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="ipane-labs" role="tabpanel" aria-labelledby="itab-labs">
+    <div class="list-group">
+      {% for s in sections %}
+      <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span><strong>{{ s.name }}</strong><br><span class="small text-muted">{{ s.course.title if s.course else '' }} · {{ s.enrollments|length }} enrolled</span></span>
+        <span class="d-flex flex-wrap gap-2">
+          <a class="btn btn-sm btn-brand" href="{{ url_for('instructor_section', section_id=s.id) }}#content">Assignments</a>
+          <a class="btn btn-sm btn-outline-navy" href="{{ url_for('course_labs', section_id=s.id) }}">Labs</a>
+          <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_exam_sim', section_id=s.id) }}">Practice Exams</a>
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
 </div>
+<script>
+(function () {
+  var f = document.getElementById('rosterFilter'); if (!f) return;
+  f.addEventListener('input', function () {
+    var q = f.value.trim().toLowerCase();
+    document.querySelectorAll('#rosterTable tbody tr[data-filter]').forEach(function (tr) { tr.hidden = q && tr.getAttribute('data-filter').indexOf(q) === -1; });
+  });
+  if (location.hash) { var t = document.querySelector('[data-bs-target="' + location.hash.replace('#', '#ipane-') + '"]'); if (t && window.bootstrap) new bootstrap.Tab(t).show(); }
+})();
+</script>
 {% endif %}
 {% endblock %}

@@ -13,11 +13,11 @@
       <span class="novak-section-badge">{% if L.is_milestone %}Step {{ L.step_group|default(1) }} of {{ L.step_group_total|default(4) }} · Milestone {{ L.milestone_index|default(1) }}{% else %}Step {{ L.step_group|default(1) }} of {{ L.step_group_total|default(4) }} · Part {{ L.sec_index|default(1) }}{% endif %}</span>
       {% if st.resolved %}<span class="badge badge-live">✓ Verified</span>{% endif %}
     </div>
-    <div class="novak-adaptive-rung-bar novak-adaptive-bar ladder-rungs" role="group" aria-label="Adaptive explanation modes for {{ d_head }}">
-      <span class="novak-rung-status visually-hidden">Current Rung: {{ L.shown }} {{ 'Standard' if L.shown == 'R0' else L.style }}</span>
+    <div class="novak-adaptive-rung-bar novak-adaptive-bar ladder-rungs" role="group" aria-label="5 Ways to Learn: {{ d_head }}">
+      <span class="novak-rung-status visually-hidden">Showing: {{ 'Standard' if L.shown == 'R0' else L.style }}</span>
       <form method="post" action="{{ L.url_show('R0') }}" class="ladder-showform novak-segmented-rungs m-0">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        {%- for r_code, r_sr, r_vis in [('R0','R0 Standard','Standard'),('R1','R1 Plain Language','Plain English'),('R2','R2 Real-World Analogy','Real-World Analogy'),('R3','R3 Visual Diagram','Visual Map'),('R4','R4 Hands-On Try-It','Interactive Try-It')] -%}
+        {%- for r_code, r_sr, r_vis in [('R0','Way 1 of 5:','Standard'),('R1','Way 2 of 5:','Plain English'),('R2','Way 3 of 5:','Analogy'),('R3','Way 4 of 5:','Visual'),('R4','Way 5 of 5:','Try-It')] -%}
         {%- if r_code == 'R0' or r_code in (L.allowed or ['R1','R2','R3','R4']) or r_code in (st.tried or []) -%}
         <button type="submit" formaction="{{ L.url_show(r_code) }}" class="novak-rung-pill {% if L.shown == r_code %}is-active{% endif %}" data-rung-pick="{{ r_code }}" aria-pressed="{{ 'true' if L.shown == r_code else 'false' }}"><span class="visually-hidden">{{ r_sr }}</span><span aria-hidden="true">{{ r_vis }}</span></button>
         {%- endif -%}
@@ -27,7 +27,7 @@
   </div>
   {% if v %}
   <section class="sublesson ladder-rung" aria-labelledby="lh-{{ L.sid }}">
-    <p class="ladder-label" tabindex="-1"{% if L.feedback and not L.feedback.ok %} aria-describedby="lf-{{ L.sid }}"{% endif %}><span class="ladder-badge ladder-swapbadge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Swapped to {{ L.shown }}: {{ L.style }}{% if L.step_no %} — step {{ L.step_no }} of {{ L.step_total }}{% endif %}</span>
+    <p class="ladder-label" tabindex="-1"{% if L.feedback and not L.feedback.ok %} aria-describedby="lf-{{ L.sid }}"{% endif %}><span class="ladder-badge ladder-swapbadge"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Now showing: {{ L.style }}{% if L.step_no %} — step {{ L.step_no }} of {{ L.step_total }}{% endif %}</span>
       <span class="ladder-review visually-hidden">{{ L.review }}</span></p>
     {% if L.feedback and not L.feedback.ok %}<p class="ladder-feedback is-miss" id="lf-{{ L.sid }}">{{ L.feedback.text }}</p>{% endif %}
     <h3 id="lh-{{ L.sid }}">{{ d_head }}</h3>

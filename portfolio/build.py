@@ -60,7 +60,7 @@ def openbadges(pf, issuer_url, verify_url):
             continue
         asr.append({'@context': 'https://w3id.org/openbadges/v2', 'type': 'Assertion', 'recipient': rec,
                     'issuedOn': x['date'] or pf['generated'], 'verification': {'type': 'hosted', 'url': verify_url},
-                    'badge': {'type': 'BadgeClass', 'name': f"VOUCHER READY: {x['name']} ({x['code']}) simulator",
+                    'badge': {'type': 'BadgeClass', 'name': f"EXAM READY: {x['name']} ({x['code']}) simulator",
                               'issuer': issuer, 'tags': [x['code'], 'exam-simulator'],
                               'criteria': {'narrative': f"Simulated scaled score {x['score']}/900 against a pass bar of {x['bar']} "
                                                         f"({x['mode']}) with every domain at 60% or better. Simulation only; "

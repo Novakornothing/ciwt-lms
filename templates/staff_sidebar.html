@@ -43,7 +43,7 @@
             <i class="bi bi-mortarboard"></i><span>My grades</span>
           </a>
           <a class="rail-link {% if ep in ('helix.my_data','helix.consent_page') %}active{% endif %}" href="{{ url_for('helix.my_data') }}">
-            <i class="bi bi-eye"></i><span>My attention data</span>
+            <i class="bi bi-eye"></i><span>My eye-tracking data</span>
           </a>
         </div>
       </details>
@@ -113,7 +113,7 @@
             <i class="bi bi-search"></i><span>Search lessons</span>
           </a>
           <a class="rail-link {% if ep == 'helix.policy' %}active{% endif %}" href="{{ url_for('helix.policy') }}">
-            <i class="bi bi-eye"></i><span>Attention policy</span>
+            <i class="bi bi-eye"></i><span>Eye tracking policy</span>
           </a>
           {# TQI is admin-only on novakornothing.com/tqi — not shown to students #}
         </div>
@@ -128,32 +128,14 @@
           <a class="rail-link {% if ep == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
             <i class="bi bi-speedometer2"></i><span>Admin overview</span>
           </a>
-          <a class="rail-link {% if ep == 'admin_people' %}active{% endif %}" href="{{ url_for('admin_people') }}">
-            <i class="bi bi-people"></i><span>People</span>
+          <a class="rail-link {% if ep in ('admin_people','admin_classes') %}active{% endif %}" href="{{ url_for('admin_people') }}">
+            <i class="bi bi-people"></i><span>Users &amp; Sections</span>
           </a>
-          <a class="rail-link {% if ep == 'admin_curriculum' %}active{% endif %}" href="{{ url_for('admin_curriculum') }}">
-            <i class="bi bi-journal-bookmark"></i><span>Curriculum</span>
+          <a class="rail-link {% if ep == 'admin_exports' %}active{% endif %}" href="{{ url_for('admin_exports') }}">
+            <i class="bi bi-box-arrow-down"></i><span>Exports</span>
           </a>
-          <a class="rail-link {% if ep == 'admin_tqi' %}active{% endif %}" href="{{ url_for('admin_tqi') }}">
-            <i class="bi bi-clipboard2-pulse"></i><span>Quality / TQI</span>
-          </a>
-          <a class="rail-link {% if ep == 'admin_readiness' %}active{% endif %}" href="{{ url_for('admin_readiness') }}">
-            <i class="bi bi-clipboard-check"></i><span>Product readiness</span>
-          </a>
-          <a class="rail-link {% if ep in ('admin_lti','admin_lti_new','admin_lti_edit') %}active{% endif %}" href="{{ url_for('admin_lti') }}">
-            <i class="bi bi-plug"></i><span>LMS (LTI)</span>
-          </a>
-          <a class="rail-link {% if ep in ('admin_roi','roi_dashboard') %}active{% endif %}" href="{{ url_for('admin_roi') }}">
-            <i class="bi bi-graph-up-arrow"></i><span>Institutional ROI</span>
-          </a>
-          <a class="rail-link {% if ep in ('admin_compliance','compliance_center') %}active{% endif %}" href="{{ url_for('admin_compliance') }}">
-            <i class="bi bi-shield-check"></i><span>Security &amp; Section 508</span>
-          </a>
-          <a class="rail-link {% if ep == 'admin_audit' %}active{% endif %}" href="{{ url_for('admin_audit') }}">
-            <i class="bi bi-shield-check"></i><span>Audit log</span>
-          </a>
-          <a class="rail-link" href="https://novakornothing.com/tqi" target="_blank" rel="noopener">
-            <i class="bi bi-clipboard2-pulse"></i><span>TQI site</span>
+          <a class="rail-link {% if ep is string and ep.startswith('admin_') and ep not in ('admin_dashboard','admin_people','admin_classes','admin_exports','admin_tickets','admin_ticket_detail','admin_teaching_time','admin_test_analytics','admin_backup_db') %}active{% endif %}" href="{{ url_for('admin_tools') }}">
+            <i class="bi bi-tools"></i><span>More tools</span>
           </a>
           {% endif %}
           <a class="rail-link {% if ep == 'instructor_dashboard' %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
@@ -215,7 +197,7 @@
             <i class="bi bi-clipboard-data"></i><span>Score hub</span>
           </a>
           <a class="rail-link {% if ep and ep.startswith('helix.instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
-            <i class="bi bi-eye"></i><span>Attention signal</span>
+            <i class="bi bi-eye"></i><span>Eye tracking signal</span>
           </a>
           <a class="rail-link" href="{{ url_for('export_analytics_csv') }}">
             <i class="bi bi-download"></i><span>Export scores CSV</span>
@@ -231,7 +213,7 @@
             <i class="bi bi-graph-up-arrow"></i><span>Test analytics</span>
           </a>
           <a class="rail-link {% if ep and ep.startswith('helix.instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
-            <i class="bi bi-eye"></i><span>Attention signal</span>
+            <i class="bi bi-eye"></i><span>Eye tracking signal</span>
           </a>
           {% endif %}
         </div>
@@ -288,7 +270,7 @@
               </a>
               <a class="rail-link rail-sublink {% if ep == 'mastery_today' and open_section_id == s.id %}active{% endif %}"
                  href="{{ url_for('mastery_today', section_id=s.id) }}">
-                <i class="bi bi-people"></i><span>Who needs me</span>
+                <i class="bi bi-people"></i><span>Students needing help</span>
               </a>
               <a class="rail-link rail-sublink {% if ep in ('instructor_gradebook','instructor_gradebook_student') and open_section_id == s.id %}active{% endif %}"
                  href="{{ url_for('instructor_gradebook', section_id=s.id) }}">
@@ -296,7 +278,7 @@
               </a>
               <a class="rail-link rail-sublink {% if ep.startswith('helix.instructor_attention') and open_section_id == s.id %}active{% endif %}"
                  href="{{ url_for('helix.instructor_attention', section_id=s.id) }}">
-                <i class="bi bi-eye"></i><span>Attention</span>
+                <i class="bi bi-eye"></i><span>Eye Tracking</span>
               </a>
               <details class="rail-tree rail-tree-nested" {% if open_section_id == s.id and ep in ('course_labs','instructor_lab_results','instructor_lab_student','tutor_instructor','section_outcomes','mastery_class','mastery_class_student','mastery_briefing','ladder_class','ladder_student','ladder_preview','syllabus_settings') %}open{% endif %}>
                 <summary class="rail-tree-sum rail-tree-sum-sm">
@@ -321,7 +303,7 @@
                   </a>
                   <a class="rail-link rail-sublink {% if ep in ('mastery_class','mastery_class_student') and open_section_id == s.id %}active{% endif %}"
                      href="{{ url_for('mastery_class', section_id=s.id) }}">
-                    <i class="bi bi-signpost-split"></i><span>Mastery</span>
+                    <i class="bi bi-signpost-split"></i><span>Skill Mastery</span>
                   </a>
                   <a class="rail-link rail-sublink {% if ep == 'mastery_briefing' and open_section_id == s.id %}active{% endif %}"
                      href="{{ url_for('mastery_briefing', section_id=s.id) }}">

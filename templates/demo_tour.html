@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>60-Second Demo — Novak LMS™</title>
+  <meta name="description" content="A 60-second guided tour of Novak LMS™: pick a course, try 5 Ways to Learn, Eye Tracking, a live lab step, and the instructor and admin views.">
+  <link rel="icon" href="{{ url_for('static', filename='img/navy-n-256.png') }}">
+  <style>
+    :root { --navy:#061428; --navy2:#0b2a55; --gold:#d4b46a; --gold2:#f3dfa6; --ice:#eef4fb; --ink:#0f1d33; --muted:#5b6b82; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html, body { overflow-x:clip; }
+    body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,system-ui,sans-serif; color:var(--ink); background:var(--ice); line-height:1.55; min-height:100vh; display:flex; flex-direction:column; }
+    :focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+    .top { background:var(--navy); color:#fff; }
+    .top-in { max-width:880px; margin:0 auto; padding:.7rem 1.2rem; display:flex; align-items:center; gap:.6rem; }
+    .top img { width:32px; height:32px; border-radius:50%; object-fit:cover; }
+    .top a { color:#fff; text-decoration:none; font-weight:800; letter-spacing:.06em; font-size:.92rem; display:flex; align-items:center; gap:.5rem; }
+    .top .skip { margin-left:auto; font-weight:600; letter-spacing:0; color:#c9d6e8; font-size:.88rem; }
+    main { flex:1; width:100%; max-width:880px; margin:0 auto; padding:1.4rem 1.2rem 2rem; }
+    .prog { display:flex; gap:.35rem; margin-bottom:.5rem; } .prog span { flex:1; height:6px; border-radius:3px; background:#cfdaea; } .prog span.on { background:var(--navy2); }
+    .stepno { font-size:.8rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.12em; margin-bottom:.9rem; }
+    .panel { background:#fff; border:1px solid #d6e0ee; border-radius:16px; padding:1.5rem; }
+    h1 { font-size:clamp(1.35rem,3vw,1.8rem); line-height:1.2; margin-bottom:.4rem; }
+    .lede { color:var(--muted); margin-bottom:1.1rem; }
+    .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:.8rem; }
+    .pick { font:inherit; text-align:left; background:#f8fbff; border:2px solid #d6e0ee; border-radius:12px; padding:1rem; cursor:pointer; color:var(--ink); }
+    .pick strong { display:block; font-size:1.02rem; } .pick span { color:var(--muted); font-size:.88rem; }
+    .pick[aria-pressed="true"] { border-color:var(--navy2); background:#eaf1fb; }
+    .tabs { display:flex; flex-wrap:wrap; gap:.4rem; margin:.4rem 0 1rem; }
+    .tabs button { font:inherit; font-size:.9rem; font-weight:700; border:1px solid #c3d0e3; background:#fff; color:var(--navy2); border-radius:999px; padding:.45rem .95rem; cursor:pointer; }
+    .tabs button[aria-selected="true"] { background:var(--navy2); color:#fff; border-color:var(--navy2); }
+    .way { min-height:110px; color:#33445c; } .way code, .term code { background:#e8eef7; padding:0 .3rem; border-radius:4px; }
+    .way svg { width:100%; max-width:520px; height:auto; }
+    .chips { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.6rem; } .chips button { font:inherit; font-weight:700; padding:.4rem 1rem; border-radius:8px; border:1px solid #c3d0e3; background:#fff; cursor:pointer; }
+    .msg { margin-top:.6rem; font-weight:700; min-height:1.5em; } .msg.ok { color:#11643a; } .msg.miss { color:#8a2a1c; }
+    .eye { display:grid; grid-template-columns:220px 1fr; gap:1.2rem; align-items:center; }
+    .cam { width:220px; height:165px; border-radius:12px; background:#0b1a30; color:#a9bbd2; display:grid; place-items:center; overflow:hidden; font-size:.85rem; text-align:center; padding:.5rem; }
+    .cam video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+    .meter { height:12px; border-radius:6px; background:#dfe7f2; overflow:hidden; margin:.4rem 0; } .meter i { display:block; height:100%; width:72%; background:var(--navy2); transition:width .6s; }
+    .term { background:#0b1424; color:#d9e6f7; border-radius:12px; padding:1rem; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92rem; }
+    .term .task { color:var(--gold2); margin-bottom:.6rem; font-family:inherit; }
+    .term form { display:flex; gap:.5rem; align-items:center; } .term label { color:#7fe0a8; }
+    .term input { flex:1; min-width:0; font:inherit; background:#111f36; color:#fff; border:1px solid #2b4266; border-radius:6px; padding:.45rem .6rem; }
+    .term button { font:inherit; font-weight:700; background:#fff; color:var(--navy); border:0; border-radius:6px; padding:.45rem .8rem; cursor:pointer; }
+    .term pre { white-space:pre-wrap; margin-top:.7rem; color:#b9f3cf; min-height:1.2em; }
+    .term .hint { color:#a9bbd2; font-size:.82rem; margin-top:.4rem; }
+    .views { display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
+    .view { border:1px solid #d6e0ee; border-radius:12px; padding:1rem; background:#f8fbff; }
+    .view h2 { font-size:1rem; margin-bottom:.5rem; } .view ul { list-style:none; display:grid; gap:.35rem; font-size:.92rem; color:#33445c; }
+    .view b { color:var(--ink); } .view a { display:inline-block; margin-top:.7rem; font-weight:800; color:var(--navy2); }
+    .seg { display:inline-flex; border:1px solid #c3d0e3; border-radius:999px; overflow:hidden; margin-bottom:.8rem; }
+    .seg button { font:inherit; font-weight:700; border:0; background:#fff; padding:.4rem 1rem; cursor:pointer; color:var(--navy2); } .seg button[aria-pressed="true"] { background:var(--navy2); color:#fff; }
+    .nav { display:flex; justify-content:space-between; align-items:center; margin-top:1.1rem; gap:.6rem; }
+    .btn { font:inherit; font-weight:800; border-radius:10px; padding:.75rem 1.3rem; cursor:pointer; text-decoration:none; text-align:center; border:2px solid var(--navy2); }
+    .btn-next { background:var(--navy2); color:#fff; } .btn-back { background:#fff; color:var(--navy2); }
+    .btn-gold { background:var(--gold); border-color:var(--gold); color:#1b1406; } .btn-white { background:#fff; color:var(--navy2); }
+    .btn[disabled] { opacity:.45; cursor:not-allowed; }
+    .end { display:flex; gap:.8rem; flex-wrap:wrap; margin-top:1rem; } .end .btn { flex:1; min-width:220px; }
+    .note { font-size:.85rem; color:var(--muted); margin-top:.7rem; }
+    footer { text-align:center; font-size:.8rem; color:var(--muted); padding:1rem; }
+    [hidden] { display:none !important; }
+    @media (max-width: 640px) {
+      .grid3, .views, .eye { grid-template-columns:1fr; }
+      .cam { width:100%; height:180px; }
+      .panel { padding:1.1rem; } main { padding:1rem .9rem 1.5rem; }
+      .end .btn { min-width:0; width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top"><div class="top-in">
+    <a href="{{ url_for('index') }}"><img class="mark" src="{{ url_for('static', filename='img/navy-n-512.webp') }}" alt="" width="32" height="32"> NOVAK LMS™</a>
+    <a class="skip" href="{{ url_for('index') }}">Exit tour</a>
+  </div></header>
+  <main id="tour" data-total="6">
+    <div class="prog" aria-hidden="true">{% for i in range(6) %}<span{% if i == 0 %} class="on"{% endif %}></span>{% endfor %}</div>
+    <p class="stepno" id="stepNo" aria-live="polite">Step 1 of 6</p>
+
+    <section class="panel step" data-step="1" aria-labelledby="s1h">
+      <h1 id="s1h">Pick a course</h1>
+      <p class="lede">Choose one. You can switch any time.</p>
+      <div class="grid3" id="coursePick">
+        {% for c in courses %}
+        <button type="button" class="pick" data-course="{{ c.code }}" aria-pressed="{{ 'true' if loop.first else 'false' }}"><strong>{{ c.title }}</strong><span>{{ c.blurb }}</span></button>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="panel step" data-step="2" aria-labelledby="s2h" hidden>
+      <h1 id="s2h">5 Ways to Learn</h1>
+      <p class="lede" id="conceptQ"></p>
+      <div class="tabs" role="tablist" aria-label="5 Ways to Learn">
+        <button type="button" role="tab" data-way="0" aria-selected="true">Standard</button>
+        <button type="button" role="tab" data-way="1" aria-selected="false">Plain English</button>
+        <button type="button" role="tab" data-way="2" aria-selected="false">Analogy</button>
+        <button type="button" role="tab" data-way="3" aria-selected="false">Visual</button>
+        <button type="button" role="tab" data-way="4" aria-selected="false">Try-It</button>
+      </div>
+      <div class="way" id="wayBody" role="tabpanel" aria-live="polite"></div>
+      <p class="note">Every lesson section has all five. Students pick freely, on desktop or phone.</p>
+    </section>
+
+    <section class="panel step" data-step="3" aria-labelledby="s3h" hidden>
+      <h1 id="s3h">Eye Tracking (optional)</h1>
+      <p class="lede">Notices when a student re-reads a section and offers another way to learn. The camera is optional.</p>
+      <div class="eye">
+        <div class="cam" id="camBox">Camera off</div>
+        <div>
+          <p><b>Focus on this section</b></p>
+          <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
+          <p class="note" id="eyeStatus">Preview without a camera: sample focus signal.</p>
+          <div class="chips">
+            <button type="button" id="camOn">Turn on camera</button>
+            <button type="button" id="camOff" hidden>Turn off camera</button>
+          </div>
+          <p class="note">Video stays in your browser's memory. Nothing is recorded or uploaded.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel step" data-step="4" aria-labelledby="s4h" hidden>
+      <h1 id="s4h">One live lab step</h1>
+      <p class="lede">Labs check your work instantly.</p>
+      <div class="term">
+        <p class="task" id="labTask"></p>
+        <form id="labForm" autocomplete="off">
+          <label for="labIn" id="labPrompt">$</label>
+          <input id="labIn" spellcheck="false" autocapitalize="off" aria-describedby="labTask">
+          <button type="submit">Run</button>
+        </form>
+        <pre id="labOut" role="status" aria-live="polite"></pre>
+        <p class="hint" id="labHint"></p>
+      </div>
+    </section>
+
+    <section class="panel step" data-step="5" aria-labelledby="s5h" hidden>
+      <h1 id="s5h">Instructor and Admin views</h1>
+      <p class="lede">The same class, seen by staff.</p>
+      <div class="seg" role="group" aria-label="Choose a view">
+        <button type="button" data-view="instructor" aria-pressed="true">Instructor</button>
+        <button type="button" data-view="admin" aria-pressed="false">Admin</button>
+      </div>
+      <div class="views">
+        <div class="view" data-viewpane="instructor">
+          <h2>Overview</h2>
+          <ul>
+            <li>Class: <b>{{ stats.section_name }}</b></li>
+            <li>Students: <b>{{ stats.students }}</b></li>
+            <li>Students Needing Help today: <b>{{ stats.need_help }}</b></li>
+          </ul>
+          <a href="{{ url_for('demo_enter', role='instructor') }}">Open Instructor view →</a>
+        </div>
+        <div class="view" data-viewpane="instructor">
+          <h2>Students &amp; Grades</h2>
+          <ul><li>One roster table with filter</li><li>CSV export</li><li>Labs &amp; Assignments tab</li></ul>
+        </div>
+        <div class="view" data-viewpane="admin" hidden>
+          <h2>Overview</h2>
+          <ul>
+            <li>Active seats: <b>{{ stats.seats }}</b></li>
+            <li>Instructors: <b>{{ stats.instructors }}</b></li>
+            <li>Courses: <b>{{ stats.courses }}</b></li>
+          </ul>
+          <a href="{{ url_for('demo_enter', role='admin') }}">Open Admin view →</a>
+        </div>
+        <div class="view" data-viewpane="admin" hidden>
+          <h2>Exports</h2>
+          <ul><li>SCORM 1.2 / 2004 packages</li><li>xAPI statements</li><li>Audit log CSV</li></ul>
+        </div>
+      </div>
+      <p class="note">Numbers are from the live demo classroom.</p>
+    </section>
+
+    <section class="panel step" data-step="6" aria-labelledby="s6h" hidden>
+      <h1 id="s6h">That's the tour.</h1>
+      <p class="lede">Make your own account, or step into the full demo.</p>
+      <div class="end">
+        <a class="btn btn-gold" id="tourCreate" href="{{ url_for('register_account') }}">Create your real account</a>
+        <a class="btn btn-white" id="tourEnter" href="{{ url_for('index') }}">Enter Novak LMS™</a>
+      </div>
+    </section>
+
+    <div class="nav">
+      <button type="button" class="btn btn-back" id="tourBack" disabled>Back</button>
+      <button type="button" class="btn btn-next" id="tourNext">Next</button>
+    </div>
+  </main>
+  <footer>© 2026 Novak LMS™ · <a href="{{ url_for('terms_of_service') }}">Terms</a> · <a href="{{ url_for('privacy_page') }}">Privacy</a></footer>
+  <script type="application/json" id="tourData">{{ tour_data|tojson }}</script>
+  <script src="{{ url_for('static', filename='js/demo_tour.js') }}"></script>
+</body>
+</html>
