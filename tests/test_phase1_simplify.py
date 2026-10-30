@@ -154,7 +154,7 @@ def test_scorm_packages_have_no_navy_metadata(anon):
                     assert bad not in text, (ver, name, bad)
 
 
-_CODE_RE = re.compile(r'\b(ITSUP|NETOPS|CLIENT)\b')
+_CODE_RE = re.compile(r'\b(ITSUP|NETOPS|CLIENT|SEC)\b(?!-[A-Z]+-\d)')  # SEC-LAB-03 style control ids are not course labels
 _OLD_TITLE_RE = re.compile(r'IT Support Technician Fundamentals|Network Operations Fundamentals|Client Systems|'
                            r'Shop Procedures|client systems|network operations (training|learning)|CLIENT-101')
 
@@ -243,3 +243,26 @@ def test_eye_tracking_pill_uses_plain_name():
     js = (ROOT / 'static/js/helix/helix-gaze.js').read_text()
     assert '<span class="hx-pill-text">Eye Tracking</span>' in js
     assert not re.search(r"""['"][^'"\n]*(?<![\w.])Helix\b(?![\w(])[^'"\n]*['"]""", js)
+
+
+def test_student_home_lists_every_course_side_by_side(student):
+    h = student.get('/student').get_data(as_text=True)
+    assert 'Other classes' not in h
+    n = h.count('class="home-course')
+    if n:
+        assert h.count('aria-current="true"') >= 1
+        assert re.search(r'<nav class="home-courses[^"]*" aria-label="My courses">', h)
+
+
+def test_cybersecurity_pages_show_names_not_codes(student):
+    from app import _obj_label, _course_label
+    assert _obj_label('SEC-7.1') == 'CYB-7.1' and _obj_label('IT-9.1') == 'IT-9.1'
+    assert _course_label('SEC') == 'Cybersecurity'
+    for u in ('/labs/sec-vm-suid', '/labs/sec-phish', '/labs'):
+        r = student.get(u, follow_redirects=True)
+        assert r.status_code == 200, u
+        bad = [s for s in _bad_course_names(_visible_strings(r.get_data(as_text=True)))
+               if not re.search(r'ticket SEC-\w+', s)]
+        assert bad == [], (u, bad)
+    from curriculum_sec import render
+    assert 'coach a classmate on <strong>SEC' not in (ROOT / 'curriculum_sec/render.py').read_text()

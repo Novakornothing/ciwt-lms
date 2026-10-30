@@ -2726,6 +2726,10 @@ body.is-lab-workbench #mobileStaffMenuBtn {
 .continue-card .continue-btn { font-weight: 800; }
 .continue-card .continue-daily a { color: inherit; font-weight: 700; text-decoration: underline; }
 .student-tabs .nav-link { font-weight: 700; }
+.home-courses { display: flex; flex-wrap: wrap; gap: .4rem; }
+.home-course { display: inline-block; padding: .3rem .8rem; border: 1px solid var(--border-strong, #cbd5e1); border-radius: 999px; font-size: .85rem; font-weight: 600; text-decoration: none; color: inherit; }
+.home-course:hover, .home-course:focus-visible { border-color: var(--brand, #0b5cab); }
+.home-course.is-current { background: var(--navy, #0f2a4a); border-color: var(--navy, #0f2a4a); color: #fff; }
 .student-chapters .list-group-item { padding: .7rem 1rem; }
 
 /* Phase 1: lesson reader — one sticky bar, 68ch column, flat sections, reader preferences */

@@ -36,7 +36,7 @@
 <header class="lab-head">
   <div class="lab-head-main">
     <p class="lab-kicker mb-1"><span class="lab-kind lab-kind-{{ lab.kind }}">{{ kind_label or lab.kind }}</span>
-      {% for code in lab.course_objectives or [] %}<span class="lab-obj-code">{{ code }}</span>{% endfor %}
+      {% for code in lab.course_objectives or [] %}<span class="lab-obj-code">{{ code|obj_label }}</span>{% endfor %}
       {% if lab.minutes %}<span class="text-muted small">· about {{ lab.minutes }} min</span>{% endif %}</p>
     <h1 class="h4 mb-1">{{ lab.title }}</h1>
     <p class="mb-0 lab-scenario">{{ lab.intro }}</p>

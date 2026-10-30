@@ -10,7 +10,7 @@
 <header class="lab-head">
   <div class="lab-head-main">
     <p class="lab-kicker mb-1"><span class="lab-kind lab-kind-scenario">Lab scenario · Hands-On Challenge</span>
-      {% for code in s.course_objectives %}<span class="lab-obj-code">{{ code }}</span>{% endfor %}
+      {% for code in s.course_objectives %}<span class="lab-obj-code">{{ code|obj_label }}</span>{% endfor %}
       <span class="text-muted small">· about {{ s.minutes }} min</span></p>
     <h1 class="h4 mb-1">{{ s.title }}</h1>
     <p class="mb-0 lab-scenario">{{ s.ticket }}</p>

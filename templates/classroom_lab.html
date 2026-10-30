@@ -10,7 +10,7 @@
 <header class="lab-head">
   <div class="lab-head-main">
     <p class="lab-kicker mb-1"><span class="lab-kind lab-kind-classroom">Classroom lab</span>
-      {% for c, ch in cl.chapters or [] %}<span class="lab-obj-code">{{ c }} Ch {{ ch }}</span>{% endfor %}
+      {% for c, ch in cl.chapters or [] %}<span class="lab-obj-code">{{ c|course_label }} Ch {{ ch }}</span>{% endfor %}
       {% if cl.minutes %}<span class="text-muted small">· about {{ cl.minutes }} min</span>{% endif %}</p>
     <h1 class="h4 mb-1">{{ cl.id }} — {{ cl.title }}</h1>
     <p class="mb-0 lab-scenario">{{ cl.objective }}</p>

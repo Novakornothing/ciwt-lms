@@ -252,6 +252,18 @@ def _static_cache(resp):
 _PUBLIC_ITEM_FIELDS = ('options', 'lo', 'lo_code', 'lo_text', 'type', 'prompts', 'choose')  # pass 11: PBQ metadata, no keys
 
 
+@app.template_filter('course_label')
+def _course_label(code):
+    return {'ITSUP': 'IT Support', 'NETOPS': 'Basic Networking', 'CLIENT': 'Operating Systems', 'SEC': 'Cybersecurity'}.get(str(code or ''), code)
+
+
+@app.template_filter('obj_label')
+def _obj_label(code):
+    """Objective chips: keep the stored id, show a course-neutral prefix (SEC-7.1 -> CYB-7.1)."""
+    c = str(code or '')
+    return 'CYB-' + c[4:] if c.startswith('SEC-') else c
+
+
 @app.template_filter('public_questions')
 def _public_questions(questions):
     out = []

@@ -28,6 +28,11 @@
 </section>
 
 {% if sections %}
+{% if sections|length > 1 %}
+<nav class="home-courses mb-3" aria-label="My courses">
+  {% for s in sections %}<a class="home-course{% if loop.first %} is-current{% endif %}" href="{{ url_for('student_section', section_id=s.id) }}"{% if loop.first %} aria-current="true"{% endif %} title="{{ s.name }}">{{ s.course.title if s.course else s.name }}</a>{% endfor %}
+</nav>
+{% endif %}
 <ul class="nav nav-tabs student-tabs mb-3" role="tablist" aria-label="My course">
   <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-ch" data-bs-toggle="tab" data-bs-target="#pane-ch" type="button" role="tab" aria-controls="pane-ch" aria-selected="true">Course Chapters</button></li>
   <li class="nav-item" role="presentation"><button class="nav-link" id="tab-labs" data-bs-toggle="tab" data-bs-target="#pane-labs" type="button" role="tab" aria-controls="pane-labs" aria-selected="false">Hands-On Labs</button></li>
@@ -35,9 +40,6 @@
 </ul>
 <div class="tab-content">
   <div class="tab-pane fade show active" id="pane-ch" role="tabpanel" aria-labelledby="tab-ch">
-    {% if sections|length > 1 %}
-    <p class="small text-muted mb-2">Other classes:{% for s in sections[1:] %} <a href="{{ url_for('student_section', section_id=s.id) }}">{{ s.course.title }} · {{ s.name }}</a>{{ ',' if not loop.last }}{% endfor %}</p>
-    {% endif %}
     <ol class="list-group list-group-numbered student-chapters">
       {% for ch in chapters %}
       <li class="list-group-item d-flex justify-content-between align-items-center gap-2">

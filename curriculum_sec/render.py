@@ -99,9 +99,8 @@ def _lesson_html(lesson, first):
         body.append(_section_html(sec))
     body.append(
         '<div class="practice-standard"><h4>Practice standard for this lesson</h4>'
-        f'<p>When you finish {escape(lesson["title"])}, you can coach a classmate on '
-        f'<strong>{escape(skill)}</strong> without the notes in front of you. '
-        'The checks under each section all map to that skill.</p></div>'
+        f'<p>When you finish {escape(lesson["title"])}, you can coach a classmate on it '
+        'without the notes in front of you. The checks under each section all map to this skill.</p></div>'
     )
     return ''.join(body)
 

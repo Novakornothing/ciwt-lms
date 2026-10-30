@@ -1401,7 +1401,7 @@ _LABEL_PREFIX_RE = re.compile(r"^\s*(\d+\.\d+)\b")
 
 
 # User-facing course names; internal codes stay in ids and keys.
-COURSE_DISPLAY = {"ITSUP": "IT Support", "NETOPS": "Basic Networking", "CLIENT": "Operating Systems"}
+COURSE_DISPLAY = {"ITSUP": "IT Support", "NETOPS": "Basic Networking", "CLIENT": "Operating Systems", "SEC": "Cybersecurity"}
 
 
 def course_display(code: str) -> str:
