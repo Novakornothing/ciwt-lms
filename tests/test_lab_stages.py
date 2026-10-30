@@ -98,12 +98,72 @@ def test_checkers_read_end_state_and_reject_walkthrough_values():
     assert not PX._file_ok(lx["fs"], f["assisted_path"], f["assisted_token"], f["assisted_mode"])
 
 
-def test_vm_probe_checks_the_file_not_the_walkthrough_line():
+def _story(html):
+    m = re.search(r'<div class="stage-story">(.*?)</div>', html or "", flags=re.S)
+    text = m.group(1) if m else ""
+    text = re.sub(r"<[^>]+>", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _words(text):
+    return re.findall(r"[a-z0-9']+", text.lower())
+
+
+def _sentences(text):
+    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+
+
+def _shingles(text, n=5):
+    words = _words(text)
+    if len(words) < n:
+        return set()
+    return {tuple(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def test_stage_two_and_three_do_not_share_sentences_or_shingles():
+    """Different labs must not reuse an 8-word sentence or more than 40% of 5-word shingles."""
+    pubs = {lab["id"]: PX.public(lab, {"seed": 1}, []) for lab in LABS}
+    for stage in ("assisted", "ticket"):
+        texts = {lid: _story(pub["stages"][{"guided": 0, "assisted": 1, "ticket": 2}[stage]]["html"]) for lid, pub in pubs.items()}
+        seen = {}
+        for lid, text in texts.items():
+            for sentence in _sentences(text):
+                if len(_words(sentence)) < 8:
+                    continue
+                seen.setdefault(sentence.lower(), []).append(lid)
+        shared = {s: labs for s, labs in seen.items() if len(labs) > 1}
+        assert not shared, (stage, list(shared.items())[:3])
+        ids = list(texts)
+        bags = {lid: _shingles(texts[lid]) for lid in ids}
+        worst = (0.0, "", "")
+        for i, left in enumerate(ids):
+            for right in ids[i + 1:]:
+                a, b = bags[left], bags[right]
+                if not a and not b:
+                    score = 0.0
+                else:
+                    score = len(a & b) / len(a | b)
+                if score > worst[0]:
+                    worst = (score, left, right)
+                assert score <= 0.40, (stage, left, right, round(score, 3))
+
+
+def test_vm_file_check_runs_real_grep_and_solved_probe_does_not_fake_it():
     lab = RT.get_lab("linux-vm-perms")
     state = RT.fresh_state(lab["id"], uid=3)
     script = RT.VM.probe_script(state, lab)
     token = state["px"]["facts"]["assisted_token"]
     assert token in script and "px_assisted" in script and "grep -qx" in script
-    assert token != "ticket 4512"
-    solved = RT.VM.solved_probe(state, lab)
-    assert "c_px_assisted 1" in solved and "c_px_ticket 1" in solved
+    assert "c_px_assisted" not in RT.VM.solved_probe(state, lab)
+    missing = PX.run_px_grep(lab, state, [])
+    assert "c_px_assisted 0" in missing and "c_px_ticket 0" in missing
+    made = PX.run_px_grep(lab, state, PX.vm_file_commands(lab, state))
+    assert "c_px_assisted 1" in made and "c_px_ticket 1" in made
+    # a walkthrough line in the proof file is not this attempt's token
+    wrong = [c for c in PX.vm_file_commands(lab, state) if "printf" in c][:1]
+    # replace the token write with the old walkthrough line and chmod the assisted path only
+    path = state["px"]["facts"]["assisted_path"]
+    mode = state["px"]["facts"]["assisted_mode"]
+    bogus = [f"mkdir -p /root", "printf '%s\\n' 'ticket 4512' > " + path, f"chmod {mode} {path}"]
+    rejected = PX.run_px_grep(lab, state, bogus)
+    assert "c_px_assisted 0" in rejected

@@ -338,11 +338,83 @@ def probe_shells(state, lab):
 
 
 def solved_px_lines(state, lab):
+    """The guest probe is the real check. Tests must not invent a pass here."""
+    return []
+
+
+def vm_file_commands(lab, state):
+    """Shell lines that create the stage 2 and 3 proof files. Safe to run on a temp directory."""
+    if family(lab) != "vm":
+        return []
+    f = ((state or {}).get("px") or {}).get("facts") or facts(lab, (state or {}).get("seed") or 1)
+    out = []
+    for path, token, mode in (
+        (f["assisted_path"], f["assisted_token"], f["assisted_mode"]),
+        (f["ticket_path"], f["ticket_token"], f["ticket_mode"]),
+    ):
+        parent = path.rsplit("/", 1)[0]
+        out.append(f"mkdir -p {parent}")
+        out.append("printf '%s\\n' '" + str(token).replace("'", "'\\''") + f"' > {path}")
+        out.append(f"chmod {mode} {path}")
+    return out
+
+
+def run_px_grep(lab, state, commands):
+    """Run the stage file checks with the system grep against a temp directory.
+
+    Returns lines ``c_px_assisted 1`` or ``0`` (and the ticket line). A missing file is 0.
+    Only mkdir, printf, and chmod from vm_file_commands are executed.
+    """
+    import os
+    import subprocess
+    import tempfile
+    shells = probe_shells(state, lab)
+    if not shells:
+        return []
+    allowed = ("mkdir -p ", "printf ", "chmod ")
+    for cmd in commands or []:
+        if not str(cmd).startswith(allowed):
+            raise ValueError(f"refusing to run {cmd!r} on the host")
+    with tempfile.TemporaryDirectory(prefix="novak-px-") as tmp:
+        def rewrite(text):
+            return (str(text).replace("/home/trainee", tmp + "/home/trainee")
+                    .replace("/root", tmp + "/root"))
+        os.makedirs(tmp + "/root", exist_ok=True)
+        os.makedirs(tmp + "/home/trainee", exist_ok=True)
+        for cmd in commands or []:
+            subprocess.run(["bash", "-c", rewrite(cmd)], cwd=tmp, check=False,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+        lines = []
+        for key, sh in shells:
+            if "grep -qx" not in sh or "ls -l" not in sh:
+                raise ValueError("stage file check is not the expected grep")
+            proc = subprocess.run(["bash", "-c", rewrite(sh)], cwd=tmp, check=False,
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+            lines.append(f"c_{key} {1 if proc.returncode == 0 else 0}")
+        return lines
+
+
+def probes_with_real_px(lab, state, probes):
+    """Solved objective probes plus the real grep result for the stage files."""
     if not lab or lab.get("kind") != "vm":
-        return []
-    if not ((state or {}).get("px") or {}).get("facts"):
-        return []
-    return ["c_px_assisted 1", "c_px_ticket 1"]
+        return probes
+    extra = run_px_grep(lab, state, vm_file_commands(lab, state))
+    if isinstance(probes, str):
+        return splice_px_lines(probes, extra)
+    out = dict(probes)
+    first = next(iter(out))
+    out[first] = splice_px_lines(out[first], extra)
+    return out
+
+
+def splice_px_lines(probe_text, extra_lines):
+    """Insert real grep results into one machine's probe, before the end marker."""
+    if not extra_lines:
+        return probe_text
+    block = "\n".join(extra_lines)
+    if "\nend\n" in probe_text:
+        return probe_text.replace("\nend\n", "\n" + block + "\nend\n", 1)
+    return probe_text.rstrip() + "\n" + block + "\nend\n"
 
 
 # ---------------------------------------------------------------- checks
@@ -393,6 +465,13 @@ def end_state_ok(lab, stage, state, done):
             return dns == [f["assisted_dns"]] and f["assisted_dns"] != f["guided_dns"]
         host = state.get("px_host") or state.get("hostname")
         return host == f["ticket_host"] and host != f["guided_host"]
+    if lab.get("id") == "sw-vlan-multi" and stage == "assisted":
+        a, b = f["assisted_vlans"]
+        staff, guest, uplink = _port(state, "FastEthernet0/2"), _port(state, "FastEthernet0/3"), _port(state, "FastEthernet0/1")
+        return (staff.get("mode") == "access" and staff.get("vlan") == a
+                and guest.get("mode") == "access" and guest.get("vlan") == b
+                and uplink.get("trunk") and list(uplink.get("allowed") or []) == sorted((a, b))
+                and a not in (10, 20) and b not in (10, 20))
     if fam == "sw_vlan" and stage == "assisted":
         iface = _port(state, f["assisted_port"])
         return iface.get("vlan") == f["assisted_vlan"] and iface.get("mode") == "access" and f["assisted_vlan"] != f["guided_vlan"]
@@ -478,6 +557,14 @@ def followup_commands(lab, state, stage):
     f = ((state or {}).get("px") or {}).get("facts") or facts(lab, (state or {}).get("seed") or 1)
     fam = family(lab)
     if stage == "assisted":
+        if lab.get("id") == "sw-vlan-multi":
+            a, b = f["assisted_vlans"]
+            return _ios(["enable", "configure terminal",
+                         f"vlan {a}", f"name STAFF{a}", f"vlan {b}", f"name GUEST{b}",
+                         "interface fa0/2", "switchport mode access", f"switchport access vlan {a}",
+                         "interface fa0/3", "switchport mode access", f"switchport access vlan {b}",
+                         "interface fa0/1", "switchport mode trunk", f"switchport trunk allowed vlan {a},{b}",
+                         "end"])
         if fam == "win":
             return [f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['assisted_dns']}"]
         if fam == "sw_vlan":
@@ -1010,28 +1097,8 @@ _BRIDGE = (
 
 
 def _later_paragraphs(lab, stage):
-    fam = family(lab)
-    pair = _OUTCOME.get(fam) or _OUTCOME["choice"]
-    outcome = pair[0] if stage == "assisted" else pair[1]
-    blurb = (lab.get("blurb") or "").strip()
-    h = int(hashlib.sha1(f"{lab.get('id')}:{stage}".encode()).hexdigest()[:4], 16)
-    bridge = _BRIDGE[h % len(_BRIDGE)]
-    title = lab.get("title") or lab.get("id")
-    sentences = [
-        _lead(lab, stage),
-        outcome,
-        bridge,
-    ]
-    sentences.append("Finish this attempt only when the end state matches the note.")
-    # unique closers so the last sentence's opening is not reused inside the stage
-    closers = (
-        "Submit only after the machine shows the new state.",
-        "A second attempt gets different note values, so a friend's screenshot will not match.",
-        "Leave the walkthrough's configuration in place when the note does not tell you to remove it.",
-        "If the note and the screen disagree, believe the note for this attempt.",
-    )
-    sentences.append(closers[h % len(closers)])
-    return sentences
+    import lab_stage_scenarios as LS
+    return [LS.prose(lab, stage)]
 
 
 def guided_html(lab):
@@ -1061,7 +1128,7 @@ def guided_html(lab):
 
 def later_html(lab, stage):
     sentences = _later_paragraphs(lab, stage)
-    body = "".join(f"<p>{_esc(s)}</p>" for s in sentences)
+    body = "<div class=\"stage-story\">" + "".join(f"<p>{_esc(s)}</p>" for s in sentences) + "</div>"
     card = syntax_card(lab)
     rows = "".join(
         f"<li><span>{_esc(row['label'])}</span> <code>{_esc(row['form'])}</code></li>" for row in card
@@ -1107,12 +1174,13 @@ def public(lab, state, done):
 
 
 def later_hint(lab, stage, tier):
-    fam = family(lab)
-    pair = _OUTCOME.get(fam) or _OUTCOME["choice"]
-    outcome = pair[0] if stage == "assisted" else pair[1]
+    import lab_stage_scenarios as LS
+    parts = [s.strip() for s in re.split(r"(?<=[.!?])\s+", LS.prose(lab, stage)) if s.strip()]
+    if not parts:
+        return "Read the note for this stage."
     if tier <= 1:
-        return f"Look at the note for this stage. {outcome}"
-    return "The syntax card shows the form. Put the note's value in the placeholder. Do not reuse the walkthrough's numbers, names, or paths."
+        return parts[0]
+    return parts[1] if len(parts) > 1 else parts[0]
 
 
 def solving_commands(lab):
