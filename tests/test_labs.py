@@ -63,7 +63,12 @@ def solve_http(client, lab_id, mod=None):
                 a = a(server_state)
             st = _j(client.post(f"/labs/{lab_id}/check", json={"step": step["id"], "answer": a}))
             assert st["result"]["correct"], (lab_id, step["id"], st["result"])
-    return st
+    for action in RT.PX.stage_actions(lab, _server_state(lab_id)):
+        if action["type"] == "cmd":
+            st = _j(client.post(f"/labs/{lab_id}/cmd", json={"command": action["command"]}))
+        elif action["type"] == "stage":
+            st = _j(client.post(f"/labs/{lab_id}/stage", json={"stage": action["stage"], "answer": action["answer"]}))
+    return _j(client.get(f"/labs/{lab_id}/state"))
 
 
 def _server_state(lab_id, email="student1@lms.local"):
@@ -289,6 +294,9 @@ def test_event_log_records_ordered_process(student, instructor, mod):
     _j(student.post("/labs/win-ipconfig/hint"))
     _j(student.post("/labs/win-ipconfig/cmd", json={"command": "hostname"}))
     _j(student.post("/labs/win-ipconfig/cmd", json={"command": "ipconfig /all"}))
+    for action in RT.PX.stage_actions(RT.get_lab("win-ipconfig"), _server_state("win-ipconfig")):
+        if action["type"] == "cmd":
+            _j(student.post("/labs/win-ipconfig/cmd", json={"command": action["command"]}))
     row, uid = _row(mod, "student1@lms.local", "win-ipconfig")
     with mod.app.app_context():
         evs = api.events_for(uid, "win-ipconfig", attempt=(row.resets or 0) + 1)

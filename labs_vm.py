@@ -556,6 +556,13 @@ def probe_script(state, lab=None, machine=None):
         lines.append(f"_c {c['id']} {_shq(fill(c['sh'], state))} {int(c.get('secs') or 3)}")
         if c.get("show"):
             lines.append(f"_v {c['id']} {_shq(fill(c['show'], state))}")
+    if machine == names[0]:
+        try:
+            import lab_progression as PX
+            for key, sh in PX.probe_shells(state, lab):
+                lines.append(f"_c {key} {_shq(sh)} 3")
+        except Exception:
+            pass
     lines += ["echo end", "} > /mnt/.ciwt-result 2>&1"]
     return _HELPERS + "\n".join(lines) + "\n"
 
@@ -715,6 +722,12 @@ def solved_probe(state, lab=None, machine=None):
     for c in lab["vm_checks"]:
         if c.get("sh") and (c.get("on") or names[0]) == machine:
             out.append(f"c_{c['id']} 1")
+    if machine == names[0]:
+        try:
+            import lab_progression as PX
+            out.extend(PX.solved_px_lines(state, lab))
+        except Exception:
+            pass
     return "\n".join(out + ["end"]) + "\n"
 
 

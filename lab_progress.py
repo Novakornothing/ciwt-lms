@@ -397,9 +397,9 @@ def register(app, db, deps):
                 and all(x['id'] != src['id'] for x in real_labs)):
             real_labs = [src] + real_labs
         view_lab = lab
-        if lab.get('kind') == 'vm' and lab.get('session_vars'):
+        if lab.get('kind') == 'vm':
             view_lab = dict(lab)
-            view_lab['vm'] = RT.VM.vm_for_session(lab, state.get('seed'))
+            view_lab['vm'] = RT.PX.prepare_vm(lab, state)
         return render_template(tpl, lab=view_lab, boot=boot, prompt=boot.get('prompt', ''), practical_back=back, vm_assets_ok=vm_ok,
                                fallback_labs=fallback_labs, real_labs=real_labs,
                                palette=RT.palette(lab), steps=RT.public_steps(lab, state))
@@ -487,6 +487,35 @@ def register(app, db, deps):
              ev=('check', str(body.get('step') or '') + ' ' + json.dumps(body.get('answer'), sort_keys=True)[:800],
                  'ok' if result.get('correct') else 'wrong', newly, result.get('message')))
         return jsonify(payload_for(row, lab, state, done, {'result': result, 'newly': [o for o in done if o not in before['done']]}))
+
+    @login_required
+    def interactive_lab_note(lab_id):
+        """The session note. It is not part of the stage instructions."""
+        lab, err = lab_or_json_404(lab_id)
+        if err:
+            return err
+        state, _done = load(get_row(lab_id))
+        RT.PX.attach(lab, state)
+        f = (state.get('px') or {}).get('facts') or {}
+        which = (request.args.get('stage') or 'assisted').strip()
+        text = f.get('note_ticket') if which == 'ticket' else f.get('note_assisted')
+        return jsonify({'stage': which, 'text': text or ''})
+
+    @login_required
+    def interactive_lab_stage(lab_id):
+        lab, err = lab_or_json_404(lab_id)
+        if err:
+            return err
+        row = get_row(lab_id)
+        state, done = load(row)
+        body = request.get_json(silent=True) or {}
+        before = {'state': state, 'done': list(done)}
+        result, state, done = RT.PX.submit_answer(lab, state, done, str(body.get('stage') or ''), body.get('answer'))
+        newly = [o for o in done if o not in before['done']]
+        save(row, lab, state, done, snapshot=before if done != before['done'] or state != before['state'] else None,
+             wrong=not result.get('ok'),
+             ev=('check', 'stage ' + str(body.get('stage') or ''), 'ok' if result.get('ok') else 'wrong', newly, result.get('message')))
+        return jsonify(payload_for(row, lab, state, done, {'result': result, 'newly': newly}))
 
     @login_required
     def interactive_lab_hint(lab_id):
@@ -839,6 +868,8 @@ def register(app, db, deps):
         ('/labs/<lab_id>/event', 'interactive_lab_event', interactive_lab_event, ['POST']),
         ('/labs/<lab_id>/packet-flow', 'interactive_lab_packet_flow', interactive_lab_packet_flow, ['GET']),
         ('/labs/<lab_id>/check', 'interactive_lab_check', interactive_lab_check, ['POST']),
+        ('/labs/<lab_id>/note', 'interactive_lab_note', interactive_lab_note, ['GET']),
+        ('/labs/<lab_id>/stage', 'interactive_lab_stage', interactive_lab_stage, ['POST']),
         ('/labs/<lab_id>/hint', 'interactive_lab_hint', interactive_lab_hint, ['POST']),
         ('/labs/<lab_id>/undo', 'interactive_lab_undo', interactive_lab_undo, ['POST']),
         ('/labs/<lab_id>/reset', 'interactive_lab_reset', interactive_lab_reset, ['POST']),

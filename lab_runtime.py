@@ -15,6 +15,7 @@ import labs_linux as LX
 import labs_linux_gui as LLG
 import labs_vm as VM
 import labs_scenario as SC
+import lab_progression as PX
 
 KIND_GROUPS = [
     ("ticket", "Help desk & bench", "Ticket intake and the hardware bench card."),
@@ -111,6 +112,7 @@ def fresh_state(lab_id, uid=0, reseed=0):
     st["objectives"] = [o["id"] for o in lab["objectives"]]
     if lab.get("steps"):
         LA.ensure_generated(lab["steps"], st)
+    PX.attach(lab, st)
     return st
 
 
@@ -126,8 +128,15 @@ def _ids(lab):
     return [o["id"] for o in lab["objectives"]]
 
 
-def _clean(lab, done):
+def _tracked(lab):
     ids = _ids(lab)
+    if PX.needs_stages(lab):
+        ids = ids + list(PX.STAGE_MARKS)
+    return ids
+
+
+def _clean(lab, done):
+    ids = _tracked(lab)
     seen = []
     for d in done or []:
         if d in ids and d not in seen:
@@ -136,14 +145,14 @@ def _clean(lab, done):
 
 
 def score(lab, done):
-    ids = _ids(lab)
+    ids = _tracked(lab)
     if not ids:
         return 0.0
     return round(100.0 * len([i for i in ids if i in (done or [])]) / len(ids), 1)
 
 
 def is_complete(lab, done):
-    return set(_ids(lab)) <= set(done or [])
+    return set(_tracked(lab)) <= set(done or [])
 
 
 def view(lab, state, done):
@@ -154,6 +163,7 @@ def view(lab, state, done):
                                            is_complete(lab, done)),
         "score": score(lab, done),
         "next": next((o["id"] for o in lab["objectives"] if o["id"] not in done), None),
+        "progression": PX.public(lab, state, done),
     }
     if lab["kind"] == "win11gui":
         g = deepcopy(state.get("gui") or {})
@@ -236,6 +246,10 @@ def run_command(lab_id, state, done, command):
                     extra.extend(r)
         lines, unknown = LX.run(cmd, state, done, mark, rules)
         lines = list(lines) + extra
+        absorbed = PX.absorb(lab, state, cmd)
+        if absorbed is not None:
+            lines = absorbed
+            unknown = False
         for ln in list(lines):
             m = re.search(r"(?:cd: |cannot access '|: )([^':]+?)'?: No such file or directory", ln)
             if m:
@@ -243,6 +257,7 @@ def run_command(lab_id, state, done, command):
                 if near:
                     lines.append("Did you mean: " + ", ".join(near) + " ?  (Linux names are case-sensitive; Tab completes them.)")
                 break
+        state, done = PX.observe(lab, state, done)
         done = _clean(lab, done)
         return {"lines": lines, "unknown": bool(unknown)}, state, done
 
@@ -274,8 +289,12 @@ def run_command(lab_id, state, done, command):
         more = auto(state, done, expanded, lines)
         if more:
             lines += more
+    absorbed = PX.absorb(lab, state, cmd)
+    if absorbed is not None:
+        lines = absorbed
+    state, done = PX.observe(lab, state, done)
     done = _clean(lab, done)
-    return {"lines": lines, "unknown": _is_unknown(lines)}, state, done
+    return {"lines": lines, "unknown": False if absorbed is not None else _is_unknown(lines)}, state, done
 
 
 def complete(lab, state, partial):
@@ -338,6 +357,7 @@ def vm_check(lab_id, state, done, probes, booted=True, fabric=None):
     """probes: {machine: probe output} (or one string for single-VM labs); fabric: the virtual network's event log."""
     lab = get_lab(lab_id)
     res, state, done = VM.grade(lab, state, list(done), probes, booted, fabric)
+    state, done = PX.observe(lab, state, done)
     return res, state, _clean(lab, done)
 
 
@@ -349,8 +369,10 @@ def apply_event(lab_id, state, done, ev, data):
         return {"error": "This lab has no desktop.", "changed": False}, state, done
     if lab["kind"] in ("linuxgui", "linux"):
         result, state, done = LLG.apply(lab, state, done, ev, data if isinstance(data, dict) else {})
+        state, done = PX.observe(lab, state, done)
         return result, state, _clean(lab, done)
     result, state, done = LG.apply(lab, state, done, ev, data if isinstance(data, dict) else {})
+    state, done = PX.observe(lab, state, done)
     return result, state, _clean(lab, done)
 
 
@@ -377,6 +399,7 @@ def check_step(lab_id, state, done, step_id, answer):
     if res["correct"] and st["objective"] not in done:
         done.append(st["objective"])
     res["attempts"] = att[step_id]
+    state, done = PX.observe(lab, state, done)
     return res, state, _clean(lab, done)
 
 
@@ -414,6 +437,14 @@ def next_hint(lab, state, done, hints_used):
     done = done or []
     pending = [o for o in lab["objectives"] if o["id"] not in done]
     if not pending:
+        nxt = next((s for s in PX.STAGE_ORDER if f"stage:{s}" not in done), None)
+        if nxt and nxt != "guided":
+            o = {"id": f"stage:{nxt}", "text": nxt}
+            tiers = (state or {}).get("_hint_tier") or {}
+            cur = int(tiers.get(o["id"], 0))
+            tier = min(cur + 1, 2)
+            return {"objective": o["id"], "objective_text": nxt, "tier": tier, "counted": tier > cur,
+                    "text": PX.later_hint(lab, nxt, tier), "max": tier >= 2}
         return {"objective": None, "tier": 0, "counted": False, "text": "Every objective is complete."}
     o = pending[0]
     tiers = (state or {}).get("_hint_tier") or {}
@@ -422,7 +453,9 @@ def next_hint(lab, state, done, hints_used):
     counted = tier > cur
     oh = (lab.get("obj_hints") or {}).get(o["id"])
     step = next((s for s in (lab.get("steps") or []) if s["objective"] == o["id"]), None)
-    if oh:
+    if o["id"].startswith("s2") or o["id"].startswith("s3"):
+        text = PX.later_hint(lab, "assisted" if o["id"].startswith("s2") else "ticket", tier)
+    elif oh:
         text = oh[min(tier, len(oh)) - 1]
     elif step is not None:
         text = ("Re-read the scenario and the feedback under the question." if tier == 1 else
@@ -522,6 +555,7 @@ def solve(lab_id, uid=0):
             a = a(state)
         res, state, done = check_step(lab_id, state, done, st["id"], a)
         log.append((st["id"], res))
+    state, done = PX.drive(lab, state, done, run_command)
     return state, done, log
 
 

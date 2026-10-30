@@ -51,7 +51,7 @@ def test_stage23_text_does_not_contain_session_answers(lab_id):
 def test_solver_completes_every_gui_lab():
     for lab in G.LINUX_GUI_LABS:
         state, done, _ = RT.solve(lab["id"], uid=3)
-        assert set(done) == {o["id"] for o in lab["objectives"]}, lab["id"]
+        assert set(o["id"] for o in lab["objectives"]) <= set(done), lab["id"]
         assert "gui_vars" in state
 
 
