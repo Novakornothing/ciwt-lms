@@ -86,43 +86,164 @@
   var win = document.getElementById("winSim");
   if (win) {
     var wout = document.getElementById("winSimOut");
-    var users = { Trainee: true, labtech: true };
+    var sim = {
+      hostname: "NOVAK-W11-07",
+      ipv4: "10.20.30.47",
+      mask: "255.255.255.0",
+      gateway: "10.20.30.1",
+      dns: ["10.20.30.10", "10.20.30.11"],
+      mac: "00-1A-2B-AA-BB-07",
+      dhcp: true,
+      services: {
+        Dhcp: ["Running", "DHCP Client"],
+        Dnscache: ["Running", "DNS Client"],
+        Spooler: ["Running", "Print Spooler"],
+        WinDefend: ["Running", "Microsoft Defender Antivirus Service"]
+      },
+      users: { Trainee: true, labtech: true }
+    };
     function wline(text) {
       var p = document.createElement("p");
       p.textContent = text;
       wout.appendChild(p);
       wout.scrollTop = wout.scrollHeight;
     }
-    wline("Windows PowerShell — simulation");
-    wline("Type help for the commands this simulation implements.");
+    function padLabel(label) {
+      var dots = " . . . . . . . . . . . . . . . . . . . . . . . . . ";
+      return "   " + (label + dots).slice(0, 36) + ": ";
+    }
+    wline("Windows PowerShell");
+    wline("Copyright (C) Microsoft Corporation. Simulation — not a Windows computer.");
+    wline("");
+    function winKnown(low) {
+      if (low === "help" || low === "hostname" || low === "get-localuser" || low === "net user") return true;
+      if (low.indexOf("ipconfig") === 0 || low.indexOf("ping ") === 0 || low === "ping") return true;
+      if (low.indexOf("get-service") === 0) return true;
+      if (low.indexOf("set-dnsclientserveraddress") === 0) return true;
+      if (low.indexOf("rename-computer") === 0) return true;
+      return false;
+    }
     function runLocal(line) {
-      var low = line.trim().toLowerCase();
-      if (!low) return;
-      wline("> " + line);
+      var raw = line.trim();
+      var low = raw.toLowerCase();
+      if (!low) return false;
+      wline("PS C:\\Users\\Trainee> " + raw);
+      if (!winKnown(low)) {
+        wline("not available in this simulation");
+        return false;
+      }
       if (low === "help") {
-        wline("hostname, ipconfig /all, ping <destination>, Get-Service <name>, Get-LocalUser");
-        wline("Set-DnsClientServerAddress -InterfaceAlias <name> -ServerAddresses <address>");
+        wline("Implemented here: hostname, ipconfig, ipconfig /all, ping <destination>,");
+        wline("Get-Service <Name>, Get-LocalUser,");
+        wline("Set-DnsClientServerAddress -InterfaceAlias <name> -ServerAddresses <address>,");
         wline("Rename-Computer -NewName <name>");
-        return;
+        wline("Anything else: not available in this simulation.");
+        return true;
       }
-      if (low === "hostname") { wline("(see Settings for the name this simulation is showing)"); return; }
-      if (low.indexOf("ipconfig") === 0) { wline("Ethernet  DNS: read Settings after you apply a server"); return; }
-      if (low.indexOf("get-localuser") === 0 || low === "net user") {
-        Object.keys(users).forEach(function (name) { wline(name + "  " + (users[name] ? "Enabled" : "Disabled")); });
-        return;
+      if (low === "hostname") { wline(sim.hostname); return true; }
+      if (low === "ipconfig" || low === "ipconfig /all") {
+        var full = low.indexOf("/all") >= 0;
+        wline("Windows IP Configuration");
+        wline("");
+        if (full) wline(padLabel("Host Name") + sim.hostname);
+        wline("Ethernet adapter Ethernet:");
+        wline("");
+        if (full) wline(padLabel("Physical Address") + sim.mac);
+        if (full) wline(padLabel("DHCP Enabled") + (sim.dhcp ? "Yes" : "No"));
+        wline(padLabel("IPv4 Address") + sim.ipv4);
+        wline(padLabel("Subnet Mask") + sim.mask);
+        wline(padLabel("Default Gateway") + sim.gateway);
+        if (full) {
+          sim.dns.forEach(function (d, i) {
+            wline(padLabel(i === 0 ? "DNS Servers" : "") + d);
+          });
+        }
+        return true;
       }
-      if (low.indexOf("get-service") === 0) { wline("Running  Dhcp"); return; }
-      wline("The graded console records the same line when you run it there.");
+      if (low.indexOf("ipconfig ") === 0) {
+        wline("not available in this simulation");
+        return false;
+      }
+      if (low === "ping") {
+        wline("Usage: ping [-n count] target_name");
+        return true;
+      }
+      if (low.indexOf("ping ") === 0) {
+        var target = raw.split(/\s+/).pop();
+        var local = target === "127.0.0.1" || target === sim.ipv4 || target === sim.gateway;
+        wline("Pinging " + target + " with 32 bytes of data:");
+        var i;
+        for (i = 0; i < 4; i++) {
+          wline(local
+            ? "Reply from " + target + ": bytes=32 time<1ms TTL=128"
+            : "Request timed out.");
+        }
+        wline("");
+        wline("Ping statistics for " + target + ":");
+        wline(local
+          ? "    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),"
+          : "    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss),");
+        return true;
+      }
+      if (low.indexOf("get-service") === 0) {
+        var parts = raw.split(/\s+/);
+        var want = parts.length > 1 ? parts[1] : "";
+        var names = Object.keys(sim.services).filter(function (n) {
+          return !want || n.toLowerCase() === want.toLowerCase();
+        });
+        if (!names.length) {
+          wline("Get-Service : Cannot find any service with service name '" + want + "'.");
+          return true;
+        }
+        wline("Status   Name         DisplayName");
+        wline("------   ----         -----------");
+        names.forEach(function (n) {
+          var row = sim.services[n];
+          wline(row[0] + "  " + n + "  " + row[1]);
+        });
+        return true;
+      }
+      if (low === "get-localuser" || low === "net user") {
+        wline("Name       Enabled");
+        wline("----       -------");
+        Object.keys(sim.users).forEach(function (name) {
+          wline(name + "  " + (sim.users[name] ? "True" : "False"));
+        });
+        return true;
+      }
+      if (low.indexOf("set-dnsclientserveraddress") === 0) {
+        var m = raw.match(/-ServerAddresses\s+(\S+)/i);
+        if (!m) {
+          wline("Set-DnsClientServerAddress : Missing an argument for parameter 'ServerAddresses'.");
+          return true;
+        }
+        sim.dns = [m[1].replace(/['"]/g, "")];
+        sim.dhcp = true;
+        return true;
+      }
+      if (low.indexOf("rename-computer") === 0) {
+        var nm = raw.match(/-NewName\s+(\S+)/i);
+        if (!nm) {
+          wline("Rename-Computer : Missing an argument for parameter 'NewName'.");
+          return true;
+        }
+        sim.hostname = nm[1].replace(/['"]/g, "");
+        wline("WARNING: The changes will take effect after you restart the computer.");
+        wline("This simulation applies the new name now, so hostname already shows it.");
+        return true;
+      }
+      wline("not available in this simulation");
+      return false;
     }
     document.getElementById("winSimForm").addEventListener("submit", function (ev) {
       ev.preventDefault();
       var input = document.getElementById("winSimIn");
       var line = input.value;
-      runLocal(line);
+      var known = runLocal(line);
       saveLocal("win-transcript", wout.textContent.slice(-4000));
       input.value = "";
       var cmd = root.getAttribute("data-cmd-url");
-      if (cmd && line.trim()) {
+      if (known && cmd && line.trim()) {
         fetch(cmd, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ command: line }) }).catch(function () {});
       }
     });
@@ -137,9 +258,9 @@
     win.querySelectorAll("[data-user-toggle]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var name = btn.getAttribute("data-user-toggle");
-        users[name] = !users[name];
-        btn.textContent = users[name] ? "Disable" : "Enable";
-        saveLocal("win-users", users);
+        sim.users[name] = !sim.users[name];
+        btn.textContent = sim.users[name] ? "Disable" : "Enable";
+        saveLocal("win-users", sim.users);
       });
     });
     var settings = document.getElementById("winSettingsForm");
@@ -151,11 +272,11 @@
         var stageUrl = root.getAttribute("data-stage-url");
         if (dns) {
           fetch(stageUrl, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stage: "assisted", answer: dns }) });
-          wline("Simulation DNS set to " + dns);
+          wline("DNS Servers . . . . . . . . . . . : " + dns);
         }
         if (name) {
           fetch(stageUrl, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stage: "ticket", answer: name }) });
-          wline("Simulation computer name set to " + name);
+          wline("Host Name . . . . . . . . . . . . : " + name);
         }
       });
     }
@@ -183,13 +304,51 @@
       if (mode === "config-vlan") p = host + "(config-vlan)#";
       document.getElementById("iosPrompt").textContent = p;
     }
-    iline("Simulation console. enable, configure terminal, interface, vlan, show commands.");
+    iline("Press RETURN to get started. This is a simulation, not Cisco software.");
     prompt();
+    var editVlan = null;
+    var routes = [];
+    var acls = [];
+    var kind = ios.getAttribute("data-kind") || "switch";
     function normIf(token) {
       var m = String(token || "").toLowerCase().replace(/\s+/g, "").match(/^(fa|fastethernet|gi|gigabitethernet)(\d+)\/(\d+)$/);
       if (!m) return null;
-      var kind = m[1].charAt(0) === "g" ? "GigabitEthernet" : "FastEthernet";
-      return kind + m[2] + "/" + m[3];
+      var nic = m[1].charAt(0) === "g" ? "GigabitEthernet" : "FastEthernet";
+      return nic + m[2] + "/" + m[3];
+    }
+    function shortIf(name) {
+      return String(name).replace("FastEthernet", "Fa").replace("GigabitEthernet", "Gi");
+    }
+    function pad(text, n) {
+      text = String(text);
+      return text.length >= n ? text.slice(0, n) : text + " ".repeat(n - text.length);
+    }
+    function invalid() { iline("% Invalid input detected at '^' marker."); }
+    function showVlan() {
+      iline("VLAN Name                             Status    Ports");
+      iline("---- -------------------------------- --------- -------------------------------");
+      var by = {};
+      Object.keys(ports).forEach(function (name) {
+        var p = ports[name];
+        if (!p || p.trunk || p.mode === "trunk") return;
+        var id = String(p.vlan || 1);
+        (by[id] = by[id] || []).push(shortIf(name));
+      });
+      Object.keys(vlans).sort(function (a, b) { return Number(a) - Number(b); }).forEach(function (id) {
+        iline(pad(id, 4) + " " + pad(vlans[id], 32) + " " + pad("active", 9) + " " + (by[id] || []).join(", "));
+      });
+    }
+    function showIpInt() {
+      iline("Interface                  IP-Address      OK? Method Status                Protocol");
+      ["GigabitEthernet0/0", "GigabitEthernet0/1"].forEach(function (name) {
+        var row = ports[name] || {};
+        var up = !!row.up;
+        var ip = row.ip || "unassigned";
+        var method = row.ip ? "manual" : "unset";
+        var status = up ? "up" : "administratively down";
+        var proto = up ? "up" : "down";
+        iline(pad(shortIf(name), 26) + " " + pad(ip, 15) + " YES " + pad(method, 6) + " " + pad(status, 21) + " " + proto);
+      });
     }
     document.getElementById("iosSimForm").addEventListener("submit", function (ev) {
       ev.preventDefault();
@@ -197,46 +356,95 @@
       var line = input.value.trim();
       input.value = "";
       if (!line) return;
-      iline(document.getElementById("iosPrompt").textContent + " " + line);
+      iline(document.getElementById("iosPrompt").textContent + line);
       var low = line.toLowerCase();
-      if (low === "enable" || low === "en") { mode = "priv"; }
-      else if (low === "configure terminal" || low === "conf t") { if (mode === "priv" || mode === "config") mode = "config"; else iline("% Privileged mode required."); }
-      else if (low === "end") { mode = "priv"; iface = null; }
-      else if (low === "exit") { if (mode === "config-if" || mode === "config-vlan") mode = "config"; else if (mode === "config") mode = "priv"; else mode = "user"; }
-      else if (low.indexOf("hostname ") === 0 && mode === "config") host = line.split(/\s+/).slice(1).join(" ");
-      else if (low.indexOf("vlan ") === 0 && (mode === "config" || mode === "config-vlan")) {
-        var id = parseInt(line.split(/\s+/)[1], 10);
-        if (id >= 1 && id <= 4094) { vlans[id] = vlans[id] || ("VLAN" + id); mode = "config-vlan"; }
-        else iline("% VLAN id 1-4094.");
+      var forward = true;
+      if (low === "enable" || low === "en") {
+        if (mode === "user") mode = "priv";
+        else if (mode !== "priv") invalid();
+      } else if (low === "disable") {
+        if (mode === "priv") mode = "user";
+        else invalid();
+      } else if (low === "configure terminal" || low === "conf t") {
+        if (mode === "priv") { mode = "config"; iface = null; editVlan = null; }
+        else invalid();
+      } else if (low === "end") {
+        if (mode === "user" || mode === "priv") invalid();
+        else { mode = "priv"; iface = null; editVlan = null; }
+      } else if (low === "exit") {
+        if (mode === "config-if" || mode === "config-vlan") { mode = "config"; iface = null; editVlan = null; }
+        else if (mode === "config") mode = "priv";
+        else if (mode === "priv") mode = "user";
+        else invalid();
+      } else if (low.indexOf("hostname ") === 0) {
+        if (mode !== "config") invalid();
+        else host = line.split(/\s+/).slice(1).join(" ");
+      } else if (low.indexOf("vlan ") === 0) {
+        if (kind !== "switch" || (mode !== "config" && mode !== "config-vlan")) { if (kind !== "switch") { iline("not available in this simulation"); forward = false; } else invalid(); }
+        else {
+          var vid = parseInt(line.split(/\s+/)[1], 10);
+          if (!(vid >= 1 && vid <= 4094)) iline("% VLAN id 1-4094.");
+          else { vlans[vid] = vlans[vid] || ("VLAN" + vid); editVlan = vid; mode = "config-vlan"; iface = null; }
+        }
       } else if (low.indexOf("name ") === 0 && mode === "config-vlan") {
-        var last = Object.keys(vlans).pop();
-        vlans[last] = line.split(/\s+/).slice(1).join(" ");
-      } else if (low.indexOf("interface ") === 0 && mode.indexOf("config") === 0) {
-        iface = normIf(line.split(/\s+/).slice(1).join(""));
-        if (!iface) iline("% Invalid interface.");
-        else { ports[iface] = ports[iface] || {}; mode = "config-if"; }
-      } else if (mode === "config-if" && low === "switchport mode access") ports[iface].mode = "access";
-      else if (mode === "config-if" && low === "switchport mode trunk") { ports[iface].mode = "trunk"; ports[iface].trunk = true; }
-      else if (mode === "config-if" && low.indexOf("switchport access vlan ") === 0) ports[iface].vlan = parseInt(line.split(/\s+/).pop(), 10);
-      else if (mode === "config-if" && low.indexOf("ip address ") === 0) {
+        if (editVlan == null) invalid();
+        else vlans[editVlan] = line.split(/\s+/).slice(1).join(" ");
+      } else if (low.indexOf("interface ") === 0) {
+        if (mode !== "config" && mode !== "config-if") invalid();
+        else {
+          iface = normIf(line.replace(/^interface\s+/i, ""));
+          if (!iface) iline("% Invalid interface. Example: interface FastEthernet0/1");
+          else { ports[iface] = ports[iface] || { mode: "access", vlan: 1 }; mode = "config-if"; editVlan = null; }
+        }
+      } else if (mode === "config-if" && (low === "switchport mode access" || low === "switchport mode trunk" || low.indexOf("switchport access vlan ") === 0 || low.indexOf("switchport trunk allowed vlan ") === 0 || low.indexOf("switchport port-security") === 0)) {
+        if (kind !== "switch") { iline("not available in this simulation"); forward = false; }
+        else if (low === "switchport mode access") { ports[iface].mode = "access"; ports[iface].trunk = false; }
+        else if (low === "switchport mode trunk") { ports[iface].mode = "trunk"; ports[iface].trunk = true; }
+        else if (low.indexOf("switchport access vlan ") === 0) {
+          var av = parseInt(line.split(/\s+/).pop(), 10);
+          ports[iface].vlan = av; ports[iface].mode = "access"; ports[iface].trunk = false;
+          vlans[av] = vlans[av] || ("VLAN" + av);
+        } else if (low.indexOf("switchport trunk allowed vlan ") === 0) {
+          ports[iface].allowed = line.split(/\s+/).pop().split(",").map(function (n) { return parseInt(n, 10); }).filter(function (n) { return n; });
+        } else ports[iface].portsec = true;
+      } else if (mode === "config-if" && low.indexOf("ip address ") === 0) {
         var bits = line.split(/\s+/);
-        ports[iface].ip = bits[2]; ports[iface].mask = bits[3];
+        if (bits.length < 4 || (bits[2].match(/\./g) || []).length !== 3 || (bits[3].match(/\./g) || []).length !== 3) {
+          iline("% Incomplete command. Example: ip address 10.1.1.1 255.255.255.0");
+        } else { ports[iface].ip = bits[2]; ports[iface].mask = bits[3]; }
       } else if (mode === "config-if" && (low === "no shutdown" || low === "no shut")) ports[iface].up = true;
-      else if (mode === "config" && low.indexOf("ip route ") === 0) ports["route"] = line;
-      else if (mode === "config" && low.indexOf("access-list ") === 0) ports["acl"] = (ports["acl"] || []).concat([line]);
-      else if (low.indexOf("show vlan") === 0) {
-        Object.keys(vlans).forEach(function (id) { iline(id + "  " + vlans[id]); });
-      } else if (low.indexOf("show ip interface") === 0 || low.indexOf("show ip int") === 0) {
-        ["GigabitEthernet0/0", "GigabitEthernet0/1"].forEach(function (name) {
-          var row = ports[name] || {};
-          iline(name + "  " + (row.ip || "unassigned") + "  " + (row.up ? "up" : "admin down"));
+      else if (mode === "config-if" && low === "shutdown") ports[iface].up = false;
+      else if (mode === "config-if" && low.indexOf("description ") === 0) ports[iface].desc = line.split(/\s+/).slice(1).join(" ");
+      else if (mode === "config" && low.indexOf("ip route ") === 0) {
+        var rp = line.split(/\s+/);
+        if (rp.length < 5) iline("% Incomplete command. Example: ip route 0.0.0.0 0.0.0.0 10.1.1.2");
+        else routes.push({ dest: rp[2], mask: rp[3], hop: rp[4] });
+      } else if (mode === "config" && low.indexOf("access-list ") === 0) acls.push(line);
+      else if (mode === "config" && low.indexOf("banner ") === 0) ports.banner = line;
+      else if (low === "show vlan brief" || low === "show vlan" || low === "sh vlan brief" || low === "sh vlan") showVlan();
+      else if (low === "show ip interface brief" || low === "sh ip int br" || low === "show ip int brief") showIpInt();
+      else if (low === "show ip route" || low === "sh ip route") {
+        iline("Codes: S - static");
+        var def = routes.filter(function (r) { return r.dest === "0.0.0.0"; })[0];
+        iline(def ? "Gateway of last resort is " + def.hop + " to network 0.0.0.0" : "Gateway of last resort is not set");
+        iline("");
+        routes.forEach(function (r) {
+          iline("S        " + r.dest + " " + r.mask + " [1/0] via " + r.hop);
         });
-      } else if (low === "?" || low === "help") iline("enable | configure terminal | interface | vlan | show vlan | show ip interface brief | ip route | access-list");
-      else iline("% Unrecognized in this simulation. The graded console has the fuller set.");
+      } else if (low === "?" || low === "help") {
+        iline("User: enable");
+        iline("Privileged: configure terminal, disable, show vlan brief, show ip interface brief, show ip route");
+        iline("Config: hostname, interface, vlan, ip route, access-list, end");
+        iline("Interface: ip address, no shutdown, description, switchport (switch labs)");
+        iline("Other input: not available in this simulation");
+      } else {
+        iline("not available in this simulation");
+        forward = false;
+      }
       prompt();
-      saveLocal("ios-state", { host: host, vlans: vlans, ports: ports, mode: mode });
+      saveLocal("ios-state", { host: host, mode: mode, vlans: vlans, ports: ports, routes: routes });
       var cmd = root.getAttribute("data-cmd-url");
-      if (cmd) fetch(cmd, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ command: line }) }).catch(function () {});
+      if (forward && cmd) fetch(cmd, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ command: line }) }).catch(function () {});
     });
   }
 

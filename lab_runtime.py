@@ -556,6 +556,16 @@ def solve(lab_id, uid=0):
         res, state, done = check_step(lab_id, state, done, st["id"], a)
         log.append((st["id"], res))
     state, done = PX.drive(lab, state, done, run_command)
+    if lab.get("kind") == "vm":
+        file_cmds = PX.vm_file_commands(lab, state)
+        if file_cmds:
+            state, done = vm_log(lab_id, state, done, file_cmds)
+            extra = PX.run_px_grep(lab, state, file_cmds)
+            probes = VM.solved_probes(state, lab)
+            first = next(iter(probes))
+            probes[first] = PX.splice_px_lines(probes[first], extra)
+            res, state, done = vm_check(lab_id, state, done, probes, fabric=sol.get("fabric"))
+            log.append(("vm-px-grep", res))
     return state, done, log
 
 

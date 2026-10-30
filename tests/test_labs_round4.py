@@ -123,5 +123,6 @@ def test_round4_pages_and_http_flow(student, instructor):
         assert set(j["scripts"]) == set(V.machines(lab))
         _j(student.post(f"/labs/{lid}/vm-log", json={"lines": [], "booted": True, "boot_ms": 1}))
         _j(student.post(f"/labs/{lid}/vm-log", json={"lines": lab["solution"]["vm_commands"]}))
-        r = _j(student.post(f"/labs/{lid}/vm-check", json={"probes": V.solved_probes(st, lab), "fabric": lab["solution"].get("fabric")}))
+        probes = RT.PX.probes_with_real_px(lab, st, V.solved_probes(st, lab))
+        r = _j(student.post(f"/labs/{lid}/vm-check", json={"probes": probes, "fabric": lab["solution"].get("fabric")}))
         assert r["complete"] and r["score"] == 100, (lid, r)

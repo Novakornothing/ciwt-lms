@@ -722,12 +722,6 @@ def solved_probe(state, lab=None, machine=None):
     for c in lab["vm_checks"]:
         if c.get("sh") and (c.get("on") or names[0]) == machine:
             out.append(f"c_{c['id']} 1")
-    if machine == names[0]:
-        try:
-            import lab_progression as PX
-            out.extend(PX.solved_px_lines(state, lab))
-        except Exception:
-            pass
     return "\n".join(out + ["end"]) + "\n"
 
 
