@@ -96,7 +96,7 @@
   </div>
   {% include '_lab_side.html' %}
 </div>
-{% set cfg = {'kind': lab.kind, 'boot': boot, 'lab_id': lab.id, 'vm': lab.vm,
+{% set cfg = {'kind': lab.kind, 'boot': boot, 'lab_id': lab.id, 'vm': vm_page if vm_page is defined and vm_page else lab.vm,
   'assets': {'lib': url_for('static', filename='vendor/v86/libv86.js'), 'net': url_for('static', filename='js/lab-vmnet.js'), 'wasm': url_for('static', filename='vendor/v86/v86.wasm'), 'bios': url_for('static', filename='vendor/v86/seabios.bin'), 'vga_bios': url_for('static', filename='vendor/v86/vgabios.bin'), 'bzimage': url_for('static', filename='vendor/v86/' ~ lab.vm.image)},
   'urls': {'log': url_for('interactive_lab_vm_log', lab_id=lab.id), 'vmcheck': url_for('interactive_lab_vm_check', lab_id=lab.id), 'probe': url_for('interactive_lab_vm_probe', lab_id=lab.id), 'hint': url_for('interactive_lab_hint', lab_id=lab.id), 'undo': url_for('interactive_lab_undo', lab_id=lab.id), 'reset': url_for('interactive_lab_reset', lab_id=lab.id), 'check': url_for('interactive_lab_check', lab_id=lab.id), 'state': url_for('interactive_lab_state', lab_id=lab.id)}} %}
 <script type="application/json" id="labConfig">{{ cfg|tojson }}</script>

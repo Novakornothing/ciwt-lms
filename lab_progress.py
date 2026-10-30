@@ -396,7 +396,11 @@ def register(app, db, deps):
         if (src and src.get('kind') == 'vm' and lab['id'] in (src.get('fallback') or [])
                 and all(x['id'] != src['id'] for x in real_labs)):
             real_labs = [src] + real_labs
+        vm_page = None
+        if lab.get('kind') == 'vm':
+            vm_page = RT.VM.personalize(lab.get('vm'), (state or {}).get('nonce'))
         return render_template(tpl, lab=lab, boot=boot, prompt=boot.get('prompt', ''), practical_back=back, vm_assets_ok=vm_ok,
+                               vm_page=vm_page,
                                fallback_labs=fallback_labs, real_labs=real_labs,
                                palette=RT.palette(lab), steps=RT.public_steps(lab, state))
 
