@@ -287,8 +287,30 @@ def _is_trouble(entry, widget):
     return bool(_TROUBLE_RE.search(blob)) and (widget or {}).get('type') == 'order'
 
 
+def _sec_kind(entry):
+    """Security sections use the same widgets as the other courses, spread so one type does not dominate."""
+    blob = f"{entry.get('heading') or ''} {entry.get('sid') or ''}".lower()
+    rules = (
+        ('phish', ('phish', 'vishing', 'smishing', 'pretext', 'baiting')),
+        ('hash', ('hash', 'checksum', 'digest')),
+        ('logs', ('logs', 'syslog', 'siem')),
+        ('acl', ('firewall', 'iptables')),
+        ('ports', ('ports', 'well-known')),
+        ('cia', ('confidentiality', 'availability')),
+    )
+    for kind, words in rules:
+        if any(word in blob for word in words):
+            return kind
+    cycle = ('classify', 'match', 'pairs', 'sequence', 'choose', 'shell',
+             'cia', 'hash', 'phish', 'logs', 'acl', 'ports', 'trace')
+    n = int(hashlib.sha256(('sec-widget:' + (entry.get('sid') or '')).encode()).hexdigest()[:8], 16)
+    return cycle[n % len(cycle)]
+
+
 def _kind_for(entry):
     course, label, sid = entry['course'], entry['label'], entry.get('sid') or ''
+    if course == 'SEC':
+        return _sec_kind(entry)
     sid_l = sid.lower()
     for kind, bits in _SID:
         if any(b in sid_l for b in bits):
@@ -499,11 +521,8 @@ _CACHE = {}
 
 
 def sim_for(entry):
-    """Widget config for one ladder section, or None when the entry is not a concept section.
-
-    Cybersecurity (course code SEC) is owned by another branch and gets no config here.
-    """
-    if not entry or entry.get('type') != 'section' or entry.get('course') == 'SEC':
+    """Widget config for one ladder section, or None when the entry is not a concept section."""
+    if not entry or entry.get('type') != 'section':
         return None
     key = (entry.get('course'), entry.get('label'), entry.get('sid'))
     if key not in _CACHE:
@@ -516,7 +535,7 @@ def mapped_sections():
     from curriculum_v2 import ladder as LD
     out = {}
     for key, entry in LD.ladder().items():
-        if entry.get('type') != 'section' or key[0] == 'SEC':
+        if entry.get('type') != 'section':
             continue
         out[key] = sim_for(entry)
     return out

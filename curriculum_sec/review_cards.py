@@ -1,9 +1,7 @@
-"""Daily Review cards for Security.
+"""Daily Review source rows for Security.
 
-The learner-features branch (Help Desk Queue / Daily Review) is not on this branch.
-These rows match learner/deck_data.py: (prompt, answer, courses) for ports and
-(prompt, answer, accept, courses) is not required here. Wire them by extending
-PORTS and TERMS in learner/deck_data.py with courses including 'SEC'.
+learner/deck_data.py folds these into the deck: shared ports gain the SEC course,
+and these terms become security cards. Facts are original short answers.
 """
 
 SEC = ('SEC',)

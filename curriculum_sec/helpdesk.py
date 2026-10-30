@@ -1,8 +1,7 @@
 """Help Desk Queue tickets for Security.
 
-The queue UI lives on the learner-features branch and is not merged here.
-Each record is the same shape as learner.tickets.hd so a later import can append
-TICKETS to that list. Nothing here calls a network service.
+learner/tickets.py appends TICKETS. Each record matches learner.tickets.hd.
+Nothing here calls a network service.
 """
 
 PRIORITIES = ('low', 'medium', 'high', 'critical')

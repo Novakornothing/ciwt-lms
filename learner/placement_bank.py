@@ -168,6 +168,9 @@ _ROWS = [
      'So the note records the DNS servers you had before the change', 'Because flush only works after a format', 'Because the command will invent a new IP', 'Because Windows hides ipconfig until you flush'),
 ]
 
+from curriculum_sec.placement import ROWS as _SEC_ROWS
+_ROWS.extend(row[:8] for row in _SEC_ROWS)
+
 
 def _item(course, chapter, letter, prompt, correct, w1, w2, w3):
     iid = f'{course}-{chapter}-{letter}'

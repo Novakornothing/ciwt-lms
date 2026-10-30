@@ -80,6 +80,12 @@ def test_objective_map_and_full_exam():
     assert len(TICKETS) >= 12
     assert len(PORTS) + len(TERMS) >= 40
     assert len(ROWS) == 28 * 3
+    from learner.tickets import tickets_for
+    from learner.deck import cards
+    from learner.placement_bank import items_for
+    assert len(tickets_for('SEC')) >= 12
+    assert sum(1 for card in cards() if 'SEC' in card['courses']) >= 40
+    assert len(items_for('SEC')) == 28 * 3
 
 
 def test_practice_bank_size():

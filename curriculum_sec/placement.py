@@ -1,8 +1,7 @@
 """Placement items for Security, three per chapter.
 
-Skip What You Know is on the learner-features branch. These rows match
-learner/placement_bank.py: (course, chapter, letter, prompt, correct, wrong, wrong, wrong).
-Append them when that module is wired. Objective tags are the lesson skill ids.
+learner/placement_bank.py appends the first eight fields of each row.
+The ninth field is the lesson skill id (SEC-chapter.lesson).
 """
 from curriculum_sec.catalog import CHAPTERS
 

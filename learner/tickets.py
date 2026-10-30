@@ -602,6 +602,9 @@ TICKETS = [
        ['path', 'ran'], ['cron', 'path'], lab='linux-vm-cron', area='Linux'),
 ]
 
+from curriculum_sec.helpdesk import TICKETS as _SEC_TICKETS
+TICKETS.extend(_SEC_TICKETS)
+
 assert len(TICKETS) >= 40
 assert len({t['id'] for t in TICKETS}) == len(TICKETS)
 _BY = {t['id']: t for t in TICKETS}
