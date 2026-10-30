@@ -27,7 +27,7 @@
 <div class="practice-grid">
 {% for k, e in exams.items() %}
   <section class="card practice-card" aria-labelledby="pe-{{ k }}">
-    <div class="card-header navy"><h2 class="h5 mb-0" id="pe-{{ k }}">{{ e.name }} <span class="small opacity-75">{{ e.code }}</span></h2></div>
+    <div class="card-header navy"><h2 class="h5 mb-0" id="pe-{{ k }}">{{ e.name }}{% if e.code and not e.code.startswith('SEC') %} <span class="small opacity-75">{{ e.code }}</span>{% endif %}</h2></div>
     <div class="card-body">
       <p class="small mb-2">{{ pools[k] }} questions in the pool. The official exam: {{ e.official.questions|lower }} questions in {{ e.official.minutes }} minutes{% if 'not stated' not in e.official.passing %}, passing score {{ e.official.passing }}{% endif %}.</p>
       <form method="post" action="{{ url_for('practice_start') }}" class="mb-3">

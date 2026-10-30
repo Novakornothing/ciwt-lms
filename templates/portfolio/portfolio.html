@@ -33,7 +33,7 @@
 </div>
 <section class="card card-body mt-3" aria-labelledby="pf-e"><h2 class="h5" id="pf-e">Practice exam sittings</h2>
   {% if pf.exam_sittings %}<div class="table-responsive"><table class="table table-sm pf-table"><thead><tr><th scope="col">Exam</th><th scope="col">Simulated score</th><th scope="col">Status</th><th scope="col">Date · mode</th></tr></thead><tbody>
-  {% for x in pf.exam_sittings %}<tr><td>{{ x.name }} ({{ x.code }})</td><td>{{ x.score }}/900 · pass bar {{ x.bar }}</td>
+  {% for x in pf.exam_sittings %}<tr><td>{{ x.name }}{% if x.code and not x.code.startswith('SEC') %} ({{ x.code }}){% endif %}</td><td>{{ x.score }}/900 · pass bar {{ x.bar }}</td>
   <td>{% if x.ready %}<span class="pf-badge"><i class="bi bi-patch-check" aria-hidden="true"></i> {{ x.status }}</span>{% else %}{{ x.status }}{% endif %}</td><td>{{ x.date }} · {{ x.mode }}</td></tr>{% endfor %}</tbody></table></div>
   <p class="small text-body-secondary mb-0">Simulated scores (CompTIA does not publish its scaling); not an official exam result.</p>
   {% else %}<p class="mb-0">No simulator sittings yet.</p>{% endif %}</section>

@@ -1,7 +1,7 @@
 """Exam-Day Readiness Simulator (Option B pass 1).
 
 A timed rehearsal of a CompTIA exam sitting for one class section: A+ Core 1 (220-1201), A+ Core 2 (220-1202) or
-Network+ (N10-009). Three lengths: Official (90 min, 90 questions, 5 PBQs), Standard (90 min, 45 questions, 4 PBQs)
+Network+ (N10-009). Three lengths: full-length (90 min, 90 questions, 5 PBQs), Standard (90 min, 45 questions, 4 PBQs)
 and Sprint (20 min, 15 questions, 2 PBQs); interactive simulation PBQs (sim_pbq) come first. Pass 4 adds server-side
 auto-save/resume, a server-side practice pause, timeout grading of auto-saved answers, a one-question testing-centre
 view, a whiteboard, option strikethrough, a printable candidate score report and a missed-objective drill. Practice mode lets the student pause the clock; exam mode does not and the
@@ -28,7 +28,7 @@ from .exams import ALL_DOMAINS as DOMAINS, ALL_EXAMS as EXAMS, ALL_OBJECTIVES as
 REVIEW = 'Pending SME review'
 PASS_SCORE = {'A1': 675, 'A2': 700, 'N': 720}
 MODES = {
-    'max': {'name': 'Official 90-question sitting', 'minutes': 90, 'questions': 90, 'pbqs': 5},
+    'max': {'name': 'Full-length 90-question sitting', 'minutes': 90, 'questions': 90, 'pbqs': 5},
     'full': {'name': 'Standard 45-question sitting', 'minutes': 90, 'questions': 45, 'pbqs': 4},
     'sprint': {'name': 'Sprint (15 questions)', 'minutes': 20, 'questions': 15, 'pbqs': 2},
     # created only from a result page ("Drill My Missed Objectives Now"); not offered on the start form

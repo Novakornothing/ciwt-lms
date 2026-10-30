@@ -51,10 +51,35 @@ def _form_for(items, upto, flag=()):
 
 # ------------------------------------------------------------------ modes and form building
 def test_modes_and_pbq_types():
-    assert ES.MODES['max'] == {'name': 'Official 90-question sitting', 'minutes': 90, 'questions': 90, 'pbqs': 5}
+    assert ES.MODES['max'] == {'name': 'Full-length 90-question sitting', 'minutes': 90, 'questions': 90, 'pbqs': 5}
     assert ES.MODES['full']['questions'] == 45 and ES.MODES['full']['pbqs'] == 4
     assert ES.MODES['sprint']['minutes'] == 20 and ES.MODES['sprint']['questions'] == 15
     assert ES.PBQ_TYPES[0] == 'sim_pbq'
+
+
+def test_start_titles_drop_official_and_internal_codes(student, app, mod):
+    """Sitting titles name the exam and the length. They do not say Official or show SEC-FOUND."""
+    home = student.get(BASE).get_data(as_text=True)
+    assert 'Full-length 90-question sitting' in home
+    assert 'Official' not in home
+    assert 'SEC-FOUND' not in home
+    assert '220-1201' in home and 'N10-009' in home and 'FC0-U71' in home
+    with app.app_context():
+        course = mod.Course.query.filter_by(code='SEC').one()
+        sec = mod.ClassSection.query.filter_by(course_id=course.id).first()
+        sid = sec.id
+    started = student.post(f'/student/section/{sid}/exam-sim/start', data={'exam': 'S', 'mode': 'max', 'timing': 'practice'})
+    assert started.status_code == 302
+    page = student.get(started.headers['Location']).get_data(as_text=True)
+    visible = re.sub(r'<[^>]+>', ' ', page)
+    assert 'Security practice exam · Full-length 90-question sitting' in page
+    assert 'SEC-FOUND' not in visible
+    assert 'Official' not in visible
+    other = student.post(BASE + '/start', data={'exam': 'A1', 'mode': 'max', 'timing': 'practice'})
+    assert other.status_code == 302
+    aplus = student.get(other.headers['Location']).get_data(as_text=True)
+    assert 'CompTIA A+ Core 1 (220-1201) · Full-length 90-question sitting' in aplus
+    assert 'Official' not in re.sub(r'<[^>]+>', ' ', aplus)
 
 
 @pytest.mark.parametrize('exam', ['A1', 'A2', 'N'])

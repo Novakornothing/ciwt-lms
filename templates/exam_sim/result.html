@@ -6,13 +6,13 @@
   <li class="breadcrumb-item"><a href="{{ url_for('student_section', section_id=section.id) }}">{{ section.name }}</a></li>
   <li class="breadcrumb-item"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Practice Exams</a></li>
   <li class="breadcrumb-item active" aria-current="page">Results</li></ol></nav>
-<h1 class="h3">{{ exam.name }} ({{ exam.code }}) — {{ mode.name }}</h1>
+<h1 class="h3">{{ exam.name }}{% if exam.code and not exam.code.startswith('SEC') %} ({{ exam.code }}){% endif %} — {{ mode.name }}</h1>
 <section class="card card-body mb-3 es-report" id="esReport" aria-labelledby="esReportH">
   <h2 class="h5" id="esReportH">Candidate Score Report</h2>
   <dl>
     <dt>Candidate Name</dt><dd>{{ candidate.first_name }} {{ candidate.last_name }}</dd>
     <dt>Section</dt><dd>{{ section.name }}</dd>
-    <dt>Exam Code &amp; Version</dt><dd>{{ exam.code }} ({{ exam.version }})</dd>
+    <dt>Exam Code &amp; Version</dt><dd>{% if exam.code and not exam.code.startswith('SEC') %}{{ exam.code }} ({{ exam.version }}){% else %}Novak LMS™ practice bank{% endif %}</dd>
     <dt>Date/Time</dt><dd>{{ att.submitted_at.strftime('%Y-%m-%d %H:%M') }} UTC</dd>
     <dt>Mode</dt><dd>{{ 'Exam mode' if att.strict else 'Practice mode' }} · {{ mode.name }}</dd>
     <dt>Simulated Scaled Score</dt><dd><strong>{{ att.score }}</strong> (100–900)</dd>
