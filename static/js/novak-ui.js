@@ -460,14 +460,17 @@
     }
     function keepReaderInPlace() {
       var a = readerAnchor();
-      if (!a) return;
+      if (!a) return null;
       if (keeper && keeper.timer) clearTimeout(keeper.timer);
       keeper = a;
-      var stop = function () { keeper = null; window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop); };
+      keeper.pending = 0;
+      // Hold the spot until every queued swap lands (slow networks) or the reader scrolls on their own.
+      var stop = function () { if (keeper === a) keeper = null; window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop); };
+      a.stop = stop;
       window.addEventListener('wheel', stop, { passive: true });
       window.addEventListener('touchstart', stop, { passive: true });
       window.addEventListener('keydown', stop);
-      keeper.timer = setTimeout(stop, 2500);
+      keeper.timer = setTimeout(stop, 20000);
       if (window.ResizeObserver && !lessonBody._novakRO) {
         lessonBody._novakRO = new ResizeObserver(function () { restoreAnchor(); });
         lessonBody._novakRO.observe(lessonBody);
@@ -476,6 +479,10 @@
     document.addEventListener('ladder:updated', function () {
       restoreAnchor();
       requestAnimationFrame(restoreAnchor);
+      if (keeper && keeper.pending > 0) {
+        keeper.pending -= 1;
+        if (keeper.pending === 0) { var k = keeper; clearTimeout(k.timer); k.timer = setTimeout(k.stop, 1500); }
+      }
     });
 
     // 4b. Step-Level Learning Style Switcher (#novakStepStyleBar)
@@ -492,15 +499,24 @@
           });
           var groups = getStepGroups();
           var targetCards = (focusMode && groups[activeIdx]) ? groups[activeIdx] : getSectionBlocks();
-          keepReaderInPlace();
-          targetCards.forEach(function (card, idx) {
-            if (card.getAttribute('data-shown') === rung) return;
-            var pill = card.querySelector('.novak-rung-pill[data-rung-pick="' + rung + '"]');
+          var anchor = keepReaderInPlace();
+          // Swap the section in view first, then the ones below it, then the ones above.
+          var order = targetCards.slice();
+          var ai = -1;
+          order.forEach(function (c, i) { if (ai < 0 && anchor && (c.getAttribute('data-ladder-sid') === anchor.sid || c.querySelector('[data-ladder-sid="' + anchor.sid + '"]'))) ai = i; });
+          if (ai > 0) order = order.slice(ai).concat(order.slice(0, ai).reverse());
+          var queued = 0;
+          order.forEach(function (card) {
+            var box = card.hasAttribute('data-ladder-sid') ? card : card.querySelector('[data-ladder-sid]');
+            if (!box || box.getAttribute('data-shown') === rung) return;
+            var pill = box.querySelector('.novak-rung-pill[data-rung-pick="' + rung + '"]');
             if (pill) {
-              card.setAttribute('data-swap-quiet', '1');
-              setTimeout(function () { pill.click(); }, idx * 45);
+              box.setAttribute('data-swap-quiet', '1');
+              setTimeout(function () { pill.click(); }, queued * 45);
+              queued += 1;
             }
           });
+          if (keeper) keeper.pending = queued;
         });
       });
     }

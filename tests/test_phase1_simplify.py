@@ -232,7 +232,7 @@ def test_learning_path_switch_keeps_reader_in_place():
     (Browser check: /tmp/p1/jump_check.py, which asserts the in-view section moves < 40px.)"""
     ui = (ROOT / 'static/js/novak-ui.js').read_text()
     lad = (ROOT / 'static/js/ladder.js').read_text()
-    assert "card.setAttribute('data-swap-quiet', '1')" in ui and 'keepReaderInPlace();' in ui
-    assert 'function restoreAnchor()' in ui and 'ResizeObserver' in ui
+    assert "box.setAttribute('data-swap-quiet', '1')" in ui and 'keepReaderInPlace();' in ui
+    assert 'function restoreAnchor()' in ui and 'ResizeObserver' in ui and 'keeper.pending' in ui
     assert "box.hasAttribute('data-swap-quiet')) moveFocus = false" in lad
     assert 'if (!desk.matches) openSheet(false);' in ui
