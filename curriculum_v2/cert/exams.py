@@ -499,14 +499,21 @@ for _ex, _rows in (('A1', _A1), ('A2', _A2), ('N', _N)):
 
 
 from .tech_plus import TECH_DOMAINS, TECH_EXAM, TECH_OBJECTIVES  # noqa: E402
+from curriculum_sec.exam_bank import SEC_DOMAINS, SEC_EXAM, SEC_OBJECTIVES  # noqa: E402
 
-ALL_EXAMS = dict(EXAMS, T=TECH_EXAM)
-ALL_DOMAINS = dict(DOMAINS, T=TECH_DOMAINS)
-ALL_OBJECTIVES = dict(OBJECTIVES, **TECH_OBJECTIVES)
+ALL_EXAMS = dict(EXAMS, T=TECH_EXAM, S=SEC_EXAM)
+ALL_DOMAINS = dict(DOMAINS, T=TECH_DOMAINS, S=SEC_DOMAINS)
+ALL_OBJECTIVES = dict(OBJECTIVES, **TECH_OBJECTIVES, **SEC_OBJECTIVES)
 
 
 def objectives_for(exam):
-    src = TECH_OBJECTIVES if exam == 'T' else OBJECTIVES
+    if exam == 'T':
+        src = TECH_OBJECTIVES
+    elif exam == 'S':
+        from curriculum_sec.exam_bank import SEC_OBJECTIVES as _SEC_OBJ
+        src = _SEC_OBJ
+    else:
+        src = OBJECTIVES
     return [(k, v) for k, v in src.items() if v['exam'] == exam]
 
 

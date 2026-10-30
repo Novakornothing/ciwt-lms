@@ -21,8 +21,9 @@ def _secs():
 
 def test_539_sections_all_bespoke():
     lad = L.ladder()
-    secs = [k for k, v in lad.items() if v.get('type') == 'section']
+    secs = [k for k, v in lad.items() if v.get('type') == 'section' and k[0] != 'SEC']
     assert len(secs) == 539
+    assert len([k for k, v in lad.items() if v.get('type') == 'section' and k[0] == 'SEC']) >= 120
     assert [k for k, v in lad.items() if v.get('type') == 'same_as'] == []
     assert not os.path.exists(os.path.join(ROOT, 'curriculum_v2', 'ladder', 'netops', '_gen.py'))
 

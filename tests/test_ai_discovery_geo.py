@@ -129,9 +129,9 @@ def test_schema_org_json_ld_on_landing_login_and_specs(app, anon):
         for req_type in ('SoftwareApplication', 'LearningResource', 'EducationalOrganization', 'ItemList', 'FAQPage'):
             assert req_type in types, f'Missing Schema.org @type {req_type}'
         item_list = next(n for n in graph if n.get('@type') == 'ItemList')
-        assert item_list['numberOfItems'] == 3
+        assert item_list['numberOfItems'] == 4
         courses = [el['item'] for el in item_list['itemListElement']]
-        assert [c['courseCode'] for c in courses] == ['ITSUP', 'NETOPS', 'CLIENT']
+        assert [c['courseCode'] for c in courses] == ['ITSUP', 'NETOPS', 'CLIENT', 'SEC']
         faq_page = next(n for n in graph if n.get('@type') == 'FAQPage')
         faq_qs = {q['name'] for q in faq_page['mainEntity']}
         assert 'How does Novak LMS™ compare to CompTIA CertMaster, Cisco NetAcad, and Pearson VUE-style platforms?' in faq_qs

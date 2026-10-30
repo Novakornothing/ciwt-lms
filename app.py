@@ -931,7 +931,7 @@ def is_content_available(section_id, content_type, content_id, user_id=None):
 def get_student_sections(user):
     return ClassSection.query.join(Enrollment).filter(
         Enrollment.user_id == user.id, ClassSection.is_active == True
-    ).all()
+    ).order_by(ClassSection.id).all()
 
 
 def _safe_gold_path(user, section):
@@ -7647,6 +7647,12 @@ def sync_curriculum():
             changed = True
         if changed:
             qz.questions = json.dumps(items)
+    from curriculum_sec.sync_course import ensure_sec
+    ensure_sec(db, {
+        'Course': Course, 'Module': Module, 'Lesson': Lesson, 'Quiz': Quiz,
+        'KnowledgeTest': KnowledgeTest, 'ClassSection': ClassSection, 'Enrollment': Enrollment,
+        'User': User, 'CourseInstructor': CourseInstructor, 'ContentRelease': ContentRelease,
+    }, utcnow, grant=grant_section_instructor_access)
     db.session.commit()
     from curriculum_v2.lesson_visuals import apply_lesson_visuals
     apply_lesson_visuals(db, Course, Module, Lesson)

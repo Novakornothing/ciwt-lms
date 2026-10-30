@@ -16,7 +16,7 @@ import pkgutil
 
 from . import schema as S
 
-COURSE_PACKAGES = {'ITSUP': 'itsup', 'NETOPS': 'netops', 'CLIENT': 'client'}
+COURSE_PACKAGES = {'ITSUP': 'itsup', 'NETOPS': 'netops', 'CLIENT': 'client', 'SEC': 'sec'}
 _EXTENDED_CHAPTERS = {('NETOPS', 7), ('NETOPS', 8)}
 _CACHE = {}
 

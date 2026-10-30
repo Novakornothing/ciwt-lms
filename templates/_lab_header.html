@@ -40,6 +40,22 @@
       {% if lab.minutes %}<span class="text-muted small">· about {{ lab.minutes }} min</span>{% endif %}</p>
     <h1 class="h4 mb-1">{{ lab.title }}</h1>
     <p class="mb-0 lab-scenario">{{ lab.intro }}</p>
+    {% if lab.coaching %}
+    <div class="lab-coaching mt-3">
+      <details open>
+        <summary><strong>Stage 1 — Guided walkthrough</strong></summary>
+        <div class="small mt-2">{{ lab.coaching.stage1|safe }}</div>
+      </details>
+      <details>
+        <summary><strong>Stage 2 — Assisted practice</strong></summary>
+        <div class="small mt-2">{{ lab.coaching.stage2|safe }}</div>
+      </details>
+      <details>
+        <summary><strong>Stage 3 — Ticket</strong></summary>
+        <div class="small mt-2">{{ lab.coaching.stage3|safe }}</div>
+      </details>
+    </div>
+    {% endif %}
     {% if real_labs %}<p class="small mb-0 mt-2 lab-real-link"><i class="bi bi-cpu" aria-hidden="true"></i> Simulated practice. The same skills on a real Linux machine in your browser:
       {% for r in real_labs %}<a href="{{ url_for('interactive_lab', lab_id=r.id) }}">{{ r.title }}</a>{{ ', ' if not loop.last else '' }}{% endfor %}.</p>{% endif %}
   </div>

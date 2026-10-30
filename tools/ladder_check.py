@@ -41,7 +41,10 @@ a = ap.parse_args()
 from curriculum_v2 import ladder as L                     # noqa: E402
 from curriculum_v2.ladder import schema as S, sections as SEC  # noqa: E402
 from curriculum_v2.misconceptions import MISCONCEPTIONS   # noqa: E402
-from curriculum_v2.objectives import OBJECTIVES           # noqa: E402
+from curriculum_v2.objectives import OBJECTIVES as _BASE_OBJECTIVES  # noqa: E402
+from curriculum_sec.objectives import SEC_OBJECTIVES     # noqa: E402
+OBJECTIVES = dict(_BASE_OBJECTIVES)
+OBJECTIVES.update(SEC_OBJECTIVES)
 
 errors, warnings = list(L.duplicates()), []
 try:

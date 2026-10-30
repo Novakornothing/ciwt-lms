@@ -103,6 +103,11 @@
   - Ch 6: Network Troubleshooting Capstone (`4` lessons)
   - Ch 9: Switch & Router CLI Lab Track (`6` lessons)
 
+### Course 4: Cybersecurity (`SEC`)
+- Entry-level course after IT Support, Basic Networking, and Operating Systems.
+- 10 chapters, 40 lessons, five learning paths on every section (Standard, Plain English, Analogy, Visual Map, Try-It), 20 labs, and a 120-item practice bank.
+- Topics are comparable to Security+ (SY0-701) and to entry-level cyber work. Original Novak LMS™ material. Not an official exam. Not endorsed by CompTIA or the Department of Defense.
+
 ### Course 3: Client Systems (`CLIENT` — CompTIA Tech+ FC0-U71 & Endpoint Operations)
 - **Metrics**: `6` chapters · `26` lessons · `54,655` base lesson words · `660` Exam-Sim items · `6` 3-Tab PBQs · `135` proctored Knowledge Test questions (`45` per Form A/B/C).
   - Ch 1: Windows Installation & Client Configuration (`4` lessons)

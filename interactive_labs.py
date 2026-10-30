@@ -3606,6 +3606,30 @@ def _install_new_labs():
 _install_new_labs()
 
 
+def _install_sec_labs():
+    import labs_sec as _SEC
+    for lab in _SEC.SEC_ACTIVITY_LABS:
+        lab.setdefault("review", SME_PENDING)
+        if lab["id"] not in LABS_BY_ID:
+            LABS.append(lab)
+            LABS_BY_ID[lab["id"]] = lab
+    for key, ids in _SEC.SEC_CHAPTER_LABS.items():
+        cur = CHAPTER_LABS.setdefault(key, [])
+        cur += [i for i in ids if i not in cur]
+    for key, ids in _SEC.SEC_LESSON_LABS.items():
+        cur = LESSON_LABS.get(key) or []
+        if isinstance(cur, str):
+            cur = [cur]
+        else:
+            cur = list(cur)
+        LESSON_LABS[key] = cur + [i for i in ids if i not in cur]
+    for k, v in _SEC.SEC_LAB_ALIGN.items():
+        LAB_ALIGN.setdefault(k, v)
+
+
+_install_sec_labs()
+
+
 for _l in LABS:
     _l.setdefault("sme_status", SME_VERIFIED)
 

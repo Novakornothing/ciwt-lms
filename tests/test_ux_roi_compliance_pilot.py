@@ -325,7 +325,9 @@ def test_10_interactive_linux_gui_desktop_workbench_labs(student):
 def test_11_deep_windows_and_linux_boot_process_architecture_and_696_inline_svgs(app, mod):
     """Verify 6-stage Windows & Linux Boot Architecture deep dive and >= 4 inline SVGs across all 115 lessons."""
     with app.app_context():
-        lessons = mod.Lesson.query.order_by(mod.Lesson.id).all()
+        lessons = (mod.Lesson.query.join(mod.Module).join(mod.Course)
+                   .filter(mod.Course.code.in_(('ITSUP', 'NETOPS', 'CLIENT')))
+                   .order_by(mod.Lesson.id).all())
         assert len(lessons) == 115
 
         total_svgs = 0
