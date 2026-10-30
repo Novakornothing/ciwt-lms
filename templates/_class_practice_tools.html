@@ -1,0 +1,16 @@
+{# Per-class learner tools for staff: Skip What You Know, Help Desk Queue, Daily Review. Needs `sections`. #}
+<table class="table table-sm learn-fit mb-0">
+  <thead><tr><th scope="col">Class</th><th scope="col">Open</th></tr></thead>
+  <tbody>
+    {% for s in sections %}
+    <tr>
+      <td>{{ s.name }}<br><span class="small text-muted">{{ s.course.title if s.course else '' }}</span></td>
+      <td>
+        <a href="{{ url_for('placement_staff', section_id=s.id) }}">Skip What You Know</a><br>
+        <a href="{{ url_for('helpdesk_staff', section_id=s.id) }}">Help Desk Queue</a><br>
+        <a href="{{ url_for('daily_review_staff', section_id=s.id) }}">Daily Review</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

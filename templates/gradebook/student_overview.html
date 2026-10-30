@@ -2,11 +2,10 @@
 {% from "gradebook/_macros.html" import grade_badge, ring with context %}
 {% block title %}My grades — {{ site_name }}{% endblock %}
 {% block content %}
-<div class="page-hero">
-  <div class="eyebrow">Progress &amp; grades</div>
-  <h1 class="h3 mb-1">My grades</h1>
-  <p class="mb-0">Every class you are enrolled in. Tap a class for item-by-item scores.</p>
-</div>
+<header class="page-intro">
+  <h1 class="page-intro-title">Grades</h1>
+  <p class="page-intro-purpose">Every class you are enrolled in. Open a class for item-by-item scores.</p>
+</header>
 <div class="row g-4">
   {% for c in cards %}
   {% set r = c.row %}

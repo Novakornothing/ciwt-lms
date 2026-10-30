@@ -192,6 +192,12 @@ def test_daily_review_route_sync_and_search(app, mod, student, instructor):
     home = student.get('/student').get_data(as_text=True)
     assert 'Daily Review ·' in home and 'due' in home
     assert 'Skip What You Know' in home and 'Help Desk Queue' in home
+    # Two review features, two plain names: the deck card and a secondary mastery-review link.
+    assert 'id="dailyReviewCard"' in home and f'/student/section/{sid}/daily-review' in home
+    assert 'Review topics you’ve learned' in home and f'/student/section/{sid}/daily"' in home
+    assert home.count('Daily Review') == 1
+    # The curriculum ticket list is "Lesson issues", so "Help Desk Queue" means only the simulation.
+    assert 'Lesson issues' in home
     from pathlib import Path
     import re
     page = student.get(f'/student/section/{sid}/daily-review')
@@ -212,5 +218,7 @@ def test_daily_review_route_sync_and_search(app, mod, student, instructor):
     found = student.get('/api/search?q=help%20desk').get_json()
     assert any(r['title'] == 'Help Desk Queue' for r in found['results'])
     inst = instructor.get('/instructor').get_data(as_text=True)
-    assert 'id="itab-practice"' in inst and 'Skip What You Know' in inst
+    assert 'id="ipane-practice"' in inst and 'Skip What You Know' in inst and 'Help Desk Queue' in inst
+    practice = instructor.get('/practice').get_data(as_text=True)
+    assert 'id="classPracticeTools"' in practice and 'Daily Review' in practice
     assert student.get(f'/instructor/section/{sid}/daily-review').status_code == 403

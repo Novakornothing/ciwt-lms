@@ -1,19 +1,21 @@
 {% extends "base.html" %}
 {% block title %}{{ section.name }}{% endblock %}
 {% block content %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">My classes</a></li>
-    <li class="breadcrumb-item active">{{ section.name }}</li>
-  </ol>
-</nav>
+<header class="page-intro">
+  <nav aria-label="Breadcrumb">
+    <ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('instructor_dashboard') }}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('sections_hub') }}">Classes</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ section.name }}</li>
+    </ol>
+  </nav>
+  <h1 class="page-intro-title">{{ section.name }}</h1>
+  <p class="page-intro-purpose">{{ section.course.title }} · {{ modules|length }} chapters · {{ enrollments|length }} students · {{ section.instructor.full_name if section.instructor else 'No instructor yet' }}</p>
+</header>
 
 <div class="page-hero">
   <div class="d-flex flex-wrap justify-content-between gap-2">
     <div>
-      <h1 class="h3 mb-1">{{ section.name }}</h1>
-      <p class="mb-0">{{ section.course.title }} · {{ modules|length }} chapters · {{ enrollments|length }} students
-        · Instructor {{ section.instructor.full_name if section.instructor else 'unassigned' }}</p>
       {% set n_open = namespace(t=0, m=0) %}
       {% for t in tests %}{% set r = releases.get(('test', t.id)) %}{% if r and r.is_active %}{% set n_open.t = n_open.t + 1 %}{% endif %}{% endfor %}
       {% for m in modules %}{% set r = releases.get(('module', m.id)) %}{% if r and r.is_active %}{% set n_open.m = n_open.m + 1 %}{% endif %}{% endfor %}
@@ -21,23 +23,17 @@
         <span class="badge bg-info text-dark">{{ n_open.m }} of {{ modules|length }} chapters unlocked</span></p>
     </div>
     {% set _why = why_section(section, 3) %}
-    <div class="d-flex flex-wrap gap-2 align-items-center">
-      <a class="btn btn-sm btn-brand js-tab-link" href="#content"><i class="bi bi-unlock" aria-hidden="true"></i> {{ 'Chapters' if n_open.m == modules|length else 'Unlock chapters' }}</a>
-      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('mastery_today', section_id=section.id) }}"><i class="bi bi-people" aria-hidden="true"></i> Students needing help{% if _why %} <span class="badge text-bg-warning ms-1">{{ _why|length }}</span>{% endif %}</a>
-      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_gradebook', section_id=section.id) }}"><i class="bi bi-journal-check" aria-hidden="true"></i> Gradebook</a>
-      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('instructor_exam_sim', section_id=section.id) }}"><i class="bi bi-stopwatch" aria-hidden="true"></i> Practice Exams</a>
-      <a class="btn btn-sm btn-outline-navy" href="{{ url_for('helix.instructor_attention', section_id=section.id) }}"><i class="bi bi-eye" aria-hidden="true"></i> Eye Tracking</a>
-      <details class="action-more-menu">
-        <summary class="btn btn-sm btn-outline-navy"><i class="bi bi-sliders" aria-hidden="true"></i> More tools &amp; setup</summary>
-        <div class="action-more-panel">
-          <a class="action-more-item js-tab-link" href="#students"><i class="bi bi-people" aria-hidden="true"></i> Roster</a>
-          <a class="action-more-item" href="{{ url_for('mastery_class', section_id=section.id) }}"><i class="bi bi-signpost-split" aria-hidden="true"></i> Skill Mastery</a>
-          <a class="action-more-item" href="{{ url_for('mastery_briefing', section_id=section.id) }}"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Today’s briefing</a>
-          <a class="action-more-item" href="{{ url_for('skills_board', section_id=section.id) }}"><i class="bi bi-award" aria-hidden="true"></i> Skills scores</a>
-          <a class="action-more-item" href="{{ url_for('instructor_pilot') }}"><i class="bi bi-clipboard-data" aria-hidden="true"></i> Pilot 1–13 sheet</a>
-          <a class="action-more-item" href="{{ url_for('instructor_lti', section_id=section.id) }}"><i class="bi bi-plug" aria-hidden="true"></i> LMS</a>
-        </div>
-      </details>
+    <div>
+      <a class="btn btn-brand" href="{{ url_for('instructor_gradebook', section_id=section.id) }}">Open gradebook</a>
+      <p class="class-also mb-0 mt-2">
+        <a href="{{ url_for('helix.instructor_attention', section_id=section.id) }}">Eye Tracking</a>
+        · <a href="{{ url_for('mastery_class', section_id=section.id) }}">Skill Mastery</a>
+        · <a href="{{ url_for('mastery_briefing', section_id=section.id) }}">Today’s briefing</a>
+        · <a href="{{ url_for('skills_board', section_id=section.id) }}">Skills scores</a>
+        · <a href="{{ url_for('syllabus_settings', section_id=section.id) }}">Syllabus</a>
+        · <a href="{{ url_for('instructor_lti', section_id=section.id) }}">LMS connection</a>
+        · <a href="{{ url_for('instructor_pilot') }}">Pilot run sheet</a>
+      </p>
     </div>
   </div>
 </div>

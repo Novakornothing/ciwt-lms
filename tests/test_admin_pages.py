@@ -2,8 +2,8 @@
 import pytest
 
 PAGES = ['/admin', '/admin/classes', '/admin/people', '/admin/curriculum', '/admin/tqi']
-# Phase 1: four admin tabs; every other admin page is one click away under More tools.
-NAV = ['/admin', '/admin/people', '/admin/exports', '/admin/tools']
+# Sidebar destinations. Nested tools stay one click from Reports or Settings.
+NAV = ['/admin', '/admin/people', '/admin/classes', '/admin/reports', '/admin/tools']
 
 
 @pytest.mark.parametrize('path', PAGES)
@@ -11,7 +11,7 @@ def test_admin_subpages_render_with_shared_nav(admin, path):
     r = admin.get(path)
     assert r.status_code == 200, path
     body = r.get_data(as_text=True)
-    assert 'class="admin-tabs' in body
+    assert 'id="appNav"' in body
     for href in NAV:
         assert f'href="{href}"' in body, (path, href)
     assert body.count('aria-current="page"') >= 1
@@ -42,7 +42,7 @@ def test_old_anchor_bookmarks_are_forwarded(admin):
 
 def test_overview_is_short_and_links_out(admin):
     body = admin.get('/admin').get_data(as_text=True)
-    assert 'kpi-grid' in body and 'admin-hub' in body
+    assert 'id="kpiSeats"' in body and 'Open courses' in body
     # the long forms now live on their own pages
     assert 'Create class section' not in body and 'Add instructor or admin' not in body
 
@@ -109,8 +109,13 @@ def test_people_list_is_paginated_and_keeps_filters(admin, mod, monkeypatch):
 
 
 def test_more_tools_lists_every_other_admin_page(admin):
-    body = admin.get('/admin/tools').get_data(as_text=True)
-    for href in ('/admin/curriculum', '/admin/tqi', '/admin/roi', '/admin/lti', '/admin/audit-log', '/admin/audit', '/admin/compliance', '/admin/readiness'):
-        assert f'href="{href}"' in body, href
+    settings = admin.get('/admin/tools').get_data(as_text=True)
+    for href in ('/admin/exports', '/admin/lti', '/admin/audit-log', '/admin/audit', '/admin/compliance', '/admin/readiness'):
+        assert f'href="{href}"' in settings, href
+    reports = admin.get('/admin/reports').get_data(as_text=True)
+    for href in ('/admin/tqi', '/admin/roi', '/admin/outcomes'):
+        assert f'href="{href}"' in reports, href
+    courses = admin.get('/admin/classes').get_data(as_text=True)
+    assert 'href="/admin/curriculum"' in courses
     people = admin.get('/admin/people').get_data(as_text=True)
     assert 'href="/admin/classes"' in people

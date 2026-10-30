@@ -1,355 +1,102 @@
 {% set ep = request.endpoint or '' %}
-{% set open_section_id = section.id if section is defined else none %}
 {% set is_admin_mode = current_user.role == 'admin' and (acting_role is not defined or acting_role != 'instructor') %}
 {% set is_student = current_user.role == 'student' %}
+{% set stu = (student_nav_sections|default([]))|first %}
+{% set stf = (staff_nav_sections|default([]))|first %}
 
-{# Fixed left rail — tree navigation: main categories expand to sub-items #}
+{# Flat primary nav. Account, help, and sign-out live in the avatar menu. #}
 <aside id="staffRail" class="staff-rail" aria-label="Main menu">
   <div class="staff-rail-inner">
     <div class="staff-rail-top">
-      <span class="staff-rail-title">Menu</span>
-      <button type="button" id="staffRailToggle" class="staff-rail-toggle" title="Collapse or expand menu" aria-label="Hide menu">
+      <span class="staff-rail-title">{% if is_student %}Learn{% elif is_admin_mode %}Admin{% else %}Teach{% endif %}</span>
+      <button type="button" id="staffRailToggle" class="staff-rail-toggle" title="Collapse or expand menu" aria-label="Hide menu" aria-controls="staffRail" aria-expanded="true">
         <i class="bi bi-layout-sidebar-inset" aria-hidden="true"></i><span class="rail-toggle-label d-none d-lg-inline">Hide</span><span class="rail-toggle-label d-lg-none">Close</span>
       </button>
     </div>
-
-    <div class="staff-rail-body">
+    <nav class="staff-rail-body" id="appNav" aria-label="Sections">
       {% if ep == 'view_lesson' %}
       <div class="p-2 border-bottom d-xl-none">
         <button type="button" class="btn btn-sm btn-brand w-100" data-bs-toggle="offcanvas" data-bs-target="#lessonDrawer" aria-controls="lessonDrawer" onclick="document.body.classList.remove('staff-rail-open')">
-          <i class="bi bi-list-ul me-1" aria-hidden="true"></i> Course Chapters &amp; Lesson Map
+          <i class="bi bi-list-ul me-1" aria-hidden="true"></i> Course Chapters
         </button>
       </div>
       {% endif %}
 
       {% if is_student %}
-      <details class="rail-tree" open>
-        <summary class="rail-tree-sum">
-          <i class="bi bi-journal-bookmark rail-ico"></i><span>Learn</span>
-        </summary>
-        <div class="rail-tree-kids">
-          <a class="rail-link {% if ep == 'student_dashboard' %}active{% endif %}" href="{{ url_for('student_dashboard') }}">
-            <i class="bi bi-house-door"></i><span>Home</span>
-          </a>
-          {% for s in student_nav_sections|default([]) %}
-          <a class="rail-link {% if open_section_id == s.id %}active{% endif %}"
-             href="{{ url_for('student_section', section_id=s.id) }}">
-            <i class="bi bi-door-open"></i><span>{{ s.name }}</span>
-          </a>
-          {% else %}
-          <span class="rail-empty">No classes yet</span>
-          {% endfor %}
-          <a class="rail-link {% if ep in ('student_grades','student_section_grades') %}active{% endif %}" href="{{ url_for('student_grades') }}">
-            <i class="bi bi-mortarboard"></i><span>My grades</span>
-          </a>
-          <a class="rail-link {% if ep in ('helix.my_data','helix.consent_page') %}active{% endif %}" href="{{ url_for('helix.my_data') }}">
-            <i class="bi bi-eye"></i><span>My eye-tracking data</span>
-          </a>
-        </div>
-      </details>
-      <details class="rail-tree" {% if ep and ep.startswith('interactive_lab') %}open{% endif %}>
-        <summary class="rail-tree-sum">
-          <i class="bi bi-terminal rail-ico"></i><span>Practice</span>
-        </summary>
-        <div class="rail-tree-kids">
-          {% for s in student_nav_sections|default([]) %}
-          <a class="rail-link {% if ep == 'course_labs' and open_section_id == s.id %}active{% endif %}"
-             href="{{ url_for('course_labs', section_id=s.id) }}">
-            <i class="bi bi-collection-play"></i><span>{{ s.course.title if s.course else 'Class' }} labs</span>
-          </a>
-          {% endfor %}
-          <a class="rail-link {% if ep == 'interactive_labs_index' %}active{% endif %}" href="{{ url_for('interactive_labs_index') }}">
-            <i class="bi bi-grid"></i><span>All live labs</span>
-          </a>
-          <a class="rail-link {% if ep and ep.startswith('practice_') %}active{% endif %}" href="{{ url_for('practice_index') }}">
-            <i class="bi bi-stopwatch"></i><span>Practice exams</span>
-          </a>
-          <a class="rail-link {% if ep == 'tutor_page' %}active{% endif %}" href="{{ url_for('tutor_page') }}">
-            <i class="bi bi-chat-square-text"></i><span>Course tutor</span>
-          </a>
-          <a class="rail-link {% if ep == 'portfolio_home' %}active{% endif %}" href="{{ url_for('portfolio_home') }}">
-            <i class="bi bi-award"></i><span>Skills portfolio</span>
-          </a>
-          <details class="rail-tree rail-tree-nested" {% if ep in ('convening_home','aschool_outline','instructor_pilot','cschool_comms','cschool_sysadmin') %}open{% endif %}>
-            <summary class="rail-tree-sum rail-tree-sum-sm">
-              <i class="bi bi-compass rail-ico"></i><span>Tracks &amp; outlines</span>
-            </summary>
-            <div class="rail-tree-kids">
-              <a class="rail-link rail-sublink" href="{{ url_for('interactive_labs_index') }}#windows"><i class="bi bi-laptop"></i><span>Windows 11 CLI</span></a>
-              <a class="rail-link rail-sublink" href="{{ url_for('interactive_labs_index') }}#win11gui"><i class="bi bi-window-desktop"></i><span>Windows 11 GUI</span></a>
-              <a class="rail-link rail-sublink" href="{{ url_for('interactive_labs_index') }}#switch"><i class="bi bi-hdd-network"></i><span>Switch labs</span></a>
-              <a class="rail-link rail-sublink" href="{{ url_for('interactive_labs_index') }}#router"><i class="bi bi-router"></i><span>Router labs</span></a>
-              <a class="rail-link rail-sublink {% if ep == 'convening_home' %}active{% endif %}" href="{{ url_for('convening_home') }}">
-                <i class="bi bi-flag"></i><span>Convening home</span>
-              </a>
-              <a class="rail-link rail-sublink {% if ep == 'aschool_outline' %}active{% endif %}" href="{{ url_for('aschool_outline') }}">
-                <i class="bi bi-journal-bookmark"></i><span>A-school outline</span>
-              </a>
-              <a class="rail-link rail-sublink {% if ep == 'instructor_pilot' %}active{% endif %}" href="{{ url_for('instructor_pilot') }}">
-                <i class="bi bi-clipboard-check"></i><span>Pilot 1–13 run sheet</span>
-              </a>
-              <a class="rail-link rail-sublink {% if ep == 'cschool_comms' %}active{% endif %}" href="{{ url_for('cschool_comms') }}">
-                <i class="bi bi-broadcast"></i><span>C-school comms</span>
-              </a>
-              <a class="rail-link rail-sublink {% if ep == 'cschool_sysadmin' %}active{% endif %}" href="{{ url_for('cschool_sysadmin') }}">
-                <i class="bi bi-hdd-stack"></i><span>C-school sysadmin</span>
-              </a>
-            </div>
-          </details>
-        </div>
-      </details>
-      <details class="rail-tree" {% if ep in ('tickets_list','tickets_new','messages_inbox','messages_thread','messages_new','curriculum_search') %}open{% endif %}>
-        <summary class="rail-tree-sum">
-          <i class="bi bi-life-preserver rail-ico"></i><span>Help</span>
-        </summary>
-        <div class="rail-tree-kids">
-          <a class="rail-link {% if ep in ('messages_inbox','messages_thread','messages_new') %}active{% endif %}" href="{{ url_for('messages_inbox') }}">
-            <i class="bi bi-envelope"></i><span>Ask instructor</span>
-          </a>
-          <a class="rail-link {% if ep in ('tickets_list','tickets_new') %}active{% endif %}" href="{{ url_for('tickets_list') }}">
-            <i class="bi bi-ticket-perforated"></i><span>Curriculum tickets</span>
-          </a>
-          <a class="rail-link {% if ep == 'curriculum_search' %}active{% endif %}" href="{{ url_for('curriculum_search') }}">
-            <i class="bi bi-search"></i><span>Search lessons</span>
-          </a>
-          <a class="rail-link {% if ep == 'helix.policy' %}active{% endif %}" href="{{ url_for('helix.policy') }}">
-            <i class="bi bi-eye"></i><span>Eye tracking policy</span>
-          </a>
-          {# TQI is admin-only on novakornothing.com/tqi — not shown to students #}
-        </div>
-      </details>
+        {% set course_on = ep in ('student_section','view_module','view_lesson','curriculum_index') %}
+        {% set labs_on = ep.startswith('interactive_lab') or ep in ('course_labs','scenario_lab','classroom_lab') %}
+        {% set practice_on = ep.startswith('practice_') or ep.startswith('exam_sim') or ep == 'speed_drill' %}
+        {% set grades_on = ep in ('student_grades','student_section_grades') %}
+        {% set eye_on = ep.startswith('helix.') %}
+        <a class="rail-link {% if ep == 'student_dashboard' %}active{% endif %}" href="{{ url_for('student_dashboard') }}" {% if ep == 'student_dashboard' %}aria-current="page"{% endif %}><i class="bi bi-house-door" aria-hidden="true"></i><span>Home</span></a>
+        {% if stu %}
+        <a class="rail-link {% if course_on %}active{% endif %}" href="{{ url_for('student_section', section_id=stu.id) }}" {% if course_on %}aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i><span>Course Chapters</span></a>
+        <a class="rail-link {% if labs_on %}active{% endif %}" href="{{ url_for('course_labs', section_id=stu.id) }}" {% if labs_on %}aria-current="page"{% endif %}><i class="bi bi-terminal" aria-hidden="true"></i><span>Hands-On Labs</span></a>
+        {% else %}
+        <a class="rail-link" href="{{ url_for('student_dashboard') }}"><i class="bi bi-journal-text" aria-hidden="true"></i><span>Course Chapters</span></a>
+        <a class="rail-link {% if labs_on %}active{% endif %}" href="{{ url_for('interactive_labs_index') }}" {% if labs_on %}aria-current="page"{% endif %}><i class="bi bi-terminal" aria-hidden="true"></i><span>Hands-On Labs</span></a>
+        {% endif %}
+        <a class="rail-link {% if practice_on %}active{% endif %}" href="{{ url_for('practice_index') }}" {% if practice_on %}aria-current="page"{% endif %}><i class="bi bi-stopwatch" aria-hidden="true"></i><span>Practice</span></a>
+        <a class="rail-link {% if grades_on %}active{% endif %}" href="{{ url_for('student_grades') }}" {% if grades_on %}aria-current="page"{% endif %}><i class="bi bi-mortarboard" aria-hidden="true"></i><span>Grades</span></a>
+        <a class="rail-link {% if eye_on %}active{% endif %}" href="{{ url_for('helix.my_data') }}" {% if eye_on %}aria-current="page"{% endif %}><i class="bi bi-eye" aria-hidden="true"></i><span>Eye Tracking</span></a>
+
+      {% elif is_admin_mode %}
+        {% set people_on = ep == 'admin_people' %}
+        {% set courses_on = ep in ('admin_classes','admin_curriculum') %}
+        {% set reports_on = ep in ('admin_reports','admin_tqi','admin_roi','admin_outcomes','admin_teaching_time','admin_test_analytics','instructor_analytics_hub') or (ep is string and 'performance' in ep) %}
+        {% set settings_on = ep in ('admin_tools','admin_exports','admin_privacy','admin_ferpa','admin_audit','admin_audit_log','admin_compliance','admin_readiness','admin_institutions','admin_lti','admin_backup_db','demo_guide','gaps') or (ep is string and ep.startswith('cmi5.admin')) %}
+        {% set queue_on = ep in ('admin_tickets','admin_ticket_detail','tickets_list','tickets_new') %}
+        <a class="rail-link {% if ep == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}" {% if ep == 'admin_dashboard' %}aria-current="page"{% endif %}><i class="bi bi-house-door" aria-hidden="true"></i><span>Home</span></a>
+        <a class="rail-link {% if people_on %}active{% endif %}" href="{{ url_for('admin_people') }}" {% if people_on %}aria-current="page"{% endif %}><i class="bi bi-people" aria-hidden="true"></i><span>People</span></a>
+        <a class="rail-link {% if courses_on %}active{% endif %}" href="{{ url_for('admin_classes') }}" {% if courses_on %}aria-current="page"{% endif %}><i class="bi bi-journal-bookmark" aria-hidden="true"></i><span>Courses</span></a>
+        <a class="rail-link {% if reports_on %}active{% endif %}" href="{{ url_for('admin_reports') }}" {% if reports_on %}aria-current="page"{% endif %}><i class="bi bi-bar-chart" aria-hidden="true"></i><span>Reports</span></a>
+        <a class="rail-link {% if settings_on %}active{% endif %}" href="{{ url_for('admin_tools') }}" {% if settings_on %}aria-current="page"{% endif %}><i class="bi bi-gear" aria-hidden="true"></i><span>Settings</span></a>
+        <a class="rail-link {% if queue_on %}active{% endif %}" href="{{ url_for('admin_tickets') }}" {% if queue_on %}aria-current="page"{% endif %}><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Lesson issues</span></a>
+
       {% else %}
-      <details class="rail-tree" open>
-        <summary class="rail-tree-sum">
-          <i class="bi bi-house-door rail-ico"></i><span>Teach</span>
-        </summary>
-        <div class="rail-tree-kids">
-          {% if is_admin_mode %}
-          <a class="rail-link {% if ep == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
-            <i class="bi bi-speedometer2"></i><span>Admin overview</span>
-          </a>
-          <a class="rail-link {% if ep in ('admin_people','admin_classes') %}active{% endif %}" href="{{ url_for('admin_people') }}">
-            <i class="bi bi-people"></i><span>Users &amp; Sections</span>
-          </a>
-          <a class="rail-link {% if ep == 'admin_exports' or (ep is string and ep.startswith('cmi5.admin_cmi5')) %}active{% endif %}" href="{{ url_for('admin_exports') }}">
-            <i class="bi bi-box-arrow-down"></i><span>Exports</span>
-          </a>
-          <a class="rail-link {% if ep is string and ep.startswith('admin_') and ep not in ('admin_dashboard','admin_people','admin_classes','admin_exports','admin_tickets','admin_ticket_detail','admin_teaching_time','admin_test_analytics','admin_backup_db') %}active{% endif %}" href="{{ url_for('admin_tools') }}">
-            <i class="bi bi-tools"></i><span>More tools</span>
-          </a>
-          {% endif %}
-          <a class="rail-link {% if ep == 'instructor_dashboard' %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
-            <i class="bi bi-collection"></i><span>My classes</span>
-          </a>
-          <a class="rail-link {% if ep and ep.startswith('interactive_lab') %}active{% endif %}" href="{{ url_for('interactive_labs_index') }}">
-            <i class="bi bi-terminal"></i><span>Live labs</span>
-          </a>
-          <a class="rail-link {% if ep in ('materials_index','materials_view','syllabus_settings') %}active{% endif %}" href="{{ url_for('materials_index') }}">
-            <i class="bi bi-folder2-open"></i><span>Course materials</span>
-          </a>
-          <a class="rail-link {% if ep == 'cert_coverage' %}active{% endif %}" href="{{ url_for('cert_coverage') }}">
-            <i class="bi bi-patch-check"></i><span>Certification coverage</span>
-          </a>
-          <a class="rail-link {% if ep and ep.startswith('practice_') %}active{% endif %}" href="{{ url_for('practice_index') }}">
-            <i class="bi bi-stopwatch"></i><span>Practice exams</span>
-          </a>
-        </div>
-      </details>
-      <details class="rail-tree" {% if ep in ('admin_tickets','admin_ticket_detail','tickets_list','tickets_new','messages_inbox','messages_thread','messages_new','curriculum_search') %}open{% endif %}>
-        <summary class="rail-tree-sum">
-          <i class="bi bi-inboxes rail-ico"></i><span>Inbox</span>
-        </summary>
-        <div class="rail-tree-kids">
-          {% if is_admin_mode %}
-          <a class="rail-link {% if ep in ('admin_tickets','admin_ticket_detail') %}active{% endif %}" href="{{ url_for('admin_tickets') }}">
-            <i class="bi bi-ticket-perforated"></i><span>Tickets</span>
-          </a>
-          {% else %}
-          <a class="rail-link {% if ep in ('tickets_list','tickets_new') %}active{% endif %}" href="{{ url_for('tickets_list') }}">
-            <i class="bi bi-ticket-perforated"></i><span>Tickets</span>
-          </a>
-          {% endif %}
-          <a class="rail-link {% if ep in ('messages_inbox','messages_thread','messages_new') %}active{% endif %}" href="{{ url_for('messages_inbox') }}">
-            <i class="bi bi-envelope"></i><span>Student messages</span>
-          </a>
-          <a class="rail-link {% if ep == 'curriculum_search' %}active{% endif %}" href="{{ url_for('curriculum_search') }}">
-            <i class="bi bi-search"></i><span>Search lessons</span>
-          </a>
-        </div>
-      </details>
+        {% set classes_on = ep in ('sections_hub','instructor_section','section_roster','section_setup','instructor_students') or (ep is string and ep.startswith('instructor_section')) %}
+        {% set grades_on = ep.startswith('instructor_gradebook') %}
+        {% set practice_on = ep.startswith('practice_') or ep.startswith('exam_sim') or ep == 'instructor_exam_sim' %}
+        {% set reports_on = ep in ('instructor_analytics_hub','admin_test_analytics','course_performance','course_category_performance') %}
+        {% set queue_on = ep in ('tickets_list','tickets_new','admin_tickets','admin_ticket_detail') %}
+        <a class="rail-link {% if ep == 'instructor_dashboard' %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}" {% if ep == 'instructor_dashboard' %}aria-current="page"{% endif %}><i class="bi bi-house-door" aria-hidden="true"></i><span>Home</span></a>
+        <a class="rail-link {% if classes_on %}active{% endif %}" href="{{ url_for('sections_hub') }}" {% if classes_on %}aria-current="page"{% endif %}><i class="bi bi-collection" aria-hidden="true"></i><span>Classes</span></a>
+        {% if stf %}
+        <a class="rail-link {% if grades_on %}active{% endif %}" href="{{ url_for('instructor_gradebook', section_id=stf.id) }}" {% if grades_on %}aria-current="page"{% endif %}><i class="bi bi-table" aria-hidden="true"></i><span>Grades</span></a>
+        {% else %}
+        <a class="rail-link" href="{{ url_for('instructor_dashboard') }}"><i class="bi bi-table" aria-hidden="true"></i><span>Grades</span></a>
+        {% endif %}
+        <a class="rail-link {% if practice_on %}active{% endif %}" href="{{ url_for('practice_index') }}" {% if practice_on %}aria-current="page"{% endif %}><i class="bi bi-stopwatch" aria-hidden="true"></i><span>Practice</span></a>
+        <a class="rail-link {% if reports_on %}active{% endif %}" href="{{ url_for('instructor_analytics_hub') }}" {% if reports_on %}aria-current="page"{% endif %}><i class="bi bi-bar-chart" aria-hidden="true"></i><span>Reports</span></a>
+        <a class="rail-link {% if queue_on %}active{% endif %}" href="{{ url_for('tickets_list') }}" {% if queue_on %}aria-current="page"{% endif %}><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Lesson issues</span></a>
       {% endif %}
-
-      {# —— Analytics (staff only) —— #}
-      {% if not is_student %}
-      <details class="rail-tree" {% if ep in ('admin_teaching_time','admin_test_analytics','instructor_analytics_hub','export_analytics_csv','export_item_flags_csv') or (ep is string and ('performance' in ep or 'attention' in ep)) %}open{% endif %}>
-        <summary class="rail-tree-sum">
-          <i class="bi bi-bar-chart-line rail-ico"></i><span>Reports</span>
-        </summary>
-        <div class="rail-tree-kids">
-          {% if is_admin_mode %}
-          <a class="rail-link {% if ep == 'admin_teaching_time' %}active{% endif %}" href="{{ url_for('admin_teaching_time') }}">
-            <i class="bi bi-clock-history"></i><span>Teaching time</span>
-          </a>
-          <a class="rail-link {% if ep == 'admin_test_analytics' %}active{% endif %}" href="{{ url_for('admin_test_analytics') }}">
-            <i class="bi bi-graph-up-arrow"></i><span>Test analytics</span>
-          </a>
-          <a class="rail-link {% if ep == 'instructor_analytics_hub' %}active{% endif %}" href="{{ url_for('instructor_analytics_hub') }}">
-            <i class="bi bi-clipboard-data"></i><span>Score hub</span>
-          </a>
-          <a class="rail-link {% if ep and ep.startswith('helix.instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
-            <i class="bi bi-eye"></i><span>Eye tracking signal</span>
-          </a>
-          <a class="rail-link" href="{{ url_for('export_analytics_csv') }}">
-            <i class="bi bi-download"></i><span>Export scores CSV</span>
-          </a>
-          <a class="rail-link" href="{{ url_for('export_item_flags_csv') }}">
-            <i class="bi bi-flag"></i><span>Export item flags</span>
-          </a>
-          {% else %}
-          <a class="rail-link {% if ep == 'instructor_analytics_hub' %}active{% endif %}" href="{{ url_for('instructor_analytics_hub') }}">
-            <i class="bi bi-bar-chart"></i><span>Scores &amp; reports</span>
-          </a>
-          <a class="rail-link {% if ep == 'admin_test_analytics' %}active{% endif %}" href="{{ url_for('admin_test_analytics') }}">
-            <i class="bi bi-graph-up-arrow"></i><span>Test analytics</span>
-          </a>
-          <a class="rail-link {% if ep and ep.startswith('helix.instructor_attention') %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
-            <i class="bi bi-eye"></i><span>Eye tracking signal</span>
-          </a>
-          {% endif %}
-        </div>
-      </details>
-
-      {% if is_admin_mode %}
-      <details class="rail-tree" {% if ep in ('admin_backup_db','demo_guide','gaps') %}open{% endif %}>
-        <summary class="rail-tree-sum">
-          <i class="bi bi-wrench-adjustable rail-ico"></i><span>System</span>
-        </summary>
-        <div class="rail-tree-kids">
-          <a class="rail-link" href="{{ url_for('admin_backup_db') }}">
-            <i class="bi bi-database"></i><span>Backup database</span>
-          </a>
-          <a class="rail-link {% if ep == 'demo_guide' %}active{% endif %}" href="{{ url_for('demo_guide') }}">
-            <i class="bi bi-book"></i><span>Demo guide</span>
-          </a>
-          <a class="rail-link {% if ep == 'gaps' %}active{% endif %}" href="{{ url_for('gaps') }}">
-            <i class="bi bi-map"></i><span>Platform Architecture</span>
-          </a>
-        </div>
-      </details>
-      {% endif %}
-
-      {# —— Classes (course → section tree) —— #}
-      <details class="rail-tree" {% if open_section_id or ep in ('instructor_section','instructor_dashboard') %}open{% endif %}>
-        <summary class="rail-tree-sum">
-          <i class="bi bi-diagram-3 rail-ico"></i><span>Classes</span>
-        </summary>
-        <div class="rail-tree-kids">
-          {% if is_admin_mode %}
-          <a class="rail-link {% if ep == 'admin_classes' %}active{% endif %}" href="{{ url_for('admin_classes') }}">
-            <i class="bi bi-list-ul"></i><span>All classes (admin)</span>
-          </a>
-          {% else %}
-          <a class="rail-link {% if ep == 'instructor_dashboard' %}active{% endif %}" href="{{ url_for('instructor_dashboard') }}">
-            <i class="bi bi-list-ul"></i><span>All my classes</span>
-          </a>
-          {% endif %}
-
-          {% for c in staff_nav_courses %}
-          <details class="rail-tree rail-tree-nested" {% if open_section_id and (staff_nav_sections|selectattr('id','equalto',open_section_id)|map(attribute='course_id')|first) == c.id %}open{% endif %}>
-            <summary class="rail-tree-sum rail-tree-sum-sm" title="{{ c.title }}">
-              <i class="bi bi-journal-bookmark rail-ico"></i><span>{{ c.title }}</span>
-            </summary>
-            <div class="rail-tree-kids">
-              {% for s in staff_nav_sections if s.course_id == c.id %}
-              <a class="rail-link rail-sublink {% if open_section_id == s.id and ep == 'instructor_section' %}active{% endif %}"
-                 href="{{ url_for('instructor_section', section_id=s.id) }}" title="{{ s.name }}">
-                <i class="bi bi-door-open"></i><span>{{ s.name }}</span>
-                {% if s.instructor_id != current_user.id and current_user.role == 'instructor' %}
-                <span class="rail-badge">shared</span>
-                {% endif %}
-              </a>
-              <a class="rail-link rail-sublink {% if ep == 'mastery_today' and open_section_id == s.id %}active{% endif %}"
-                 href="{{ url_for('mastery_today', section_id=s.id) }}">
-                <i class="bi bi-people"></i><span>Students needing help</span>
-              </a>
-              <a class="rail-link rail-sublink {% if ep in ('instructor_gradebook','instructor_gradebook_student') and open_section_id == s.id %}active{% endif %}"
-                 href="{{ url_for('instructor_gradebook', section_id=s.id) }}">
-                <i class="bi bi-table"></i><span>Gradebook</span>
-              </a>
-              <a class="rail-link rail-sublink {% if ep.startswith('helix.instructor_attention') and open_section_id == s.id %}active{% endif %}"
-                 href="{{ url_for('helix.instructor_attention', section_id=s.id) }}">
-                <i class="bi bi-eye"></i><span>Eye Tracking</span>
-              </a>
-              <details class="rail-tree rail-tree-nested" {% if open_section_id == s.id and ep in ('course_labs','instructor_lab_results','instructor_lab_student','tutor_instructor','section_outcomes','mastery_class','mastery_class_student','mastery_briefing','ladder_class','ladder_student','ladder_preview','syllabus_settings') %}open{% endif %}>
-                <summary class="rail-tree-sum rail-tree-sum-sm">
-                  <i class="bi bi-sliders rail-ico"></i><span>More tools ({{ s.name }})</span>
-                </summary>
-                <div class="rail-tree-kids">
-                  <a class="rail-link rail-sublink {% if ep == 'course_labs' and open_section_id == s.id %}active{% endif %}"
-                     href="{{ url_for('course_labs', section_id=s.id) }}">
-                    <i class="bi bi-terminal"></i><span>Labs</span>
-                  </a>
-                  <a class="rail-link rail-sublink {% if ep in ('instructor_lab_results','instructor_lab_student') and open_section_id == s.id %}active{% endif %}"
-                     href="{{ url_for('instructor_lab_results', section_id=s.id) }}">
-                    <i class="bi bi-clipboard-data"></i><span>Lab results</span>
-                  </a>
-                  <a class="rail-link rail-sublink {% if ep == 'tutor_instructor' and open_section_id == s.id %}active{% endif %}"
-                     href="{{ url_for('tutor_instructor', section_id=s.id) }}">
-                    <i class="bi bi-chat-square-text"></i><span>AI tutor</span>
-                  </a>
-                  <a class="rail-link rail-sublink {% if ep == 'section_outcomes' and open_section_id == s.id %}active{% endif %}"
-                     href="{{ url_for('section_outcomes', section_id=s.id) }}">
-                    <i class="bi bi-graph-up-arrow"></i><span>Outcomes</span>
-                  </a>
-                  <a class="rail-link rail-sublink {% if ep in ('mastery_class','mastery_class_student') and open_section_id == s.id %}active{% endif %}"
-                     href="{{ url_for('mastery_class', section_id=s.id) }}">
-                    <i class="bi bi-signpost-split"></i><span>Skill Mastery</span>
-                  </a>
-                  <a class="rail-link rail-sublink {% if ep == 'mastery_briefing' and open_section_id == s.id %}active{% endif %}"
-                     href="{{ url_for('mastery_briefing', section_id=s.id) }}">
-                    <i class="bi bi-clipboard-check"></i><span>Today’s briefing</span>
-                  </a>
-                  <a class="rail-link rail-sublink {% if ep in ('ladder_class','ladder_student','ladder_preview') and open_section_id == s.id %}active{% endif %}"
-                     href="{{ url_for('ladder_class', section_id=s.id) }}">
-                    <i class="bi bi-arrow-repeat"></i><span>Explanations</span>
-                  </a>
-                  <a class="rail-link rail-sublink {% if ep == 'syllabus_settings' and open_section_id == s.id %}active{% endif %}"
-                     href="{{ url_for('syllabus_settings', section_id=s.id) }}">
-                    <i class="bi bi-file-earmark-text"></i><span>Syllabus</span>
-                  </a>
-                </div>
-              </details>
-              {% else %}
-              <span class="rail-empty">No classes</span>
-              {% endfor %}
-              <a class="rail-link rail-sublink" href="{{ url_for('course_performance', course_id=c.id) }}">
-                <i class="bi bi-graph-up"></i><span>{{ c.title }} stats</span>
-              </a>
-            </div>
-          </details>
-          {% else %}
-          <span class="rail-empty">No courses yet</span>
-          {% endfor %}
-        </div>
-      </details>
-      {% endif %}
-
-    </div>
-    <div class="staff-rail-foot">
-      <a class="rail-link {% if ep == 'account' %}active{% endif %}" href="{{ url_for('account') }}" {% if ep == 'account' %}aria-current="page"{% endif %}>
-        <i class="bi bi-person-gear" aria-hidden="true"></i><span>Account &amp; settings</span>
-      </a>
-      <a class="rail-link" href="{{ url_for('logout') }}">
-        <i class="bi bi-box-arrow-right" aria-hidden="true"></i><span>Sign out</span>
-      </a>
-    </div>
+    </nav>
   </div>
 </aside>
 
 <button type="button" id="staffRailExpand" class="staff-rail-expand" title="Show menu" aria-label="Show menu">
-  <i class="bi bi-list"></i>
+  <i class="bi bi-list" aria-hidden="true"></i>
 </button>
 
+<nav class="mobile-tabbar" aria-label="Quick navigation">
+  {% if is_student %}
+  <a href="{{ url_for('student_dashboard') }}" class="{{ 'active' if ep == 'student_dashboard' }}" {% if ep == 'student_dashboard' %}aria-current="page"{% endif %}><i class="bi bi-house-door" aria-hidden="true"></i>Home</a>
+  {% if stu %}<a href="{{ url_for('student_section', section_id=stu.id) }}" class="{{ 'active' if ep in ('student_section','view_module','view_lesson','curriculum_index') }}" {% if ep in ('student_section','view_module','view_lesson') %}aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i>Course</a>
+  <a href="{{ url_for('course_labs', section_id=stu.id) }}" class="{{ 'active' if ep.startswith('interactive_lab') or ep == 'course_labs' }}" {% if ep.startswith('interactive_lab') or ep == 'course_labs' %}aria-current="page"{% endif %}><i class="bi bi-terminal" aria-hidden="true"></i>Labs</a>
+  {% endif %}
+  <a href="{{ url_for('practice_index') }}" class="{{ 'active' if ep.startswith('practice_') }}" {% if ep.startswith('practice_') %}aria-current="page"{% endif %}><i class="bi bi-stopwatch" aria-hidden="true"></i>Practice</a>
+  {% elif is_admin_mode %}
+  <a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if ep == 'admin_dashboard' }}" {% if ep == 'admin_dashboard' %}aria-current="page"{% endif %}><i class="bi bi-house-door" aria-hidden="true"></i>Home</a>
+  <a href="{{ url_for('admin_people') }}" class="{{ 'active' if ep == 'admin_people' }}" {% if ep == 'admin_people' %}aria-current="page"{% endif %}><i class="bi bi-people" aria-hidden="true"></i>People</a>
+  <a href="{{ url_for('admin_classes') }}" class="{{ 'active' if ep in ('admin_classes','admin_curriculum') }}" {% if ep in ('admin_classes','admin_curriculum') %}aria-current="page"{% endif %}><i class="bi bi-journal-bookmark" aria-hidden="true"></i>Courses</a>
+  <a href="{{ url_for('admin_tools') }}" class="{{ 'active' if ep in ('admin_tools','admin_exports') }}" {% if ep in ('admin_tools','admin_exports') %}aria-current="page"{% endif %}><i class="bi bi-gear" aria-hidden="true"></i>Settings</a>
+  {% else %}
+  <a href="{{ url_for('instructor_dashboard') }}" class="{{ 'active' if ep == 'instructor_dashboard' }}" {% if ep == 'instructor_dashboard' %}aria-current="page"{% endif %}><i class="bi bi-house-door" aria-hidden="true"></i>Home</a>
+  <a href="{{ url_for('sections_hub') }}" class="{{ 'active' if ep in ('sections_hub','instructor_section') }}" {% if ep in ('sections_hub','instructor_section') %}aria-current="page"{% endif %}><i class="bi bi-collection" aria-hidden="true"></i>Classes</a>
+  {% if stf %}<a href="{{ url_for('instructor_gradebook', section_id=stf.id) }}" class="{{ 'active' if ep.startswith('instructor_gradebook') }}" {% if ep.startswith('instructor_gradebook') %}aria-current="page"{% endif %}><i class="bi bi-table" aria-hidden="true"></i>Grades</a>{% endif %}
+  <a href="{{ url_for('instructor_analytics_hub') }}" class="{{ 'active' if ep == 'instructor_analytics_hub' }}" {% if ep == 'instructor_analytics_hub' %}aria-current="page"{% endif %}><i class="bi bi-bar-chart" aria-hidden="true"></i>Reports</a>
+  {% endif %}
+</nav>
 
 <script>
 (function () {
@@ -359,15 +106,16 @@
   const expand = document.getElementById('staffRailExpand');
   if (!rail) return;
 
-  document.body.classList.add('has-staff-rail'); /* keep if server class missing */
+  document.body.classList.add('has-staff-rail');
 
   function setCollapsed(on) {
     document.body.classList.toggle('staff-rail-collapsed', on);
+    if (toggle) toggle.setAttribute('aria-expanded', on ? 'false' : 'true');
     try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {}
   }
 
   try {
-    if (document.body.classList.contains('is-lesson-route')) {
+    if (document.body.classList.contains('is-lesson-route') || document.body.classList.contains('is-lab-workbench')) {
       document.body.classList.add('staff-rail-collapsed');
     } else if (localStorage.getItem(KEY) === '1') {
       setCollapsed(true);
@@ -376,7 +124,7 @@
 
   if (toggle) {
     toggle.addEventListener('click', function () {
-      if (window.innerWidth < 992 || document.body.classList.contains('is-lesson-route')) {
+      if (window.innerWidth < 992 || document.body.classList.contains('is-lesson-route') || document.body.classList.contains('is-lab-workbench')) {
         document.body.classList.remove('staff-rail-open');
         document.body.classList.add('staff-rail-collapsed');
         return;

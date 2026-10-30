@@ -143,20 +143,21 @@
       </div>
       <div class="views">
         <div class="view" data-viewpane="instructor">
-          <h2>Overview</h2>
+          <h2>Home</h2>
           <ul>
             <li>Class: <b>{{ stats.section_name }}</b></li>
             <li>Students: <b>{{ stats.students }}</b></li>
             <li>Students Needing Help today: <b>{{ stats.need_help }}</b></li>
+            <li>Practice per class: Skip What You Know, Help Desk Queue, Daily Review</li>
           </ul>
           <a href="{{ url_for('demo_enter', role='instructor') }}">Open Instructor view →</a>
         </div>
         <div class="view" data-viewpane="instructor">
-          <h2>Students &amp; Grades</h2>
-          <ul><li>One roster table with filter</li><li>CSV export</li><li>Labs &amp; Assignments tab</li></ul>
+          <h2>Students and Grades</h2>
+          <ul><li>One roster table with filter and CSV export (Students)</li><li>Gradebook per class (Grades)</li><li>Labs and assignments on each class page (Classes)</li></ul>
         </div>
         <div class="view" data-viewpane="admin" hidden>
-          <h2>Overview</h2>
+          <h2>Home</h2>
           <ul>
             <li>Active seats: <b>{{ stats.seats }}</b></li>
             <li>Instructors: <b>{{ stats.instructors }}</b></li>
@@ -165,8 +166,8 @@
           <a href="{{ url_for('demo_enter', role='admin') }}">Open Admin view →</a>
         </div>
         <div class="view" data-viewpane="admin" hidden>
-          <h2>Exports</h2>
-          <ul><li>SCORM 1.2 / 2004 packages</li><li>xAPI statements</li><li>Audit log CSV</li></ul>
+          <h2>Settings → Exports</h2>
+          <ul><li>cmi5 packages</li><li>SCORM 1.2 / 2004 packages</li><li>xAPI statements</li><li>Audit log CSV</li></ul>
         </div>
       </div>
       <p class="note">Numbers are from the live demo classroom.</p>

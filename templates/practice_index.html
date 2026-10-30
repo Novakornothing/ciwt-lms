@@ -2,10 +2,26 @@
 {% block title %}Practice exams — {{ site_name }}{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/cert.css') }}">{% endblock %}
 {% block content %}
-<div class="page-hero">
-  <h1 class="h3 mb-1">Practice exams</h1>
-  <p class="mb-0">Timed practice drawn from the Novak LMS™ question bank and weighted by the published exam domains, with a score report by domain and links back to the lessons.</p>
-</div>
+<header class="page-intro">
+  <nav aria-label="Breadcrumb">
+    <ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard') if current_user.role == 'student' else url_for('instructor_dashboard') }}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Practice</li>
+    </ol>
+  </nav>
+  <h1 class="page-intro-title">Practice</h1>
+  <p class="page-intro-purpose">Timed practice drawn from the Novak LMS™ question bank, with a score report by domain and links back to the lessons.</p>
+</header>
+{% if current_user.role in ('instructor', 'admin') and staff_nav_sections %}
+<section class="card mb-3" id="classPracticeTools" aria-labelledby="cptH">
+  <div class="card-body">
+    <h2 class="h5" id="cptH">Class practice tools</h2>
+    {% with sections = staff_nav_sections %}{% include '_class_practice_tools.html' %}{% endwith %}
+  </div>
+</section>
+{% elif current_user.role == 'student' and student_nav_sections %}{% set _ps = student_nav_sections|first %}
+<p class="class-also mb-3" id="studentPracticeTools"><a href="{{ url_for('daily_review', section_id=_ps.id) }}">Daily Review</a> · <a href="{{ url_for('helpdesk_queue', section_id=_ps.id) }}">Help Desk Queue</a> · <a href="{{ url_for('placement_student', section_id=_ps.id) }}">Skip What You Know</a> · <a href="{{ url_for('mastery_daily', section_id=_ps.id) }}">Review topics you’ve learned</a></p>
+{% endif %}
 <p class="practice-label"><strong>{{ label }}.</strong> {{ disclaimer }} Questions are original Novak LMS™ items, not taken from CompTIA exams, and a practice score does not predict an exam result.</p>
 
 <div class="practice-grid">

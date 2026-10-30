@@ -47,7 +47,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark" aria-label="Primary">
       <div class="container-fluid px-3 px-md-4">
         {% if current_user.is_authenticated %}
-        <button type="button" class="btn btn-outline-light d-lg-none mobile-menu-btn" id="mobileStaffMenuBtn" aria-label="Open navigation menu" aria-controls="staffRail" aria-expanded="false">
+        <button type="button" class="btn btn-outline-light mobile-menu-btn" id="mobileStaffMenuBtn" aria-label="Open navigation menu" aria-controls="staffRail" aria-expanded="false">
           <i class="bi bi-list" aria-hidden="true"></i>
         </button>
         {% endif %}
@@ -58,98 +58,91 @@
           </span>
           <span><span class="brand-title-line">{{ brand_mark }}</span><span class="brand-sub">{{ site_tagline }}</span></span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Account, search and settings">
-          {% if current_user.is_authenticated %}<i class="bi bi-person-circle text-white fs-4" aria-hidden="true"></i>{% else %}<span class="navbar-toggler-icon"></span>{% endif %}
-        </button>
-        <div class="collapse navbar-collapse" id="nav">
-          <ul class="navbar-nav me-auto ms-lg-3">
-            {% if current_user.is_authenticated %}
-              {# Primary destinations live in the left tree — keep the top bar quiet #}
-              {# Staff primary links live in the simple hierarchy bar — avoid duplicate clutter here #}
-            {% endif %}
-          </ul>
-          {% if current_user.is_authenticated %}
-          <form class="d-flex ms-lg-2 my-2 my-lg-0 position-relative novak-search-form" method="get" action="{{ url_for('curriculum_search') }}" role="search" data-api-search="{{ url_for('api_smart_search') }}">
-            <label class="visually-hidden" for="curricSearch">Search curriculum</label>
-            <div class="novak-search-input-wrap">
-              <i class="bi bi-search novak-search-ico" aria-hidden="true"></i>
-              <input id="curricSearch" class="form-control form-control-sm nav-search search-input novak-search-input" type="search" name="q" placeholder="Search lessons, labs, CLI commands, or objectives..." autocomplete="off">
-              <kbd class="novak-search-kbd d-none d-xl-inline-block" aria-hidden="true">⌘K</kbd>
+        {% if current_user.is_authenticated %}
+        <form class="d-flex my-0 position-relative novak-search-form" method="get" action="{{ url_for('curriculum_search') }}" role="search" data-api-search="{{ url_for('api_smart_search') }}">
+          <label class="visually-hidden" for="curricSearch">Search curriculum</label>
+          <div class="novak-search-input-wrap">
+            <i class="bi bi-search novak-search-ico" aria-hidden="true"></i>
+            <input id="curricSearch" class="form-control form-control-sm nav-search search-input novak-search-input" type="search" name="q" placeholder="Search lessons, labs, or objectives" autocomplete="off">
+            <kbd class="novak-search-kbd d-none d-xl-inline-block" aria-hidden="true">⌘K</kbd>
+          </div>
+          <div id="globalSearchDropdown" class="novak-search-dropdown d-none" role="listbox" aria-label="Instant search results"></div>
+        </form>
+        {% set _parts = (current_user.full_name or '').split() %}
+        {% set _ini = ((_parts[0][:1] if _parts else '') ~ (_parts[-1][:1] if _parts|length > 1 else ''))|upper %}
+        <div class="dropdown ms-auto">
+          <button type="button" class="avatar-btn" id="accountMenuBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="Account menu for {{ current_user.full_name }}">{{ _ini or '•' }}</button>
+          <div class="dropdown-menu dropdown-menu-end account-menu" aria-labelledby="accountMenuBtn">
+            <div class="account-menu-id">
+              <strong>{{ current_user.full_name }}</strong>
+              <span class="role-chip">{{ acting_role or current_user.role }}</span>
             </div>
-            <div id="globalSearchDropdown" class="novak-search-dropdown d-none" role="listbox" aria-label="Instant search results"></div>
-          </form>
-          {% endif %}
-          <ul class="navbar-nav align-items-lg-center gap-lg-1">
-            {% if current_user.is_authenticated %}
-              <li class="nav-item d-none d-lg-block">
-                <span class="nav-link user-meta py-1">
-                  <span class="user-name" title="{{ current_user.full_name }}">{{ current_user.full_name }}</span>
-                  <span class="role-chip">{{ acting_role or current_user.role }}</span>
-                </span>
-              </li>
-              {% set _secs = school_sections() %}{% if _secs %}
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="{{ url_for('sections_hub') }}" id="secSwitch" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-collection" aria-hidden="true"></i> Sections</a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="secSwitch">
-                  <li><a class="dropdown-item" href="{{ url_for('sections_hub') }}"><strong>All sections (hub)</strong></a></li>
-                  <li><hr class="dropdown-divider"></li>
-                  {% for s in _secs %}<li><a class="dropdown-item" href="{{ url_for('instructor_section', section_id=s.id) }}">{{ s.name }}</a></li>{% endfor %}
-                </ul>
-              </li>{% endif %}
-              {% if current_user.role == 'admin' %}
-              <li class="nav-item">
-                {% if acting_role == 'instructor' %}
-                <a class="nav-link" href="{{ url_for('admin_view_as', role='admin') }}">Admin mode</a>
-                {% else %}
-                <a class="nav-link" href="{{ url_for('admin_view_as', role='instructor') }}">Instructor mode</a>
-                {% endif %}
-              </li>
-              {% endif %}
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('account') }}"><i class="bi bi-person-gear d-lg-none" aria-hidden="true"></i> Account</a></li>
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Sign out</a></li>
-            {% else %}
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Sign in</a></li>
+            {% if current_user.role == 'admin' %}
+            <a class="account-menu-item" href="{{ url_for('admin_view_as', role='admin' if acting_role == 'instructor' else 'instructor') }}">{% if acting_role == 'instructor' %}Admin mode{% else %}Instructor mode{% endif %}</a>
             {% endif %}
-            <li class="nav-item">
-              <button type="button" class="nav-link border-0 bg-transparent" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
-                <i class="bi bi-moon-stars" id="themeIcon" aria-hidden="true"></i> <span class="d-lg-none">Dark mode</span>
-              </button>
-            </li>
-          </ul>
+            <a class="account-menu-item" href="{{ url_for('account') }}"><i class="bi bi-person-gear" aria-hidden="true"></i> Account</a>
+            <div class="account-menu-label">Help</div>
+            <a class="account-menu-item" href="{{ url_for('messages_inbox') }}">Messages</a>
+            {% if current_user.role == 'student' %}
+            <a class="account-menu-item" href="{{ url_for('tickets_list') }}">Lesson issues</a>
+            {% elif current_user.role == 'admin' and acting_role != 'instructor' %}
+            <a class="account-menu-item d-lg-none" href="{{ url_for('admin_reports') }}">Reports</a>
+            <a class="account-menu-item d-lg-none" href="{{ url_for('admin_tickets') }}">Lesson issues</a>
+            {% else %}
+            <a class="account-menu-item d-lg-none" href="{{ url_for('practice_index') }}">Practice</a>
+            <a class="account-menu-item d-lg-none" href="{{ url_for('tickets_list') }}">Lesson issues</a>
+            {% endif %}
+            {% if current_user.role == 'student' %}
+            <a class="account-menu-item d-lg-none" href="{{ url_for('student_grades') }}">Grades</a>
+            <a class="account-menu-item d-lg-none" href="{{ url_for('helix.my_data') }}">Eye Tracking</a>
+            {% endif %}
+            <a class="account-menu-item" href="{{ url_for('contact_page') }}">Contact and help</a>
+            <button type="button" class="account-menu-item" id="themeToggle" aria-pressed="false">
+              <i class="bi bi-moon-stars" id="themeIcon" aria-hidden="true"></i> Dark mode
+            </button>
+            {% if current_user.role in ('instructor', 'admin') and (current_user.role == 'instructor' or acting_role == 'instructor') %}
+            <div class="account-menu-block">
+              <div class="account-menu-label">Teaching timer <span id="teachClockMini">00:00</span></div>
+              <div id="teachControls" class="teach-panel">
+                <label class="visually-hidden" for="teachSection">Class for teaching timer</label>
+                <select id="teachSection" class="form-select form-select-sm">
+                  <option value="">Class…</option>
+                  {% for s in staff_nav_sections %}
+                  <option value="{{ s.id }}" {% if section is defined and section.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                  {% endfor %}
+                </select>
+                <label class="visually-hidden" for="breakMins">Break reminder</label>
+                <select id="breakMins" class="form-select form-select-sm">
+                  <option value="50" selected>50 min</option>
+                  <option value="10">10 min break</option>
+                  <option value="45">45 min</option>
+                  <option value="75">75 min</option>
+                  <option value="90">90 min</option>
+                </select>
+                <span id="teachClock" class="visually-hidden">00:00</span>
+                <span class="d-flex gap-2">
+                  <button type="button" class="btn btn-sm btn-brand" id="teachStart">Start</button>
+                  <button type="button" class="btn btn-sm btn-outline-navy" id="teachStop">Stop</button>
+                </span>
+                <span id="teachStatus" class="small text-muted" role="status">Stopped</span>
+              </div>
+            </div>
+            {% endif %}
+            <a class="account-menu-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Sign out</a>
+          </div>
         </div>
+        {% else %}
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Sign in</a></li>
+          <li class="nav-item">
+            <button type="button" class="nav-link border-0 bg-transparent" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+              <i class="bi bi-moon-stars" id="themeIcon" aria-hidden="true"></i> <span class="d-lg-none">Dark mode</span>
+            </button>
+          </li>
+        </ul>
+        {% endif %}
       </div>
     </nav>
-    {% if current_user.is_authenticated and current_user.role in ('instructor', 'admin') and (current_user.role == 'instructor' or acting_role == 'instructor') %}
-    <div class="teach-topbar py-1">
-      <div class="container-fluid px-3 px-md-4 d-flex flex-wrap align-items-center gap-2">
-        <button type="button" class="btn btn-sm btn-outline-navy teach-toggle py-0 px-2" id="teachToggle" aria-expanded="false" aria-controls="teachControls">
-          <i class="bi bi-stopwatch" aria-hidden="true"></i> Teaching timer <span class="fw-bold" id="teachClockMini">00:00</span>
-        </button>
-        <div class="teach-controls d-flex flex-wrap align-items-center gap-2" id="teachControls">
-        <span class="fw-semibold small me-1 teach-label"><i class="bi bi-stopwatch" aria-hidden="true"></i> Teaching timer</span>
-        <label class="visually-hidden" for="teachSection">Class for teaching timer</label>
-        <select id="teachSection" class="form-select form-select-sm w-auto py-0 u-minw-12">
-          <option value="">Class…</option>
-          {% for s in staff_nav_sections %}
-          <option value="{{ s.id }}" {% if section is defined and section.id == s.id %}selected{% endif %}>{{ s.name }}</option>
-          {% endfor %}
-        </select>
-        <label class="visually-hidden" for="breakMins">Break reminder</label>
-        <select id="breakMins" class="form-select form-select-sm w-auto py-0">
-          <option value="50" selected>50m</option>
-          <option value="10">10m break</option>
-          <option value="45">45m</option>
-          <option value="75">75m</option>
-          <option value="90">90m</option>
-        </select>
-        <span id="teachClock" class="fw-bold px-1">00:00</span>
-        <button type="button" class="btn btn-sm btn-brand py-0 px-2" id="teachStart">Start</button>
-        <button type="button" class="btn btn-sm btn-outline-navy py-0 px-2" id="teachStop">Stop</button>
-        <span id="teachStatus" class="small text-muted" role="status">Stopped</span>
-        </div>
-      </div>
-    </div>
-    {% endif %}
   </header>
   {% if tenant_brand %}<div class="tenant-banner" role="note">{% if tenant_brand.logo_url %}<img src="{{ tenant_brand.logo_url }}" alt="" width="84" height="28">{% endif %}<span>{{ tenant_brand.name }}</span></div>{% endif %}
   <main id="main" class="container-fluid px-3 px-md-4 px-xl-4 py-3 py-md-4 flex-grow-1 app-main" tabindex="-1">
@@ -170,34 +163,18 @@
   {% if current_user.is_authenticated %}
   {% include 'staff_sidebar.html' %}
   <div class="rail-scrim" id="railScrim" aria-hidden="true"></div>
-  {% set ep_ = request.endpoint or '' %}
-  <nav class="mobile-tabbar" aria-label="Quick navigation">
-    {% if current_user.role == 'student' %}
-    {% set first_sec = (student_nav_sections|default([]))|first %}
-    <a href="{{ url_for('student_dashboard') }}" class="{{ 'active' if ep_ == 'student_dashboard' }}" {% if ep_ == 'student_dashboard' %}aria-current="page"{% endif %}><i class="bi bi-house-door" aria-hidden="true"></i>Home</a>
-    {% if first_sec %}<a href="{{ url_for('student_section', section_id=first_sec.id) }}" class="{{ 'active' if ep_ in ('student_section','view_module','view_lesson','curriculum_index') }}"><i class="bi bi-journal-text" aria-hidden="true"></i>Class</a>{% endif %}
-    <a href="{{ url_for('student_grades') }}" class="{{ 'active' if ep_ in ('student_grades','student_section_grades') }}"><i class="bi bi-mortarboard" aria-hidden="true"></i>Grades</a>
-    <a href="{{ url_for('interactive_labs_index') }}" class="{{ 'active' if ep_.startswith('interactive_lab') or ep_ == 'course_labs' }}"><i class="bi bi-terminal" aria-hidden="true"></i>Labs</a>
-    {% else %}
-    <a href="{{ url_for('admin_dashboard') if current_user.role == 'admin' and acting_role != 'instructor' else url_for('instructor_dashboard') }}" class="{{ 'active' if ep_ in ('instructor_dashboard','admin_dashboard','admin_classes','admin_people','admin_curriculum','admin_tqi') }}"><i class="bi bi-house-door" aria-hidden="true"></i>Home</a>
-    {% set cur_sec = section if section is defined and section and section.id is defined else ((staff_nav_sections|default([]))|first) %}
-    {% if cur_sec %}
-    <a href="{{ url_for('instructor_gradebook', section_id=cur_sec.id) }}" class="{{ 'active' if ep_.startswith('instructor_gradebook') }}"><i class="bi bi-table" aria-hidden="true"></i>Grades</a>
-    <a href="{{ url_for('helix.instructor_attention', section_id=cur_sec.id) }}" class="{{ 'active' if ep_.startswith('helix.instructor_attention') }}"><i class="bi bi-eye" aria-hidden="true"></i>Eye Tracking</a>
-    {% endif %}
-    <a href="{{ url_for('messages_inbox') }}" class="{{ 'active' if ep_.startswith('messages') }}"><i class="bi bi-envelope" aria-hidden="true"></i>Messages</a>
-    {% endif %}
-    <button type="button" id="tabbarMenu" aria-controls="staffRail" aria-expanded="false"><i class="bi bi-grid" aria-hidden="true"></i>Menu</button>
-  </nav>
   {% endif %}
   <footer class="py-3">
     <div class="container-fluid px-3 px-md-4 d-flex justify-content-between flex-wrap gap-2">
       {% if request.endpoint in ('privacy_page', 'contact_page', 'accessibility') %}
       <span>© {{ copyright_year }} {{ brand_mark }} · <a href="{{ url_for('privacy_page') }}">Privacy</a> · Contact: <a href="mailto:{{ novak_contact_email }}">{{ novak_contact_email }}</a> · <a href="{{ url_for('contact_page') }}">Contact &amp; help</a></span>
       <span>{{ site_name }} · original curriculum, not a vendor exam product · <a href="{{ url_for('accessibility') }}">Accessibility</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
+      {% elif current_user.is_authenticated %}
+      <span>© {{ copyright_year }} {{ brand_mark }}</span>
+      <span><a href="{{ url_for('privacy_page') }}">Privacy</a> · <a href="{{ url_for('accessibility') }}">Accessibility</a> · <a href="{{ url_for('contact_page') }}">Help</a> · <a href="{{ url_for('my_data') }}">My data</a></span>
       {% else %}
       <span>© {{ copyright_year }} {{ brand_mark }}</span>
-      <span><a href="{{ url_for('terms_of_service') }}">Terms, DMCA &amp; Liability Shield</a> · <a href="https://novakornothing.com/terms.html">Legal &amp; ToS</a> · <a href="{{ url_for('specs_page') }}">Platform Specs</a> · <a href="{{ url_for('roi_dashboard') }}">ROI Calculator</a> · <a href="{{ url_for('compliance_center') }}">Security &amp; Privacy</a> · <a href="{{ url_for('schedule_consult') }}">Schedule Technical Consult</a> · <a href="{{ url_for('pilot_start') }}">30-Day Free Bundle</a>{% if current_user.is_authenticated %} · <a href="{{ url_for('my_data') }}">My data</a>{% endif %}</span>
+      <span><a href="{{ url_for('terms_of_service') }}">Terms, DMCA &amp; Liability Shield</a> · <a href="https://novakornothing.com/terms.html">Legal &amp; ToS</a> · <a href="{{ url_for('specs_page') }}">Platform Specs</a> · <a href="{{ url_for('roi_dashboard') }}">ROI Calculator</a> · <a href="{{ url_for('compliance_center') }}">Security &amp; Privacy</a> · <a href="{{ url_for('schedule_consult') }}">Schedule Technical Consult</a> · <a href="{{ url_for('pilot_start') }}">30-Day Free Bundle</a></span>
       {% endif %}
     </div>
   </footer>

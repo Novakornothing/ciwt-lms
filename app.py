@@ -874,7 +874,7 @@ def inject_staff_nav():
             sections = ClassSection.query.join(Enrollment).filter(
                 Enrollment.user_id == current_user.id,
                 ClassSection.is_active == True,
-            ).order_by(ClassSection.name).all()
+            ).order_by(ClassSection.id).all()
             return {
                 'staff_nav_sections': [],
                 'staff_nav_courses': [],
@@ -3528,10 +3528,19 @@ def student_dashboard():
         except Exception as exc:
             db.session.rollback()
             print('learn home:', exc)
+    next_lab = course_labs_list[0] if course_labs_list else None
+    practice_href = None
+    if sections:
+        try:
+            practice_href = url_for('exam_sim_home', section_id=sections[0].id)
+        except Exception:
+            practice_href = url_for('practice_index')
     return render_template(
         'student_dashboard.html',
         chapters=chapters,
         course_labs_list=course_labs_list,
+        next_lab=next_lab,
+        practice_href=practice_href,
         sections=sections,
         progress=progress,
         gold_path=gold_path,
@@ -5061,27 +5070,34 @@ def api_tqi_comment(section_id):
     return jsonify({'ok': True, 'kind': kind})
 
 
+def _staff_sections_for(user):
+    """Active classes this instructor or admin can open, course title then class name."""
+    if user.role == 'admin':
+        sections = ClassSection.query.filter_by(is_active=True).all()
+    else:
+        cids = instructor_course_ids(user.id)
+        sections = ClassSection.query.filter(
+            ClassSection.is_active.is_(True),
+            db.or_(
+                ClassSection.instructor_id == user.id,
+                ClassSection.course_id.in_(cids or [0]),
+            ),
+        ).all()
+    return sorted(sections, key=lambda s: ((s.course.title if s.course else ''), s.name or ''))
+
+
 @app.route('/instructor')
 @login_required
 def instructor_dashboard():
     if current_user.role not in ('instructor', 'admin'):
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
-    if current_user.role == 'admin':
-        sections = ClassSection.query.filter_by(is_active=True).order_by(ClassSection.name).all()
-    else:
-        cids = instructor_course_ids(current_user.id)
-        sections = ClassSection.query.filter(
-            ClassSection.is_active.is_(True),
-            db.or_(
-                ClassSection.instructor_id == current_user.id,
-                ClassSection.course_id.in_(cids or [0]),
-            ),
-        ).order_by(ClassSection.name).all()
-        courses = Course.query.filter(Course.id.in_(cids)).order_by(Course.title).all() if cids else []
+    sections = _staff_sections_for(current_user)
     if current_user.role == 'admin':
         courses = Course.query.order_by(Course.title).all()
-    sections = sorted(sections, key=lambda s: ((s.course.title if s.course else ''), s.name or ''))
+    else:
+        cids = instructor_course_ids(current_user.id)
+        courses = Course.query.filter(Course.id.in_(cids)).order_by(Course.title).all() if cids else []
     tqi_by_id = {}
     for s in sections:
         try:
@@ -5099,6 +5115,17 @@ def instructor_dashboard():
     overview = _instructor_overview(sections)
     return render_template('instructor_dashboard.html', sections=sections, courses=courses, tqi_by_id=tqi_by_id, briefs=briefs,
                            **overview)
+
+
+@app.route('/instructor/students')
+@login_required
+def instructor_students():
+    """Full roster. It used to be a tab on the instructor home."""
+    if current_user.role not in ('instructor', 'admin'):
+        flash('Access denied.', 'danger')
+        return redirect(url_for('index'))
+    sections = _staff_sections_for(current_user)
+    return render_template('instructor_students.html', sections=sections, **_instructor_overview(sections))
 
 
 def _instructor_roster(sections):
@@ -6216,30 +6243,64 @@ def admin_test_analytics():
 # sub-nav (templates/_admin_nav.html). The old single long page lived at /admin with #anchors; the overview
 # forwards those anchors to the matching sub-page, so bookmarks keep working.
 ADMIN_TABS = [
-    ('admin_dashboard', 'Overview', 'bi-speedometer2'),
-    ('admin_people', 'Users & Sections', 'bi-people'),
-    ('admin_exports', 'Exports', 'bi-box-arrow-down'),
-    ('admin_tools', 'More tools', 'bi-tools'),
+    ('admin_dashboard', 'Home', 'bi-house-door'),
+    ('admin_people', 'People', 'bi-people'),
+    ('admin_classes', 'Courses', 'bi-journal-bookmark'),
+    ('admin_reports', 'Reports', 'bi-bar-chart'),
+    ('admin_tools', 'Settings', 'bi-gear'),
 ]
-# Pages reached from "More tools" keep that tab highlighted; Users & Sections covers people + classes.
-ADMIN_TAB_GROUP = {'admin_classes': 'admin_people', 'admin_people': 'admin_people', 'admin_dashboard': 'admin_dashboard',
-                   'admin_exports': 'admin_exports', 'cmi5.admin_cmi5_registration': 'admin_exports'}
-ADMIN_MORE_TOOLS = [
-    ('admin_curriculum', 'Curriculum', 'What each course contains and who can teach it.'),
-    ('admin_tqi', 'Results & ROI', 'Training quality packets by class.'),
-    ('admin_roi', 'ROI calculator', 'Estimate savings for your seat count.'),
+# Nested pages keep their parent highlighted in breadcrumbs.
+ADMIN_TAB_GROUP = {
+    'admin_dashboard': 'admin_dashboard',
+    'admin_people': 'admin_people',
+    'admin_classes': 'admin_courses',
+    'admin_curriculum': 'admin_courses',
+    'admin_reports': 'admin_reports',
+    'admin_tqi': 'admin_reports',
+    'admin_roi': 'admin_reports',
+    'admin_outcomes': 'admin_reports',
+    'admin_teaching_time': 'admin_reports',
+    'admin_test_analytics': 'admin_reports',
+    'instructor_analytics_hub': 'admin_reports',
+    'admin_tools': 'admin_tools',
+    'admin_exports': 'admin_tools',
+    'cmi5.admin_cmi5_registration': 'admin_tools',
+    'admin_institutions': 'admin_tools',
+    'admin_lti': 'admin_tools',
+    'admin_privacy': 'admin_tools',
+    'admin_ferpa': 'admin_tools',
+    'admin_audit_log': 'admin_tools',
+    'admin_audit': 'admin_tools',
+    'admin_compliance': 'admin_tools',
+    'admin_readiness': 'admin_tools',
+    'admin_tickets': 'admin_tickets',
+    'admin_ticket_detail': 'admin_tickets',
+}
+ADMIN_REPORTS = [
     ('admin_outcomes', 'Outcomes', 'Pass rates, Exam Readiness, and Skill Mastery by class.'),
-    ('admin_institutions', 'Institutions', 'Campuses and single sign-on.'),
-    ('admin_lti', 'LMS connections (LTI 1.3)', 'Connect Canvas, Moodle, Blackboard, or D2L.'),
+    ('admin_tqi', 'Results and ROI', 'Training quality packets by class.'),
+    ('admin_roi', 'Savings estimate', 'Estimated lab savings for your seat count.'),
+    ('admin_teaching_time', 'Teaching time', 'Instructor time by class.'),
+    ('admin_test_analytics', 'Test analytics', 'Item difficulty and flags.'),
+    ('instructor_analytics_hub', 'Score hub', 'Compare classes inside a course.'),
+]
+ADMIN_SETTINGS = [
+    ('admin_exports', 'Exports', 'cmi5, xAPI, and SCORM packages, plus record CSV.'),
+    ('admin_institutions', 'Branding', 'School name, logo, colors, and campus sign-on.'),
+    ('admin_lti', 'Integrations', 'Connect Canvas, Moodle, Blackboard, or D2L.'),
     ('admin_privacy', 'Privacy', 'Export or delete a student record.'),
     ('admin_ferpa', 'FERPA', 'Directory information and disclosures.'),
     ('admin_audit_log', 'Audit log', 'Tamper-evident record of sensitive actions.'),
     ('admin_audit', 'Recent activity', 'The last 300 audit events, newest first.'),
-    ('admin_tickets', 'Content tickets', 'Reported lesson issues.'),
-    ('admin_teaching_time', 'Teaching time', 'Instructor time by class.'),
-    ('admin_test_analytics', 'Test analytics', 'Item difficulty and flags.'),
-    ('admin_compliance', 'Security & Section 508', 'Security, privacy, and accessibility packet.'),
-    ('admin_readiness', 'System health', 'Developer diagnostics and production checks.'),
+    ('admin_compliance', 'Security and accessibility', 'Security, privacy, and accessibility packet.'),
+    ('admin_readiness', 'System health', 'Production checks.'),
+    ('admin_backup_db', 'Backup database', 'Download a copy of the database.'),
+    ('demo_guide', 'Demo guide', 'How the sample accounts work.'),
+    ('gaps', 'Platform architecture', 'How the pieces fit together.'),
+]
+ADMIN_MORE_TOOLS = ADMIN_REPORTS + ADMIN_SETTINGS + [
+    ('admin_curriculum', 'Course contents', 'What each course contains and who can teach it.'),
+    ('admin_tickets', 'Lesson issues', 'Reported mistakes and gaps in lessons and tests.'),
 ]
 
 
@@ -6296,10 +6357,40 @@ def admin_dashboard():
         'tickets_open': CurriculumTicket.query.filter(CurriculumTicket.status.in_(('open', 'in_progress'))).count(),
     }
     stats.update(_admin_overview_cards(sections))
-    return render_template('admin_dashboard.html', admin_tab='admin_dashboard', stats=stats)
+    setup = _admin_setup_checklist(stats)
+    courses = Course.query.order_by(Course.title).all()
+    return render_template('admin_dashboard.html', admin_tab='admin_dashboard', stats=stats,
+                           setup=setup, courses=courses)
 
 
 LAB_SEAT_COST_PER_YEAR = round(460 * 0.33)   # cloud VM lab seat in the ROI model (compliance_roi_pilot)
+
+
+def _table_count(name):
+    try:
+        return int(db.session.execute(db.text(f'SELECT COUNT(*) FROM {name}')).scalar() or 0)
+    except Exception:
+        db.session.rollback()
+        return None
+
+
+def _admin_setup_checklist(stats):
+    """Platform setup. Hidden once every item is done."""
+    items = [
+        {'label': 'Add a course', 'done': stats['courses'] > 0, 'href': url_for('admin_curriculum')},
+        {'label': 'Create a class', 'done': stats['classes_active'] > 0, 'href': url_for('admin_classes')},
+        {'label': 'Add an instructor', 'done': stats['instructors'] > 0, 'href': url_for('admin_people', role='instructor')},
+        {'label': 'Enroll students', 'done': stats['seats'] > 0, 'href': url_for('admin_people', role='student')},
+    ]
+    n_lti = _table_count('lti_platform')
+    if n_lti is not None:
+        items.append({'label': 'Connect another LMS', 'done': n_lti > 0, 'href': url_for('admin_lti')})
+    n_school = _table_count('institution')
+    if n_school is not None:
+        items.append({'label': 'Add your school name', 'done': n_school > 0, 'href': url_for('admin_institutions')})
+    if all(i['done'] for i in items):
+        return []
+    return items
 
 
 def _admin_overview_cards(sections):
@@ -6348,12 +6439,28 @@ def admin_tools():
     if r:
         return r
     tools = []
-    for ep, label, desc in ADMIN_MORE_TOOLS:
+    for ep, label, desc in ADMIN_SETTINGS:
         try:
             tools.append({'url': url_for(ep), 'label': label, 'desc': desc})
         except Exception:
             continue
-    return render_template('admin_tools.html', admin_tab='admin_tools', tools=tools,
+    return render_template('admin_tools.html', admin_tab='admin_tools', tools=tools)
+
+
+@app.route('/admin/reports')
+@login_required
+@role_required('admin')
+def admin_reports():
+    r = _admin_instructor_mode_redirect()
+    if r:
+        return r
+    tools = []
+    for ep, label, desc in ADMIN_REPORTS:
+        try:
+            tools.append({'url': url_for(ep), 'label': label, 'desc': desc})
+        except Exception:
+            continue
+    return render_template('admin_reports.html', admin_tab='admin_reports', tools=tools,
                            teach_by_class=_teaching_by_class()[:5], fmt_seconds=_fmt_seconds)
 
 

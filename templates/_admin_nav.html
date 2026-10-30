@@ -1,21 +1,25 @@
-{# Admin page header + sub-navigation (Phase 1: Overview · Users & Sections · Exports · More tools).
-   Set admin_tab (endpoint) in the view; pass title/lede with {% with title=..., lede=... %}{% include '_admin_nav.html' %}{% endwith %}. #}
-{% set _grp = (admin_tab_group or {}).get(admin_tab, 'admin_tools') if admin_tab else none %}
-<div class="page-hero admin-hero">
-  <div class="u-eyebrow small text-uppercase mb-1">Admin</div>
-  <h1 class="h3 mb-1">{{ title }}</h1>
-  {% if lede %}<p class="mb-0">{{ lede }}</p>{% endif %}
-</div>
-<nav class="admin-tabs chip-scroll mb-2" aria-label="Admin sections">
-  {% for ep, label, icon in admin_tabs %}
-  <a class="chip-link" href="{{ url_for(ep) }}"{% if _grp == ep %} aria-current="page"{% endif %}><i class="bi {{ icon }}" aria-hidden="true"></i> {{ label }}</a>
-  {% endfor %}
-</nav>
-{% if _grp == 'admin_people' %}
-<nav class="admin-subtabs chip-scroll mb-3" aria-label="Users and sections">
-  <a class="chip-link" href="{{ url_for('admin_people') }}"{% if admin_tab == 'admin_people' %} aria-current="true"{% endif %}>Users</a>
-  <a class="chip-link" href="{{ url_for('admin_classes') }}"{% if admin_tab == 'admin_classes' %} aria-current="true"{% endif %}>Sections</a>
-</nav>
-{% elif _grp == 'admin_tools' and admin_tab != 'admin_tools' %}
-<p class="small mb-3"><a href="{{ url_for('admin_tools') }}">← All tools</a></p>
-{% else %}<div class="mb-3"></div>{% endif %}
+{# Page title, one-line purpose, and breadcrumbs for nested admin pages.
+   The old chip tab bar is gone: Home, People, Courses, Reports, Settings, and Lesson issues are the sidebar. #}
+{% set _grp = (admin_tab_group or {}).get(admin_tab, '') if admin_tab else '' %}
+{% set _top = admin_tab in ('admin_dashboard', 'admin_people', 'admin_classes', 'admin_tools', 'admin_reports', 'admin_tickets') %}
+<header class="page-intro">
+  {% if admin_tab and not _top %}
+  <nav aria-label="Breadcrumb">
+    <ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Home</a></li>
+      {% if _grp == 'admin_reports' %}
+      <li class="breadcrumb-item"><a href="{{ url_for('admin_reports') }}">Reports</a></li>
+      {% elif _grp == 'admin_tools' %}
+      <li class="breadcrumb-item"><a href="{{ url_for('admin_tools') }}">Settings</a></li>
+      {% elif _grp == 'admin_courses' %}
+      <li class="breadcrumb-item"><a href="{{ url_for('admin_classes') }}">Courses</a></li>
+      {% elif _grp == 'admin_people' %}
+      <li class="breadcrumb-item"><a href="{{ url_for('admin_people') }}">People</a></li>
+      {% endif %}
+      <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+    </ol>
+  </nav>
+  {% endif %}
+  <h1 class="page-intro-title">{{ title }}</h1>
+  {% if lede %}<p class="page-intro-purpose">{{ lede }}</p>{% endif %}
+</header>
