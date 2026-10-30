@@ -1,0 +1,6 @@
+[begin] (Novak Linux)
+  [exec] (Terminal) {xterm -fn 7x14 -geometry 80x24}
+  [exec] (Files) {nfiles /root}
+  [exec] (Editor) {nedit}
+  [exec] (Settings) {nsettings}
+[end]

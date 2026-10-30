@@ -495,6 +495,16 @@ def _shq(s):
     return "'" + str(s).replace("'", "'\\''") + "'"
 
 
+def fill(text, state):
+    """Replace {{name}} from state['gui_vars'] (GUI labs). Other labs have no placeholders."""
+    if not text or "{{" not in str(text):
+        return text
+    vars_ = (state or {}).get("gui_vars") or {}
+    for key, val in vars_.items():
+        text = str(text).replace("{{" + str(key) + "}}", str(val))
+    return text
+
+
 _HELPERS = r"""_c(){ ( eval "$2" ) </dev/null >/dev/null 2>&1 & W=$!; i=0; L=$(( ${3:-3} * 10 ))
 while kill -0 $W 2>/dev/null && [ $i -lt $L ]; do usleep 100000; i=$((i+1)); done
 if kill -0 $W 2>/dev/null; then kill $W 2>/dev/null; echo "c_$1 t"; elif wait $W; then echo "c_$1 1"; else echo "c_$1 0"; fi; }
@@ -511,9 +521,9 @@ def probe_script(state, lab=None, machine=None):
     for c in lab["vm_checks"]:
         if not c.get("sh") or (c.get("on") or names[0]) != machine:
             continue
-        lines.append(f"_c {c['id']} {_shq(c['sh'])} {int(c.get('secs') or 3)}")
+        lines.append(f"_c {c['id']} {_shq(fill(c['sh'], state))} {int(c.get('secs') or 3)}")
         if c.get("show"):
-            lines.append(f"_v {c['id']} {_shq(c['show'])}")
+            lines.append(f"_v {c['id']} {_shq(fill(c['show'], state))}")
     lines += ["echo end", "} > /mnt/.ciwt-result 2>&1"]
     return _HELPERS + "\n".join(lines) + "\n"
 
@@ -654,7 +664,7 @@ def grade(lab, state, done, probes, booted=True, fabric=None):
             done.append(oid)
         elif not ok and oid != "boot" and oid not in done:
             v = re.sub(r"^/mnt/\.ciwt-probe: (eval: )?(line \d+: )?", "", vals.get("v_" + oid, "").strip())
-            msg = (c.get("why") or "").replace("{v}", v or "?")
+            msg = fill(c.get("why") or "", state).replace("{v}", v or "?")
             if vals.get("c_" + oid) == "t":   # r5: the watchdog stopped it — say so, slow phones are not wrong answers
                 msg += (f" (This check was stopped after {int(c.get('secs') or 3)} s on this device, so it may only be slow: "
                         "wait until every VM shows its prompt, then press Check my work again.)")

@@ -1,0 +1,26 @@
+#!/bin/sh
+# novak-user unlock NAME | sudo NAME
+set -e
+cmd=$1
+name=$2
+[ -n "$name" ] || { echo "usage: novak-user unlock|sudo NAME"; exit 1; }
+case "$cmd" in
+  unlock)
+    passwd -u "$name"
+    echo "unlocked $name"
+    passwd -S "$name"
+    ;;
+  sudo)
+    grep -q '^sudo:' /etc/group || echo 'sudo:x:27:' >> /etc/group
+    if id -nG "$name" 2>/dev/null | tr ' ' '\n' | grep -qx sudo; then
+      echo "$name already in sudo"
+    else
+      usermod -aG sudo "$name"
+      echo "granted sudo to $name"
+    fi
+    ;;
+  *)
+    echo "usage: novak-user unlock|sudo NAME"
+    exit 1
+    ;;
+esac

@@ -8,7 +8,7 @@
       <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
         <div>
           <div class="fw-semibold">
-            <span class="badge {{ 'text-bg-primary' if lab.kind == 'linuxgui' else 'text-bg-dark' }} me-1">{{ 'UBUNTU GNOME GUI + BASH' if lab.kind == 'linuxgui' else lab.kind|upper }}</span>{{ lab.title }}
+            <span class="badge {{ 'text-bg-primary' if lab.kind == 'linuxgui' else 'text-bg-dark' }} me-1">{{ 'LIVE LINUX DESKTOP' if lab.kind == 'linuxgui' else lab.kind|upper }}</span>{{ lab.title }}
           </div>
           <div class="small text-muted mt-1">{{ lab.align or lab.blurb }}</div>
         </div>

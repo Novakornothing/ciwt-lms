@@ -1,0 +1,15 @@
+#!/bin/sh
+# novak-log rotate — keep a copy, then shrink the live message log
+set -e
+case "$1" in
+  rotate)
+    [ -f /var/log/messages ] || : > /var/log/messages
+    cp /var/log/messages /var/log/messages.1
+    : > /var/log/messages
+    echo "rotated /var/log/messages to /var/log/messages.1"
+    ;;
+  *)
+    echo "usage: novak-log rotate"
+    exit 1
+    ;;
+esac

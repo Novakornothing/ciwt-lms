@@ -11,3 +11,8 @@ Novak LMS™ Virtual Machine Guest Image Upstream Source Pointer
    - BusyBox 1.36.1 source: https://busybox.net/downloads/busybox-1.36.1.tar.bz2
    - Alpine Linux v3.20 x86 packages: https://dl-cdn.alpinelinux.org/alpine/v3.20/main/x86/
    - Complete reproducible build script & config: tools/vm_image/build.sh
+
+3. Desktop guest (novak-gui.bin) and saved state (novak-gui.state.gz):
+   - Same kernel line and Alpine v3.20 x86 packages, plus X.Org, Fluxbox, and the MIT desktop tools in tools/vm_gui/.
+   - Notes and the display caveat: docs/VM_GUI.md
+   - Licences: static/vendor/v86/LICENSES.md

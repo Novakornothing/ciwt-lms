@@ -1,0 +1,39 @@
+#!/bin/sh
+# novak-pkg update | add NAME | cron MINUTE COMMAND
+set -e
+case "$1" in
+  update)
+    apk update
+    mkdir -p /var/lib/novak
+    echo OK > /var/lib/novak/apk-updated
+    echo "package index updated"
+    ;;
+  add)
+    name=$2
+    [ -n "$name" ] || { echo "usage: novak-pkg add NAME"; exit 1; }
+    apk add "$name"
+    echo "installed $name"
+    ;;
+  cron)
+    minute=$2
+    shift 2
+    cmd=$*
+    [ -n "$minute" ] && [ -n "$cmd" ] || { echo "usage: novak-pkg cron MINUTE COMMAND"; exit 1; }
+    mkdir -p /var/spool/cron/crontabs /usr/local/bin
+    if [ ! -x /usr/local/bin/backup-verify.sh ]; then
+      printf '%s\n' '#!/bin/sh' 'echo backup-verify ok' > /usr/local/bin/backup-verify.sh
+      chmod 755 /usr/local/bin/backup-verify.sh
+    fi
+    line="$minute * * * * $cmd"
+    touch /var/spool/cron/crontabs/root
+    grep -qxF "$line" /var/spool/cron/crontabs/root || echo "$line" >> /var/spool/cron/crontabs/root
+    if ! pidof crond >/dev/null 2>&1; then
+      crond -L /var/log/crond.log >/dev/null 2>&1
+    fi
+    echo "cron: $line"
+    ;;
+  *)
+    echo "usage: novak-pkg update|add|cron"
+    exit 1
+    ;;
+esac

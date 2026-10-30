@@ -1,0 +1,38 @@
+#!/bin/sh
+# novak-proc list | stop NAME | swappiness N
+set -e
+case "$1" in
+  list)
+    for c in /proc/[0-9]*/comm; do
+      [ -r "$c" ] || continue
+      pid=${c#/proc/}
+      pid=${pid%/comm}
+      name=$(cat "$c" 2>/dev/null) || continue
+      echo "$pid $name"
+    done
+    ;;
+  stop)
+    name=$2
+    [ -n "$name" ] || { echo "usage: novak-proc stop NAME"; exit 1; }
+    n=0
+    for c in /proc/[0-9]*/comm; do
+      [ "$(cat "$c" 2>/dev/null)" = "$name" ] || continue
+      pid=${c#/proc/}; pid=${pid%/comm}
+      kill "$pid" 2>/dev/null || true
+      n=$((n+1))
+    done
+    echo "stopped $n process(es) named $name"
+    ;;
+  swappiness)
+    val=$2
+    [ -n "$val" ] || { echo "usage: novak-proc swappiness N"; exit 1; }
+    sysctl -w "vm.swappiness=$val" >/dev/null
+    mkdir -p /etc/sysctl.d
+    printf 'vm.swappiness=%s\n' "$val" > /etc/sysctl.d/99-workstation.conf
+    echo "vm.swappiness=$val"
+    ;;
+  *)
+    echo "usage: novak-proc list|stop|swappiness"
+    exit 1
+    ;;
+esac

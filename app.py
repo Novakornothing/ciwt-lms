@@ -2552,13 +2552,13 @@ def oss_licenses_json():
                 "notes": "100% Novak Learning proprietary IP and MIT clean-room shim; zero GPLv3 code in runtime."
             },
             {
-                "name": "Ubuntu 24.04 GNOME 46 GUI + Bash Split-View Workbenches, Windows 11 GUI & Cisco IOS Simulators",
+                "name": "Live Linux desktop labs, Windows 11 GUI & Cisco IOS simulators",
                 "artifacts": ["labs_linux_gui.py", "static/js/lab-linux-gui.js", "labs_gui.py", "interactive_labs.py"],
                 "version": "Wave 6",
                 "license": "Proprietary",
                 "commercial_safe": True,
                 "whitelabel_safe": True,
-                "notes": "100% Novak Learning proprietary state machines."
+                "notes": "Lab pages and graders are Novak LMS code. The guest desktop image runs only inside the VM and is not linked into the host; see static/vendor/v86/LICENSES.md."
             },
             {
                 "name": "Bootstrap 5.3.3 & Bootstrap Icons 1.11.3",

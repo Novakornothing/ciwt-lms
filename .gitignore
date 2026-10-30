@@ -14,6 +14,7 @@ static/vendor/v86/LICENSE.v86
 # the CIWT lab image is built here (tools/vm_image/build.sh) and committed so the labs work after a plain checkout
 !static/vendor/v86/ciwt-linux.bin
 !static/vendor/v86/novak-linux.bin
+!static/vendor/v86/novak-gui.bin
 backups/
 .env
 *.db-wal

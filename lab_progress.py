@@ -374,14 +374,19 @@ def register(app, db, deps):
                 back = None
         boot = payload_for(row, lab, state, done)
         boot['transcript'] = _j(row.transcript_json, [])
-        if lab.get('kind') == 'vm':
+        if lab.get('vm_checks'):
             boot['vm_nonce'] = state.get('nonce')
         tpl = {'win11gui': 'win11_gui_lab.html', 'linuxgui': 'linux_gui_lab.html', 'activity': 'activity_lab.html', 'vm': 'vm_lab.html'}.get(lab.get('kind'), 'interactive_lab.html')
         vm_ok = None
-        if lab.get('kind') == 'vm':
+        if lab.get('vm'):
             import os
             vdir = os.path.join(app.static_folder, 'vendor', 'v86')
-            vm_ok = all(os.path.isfile(os.path.join(vdir, f)) for f in ('libv86.js', 'v86.wasm', 'seabios.bin', 'vgabios.bin', lab['vm']['image']))
+            need = ['libv86.js', 'v86.wasm', 'seabios.bin', 'vgabios.bin']
+            if lab.get('kind') == 'linuxgui':
+                need.append(lab['vm'].get('state') or lab['vm']['image'])
+            else:
+                need.append(lab['vm']['image'])
+            vm_ok = all(os.path.isfile(os.path.join(vdir, f)) for f in need)
         fallback_labs = [x for x in (RT.get_lab(f) for f in lab.get('fallback') or []) if x]
         real_labs = [x for x in RT.VM.VM_LABS if lab['id'] in (x.get('fallback') or [])]
         # r5: a simulator opened from a real-VM page that is not a catalogue twin (a scenario stage such as scn-dns-fix)
@@ -550,7 +555,7 @@ def register(app, db, deps):
         lab, err = lab_or_json_404(lab_id)
         if err:
             return err
-        if lab.get('kind') != 'vm':
+        if not lab.get('vm_checks'):
             return jsonify({'error': 'not a VM lab'}), 400
         row = get_row(lab_id)
         state, done = load(row)
@@ -572,7 +577,7 @@ def register(app, db, deps):
         lab, err = lab_or_json_404(lab_id)
         if err:
             return err
-        if lab.get('kind') != 'vm':
+        if not lab.get('vm_checks'):
             return jsonify({'error': 'not a VM lab'}), 400
         row = get_row(lab_id)
         state, done = load(row)
@@ -604,10 +609,11 @@ def register(app, db, deps):
             return err
         row = get_row(lab_id)
         state, _ = load(row)
-        if lab.get('kind') != 'vm':
+        if not lab.get('vm_checks'):
             return jsonify({'error': 'not a VM lab'}), 400
         scripts = RT.VM.probe_scripts(state, lab)
-        return jsonify({'script': scripts[RT.VM.machines(lab)[0]], 'scripts': scripts})
+        return jsonify({'script': scripts[RT.VM.machines(lab)[0]], 'scripts': scripts,
+                        'setup': RT.LLG.setup_script(lab, state) if lab.get('kind') == 'linuxgui' else ''})
 
     @login_required
     def interactive_lab_mark_done(lab_id):
