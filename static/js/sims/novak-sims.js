@@ -818,6 +818,177 @@
         });
         stage.appendChild(list);
       }
+    },
+    match: {
+      sample: function () {
+        return { type: 'match', instruction: 'Match each term to the group it belongs in, then check.',
+          params: { buckets: ['Keep', 'Replace'], items: [
+            { id: 'i0', text: 'Known-good cable', bucket: 'Keep' }, { id: 'i1', text: 'Swollen capacitor', bucket: 'Replace' },
+            { id: 'i2', text: 'Current driver', bucket: 'Keep' }, { id: 'i3', text: 'Burned connector', bucket: 'Replace' }
+          ] },
+          goal: { items: { i0: 'Keep', i1: 'Replace', i2: 'Keep', i3: 'Replace' } } };
+      },
+      initial: function () { return { placed: {} }; },
+      solved: function (spec) { return { placed: Object.assign({}, spec.goal.items) }; },
+      evaluate: function (spec, state) {
+        var ok = sortOk(spec, state);
+        return { ok: ok, message: ok ? 'Every term is in the right group.' : 'Some terms are in the wrong group. Change them and check again.' };
+      },
+      render: function (stage, spec, state, paint) {
+        state.placed = state.placed || {};
+        var list = el('ul', { class: 'sim-sort' });
+        (spec.params.items || []).forEach(function (item) {
+          var li = el('li', {});
+          li.appendChild(el('span', { class: 'sim-order-text' }, item.text));
+          var picks = el('div', { class: 'sim-choices', role: 'group', 'aria-label': 'Group for ' + item.text });
+          (spec.params.buckets || []).forEach(function (bucket) {
+            var b = btn(bucket, 'm-' + item.id + '-' + bucket, state.placed[item.id] === bucket);
+            b.setAttribute('aria-label', item.text + ', ' + bucket);
+            b.addEventListener('click', function () {
+              state.placed[item.id] = bucket;
+              state._focus = 'm-' + item.id + '-' + bucket;
+              paint();
+            });
+            picks.appendChild(b);
+          });
+          li.appendChild(picks);
+          list.appendChild(li);
+        });
+        stage.appendChild(list);
+      }
+    },
+    pairs: {
+      sample: function () {
+        return { type: 'pairs', instruction: 'Sort one card at a time into the right pile, then check.',
+          params: { buckets: ['Keep', 'Replace'], items: [
+            { id: 'i0', text: 'Known-good cable', bucket: 'Keep' }, { id: 'i1', text: 'Swollen capacitor', bucket: 'Replace' },
+            { id: 'i2', text: 'Current driver', bucket: 'Keep' }, { id: 'i3', text: 'Burned connector', bucket: 'Replace' }
+          ] },
+          goal: { items: { i0: 'Keep', i1: 'Replace', i2: 'Keep', i3: 'Replace' } } };
+      },
+      initial: function () { return { cursor: 0, placed: {} }; },
+      solved: function (spec) { return { cursor: (spec.params.items || []).length, placed: Object.assign({}, spec.goal.items) }; },
+      evaluate: function (spec, state) {
+        var items = spec.params.items || [];
+        if (Object.keys(state.placed || {}).length < items.length) return { ok: false, message: 'Place every card, then check.' };
+        var ok = sortOk(spec, state);
+        return { ok: ok, message: ok ? 'Every card is in the right pile.' : 'Some cards are in the wrong pile. Reset and try the missed ones again.' };
+      },
+      render: function (stage, spec, state, paint) {
+        var items = spec.params.items || [];
+        state.placed = state.placed || {};
+        var done = state.cursor >= items.length;
+        var item = done ? null : items[state.cursor];
+        stage.appendChild(el('p', { class: 'sim-note' }, done ? 'Every card is placed.' : ('Card ' + (state.cursor + 1) + ' of ' + items.length)));
+        if (item) {
+          stage.appendChild(el('p', { class: 'sim-read' }, item.text));
+          var picks = el('div', { class: 'sim-choices', role: 'group', 'aria-label': 'Pile for ' + item.text });
+          (spec.params.buckets || []).forEach(function (bucket) {
+            var b = btn(bucket, 'p-' + bucket);
+            b.setAttribute('aria-label', 'Place ' + item.text + ' in ' + bucket);
+            b.addEventListener('click', function () {
+              state.placed[item.id] = bucket;
+              state.cursor += 1;
+              state._focus = 'p-' + bucket;
+              paint();
+            });
+            picks.appendChild(b);
+          });
+          stage.appendChild(picks);
+        }
+      }
+    },
+    classify: {
+      sample: function () {
+        return { type: 'classify', instruction: 'Sort each item into the matching group, then check.',
+          params: { buckets: ['Input', 'Output', 'Both'], items: [
+            { id: 'i0', text: 'Keyboard', bucket: 'Input' }, { id: 'i1', text: 'Printer', bucket: 'Output' },
+            { id: 'i2', text: 'Touchscreen', bucket: 'Both' }, { id: 'i3', text: 'Speaker', bucket: 'Output' }
+          ] },
+          goal: { items: { i0: 'Input', i1: 'Output', i2: 'Both', i3: 'Output' } } };
+      },
+      initial: function () { return { placed: {} }; },
+      solved: function (spec) { return { placed: Object.assign({}, spec.goal.items) }; },
+      evaluate: function (spec, state) {
+        var ok = sortOk(spec, state);
+        return { ok: ok, message: ok ? 'Every item is in the right group.' : 'Some items are in the wrong group. Change them and check again.' };
+      },
+      render: function (stage, spec, state) { renderSort(stage, spec, state); }
+    },
+    sequence: {
+      sample: function () {
+        return { type: 'sequence', instruction: 'Put these steps in the order this concept uses, then check.',
+          params: { steps: ['Name the symptom', 'Test one cause', 'Record the result'], start: ['Record the result', 'Test one cause', 'Name the symptom'] },
+          goal: { order: ['Name the symptom', 'Test one cause', 'Record the result'] } };
+      },
+      initial: function (spec) { return { order: spec.params.start.slice() }; },
+      solved: function (spec) { return { order: spec.goal.order.slice() }; },
+      evaluate: function (spec, state) {
+        var ok = sameList(state.order, spec.goal.order);
+        return { ok: ok, message: ok ? 'That order matches this concept.' : 'Not yet. Move the steps, then check again.' };
+      },
+      render: function (stage, spec, state, paint) { renderOrder(stage, state, paint, 'Move earlier'); }
+    },
+    trace: {
+      sample: function () {
+        return { type: 'trace', instruction: 'Tap the steps in the order this concept uses, then check.',
+          params: { steps: ['One', 'Two', 'Three', 'Four', 'Five'], start: ['Five', 'Four', 'Three', 'Two', 'One'] },
+          goal: { order: ['One', 'Two', 'Three', 'Four', 'Five'] } };
+      },
+      initial: function (spec) { return { picked: [], pool: spec.params.start.slice() }; },
+      solved: function (spec) { return { picked: spec.goal.order.slice(), pool: [] }; },
+      evaluate: function (spec, state) {
+        if ((state.picked || []).length < spec.goal.order.length) return { ok: false, message: 'Tap every step first.' };
+        var ok = sameList(state.picked, spec.goal.order);
+        return { ok: ok, message: ok ? 'That trace matches this concept.' : 'That order is off. Undo and tap the steps again.' };
+      },
+      render: function (stage, spec, state, paint) {
+        var built = el('ol', { class: 'sim-order', 'aria-label': 'Steps you have chosen' });
+        (state.picked || []).forEach(function (step, idx) {
+          built.appendChild(el('li', {}, (idx + 1) + '. ' + step));
+        });
+        if (!(state.picked || []).length) built.appendChild(el('li', {}, 'Nothing chosen yet'));
+        stage.appendChild(built);
+        var undo = btn('Undo last', 'trace-undo');
+        undo.disabled = !(state.picked || []).length;
+        undo.addEventListener('click', function () {
+          var last = state.picked.pop();
+          if (last) state.pool.push(last);
+          state._focus = 'trace-undo';
+          paint();
+        });
+        stage.appendChild(undo);
+        var pool = el('div', { class: 'sim-choices', role: 'group', 'aria-label': 'Remaining steps' });
+        (state.pool || []).forEach(function (step, idx) {
+          var b = btn(step, 't-' + idx);
+          b.setAttribute('aria-label', 'Choose step: ' + step);
+          b.addEventListener('click', function () {
+            state.pool.splice(idx, 1);
+            state.picked.push(step);
+            paint();
+          });
+          pool.appendChild(b);
+        });
+        stage.appendChild(pool);
+      }
+    },
+    choose: {
+      sample: function () {
+        return { type: 'choose', instruction: 'Pick the line that matches this concept, then check.',
+          params: { stem: 'Which line is the safe habit?', options: ['Write the outcome in the ticket', 'Guess and reboot', 'Skip the note'], answer: 'Write the outcome in the ticket' },
+          goal: { answer: 'Write the outcome in the ticket' } };
+      },
+      initial: function () { return { choice: '' }; },
+      solved: function (spec) { return { choice: spec.goal.answer }; },
+      evaluate: function (spec, state) {
+        if (!state.choice) return { ok: false, message: 'Pick a line first.' };
+        var ok = state.choice === spec.goal.answer;
+        return { ok: ok, message: ok ? 'That line matches this concept.' : 'Not that line. Read the stem and pick again.' };
+      },
+      render: function (stage, spec, state, paint) {
+        stage.appendChild(el('p', { class: 'sim-read' }, spec.params.stem));
+        renderChoices(stage, state, 'choice', spec.params.options, paint, spec.params.stem);
+      }
     }
   };
 
@@ -883,7 +1054,7 @@
   }
 
   return {
-    TYPES: ['subnet', 'osi', 'ports', 'chmod', 'raid', 'pcbuild', 'boot', 'acl', 'dora', 'vlan', 'troubleshoot', 'cable', 'shell', 'cia', 'hash', 'phish', 'logs'],
+    TYPES: ['subnet', 'osi', 'ports', 'chmod', 'raid', 'pcbuild', 'boot', 'acl', 'dora', 'vlan', 'troubleshoot', 'cable', 'shell', 'cia', 'hash', 'phish', 'logs', 'match', 'pairs', 'classify', 'sequence', 'trace', 'choose'],
     sample: function (type) { return widgets[type].sample(); },
     initial: function (spec) { return widgets[spec.type].initial(spec); },
     solved: function (spec) { return widgets[spec.type].solved(spec); },

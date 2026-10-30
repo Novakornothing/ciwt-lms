@@ -9,40 +9,41 @@ import re
 TYPES = (
     'subnet', 'osi', 'ports', 'chmod', 'raid', 'pcbuild', 'boot', 'acl', 'dora',
     'vlan', 'troubleshoot', 'cable', 'shell', 'cia', 'hash', 'phish', 'logs',
+    'match', 'pairs', 'classify', 'sequence', 'trace', 'choose',
 )
 
 _TAG = re.compile(r'<[^>]+>')
 _WS = re.compile(r'\s+')
 _WORD = re.compile(r"\S+")
 
-# Lesson label -> widget. CLIENT reuses the ITSUP labels (8.x–13.x).
+# Lesson label -> widget, only where the whole lesson is that topic.
+# CLIENT reuses the ITSUP labels (8.x–13.x). Troubleshooting is not a lesson-wide default.
 _ITSUP = {
-    '1.1': 'troubleshoot', '1.2': 'troubleshoot', '1.3': 'troubleshoot', '1.4': 'troubleshoot',
-    '1.5': 'troubleshoot',
     '2.1': 'pcbuild', '2.2': 'boot', '2.3': 'pcbuild', '2.4': 'pcbuild', '2.5': 'boot', '2.6': 'shell',
-    '3.1': 'troubleshoot', '3.2': 'raid', '3.3': 'pcbuild', '3.4': 'cable', '3.5': 'troubleshoot',
-    '4.1': 'troubleshoot', '4.2': 'troubleshoot', '4.3': 'troubleshoot', '4.4': 'troubleshoot',
-    '5.1': 'subnet', '5.2': 'ports', '5.3': 'troubleshoot', '5.4': 'acl', '5.5': 'troubleshoot',
-    '6.1': 'troubleshoot', '6.2': 'troubleshoot', '6.3': 'vlan', '6.4': 'troubleshoot',
-    '7.1': 'troubleshoot', '7.2': 'troubleshoot', '7.3': 'troubleshoot', '7.4': 'troubleshoot',
-    '8.1': 'troubleshoot', '8.2': 'troubleshoot', '8.3': 'troubleshoot', '8.4': 'troubleshoot',
-    '9.1': 'shell', '9.2': 'shell', '9.3': 'troubleshoot', '9.4': 'troubleshoot',
+    '3.2': 'raid', '3.3': 'pcbuild', '3.4': 'cable',
+    '5.1': 'subnet', '5.2': 'ports', '5.4': 'acl',
+    '6.3': 'vlan',
+    '9.1': 'shell', '9.2': 'shell',
     '10.1': 'cia', '10.2': 'cia', '10.3': 'hash', '10.4': 'phish',
-    '11.1': 'troubleshoot', '11.2': 'troubleshoot', '11.3': 'troubleshoot', '11.4': 'logs',
-    '12.1': 'troubleshoot', '12.2': 'troubleshoot', '12.3': 'hash', '12.4': 'troubleshoot',
+    '11.4': 'logs',
+    '12.3': 'hash',
     '13.1': 'shell', '13.2': 'shell', '13.3': 'shell', '13.4': 'dora', '13.5': 'shell', '13.6': 'boot',
 }
 _NETOPS = {
-    '1.1': 'osi', '1.2': 'subnet', '1.3': 'ports', '1.4': 'troubleshoot',
-    '2.1': 'vlan', '2.2': 'vlan', '2.3': 'cable', '2.4': 'troubleshoot',
-    '3.1': 'troubleshoot', '3.2': 'troubleshoot', '3.3': 'troubleshoot', '3.4': 'troubleshoot',
-    '4.1': 'dora', '4.2': 'dora', '4.3': 'acl', '4.4': 'troubleshoot',
-    '5.1': 'logs', '5.2': 'cia', '5.3': 'acl', '5.4': 'troubleshoot',
-    '6.1': 'logs', '6.2': 'troubleshoot', '6.3': 'troubleshoot', '6.4': 'troubleshoot',
-    '9.1': 'shell', '9.2': 'troubleshoot', '9.3': 'shell', '9.4': 'troubleshoot',
-    '9.5': 'cable', '9.6': 'shell',
+    '1.1': 'osi', '1.2': 'subnet', '1.3': 'ports',
+    '2.1': 'vlan', '2.2': 'vlan', '2.3': 'cable',
+    '4.1': 'dora', '4.2': 'dora', '4.3': 'acl',
+    '5.1': 'logs', '5.2': 'cia', '5.3': 'acl',
+    '6.1': 'logs',
+    '9.1': 'shell', '9.3': 'shell', '9.5': 'cable', '9.6': 'shell',
 }
 _LESSON = {'ITSUP': _ITSUP, 'CLIENT': _ITSUP, 'NETOPS': _NETOPS}
+_TROUBLE_LESSONS = {('ITSUP', '5.3'), ('ITSUP', '7.1'), ('ITSUP', '7.2'), ('ITSUP', '7.3'), ('ITSUP', '7.4'),
+                    ('NETOPS', '6.2')}
+_TROUBLE_RE = re.compile(
+    r'troubleshoot|methodology|fault domain|isolation order|root cause|diagnos|identify the (problem|symptom)',
+    re.I)
+_LI = re.compile(r'<li[^>]*>(.*?)</li>', re.I | re.S)
 
 # Sid fragments that pin a specialty widget even when the lesson default differs.
 _SID = (
@@ -213,6 +214,12 @@ _REQUIRED = {
     'dora': (['mode', 'steps', 'start'], ['order']),
     'vlan': (['ports', 'frame', 'choices', 'answer'], ['answer']),
     'troubleshoot': (['mode'], []),
+    'match': (['buckets', 'items'], ['items']),
+    'pairs': (['buckets', 'items'], ['items']),
+    'classify': (['buckets', 'items'], ['items']),
+    'sequence': (['steps', 'start'], ['order']),
+    'trace': (['steps', 'start'], ['order']),
+    'choose': (['stem', 'options', 'answer'], ['answer']),
     'cable': (['shape', 'choices', 'answer'], ['answer']),
     'shell': (['expect', 'hint', 'commands', 'question', 'choices', 'answer'], ['command', 'answer']),
     'cia': (['buckets', 'items'], ['items']),
@@ -262,13 +269,46 @@ def _finish(kind, instruction, params, goal):
     return {'type': kind, 'instruction': _instr(instruction), 'params': params, 'goal': goal}
 
 
+def _steps_from_r3(entry):
+    html = ((entry.get('rungs') or {}).get('R3') or {}).get('html') or ''
+    steps = [plain(x) for x in _LI.findall(html)]
+    steps = [s for s in steps if s]
+    return steps if len(steps) >= 3 else None
+
+
+def _is_trouble(entry, widget):
+    if (entry.get('course'), entry.get('label')) in _TROUBLE_LESSONS and (widget or {}).get('type') == 'order':
+        return True
+    blob = ' '.join([
+        entry.get('heading') or '',
+        entry.get('sid') or '',
+        (widget or {}).get('prompt') or '',
+    ])
+    return bool(_TROUBLE_RE.search(blob)) and (widget or {}).get('type') == 'order'
+
+
 def _kind_for(entry):
     course, label, sid = entry['course'], entry['label'], entry.get('sid') or ''
     sid_l = sid.lower()
     for kind, bits in _SID:
         if any(b in sid_l for b in bits):
             return kind
-    return _LESSON.get(course, {}).get(label, 'troubleshoot')
+    mapped = _LESSON.get(course, {}).get(label)
+    if mapped:
+        return mapped
+    widget = ((entry.get('rungs') or {}).get('R4') or {}).get('widget') or {}
+    if _is_trouble(entry, widget):
+        return 'troubleshoot'
+    if widget.get('type') == 'order':
+        steps = _steps_of(widget) or []
+        return 'trace' if len(steps) >= 5 else 'sequence'
+    if widget.get('type') == 'sort':
+        names = [plain(b) for b in (widget.get('buckets') or {}) if plain(b)]
+        if len(names) >= 3:
+            return 'classify'
+        key = f'{course}|{label}|{sid}'
+        return 'pairs' if _rot(key, 2) else 'match'
+    return 'choose'
 
 
 def _steps_of(widget):
@@ -304,36 +344,42 @@ def _sort_of(widget):
     return names, items
 
 
-def _troubleshoot(entry, widget, key):
-    steps = _steps_of(widget)
-    if steps:
-        return _finish('troubleshoot', 'Put the steps in the order this concept uses, then check.',
-                       {'mode': 'order', 'steps': steps, 'start': _shuf(steps, key)},
-                       {'order': steps})
-    sort = _sort_of(widget)
-    if sort:
-        names, items = sort
-        return _finish('troubleshoot', 'Sort each item into the matching group, then check.',
-                       {'mode': 'sort', 'buckets': names, 'items': items},
-                       {'items': {it['id']: it['bucket'] for it in items}})
-    steps = list(_METHOD)
-    return _finish('troubleshoot', 'Put the troubleshooting steps in order, then check.',
-                   {'mode': 'order', 'steps': steps, 'start': _shuf(steps, key)},
+def _order_cfg(kind, steps, key, instruction):
+    return _finish(kind, instruction,
+                   {'mode': 'order', 'steps': steps, 'start': _shuf(steps, key)} if kind == 'troubleshoot'
+                   else {'steps': steps, 'start': _shuf(steps, key)},
                    {'order': steps})
 
 
-def _classifier(kind, widget, key, default_items, default_buckets, instruction):
-    sort = _sort_of(widget)
-    if sort and kind in ('cia', 'troubleshoot'):
-        names, items = sort
-        return _finish(kind, 'Sort each item into the matching group, then check.',
-                       {'buckets': names, 'items': items},
-                       {'items': {it['id']: it['bucket'] for it in items}})
-    items = [{'id': f'c{i}', 'text': text, 'bucket': bucket} for i, (text, bucket) in enumerate(default_items)]
-    items_view = _shuf(items, key)
+def _troubleshoot(entry, widget, key):
+    steps = _steps_of(widget) or _steps_from_r3(entry) or list(_METHOD)
+    return _order_cfg('troubleshoot', steps, key, 'Put the troubleshooting steps in order, then check.')
+
+
+def _grouped(kind, names, items, instruction):
     return _finish(kind, instruction,
-                   {'buckets': list(default_buckets), 'items': items_view},
+                   {'buckets': names, 'items': items},
                    {'items': {it['id']: it['bucket'] for it in items}})
+
+
+def _classifier(kind, key, default_items, default_buckets, instruction):
+    items = [{'id': f'c{i}', 'text': text, 'bucket': bucket} for i, (text, bucket) in enumerate(default_items)]
+    return _finish(kind, instruction,
+                   {'buckets': list(default_buckets), 'items': _shuf(items, key)},
+                   {'items': {it['id']: it['bucket'] for it in items}})
+
+
+def _choose(entry, key):
+    checks = ((entry.get('rungs') or {}).get('R4') or {}).get('checks') or entry.get('checks') or []
+    if not checks:
+        steps = list(_METHOD)
+        return _order_cfg('sequence', steps, key, 'Put these steps in the order this concept uses, then check.')
+    chk = checks[0]
+    options = [chk['correct']] + list(chk.get('wrong') or [])
+    stem = plain(chk.get('q') or '') or 'Which line matches this concept?'
+    return _finish('choose', 'Pick the line that matches this concept, then check.',
+                   {'stem': stem[:240], 'options': _shuf(options, key), 'answer': chk['correct']},
+                   {'answer': chk['correct']})
 
 
 def _build(entry):
@@ -405,9 +451,31 @@ def _build(entry):
         return _finish('shell', 'Run the safe command, read the output, then answer the check.',
                        spec, {'command': spec['expect'], 'answer': spec['answer']})
     if kind == 'cia':
-        return _classifier('cia', widget, key, _CIA,
+        return _classifier('cia', key, _CIA,
                            ('Confidentiality', 'Integrity', 'Availability'),
                            'Classify each case as confidentiality, integrity, or availability.')
+    if kind in ('match', 'pairs', 'classify'):
+        grouped = _sort_of(widget)
+        if not grouped:
+            return _choose(entry, key)
+        names, items = grouped
+        text = ('Sort one card at a time into the right pile, then check.' if kind == 'pairs'
+                else 'Match each term to the group it belongs in, then check.' if kind == 'match'
+                else 'Sort each item into the matching group, then check.')
+        return _grouped(kind, names, items, text)
+    if kind in ('sequence', 'trace', 'troubleshoot'):
+        steps = _steps_of(widget) or _steps_from_r3(entry)
+        if steps and kind == 'trace' and len(steps) < 5:
+            kind = 'sequence'
+        if steps and kind == 'sequence' and len(steps) >= 5:
+            kind = 'trace'
+        if not steps:
+            return _choose(entry, key)
+        if kind == 'troubleshoot':
+            return _order_cfg('troubleshoot', steps, key, 'Put the troubleshooting steps in order, then check.')
+        if kind == 'trace':
+            return _order_cfg('trace', steps, key, 'Tap the steps in the order this concept uses, then check.')
+        return _order_cfg('sequence', steps, key, 'Put these steps in the order this concept uses, then check.')
     if kind == 'hash':
         return _finish('hash', 'Change one character and confirm the teaching hash changes.',
                        {'start': 'backup-report'}, {'changed': True})
@@ -422,15 +490,20 @@ def _build(entry):
         answer = next(i for i, sev, src, text, hit in _LOGS if hit)
         return _finish('logs', 'Filter the lines and select the failed sign-in.',
                        {'lines': lines, 'answerId': answer}, {'pick': answer})
-    return _troubleshoot(entry, widget, key)
+    if kind == 'choose':
+        return _choose(entry, key)
+    return _choose(entry, key)
 
 
 _CACHE = {}
 
 
 def sim_for(entry):
-    """Widget config for one ladder section, or None when the entry is not a concept section."""
-    if not entry or entry.get('type') != 'section':
+    """Widget config for one ladder section, or None when the entry is not a concept section.
+
+    Cybersecurity (course code SEC) is owned by another branch and gets no config here.
+    """
+    if not entry or entry.get('type') != 'section' or entry.get('course') == 'SEC':
         return None
     key = (entry.get('course'), entry.get('label'), entry.get('sid'))
     if key not in _CACHE:
@@ -443,7 +516,7 @@ def mapped_sections():
     from curriculum_v2 import ladder as LD
     out = {}
     for key, entry in LD.ladder().items():
-        if entry.get('type') != 'section':
+        if entry.get('type') != 'section' or key[0] == 'SEC':
             continue
         out[key] = sim_for(entry)
     return out
@@ -502,8 +575,14 @@ def validate_config(cfg, where=''):
             errs.append(prefix + f'unknown troubleshoot mode {mode!r}')
     if kind == 'subnet' and params.get('startPrefix') == goal.get('prefix'):
         errs.append(prefix + 'subnet slider must not start on the answer')
-    if kind == 'dora' and params.get('start') == goal.get('order'):
+    if kind in ('dora', 'sequence', 'trace') and params.get('start') == goal.get('order'):
         errs.append(prefix + 'sequence must not start in the solved order')
+    if kind == 'choose' and params.get('answer') not in (params.get('options') or []):
+        errs.append(prefix + 'choose answer must be one of the options')
+    if kind in ('match', 'pairs', 'classify'):
+        items = params.get('items') or []
+        if len(params.get('buckets') or []) < 2 or len(items) < 4:
+            errs.append(prefix + 'group sim needs 2 groups and 4 items')
     if kind == 'shell':
         expect = params.get('expect')
         if expect not in (params.get('commands') or {}):

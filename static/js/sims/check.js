@@ -2,7 +2,7 @@
 var assert = require('assert');
 var S = require('./novak-sims.js');
 
-assert.strictEqual(S.TYPES.length, 17);
+assert.ok(S.TYPES.length >= 23, 'widget type count');
 S.TYPES.forEach(function (type) {
   var spec = S.sample(type);
   assert.strictEqual(spec.type, type);

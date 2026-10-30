@@ -8,22 +8,33 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_every_concept_section_has_a_valid_widget():
+    from curriculum_v2 import ladder as LD
     rows = mapped_sections()
     assert len(rows) >= 155
     by_course, by_type = coverage()
     assert by_course['ITSUP'] >= 1 and by_course['NETOPS'] >= 1 and by_course['CLIENT'] >= 1
+    assert 'SEC' not in by_course
+    assert not any(k[0] == 'SEC' for k in rows)
+    total = sum(by_course.values())
     assert set(by_type) == set(TYPES)
+    biggest = max(by_type.values())
+    assert biggest / total <= 0.20, (biggest, total, by_type)
     problems = []
     for key, cfg in rows.items():
         problems.extend(validate_config(cfg, f'{key[0]} {key[1]} {key[2]}'))
     assert problems == []
+    # A support-role section is not forced onto the troubleshooting sorter.
+    sample = next(cfg for (c, lab, sid), cfg in rows.items() if c == 'ITSUP' and lab == '1.1')
+    assert sample['type'] != 'troubleshoot'
+    sec_n = sum(1 for k, e in LD.ladder().items() if k[0] == 'SEC' and e.get('type') == 'section')
+    assert sec_n >= 1
 
 
 def test_widget_logic_passes_for_every_type():
     script = ROOT / 'static' / 'js' / 'sims' / 'check.js'
     proc = subprocess.run(['node', str(script)], capture_output=True, text=True, check=False)
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert 'ok 17 widget types' in proc.stdout
+    assert 'ok 23 widget types' in proc.stdout
 
 
 def _itsup_lesson(mod, label='1.1'):
@@ -95,7 +106,8 @@ def test_sim_check_records_one_mastery_observation(student, app, mod):
 def test_switcher_still_pins_the_reader():
     ui = (ROOT / 'static/js/novak-ui.js').read_text()
     lad = (ROOT / 'static/js/ladder.js').read_text()
-    assert "card.setAttribute('data-swap-quiet', '1')" in ui and 'keepReaderInPlace();' in ui
+    assert "box.setAttribute('data-swap-quiet', '1')" in ui and 'keepReaderInPlace();' in ui
+    assert 'Swap the section in view first' in ui
     assert "box.hasAttribute('data-swap-quiet')) moveFocus = false" in lad
     assert 'mountSims(box)' in lad
     assert 'scrollIntoView' not in (ROOT / 'static/js/sims/novak-sims.js').read_text()
