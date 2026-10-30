@@ -98,7 +98,7 @@ def test_placement_stops_early_and_builds_a_plan():
 def test_ticket_grade_is_deterministic_and_rubric_based():
     assert len(TICKETS) >= 40
     courses = {t['course'] for t in TICKETS}
-    assert courses == {'ITSUP', 'NETOPS', 'CLIENT'}
+    assert courses == {'ITSUP', 'NETOPS', 'CLIENT', 'SEC'}
     import interactive_labs as labs
     for ticket in TICKETS:
         if ticket['lab_id']:
