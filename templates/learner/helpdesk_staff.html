@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Help Desk Queue — {{ site_name }}{% endblock %}
+{% block content %}
+<p class="small mb-2"><a href="{{ url_for('instructor_dashboard') }}">Instructor</a></p>
+<section class="page-hero mb-3">
+  <p class="eyebrow mb-1">Help Desk Queue</p>
+  <h1 class="h3 mb-1">{{ section.name }}</h1>
+  <p class="mb-0">{{ course.title if course else '' }} · {{ n_tickets }} tickets</p>
+</section>
+<table class="table table-sm learn-fit">
+  <thead><tr><th scope="col">Student</th><th scope="col">Resolved</th><th scope="col">Average</th><th scope="col">Minutes</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.user.full_name }}</td>
+      <td>{{ r.resolved }}</td>
+      <td>{% if r.avg is not none %}{{ r.avg }}{% else %}—{% endif %}</td>
+      <td>{% if r.minutes is not none %}{{ r.minutes }}{% else %}—{% endif %}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">No students.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

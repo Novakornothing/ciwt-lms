@@ -2846,3 +2846,13 @@ body.is-lab-workbench #mobileStaffMenuBtn {
 /* Phase 1b: every text block in the lesson shares the same ~68ch centre column; diagrams may run wider */
 #lessonBody > :not(aside):not(figure):not(.novak-visual-blueprint):not(.novak-boot-quickcard) { max-width: 68ch; margin-left: auto; margin-right: auto; }
 #lessonBody > .novak-focus-nav-bar { max-width: 68ch; }
+
+/* Learner pages: one column, no sideways scroll at 390px */
+.learn-stack { display: grid; gap: .75rem; }
+.learn-due { display: block; text-decoration: none; color: inherit; padding: 1rem 1.05rem; }
+.learn-due:hover { color: inherit; }
+.learn-fit { width: 100%; table-layout: fixed; }
+.learn-fit th, .learn-fit td { overflow-wrap: anywhere; word-break: break-word; vertical-align: top; }
+.learn-choice { display: flex; flex-direction: column; gap: .5rem; min-width: 0; border: 0; padding: 0; margin: 0; }
+.learn-choice .btn { min-height: 44px; white-space: normal; text-align: left; width: 100%; }
+.learn-choice legend { float: none; width: auto; padding: 0; }

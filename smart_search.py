@@ -759,6 +759,16 @@ def run_smart_search(
     except Exception:
         command_card = None
 
+    try:
+        from learner.search import feature_hits
+        role = getattr(current_user, 'role', '') or ''
+        sec = section_for_course_fn(course_ids[0]) if course_ids else None
+        if sec is not None:
+            scored_results.extend(feature_hits(q, role, sec.id, url_for_fn))
+            scored_results.sort(key=lambda r: (-r['score'], r['kind'] != 'Lesson', r['title']))
+    except Exception:
+        pass
+
     return {
         'query': q,
         'command_card': command_card,

@@ -13,6 +13,7 @@
   <li class="nav-item" role="presentation"><button class="nav-link active" id="itab-ov" data-bs-toggle="tab" data-bs-target="#ipane-ov" type="button" role="tab" aria-controls="ipane-ov" aria-selected="true">Overview</button></li>
   <li class="nav-item" role="presentation"><button class="nav-link" id="itab-st" data-bs-toggle="tab" data-bs-target="#ipane-st" type="button" role="tab" aria-controls="ipane-st" aria-selected="false">Students &amp; Grades</button></li>
   <li class="nav-item" role="presentation"><button class="nav-link" id="itab-labs" data-bs-toggle="tab" data-bs-target="#ipane-labs" type="button" role="tab" aria-controls="ipane-labs" aria-selected="false">Labs &amp; Assignments</button></li>
+  <li class="nav-item" role="presentation"><button class="nav-link" id="itab-practice" data-bs-toggle="tab" data-bs-target="#ipane-practice" type="button" role="tab" aria-controls="ipane-practice" aria-selected="false">Practice</button></li>
 </ul>
 <div class="tab-content">
   <div class="tab-pane fade show active" id="ipane-ov" role="tabpanel" aria-labelledby="itab-ov">
@@ -84,6 +85,24 @@
       </div>
       {% endfor %}
     </div>
+  </div>
+
+  <div class="tab-pane fade" id="ipane-practice" role="tabpanel" aria-labelledby="itab-practice">
+    <table class="table table-sm learn-fit mb-0">
+      <thead><tr><th scope="col">Class</th><th scope="col">Open</th></tr></thead>
+      <tbody>
+        {% for s in sections %}
+        <tr>
+          <td>{{ s.name }}<br><span class="small text-muted">{{ s.course.title if s.course else '' }}</span></td>
+          <td>
+            <a href="{{ url_for('placement_staff', section_id=s.id) }}">Skip What You Know</a><br>
+            <a href="{{ url_for('helpdesk_staff', section_id=s.id) }}">Help Desk Queue</a><br>
+            <a href="{{ url_for('daily_review_staff', section_id=s.id) }}">Daily Review</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 <script>

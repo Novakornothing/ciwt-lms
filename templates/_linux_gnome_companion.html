@@ -1,46 +1,46 @@
-{# Synchronized Ubuntu 24.04 GNOME Desktop Companion Panel for Linux Shell & Real Linux VM Labs #}
+{# Linux desktop companion panel for Linux shell & real Linux VM labs: links to the paired live desktop lab (X + Fluxbox) and inserts terminal commands. #}
 {% set lnx_paired = {
-  'linux-shell': ('linux-gui-users', 'users', 'GNOME Users & Nautilus Permissions'),
-  'linux-vm-perms': ('linux-gui-users', 'users', 'GNOME Users & Nautilus Permissions'),
-  'linux-vm-shell': ('linux-gui-logs', 'logs', 'GNOME Logs (journalctl)'),
-  'linux-vm-services': ('linux-gui-processes', 'processes', 'GNOME System Monitor & Disks'),
-  'linux-vm-netclient': ('linux-gui-network', 'network', 'GNOME Settings → Network'),
-  'linux-vm-routing': ('linux-gui-network', 'network', 'GNOME Settings → Network'),
-  'linux-vm-logs': ('linux-gui-logs', 'logs', 'GNOME Logs (journalctl Security)'),
-  'linux-vm-cron': ('linux-gui-packages', 'packages', 'Ubuntu Software & Cron Scheduler'),
-  'linux-vm-users': ('linux-gui-users', 'users', 'GNOME Users & Sudo Groups'),
-  'linux-vm-packages': ('linux-gui-packages', 'packages', 'Ubuntu Software & APT Manager'),
+  'linux-shell': ('linux-gui-users', 'users', 'Settings → Users & Files permissions'),
+  'linux-vm-perms': ('linux-gui-users', 'users', 'Settings → Users & Files permissions'),
+  'linux-vm-shell': ('linux-gui-logs', 'logs', 'Settings → Logs'),
+  'linux-vm-services': ('linux-gui-processes', 'processes', 'Settings → Processes'),
+  'linux-vm-netclient': ('linux-gui-network', 'network', 'Settings → Network'),
+  'linux-vm-routing': ('linux-gui-network', 'network', 'Settings → Network'),
+  'linux-vm-logs': ('linux-gui-logs', 'logs', 'Settings → Logs'),
+  'linux-vm-cron': ('linux-gui-packages', 'packages', 'Settings → Packages & cron'),
+  'linux-vm-users': ('linux-gui-users', 'users', 'Settings → Users & sudo'),
+  'linux-vm-packages': ('linux-gui-packages', 'packages', 'Settings → Packages'),
   'linux-vm-firewall': ('linux-gui-firewall', 'firewall', 'GUFW Firewall & Systemd'),
-  'linux-vm-dns': ('linux-gui-network', 'network', 'GNOME Settings → Network & DNS'),
-  'linux-vm-dhcp': ('linux-gui-network', 'network', 'GNOME Settings → Network & DHCP'),
+  'linux-vm-dns': ('linux-gui-network', 'network', 'Settings → Network & DNS'),
+  'linux-vm-dhcp': ('linux-gui-network', 'network', 'Settings → Network'),
   'linux-vm-nat': ('linux-gui-firewall', 'firewall', 'GUFW Firewall & NAT'),
-  'linux-vm-ssh': ('linux-gui-ssh', 'ssh', 'GNOME Passwords & SSH Keys'),
-  'linux-vm-tls': ('linux-gui-ssh', 'ssh', 'GNOME Passwords & Certificates'),
-  'linux-vm-storage': ('linux-gui-disks', 'disks', 'GNOME Disks & /etc/fstab'),
-  'linux-vm-restore': ('linux-gui-disks', 'disks', 'GNOME Disks & Backup Restore'),
-  'linux-vm-incident': ('linux-gui-logs', 'logs', 'GNOME Logs & Incident Response'),
-  'linux-vm-capstone': ('linux-gui-network', 'network', 'GNOME Full Admin Workbench'),
-}.get(lab.id, ('linux-gui-network', 'network', 'GNOME Settings → Network')) %}
+  'linux-vm-ssh': ('linux-gui-ssh', 'ssh', 'Settings → SSH'),
+  'linux-vm-tls': ('linux-gui-ssh', 'ssh', 'Settings → SSH'),
+  'linux-vm-storage': ('linux-gui-disks', 'disks', 'Settings → Disks & /etc/fstab'),
+  'linux-vm-restore': ('linux-gui-disks', 'disks', 'Settings → Disks'),
+  'linux-vm-incident': ('linux-gui-logs', 'logs', 'Settings → Logs'),
+  'linux-vm-capstone': ('linux-gui-network', 'network', 'Settings → Network'),
+}.get(lab.id, ('linux-gui-network', 'network', 'Settings → Network')) %}
 
 <div class="card mb-2 border-info" id="lnxGnomeCompanionBar" style="background:linear-gradient(90deg,rgba(44,0,30,0.92),rgba(15,23,42,0.95));color:#f8fafc">
   <div class="card-body py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <span class="badge text-bg-primary"><i class="bi bi-ubuntu me-1" aria-hidden="true"></i>Ubuntu 24.04 GNOME 46 + CLI Dual Mode</span>
-      <span class="small text-light">Every Linux lab supports both <strong>GNOME Desktop GUI</strong> and <strong>Terminal CLI</strong>.</span>
+      <span class="badge text-bg-primary"><i class="bi bi-window-desktop me-1" aria-hidden="true"></i>Linux desktop + terminal</span>
+      <span class="small text-light">Practice the same task on the <strong>live Linux desktop</strong> (X with the Fluxbox window manager: Terminal, Files, Editor, Settings) or in this <strong>terminal</strong>.</span>
     </div>
     <div class="d-flex flex-wrap align-items-center gap-2">
       <button type="button" class="btn btn-sm btn-brand" id="toggleGnomeCompanionBtn" aria-expanded="false" aria-controls="lnxCompanionCollapse">
-        <i class="bi bi-layout-split me-1" aria-hidden="true"></i><span>Toggle GNOME GUI Split Inspector</span>
+        <i class="bi bi-layout-split me-1" aria-hidden="true"></i><span>Show command helper</span>
       </button>
       <a class="btn btn-sm btn-outline-light" href="{{ url_for('interactive_lab', lab_id=lnx_paired[0]) }}">
-        <i class="bi bi-window-desktop me-1" aria-hidden="true"></i>Open Full {{ lnx_paired[2] }} Workbench →
+        <i class="bi bi-window-desktop me-1" aria-hidden="true"></i>Open the desktop lab: {{ lnx_paired[2] }} →
       </a>
     </div>
   </div>
   <div class="d-none border-top border-secondary p-3" id="lnxCompanionCollapse" style="background:rgba(9,13,22,0.94)">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-      <div class="small fw-bold text-info"><i class="bi bi-window-desktop me-1" aria-hidden="true"></i>Interactive Ubuntu GNOME 46 Quick-Inspector (Synced Command Helper)</div>
-      <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="GNOME Quick Inspector Tools">
+      <div class="small fw-bold text-info"><i class="bi bi-window-desktop me-1" aria-hidden="true"></i>Command helper (the same jobs as the desktop Settings tabs)</div>
+      <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Command helper topics">
         <button type="button" class="btn btn-outline-info active" data-gnome-qtab="network">Network</button>
         <button type="button" class="btn btn-outline-info" data-gnome-qtab="disks">Disks</button>
         <button type="button" class="btn btn-outline-info" data-gnome-qtab="firewall">Firewall</button>
@@ -53,7 +53,7 @@
     </div>
     <div id="lnxCompanionTabBody" class="p-2 rounded small" style="background:rgba(15,23,42,0.9);border:1px solid rgba(56,189,248,0.28)">
       <div data-gnome-qpane="network">
-        <strong>GNOME Settings → Network (<code>nm-connection-editor</code>)</strong> · Click any GUI action to insert the equivalent command into your terminal:
+        <strong>Network</strong> · Click a button to insert the command into your terminal:
         <div class="d-flex flex-wrap gap-1 mt-1">
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ip -br addr">Inspect IPv4/IPv6 (ip -br addr)</button>
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ip route">Routing Table (ip route)</button>
@@ -62,7 +62,7 @@
         </div>
       </div>
       <div data-gnome-qpane="disks" class="d-none">
-        <strong>GNOME Disks &amp; Partition Manager (<code>gnome-disks</code>)</strong> · Inspect block devices, mounts, and <code>/etc/fstab</code>:
+        <strong>Disks</strong> · Inspect block devices, mounts, and <code>/etc/fstab</code>:
         <div class="d-flex flex-wrap gap-1 mt-1">
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="df -h">Disk Free (df -h)</button>
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="mount">Active Mounts (mount)</button>
@@ -70,7 +70,7 @@
         </div>
       </div>
       <div data-gnome-qpane="firewall" class="d-none">
-        <strong>GUFW Firewall &amp; Systemd Daemons (<code>gufw</code> / <code>systemctl</code>)</strong> · Inspect firewall rules and service state:
+        <strong>Firewall &amp; services</strong> · Inspect firewall rules and service state:
         <div class="d-flex flex-wrap gap-1 mt-1">
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="iptables -L -n">Firewall Rules (iptables -L -n)</button>
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ps aux">Running Daemons (ps aux)</button>
@@ -78,7 +78,7 @@
         </div>
       </div>
       <div data-gnome-qpane="users" class="d-none">
-        <strong>GNOME Users &amp; Nautilus File Permissions (<code>gnome-users</code> / <code>nautilus</code>)</strong> · Inspect accounts, groups, and POSIX bits:
+        <strong>Users &amp; file permissions</strong> · Inspect accounts, groups, and POSIX bits:
         <div class="d-flex flex-wrap gap-1 mt-1">
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="id">Current Identity (id)</button>
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ls -la">List Permissions (ls -la)</button>
@@ -87,7 +87,7 @@
         </div>
       </div>
       <div data-gnome-qpane="logs" class="d-none">
-        <strong>GNOME Logs (<code>gnome-logs</code> / <code>journalctl</code> / <code>/var/log</code>)</strong> · Filter authentication and system logs:
+        <strong>Logs (<code>/var/log</code>)</strong> · Filter authentication and system logs:
         <div class="d-flex flex-wrap gap-1 mt-1">
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ls -la /var/log">Inspect /var/log</button>
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="grep -i fail /var/log/auth.log">Auth Failures (grep fail)</button>
@@ -95,7 +95,7 @@
         </div>
       </div>
       <div data-gnome-qpane="processes" class="d-none">
-        <strong>GNOME System Monitor (<code>gnome-system-monitor</code>)</strong> · Inspect CPU/RAM consumers and terminate runaway PIDs:
+        <strong>Processes</strong> · Inspect CPU/RAM consumers and terminate runaway PIDs:
         <div class="d-flex flex-wrap gap-1 mt-1">
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ps aux">Process Table (ps aux)</button>
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="free -m">Memory &amp; Swap (free -m)</button>
@@ -103,14 +103,14 @@
         </div>
       </div>
       <div data-gnome-qpane="packages" class="d-none">
-        <strong>Ubuntu Software &amp; Cron Scheduler (<code>apt</code> / <code>apk</code> / <code>crontab</code>)</strong> · Inspect packages and scheduled jobs:
+        <strong>Packages &amp; cron (<code>apk</code> / <code>crontab</code>)</strong> · Inspect packages and scheduled jobs:
         <div class="d-flex flex-wrap gap-1 mt-1">
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="crontab -l">User Crontab (crontab -l)</button>
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="cat /etc/crontab">System Crontab (/etc/crontab)</button>
         </div>
       </div>
       <div data-gnome-qpane="ssh" class="d-none">
-        <strong>GNOME Passwords &amp; Keys (<code>seahorse</code> / <code>sshd_config</code>)</strong> · Inspect SSH keys and daemon hardening:
+        <strong>SSH keys &amp; <code>sshd_config</code></strong> · Inspect SSH keys and daemon hardening:
         <div class="d-flex flex-wrap gap-1 mt-1">
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="ls -la ~/.ssh">Inspect ~/.ssh Keys</button>
           <button type="button" class="btn btn-sm btn-outline-light py-0 tchip" data-chip="grep -E 'PermitRootLogin|PasswordAuthentication' /etc/ssh/sshd_config">Audit sshd_config</button>

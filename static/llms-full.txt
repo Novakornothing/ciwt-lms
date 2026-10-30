@@ -69,6 +69,7 @@
 
 ### 6. Bayesian Knowledge Tracing (BKT), Helix Gaze Telemetry & Enterprise Ops
 - **Per-Objective BKT Mastery Engine**: Fuses lesson checks, chapter quizzes, live lab telemetry (weight `0.85`), Knowledge Tests, and Exam-Sim sittings (weight `0.85`).
+- **Skip What You Know, Help Desk Queue, and Daily Review**: An adaptive placement of about 20 minutes (once per course; chapters marked tested out are instructor-visible), a deterministic help-desk queue of 42 tickets graded on triage, steps, time, and a closing note, and a five-minute SM-2 deck of 400+ commands, ports, protocols, and terms stored per user.
 - **Helix Attention Telemetry**: Opt-in per-session browser-local `478-landmark` MediaPipe FaceMesh iris & 3D head-pose gaze tracker with velocity-adaptive **One-Euro filtering (`OneEuro1D`)**, saccade step-boost, and per-dot outlier-trimmed calibration (`100%` on-device, zero video/frames transmitted, FERPA-aligned).
 - **10-Second Instructor Co-Pilot ("Students Needing Help")**: Live classroom triage showing which students are stuck, on which objective, what ladder rung (`R1–R4`) was already served, and where gaze dwell / rereading indicates cognitive friction.
 - **Enterprise Interoperability**: LTI 1.3 Advantage (`Canvas`, `Blackboard`, `Moodle`, `Brightspace`), SAML 2.0 / OIDC SSO, WCAG 2.1 AA accessibility, and tamper-evident SHA-256 hash-chained FERPA audit & data export (`/my-data`).

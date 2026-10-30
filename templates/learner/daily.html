@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Daily Review — {{ site_name }}{% endblock %}
+{% block content %}
+<p class="small mb-2"><a href="{{ url_for('student_dashboard') }}">Home</a></p>
+<section class="page-hero mb-3">
+  <p class="eyebrow mb-1">Daily Review · {{ course.title if course else '' }}</p>
+  {% if mode == 'done' %}
+  <h1 class="h3 mb-1">Done for today</h1>
+  <p class="mb-0">{{ streak }} day streak · {{ done }} cards</p>
+  {% else %}
+  <h1 class="h3 mb-1">{{ n_done + 1 }} of {{ n_total }}</h1>
+  <p class="mb-0">About {{ minutes }} minutes · {{ streak }} day streak</p>
+  {% endif %}
+</section>
+{% if mode == 'ask' and card %}
+<article class="card" id="dailyCard">
+  <div class="card-body">
+    <p id="dailyOffline" class="small text-muted d-none" role="status">Saved on this device. It will sync when you are back online.</p>
+    <form method="post" id="dailyForm" action="{{ url_for('daily_review', section_id=section.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="card_id" value="{{ card.id }}">
+      {% if card.kind == 'command' %}
+      <label class="form-label" for="dailyAnswer">{{ card.prompt }}</label>
+      <input class="form-control mb-3" id="dailyAnswer" name="answer" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+      {% else %}
+      <fieldset class="learn-choice">
+        <legend class="h6">{{ card.prompt }}</legend>
+        {% for opt in card.options %}
+        <label class="btn btn-outline-navy text-start"><input class="form-check-input me-2" type="radio" name="answer" value="{{ opt }}" required> {{ opt }}</label>
+        {% endfor %}
+      </fieldset>
+      {% endif %}
+      <button type="submit" class="btn btn-brand mt-3">Check</button>
+    </form>
+  </div>
+</article>
+<script id="dailySync" type="application/json">{{ sync|tojson }}</script>
+<script src="{{ url_for('static', filename='js/daily-review.js') }}"></script>
+{% else %}
+<article class="card"><div class="card-body"><p class="mb-0">Come back tomorrow. The streak stays if you do not miss a day.</p></div></article>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Skip What You Know — {{ site_name }}{% endblock %}
+{% block content %}
+<p class="small mb-2"><a href="{{ url_for('student_dashboard') }}">Home</a></p>
+{% if mode == 'plan' %}
+<section class="page-hero mb-3">
+  <p class="eyebrow mb-1">Skip What You Know</p>
+  <h1 class="h3 mb-1">Your plan for {{ course.title }}</h1>
+  <p class="mb-0">Your instructor can see this and change it. You can take it once per course.</p>
+</section>
+<div class="learn-stack">
+  <article class="card">
+    <div class="card-header">Where to start</div>
+    <div class="card-body">
+      {% if plan.start %}
+      <p class="mb-1"><strong>{{ titles.get(plan.start, 'Chapter ' ~ plan.start) }}</strong></p>
+      <p class="mb-0 small text-muted">Start here. Chapters above this that say tested out can be skipped.</p>
+      {% else %}
+      <p class="mb-0">Every chapter tested out. Practice exams are the next check.</p>
+      {% endif %}
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-header">Tested out</div>
+    <div class="card-body">
+      {% if plan.skip %}
+      <ul class="mb-0">
+        {% for ch in plan.skip %}<li>{{ titles.get(ch, 'Chapter ' ~ ch) }} <span class="badge text-bg-success">tested out</span></li>{% endfor %}
+      </ul>
+      {% else %}
+      <p class="mb-0 text-muted">No chapter tested out.</p>
+      {% endif %}
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-header">Review</div>
+    <div class="card-body">
+      {% if plan.review %}
+      <ul class="mb-0">{% for ch in plan.review %}<li>{{ titles.get(ch, 'Chapter ' ~ ch) }}</li>{% endfor %}</ul>
+      {% else %}
+      <p class="mb-0 text-muted">Nothing marked for review.</p>
+      {% endif %}
+    </div>
+  </article>
+</div>
+{% elif mode == 'ask' %}
+<section class="page-hero mb-3">
+  <p class="eyebrow mb-1">Skip What You Know · {{ course.title }}</p>
+  <h1 class="h3 mb-1">Question {{ attempt.n_asked + 1 }}</h1>
+  <p class="mb-0">About {{ minutes }} minutes. It stops when the plan is clear.</p>
+</section>
+<form method="post" class="card">
+  <div class="card-body">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="answer">
+    <fieldset class="learn-choice">
+      <legend class="h6">{{ item.prompt }}</legend>
+      {% for opt in item.options %}
+      <label class="btn btn-outline-navy text-start">
+        <input class="form-check-input me-2" type="radio" name="choice" value="{{ opt }}" required> {{ opt }}
+      </label>
+      {% endfor %}
+    </fieldset>
+    <button type="submit" class="btn btn-brand mt-3">Save answer</button>
+  </div>
+</form>
+{% else %}
+<section class="page-hero mb-3">
+  <p class="eyebrow mb-1">Skip What You Know</p>
+  <h1 class="h3 mb-1">{{ course.title }}</h1>
+  <p class="mb-3">About {{ minutes }} minutes, once per course. Chapters you already know are marked tested out. Your instructor can see the result.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="start">
+    <button type="submit" class="btn btn-brand">Start</button>
+  </form>
+</section>
+<article class="card"><div class="card-body"><p class="mb-0">{{ n_chapters }} chapters. The next question is the one the plan is least sure about.</p></div></article>
+{% endif %}
+{% endblock %}

@@ -65,3 +65,15 @@ def test_real_desktop_snapshot_grades_users_lab():
     assert "s1_mode" in r.stdout and "s3_mode" in r.stdout
     # the snapshot path, not a cold boot
     assert "restore prompt" in r.stderr
+
+
+def test_gui_progress_uses_compressed_piece_sizes():
+    """The download label counts bytes on the wire (~49 MB of gzip pieces), not the unpacked snapshot."""
+    import os
+    import labs_linux_gui as LLG
+    sizes = LLG.GUI_VM["state_part_bytes"]
+    root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "vendor", "v86")
+    assert sizes == [os.path.getsize(os.path.join(root, n)) for n in LLG.GUI_VM["state_parts"]]
+    assert 40e6 < sum(sizes) < 60e6
+    js = open(os.path.join(root, "..", "..", "js", "lab-linux-gui.js"), encoding="utf-8").read()
+    assert "V.state_part_bytes" in js and "doneNet" in js

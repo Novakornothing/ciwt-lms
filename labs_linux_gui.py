@@ -10,6 +10,7 @@ gui_vars, which are not rendered in the lab text.
 """
 from __future__ import annotations
 
+import os
 import random
 from copy import deepcopy
 
@@ -34,12 +35,20 @@ GUI_VM = {
     # Concatenate these gzip pieces and decompress. Each piece is under 20 MiB.
     "state_parts": ["novak-gui.state.0.part", "novak-gui.state.1.part", "novak-gui.state.2.part"],
     "download_mb": 50,
+    # Compressed bytes of each piece on disk, so the page can show real download progress.
+    "state_part_bytes": [],
     "memory_mb": 192,
     "vga_mb": 8,
     "prompt_re": r"[#%$] $",
     "cmdline": "console=ttyS0,115200 tsc=reliable mitigations=off random.trust_cpu=on video=800x600",
     "machines": [{"name": "vm", "label": "Linux desktop", "hostname": "novak-lnx-01", "segs": [], "memory_mb": 192}],
 }
+
+_V86_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "vendor", "v86")
+GUI_VM["state_part_bytes"] = [
+    os.path.getsize(os.path.join(_V86_DIR, n)) if os.path.exists(os.path.join(_V86_DIR, n)) else 0
+    for n in GUI_VM["state_parts"]
+]
 
 _USERS = ["alex", "sam", "riley", "casey", "morgan"]
 _PROCS = ["backup-job", "index-worker", "log-ship", "cache-warm"]

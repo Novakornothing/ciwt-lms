@@ -70,8 +70,10 @@
       });
     });
   }
-  function loadParts(urls, onprog) {
-    var pieces = [], done = 0, known = 0;
+  // Progress counts compressed bytes fetched (what the network actually moves), not the unpacked size.
+  function loadParts(urls, onprog, sizes) {
+    var pieces = [], doneNet = 0;
+    var planned = (sizes || []).reduce(function (a, b) { return a + (+b || 0); }, 0);
     function next(i) {
       if (i >= urls.length) {
         var len = pieces.reduce(function (a, b) { return a + b.byteLength; }, 0);
@@ -79,13 +81,17 @@
         pieces.forEach(function (b) { out.set(new Uint8Array(b), o); o += b.byteLength; });
         return Promise.resolve(out.buffer);
       }
+      var known = planned;
       return loadPart(urls[i], function (got, total) {
-        if (total && !pieces[i]) known = Math.max(known, done + total);
-        if (onprog) onprog(done + got, known || (done + got));
-      }).then(gunzip).then(function (buf) {
+        if (!planned && total) known = Math.max(known, doneNet + total);
+        if (onprog) onprog(doneNet + got, Math.max(known, doneNet + got));
+      }).then(function (buf) {
+        doneNet += buf.byteLength;
+        if (!planned) known = Math.max(known, doneNet);
+        if (onprog) onprog(doneNet, Math.max(planned || known, doneNet));
+        return gunzip(buf);
+      }).then(function (buf) {
         pieces[i] = buf;
-        done += buf.byteLength;
-        if (onprog) onprog(done, Math.max(known, done));
         return next(i + 1);
       });
     }
@@ -175,10 +181,10 @@
       }
       loadParts(urls, function (got, total) {
         var pct = total ? 8 + 78 * got / total : 20;
-        var mb = (got / 1048576).toFixed(1);
-        var of = total ? ' of ' + (total / 1048576).toFixed(1) : '';
+        var mb = (got / 1e6).toFixed(1);
+        var of = total ? ' of ' + (total / 1e6).toFixed(1) : '';
         setStatus('Downloading the desktop — ' + mb + of + ' MB', pct);
-      }).then(function (buf) {
+      }, V.state_part_bytes).then(function (buf) {
         clean = buf.slice(0);
         return boot(buf);
       }).then(arm).catch(function (e) {

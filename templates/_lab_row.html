@@ -12,7 +12,7 @@
      data-lab-courses="{{ courses_csv }}"
      data-lab-status="{{ 'completed' if is_done else 'remaining' }}"
      data-lab-search="{{ (lab.id ~ ' ' ~ lab.title ~ ' ' ~ s ~ ' ' ~ objs_csv ~ ' ' ~ (lab.kind_label or lab.kind))|lower }}">
-    {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ {'win11gui': 'WIN11 GUI', 'linuxgui': 'UBUNTU GUI + BASH', 'activity': 'ACTIVITY', 'classroom': 'CLASSROOM', 'vm': 'REAL VM'}.get(lab.kind, lab.kind|upper) }}</span>{% endif %}
+    {% if show_kind %}<span class="lab-kind lab-kind-{{ lab.kind }}">{{ {'win11gui': 'WIN11 GUI', 'linuxgui': 'LINUX DESKTOP', 'activity': 'ACTIVITY', 'classroom': 'CLASSROOM', 'vm': 'REAL VM'}.get(lab.kind, lab.kind|upper) }}</span>{% endif %}
     <span class="lab-row-main"><span class="lab-row-title">{{ lab.title }}{% if sme %} <span class="badge text-bg-success ms-1">Verified</span> <span class="lab-sme-tag visually-hidden">{{ sme }}</span>{% endif %}</span>
       {% if s %}<span class="lab-row-sub">{{ s }}</span>{% endif %}</span>
     {% if prog %}

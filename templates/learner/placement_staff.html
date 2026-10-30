@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Skip What You Know — {{ site_name }}{% endblock %}
+{% block content %}
+<p class="small mb-2"><a href="{{ url_for('instructor_dashboard') }}">Instructor</a></p>
+{% if mode == 'detail' %}
+<section class="page-hero mb-3">
+  <p class="eyebrow mb-1">Skip What You Know</p>
+  <h1 class="h3 mb-1">{{ user.full_name }}</h1>
+  <p class="mb-0">{{ course.title if course else '' }} · {{ section.name }}</p>
+</section>
+{% if plan %}
+<form method="post" class="card mb-3">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="action" value="save">
+  <div class="card-body">
+    <label class="form-label" for="ovNote">Note</label>
+    <input class="form-control mb-3" id="ovNote" name="note" maxlength="300" required placeholder="Why you are changing this">
+    <table class="table table-sm learn-fit mb-3">
+      <thead><tr><th scope="col">Chapter</th><th scope="col">Result</th><th scope="col">Set</th></tr></thead>
+      <tbody>
+        {% for row in plan.rows %}
+        <tr>
+          <td>{{ titles.get(row.chapter, 'Chapter ' ~ row.chapter) }}</td>
+          <td>{% if row.status == 'tested_out' %}<span class="badge text-bg-success">tested out</span>{% elif row.status == 'review' %}Review{% else %}{{ row.status|replace('_', ' ') }}{% endif %}{% if row.source == 'instructor' %} · yours{% endif %}</td>
+          <td>
+            <label class="visually-hidden" for="k{{ row.chapter }}">Set chapter {{ row.chapter }}</label>
+            <select class="form-select form-select-sm" id="k{{ row.chapter }}" name="kind-{{ row.chapter }}">
+              <option value="placement" {% if row.source != 'instructor' %}selected{% endif %}>Keep placement</option>
+              <option value="tested_out" {% if row.source == 'instructor' and row.status == 'tested_out' %}selected{% endif %}>Tested out</option>
+              <option value="review" {% if row.source == 'instructor' and row.status == 'review' %}selected{% endif %}>Must review</option>
+            </select>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button type="submit" class="btn btn-brand">Save</button>
+  </div>
+</form>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="action" value="reset">
+  <button type="submit" class="btn btn-outline-navy">Reset so they can take it again</button>
+</form>
+{% else %}
+<article class="card"><div class="card-body"><p class="mb-0">No finished placement yet.</p></div></article>
+{% endif %}
+{% else %}
+<section class="page-hero mb-3">
+  <p class="eyebrow mb-1">Skip What You Know</p>
+  <h1 class="h3 mb-1">{{ section.name }}</h1>
+  <p class="mb-0">{{ course.title if course else '' }}</p>
+</section>
+<table class="table table-sm learn-fit">
+  <thead><tr><th scope="col">Student</th><th scope="col">Result</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.user.full_name }}</td>
+      <td>
+        {% if r.plan %}{{ r.plan.skip|length }} tested out{% if r.plan.start %} · start ch. {{ r.plan.start }}{% endif %}
+        {% elif r.attempt %}In progress{% else %}Not taken{% endif %}
+      </td>
+      <td><a class="btn btn-sm btn-outline-navy" href="{{ url_for('placement_staff_student', section_id=section.id, user_id=r.user.id) }}">Open</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3">No students.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
