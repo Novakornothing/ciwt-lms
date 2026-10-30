@@ -302,7 +302,9 @@ def attach(lab, state):
         f = state["px"]["facts"]
         state["fs"][f["note_path"]] = {"t": "f", "mode": 0o644, "owner": "trainee", "group": "trainee", "c": f["note_body"]}
     import lab_skills as SK
-    SK.plant_fs(lab, state, (state.get("px") or {}).get("facts") or {})
+    facts_now = (state.get("px") or {}).get("facts") or {}
+    SK.plant_fs(lab, state, facts_now)
+    SK.plant_state(lab, state, facts_now)
     return state
 
 
@@ -483,6 +485,10 @@ def end_state_ok(lab, stage, state, done):
     if fam == "linuxgui":
         return all(i in done for i in _later_ids(lab, stage))
     if fam in ("win", "desk"):
+        import lab_skills as SK
+        custom = SK.stage_state_ok(lab, stage, state, f)
+        if custom is not None:
+            return custom
         if stage == "assisted":
             dns = [str(x) for x in (state.get("dns") or state.get("px_dns") or [])]
             return dns == [f["assisted_dns"]] and f["assisted_dns"] != f["guided_dns"]
@@ -654,7 +660,9 @@ def stage_actions(lab, state):
     f = state["px"]["facts"]
     for stage in ("assisted", "ticket"):
         if fam == "desk":
-            ans = f["assisted_dns"] if stage == "assisted" else f["ticket_host"]
+            import lab_skills as SK
+            custom = SK.desk_value(lab, f, stage)
+            ans = custom if custom is not None else (f["assisted_dns"] if stage == "assisted" else f["ticket_host"])
             actions.append({"type": "stage", "stage": stage, "answer": ans})
         elif fam in ("choice", "number"):
             ans = f["assisted_answer" if stage == "assisted" else "ticket_answer"]
@@ -674,13 +682,14 @@ def submit_answer(lab, state, done, stage, answer):
         text = answer.get("answer") or answer.get("outcome") or ""
     state["px"].setdefault("answers", {})[stage] = str(text or "").strip()
     if family(lab) in ("desk", "win"):
-        # The simulated desk records the resulting settings. The check compares them with the note.
-        if stage == "assisted":
-            state["dns"] = [str(text or "").strip()]
-            state["px_dns"] = state["dns"]
-        else:
-            state["px_host"] = str(text or "").strip()
-            state["hostname"] = state["px_host"]
+        import lab_skill_windows as WW
+        if not WW.apply_desk(lab, state, stage, str(text or "").strip()):
+            if stage == "assisted":
+                state["dns"] = [str(text or "").strip()]
+                state["px_dns"] = state["dns"]
+            else:
+                state["px_host"] = str(text or "").strip()
+                state["hostname"] = state["px_host"]
     state, done = observe(lab, state, done)
     mark = f"stage:{stage}"
     expect = state["px"]["facts"]["assisted_answer" if stage == "assisted" else "ticket_answer"]
@@ -708,7 +717,9 @@ def drive(lab, state, done, run_command):
         if f"stage:{stage}" in done:
             continue
         if fam == "desk":
-            ans = f["assisted_dns"] if stage == "assisted" else f["ticket_host"]
+            import lab_skills as SK
+            custom = SK.desk_value(lab, f, stage) if hasattr(SK, "desk_value") else None
+            ans = custom if custom is not None else (f["assisted_dns"] if stage == "assisted" else f["ticket_host"])
             _, state, done = submit_answer(lab, state, done, stage, ans)
             continue
         if fam in ("choice", "number"):
@@ -758,6 +769,9 @@ def absorb(lab, state, command):
         state["hostname"] = name
         state["px_host"] = name
         return [f"The computer will be named {name} after it restarts. In this simulation the name is already in effect."]
+    import lab_skill_windows as WW
+    if WW.win_effect(lab, state, raw):
+        return ["The setting is updated."]
     return None
 
 

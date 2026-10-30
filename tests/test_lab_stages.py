@@ -85,7 +85,7 @@ def test_checkers_read_end_state_and_reject_walkthrough_values():
     st["dns"] = [st["px"]["facts"]["guided_dns"]]
     st, done = PX.observe(win, st, done)
     assert "stage:assisted" not in done
-    st["dns"] = [st["px"]["facts"]["assisted_dns"]]
+    st["dns"] = [st["px"]["facts"]["w_ip"]]
     st, done = PX.observe(win, st, done)
     assert "stage:assisted" in done
 

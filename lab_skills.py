@@ -361,7 +361,30 @@ def _rewrite(text, tmp):
     return text
 
 
+def plant_state(lab, state, facts):
+    row = spec(lab)
+    fn = (row or {}).get("plant_state")
+    if fn and facts:
+        fn(state, facts)
+
+
+def desk_value(lab, facts, stage):
+    row = spec(lab)
+    if not row or not row.get("ok"):
+        return None
+    return row["stages"][stage]["fix"](facts)[0]
+
+
+def stage_state_ok(lab, stage, state, facts):
+    row = spec(lab)
+    fn = (row or {}).get("ok")
+    if not fn:
+        return None
+    return bool(fn(state, facts, stage))
+
+
 import lab_skill_linux  # noqa: E402,F401  — registers SPECS
+import lab_skill_windows  # noqa: E402,F401
 
 
 def _run_real(plant, fix, checks):
