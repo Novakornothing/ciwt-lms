@@ -13,12 +13,18 @@ def test_every_concept_section_has_a_valid_widget():
     assert len(rows) >= 155
     by_course, by_type = coverage()
     assert by_course['ITSUP'] >= 1 and by_course['NETOPS'] >= 1 and by_course['CLIENT'] >= 1
-    assert 'SEC' not in by_course
-    assert not any(k[0] == 'SEC' for k in rows)
+    sec_n = sum(1 for k, e in LD.ladder().items() if k[0] == 'SEC' and e.get('type') == 'section')
+    assert by_course['SEC'] == sec_n >= 491
     total = sum(by_course.values())
     assert set(by_type) == set(TYPES)
     biggest = max(by_type.values())
     assert biggest / total <= 0.20, (biggest, total, by_type)
+    sec_types = {}
+    for key, cfg in rows.items():
+        if key[0] == 'SEC':
+            sec_types[cfg['type']] = sec_types.get(cfg['type'], 0) + 1
+    sec_biggest = max(sec_types.values())
+    assert sec_biggest / sec_n <= 0.20, (sec_biggest, sec_n, sec_types)
     problems = []
     for key, cfg in rows.items():
         problems.extend(validate_config(cfg, f'{key[0]} {key[1]} {key[2]}'))
@@ -26,8 +32,6 @@ def test_every_concept_section_has_a_valid_widget():
     # A support-role section is not forced onto the troubleshooting sorter.
     sample = next(cfg for (c, lab, sid), cfg in rows.items() if c == 'ITSUP' and lab == '1.1')
     assert sample['type'] != 'troubleshoot'
-    sec_n = sum(1 for k, e in LD.ladder().items() if k[0] == 'SEC' and e.get('type') == 'section')
-    assert sec_n >= 1
 
 
 def test_widget_logic_passes_for_every_type():
