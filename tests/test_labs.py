@@ -69,11 +69,16 @@ def solve_http(client, lab_id, mod=None):
         elif action["type"] == "stage":
             st = _j(client.post(f"/labs/{lab_id}/stage", json={"stage": action["stage"], "answer": action["answer"]}))
     if lab.get("kind") == "vm":
+        import lab_skills as SK
         server_state = _server_state(lab_id)
         file_cmds = RT.PX.vm_file_commands(lab, server_state)
+        if SK.has_spec(lab):
+            extra = SK.evaluate(lab, server_state["px"]["facts"])
+        else:
+            extra = RT.PX.run_px_grep(lab, server_state, file_cmds) if file_cmds else []
         if file_cmds:
             _j(client.post(f"/labs/{lab_id}/vm-log", json={"lines": file_cmds}))
-            extra = RT.PX.run_px_grep(lab, server_state, file_cmds)
+        if extra:
             probes = RT.VM.solved_probes(_server_state(lab_id), lab)
             first = next(iter(probes))
             probes[first] = RT.PX.splice_px_lines(probes[first], extra)

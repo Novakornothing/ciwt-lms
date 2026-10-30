@@ -45,7 +45,8 @@ def test_sentence_openings_are_not_repeated_filler():
     for lab in LABS:
         pub = PX.public(lab, {"seed": 1}, [])
         for stage in pub["stages"]:
-            counts = PX.sentence_openings(stage["html"])
+            html = re.sub(r"<code[^>]*>.*?</code>", " ", stage["html"], flags=re.S)
+            counts = PX.sentence_openings(html)
             over = {k: v for k, v in counts.items() if v > 2}
             assert not over, (lab["id"], stage["id"], over)
 
@@ -91,11 +92,11 @@ def test_checkers_read_end_state_and_reject_walkthrough_values():
     linux = RT.get_lab("linux-shell")
     lx = RT.fresh_state(linux["id"], uid=8)
     f = lx["px"]["facts"]
-    assert not PX._file_ok(lx["fs"], f["assisted_path"], f["assisted_token"], f["assisted_mode"])
-    lx["fs"][f["assisted_path"]] = {"t": "f", "mode": int(f["assisted_mode"], 8), "c": f["assisted_token"] + "\n"}
-    assert PX._file_ok(lx["fs"], f["assisted_path"], f["assisted_token"], f["assisted_mode"])
-    lx["fs"][f["assisted_path"]]["c"] = "ticket 4512\n"
-    assert not PX._file_ok(lx["fs"], f["assisted_path"], f["assisted_token"], f["assisted_mode"])
+    assert not PX.end_state_ok(linux, "assisted", lx, [o["id"] for o in linux["objectives"]] + ["stage:guided"])
+    lx["fs"][f["s2_path"]]["mode"] = int(f["s2_mode"], 8)
+    assert PX.end_state_ok(linux, "assisted", lx, [o["id"] for o in linux["objectives"]] + ["stage:guided"])
+    lx["fs"][f["s2_path"]]["mode"] = 0o666
+    assert not PX.end_state_ok(linux, "assisted", lx, [o["id"] for o in linux["objectives"]] + ["stage:guided"])
 
 
 def _story(html):
@@ -149,21 +150,16 @@ def test_stage_two_and_three_do_not_share_sentences_or_shingles():
 
 
 def test_vm_file_check_runs_real_grep_and_solved_probe_does_not_fake_it():
+    import lab_skills as SK
     lab = RT.get_lab("linux-vm-perms")
     state = RT.fresh_state(lab["id"], uid=3)
     script = RT.VM.probe_script(state, lab)
-    token = state["px"]["facts"]["assisted_token"]
-    assert token in script and "px_assisted" in script and "grep -qx" in script
+    path = state["px"]["facts"]["s2_path"]
+    assert path in script and "px_assisted" in script and "ls -l" in script
     assert "c_px_assisted" not in RT.VM.solved_probe(state, lab)
-    missing = PX.run_px_grep(lab, state, [])
-    assert "c_px_assisted 0" in missing and "c_px_ticket 0" in missing
-    made = PX.run_px_grep(lab, state, PX.vm_file_commands(lab, state))
-    assert "c_px_assisted 1" in made and "c_px_ticket 1" in made
-    # a walkthrough line in the proof file is not this attempt's token
-    wrong = [c for c in PX.vm_file_commands(lab, state) if "printf" in c][:1]
-    # replace the token write with the old walkthrough line and chmod the assisted path only
-    path = state["px"]["facts"]["assisted_path"]
-    mode = state["px"]["facts"]["assisted_mode"]
-    bogus = [f"mkdir -p /root", "printf '%s\\n' 'ticket 4512' > " + path, f"chmod {mode} {path}"]
-    rejected = PX.run_px_grep(lab, state, bogus)
-    assert "c_px_assisted 0" in rejected
+    assert "proof-" not in script
+    facts = state["px"]["facts"]
+    assert SK.stage_fails_until_fixed(lab, facts, "assisted")
+    assert SK.stage_fails_until_fixed(lab, facts, "ticket")
+    made = SK.evaluate(lab, facts)
+    assert made == ["c_px_assisted 1", "c_px_ticket 1"]

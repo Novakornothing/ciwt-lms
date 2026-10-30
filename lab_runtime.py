@@ -557,10 +557,18 @@ def solve(lab_id, uid=0):
         log.append((st["id"], res))
     state, done = PX.drive(lab, state, done, run_command)
     if lab.get("kind") == "vm":
-        file_cmds = PX.vm_file_commands(lab, state)
-        if file_cmds:
-            state, done = vm_log(lab_id, state, done, file_cmds)
-            extra = PX.run_px_grep(lab, state, file_cmds)
+        import lab_skills as SK
+        if SK.has_spec(lab):
+            extra = SK.evaluate(lab, state["px"]["facts"])
+            file_cmds = PX.vm_file_commands(lab, state)
+            if file_cmds:
+                state, done = vm_log(lab_id, state, done, file_cmds)
+        else:
+            file_cmds = PX.vm_file_commands(lab, state)
+            extra = PX.run_px_grep(lab, state, file_cmds) if file_cmds else []
+            if file_cmds:
+                state, done = vm_log(lab_id, state, done, file_cmds)
+        if extra:
             probes = VM.solved_probes(state, lab)
             first = next(iter(probes))
             probes[first] = PX.splice_px_lines(probes[first], extra)

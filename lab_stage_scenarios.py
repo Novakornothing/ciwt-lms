@@ -15,6 +15,10 @@ def add(lid, assisted, ticket):
 
 
 def prose(lab, stage):
+    import lab_skills as SK
+    custom = SK.prose(lab, stage)
+    if custom:
+        return custom
     row = COPY.get(lab.get("id") if isinstance(lab, dict) else lab)
     if not row or stage not in row:
         raise KeyError(lab.get("id") if isinstance(lab, dict) else lab)

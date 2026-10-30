@@ -221,13 +221,20 @@ def facts(lab, seed):
         "ticket_ip": f"172.16.{seed % 16}.{host}",
         "ticket_prefix": prefix,
     }
-    f["note_assisted"] = _note(f, "assisted")
-    f["note_ticket"] = _note(f, "ticket")
+    import lab_skills as SK
+    SK.enrich(lab, f, seed)
+    f["note_assisted"] = _note(f, "assisted", lab)
+    f["note_ticket"] = _note(f, "ticket", lab)
     f["note_body"] = "PRACTICE\n" + f["note_assisted"] + "\n\nINCIDENT\n" + f["note_ticket"] + "\n"
     return f
 
 
-def _note(f, stage):
+def _note(f, stage, lab=None):
+    if lab is not None:
+        import lab_skills as SK
+        custom = SK.note(lab, stage, f)
+        if custom:
+            return custom
     fam = f["family"]
     if stage == "assisted":
         if fam in ("win", "desk"):
@@ -294,6 +301,8 @@ def attach(lab, state):
     if fam == "linux" and isinstance(state.get("fs"), dict):
         f = state["px"]["facts"]
         state["fs"][f["note_path"]] = {"t": "f", "mode": 0o644, "owner": "trainee", "group": "trainee", "c": f["note_body"]}
+    import lab_skills as SK
+    SK.plant_fs(lab, state, (state.get("px") or {}).get("facts") or {})
     return state
 
 
@@ -312,6 +321,8 @@ def prepare_vm(lab, state):
     # printf one argument per line, single-quoted
     args = " ".join("'" + line.replace("'", "'\\''") + "'" for line in body.split("\n"))
     snippet = f"mkdir -p /root\nprintf '%s\n' {args} > '{path}'\n"
+    import lab_skills as SK
+    snippet += SK.plant_shell(lab, f)
     setup = vm.setdefault("setup", {})
     for machine in vm.get("machines") or []:
         name = machine.get("name")
@@ -326,6 +337,10 @@ def probe_shells(state, lab):
     f = ((state or {}).get("px") or {}).get("facts") or {}
     if not f:
         return []
+    import lab_skills as SK
+    custom = SK.probe_pairs(lab, f)
+    if custom is not None:
+        return custom
     out = []
     for key, path, token, mode in (
         ("px_assisted", f["assisted_path"], f["assisted_token"], f["assisted_mode"]),
@@ -347,6 +362,9 @@ def vm_file_commands(lab, state):
     if family(lab) != "vm":
         return []
     f = ((state or {}).get("px") or {}).get("facts") or facts(lab, (state or {}).get("seed") or 1)
+    import lab_skills as SK
+    if SK.has_spec(lab):
+        return list(SK.fix_commands(lab, f, "assisted") or []) + list(SK.fix_commands(lab, f, "ticket") or [])
     out = []
     for path, token, mode in (
         (f["assisted_path"], f["assisted_token"], f["assisted_mode"]),
@@ -398,7 +416,12 @@ def probes_with_real_px(lab, state, probes):
     """Solved objective probes plus the real grep result for the stage files."""
     if not lab or lab.get("kind") != "vm":
         return probes
-    extra = run_px_grep(lab, state, vm_file_commands(lab, state))
+    import lab_skills as SK
+    facts = ((state or {}).get("px") or {}).get("facts") or {}
+    if SK.has_spec(lab):
+        extra = SK.evaluate(lab, facts)
+    else:
+        extra = run_px_grep(lab, state, vm_file_commands(lab, state))
     if isinstance(probes, str):
         return splice_px_lines(probes, extra)
     out = dict(probes)
@@ -508,10 +531,16 @@ def end_state_ok(lab, stage, state, done):
     if fam in ("linux", "vm") and stage == "assisted":
         if fam == "vm":
             return (state.get("probe_last") or {}).get("c_px_assisted") == "1"
+        import lab_skills as SK
+        if SK.has_spec(lab):
+            return SK.fs_ok(lab, stage, state, f)
         return _file_ok(state.get("fs"), f["assisted_path"], f["assisted_token"], f["assisted_mode"])
     if fam in ("linux", "vm") and stage == "ticket":
         if fam == "vm":
             return (state.get("probe_last") or {}).get("c_px_ticket") == "1"
+        import lab_skills as SK
+        if SK.has_spec(lab):
+            return SK.fs_ok(lab, stage, state, f)
         return _file_ok(state.get("fs"), f["ticket_path"], f["ticket_token"], f["ticket_mode"])
     if fam in ("choice", "number"):
         got = ((state.get("px") or {}).get("answers") or {}).get(stage)
@@ -555,6 +584,10 @@ def _ios(lines):
 
 def followup_commands(lab, state, stage):
     f = ((state or {}).get("px") or {}).get("facts") or facts(lab, (state or {}).get("seed") or 1)
+    import lab_skills as SK
+    custom = SK.fix_commands(lab, f, stage)
+    if custom is not None:
+        return custom
     fam = family(lab)
     if stage == "assisted":
         if lab.get("id") == "sw-vlan-multi":
@@ -914,6 +947,10 @@ def explain_command(cmd, kind, index):
 
 def syntax_card(lab):
     """Command forms with placeholders. These are not filled in with this attempt's answer."""
+    import lab_skills as SK
+    custom = SK.syntax(lab)
+    if custom:
+        return custom
     fam = family(lab)
     kind = lab.get("kind")
     common = [
@@ -1102,28 +1139,8 @@ def _later_paragraphs(lab, stage):
 
 
 def guided_html(lab):
-    kind = lab.get("kind") or ""
-    cmds = guided_commands(lab)
-    parts = [f"<p>{_esc(_lead(lab, 'guided'))}</p>"]
-    if (lab.get("intro") or "").strip():
-        parts.append(f"<p>{_esc(lab['intro'].strip())}</p>")
-    if cmds:
-        items = "".join(_cmd_block(c, kind, i) for i, c in enumerate(cmds))
-        parts.append("<ol class=\"walk\">" + items + "</ol>")
-        parts.append("<p>There is no copy button. Type each line. Stage 2 will not accept these values.</p>")
-    else:
-        bits = []
-        for i, obj in enumerate(lab.get("objectives") or []):
-            text = obj.get("text") or obj.get("id")
-            bits.append(f"<li><p>{_esc(text)}</p><p>{_esc(_WHY[i % len(_WHY)])}</p></li>")
-        parts.append("<ol class=\"walk\">" + "".join(bits) + "</ol>")
-    if kind == "vm":
-        parts.append("<p>This is a real Linux system in the browser. The later stages look at files on that system.</p>")
-    elif kind in ("windows", "win11gui"):
-        parts.append("<p>The Windows desk beside this lab is a simulation. The graded console is the one that records your commands.</p>")
-    elif kind in ("switch", "router"):
-        parts.append("<p>The Cisco-style console is a simulation of user, privileged, and configuration modes. It is not Cisco software.</p>")
-    return "\n".join(parts)
+    import lab_stage1
+    return lab_stage1.guided_html(lab, _esc, guided_commands(lab))
 
 
 def later_html(lab, stage):

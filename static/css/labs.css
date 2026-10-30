@@ -374,6 +374,12 @@ html:not([data-theme="dark"]) .scn-resolved { color: #08603f; }
   .lab-side.is-open { transform: none; visibility: visible; }
   .lab-sheet-btn { display: inline-flex; align-items: center; gap: .35rem; position: fixed; right: 12px; bottom: calc(var(--tabbar-h, 64px) + 10px);
     z-index: 1060; min-height: 44px; border-radius: 999px; border: 1px solid #3ec7ff; background: #0a1628; color: #fff; padding: .35rem .8rem; }
+  /* Keep Ask the tutor above the Objectives button instead of underneath it. */
+  body:has(#labSheetBtn) #tutor-open {
+    bottom: calc(var(--tabbar-h, 64px) + 64px) !important;
+    right: 12px !important;
+    z-index: 1061;
+  }
   .lab-sheet-scrim { position: fixed; inset: 0; background: rgba(2,6,13,.5); z-index: 1075; }
   html.term-focus-on .lab-sheet-btn { visibility: hidden; }
   body.lab-sheet-open { overflow: hidden; }
