@@ -78,14 +78,6 @@ LAB_ON = {
     'Log aggregation': 'sec-logtriage',
 }
 
-_STEPS = [
-    'Point at the clue in the ticket',
-    'Name the idea in ordinary words',
-    'Pick the safe next move',
-    'Leave one sentence in the note',
-]
-
-
 def _chunks(items, size=3):
     out = []
     i = 0
@@ -98,29 +90,82 @@ def _chunks(items, size=3):
     return out
 
 
+def _clip(text):
+    return ' '.join(str(text).strip().rstrip('.').split())
+
+
+def _neighbor(name):
+    names = [leaf[2] for leaf in LEAVES]
+    return names[(names.index(name) + 1) % len(names)]
+
+
+def _paths(name):
+    """Standard, plain, and analogy lines. Fixed glue stays under eight tokens and each line carries this concept."""
+    means, case, plain, story = map(_clip, GLOSS[name])
+    other = _neighbor(name)
+    o_means, o_case, o_plain, o_story = map(_clip, GLOSS[other])
+    r0 = [
+        f'{name}. {means}.',
+        f'{case}. Call that {name}.',
+        f'{o_case}. Call that {other}, not {name}.',
+        f'{plain}. Decide {name} that way.',
+        f'{o_plain}. That decision belongs to {other}, not to {name}.',
+    ]
+    r1 = [
+        f'{name}: {plain}.',
+        f'{story}. Hold that picture for {name}.',
+        f'{o_plain}. That wording is {other}, not {name}.',
+        f'{o_story}. Leave that picture on {other}.',
+        f'{means}. Say this about {name} without jargon.',
+    ]
+    r2 = [
+        f'{story}. The {name} picture stops there.',
+        f'{case}. Point the {name} picture at that evidence.',
+        f'{o_means}. Keep {other} off the {name} picture.',
+        f'{o_story}. Hang that picture on {other} instead.',
+    ]
+    steps = [
+        f'Spot {name}: {case}',
+        f'Decide {name}: {plain}',
+        f'Keep {other} separate from {name}',
+        f'Record {name} beside the evidence you used',
+    ]
+    r4 = [
+        f'Sort evidence of {name} before the station.',
+        f'{name} cards match the {name} decision.',
+        f'{plain}. Sort that {name} decision before the station.',
+    ]
+    return {
+        'r0': r0, 'r1': r1, 'r2': r2, 'r4': r4, 'steps': steps,
+        'other': other, 'case': case, 'plain': plain, 'means': means, 'story': story,
+    }
+
+
 def _section(leaf, widget):
     domain, exam, name = leaf
     means, case, plain, story = GLOSS[name]
+    path = _paths(name)
     return Sec(
         name,
         name,
-        [
-            means,
-            'You will see it when this happens: ' + case,
-            'People miss it when they rename the event or skip the evidence.',
-            'The working rule is to name the evidence, apply this idea, and write the reason down.',
-            'Keep it separate from the neighboring idea in this chapter. The name on the ticket has to match the fact.',
-        ],
+        path['r0'],
         plain,
         story,
-        _STEPS,
+        path['steps'],
         plain.rstrip('.'),
-        'Buy a product and skip the note',
-        'Treat every event as the same kind of failure',
-        f'{name} is the right idea because {means} A product purchase or a vague label does not match the evidence in front of you.',
+        f'Treat this as {path["other"]} and skip the note',
+        f'Buy a tool before naming {name}',
+        f'{name} is the right idea because {means} {path["other"]} would be the label only if the ticket showed that other fact instead.',
         covers=[name],
         family=FAMILY.get(exam, 'sort-cards'),
         widget=widget,
+        r1=path['r1'],
+        r2=path['r2'],
+        r4=path['r4'],
+        boxes=[(name[:20], 'definition'), (path['case'][:26], 'ticket'), (path['plain'][:26], 'decision')],
+        note=case,
+        neighbor=path['other'],
+        scene=case,
     )
 
 
@@ -173,12 +218,13 @@ def build_chapters():
                 title = f'{n}.{li} ' + names[0] + ' and the ideas beside it'
             skill = f'SEC-{n}.{li}'
             objective = 'Explain and apply: ' + '; '.join(names)
+            first_case = GLOSS[names[0]][1].strip()
             lessons.append(L(
                 li, title, skill, objective,
-                'This lesson is part of the Security course and assumes you can already triage a ticket.',
+                f'{names[0]}. {first_case}',
                 [
-                    OBJECTIVE_TITLES[exam] + '.',
-                    'Each section names one idea, shows a workplace moment, and asks you to keep the idea separate from its neighbors.',
+                    f'{names[0]}. {first_case}',
+                    f'{names[1]}. {GLOSS[names[1]][1].strip()}',
                 ],
                 sections,
                 lab=lab,

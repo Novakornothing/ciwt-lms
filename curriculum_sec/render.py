@@ -86,21 +86,17 @@ def _lesson_html(lesson, first):
     body = [
         f'<div class="lo-panel" data-skill="{escape(skill)}"><h4>Terminal objectives</h4><ul>',
         f'<li>{escape(lesson["objective"])}</li>',
-        '<li>Answer the knowledge check on every section, in any learning path</li>',
-        '<li>Use the linked lab when this lesson names one</li>',
         '</ul></div>',
         f'<div class="build-on"><strong>{fit_label}:</strong> {escape(lesson["fits"])}</div>',
         f'<div class="plain-english"><h4>In plain English</h4>{_p(lesson["intro"])}</div>',
-        '<div class="live-demo"><h4>Live demonstration habit</h4>'
-        '<p>Say the idea in one sentence, point at the diagram, then name the mistake you will not make. '
-        'If that stalls, switch the learning path and answer the check again.</p></div>',
+        f'<div class="live-demo"><h4>Live demonstration habit</h4>'
+        f'<p>{escape(lesson["sections"][0]["heading"])}: {escape(lesson["sections"][0]["note"])}</p></div>',
     ]
     for sec in lesson['sections']:
         body.append(_section_html(sec))
     body.append(
         '<div class="practice-standard"><h4>Practice standard for this lesson</h4>'
-        f'<p>When you finish {escape(lesson["title"])}, you can coach a classmate on it '
-        'without the notes in front of you. The checks under each section all map to this skill.</p></div>'
+        f'<p>{escape(lesson["sections"][0]["heading"])}. {escape(lesson["sections"][0]["note"])}</p></div>'
     )
     return ''.join(body)
 

@@ -1,7 +1,13 @@
 """Helpers that wrap a section's original lines in five different explanations."""
 
 
-def Sec(heading, topic, r0, plain, story, steps, key, bad1, bad2, why, covers=(), family='sort', widget='sort'):
+def _dot(text):
+    text = str(text).strip()
+    return text if text.endswith('.') else text + '.'
+
+
+def Sec(heading, topic, r0, plain, story, steps, key, bad1, bad2, why, covers=(), family='sort', widget='sort',
+        r1=None, r2=None, r4=None, boxes=None, note=None, neighbor='', scene=''):
     """A section whose standard, plain, and analogy paths are original sentences."""
     if isinstance(r0, str):
         r0 = [r0]
@@ -10,6 +16,19 @@ def Sec(heading, topic, r0, plain, story, steps, key, bad1, bad2, why, covers=()
     if isinstance(story, str):
         story = [story]
     why_out = why if len(why.split()) >= 12 else why + ' The other choices describe a different goal or a different control.'
+    spoken = _dot(plain[0])
+    tale = _dot(story[0])
+    if r1 is None:
+        r1 = [spoken, tale]
+    if r2 is None:
+        r2 = [tale, spoken]
+    if r4 is None:
+        r4 = [f'Sort {topic} evidence before opening the station.', f'{topic} cards teach one decision.']
+    if boxes is None:
+        boxes = [(heading[:22] or 'Topic', 'definition'), (heading[:22] or 'Topic', 'ticket'), (heading[:22] or 'Topic', 'decision')]
+    fit_a = spoken.rstrip('.')
+    fit_b = (scene or heading)[:90]
+    other = neighbor or 'a neighboring idea'
     return {
         'heading': heading,
         'topic': topic,
@@ -17,43 +36,26 @@ def Sec(heading, topic, r0, plain, story, steps, key, bad1, bad2, why, covers=()
         'family': family,
         'widget': widget,
         'r0': list(r0),
-        'r1': [
-            'Here is the everyday version.',
-            plain[0] if str(plain[0]).endswith('.') else str(plain[0]) + '.',
-            'A new coworker can say that line back out loud.',
-            'When the line is fuzzy, stop and ask again.',
-            'Do not change the box yet.',
-            'Name the person, the thing, and the bad result.',
-        ] + list(plain[1:]),
-        'r2': [
-            'Picture a small clinic front desk on a busy morning.',
-            story[0] if str(story[0]).endswith('.') else str(story[0]) + '.',
-            'The desk picture is only a mirror for the real job.',
-            'Match each piece of the picture to one job you actually do.',
-            'When the mirror breaks, the job remains and the picture can go.',
-            'A story is a memory aid, not proof and not a procedure.',
-        ] + list(story[1:]),
+        'r1': list(r1),
+        'r2': list(r2),
         'steps': list(steps),
         'key': key,
         'bad': [bad1, bad2],
         'why': why_out,
-        'note': 'Write the evidence in the ticket before you change a setting.',
+        'note': _dot(note if note is not None else plain[0]),
         'diagram': heading[:42],
-        'boxes': [('What', 'the idea'), ('When', 'you see it'), ('Do', 'the next step')],
-        'diagram_r3': 'Order of the trace',
+        'boxes': list(boxes),
+        'diagram_r3': f'{heading[:32]} trace',
         'boxes_r3': [('Begin', steps[0][:28]), ('Middle', steps[1][:28]), ('Confirm', steps[2][:28])],
-        'r4': [
-            'Sort or order the cards before you open a station.',
-            'The cards train the judgment. The station trains your hands.',
-            'When the cards feel settled, use the linked lab if this lesson has one.',
-        ],
+        'r4': list(r4),
         'sort_prompt': f'Which cards belong with {topic}?',
         'sort': {
-            'Fits this idea': [f'Apply {topic[:40]}', 'Write the evidence down'],
-            'Does not fit': ['Guess and move on', 'Skip the ticket note'],
+            'Fits this idea': [f'{topic}: {fit_a[:80]}', f'{topic} evidence: {fit_b[:80]}'],
+            'Does not fit': [f'{other}: a different fact', f'{topic}: guess and skip the note'],
         },
-        'sort_done': 'The fitting pile is the habit you will use on the next ticket.',
-        'lab_note': 'Open the linked station and compare the live state with the safe state.',
+        'sort_done': f'The fitting pile is the {topic} decision you will write on the next ticket.',
+        'lab_note': f'Open the linked station and compare the live state with the safe {topic} state.',
+        'neighbor': other,
     }
 
 

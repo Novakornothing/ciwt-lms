@@ -101,6 +101,29 @@ def _mc(n, oid, course_obj, text, correct, wrongs, why):
     return item
 
 
+_ID_FRAMES = (
+    'The evidence in the ticket is: {case} Which topic is that?',
+    'You have to label this before you touch a setting: {case} What is the right label?',
+    'A coworker used a different name. The fact you can verify is: {case} Which name fits the fact?',
+    'Sort this queue item before you recommend a tool. {case} Which topic matches it?',
+    'The handoff is missing a label. Here is the only fact: {case} Which topic belongs on the ticket?',
+    'Do not file this under the neighboring idea. {case} Which topic is actually in front of you?',
+    'Read the evidence once, then name it. {case} Which topic is supported?',
+    'The next person will bring the wrong control if you misname this. {case} Which topic is accurate?',
+)
+
+_DO_FRAMES = (
+    'The ticket says: {case} Which decision matches {name}?',
+    'You have to tell a new teammate what to do about this: {case} Which line is the right call for {name}?',
+    'Pick the action that fits {name}. The evidence is: {case}',
+    'Which response is the one {name} calls for, given this evidence: {case}',
+    'A faster option is on the table. The evidence is still: {case} Which response is the one for {name}?',
+    'Write the decision for {name} into the ticket. The evidence is: {case} Which line should you write?',
+    'Two labels were proposed. The evidence is: {case} Which decision is the one {name} supports?',
+    'Close this only if the decision matches the evidence. {case} Which decision is right for {name}?',
+)
+
+
 def _singles():
     by_obj = OrderedDict()
     for leaf in LEAVES:
@@ -109,34 +132,44 @@ def _singles():
     n = 1
     for obj, names in by_obj.items():
         oid = f'S:{obj}'
+        course_obj = f'SEC-{_OBJ_ORDER.index(obj) + 1}.1'
         for i, name in enumerate(names):
-            means, case, plain, story = GLOSS[name]
+            means, case, plain, _story = GLOSS[name]
             others = [x for x in names if x != name]
-            # rotate so distractors vary and stay near the key's length
             wrong_names = sorted(others, key=lambda x: (abs(len(x) - len(name)), x))[:3]
-            why = (
-                f'{name} fits this evidence: {means} '
-                f'The other choices are different topics from the same part of the course.'
+            contrast = wrong_names[0]
+            contrast_case = GLOSS[contrast][1].rstrip('.')
+            why_id = (
+                f'{means} That is why the label is {name}. '
+                f'{contrast} would be the label if the ticket instead said: {contrast_case}.'
             )
-            course_obj = f'SEC-{_OBJ_ORDER.index(obj) + 1}.1'
             out.append(_mc(
                 n, oid, course_obj,
-                f'A clinic ticket says: {case} Which security topic is this?',
-                name, wrong_names, why,
+                _ID_FRAMES[i % len(_ID_FRAMES)].format(case=case.rstrip('.')),
+                name, wrong_names, why_id,
             ))
             n += 1
             wrong_plain = []
+            plain_owners = []
             for other in others:
-                if GLOSS[other][2] != plain:
-                    wrong_plain.append(GLOSS[other][2].rstrip('.'))
+                line = GLOSS[other][2].rstrip('.')
+                if line != plain.rstrip('.') and line not in wrong_plain:
+                    wrong_plain.append(line)
+                    plain_owners.append(other)
                 if len(wrong_plain) == 3:
                     break
+            decoy = plain_owners[0] if plain_owners else contrast
+            why_do = (
+                f'For {name}, the decision is: {plain.rstrip(".")}. '
+                f'{means} The line about {decoy} answers a different decision, '
+                f'because {decoy} shows up as: {GLOSS[decoy][1].rstrip(".")}.'
+            )
             out.append(_mc(
                 n, oid, course_obj,
-                f'A new teammate asks what {name} means on a live ticket. Which summary is fair?',
+                _DO_FRAMES[(i + 3) % len(_DO_FRAMES)].format(case=case.rstrip('.'), name=name),
                 plain.rstrip('.'),
                 wrong_plain,
-                f'The fair summary is the everyday line for {name}. {means}',
+                why_do,
             ))
             n += 1
     return out
