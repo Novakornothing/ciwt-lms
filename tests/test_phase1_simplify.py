@@ -236,3 +236,9 @@ def test_learning_path_switch_keeps_reader_in_place():
     assert 'function restoreAnchor()' in ui and 'ResizeObserver' in ui and 'keeper.pending' in ui
     assert "box.hasAttribute('data-swap-quiet')) moveFocus = false" in lad
     assert 'if (!desk.matches) openSheet(false);' in ui
+
+
+def test_eye_tracking_pill_uses_plain_name():
+    js = (ROOT / 'static/js/helix/helix-gaze.js').read_text()
+    assert '<span class="hx-pill-text">Eye Tracking</span>' in js
+    assert not re.search(r"""['"][^'"\n]*(?<![\w.])Helix\b(?![\w(])[^'"\n]*['"]""", js)

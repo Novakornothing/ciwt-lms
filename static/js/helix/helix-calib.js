@@ -268,7 +268,7 @@
   var RES_TEXT = {
     line: 'Precise enough for <strong>line-level</strong> areas (unusual for a webcam \u2014 nice setup).',
     paragraph: 'Precise enough for <strong>paragraph-level</strong> areas of interest.',
-    heading: 'Helix will track <strong>heading-level</strong> sections (finer areas need a lower error).'
+    heading: 'Eye Tracking will track <strong>heading-level</strong> sections (finer areas need a lower error).'
   };
 
   function result(ov, engine, v, opts, attempt) {
@@ -281,12 +281,12 @@
       }).join('');
       ov.insertAdjacentHTML('beforeend', marks);
       var err = s.valid ? '<p class="mb-1">Median error <strong>' + s.errorPx + ' px</strong>' + (s.errorDeg != null ? ' \u2248 <strong>' + s.errorDeg + '\u00b0</strong> of visual angle' + (s.distanceCm ? ' at ~' + s.distanceCm + ' cm' : '') : '') + '; spread ' + s.precisionPx + ' px.</p>' +
-        '<p class="small mb-2 opacity-75">Rings = targets, dots = Helix\u2019s estimate. Degrees assume 96 CSS px per inch and the camera\u2019s distance estimate.</p>' : '';
+        '<p class="small mb-2 opacity-75">Rings = targets, dots = the eye tracker\u2019s estimate. Degrees assume 96 CSS px per inch and the camera\u2019s distance estimate.</p>' : '';
       var tips = '<ul class="small text-start mb-2"><li>Light your face from the front; avoid a bright window behind you.</li><li>Keep the camera at eye level; move your eyes rather than your head.</li><li>Clean the camera lens; tilt glasses slightly if they reflect.</li></ul>';
       help(ov,
         (s.valid ? '<h2 class="h5">' + (ok ? 'You\u2019re all set! ' : '') + 'Accuracy: ' + s.score + '% <span class="hx-acc hx-acc-' + s.band + '">' + s.band + '</span></h2>' + err +
           (s.calibMs ? '<p class="small mb-2 opacity-75">Calibrated in ' + Math.round(s.calibMs / 1000) + ' s (' + (s.calibMode === 'follow' ? 'follow the dot' : s.calibMode === 'follow+dots' ? 'follow the dot, then dots' : 'dots') + ').</p>' : '')
-                 : '<h2 class="h5">No gaze estimates received <span class="hx-acc hx-acc-poor">poor</span></h2><p class="mb-2">Helix could not see your eyes during the check. Check the lighting and that your face is in view.</p>') +
+                 : '<h2 class="h5">No gaze estimates received <span class="hx-acc hx-acc-poor">poor</span></h2><p class="mb-2">Eye Tracking could not see your eyes during the check. Check the lighting and that your face is in view.</p>') +
         (s.valid ? '<p class="mb-2">' + RES_TEXT[s.resolution] + '</p>' : '') +
         (ok ? '' : '<p class="mb-2"><strong>Not quite there yet (below ' + min + '%).</strong> That\u2019s common on the first try \u2014 one of these usually fixes it:</p>' + tips) +
         '<div class="d-flex flex-wrap gap-2 justify-content-center">' +
@@ -366,7 +366,7 @@
         var cmp = prev && prev.errorPx != null && s.valid
           ? '<p class="small mb-2">At calibration: ~' + prev.errorPx + ' px' + (prev.errorDeg != null ? ' (' + prev.errorDeg + '\u00b0)' : '') + '. Now: ~' + s.errorPx + ' px' + (s.errorDeg != null ? ' (' + s.errorDeg + '\u00b0)' : '') + '.</p>' : '';
         help(ov, (s.valid ? '<h2 id="hxCalTitle" class="h5">Accuracy now: ' + s.score + '% <span class="hx-acc hx-acc-' + s.band + '">' + s.band + '</span></h2>' + cmp
-            : '<h2 id="hxCalTitle" class="h5">No gaze estimates during the check <span class="hx-acc hx-acc-poor">poor</span></h2><p class="mb-2">Helix could not see your eyes. Check the lighting and that your face is in view.</p>') +
+            : '<h2 id="hxCalTitle" class="h5">No gaze estimates during the check <span class="hx-acc hx-acc-poor">poor</span></h2><p class="mb-2">Eye Tracking could not see your eyes. Check the lighting and that your face is in view.</p>') +
           (ok ? '<p class="small mb-2">Your calibration still fits. Nothing was retrained.</p>' : '<p class="small mb-2"><strong>Below ' + min + '%.</strong> A recalibration (about 30 s) usually fixes this.</p>') +
           '<div class="d-flex flex-wrap gap-2 justify-content-center"><button type="button" class="btn ' + (ok ? 'btn-brand' : 'btn-outline-light') + '" id="hxChkDone">Back to reading</button>' +
           '<button type="button" class="btn ' + (ok ? 'btn-outline-light' : 'btn-brand') + '" id="hxChkRecal">Recalibrate</button></div>', 'is-result');

@@ -157,21 +157,21 @@
     _paused: { key: '_paused', label: 'Paused by student', order: 993, kind: 'state' },
     // pass 10 session hardening
     _camera_off: { key: '_camera_off', label: 'Camera disconnected or blocked', order: 992, kind: 'state' },
-    _other_tab: { key: '_other_tab', label: 'Helix active in another tab', order: 991, kind: 'state' },
+    _other_tab: { key: '_other_tab', label: 'Eye Tracking active in another tab', order: 991, kind: 'state' },
     _asleep: { key: '_asleep', label: 'Device asleep / page suspended', order: 990, kind: 'state' }
   };
 
   /* ------------------------------------------------------------ dock UI */
   function buildDock() {
     if ($('helixDock')) return;
-    var dock = el('section', { id: 'helixDock', 'class': 'helix-dock', 'aria-label': 'Helix attention signal', 'data-phase': 'idle' });
+    var dock = el('section', { id: 'helixDock', 'class': 'helix-dock', 'aria-label': 'Eye Tracking signal', 'data-phase': 'idle' });
     dock.innerHTML =
       '<button type="button" class="helix-pill-btn" id="hxPill" aria-expanded="false" aria-controls="hxCard">' +
-        '<span class="hx-dot" aria-hidden="true"></span><span class="hx-pill-text">Helix</span><span class="visually-hidden"> attention signal — open panel</span></button>' +
+        '<span class="hx-dot" aria-hidden="true"></span><span class="hx-pill-text">Eye Tracking</span><span class="visually-hidden"> attention signal — open panel</span></button>' +
       '<div class="helix-card" id="hxCard" hidden>' +
-        '<div class="hx-head"><strong><i class="bi bi-eye" aria-hidden="true"></i> Helix attention</strong>' +
+        '<div class="hx-head"><strong><i class="bi bi-eye" aria-hidden="true"></i> Eye Tracking</strong>' +
           '<span class="hx-badge">Not a grade</span>' +
-          '<button type="button" class="hx-icon-btn" id="hxMin" aria-label="Minimise Helix panel"><i class="bi bi-dash-lg" aria-hidden="true"></i></button></div>' +
+          '<button type="button" class="hx-icon-btn" id="hxMin" aria-label="Minimise Eye Tracking panel"><i class="bi bi-dash-lg" aria-hidden="true"></i></button></div>' +
         '<div id="hxBody"></div>' +
         '<p class="hx-status" id="hxStatus" role="status" aria-live="polite"></p>' +
       '</div>';
@@ -196,7 +196,7 @@
     var dock = $('helixDock');
     if (dock) dock.setAttribute('data-phase', p);
     var t = document.querySelector('#hxPill .hx-pill-text');
-    if (t) t.textContent = pillText || 'Helix';
+    if (t) t.textContent = pillText || 'Eye Tracking';
   }
   function status(msg) { var n = $('hxStatus'); if (n) n.textContent = msg || ''; }
   function body(html) { var n = $('hxBody'); if (n) n.innerHTML = html; return n; }
@@ -229,7 +229,7 @@
     if (camOk && dev === 'mobile') html += '<p class="hx-note">Phone: hold it about 30 cm away (a forearm), front camera at the top, and tap each dot to calibrate. Rotating the phone needs a quick 5-dot refresh.</p>';
     else if (!cameraPossible()) html += '<p class="hx-note">Camera gaze needs HTTPS and camera access, so only the reading signal is available here.</p>';
     if (dev === 'tablet' && camOk) html += '<p class="hx-note">Tablet: prop it up at eye level for camera gaze.</p>';
-    html += '<p class="hx-links"><a href="' + esc(CFG.tryUrl || '/helix/try') + '">Try the live gaze dot first</a> · <a href="' + esc(CFG.policyUrl) + '">How Helix works</a> · <a href="' + esc(CFG.myDataUrl) + '">My data</a></p>';
+    html += '<p class="hx-links"><a href="' + esc(CFG.tryUrl || '/helix/try') + '">Try the live gaze dot first</a> · <a href="' + esc(CFG.policyUrl) + '">How Eye Tracking works</a> · <a href="' + esc(CFG.myDataUrl) + '">My data</a></p>';
     body(html);
     on('hxCam', function () {
       // iOS Safari: getUserMedia must start inside the tap, before any network round-trip
@@ -239,7 +239,7 @@
     on('hxPassive', function () { ensureConsent('passive'); });
     on('hxSkip', function () {
       var st = store(); if (st) st.setItem(DISMISS_KEY, String(now()));
-      setOpen(false); setPhase('idle', 'Helix off');
+      setOpen(false); setPhase('idle', 'Eye Tracking off');
     });
     status('');
   }
@@ -251,7 +251,7 @@
     body(
       '<form id="hxConsent" class="hx-consent">' +
       (c.stale ? '<p class="hx-note"><strong>The policy changed</strong> since you last agreed. Please review it again.</p>' : '') +
-      '<p class="hx-copy">Before Helix records anything:</p><ul class="hx-list">' +
+      '<p class="hx-copy">Before Eye Tracking records anything:</p><ul class="hx-list">' +
       '<li>Camera video is processed <strong>only in this browser</strong>. No images are uploaded.</li>' +
       '<li>Stored: which lesson blocks you spent time on, for how long, and data-quality info (calibration accuracy, face/tab states).</li>' +
       '<li>It is <strong>not a grade</strong> and not required for any quiz or test.</li>' +
@@ -309,7 +309,7 @@
       return startPassive();
     }).catch(function (err) {
       setPhase('error');
-      body('<p class="hx-copy">Helix could not start: ' + esc(err.message || err) + '.</p>' +
+      body('<p class="hx-copy">Eye Tracking could not start: ' + esc(err.message || err) + '.</p>' +
         '<div class="hx-actions">' + (S.server.passive_enabled && mode === 'gaze' ? '<button type="button" class="btn btn-brand btn-sm" id="hxFallback">Use reading signal instead</button>' : '') +
         '<button type="button" class="btn btn-outline-secondary btn-sm" id="hxBack">Back</button></div>');
       on('hxFallback', function () { endSession(true).then(function () { ensureConsent('passive'); }); });
@@ -388,7 +388,7 @@
         if (!S.faceLostSince) S.faceLostSince = t;
         if (t - S.faceLostSince > 8000 && !S.warnedFace) {
           S.warnedFace = true;
-          toast('<strong>Helix can\u2019t see your face.</strong> Check lighting and that the camera is not covered.', [{ label: 'Pause Helix', fn: togglePause }], 12000);
+          toast('<strong>Eye Tracking can\u2019t see your face.</strong> Check lighting and that the camera is not covered.', [{ label: 'Pause Eye Tracking', fn: togglePause }], 12000);
         }
       } else {
         S.faceLostSince = 0; S.warnedFace = false;
@@ -406,7 +406,7 @@
       var tl = S.timeline && S.timeline.totals;
       if (tl && tl.total > 60000 && tl.low_conf / tl.total > 0.35 && !S.lowPrompted) {
         S.lowPrompted = true;
-        toast('Helix is unsure where you are looking much of the time. A quick recalibration usually fixes this.', [{ label: 'Recalibrate', fn: recalibrate }, { label: 'Switch to reading signal', cls: 'btn-outline-navy', fn: switchToPassive }], 20000);
+        toast('Eye Tracking is unsure where you are looking much of the time. A quick recalibration usually fixes this.', [{ label: 'Recalibrate', fn: recalibrate }, { label: 'Switch to reading signal', cls: 'btn-outline-navy', fn: switchToPassive }], 20000);
       }
     } else {
       if (t - S.lastInteraction > IDLE_MS) state = STATES._idle;
@@ -438,7 +438,7 @@
 
   function renderLive() {
     var passive = S.mode === 'passive';
-    setPhase(passive ? 'passive' : 'live', passive ? 'Helix · reading' : 'Helix · live');
+    setPhase(passive ? 'passive' : 'live', passive ? 'Eye Tracking · reading' : 'Eye Tracking · live');
     var cal = S.calibration;
     var band = cal ? ('<span class="hx-acc hx-acc-' + cal.band + '">Accuracy ' + cal.score + '% · ' + cal.band + '</span>' +
       '<span class="hx-note d-block">' + (cal.errorPx != null ? '~' + cal.errorPx + ' px' + (cal.errorDeg != null ? ' (' + cal.errorDeg + '°)' : '') + ' · ' : '') +
@@ -488,14 +488,14 @@
     try { if (S.mode === 'gaze' && S.engine) { if (S.paused) S.engine.pause(); else S.engine.resume(); } } catch (e) {}
     var b = $('hxPause');
     if (b) { b.setAttribute('aria-pressed', S.paused ? 'true' : 'false'); b.innerHTML = S.paused ? '<i class="bi bi-play-fill" aria-hidden="true"></i> Resume' : '<i class="bi bi-pause-fill" aria-hidden="true"></i> Pause'; }
-    setPhase(S.paused ? 'paused' : (S.mode === 'passive' ? 'passive' : 'live'), S.paused ? 'Helix · paused' : null);
+    setPhase(S.paused ? 'paused' : (S.mode === 'passive' ? 'passive' : 'live'), S.paused ? 'Eye Tracking · paused' : null);
     if (S.paused) $('helixGazeDot').style.display = 'none';
     status(S.paused ? 'Paused — nothing is being measured.' : 'Resumed.');
   }
 
   function hardStop(msg) {
     teardown();
-    setPhase('ended', 'Helix');
+    setPhase('ended', 'Eye Tracking');
     body('<p class="hx-copy">' + esc(msg) + '</p><div class="hx-actions"><button type="button" class="btn btn-outline-navy btn-sm" id="hxAgain">Start again</button></div>');
     on('hxAgain', function () { boot(true); });
   }
@@ -524,7 +524,7 @@
   function stopSession() {
     status('Saving…');
     return endSession().then(function () {
-      setPhase('ended', 'Helix');
+      setPhase('ended', 'Eye Tracking');
       body('<p class="hx-copy"><strong>Session saved.</strong> Thanks — this helps your instructor see which parts of the lesson need another pass.</p>' +
         '<div id="hxReview" class="hx-review"></div>' +
         '<div class="hx-actions"><button type="button" class="btn btn-outline-navy btn-sm" id="hxAgain">Start another session</button>' +
@@ -537,8 +537,8 @@
 
   function autoEnd(reason) {
     endSession().then(function () {
-      setPhase('ended', 'Helix');
-      body('<p class="hx-copy">Helix ended the session automatically (' + esc(reason) + ').</p><div class="hx-actions"><button type="button" class="btn btn-brand btn-sm" id="hxAgain">Resume with a new session</button></div>');
+      setPhase('ended', 'Eye Tracking');
+      body('<p class="hx-copy">Eye Tracking ended the session automatically (' + esc(reason) + ').</p><div class="hx-actions"><button type="button" class="btn btn-brand btn-sm" id="hxAgain">Resume with a new session</button></div>');
       on('hxAgain', function () { boot(true); });
     });
   }
@@ -628,7 +628,7 @@
         S.lastCalibratedAt = now(); S.driftPrompted = false; S.lowPrompted = false; S.recalPrompted = false;
         S.filter = new Core.GazeFilter({ bounds: { w: innerWidth, h: innerHeight } });
         beginLive();
-        toast('Restored your Helix calibration from this session.', [{ label: 'Recalibrate', cls: 'btn-outline-light', fn: function () { recalibrate(false); } }], 6000);
+        toast('Restored your Eye Tracking calibration from this session.', [{ label: 'Recalibrate', cls: 'btn-outline-light', fn: function () { recalibrate(false); } }], 6000);
         return;
       }
       return calibrate(false);
@@ -647,7 +647,7 @@
     if (ev.notice === 'camera_back') { if (S.cameraLost === 'muted') { S.cameraLost = null; renderLive(); status('Camera is back.'); } return; }
     if (ev.notice === 'thermal' && !S.quality.warned.thermal) {
       S.quality.warned.thermal = true;
-      toast('Your device is running warm, so Helix is checking your gaze less often to save power. Tracking continues.', null, 8000);
+      toast('Your device is running warm, so Eye Tracking is checking your gaze less often to save power. Tracking continues.', null, 8000);
     }
     if (ev.face) S.lastFaceOk = now();
     if (ev.pred) onGaze(ev.pred);
@@ -779,11 +779,11 @@
     }
     if (since('occSince', !!st.occluded) > 5000 && !q.warned.occ) {
       q.warned.occ = true;
-      toast('Something is covering part of your face or one eye. Helix pauses estimates until both eyes are visible.', null, 10000);
+      toast('Something is covering part of your face or one eye. Eye Tracking pauses estimates until both eyes are visible.', null, 10000);
     }
     if (st.faces > 1 && !q.warned.faces) {
       q.warned.faces = true;
-      toast('Another face is in view. Helix keeps following you, the person it calibrated with.', null, 6000);
+      toast('Another face is in view. Eye Tracking keeps following you, the person it calibrated with.', null, 6000);
     }
     // smart recalibration: posture changed enough that the calibration no longer fits
     if (e.recalCheck && !S.recalPrompted && (!q.lastRecalCheck || t - q.lastRecalCheck > 2000)) {
@@ -804,7 +804,7 @@
     if (!S.calibration || !S.calibration.errorPx || S.recalPrompted) return;
     if (S.drift.drifting(S.calibration.errorPx, DRIFT_FACTOR)) {
       S.recalPrompted = true;
-      toast('<strong>Tracking has drifted</strong> (clicks land ~' + Math.round(S.drift.median()) + ' px from where Helix thinks you look). A 15-second refresh fixes it.',
+      toast('<strong>Tracking has drifted</strong> (clicks land ~' + Math.round(S.drift.median()) + ' px from where Eye Tracking thinks you look). A 15-second refresh fixes it.',
         [{ label: 'Quick recalibrate', fn: function () { recalibrate(true); } }], 20000);
     }
   }
@@ -816,7 +816,7 @@
     if (k === S.orientation) return;
     S.orientation = k;
     if (S.engine.setOrientation(k)) toast('Rotated — using your ' + k + ' calibration.', null, 4000);
-    else toast('Rotated to ' + k + '. Helix needs a quick 5-dot calibration for this orientation.', [{ label: 'Calibrate now', fn: function () { recalibrate(true); } }], 20000);
+    else toast('Rotated to ' + k + '. Eye Tracking needs a quick 5-dot calibration for this orientation.', [{ label: 'Calibrate now', fn: function () { recalibrate(true); } }], 20000);
   }
 
   function engineMeta() {
@@ -833,7 +833,7 @@
   }
 
   function calibrate(isRecal, quick) {
-    setPhase('calibrating', 'Helix · calibrating');
+    setPhase('calibrating', 'Eye Tracking · calibrating');
     body('<p class="hx-copy">Calibrating — follow the steps on screen. Press Esc to cancel.</p>');
     calSink = true;
     return Calib.run(S.engine, {
@@ -927,7 +927,7 @@
     if (S.mode !== 'gaze' || !S.engine || !Calib.check || S.cameraLost || S.yielded) return;
     var wasPaused = S.paused;
     S.paused = true; calSink = true;
-    setPhase('calibrating', 'Helix · checking');
+    setPhase('calibrating', 'Eye Tracking · checking');
     Calib.check(S.engine, { minAccuracy: S.server.min_accuracy || 45, previous: S.calibration }).then(function (r) {
       calSink = null; S.paused = wasPaused;
       if (r.score && r.score.valid) {
@@ -965,11 +965,11 @@
   }
   function renderCameraLost() {
     var r = S.cameraLost;
-    var why = r === 'permission' ? 'Camera permission was turned off for this site, so Helix stopped using the camera.'
+    var why = r === 'permission' ? 'Camera permission was turned off for this site, so Eye Tracking stopped using the camera.'
       : r === 'unplugged' ? 'The camera was disconnected.'
       : r === 'muted' ? 'The camera stopped sending video (a privacy shutter or another app may be using it).'
       : 'The camera stopped (it may have been unplugged, used by another app, or switched off while the device slept).';
-    setPhase('paused', 'Helix · camera off');
+    setPhase('paused', 'Eye Tracking · camera off');
     body('<div class="hx-live"><span class="hx-acc hx-acc-poor">Camera off</span><p class="hx-copy">' + esc(why) +
       ' Nothing is being measured; this time is recorded as “camera off”, not reading.</p></div>' +
       '<div class="hx-actions">' + (r === 'muted' ? '' : '<button type="button" class="btn btn-brand btn-sm" id="hxReconnect"><i class="bi bi-camera-video" aria-hidden="true"></i> Reconnect camera</button>') +
@@ -984,7 +984,7 @@
     status('Reconnecting camera…');
     S.engine.reconnect().then(function (res) {
       S.cameraLost = null; S.lastFaceOk = S.lastSample = now();
-      if (!res.sameDevice) { status('A different camera was connected, so Helix needs a new calibration.'); recalibrate(); return; }
+      if (!res.sameDevice) { status('A different camera was connected, so Eye Tracking needs a new calibration.'); recalibrate(); return; }
       renderLive(); status('Camera reconnected. Your calibration is kept; use Re-check accuracy if you moved.');
     }, function (err) {
       status('Could not reconnect: ' + (err && err.message || err) + '.');
@@ -992,7 +992,7 @@
   }
 
   /* several tabs: only one tab measures at a time. The tab where Helix was started (or resumed) most
-     recently wins; the others release the camera and record "Helix active in another tab". */
+     recently wins; the others release the camera and record "Eye Tracking active in another tab". */
   var bc = null;
   try { if (window.BroadcastChannel) bc = new BroadcastChannel('ciwt-helix'); } catch (e) { bc = null; }
   function announce(type) {
@@ -1014,10 +1014,10 @@
     }
     var dot = $('helixGazeDot'); if (dot) dot.style.display = 'none';
     var cal = $('helixCalib'); if (cal) { cal.remove(); calSink = null; }
-    setPhase('paused', 'Helix · other tab');
-    body('<div class="hx-live"><span class="hx-acc hx-acc-info">Paused here</span><p class="hx-copy">Helix is running in another tab, so it is paused in this one. Nothing is measured here' +
+    setPhase('paused', 'Eye Tracking · other tab');
+    body('<div class="hx-live"><span class="hx-acc hx-acc-info">Paused here</span><p class="hx-copy">Eye Tracking is running in another tab, so it is paused in this one. Nothing is measured here' +
       (S.mode === 'gaze' ? ' and the camera is released' : '') + '.</p></div>' +
-      '<div class="hx-actions"><button type="button" class="btn btn-brand btn-sm" id="hxUseHere">Use Helix in this tab</button>' +
+      '<div class="hx-actions"><button type="button" class="btn btn-brand btn-sm" id="hxUseHere">Use Eye Tracking in this tab</button>' +
       '<button type="button" class="btn btn-danger btn-sm" id="hxStop"><i class="bi bi-stop-fill" aria-hidden="true"></i> Stop</button></div>');
     on('hxUseHere', reclaimTab); on('hxStop', function () { stopSession(); });
     if (S.queue && S.timeline) { queueBatch(false); S.queue.flush(); }
@@ -1073,7 +1073,7 @@
   function boot(open) {
     fetch(CFG.configUrl, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (cfg) {
       S.server = cfg;
-      if (!cfg.enabled || !cfg.can_record) return; // Helix off for this class: render nothing
+      if (!cfg.enabled || !cfg.can_record) return; // Eye Tracking off for this class: render nothing
       // per-device-class calibration defaults (admin-set from real study data; built-in: dots, 720p).
       // An explicit ?hires=1 or a page-level HELIX_ENGINE.hiRes still wins.
       var dflt = (cfg.calib_defaults || {})[device()] || {};
@@ -1084,11 +1084,11 @@
       S.showDot = !!(st && st.getItem(DOT_KEY) === '1');
       renderOffer();
       var dismissed = st && +st.getItem(DISMISS_KEY) > now() - 7 * 864e5;
-      if (dismissed && !open) setPhase('idle', 'Helix off');
+      if (dismissed && !open) setPhase('idle', 'Eye Tracking off');
       // start as the small pill: an auto-opened card covered lesson text on first visit
       setOpen(!!open);
       flushLeftovers();
-    }).catch(function () { /* Helix is optional: fail silently */ });
+    }).catch(function () { /* Eye Tracking is optional: fail silently */ });
   }
 
   window.addEventListener('pagehide', onPageHide);
