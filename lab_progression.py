@@ -482,6 +482,10 @@ def end_state_ok(lab, stage, state, done):
         return False
     if stage == "ticket" and "stage:assisted" not in done and not (fam == "linuxgui" and all(i in done for i in _later_ids(lab, "assisted"))):
         return False
+    import lab_skills as SK
+    custom = SK.stage_state_ok(lab, stage, state, f)
+    if custom is not None:
+        return custom
     if fam == "linuxgui":
         return all(i in done for i in _later_ids(lab, stage))
     if fam in ("win", "desk"):

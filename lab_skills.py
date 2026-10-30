@@ -385,6 +385,7 @@ def stage_state_ok(lab, stage, state, facts):
 
 import lab_skill_linux  # noqa: E402,F401  — registers SPECS
 import lab_skill_windows  # noqa: E402,F401
+import lab_skill_ios  # noqa: E402,F401
 
 
 def _run_real(plant, fix, checks):
