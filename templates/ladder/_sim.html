@@ -1,0 +1,11 @@
+{# R4 Try-It simulation. Needs sim (widget config) and L. Practice check posts to the ladder event URL. #}
+<div class="novak-sim" data-novak-sim="{{ sim.type }}" data-evidence-url="{{ L.url_event }}">
+  <p class="novak-sim-instr" id="simi-{{ L.sid }}">{{ sim.instruction }}</p>
+  <div class="novak-sim-stage" role="group" aria-labelledby="simi-{{ L.sid }}"></div>
+  <div class="novak-sim-actions">
+    <button type="button" class="btn btn-sm btn-brand" data-sim-check>Check</button>
+    <button type="button" class="btn btn-sm btn-outline-navy" data-sim-reset>Reset</button>
+  </div>
+  <p class="novak-sim-fb" role="status" aria-live="polite"></p>
+  <div class="novak-sim-spec" hidden>{{ sim|tojson }}</div>
+</div>

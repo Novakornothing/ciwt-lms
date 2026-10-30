@@ -264,7 +264,7 @@
         </button>
       </div>
       <div class="curriculum-card">
-        <div class="module-content novak-focus-mode-active" id="lessonBody">
+        <div class="module-content novak-focus-mode-active" id="lessonBody" data-sims-src="{{ url_for('static', filename='js/sims/novak-sims.js') }}" data-sims-css="{{ url_for('static', filename='css/sims.css') }}">
           {% if ladder_html %}
           <div class="lesson-meta-strip visually-hidden">
             {% if ladder_gate and ladder_gate.on and not ladder_gate.exempt %}<p class="ladder-topstatus mb-0" data-gate-top>

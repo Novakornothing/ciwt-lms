@@ -260,6 +260,34 @@
       tog.addEventListener('keydown', function (e) { if (e.key === ' ') { e.preventDefault(); toggleOriginal(box, tog); } });
     }
     initWidgets(box);
+    mountSims(box);
+  }
+
+  var simsLoading = false;
+  var simsWait = [];
+  function mountSims(scope) {
+    var nodes = scope.querySelectorAll('[data-novak-sim]');
+    if (!nodes.length) return;
+    function go() { if (window.NovakSims) window.NovakSims.mountAll(scope); }
+    if (window.NovakSims) { go(); return; }
+    if (simsLoading) { simsWait.push(go); return; }
+    simsLoading = true;
+    var cssHref = body.getAttribute('data-sims-css') || '/static/css/sims.css';
+    var jsSrc = body.getAttribute('data-sims-src') || '/static/js/sims/novak-sims.js';
+    if (!document.querySelector('link[data-novak-sims-css]')) {
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = cssHref;
+      css.setAttribute('data-novak-sims-css', '1');
+      document.head.appendChild(css);
+    }
+    var s = document.createElement('script');
+    s.src = jsSrc;
+    s.onload = function () {
+      go();
+      simsWait.splice(0).forEach(function (fn) { fn(); });
+    };
+    document.body.appendChild(s);
   }
 
   body.querySelectorAll('.ladder').forEach(init);
