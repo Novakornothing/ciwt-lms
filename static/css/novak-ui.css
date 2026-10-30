@@ -2175,7 +2175,7 @@ html[data-theme="dark"] .novak-section-card {
 .tutor-fab {
   position: fixed !important;
   bottom: 20px !important;
-  right: 120px !important;
+  right: 172px !important;
   z-index: 1050 !important;
   min-height: 40px !important;
   padding: 0.4rem 0.85rem !important;
@@ -2197,7 +2197,7 @@ html[data-theme="dark"] .novak-section-card {
 @media (max-width: 767.98px) {
   body.has-mobile-tabbar .tutor-fab {
     bottom: calc(var(--tabbar-h, 64px) + 14px) !important;
-    right: 112px !important;
+    right: 162px !important;
   }
   body.has-mobile-tabbar .helix-dock {
     bottom: calc(var(--tabbar-h, 64px) + 14px) !important;
