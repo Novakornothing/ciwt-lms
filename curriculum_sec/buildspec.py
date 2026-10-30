@@ -1,6 +1,64 @@
 """Helpers that wrap a section's original lines in five different explanations."""
 
 
+def _dot(text):
+    text = str(text).strip()
+    return text if text.endswith('.') else text + '.'
+
+
+def Sec(heading, topic, r0, plain, story, steps, key, bad1, bad2, why, covers=(), family='sort', widget='sort',
+        r1=None, r2=None, r4=None, boxes=None, note=None, neighbor='', scene=''):
+    """A section whose standard, plain, and analogy paths are original sentences."""
+    if isinstance(r0, str):
+        r0 = [r0]
+    if isinstance(plain, str):
+        plain = [plain]
+    if isinstance(story, str):
+        story = [story]
+    why_out = why if len(why.split()) >= 12 else why + ' The other choices describe a different goal or a different control.'
+    spoken = _dot(plain[0])
+    tale = _dot(story[0])
+    if r1 is None:
+        r1 = [spoken, tale]
+    if r2 is None:
+        r2 = [tale, spoken]
+    if r4 is None:
+        r4 = [f'Sort {topic} evidence before opening the station.', f'{topic} cards teach one decision.']
+    if boxes is None:
+        boxes = [(heading[:22] or 'Topic', 'definition'), (heading[:22] or 'Topic', 'ticket'), (heading[:22] or 'Topic', 'decision')]
+    fit_a = spoken.rstrip('.')
+    fit_b = (scene or heading)[:90]
+    other = neighbor or 'a neighboring idea'
+    return {
+        'heading': heading,
+        'topic': topic,
+        'covers': list(covers),
+        'family': family,
+        'widget': widget,
+        'r0': list(r0),
+        'r1': list(r1),
+        'r2': list(r2),
+        'steps': list(steps),
+        'key': key,
+        'bad': [bad1, bad2],
+        'why': why_out,
+        'note': _dot(note if note is not None else plain[0]),
+        'diagram': heading[:42],
+        'boxes': list(boxes),
+        'diagram_r3': f'{heading[:32]} trace',
+        'boxes_r3': [('Begin', steps[0][:28]), ('Middle', steps[1][:28]), ('Confirm', steps[2][:28])],
+        'r4': list(r4),
+        'sort_prompt': f'Which cards belong with {topic}?',
+        'sort': {
+            'Fits this idea': [f'{topic}: {fit_a[:80]}', f'{topic} evidence: {fit_b[:80]}'],
+            'Does not fit': [f'{other}: a different fact', f'{topic}: guess and skip the note'],
+        },
+        'sort_done': f'The fitting pile is the {topic} decision you will write on the next ticket.',
+        'lab_note': f'Open the linked station and compare the live state with the safe {topic} state.',
+        'neighbor': other,
+    }
+
+
 def S(heading, topic, tech, example, plain, story, steps, key, bad1, bad2, why):
     """tech/example stay in the standard path. plain, story, and steps stay in their own paths."""
     return {
@@ -53,6 +111,10 @@ def S(heading, topic, tech, example, plain, story, steps, key, bad1, bad2, why):
         'sort_done': 'The fitting pile is the habit you will use on a ticket.',
         'lab_note': 'Open the linked station and compare the live state with the safe state.',
     }
+
+
+def lesson(n, title, skill, objective, fits, intro, sections, lab=None, mc_label='', mc_fix='', mc_terms=None):
+    return L(n, title, skill, objective, fits, intro, sections, lab=lab, mc_label=mc_label, mc_fix=mc_fix, mc_terms=mc_terms)
 
 
 def L(n, title, skill, objective, fits, intro, sections, lab=None, mc_label='', mc_fix='', mc_terms=None, skill_name=''):

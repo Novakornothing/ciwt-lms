@@ -24,9 +24,11 @@ ap.add_argument("--verbose", action="store_true")
 a = ap.parse_args()
 lab = V.VM_BY_ID[a.lab]
 state = V.fresh(lab, 1)
+vals = state.get("gui_vars") or {}
 cmds = lab["solution"]["vm_commands"] if a.commands == "solution" else ([] if a.commands == "none" else
                                                                          Path(a.commands).read_text().splitlines())
-spec = {"vm": lab["vm"], "commands": cmds, "probes": V.probe_scripts(state, lab), "verbose": a.verbose}
+cmds = [V.fill_session(c, vals) for c in cmds]
+spec = {"vm": V.vm_for_session(lab, 1), "commands": cmds, "probes": V.probe_scripts(state, lab), "verbose": a.verbose}
 with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
     json.dump(spec, f)
 r = subprocess.run(["node", str(HERE / "vm_headless.mjs"), f.name], capture_output=True, text=True, timeout=1500)

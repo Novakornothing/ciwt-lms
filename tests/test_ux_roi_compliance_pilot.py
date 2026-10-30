@@ -421,7 +421,7 @@ def test_12_wave6_ux_refinements_spec_drawer_step_style_lab_fullwidth_filter_and
 
     lab_html = student.get("/labs/linux-gui-logs").get_data(as_text=True)
     assert "is-lab-workbench staff-rail-collapsed" in lab_html
-    assert "All 114 Live Labs" in lab_html
+    assert "All 137 Live Labs" in lab_html
 
     catalog_html = student.get("/labs").get_data(as_text=True)
     assert "id=\"labsFilterBar\"" in catalog_html

@@ -287,8 +287,114 @@ def _is_trouble(entry, widget):
     return bool(_TROUBLE_RE.search(blob)) and (widget or {}).get('type') == 'order'
 
 
+# Security sections pick a widget from the topic, then fill the rest so no type
+# is more than about a fifth of the course. Specialty widgets stay on the topics
+# they actually demonstrate.
+_SEC_SPECIAL = {
+    'phish': re.compile(r'\b(phish\w*|vishing|smishing|pretext\w*|baiting|quid pro quo)\b', re.I),
+    'hash': re.compile(r'\b(hash\w*|checksums?|hmac|message digest)\b', re.I),
+    'logs': re.compile(r'\b(logs?|siem|syslog)\b', re.I),
+    'acl': re.compile(r'\b(firewalls?|access control lists?|screened subnets?)\b', re.I),
+    'ports': re.compile(r'\b(port numbers?|well-known ports?)\b', re.I),
+    'chmod': re.compile(r'\b(permissions?|chmod|file modes?)\b', re.I),
+    'cia': re.compile(r'\b(confidentiality|integrity|availability)\b', re.I),
+    'shell': re.compile(r'\b(shell|command line|bash)\b', re.I),
+    'troubleshoot': re.compile(r'\b(troubleshoot\w*|root cause|incident response)\b', re.I),
+}
+_SEC_GENERAL = ('match', 'pairs', 'classify', 'sequence', 'trace', 'choose', 'troubleshoot')
+_SEC_KIND = {}
+
+
+def _sec_plan():
+    """label, sid -> widget type. Computed once so the spread stays under the cap."""
+    if _SEC_KIND:
+        return _SEC_KIND
+    from curriculum_v2 import ladder as LD
+    entries = [e for k, e in LD.ladder().items() if k[0] == 'SEC' and e.get('type') == 'section']
+    entries.sort(key=lambda e: (e.get('label') or '', e.get('sid') or ''))
+    n = len(entries) or 1
+    special_cap = max(8, int(n * 0.08))
+    general_cap = max(12, int(n * 0.18))
+    counts = {}
+    for entry in entries:
+        blob = f"{entry.get('heading') or ''} {entry.get('sid') or ''}"
+        kind = None
+        for name, rx in _SEC_SPECIAL.items():
+            if rx.search(blob) and counts.get(name, 0) < special_cap:
+                kind = name
+                break
+        if kind is None:
+            kind = min(_SEC_GENERAL, key=lambda name: (counts.get(name, 0), name))
+            if counts.get(kind, 0) >= general_cap:
+                kind = 'choose'
+        counts[kind] = counts.get(kind, 0) + 1
+        _SEC_KIND[(entry.get('label'), entry.get('sid'))] = kind
+    return _SEC_KIND
+
+
+def _sec_group(entry):
+    """Four cards from this section's own check, two of them fitting the idea."""
+    heading = plain(entry.get('heading') or 'This idea') or 'This idea'
+    chk = (entry.get('checks') or [{}])[0]
+    correct = plain(chk.get('correct') or '') or heading
+    wrong = [plain(w) for w in (chk.get('wrong') or []) if plain(w)]
+    while len(wrong) < 2:
+        wrong.append(f'A different idea than {heading}')
+    rows = [
+        (correct, 'Fits'),
+        (f'{heading}: evidence on the ticket', 'Fits'),
+        (wrong[0], 'Does not fit'),
+        (wrong[1], 'Does not fit'),
+    ]
+    seen = set()
+    items = []
+    for i, (text, bucket) in enumerate(rows):
+        label = text[:140]
+        if label in seen:
+            label = f'{label} ({heading})'[:140]
+        seen.add(label)
+        items.append({'id': f'i{i}', 'text': label, 'bucket': bucket})
+    return ['Fits', 'Does not fit'], items
+
+
+def _sec_steps(entry, n):
+    steps = _steps_from_r3(entry) or []
+    heading = plain(entry.get('heading') or 'This idea') or 'This idea'
+    chk = (entry.get('checks') or [{}])[0]
+    for extra in (plain(chk.get('correct') or ''), f'Confirm {heading}', f'Write {heading} on the ticket'):
+        if extra and extra not in steps:
+            steps.append(extra)
+        if len(steps) >= n:
+            break
+    while len(steps) < max(n, 3):
+        steps.append(f'{heading} check {len(steps) + 1}')
+    return steps[:max(n, 3)]
+
+
+def _build_sec(entry, kind, key):
+    """Section-specific config for the widgets that read this concept. None lets the shared builder run."""
+    if kind in ('match', 'pairs', 'classify'):
+        names, items = _sec_group(entry)
+        text = ('Sort one card at a time into the right pile, then check.' if kind == 'pairs'
+                else 'Match each term to the group it belongs in, then check.' if kind == 'match'
+                else 'Sort each item into the matching group, then check.')
+        return _grouped(kind, names, items, text)
+    if kind in ('sequence', 'trace', 'troubleshoot'):
+        steps = _sec_steps(entry, 5 if kind == 'trace' else 4)
+        if kind == 'troubleshoot':
+            return _order_cfg('troubleshoot', steps, key, 'Put the response steps in order, then check.')
+        if kind == 'trace':
+            return _order_cfg('trace', steps, key, 'Tap the steps in the order this concept uses, then check.')
+        return _order_cfg('sequence', steps, key, 'Put these steps in the order this concept uses, then check.')
+    if kind == 'choose':
+        return _choose(entry, key)
+    return None
+
+
 def _kind_for(entry):
     course, label, sid = entry['course'], entry['label'], entry.get('sid') or ''
+    if course == 'SEC':
+        return _sec_plan().get((label, sid), 'choose')
     sid_l = sid.lower()
     for kind, bits in _SID:
         if any(b in sid_l for b in bits):
@@ -388,6 +494,10 @@ def _build(entry):
     r4 = (entry.get('rungs') or {}).get('R4') or {}
     widget = r4.get('widget') or {}
     kind = _kind_for(entry)
+    if course == 'SEC':
+        built = _build_sec(entry, kind, key)
+        if built:
+            return built
 
     if kind == 'troubleshoot':
         return _troubleshoot(entry, widget, key)
@@ -499,11 +609,8 @@ _CACHE = {}
 
 
 def sim_for(entry):
-    """Widget config for one ladder section, or None when the entry is not a concept section.
-
-    Cybersecurity (course code SEC) is owned by another branch and gets no config here.
-    """
-    if not entry or entry.get('type') != 'section' or entry.get('course') == 'SEC':
+    """Widget config for one ladder section, or None when the entry is not a concept section."""
+    if not entry or entry.get('type') != 'section':
         return None
     key = (entry.get('course'), entry.get('label'), entry.get('sid'))
     if key not in _CACHE:
@@ -516,7 +623,7 @@ def mapped_sections():
     from curriculum_v2 import ladder as LD
     out = {}
     for key, entry in LD.ladder().items():
-        if entry.get('type') != 'section' or key[0] == 'SEC':
+        if entry.get('type') != 'section':
             continue
         out[key] = sim_for(entry)
     return out

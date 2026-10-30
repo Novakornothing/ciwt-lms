@@ -1,10 +1,10 @@
 """Source rows for the Daily Review deck. Cards are built in deck.build_cards.
 
-Courses: ITSUP (IT Support), NETOPS (Basic Networking), CLIENT (Operating Systems).
+Courses: ITSUP (IT Support), NETOPS (Basic Networking), CLIENT (Operating Systems), SEC (Security).
 A row can belong to more than one course. Facts are standard published protocol and OS behavior.
 """
 
-IT, NO, CL = ('ITSUP',), ('NETOPS',), ('CLIENT',)
+IT, NO, CL, SE = ('ITSUP',), ('NETOPS',), ('CLIENT',), ('SEC',)
 ALL = ('ITSUP', 'NETOPS', 'CLIENT')
 ITCL = ('ITSUP', 'CLIENT')
 ITNO = ('ITSUP', 'NETOPS')
@@ -377,4 +377,39 @@ TERMS = [
     ('What is recursion in DNS?', 'The resolver chasing the name on behalf of the client', 'net', NO),
     ('What is an authoritative server?', 'The server that owns the zone and its records', 'net', NO),
     ('What is a forwarder?', 'A resolver you send queries to instead of chasing them yourself', 'net', NO),
+    ('What does confidentiality mean?', 'Only approved people can read the data', 'security', SE),
+    ('What does integrity mean?', 'The data was not changed without approval', 'security', SE),
+    ('What does availability mean?', 'The service is usable when the work needs it', 'security', SE),
+    ('What is non-repudiation?', 'You can show later who did the action', 'security', SE),
+    ('What is a preventive control?', 'It stops the bad action before it succeeds', 'security', SE),
+    ('What is a detective control?', 'It notices something that already happened', 'security', SE),
+    ('What is a compensating control?', 'A stand-in when the preferred control cannot be used yet', 'security', SE),
+    ('What is a worm?', 'Malware that spreads without someone opening a file', 'attack', SE),
+    ('What is a trojan?', 'A program that looks useful and also does harm', 'attack', SE),
+    ('What is ransomware?', 'Malware that locks data and demands payment', 'attack', SE),
+    ('What is password spraying?', 'A few common passwords tried against many accounts', 'attack', SE),
+    ('What is a zero-day?', 'A flaw the vendor has not patched yet', 'attack', SE),
+    ('What is phishing?', 'A fake message that wants a click or a secret', 'attack', SE),
+    ('What is SPF?', 'A DNS list of who may send mail for a domain', 'framework', SE),
+    ('What is DKIM?', 'A signature on a mail message', 'framework', SE),
+    ('What is DMARC?', 'The rule for mail that fails SPF or DKIM', 'framework', SE),
+    ('What is a hot site?', 'A spare that is already running with current data', 'framework', SE),
+    ('What is a cold site?', 'Space and power, with no systems ready', 'framework', SE),
+    ('What is the policy engine in zero trust?', 'The part that decides allow or deny', 'framework', SE),
+    ('What is a SIEM?', 'A place that collects logs; a person still judges the alert', 'framework', SE),
+    ('What is least privilege?', 'Only the rights the job needs', 'framework', SE),
+    ('What is a hash?', 'A fingerprint of data, not a way to get the data back', 'security', SE),
+    ('What is a salt?', 'A unique extra mixed in before a password is hashed', 'security', SE),
+    ('Which port does LDAPS use?', 'TCP 636', 'port', SE),
+    ('Which port does TACACS+ use?', 'TCP 49', 'port', SE),
+    ('Which port does RADIUS authentication use?', 'UDP 1812', 'port', SE),
+    ('Which port does Kerberos use?', 'TCP 88', 'port', SE),
+    ('Which port does SSH use?', 'TCP 22', 'port', SE),
+    ('Which port does HTTPS use?', 'TCP 443', 'port', SE),
+]
+
+COMMANDS += [
+    ('Type the command that prints the host firewall rules.', 'iptables -S', ['iptables -L'], SE),
+    ('Type the command that checks a saved sha256 fingerprint file.', 'sha256sum -c baseline.txt', ['sha256sum -c'], SE),
+    ('Type the command that shows password aging for a user.', 'chage -l user', ['chage -l'], SE),
 ]

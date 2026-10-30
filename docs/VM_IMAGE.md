@@ -33,6 +33,7 @@ and rejected.
 | Shell and core | BusyBox 1.36.1 (ash, coreutils, `vi`, `grep`, `sed`, `awk`, `find`, `ps`, `crond`, `syslogd`, `udhcpc`, `ip`, `ping`, `traceroute`, `nslookup`, `start-stop-daemon`) | every lab |
 | Accounts | shadow 4.15 (`useradd`, `usermod`, `groupadd`, `gpasswd`, `chage`, `chpasswd`), linux-pam 1.6, **sudo 1.9.15** with `/etc/sudoers.d` and `visudo -c` | users |
 | Remote access | **OpenSSH 9.7** (`ssh`, `sshd`, `ssh-keygen`, `ssh-copy-id`, `scp`, sftp); only an ed25519 host key, made on first start | ssh, firewall |
+| Certificates | **OpenSSL 3.3.7** CLI (`openssl`, including `genrsa`, `req`, `x509`, and `verify`). `libssl` and `libcrypto` were already in the image; the CLI adds about 260 KB to the bzImage. | certificate labs |
 | Firewall | **iptables 1.8.10** (nf_tables backend; kernel netfilter with conntrack, NAT, LOG and REJECT). There is no `nft` binary. | firewall |
 | DNS and DHCP | **dnsmasq 2.90** as a resolver, authoritative zone, forwarder and DHCP server; `drill` (ldns 1.8.3), which works like `dig` for the basics; BusyBox `nslookup` | dns, nettrouble |
 | Packages | **apk-tools 2.14** with a signed offline repository at `/var/lib/ciwt-repo` (darkhttpd 1.16) | packages |

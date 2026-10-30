@@ -254,7 +254,7 @@ _PUBLIC_ITEM_FIELDS = ('options', 'lo', 'lo_code', 'lo_text', 'type', 'prompts',
 
 @app.template_filter('course_label')
 def _course_label(code):
-    return {'ITSUP': 'IT Support', 'NETOPS': 'Basic Networking', 'CLIENT': 'Operating Systems', 'SEC': 'Cybersecurity'}.get(str(code or ''), code)
+    return {'ITSUP': 'IT Support', 'NETOPS': 'Basic Networking', 'CLIENT': 'Operating Systems', 'SEC': 'Security'}.get(str(code or ''), code)
 
 
 @app.template_filter('obj_label')
@@ -1695,10 +1695,17 @@ def register_account():
         sec_to_join = None
         if form_data['join_code']:
             try:
-                sid = db.session.execute(
-                    db.text('SELECT section_id FROM section_join_code WHERE code = :c'),
-                    {'c': form_data['join_code']}
-                ).scalar()
+                wanted = [form_data['join_code']]
+                if form_data['join_code'] in ('CYBER-DEMO', 'SECURITY-DEMO'):
+                    wanted = ['SECURITY-DEMO', 'CYBER-DEMO']
+                sid = None
+                for code in wanted:
+                    sid = db.session.execute(
+                        db.text('SELECT section_id FROM section_join_code WHERE code = :c'),
+                        {'c': code}
+                    ).scalar()
+                    if sid:
+                        break
                 if sid:
                     sec_to_join = db.session.get(ClassSection, int(sid))
             except Exception:
@@ -1823,7 +1830,7 @@ def demo_tour():
     """60-second guided demo (Phase 1). Works without login and without a camera."""
     order = ['ITSUP', 'NETOPS', 'CLIENT', 'SEC']
     titles = {c.code: c.title for c in Course.query.filter(Course.code.in_(order)).all()}
-    fallback = {'ITSUP': 'IT Support', 'NETOPS': 'Basic Networking', 'CLIENT': 'Operating Systems', 'SEC': 'Cybersecurity'}
+    fallback = {'ITSUP': 'IT Support', 'NETOPS': 'Basic Networking', 'CLIENT': 'Operating Systems', 'SEC': 'Security'}
     courses = [{'code': k, 'title': titles.get(k) or fallback[k], 'blurb': DEMO_TOUR_CONTENT[k]['blurb']} for k in order]
     stats = {'section_name': 'Section A', 'students': 0, 'need_help': 0, 'seats': 0, 'instructors': 0, 'courses': len(courses)}
     try:
@@ -2673,7 +2680,7 @@ def roi_export_csv():
     w.writerow(['Annual Direct License Savings ($/yr)', roi['license_savings'], f"{roi['license_reduction_pct']}% cost reduction"])
     w.writerow(['Instructor Triage & Grading Hours Saved (hrs/yr)', roi['total_faculty_hours_saved'], f"${roi['faculty_dollar_value']}/yr faculty capacity value"])
     w.writerow(['Avoided Exam Retake Voucher Waste ($/yr)', roi['voucher_savings'], f"{roi['avoided_retakes']} avoided retakes (61% -> 89% pass rate)"])
-    w.writerow(['Avoided VDI / Lab Server Overhead ($/yr)', roi['infra_savings'], '114 browser-native labs including 32 WebAssembly Linux VMs'])
+    w.writerow(['Avoided VDI / Lab Server Overhead ($/yr)', roi['infra_savings'], '137 browser-native labs including 40 WebAssembly Linux VMs'])
     w.writerow(['Total Annual Institutional Net Savings ($/yr)', roi['total_annual_net_savings'], f"{roi['roi_multiple']}x Year-1 ROI"])
     w.writerow(['3-Year Net Institutional Savings ($)', roi['three_year_net_savings'], '36-month cumulative savings'])
     resp = Response(buf.getvalue(), status=200, mimetype='text/csv')

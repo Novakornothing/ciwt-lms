@@ -27,6 +27,7 @@ are formative practice; for summative use pair them with the event-log review or
 Licences: static/vendor/v86/LICENSES.md.  Image notes: docs/VM_IMAGE.md.
 """
 import hashlib
+import random
 import re
 
 VM_ASSETS = {
@@ -491,7 +492,35 @@ def machines(lab):
 
 
 def fresh(lab, seed):
-    return {"nonce": nonce(seed), "vm_cmds": [], "checks": 0, "probe_last": None}
+    state = {"nonce": nonce(seed), "vm_cmds": [], "checks": 0, "probe_last": None}
+    values = session_values(lab, seed)
+    if values:
+        state["gui_vars"] = values
+    return state
+
+
+def session_values(lab, seed):
+    """Per-attempt values the learner must read from the VM. Empty when the lab has none."""
+    spec = lab.get('session_vars') or {}
+    rng = random.Random(int(seed or 1))
+    return {str(k): str(rng.choice(list(v))) for k, v in spec.items() if v}
+
+
+def fill_session(text, values):
+    out = text or ''
+    for key, value in (values or {}).items():
+        out = out.replace('{{' + key + '}}', value)
+    return out
+
+
+def vm_for_session(lab, seed):
+    """A copy of lab['vm'] with this attempt's values written into the setup scripts."""
+    from copy import deepcopy
+    vm = deepcopy(lab.get('vm') or {})
+    values = session_values(lab, seed)
+    if values and vm.get('setup'):
+        vm['setup'] = {machine: fill_session(script, values) for machine, script in vm['setup'].items()}
+    return vm
 
 
 def _shq(s):

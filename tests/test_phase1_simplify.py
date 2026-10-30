@@ -44,7 +44,7 @@ def test_demo_tour_page_and_data(anon):
         assert s in h, s
     data = json.loads(re.search(r'<script type="application/json" id="tourData">(.*?)</script>', h, re.S).group(1))
     assert [c['code'] for c in data['courses']] == ['ITSUP', 'NETOPS', 'CLIENT', 'SEC']
-    assert [c['title'] for c in data['courses']] == list(NEW_TITLES.values()) + ['Cybersecurity']
+    assert [c['title'] for c in data['courses']] == list(NEW_TITLES.values()) + ['Security']
     assert set(data['content']) == set(NEW_TITLES) | {'SEC'}
     assert 'SEC' not in ' '.join(c['title'] for c in data['courses'])
 
@@ -283,7 +283,7 @@ def test_student_home_lists_every_course_side_by_side(student):
 def test_cybersecurity_pages_show_names_not_codes(student):
     from app import _obj_label, _course_label
     assert _obj_label('SEC-7.1') == 'CYB-7.1' and _obj_label('IT-9.1') == 'IT-9.1'
-    assert _course_label('SEC') == 'Cybersecurity'
+    assert _course_label('SEC') == 'Security'
     for u in ('/labs/sec-vm-suid', '/labs/sec-phish', '/labs'):
         r = student.get(u, follow_redirects=True)
         assert r.status_code == 200, u

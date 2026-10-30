@@ -22,12 +22,15 @@
     var tmp = document.createElement('div');
     tmp.innerHTML = html.trim();
     var fresh = tmp.firstElementChild;
-    // A bulk swap from the 5 Ways to Learn switcher: keep the reader where they are (no focus jump, no scroll).
+    // A bulk swap from the 5 Ways to Learn switcher: keep the reader where they are.
+    // The leave/enter animations translate the section by 6px and 8px, and a scroll
+    // correction that sees that slide leaves the reader off by that amount.
+    var quiet = box.hasAttribute('data-swap-quiet');
     if (box.hasAttribute('data-swap-quiet')) moveFocus = false;
     function put() {
       box.replaceWith(fresh);
       document.dispatchEvent(new CustomEvent('ladder:updated', { detail: { sid: fresh.getAttribute('data-ladder-sid') } }));
-      if (!reduce) { fresh.classList.add('ladder-entering'); setTimeout(function () { fresh.classList.remove('ladder-entering'); }, 400); }
+      if (!reduce && !quiet) { fresh.classList.add('ladder-entering'); setTimeout(function () { fresh.classList.remove('ladder-entering'); }, 400); }
       init(fresh);
       if (moveFocus) {
         var target = fresh.querySelector('.ladder-label') || fresh.querySelector('.ladder-feedback');
@@ -39,7 +42,7 @@
         if (top < 0 || top > window.innerHeight * 0.6) fresh.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
       }
     }
-    if (reduce) { put(); return; }
+    if (reduce || quiet) { put(); return; }
     box.classList.add('ladder-leaving');
     setTimeout(put, 190);
   }

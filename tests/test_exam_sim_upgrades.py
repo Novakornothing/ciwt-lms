@@ -496,7 +496,7 @@ def test_landing_page_pillars(anon):
     for old in ('EXAM READY', 'Who Needs Me', 'What Sets Novak LMS™ Apart'):
         assert old not in html, old
     specs = anon.get('/specs').get_data(as_text=True)
-    for s in ('114 labs', 'Diagnose → Fix → Verify', 'Exam Readiness', 'Students Needing Help'):
+    for s in ('137 labs', 'Diagnose → Fix → Verify', 'Exam Readiness', 'Students Needing Help'):
         assert s in specs, s
 
 

@@ -5,13 +5,13 @@ same idea. Headings, section ids, and r0 stamps come from the rendered HTML.
 """
 from html import escape
 
-from curriculum_v2.ladder.schema import analogy, check, plain, section, sort, tryit, visual
+from curriculum_v2.ladder.schema import analogy, check, order, plain, reveal, section, sort, tryit, visual
 from curriculum_v2.ladder.sections import sections
 
 from curriculum_sec import specs as SP
 
 REVIEW = 'Pending SME review'
-SOURCE = 'Novak LMS™ Cybersecurity lesson (original). Pending SME review.'
+SOURCE = 'Novak LMS™ Security lesson (original). Pending SME review.'
 
 
 def _p(sentences):
@@ -86,21 +86,17 @@ def _lesson_html(lesson, first):
     body = [
         f'<div class="lo-panel" data-skill="{escape(skill)}"><h4>Terminal objectives</h4><ul>',
         f'<li>{escape(lesson["objective"])}</li>',
-        '<li>Answer the knowledge check on every section, in any learning path</li>',
-        '<li>Use the linked lab when this lesson names one</li>',
         '</ul></div>',
         f'<div class="build-on"><strong>{fit_label}:</strong> {escape(lesson["fits"])}</div>',
         f'<div class="plain-english"><h4>In plain English</h4>{_p(lesson["intro"])}</div>',
-        '<div class="live-demo"><h4>Live demonstration habit</h4>'
-        '<p>Say the idea in one sentence, point at the diagram, then name the mistake you will not make. '
-        'If that stalls, switch the learning path and answer the check again.</p></div>',
+        f'<div class="live-demo"><h4>Live demonstration habit</h4>'
+        f'<p>{escape(lesson["sections"][0]["heading"])}: {escape(lesson["sections"][0]["note"])}</p></div>',
     ]
     for sec in lesson['sections']:
         body.append(_section_html(sec))
     body.append(
         '<div class="practice-standard"><h4>Practice standard for this lesson</h4>'
-        f'<p>When you finish {escape(lesson["title"])}, you can coach a classmate on it '
-        'without the notes in front of you. The checks under each section all map to this skill.</p></div>'
+        f'<p>{escape(lesson["sections"][0]["heading"])}. {escape(lesson["sections"][0]["note"])}</p></div>'
     )
     return ''.join(body)
 
@@ -177,7 +173,13 @@ def _rungs(sec, lab_id, checks, section_html):
     r1 = plain(htmls['R1'], SOURCE, [checks[1]])
     r2 = analogy(htmls['R2'], SOURCE, [checks[2]])
     r3 = visual(htmls['R3'], SOURCE, [checks[3]])
-    widget = sort(sec['sort_prompt'], sec['sort'], sec['sort_done'])
+    kind = sec.get('widget') or 'sort'
+    if kind == 'order':
+        widget = order(sec['sort_prompt'], list(sec['steps'])[:4], sec['sort_done'])
+    elif kind == 'reveal':
+        widget = reveal(sec['sort_prompt'], sec['key'] + '. ' + sec['why'][:180])
+    else:
+        widget = sort(sec['sort_prompt'], sec['sort'], sec['sort_done'])
     lab = {'id': lab_id, 'note': sec['lab_note']} if lab_id else None
     r4 = tryit(htmls['R4'], SOURCE, [checks[4]], widget=widget, lab=lab)
     return r1, r2, r3, r4

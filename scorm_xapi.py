@@ -32,8 +32,8 @@ COURSE_CATALOG = {
     },
     "SEC": {
         "code": "SEC",
-        "title": "Cybersecurity",
-        "cert": "Foundational cybersecurity practice comparable to Security+ (SY0-701). Not an official exam.",
+        "title": "Security",
+        "cert": "Aligned to the CompTIA Security+ (SY0-701) exam objectives. Not an official exam.",
         "chapters": 10,
         "lessons": 40,
     },
@@ -220,7 +220,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
     target_codes = ["ITSUP", "NETOPS", "CLIENT", "SEC"] if code == "ALL" else [code]
     primary_meta = COURSE_CATALOG.get(code, {
         "code": "ALL",
-        "title": "Novak LMS™ Complete Course Suite (IT Support, Basic Networking, Operating Systems, and Cybersecurity)",
+        "title": "Novak LMS™ Complete Course Suite (IT Support, Basic Networking, Operating Systems, and Security)",
         "cert": "CompTIA A+ (220-1201/1202), Network+ (N10-009), Tech+ (FC0-U71)",
         "chapters": 26,
         "lessons": 115,
@@ -341,7 +341,7 @@ def build_scorm_package_zip(course_code="NETOPS", version="1.2", base_url="https
         "telemetry_capabilities": [
             "5-Path Adaptive Learning Modality Tracking (R0 Standard, R1 Plain English, R2 Analogy, R3 Visual Map, R4 Interactive Try-It)",
             "Per-Section Time-to-Mastery (median_seconds_to_resolve & mean_attempts_to_resolve)",
-            "114 Browser-Native Hands-On Labs (8 Ubuntu 24.04 GNOME GUI + Bash Split-View, 8 Windows 11 GUI, 32 Real WebAssembly Linux VMs, 19 Cisco IOS Switch/Router CLI)",
+            "137 Browser-Native Hands-On Labs (8 Ubuntu 24.04 GNOME GUI + Bash Split-View, 8 Windows 11 GUI, 32 Real WebAssembly Linux VMs, 19 Cisco IOS Switch/Router CLI)",
             "Diagnose -> Fix -> Verify Engineering Process Grading",
             "100% Browser-Local Helix Gaze-Assisted Intervention Telemetry (Zero Video Transmitted)",
         ],

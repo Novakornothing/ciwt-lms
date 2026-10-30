@@ -19,7 +19,7 @@ CATEGORIES = {
     'cli': 'CLI Commands (Windows, Linux, Cisco IOS)',
     'acronyms': 'Acronyms & Security/Cloud Concepts',
 }
-EXAM_CODES = {'T': 'FC0-U71', 'A1': '220-1201', 'A2': '220-1202', 'N': 'N10-009'}
+EXAM_CODES = {'T': 'FC0-U71', 'A1': '220-1201', 'A2': '220-1202', 'N': 'N10-009', 'S': 'SY0-701'}
 BLITZ_SECONDS = 60
 BALANCE = 1.15
 
@@ -307,6 +307,51 @@ _RAW = [
     (_A, 'A1', 'VDI (Virtual Desktop Infra)', 'Centralized hosted desktop VMs'),
     (_A, 'A1', 'S.M.A.R.T. drive telemetry', 'Self-Monitoring drive health'),
     (_A, 'N', 'EUI-64 interface ID', '64-bit IPv6 host ID from MAC'),
+    # Security course daily-review cards (SY0-701). Backs stay short so blitz choices stay balanced.
+    (_P, 'S', 'Secure LDAP directory', 'TCP 636'), (_P, 'S', 'Kerberos port', 'TCP/UDP 88'),
+    (_P, 'S', 'RADIUS auth', 'UDP 1812'), (_P, 'S', 'TACACS+', 'TCP 49'),
+    (_P, 'S', 'SMTPS / submission', 'TCP 465 / 587'), (_P, 'S', 'FTPS', 'TCP 989 / 990'),
+    (_P, 'S', 'Which port is HTTPS?', 'TCP 443'), (_P, 'S', 'Which port is SSH?', 'TCP 22'),
+    (_A, 'S', 'CIA', 'Confidentiality, integrity, availability'),
+    (_A, 'S', 'Non-repudiation', 'Proof of who did it'),
+    (_A, 'S', 'AAA', 'Authenticate, authorize, account'),
+    (_A, 'S', 'CVE', 'Public id for one flaw'),
+    (_A, 'S', 'CVSS', 'A severity number, not your risk'),
+    (_A, 'S', 'SLE', 'Loss expected from one event'),
+    (_A, 'S', 'ALE', 'SLE times events per year'),
+    (_A, 'S', 'ARO', 'How many times a year'),
+    (_A, 'S', 'RTO', 'How long you can be down'),
+    (_A, 'S', 'RPO', 'How much recent work you can lose'),
+    (_A, 'S', 'MTTR', 'Average time to repair'),
+    (_A, 'S', 'MTBF', 'Average time between failures'),
+    (_A, 'S', 'SPF', 'Who may send mail for the domain'),
+    (_A, 'S', 'DKIM', 'A signature on the message'),
+    (_A, 'S', 'DMARC', 'What to do when SPF or DKIM fails'),
+    (_A, 'S', 'SAML', 'Signed assertion of a login'),
+    (_A, 'S', 'OAuth', 'A limited token, not the password'),
+    (_A, 'S', 'RBAC', 'Rights follow the job'),
+    (_A, 'S', 'MAC control', 'Labels the owner cannot relax'),
+    (_A, 'S', 'DAC control', 'The owner grants access'),
+    (_A, 'S', 'WPA3', 'Current Wi-Fi handshake'),
+    (_A, 'S', 'TPM', 'Chip that seals keys to one PC'),
+    (_A, 'S', 'HSM', 'Dedicated box that keeps keys'),
+    (_A, 'S', 'Salt', 'Unique extra before a password hash'),
+    (_A, 'S', 'Hash', 'A fingerprint, not a lock'),
+    (_A, 'S', 'Worm', 'Spreads with nobody opening a file'),
+    (_A, 'S', 'Trojan', 'Looks useful and also harms'),
+    (_A, 'S', 'Ransomware', 'Locks data and demands payment'),
+    (_A, 'S', 'Logic bomb', 'Waits, then harms'),
+    (_A, 'S', 'Spraying', 'One guess, many accounts'),
+    (_A, 'S', 'Hot site', 'Live spare, fast switch'),
+    (_A, 'S', 'Cold site', 'Space and power only'),
+    (_A, 'S', 'Warm site', 'Gear ready, data must catch up'),
+    (_A, 'S', 'SIEM', 'Many logs, a person still decides'),
+    (_A, 'S', 'EDR', 'Watches the host and can isolate it'),
+    (_A, 'S', 'DLP', 'Watches secrets on the way out'),
+    (_C, 'S', 'sha256sum -c baseline', 'Check a saved fingerprint'),
+    (_C, 'S', 'chage -l user', 'Show password aging'),
+    (_C, 'S', 'iptables -S', 'Print the host firewall rules'),
+    (_C, 'S', 'chmod 640 file', 'Owner rw, group r, others none'),
 ]
 
 

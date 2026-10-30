@@ -29,6 +29,7 @@ libxtables 1.8.10-r3 main
 lsblk 2.40.1-r1 main
 musl 1.2.5-r3 main
 ncurses-terminfo-base 6.4_p20240420-r2 main
+openssl 3.3.7-r0 main
 openssh-client-common 9.7_p1-r5 main
 openssh-client-default 9.7_p1-r5 main
 openssh-keygen 9.7_p1-r5 main
