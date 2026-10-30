@@ -1,4 +1,4 @@
-# Novak LMS™ — IT Support, Operating Systems, Basic Networking & Cybersecurity
+# Novak LMS™ — IT Support, Operating Systems, Basic Networking & Security
 
 > **Novak LMS™** (Novak Learning · [https://novakornothing.com](https://novakornothing.com) · [https://novak-lms.onrender.com](https://novak-lms.onrender.com)) is an institution-ready adaptive Learning Management System, multi-OS browser lab workbench, certification Practice Exams simulator, and privacy-preserving attention telemetry platform built for colleges, technical institutes, and operational training commands.
 
@@ -25,7 +25,7 @@
 ## Verified Wave 3 Platform Metrics & Quantitative Specifications
 
 ### 1. Curriculum Depth (`639,146` Total Instructional Words)
-- **Courses**: `3` full certification-aligned courses (`Operating Systems / FC0-U71`, `IT Support / 220-1201 & 220-1202`, and `Basic Networking / N10-009`), plus Cybersecurity.
+- **Courses**: `3` full certification-aligned courses (`Operating Systems / FC0-U71`, `IT Support / 220-1201 & 220-1202`, and `Basic Networking / N10-009`), plus Security.
 - **Structure**: `26` chapters, `115` lessons, **`242,549` base lesson words**, and **`639,146` total instructional words** including `396,597` words across **`539` bespoke 4-rung adaptive explanation ladders**.
 - **5 Freely Clickable Learning Paths & In-Place 4-Rung Adaptive Explanation Ladders (`R0 → R1 → R2 → R3 → R4`)**:
   - Students can click any of the 5 learning paths on demand at any time on desktop or mobile (without waiting to fail a quiz), and automatic remediation escalates in place when a check is missed across 4 balanced Concept Steps per lesson:
@@ -43,11 +43,11 @@
   3. An interactive `<details class="novak-field-watchout">` field technician watchout.
 - Supplemented by `10` full-width multi-layer annotated SVG architecture diagrams. Zero plain-text walls.
 
-### 3. Hands-On Browser Labs (`114` Browser Labs across all 4 courses, `8` Live Linux Desktop Labs, `32` Real Linux VMs, plus `9` Classroom Labs)
-- **`114` browser labs across all 4 courses (plus `9` instructor-signed classroom labs)** requiring zero local installation or external cloud VM popups:
+### 3. Hands-On Browser Labs (`138` Browser Labs across all 4 courses, `8` Live Linux Desktop Labs, `44` Real Linux VMs, plus `9` Classroom Labs)
+- **`138` browser labs across all 4 courses (plus `9` instructor-signed classroom labs)** requiring zero local installation or external cloud VM popups:
   - **Live Linux desktop and terminal in your browser (`linuxgui` + `vm`)**: 8 desktop labs (`linux-gui-network`, `linux-gui-disks`, `linux-gui-firewall`, `linux-gui-users`, `linux-gui-logs`, `linux-gui-processes`, `linux-gui-packages`, `linux-gui-ssh`) on a real framebuffer desktop (file manager, editor, terminal, settings), graded from the live system.
-  - **`32` real in-browser Linux VMs** (Alpine/x86 WebAssembly Linux 6.8 VM with a live root shell, filesystem, `/proc`, and networking utilities).
-  - **`82` stateful Windows 11, Cisco IOS & Hardware labs** (`8` Windows 11 GUI desktop labs, `27` Windows PowerShell/CMD labs, `19` Cisco IOS Switch & Router CLI labs covering `VLANs`, `802.1Q trunks`, `ROAS`, `OSPF`, `ACLs`, `NAT`, and `9` interactive drag-and-drop hardware/subnetting workbenches).
+  - **`44` real in-browser Linux VMs** (Alpine/x86 WebAssembly Linux 6.8 VM with a live root shell, filesystem, `/proc`, and networking utilities).
+  - **`94` stateful Windows 11, Cisco IOS & Hardware labs** (`8` Windows 11 GUI desktop labs, `27` Windows PowerShell/CMD labs, `19` Cisco IOS Switch & Router CLI labs covering `VLANs`, `802.1Q trunks`, `ROAS`, `OSPF`, `ACLs`, `NAT`, and `9` interactive drag-and-drop hardware/subnetting workbenches).
 - **Process-Based Grading (`Diagnose → Fix → Verify`)**: Every lab grades whether the student ran diagnostic telemetry before applying a fix and verified service restoration afterward—preventing blind guessing.
 
 ### 4. Practice Exams simulator & 3-tab Hands-On Challenge (PBQ)
@@ -113,10 +113,10 @@
   - Ch 5: Operational Procedures & Capstone Habits (`4` lessons)
   - Ch 6: Windows CLI & VM Lab Track (`6` lessons)
 
-### Course 4: Cybersecurity
+### Course 4: Security
 - Entry-level course after IT Support, Basic Networking, and Operating Systems.
-- 10 chapters, 40 lessons, five learning paths on every section (Standard, Plain English, Analogy, Visual Map, Try-It), 20 labs, and a 120-item practice bank.
-- Topics are comparable to Security+ (SY0-701) and to entry-level cyber work. Original Novak LMS™ material. Not an official exam and not endorsed by CompTIA.
+- 28 chapters, 129 lessons, five learning paths on every section (Standard, Plain English, Analogy, Visual Map, Try-It), 44 labs, and a 774-item practice bank plus 32 performance-based questions.
+- Aligned to the CompTIA Security+ (SY0-701) exam objectives. Original Novak LMS™ material. Not an official exam and not endorsed by CompTIA.
 
 ---
 
@@ -126,10 +126,10 @@ When evaluating IT and networking training platforms, institutions frequently co
 
 | Architectural Dimension | Novak LMS™ (`novakornothing.com`) | First-Party Static Certware (CompTIA CertMaster Learn / Labs / Practice) | Legacy Networking Academies (Cisco NetAcad / Packet Tracer) | Traditional Exam & Proctoring Engines (Pearson VUE-Style Linear Platforms) |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. Platform Unification** | Single unified LMS with Lessons, `539` 4-Rung Adaptive Ladders, `114` Browser Labs, `1,400`-Item Exam-Sim, and Proctored Forms A/B/C | Fragmented across 3 separate paid SKUs (CertMaster Learn, Labs, Practice) with disconnected interfaces | Networking-focused curriculum requiring a separate local desktop Packet Tracer binary | High-stakes exam delivery and scheduling engine only; zero instructional curriculum |
+| **1. Platform Unification** | Single unified LMS with Lessons, `539` 4-Rung Adaptive Ladders, `138` Browser Labs, `1,400`-Item Exam-Sim, and Proctored Forms A/B/C | Fragmented across 3 separate paid SKUs (CertMaster Learn, Labs, Practice) with disconnected interfaces | Networking-focused curriculum requiring a separate local desktop Packet Tracer binary | High-stakes exam delivery and scheduling engine only; zero instructional curriculum |
 | **2. Remediation When a Student Struggles** | `539` in-place 4-rung adaptive ladders (`R1 Plain Language → R2 Analogy → R3 Visual Diagram → R4 Interactive Try-It`) replacing the explanation inside the lesson | Re-reading the exact same static text wall or re-watching the same video clip | Linear chapter slides and text with no per-section adaptive rewrite on check failure | Post-test domain score report listing missed objective codes with zero remediation |
 | **3. Curriculum & Visual Depth** | `639,146` words across `115` lessons (`242,549` base + `396,597` ladder words) + `100%` lesson SVG Architecture Blueprints & 5-row RFC/IEEE Spec Tables | Light summary pages and flashcard glossaries often supplemented by external textbooks | Strong routing/switching theory; light PC hardware, Windows repair, and multi-OS coverage | No instructional curriculum |
-| **4. Hands-On Lab Execution** | `114` browser labs (`32` real WebAssembly Linux VMs + `82` stateful Win11, Cisco IOS CLI, packet-flow & SVG hardware benches) graded on `Diagnose → Fix → Verify` process | External cloud VM popups with boot latency or rigid scripted click-paths | Desktop Packet Tracer app focused on network topologies; no live Linux VM or Win11 repair | None |
+| **4. Hands-On Lab Execution** | `138` browser labs (`44` real WebAssembly Linux VMs + `94` stateful Win11, Cisco IOS CLI, packet-flow & SVG hardware benches) graded on `Diagnose → Fix → Verify` process | External cloud VM popups with boot latency or rigid scripted click-paths | Desktop Packet Tracer app focused on network topologies; no live Linux VM or Win11 repair | None |
 | **5. Performance-Based Questions (PBQs)** | `36` 3-tab Hands-On Challenges (PBQs) with clickable SVG topologies, live device logs, and `pbq-cli` diagnostic terminal | Static drag-and-drop matching or flat dropdown forms | Chapter `.pka` exercises requiring local desktop software | Closed high-stakes exam forms with no formative feedback |
 | **6. Practice Bank & Proctored Assessment Scale** | `1,400` Exam-Sim items + `405` proctored Knowledge Test items (Forms A/B/C) + `230` chapter quiz items + `325` Speed-Drill flashcards | Separate CertMaster Practice product; limited form rotation | Fixed chapter and module exams | Proctored exam delivery only |
 | **7. Attention & Cognitive Friction Telemetry** | Opt-in browser-local `478-landmark` Helix iris & 3D head-pose gaze bench with One-Euro filtering (`0` video uploaded, FERPA-aligned) | None / coarse page-timer only | None / coarse page-timer only | Invasive remote webcam video streaming and recording |
@@ -138,13 +138,13 @@ When evaluating IT and networking training platforms, institutions frequently co
 | **10. Institution & LMS Interoperability** | Built-in LTI 1.3 Advantage (`Canvas`, `Blackboard`, `Moodle`, `Brightspace`), SAML 2.0 / OIDC SSO, WCAG 2.1 AA, SHA-256 hash-chained FERPA audit log | Separate LTI links per SKU | Separate academy portal / LTI connectors | Testing center scheduling portal |
 
 ### Summary Comparison Takeaways
-1. **Novak LMS™ vs. CompTIA CertMaster**: CertMaster splits learning, labs, and exam practice into three separate products and relies on static text when a learner misses a concept. Novak LMS™ unifies all three in one interface and dynamically swaps in `539` 4-rung explanation ladders (`R1–R4`) plus `114` instant browser labs (`32` real WebAssembly Linux VMs) graded on `Diagnose → Fix → Verify`.
+1. **Novak LMS™ vs. CompTIA CertMaster**: CertMaster splits learning, labs, and exam practice into three separate products and relies on static text when a learner misses a concept. Novak LMS™ unifies all three in one interface and dynamically swaps in `539` 4-rung explanation ladders (`R1–R4`) plus `138` instant browser labs (`44` real WebAssembly Linux VMs) graded on `Diagnose → Fix → Verify`.
 2. **Novak LMS™ vs. Cisco NetAcad**: NetAcad excels at Cisco routing/switching with desktop Packet Tracer, whereas Novak LMS™ runs `100%` in the browser across PC hardware, Windows 11, Linux VMs, and Cisco IOS CLI, while adding Bayesian Knowledge Tracing and the 10-second **"Students Needing Help"** instructor co-pilot.
 3. **Novak LMS™ vs. Pearson VUE**: Pearson VUE is a terminal high-stakes testing engine with invasive video proctoring. Novak LMS™ prepares candidates *before* voucher issue using a `1,400`-item Practice Exams simulator, `36` 3-tab Hands-On Challenges (PBQs), `405` proctored Knowledge Test items across Forms A/B/C, and `EXAM READY` verification (`2` consecutive sittings `>= 780`), while keeping Helix gaze telemetry `100%` on-device.
 
 ## Institutional ROI, Financial & Operational Savings (68% TCO Reduction), Security, Zero-Video Privacy & Section 508 (VPAT 2.5) Architecture & 30-Day / 30-Student Free Bundle
 - **Consolidate 4 Vendor Licenses into 1 Unified Stack (68% Lower Cost per Student)**: Replaces separate eBook/learnware, cloud VM lab seat, practice exam bank, and analytics add-on (~$460/student/yr) with Novak LMS™ ($145/student/yr), saving **$78,750+/year per 250 students**.
-- **Reclaim 14.5 Instructor Hours/Week (580+ Faculty Hours/Year)**: Automated 539 4-rung in-place explanation ladders (R1–R4), automated `Diagnose → Fix → Verify` grading across 114 browser labs, and the 10-second `"Students Needing Help"` Co-Pilot eliminate manual triage and grading bottlenecks.
+- **Reclaim 14.5 Instructor Hours/Week (580+ Faculty Hours/Year)**: Automated 539 4-rung in-place explanation ladders (R1–R4), automated `Diagnose → Fix → Verify` grading across 138 browser labs, and the 10-second `"Students Needing Help"` Co-Pilot eliminate manual triage and grading bottlenecks.
 - **Eliminate Retake Voucher Waste ($18,400+/Year Saved per 250 Students)**: Psychometric `EXAM READY` gating (2 consecutive sittings >= 780/900) lifts first-attempt certification pass rates from 61% to 89%.
 - **Self-Service 30-Day / 30-Student Free Institutional Pilot Bundle (`https://novak-lms.onrender.com/pilot/start`)**: Instant 60-second onboarding provisioning 30 full student seats for 30 days ($0 cost, no credit card required) with a unique `PILOT-XXXX` join code, all 4 courses unlocked, LTI 1.3 Advantage, and CSV roster import.
 - **Institutional ROI Dashboard (`https://novak-lms.onrender.com/roi`)**: Interactive executive TCO & ROI calculator with real-time sliders and CSV/PDF brief export.

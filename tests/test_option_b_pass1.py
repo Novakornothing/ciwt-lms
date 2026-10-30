@@ -131,7 +131,7 @@ def test_hw_bench_assets():
 # ------------------------------------------------------------------ 4. Exam-Day Readiness Simulator
 def test_scaling_and_badges():
     assert ES.scaled(0, 45) == 100 and ES.scaled(45, 45) == 900 and ES.scaled(0, 0) == 100
-    assert ES.PASS_SCORE == {'A1': 675, 'A2': 700, 'N': 720}
+    assert ES.PASS_SCORE == {'A1': 675, 'A2': 700, 'N': 720, 'S': 750, 'T': 650}
     assert ES.readiness(800, 'N', [80, 90]) == 'ready'
     assert ES.readiness(800, 'N', [80, 40]) == 'borderline'
     assert ES.readiness(690, 'N', [70]) == 'borderline'

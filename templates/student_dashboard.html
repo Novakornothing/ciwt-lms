@@ -14,7 +14,6 @@
   {% for s in sections|sort(attribute='course_id') %}{% set cur = (s.id == first_sec.id) %}<a class="home-course{% if cur %} is-current{% endif %}" href="{{ url_for('student_section', section_id=s.id) }}"{% if cur %} aria-current="true"{% endif %} title="{{ s.name }}">{{ s.course.title if s.course else s.name }}</a>{% endfor %}
 </nav>
 {% endif %}
-
 <section class="page-hero home-hero continue-card" aria-labelledby="continueH">
   <p class="eyebrow mb-1">Welcome back, {{ current_user.first_name }}</p>
   {% if cont %}

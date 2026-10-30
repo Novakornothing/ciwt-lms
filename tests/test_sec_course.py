@@ -1,4 +1,4 @@
-"""Cybersecurity course: seed, five learning paths, labs, and the practice bank."""
+"""Security course: seed, five learning paths, labs, and the practice bank."""
 import labs_sec
 from curriculum_sec.exam_bank import as_bank_items
 from curriculum_sec.render import CHAPTERS, lesson_count
@@ -22,8 +22,8 @@ def _hint_blob(lab):
 
 
 def test_course_shape_and_five_paths():
-    assert lesson_count() >= 40
-    assert len(CHAPTERS) == 10
+    assert lesson_count() >= 120
+    assert len(CHAPTERS) == 28
     from curriculum_v2.objectives import OBJECTIVES
     from curriculum_sec.objectives import SEC_OBJECTIVES
     from curriculum_v2.misconceptions import MISCONCEPTIONS
@@ -31,7 +31,7 @@ def test_course_shape_and_five_paths():
     objs = dict(OBJECTIVES)
     objs.update(SEC_OBJECTIVES)
     for ch in CHAPTERS:
-        assert len(ch['lessons']) >= 4
+        assert len(ch['lessons']) >= 3
         mod = importlib.import_module(f"curriculum_v2.ladder.sec.ch{ch['order']:02d}")
         errors, _warnings = S.validate_module(mod, objs, MISCONCEPTIONS, labs=None)
         assert errors == [], errors
@@ -52,10 +52,10 @@ def test_course_shape_and_five_paths():
             assert errors == [], errors
 
 
-def test_twenty_labs_and_stage_two_three_hide_commands():
+def test_labs_and_stage_two_three_hide_commands():
     labs = labs_sec.SEC_VM_LABS + labs_sec.SEC_ACTIVITY_LABS
-    assert len(labs) == 20
-    assert len({lab['id'] for lab in labs}) == 20
+    assert len(labs) >= 40
+    assert len({lab['id'] for lab in labs}) == len(labs)
     for lab in labs:
         blob = _hint_blob(lab)
         for cmd in _commands(lab):
@@ -65,24 +65,41 @@ def test_twenty_labs_and_stage_two_three_hide_commands():
         assert 'Stage 3' in lab['coaching']['stage3']
 
 
+def test_objective_map_and_full_exam():
+    from pathlib import Path
+    import random
+    from curriculum_v2.cert import exam_sim as ES
+    text = Path('docs/SECURITY_OBJECTIVE_MAP.md').read_text()
+    assert '100%' in text and 'Covered' in text
+    assert 'Not an official exam' in text or 'not an official exam' in text
+    form = ES.build_form('S', 'max', random.Random(2))
+    assert len(form) == 90 and len({i for i, _o in form}) == 90
+    from curriculum_sec.helpdesk import TICKETS
+    from curriculum_sec.review_cards import PORTS, TERMS
+    from curriculum_sec.placement import ROWS
+    assert len(TICKETS) >= 12
+    assert len(PORTS) + len(TERMS) >= 40
+    assert len(ROWS) == 28 * 3
+
+
 def test_practice_bank_size():
     items = as_bank_items()
     singles = [it for it in items if it['type'] == 'single']
     pbqs = [it for it in items if it['type'] in ('order', 'match')]
-    assert len(singles) >= 120
-    assert len(pbqs) >= 4
+    assert len(singles) >= 600
+    assert len(pbqs) >= 25
     assert len({it['id'] for it in items}) == len(items)
 
 
 def test_sec_seed_enroll_lesson_lab_and_practice(student, instructor, admin, anon, mod):
     with mod.app.app_context():
         course = mod.Course.query.filter_by(code='SEC').one()
-        assert course.title == 'Cybersecurity'
+        assert course.title == 'Security'
         assert 'ciwt' not in (course.description or '').lower()
         chapters = mod.Module.query.filter_by(course_id=course.id).count()
         lessons = mod.Lesson.query.join(mod.Module).filter(mod.Module.course_id == course.id).count()
-        assert chapters == 10
-        assert lessons >= 40
+        assert chapters == 28
+        assert lessons >= 120
         student_row = mod.User.query.filter_by(email='student1@lms.local').one()
         section = mod.ClassSection.query.filter_by(course_id=course.id).first()
         assert section is not None
@@ -103,22 +120,22 @@ def test_sec_seed_enroll_lesson_lab_and_practice(student, instructor, admin, ano
     assert 'labConfig' in lab.get_data(as_text=True)
     dash = student.get('/student')
     assert dash.status_code == 200
-    assert 'Cybersecurity' in dash.get_data(as_text=True)
+    assert 'Security' in dash.get_data(as_text=True)
     started = student.post('/practice/start', data={'exam': 'S'})
     assert started.status_code in (302, 303)
     take = student.get(started.headers['Location'])
     assert take.status_code == 200
     body = take.get_data(as_text=True)
-    assert 'Cybersecurity foundations practice' in body
+    assert 'Security' in body
     assert 'id="assessQuestions"' in body
     dash_html = dash.get_data(as_text=True)
     assert 'Course Chapters' in dash_html and 'Hands-On Labs' in dash_html and 'Practice' in dash_html
     assert '>SEC<' not in dash_html and 'SEC ·' not in dash_html
-    assert 'Cybersecurity' in instructor.get('/instructor').get_data(as_text=True)
+    assert 'Security' in instructor.get('/instructor').get_data(as_text=True)
     exports = admin.get('/admin/exports').get_data(as_text=True)
-    assert 'Cybersecurity' in exports and '>SEC<' not in exports
+    assert 'Security' in exports and '>SEC<' not in exports
     tour = anon.get('/demo/tour').get_data(as_text=True)
-    assert 'Cybersecurity' in tour and 'Threats, access, firewalls' in tour
+    assert 'Security' in tour and 'Threats, access, firewalls' in tour
     found = student.get('/api/search?q=iptables').get_json()['command_card']
     assert found and any('sec-vm-iptables' in (p.get('url') or '') for p in found.get('practice') or [])
     aged = student.get('/api/search?q=chage').get_json()['command_card']
@@ -144,5 +161,5 @@ def test_sec_seed_enroll_lesson_lab_and_practice(student, instructor, admin, ano
     data, _mime, name = scorm_xapi.build_scorm_package_zip('SEC', '1.2')
     assert name.startswith('novak-lms-sec-')
     manifest = zipfile.ZipFile(io.BytesIO(data)).read('imsmanifest.xml').decode()
-    assert '<title>Cybersecurity</title>' in manifest
+    assert '<title>Security</title>' in manifest
     assert 'ile_cin' not in manifest and 'A-150' not in manifest and '>SEC<' not in manifest

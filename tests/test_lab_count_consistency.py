@@ -13,7 +13,7 @@ PUBLIC = ['templates/landing.html', 'templates/specs.html', 'templates/index.htm
 
 def test_lab_catalog_size_and_courses():
     labs = RT.list_labs()
-    assert len(labs) == 114
+    assert len(labs) == 138
     assert all(lab['courses'] for lab in labs)
     assert {c for lab in labs for c in lab['courses']} == {'ITSUP', 'NETOPS', 'CLIENT', 'SEC'}
 
