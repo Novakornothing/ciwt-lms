@@ -41,7 +41,7 @@ def register(app, db, d):
     class SectionJoinCode(db.Model):
         __tablename__ = 'section_join_code'
         section_id = db.Column(db.Integer, db.ForeignKey('class_section.id'), primary_key=True)
-        code = db.Column(db.String(12), unique=True, nullable=False)
+        code = db.Column(db.String(20), unique=True, nullable=False)
 
     class DataRequest(db.Model):
         """FERPA request: a student (or staff on their behalf) asks for an export, a correction or deletion."""

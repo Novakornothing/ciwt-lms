@@ -183,8 +183,32 @@ def _item(course, chapter, letter, prompt, correct, w1, w2, w3):
     }
 
 
+def _security_rows():
+    """Three placement questions per Security chapter, from the lesson text."""
+    from curriculum_sec.assemble import CHAPTERS
+    from curriculum_sec.gloss import GLOSS
+    rows = []
+    letters = 'abc'
+    for ch in CHAPTERS:
+        plains = []
+        for les in ch['lessons']:
+            for name in les.get('mc_terms') or []:
+                if name in GLOSS:
+                    plains.append((name, GLOSS[name][2].rstrip('.')))
+        if len(plains) < 3:
+            continue
+        wrongs = [p for _n, p in plains]
+        for i, (name, plain) in enumerate(plains[:3]):
+            pool = [w for w in wrongs if w != plain]
+            while len(pool) < 3:
+                pool.append('That description belongs to a different idea in this course')
+            rows.append(('SEC', ch['order'], letters[i],
+                         f'Which line matches {name}?', plain, pool[0], pool[1], pool[2]))
+    return rows
+
+
 def all_items():
-    return [_item(*row) for row in _ROWS]
+    return [_item(*row) for row in list(_ROWS) + _security_rows()]
 
 
 def items_for(course_code, chapters=None):

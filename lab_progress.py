@@ -396,7 +396,11 @@ def register(app, db, deps):
         if (src and src.get('kind') == 'vm' and lab['id'] in (src.get('fallback') or [])
                 and all(x['id'] != src['id'] for x in real_labs)):
             real_labs = [src] + real_labs
-        return render_template(tpl, lab=lab, boot=boot, prompt=boot.get('prompt', ''), practical_back=back, vm_assets_ok=vm_ok,
+        view_lab = lab
+        if lab.get('kind') == 'vm' and lab.get('session_vars'):
+            view_lab = dict(lab)
+            view_lab['vm'] = RT.VM.vm_for_session(lab, state.get('seed'))
+        return render_template(tpl, lab=view_lab, boot=boot, prompt=boot.get('prompt', ''), practical_back=back, vm_assets_ok=vm_ok,
                                fallback_labs=fallback_labs, real_labs=real_labs,
                                palette=RT.palette(lab), steps=RT.public_steps(lab, state))
 

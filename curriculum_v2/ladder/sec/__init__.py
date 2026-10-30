@@ -1,1 +1,1 @@
-"""Explanation-ladder content for the Cybersecurity course (SEC)."""
+"""Explanation-ladder content for the Security course (SEC)."""

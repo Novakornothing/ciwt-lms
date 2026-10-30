@@ -48,7 +48,16 @@ def gen_hosts_needed(seed, step_id):
     return {'need': need}
 
 
-GENERATORS = {'subnet': gen_subnet, 'hosts_needed': gen_hosts_needed}
+def gen_ticket(seed, step_id):
+    """A case id and a host the learner must read back. Nothing here is a command."""
+    r = _rng(seed, step_id)
+    return {
+        'case': 'SR-%d' % r.randint(2400, 8900),
+        'host': r.choice(['files-03', 'mail-11', 'badge-02', 'pay-07']),
+    }
+
+
+GENERATORS = {'subnet': gen_subnet, 'hosts_needed': gen_hosts_needed, 'ticket': gen_ticket}
 
 # ------------------------------------------------------------------ helpers
 

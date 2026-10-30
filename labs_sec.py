@@ -1,4 +1,4 @@
-"""Cybersecurity labs for course SEC.
+"""Security labs for course SEC.
 
 Linux stations are real v86 VMs graded on the final system state. Windows, phishing,
 certificate, MFA, ACL, and GPG stations are graded activities in the same lab runner.
@@ -929,45 +929,43 @@ SEC_ACTIVITY_LABS = [
     SEC_GPG, SEC_WIN_FW, SEC_WIN_POL, SEC_WIN_EVT, SEC_ACL, SEC_PHISH, SEC_MFA, SEC_CERT, SEC_IR, SEC_RISK,
 ]
 
-SEC_CHAPTER_LABS = {
-    ('SEC', 1): ['sec-risk'],
-    ('SEC', 2): ['sec-phish'],
-    ('SEC', 3): ['sec-vm-proc'],
-    ('SEC', 4): ['sec-vm-hash', 'sec-gpg', 'sec-cert'],
-    ('SEC', 5): ['sec-mfa', 'sec-vm-users', 'sec-vm-ssh'],
-    ('SEC', 6): ['sec-vm-iptables', 'sec-acl', 'sec-win-fw'],
-    ('SEC', 7): ['sec-vm-perms', 'sec-vm-suid', 'sec-vm-users', 'sec-vm-ssh', 'sec-win-policy'],
-    ('SEC', 8): ['sec-vm-authlog', 'sec-win-events', 'sec-vm-grep'],
-    ('SEC', 9): ['sec-ir', 'sec-vm-cron', 'sec-vm-proc', 'sec-vm-hash', 'sec-vm-grep'],
-    ('SEC', 10): ['sec-risk'],
-}
+from labs_sec_more import MORE_ACTIVITY, MORE_VM  # noqa: E402
 
-SEC_LESSON_LABS = {
-    ('SEC', 1, 4): ['sec-risk'],
-    ('SEC', 2, 2): ['sec-phish'],
-    ('SEC', 3, 3): ['sec-vm-proc'],
-    ('SEC', 3, 4): ['sec-vm-proc'],
-    ('SEC', 4, 1): ['sec-vm-hash'],
-    ('SEC', 4, 2): ['sec-gpg'],
-    ('SEC', 4, 3): ['sec-cert'],
-    ('SEC', 4, 4): ['sec-cert'],
-    ('SEC', 5, 1): ['sec-mfa'],
-    ('SEC', 5, 2): ['sec-vm-users'],
-    ('SEC', 5, 4): ['sec-vm-ssh'],
-    ('SEC', 6, 1): ['sec-vm-iptables'],
-    ('SEC', 6, 2): ['sec-acl'],
-    ('SEC', 6, 4): ['sec-win-fw'],
-    ('SEC', 7, 1): ['sec-vm-perms'],
-    ('SEC', 7, 2): ['sec-vm-ssh'],
-    ('SEC', 7, 3): ['sec-win-policy'],
-    ('SEC', 7, 4): ['sec-vm-suid'],
-    ('SEC', 8, 1): ['sec-vm-authlog'],
-    ('SEC', 8, 3): ['sec-win-events'],
-    ('SEC', 8, 4): ['sec-vm-grep'],
-    ('SEC', 9, 1): ['sec-ir'],
-    ('SEC', 9, 2): ['sec-vm-cron'],
-    ('SEC', 9, 4): ['sec-vm-hash'],
-    ('SEC', 10, 2): ['sec-risk'],
-}
+SEC_VM_LABS = SEC_VM_LABS + MORE_VM
+SEC_ACTIVITY_LABS = SEC_ACTIVITY_LABS + MORE_ACTIVITY
+
+def _security_lab_maps():
+    """Attach each lab to the lesson that names it, and keep every Security lab on the course."""
+    from curriculum_sec.assemble import CHAPTERS
+    chapters, lessons, seen = {}, {}, set()
+    for ch in CHAPTERS:
+        ids = []
+        for les in ch['lessons']:
+            lab_id = les.get('lab')
+            if not lab_id:
+                continue
+            ids.append(lab_id)
+            lessons[('SEC', ch['order'], les['order'])] = [lab_id]
+            seen.add(lab_id)
+        uniq = []
+        for lab_id in ids:
+            if lab_id not in uniq:
+                uniq.append(lab_id)
+        if uniq:
+            chapters[('SEC', ch['order'])] = uniq
+    by_id = {lab['id']: lab for lab in SEC_VM_LABS + SEC_ACTIVITY_LABS}
+    for ch in CHAPTERS:
+        for les in ch['lessons']:
+            lab = by_id.get(les.get('lab') or '')
+            if lab:
+                lab['course_objectives'] = [les['skill']]
+    for lab in SEC_VM_LABS + SEC_ACTIVITY_LABS:
+        if lab['id'] not in seen:
+            chapters.setdefault(('SEC', 1), []).append(lab['id'])
+            seen.add(lab['id'])
+    return chapters, lessons
+
+
+SEC_CHAPTER_LABS, SEC_LESSON_LABS = _security_lab_maps()
 
 SEC_LAB_ALIGN = {lab['id']: lab['blurb'] for lab in SEC_VM_LABS + SEC_ACTIVITY_LABS}

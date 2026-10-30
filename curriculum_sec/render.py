@@ -5,13 +5,13 @@ same idea. Headings, section ids, and r0 stamps come from the rendered HTML.
 """
 from html import escape
 
-from curriculum_v2.ladder.schema import analogy, check, plain, section, sort, tryit, visual
+from curriculum_v2.ladder.schema import analogy, check, order, plain, reveal, section, sort, tryit, visual
 from curriculum_v2.ladder.sections import sections
 
 from curriculum_sec import specs as SP
 
 REVIEW = 'Pending SME review'
-SOURCE = 'Novak LMS™ Cybersecurity lesson (original). Pending SME review.'
+SOURCE = 'Novak LMS™ Security lesson (original). Pending SME review.'
 
 
 def _p(sentences):
@@ -177,7 +177,13 @@ def _rungs(sec, lab_id, checks, section_html):
     r1 = plain(htmls['R1'], SOURCE, [checks[1]])
     r2 = analogy(htmls['R2'], SOURCE, [checks[2]])
     r3 = visual(htmls['R3'], SOURCE, [checks[3]])
-    widget = sort(sec['sort_prompt'], sec['sort'], sec['sort_done'])
+    kind = sec.get('widget') or 'sort'
+    if kind == 'order':
+        widget = order(sec['sort_prompt'], list(sec['steps'])[:4], sec['sort_done'])
+    elif kind == 'reveal':
+        widget = reveal(sec['sort_prompt'], sec['key'] + '. ' + sec['why'][:180])
+    else:
+        widget = sort(sec['sort_prompt'], sec['sort'], sec['sort_done'])
     lab = {'id': lab_id, 'note': sec['lab_note']} if lab_id else None
     r4 = tryit(htmls['R4'], SOURCE, [checks[4]], widget=widget, lab=lab)
     return r1, r2, r3, r4

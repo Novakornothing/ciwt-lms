@@ -6,14 +6,14 @@ from curriculum_sec.exam_bank import as_bank_items
 from curriculum_sec.render import CHAPTERS
 
 DISCLAIMER = (
-    'Original Novak LMS™ curriculum. Covers foundational topics comparable to CompTIA Security+ (SY0-701) '
-    'and to entry-level cyber work. Not affiliated with, endorsed by, or a substitute for any vendor certification.'
+    'Original Novak LMS™ curriculum, aligned to the CompTIA Security+ (SY0-701) exam objectives. '
+    'Not affiliated with, endorsed by, or a substitute for any vendor certification.'
 )
-TITLE = 'Cybersecurity'
+TITLE = 'Security'
 DESCRIPTION = (
-    'Entry-level cybersecurity after IT support, basic networking, and operating systems. '
-    'You practice confidentiality, threats, malware, cryptography, access control, network and endpoint '
-    'hardening, logging, incident response, and basic governance. ' + DISCLAIMER
+    'Security after IT support, basic networking, and operating systems. '
+    'Lessons, labs, and a 90-question Exam-Day sitting cover the five Security+ domains in plain English. '
+    + DISCLAIMER
 )
 
 
@@ -114,16 +114,16 @@ def ensure_sec(db, models, utcnow, grant=None):
     if not kt:
         db.session.add(KnowledgeTest(
             course_id=course.id,
-            title='Cybersecurity foundations — knowledge check',
-            description='Forty-five original items drawn from the Cybersecurity practice bank. ' + DISCLAIMER,
+            title='Security knowledge check',
+            description='Forty-five original items drawn from the Security practice bank. ' + DISCLAIMER,
             order=1,
             questions=kt_payload,
             passing_score=80,
             time_limit_minutes=45,
         ))
     else:
-        kt.title = 'Cybersecurity foundations — knowledge check'
-        kt.description = 'Forty-five original items drawn from the Cybersecurity practice bank. ' + DISCLAIMER
+        kt.title = 'Security knowledge check'
+        kt.description = 'Forty-five original items drawn from the Security practice bank. ' + DISCLAIMER
         kt.questions = kt_payload
         kt.passing_score = 80
         kt.time_limit_minutes = 45
@@ -135,7 +135,7 @@ def ensure_sec(db, models, utcnow, grant=None):
     section = ClassSection.query.filter_by(course_id=course.id).order_by(ClassSection.id).first()
     if not section and instr:
         section = ClassSection(
-            name='Cybersecurity — after Operating Systems',
+            name='Security — after Operating Systems',
             course_id=course.id,
             instructor_id=instr.id,
             max_students=30,
@@ -167,7 +167,7 @@ def ensure_sec(db, models, utcnow, grant=None):
         try:
             db.session.execute(
                 db.text('INSERT OR REPLACE INTO section_join_code (section_id, code) VALUES (:sid, :c)'),
-                {'sid': section.id, 'c': 'CYBER-DEMO'},
+                {'sid': section.id, 'c': 'SECURITY-DEMO'},
             )
         except Exception:
             pass
