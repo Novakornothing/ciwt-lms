@@ -3597,6 +3597,13 @@ def student_section(section_id):
                 my_answers = json.loads(my_eoc.answers_json or '{}')
             except Exception:
                 my_answers = {}
+    learn_sec = None
+    if current_user.role == 'student' and learner_api:
+        try:
+            learn_sec = learner_api.home(current_user, section)
+        except Exception as exc:
+            db.session.rollback()
+            print('learn section:', exc)
     return render_template(
         'student_section.html',
         section=section,
@@ -3611,6 +3618,7 @@ def student_section(section_id):
         eoc_items=TQI_EOC_ITEMS,
         my_eoc=my_eoc,
         my_answers=my_answers,
+        learn_sec=learn_sec,
     )
 
 

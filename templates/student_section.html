@@ -32,7 +32,7 @@
     {% set opener = (modules|selectattr('available')|list|first) %}
     {% if opener %}<a class="btn btn-brand" href="{{ url_for('view_module', section_id=section.id, module_id=opener.module.id) }}">Continue</a>{% endif %}
     {% endif %}
-    <p class="class-also mb-0"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Practice</a> · <a href="{{ url_for('speed_drill', section_id=section.id) }}">Speed drill</a>{% if current_user.role == 'student' %} · <a href="{{ url_for('mastery_student', section_id=section.id) }}">Skip What You Know</a> · <a href="{{ url_for('mastery_plan', section_id=section.id) }}">My plan</a> · <a href="{{ url_for('ladder_profile', section_id=section.id) }}">What helps you learn</a>{% endif %}{% if section.course and section.course.code in ('ITSUP', 'APLUS', 'NETOPS', 'NETPLUS', 'CLIENT') %} · <a href="{{ url_for('section_material', section_id=section.id, kind='syllabus') }}">Syllabus</a>{% endif %}</p>
+    <p class="class-also mb-0"><a href="{{ url_for('exam_sim_home', section_id=section.id) }}">Practice</a> · <a href="{{ url_for('speed_drill', section_id=section.id) }}">Speed drill</a>{% if current_user.role == 'student' %}{% if learn_sec and learn_sec.has_placement %} · <a href="{{ learn_sec.placement_url }}">Skip What You Know</a>{% endif %} · <a href="{{ url_for('mastery_student', section_id=section.id) }}">Skill Mastery</a> · <a href="{{ url_for('mastery_plan', section_id=section.id) }}">My plan</a> · <a href="{{ url_for('ladder_profile', section_id=section.id) }}">What helps you learn</a>{% endif %}{% if section.course and section.course.code in ('ITSUP', 'APLUS', 'NETOPS', 'NETPLUS', 'CLIENT') %} · <a href="{{ url_for('section_material', section_id=section.id, kind='syllabus') }}">Syllabus</a>{% endif %}</p>
   </div>
 </div>
 {% include "_student_intro.html" %}
@@ -51,7 +51,7 @@
         <div class="list-group-item">
           <div class="d-flex justify-content-between align-items-center gap-2">
             <div class="min-w-0">
-              <strong>{% if not item.module.title.startswith('Chapter') %}{{ item.module.order }}. {% endif %}{{ item.module.title }}</strong>
+              <strong>{% if not item.module.title.startswith('Chapter') %}{{ item.module.order }}. {% endif %}{{ item.module.title }}</strong>{% if learn_sec and item.module.order in learn_sec.skip %} <span class="badge text-bg-success">tested out</span>{% endif %}
               {% set nq = item.quizzes|length %}
               <div class="small text-muted">~{{ item.module.estimated_minutes }} min{% if nq %} · {{ nq }} practice quiz{{ 'zes' if nq != 1 }}{% endif %}</div>
             </div>

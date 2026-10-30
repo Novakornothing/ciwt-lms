@@ -198,6 +198,9 @@ def test_daily_review_route_sync_and_search(app, mod, student, instructor):
     assert home.count('Daily Review') == 1
     # The curriculum ticket list is "Lesson issues", so "Help Desk Queue" means only the simulation.
     assert 'Lesson issues' in home
+    course_page = student.get(f'/student/section/{sid}').get_data(as_text=True)
+    assert f'href="/student/section/{sid}/placement">Skip What You Know' in course_page
+    assert '>Skill Mastery</a>' in course_page
     from pathlib import Path
     import re
     page = student.get(f'/student/section/{sid}/daily-review')
