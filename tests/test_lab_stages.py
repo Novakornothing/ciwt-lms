@@ -149,6 +149,64 @@ def test_stage_two_and_three_do_not_share_sentences_or_shingles():
                 assert score <= 0.40, (stage, left, right, round(score, 3))
 
 
+_TRIVIAL = {"hostname", "computer-name", "proof-token", "token-file"}
+
+
+def _stage_sentences(html):
+    text = re.sub(r'<ul class="syntax-card">.*?</ul>', " ", html or "", flags=re.S)
+    text = re.sub(r"<button[^>]*>.*?</button>", " ", text, flags=re.S)
+    text = re.sub(r"<form[^>]*>.*?</form>", " ", text, flags=re.S)
+    text = re.sub(r"<h3[^>]*>.*?</h3>", " ", text, flags=re.S)
+    text = re.sub(r"<code[^>]*>.*?</code>", " ", text, flags=re.S)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if len(_words(s)) >= 8]
+
+
+def test_stage3_checker_is_the_labs_skill():
+    import lab_skills as SK
+    for lab in LABS:
+        kind = SK.checker(lab, "ticket")
+        if kind is None and lab.get("kind") == "linuxgui":
+            continue
+        assert kind and kind not in _TRIVIAL, (lab["id"], kind)
+
+
+def test_stage_text_does_not_turn_dots_into_commas():
+    for lab in LABS:
+        pub = PX.public(lab, {"seed": 1}, [])
+        for stage in pub["stages"]:
+            html = stage["html"]
+            assert not re.search(r"\d,\d,\d,\d", html), (lab["id"], stage["id"])
+            assert "notes,txt" not in html and "backup,sh" not in html, lab["id"]
+
+
+def test_no_stage_sentence_is_shared_by_more_than_five_labs():
+    from collections import defaultdict
+    seen = defaultdict(set)
+    for lab in LABS:
+        pub = PX.public(lab, {"seed": 1}, [])
+        for stage in pub["stages"]:
+            for sentence in _stage_sentences(stage["html"]):
+                seen[sentence.lower()].add(lab["id"])
+    shared = {s: labs for s, labs in seen.items() if len(labs) > 5}
+    assert not shared, list(shared.items())[:3]
+
+
+def test_syntax_card_does_not_contain_the_seeded_answer_command():
+    import lab_skills as SK
+    for lab in LABS:
+        if not SK.has_spec(lab):
+            continue
+        facts = PX.facts(lab, 3)
+        card = " ".join(row["form"] for row in PX.syntax_card(lab))
+        for stage in ("assisted", "ticket"):
+            for cmd in SK.fix_commands(lab, facts, stage) or []:
+                if not re.search(r"\d", str(cmd)):
+                    continue
+                assert str(cmd) not in card, (lab["id"], cmd)
+
+
 def test_vm_file_check_runs_real_grep_and_solved_probe_does_not_fake_it():
     import lab_skills as SK
     lab = RT.get_lab("linux-vm-perms")
