@@ -34,7 +34,7 @@
           {% for s in student_nav_sections|default([]) %}
           <a class="rail-link {% if open_section_id == s.id %}active{% endif %}"
              href="{{ url_for('student_section', section_id=s.id) }}">
-            <i class="bi bi-door-open"></i><span>{{ s.course.code if s.course else 'Class' }} · {{ s.name }}</span>
+            <i class="bi bi-door-open"></i><span>{{ s.name }}</span>
           </a>
           {% else %}
           <span class="rail-empty">No classes yet</span>
@@ -55,7 +55,7 @@
           {% for s in student_nav_sections|default([]) %}
           <a class="rail-link {% if ep == 'course_labs' and open_section_id == s.id %}active{% endif %}"
              href="{{ url_for('course_labs', section_id=s.id) }}">
-            <i class="bi bi-collection-play"></i><span>{{ s.course.code if s.course else 'Class' }} labs</span>
+            <i class="bi bi-collection-play"></i><span>{{ s.course.title if s.course else 'Class' }} labs</span>
           </a>
           {% endfor %}
           <a class="rail-link {% if ep == 'interactive_labs_index' %}active{% endif %}" href="{{ url_for('interactive_labs_index') }}">
@@ -257,7 +257,7 @@
           {% for c in staff_nav_courses %}
           <details class="rail-tree rail-tree-nested" {% if open_section_id and (staff_nav_sections|selectattr('id','equalto',open_section_id)|map(attribute='course_id')|first) == c.id %}open{% endif %}>
             <summary class="rail-tree-sum rail-tree-sum-sm" title="{{ c.title }}">
-              <i class="bi bi-journal-bookmark rail-ico"></i><span>{{ c.code }}</span>
+              <i class="bi bi-journal-bookmark rail-ico"></i><span>{{ c.title }}</span>
             </summary>
             <div class="rail-tree-kids">
               {% for s in staff_nav_sections if s.course_id == c.id %}
@@ -323,7 +323,7 @@
               <span class="rail-empty">No classes</span>
               {% endfor %}
               <a class="rail-link rail-sublink" href="{{ url_for('course_performance', course_id=c.id) }}">
-                <i class="bi bi-graph-up"></i><span>{{ c.code }} stats</span>
+                <i class="bi bi-graph-up"></i><span>{{ c.title }} stats</span>
               </a>
             </div>
           </details>

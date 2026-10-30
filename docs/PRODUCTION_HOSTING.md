@@ -30,7 +30,7 @@ the database answers; it also reports the database backend and whether the SQLit
 4. Keep `--workers 1 --threads 8` with SQLite. A disk can be attached to only one instance, so for horizontal
    scaling switch to PostgreSQL (comment block at the end of `render.yaml`).
 
-## Option B — Docker / Docker Compose (school server, DoD-ready VM, Fly.io)
+## Option B — Docker / Docker Compose (school server, hardened VM, Fly.io)
 
 ```bash
 cp .env.example .env        # set SECRET_KEY

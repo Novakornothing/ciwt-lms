@@ -1,4 +1,4 @@
-# Single-host deployment (school server, DoD-ready VM, any Docker host).
+# Single-host deployment (school server, hardened VM, any Docker host).
 #   cp .env.example .env   # set SECRET_KEY at minimum
 #   docker compose up -d --build
 #   docker compose exec web python tools/backup_db.py      # on-demand backup into the volume

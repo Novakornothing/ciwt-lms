@@ -7827,6 +7827,8 @@ def sync_curriculum():
         _nm = _sec.name or ''
         for _old, _new in _renames:
             _nm = _nm.replace(_old, _new)
+        if _nm.strip() == 'Operating Systems — CLIENT-101':
+            _nm = 'Operating Systems Fall 2026 — Section E'
         if _nm != (_sec.name or ''):
             _sec.name = _nm
     for course, pack in ((aplus, APLUS_LESSONS), (netplus, NETPLUS_LESSONS), (client, CLIENT_LESSONS)):

@@ -33,7 +33,7 @@
         <option value="">All classes</option>
         {% for s in sections %}
         <option value="{{ s.id }}" {% if pre_section == s.id %}selected{% endif %}>
-          {{ s.name }}{% if s.course %} · {{ s.course.code }}{% endif %}
+          {{ s.name }}{% if s.course %} · {{ s.course.title }}{% endif %}
         </option>
         {% endfor %}
       </select>
@@ -68,7 +68,7 @@
       <select id="f-section_id" name="section_id" class="form-select">
         <option value="">—</option>
         {% for s in sections %}
-        <option value="{{ s.id }}">{{ s.name }}{% if s.course %} · {{ s.course.code }}{% endif %}</option>
+        <option value="{{ s.id }}">{{ s.name }}{% if s.course %} · {{ s.course.title }}{% endif %}</option>
         {% endfor %}
       </select>
     </div>

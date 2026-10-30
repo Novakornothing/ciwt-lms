@@ -22,6 +22,8 @@
     var tmp = document.createElement('div');
     tmp.innerHTML = html.trim();
     var fresh = tmp.firstElementChild;
+    // A bulk swap from the 5 Ways to Learn switcher: keep the reader where they are (no focus jump, no scroll).
+    if (box.hasAttribute('data-swap-quiet')) moveFocus = false;
     function put() {
       box.replaceWith(fresh);
       document.dispatchEvent(new CustomEvent('ladder:updated', { detail: { sid: fresh.getAttribute('data-ladder-sid') } }));

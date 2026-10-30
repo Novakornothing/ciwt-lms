@@ -1400,6 +1400,15 @@ for _lbl, _spec in BLUEPRINTS_NETOPS.items():
 _LABEL_PREFIX_RE = re.compile(r"^\s*(\d+\.\d+)\b")
 
 
+# User-facing course names; internal codes stay in ids and keys.
+COURSE_DISPLAY = {"ITSUP": "IT Support", "NETOPS": "Basic Networking", "CLIENT": "Operating Systems"}
+
+
+def course_display(code: str) -> str:
+    c = (code or "").upper()
+    return COURSE_DISPLAY.get(c, c)
+
+
 def get_lesson_blueprint(course_code: str, ch_order: int, les_order: int, lesson_title: str = "") -> tuple:
     """Return (arch_title, stages, spec_rows, watchout_title, watchout_body) for any lesson."""
     code = (course_code or "ITSUP").upper()
@@ -1414,7 +1423,7 @@ def get_lesson_blueprint(course_code: str, ch_order: int, les_order: int, lesson
         if lbl in BLUEPRINTS_ITSUP:
             return BLUEPRINTS_ITSUP[lbl]
     # Fallback generator by title/topic if a custom lesson is ever added
-    clean_title = (lesson_title or f"{code} {ch_order}.{les_order}").strip()
+    clean_title = (lesson_title or f"{course_display(code)} {ch_order}.{les_order}").strip()
     return (
         f"{clean_title} — Architecture & Signal Path",
         [("1. Intake & Scope", "Verify Context", "STAGE 1"),
@@ -1459,7 +1468,7 @@ def render_visual_blueprint(course_code: str, ch_order: int, les_order: int, les
             f'<text x="{w // 2}" y="54" text-anchor="middle" fill="#f8fafc" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700">{escape(st_title)}</text>'
             f'<text x="{w // 2}" y="76" text-anchor="middle" fill="#cbd5e1" font-family="system-ui,-apple-system,sans-serif" font-size="9.8">{escape(st_sub)}</text>'
             f'<line x1="14" y1="92" x2="{w - 14}" y2="92" stroke="{color}" stroke-opacity="0.35" stroke-width="1"/>'
-            f'<text x="{w // 2}" y="103" text-anchor="middle" fill="#94a3b8" font-family="ui-monospace,Consolas,monospace" font-size="8.5">{escape(code)} {ch_i}.{les_i} · S{idx + 1}</text>'
+            f'<text x="{w // 2}" y="103" text-anchor="middle" fill="#94a3b8" font-family="ui-monospace,Consolas,monospace" font-size="8.5">{ch_i}.{les_i} · S{idx + 1}</text>'
             f'</g>'
         )
         if idx < len(stages[:5]) - 1:
@@ -1485,7 +1494,7 @@ def render_visual_blueprint(course_code: str, ch_order: int, les_order: int, les
         f'</defs>'
         f'<rect x="0" y="0" width="760" height="30" rx="10" fill="url(#{grad_id})"/>'
         f'<text x="18" y="20" fill="#e2e8f0" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" font-weight="700">'
-        f'NOVAK LMS™ VISUAL ARCHITECTURE · {escape(code)} {ch_i}.{les_i} — {escape(arch_title)}</text>'
+        f'NOVAK LMS™ VISUAL ARCHITECTURE · {escape(course_display(code))} {ch_i}.{les_i} — {escape(arch_title)}</text>'
         f'<text x="742" y="20" text-anchor="end" fill="#38bdf8" font-family="ui-monospace,Consolas,monospace" font-size="9.5" font-weight="600">SIGNAL &amp; WORKFLOW MAP</text>'
         + "".join(svg_nodes)
         + f'<text x="18" y="166" fill="#94a3b8" font-family="ui-monospace,Consolas,monospace" font-size="9">'
@@ -1534,7 +1543,7 @@ def render_visual_blueprint(course_code: str, ch_order: int, les_order: int, les
         f'style="margin:0.65rem 0 0.85rem 0;padding:0.75rem 1rem;border:1px solid rgba(56,189,248,0.3);border-radius:12px;background:rgba(15,23,42,0.03)">'
         f'<div class="novak-visual-header" style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.25rem">'
         f'<h4 style="margin:0;font-size:0.95rem;font-weight:700">Visual Architecture &amp; Technical Spec Reference — {escape(arch_title)}</h4>'
-        f'<span class="badge" style="font-family:ui-monospace,Consolas,monospace;font-size:0.72rem;padding:0.18rem 0.48rem;border-radius:6px;background:rgba(56,189,248,0.15);color:#0284c7">{escape(code)} · Ch {ch_i} · Lesson {les_i}</span>'
+        f'<span class="badge" style="font-family:ui-monospace,Consolas,monospace;font-size:0.72rem;padding:0.18rem 0.48rem;border-radius:6px;background:rgba(56,189,248,0.15);color:#0284c7">{escape(course_display(code))} · Ch {ch_i} · Lesson {les_i}</span>'
         f'</div>'
         f'{svg_html}'
         f'<details class="novak-spec-drawer">'

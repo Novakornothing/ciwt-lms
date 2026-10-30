@@ -437,6 +437,47 @@
       refresh: emitStep
     };
 
+    // Swapping explanations changes section heights. Pin the section at the top of the viewport
+    // (by its stable data-ladder-sid, since swapped boxes are replaced) and hold it there.
+    var keeper = null;
+    function readerAnchor() {
+      var top = 0;
+      var tl = document.querySelector('.lesson-topline');
+      if (tl) top = Math.max(0, tl.getBoundingClientRect().bottom);
+      var boxes = lessonBody.querySelectorAll('[data-ladder-sid]');
+      for (var i = 0; i < boxes.length; i++) {
+        var r = boxes[i].getBoundingClientRect();
+        if (r.height && r.bottom > top + 1) return { sid: boxes[i].getAttribute('data-ladder-sid'), top: r.top };
+      }
+      return null;
+    }
+    function restoreAnchor() {
+      if (!keeper) return;
+      var el = lessonBody.querySelector('[data-ladder-sid="' + keeper.sid + '"]');
+      if (!el) return;
+      var d = el.getBoundingClientRect().top - keeper.top;
+      if (Math.abs(d) > 1) window.scrollBy({ top: d, left: 0, behavior: 'instant' });
+    }
+    function keepReaderInPlace() {
+      var a = readerAnchor();
+      if (!a) return;
+      if (keeper && keeper.timer) clearTimeout(keeper.timer);
+      keeper = a;
+      var stop = function () { keeper = null; window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop); };
+      window.addEventListener('wheel', stop, { passive: true });
+      window.addEventListener('touchstart', stop, { passive: true });
+      window.addEventListener('keydown', stop);
+      keeper.timer = setTimeout(stop, 2500);
+      if (window.ResizeObserver && !lessonBody._novakRO) {
+        lessonBody._novakRO = new ResizeObserver(function () { restoreAnchor(); });
+        lessonBody._novakRO.observe(lessonBody);
+      }
+    }
+    document.addEventListener('ladder:updated', function () {
+      restoreAnchor();
+      requestAnimationFrame(restoreAnchor);
+    });
+
     // 4b. Step-Level Learning Style Switcher (#novakStepStyleBar)
     var stepStyleBar = document.getElementById('novakStepStyleBar');
     if (stepStyleBar) {
@@ -451,10 +492,12 @@
           });
           var groups = getStepGroups();
           var targetCards = (focusMode && groups[activeIdx]) ? groups[activeIdx] : getSectionBlocks();
+          keepReaderInPlace();
           targetCards.forEach(function (card, idx) {
             if (card.getAttribute('data-shown') === rung) return;
             var pill = card.querySelector('.novak-rung-pill[data-rung-pick="' + rung + '"]');
             if (pill) {
+              card.setAttribute('data-swap-quiet', '1');
               setTimeout(function () { pill.click(); }, idx * 45);
             }
           });
@@ -681,13 +724,27 @@
       if (fab) fab.setAttribute('aria-expanded', open ? 'true' : 'false');
       if (scrim) scrim.hidden = !open;
       document.body.classList.toggle('lesson-sheet-open', open);
-      if (open) { var f = rail.querySelector('button, a'); if (f) f.focus(); } else if (fab && !desk.matches) { fab.focus(); }
+      if (open) { var f = rail.querySelector('button, a'); if (f) f.focus({ preventScroll: true }); } else if (fab && !desk.matches) { fab.focus({ preventScroll: true }); }
     }
     if (fab) fab.addEventListener('click', function () { openSheet(!rail.classList.contains('is-open')); });
     if (scrim) scrim.addEventListener('click', function () { openSheet(false); });
     if (closeBtn) closeBtn.addEventListener('click', function () { openSheet(false); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && rail.classList.contains('is-open')) openSheet(false); });
     function closeIfSheet() { if (!desk.matches) openSheet(false); }
+
+    // Short, clean step names: drop numbering ("1.", "1.1", "Step 2:"), trailing notes, filler words; cap at ~6 words
+    var FILLER = /^(actually|really|just|basically|simply)$/i;
+    function cleanStepName(raw) {
+      var t = String(raw || '').replace(/\s+/g, ' ').trim();
+      t = t.replace(/^(step|part|section|lesson|ch(apter)?)\s*\d+[a-z]?\s*[:.\-–—)]?\s*/i, '');
+      t = t.replace(/^[\d.]+[a-z]?\s*[:.\-–—)]?\s*/i, '');
+      t = t.split(/\s[—–-]\s|:\s|\s\(|;\s/)[0];
+      t = t.replace(/[.,;:!?]+$/, '').trim();
+      var words = t.split(' ').filter(function (w, i) { return !(i > 0 && FILLER.test(w)); });
+      if (words.length > 6) words = words.slice(0, 5);
+      t = words.join(' ').replace(/\s+(and|or|of|to|for|with|in|on|&)$/i, '');
+      return t ? t.charAt(0).toUpperCase() + t.slice(1) : '';
+    }
 
     // Steps list, built from the same step groups the guided view uses
     function buildSteps() {
@@ -696,7 +753,7 @@
       stepsOl.innerHTML = '';
       groups.forEach(function (g, i) {
         var first = g[0];
-        var head = (first && (first.getAttribute('data-heading') || (first.querySelector('h2, h3') || {}).textContent)) || ('Step ' + (i + 1));
+        var head = cleanStepName(first && (first.getAttribute('data-heading') || (first.querySelector('h2, h3') || {}).textContent)) || ('Step ' + (i + 1));
         var li = document.createElement('li');
         var b = document.createElement('button');
         b.type = 'button';
@@ -752,6 +809,8 @@
         var src = document.querySelector('#novakStepStyleBar [data-step-rung="' + rung + '"]');
         if (src) src.click();
         syncWays(rung);
+        // On tablet/phone close the sheet so the reader sees the swap where they are
+        if (!desk.matches) openSheet(false);
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('#novakStepStyleBar [data-step-rung]'), function (b) {

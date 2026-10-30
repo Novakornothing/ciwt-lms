@@ -33,7 +33,7 @@
           · {{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '' }}
           · {{ t.category }}
           {% if t.lesson %} · {{ t.lesson.title }}{% endif %}{% if t.quiz %} · Quiz: {{ t.quiz.title }}{% endif %}{% if t.test %} · Test: {{ t.test.title }}{% endif %}
-          {% if t.course %} · {{ t.course.code }}{% endif %}
+          {% if t.course %} · {{ t.course.title }}{% endif %}
         </div>
       </div>
       <span class="badge {% if t.status in ('open','in_progress') %}badge-live{% else %}badge-closed{% endif %}">

@@ -9,7 +9,7 @@
   </ol>
 </nav>
 <div class="page-hero">
-  <h1 class="h3 mb-1">Lab results — {{ section.course.code }}</h1>
+  <h1 class="h3 mb-1">Lab results — {{ section.course.title }}</h1>
   <p class="mb-0">{{ labs|length }} labs in this course ({{ classroom|length }} classroom). Best score per student; hints and resets are shown so you can see who struggled.</p>
   <div class="d-flex flex-wrap gap-2 mt-2">
     <a class="btn btn-sm btn-light" href="{{ url_for('instructor_lab_results_csv', section_id=section.id) }}" data-no-busy><i class="bi bi-download" aria-hidden="true"></i> CSV</a>

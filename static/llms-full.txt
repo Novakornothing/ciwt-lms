@@ -15,7 +15,7 @@
 - **Helix Browser-Local Gaze & Head-Pose Bench (`/helix/try`)**: [https://novak-lms.onrender.com/helix/try](https://novak-lms.onrender.com/helix/try)
 - **Full Technical Reference (`/llms-full.txt`)**: [https://novakornothing.com/llms-full.txt](https://novakornothing.com/llms-full.txt) · [https://novak-lms.onrender.com/llms-full.txt](https://novak-lms.onrender.com/llms-full.txt)
 - **Terms of Service, DMCA Safe Harbor Protocol & Enterprise Content Liability Shield (`/terms`)**: [https://novakornothing.com/terms.html](https://novakornothing.com/terms.html) · [https://novak-lms.onrender.com/terms](https://novak-lms.onrender.com/terms)
-- **SCORM 1.2 / 2004 Dispatch Packages & xAPI 1.0.3 Statement Export (not a cmi5 LRS or cmi5 launch)**: [https://novak-lms.onrender.com/compliance#scorm-xapi-ile](https://novak-lms.onrender.com/compliance#scorm-xapi-ile) · [https://novak-lms.onrender.com/api/xapi/statements](https://novak-lms.onrender.com/api/xapi/statements)
+- **SCORM 1.2 / 2004 Dispatch Packages & xAPI 1.0.3 Statement Export (not a cmi5 LRS or cmi5 launch)**: [https://novak-lms.onrender.com/compliance#scorm-xapi](https://novak-lms.onrender.com/compliance#scorm-xapi) · [https://novak-lms.onrender.com/api/xapi/statements](https://novak-lms.onrender.com/api/xapi/statements)
 - **WebAssembly Toolchain & Permissive OSS License Audit (MIT / Apache 2.0 / BSD-2-Clause)**: [https://novak-lms.onrender.com/compliance/oss-licenses](https://novak-lms.onrender.com/compliance/oss-licenses)
 - **Privacy, FERPA & Student Data Controls (`/privacy`)**: [https://novak-lms.onrender.com/privacy](https://novak-lms.onrender.com/privacy)
 - **Contact & Pilot Support (`/contact`)**: [https://novak-lms.onrender.com/contact](https://novak-lms.onrender.com/contact) (`novakornothing@gmail.com`)
@@ -63,7 +63,7 @@
 - **Authentic Sitting Controls**: `100–900` scaled scoring, `EXAM READY` certification gate (`2` consecutive sittings `>= 780`), digital scratch whiteboard, option strikethrough, mark-for-review, and ADA extended-time accommodations (`1.25x`, `1.5x`, `2.0x`).
 
 ### 5. Proctored Course Assessments & Rapid Recall
-- **`405` Proctored Knowledge Test scenario questions** standardized at **`45` questions per form across Forms A, B, and C** (`135` per course across `ITSUP`, `NETOPS`, and `CLIENT`).
+- **`405` Proctored Knowledge Test scenario questions** standardized at **`45` questions per form across Forms A, B, and C** (`135` per course across IT Support, Basic Networking, and Operating Systems).
 - **`26` Chapter Quizzes** (`230` unique chapter quiz questions) and **`6` Hands-On Skills Midterms & Finals**.
 - **`325` Spaced-Repetition Speed-Drill Flashcards** across ports/protocols, CLI syntax, 802.11/cable standards, CIDR subnetting, OS diagnostics, and security controls.
 
@@ -77,7 +77,7 @@
 
 ## Course Catalog & 26-Chapter Index
 
-### Course 1: IT Support (`ITSUP` — CompTIA A+ 220-1201 Core 1 & 220-1202 Core 2)
+### Course 1: IT Support (CompTIA A+ 220-1201 Core 1 & 220-1202 Core 2)
 - **Metrics**: `13` chapters · `59` lessons · `116,582` base lesson words · `466` Core 1 + `463` Core 2 Exam-Sim items · `20` 3-Tab PBQs · `135` proctored Knowledge Test questions (`45` per Form A/B/C).
   - Ch 1: Professional Foundations & Workplace Safety (`5` lessons)
   - Ch 2: PC Architecture: Motherboard, CPU & Memory (`6` lessons)
@@ -93,7 +93,7 @@
   - Ch 12: Operational Procedures & Capstone Habits (`4` lessons)
   - Ch 13: Windows CLI & VM Lab Track (`6` lessons)
 
-### Course 2: Basic Networking (`NETOPS` — CompTIA Network+ N10-009)
+### Course 2: Basic Networking (CompTIA Network+ N10-009)
 - **Metrics**: `7` chapters · `30` lessons · `71,312` base lesson words · `454` Exam-Sim items · `10` 3-Tab PBQs · `135` proctored Knowledge Test questions (`45` per Form A/B/C).
   - Ch 1: Network Models & Addressing (`4` lessons)
   - Ch 2: Switching, VLANs & Physical Plant (`4` lessons)
@@ -103,7 +103,7 @@
   - Ch 6: Network Troubleshooting Capstone (`4` lessons)
   - Ch 9: Switch & Router CLI Lab Track (`6` lessons)
 
-### Course 3: Operating Systems (`CLIENT` — CompTIA Tech+ FC0-U71 & Endpoint Operations)
+### Course 3: Operating Systems (CompTIA Tech+ FC0-U71 & Endpoint Operations)
 - **Metrics**: `6` chapters · `26` lessons · `54,655` base lesson words · `660` Exam-Sim items · `6` 3-Tab PBQs · `135` proctored Knowledge Test questions (`45` per Form A/B/C).
   - Ch 1: Windows Installation & Client Configuration (`4` lessons)
   - Ch 2: Linux, macOS & Cross-Platform Support (`4` lessons)
@@ -251,7 +251,7 @@ Every certification sitting in the Novak LMS™ Practice Exams simulator begins 
 
 ## Complete 3-Course, 26-Chapter, 115-Lesson Curriculum Syllabus
 
-### Course `ITSUP`: IT Support (CompTIA A+ 220-1201 (Core 1) & 220-1202 (Core 2))
+### Course: IT Support (CompTIA A+ 220-1201 (Core 1) & 220-1202 (Core 2))
 - **Chapters**: `13` · **Lessons**: `59` · **Base Lesson Words**: `116,582` · **Proctored Knowledge Tests**: `3` Forms (Forms A, B, C × `45` items = `135` items)
 
 #### Chapter 1 — Professional Foundations & Workplace Safety (`5` Lessons · `10,049` Base Words)
@@ -339,7 +339,7 @@ Every certification sitting in the Novak LMS™ Practice Exams simulator begins 
 - **Lesson 5: 13.5 Windows 11 Settings paths that match the live labs** (`2,098` base words · `100%` SVG Visual Blueprint + 5-row RFC/IEEE Spec Table + Field Watchout + 4-Rung Adaptive Ladders)
 - **Lesson 6: 13.6 Processes, netsh, and when not to reboot** (`1,039` base words · `100%` SVG Visual Blueprint + 5-row RFC/IEEE Spec Table + Field Watchout + 4-Rung Adaptive Ladders)
 
-### Course `NETOPS`: Basic Networking (CompTIA Network+ N10-009)
+### Course: Basic Networking (CompTIA Network+ N10-009)
 - **Chapters**: `7` · **Lessons**: `30` · **Base Lesson Words**: `71,312` · **Proctored Knowledge Tests**: `3` Forms (Forms A, B, C × `45` items = `135` items)
 
 #### Chapter 1 — Network Models & Addressing (`4` Lessons · `9,917` Base Words)
@@ -386,7 +386,7 @@ Every certification sitting in the Novak LMS™ Practice Exams simulator begins 
 - **Lesson 5: 9.5 Capstone — New Closet Drop** (`1,171` base words · `100%` SVG Visual Blueprint + 5-row RFC/IEEE Spec Table + Field Watchout + 4-Rung Adaptive Ladders)
 - **Lesson 6: 9.6 Hostname and write memory — make it survive a reload** (`1,038` base words · `100%` SVG Visual Blueprint + 5-row RFC/IEEE Spec Table + Field Watchout + 4-Rung Adaptive Ladders)
 
-### Course `CLIENT`: Operating Systems (CompTIA Tech+ FC0-U71 & Endpoint Administration)
+### Course: Operating Systems (CompTIA Tech+ FC0-U71 & Endpoint Administration)
 - **Chapters**: `6` · **Lessons**: `26` · **Base Lesson Words**: `54,655` · **Proctored Knowledge Tests**: `3` Forms (Forms A, B, C × `45` items = `135` items)
 
 #### Chapter 1 — Windows Installation & Client Configuration (`4` Lessons · `9,164` Base Words)

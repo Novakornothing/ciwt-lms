@@ -23,7 +23,7 @@
 {% endif %}
 <div class="pf-grid">
   <section class="card card-body" aria-labelledby="pf-c"><h2 class="h5" id="pf-c">Courses</h2>
-    {% for c in pf.courses %}<p class="mb-1"><strong>{{ c.code }}</strong> {{ c.title }} — {{ c.mastered }} of {{ c.objectives }} competencies mastered</p>{% else %}<p class="mb-0">No courses yet.</p>{% endfor %}</section>
+    {% for c in pf.courses %}<p class="mb-1"><strong>{{ c.title }}</strong> — {{ c.mastered }} of {{ c.objectives }} competencies mastered</p>{% else %}<p class="mb-0">No courses yet.</p>{% endfor %}</section>
   <section class="card card-body" aria-labelledby="pf-x"><h2 class="h5" id="pf-x">Certification domain readiness</h2>
     {% for e in pf.certifications %}<h3 class="h6 mt-2">{{ e.name }} — {{ e.pct }}%</h3>
       {% for dm in e.domains %}<div class="small">{{ dm.domain }} {{ dm.name }}: {{ dm.level }} ({{ dm.pct }}%)</div>

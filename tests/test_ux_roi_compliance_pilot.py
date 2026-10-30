@@ -453,7 +453,7 @@ def test_13_scorm_12_2004_zip_packages_and_adl_xapi_telemetry(anon, student):
         assert r12.status_code == 200 and r12.mimetype == "application/zip"
         with zipfile.ZipFile(io.BytesIO(r12.data), "r") as zf:
             names = set(zf.namelist())
-            assert {"imsmanifest.xml", "index.html", "scorm_driver.js", "ile_metadata.json"} <= names
+            assert {"imsmanifest.xml", "index.html", "scorm_driver.js", "package_metadata.json"} <= names
             manifest = zf.read("imsmanifest.xml").decode("utf-8")
             assert "<schemaversion>1.2</schemaversion>" in manifest
             assert "adlcp:scormtype=\"sco\"" in manifest

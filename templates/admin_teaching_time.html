@@ -32,7 +32,7 @@
       <select id="f-course_id" name="course_id" class="form-select" aria-label="Course">
         <option value="">All courses</option>
         {% for c in courses %}
-        <option value="{{ c.id }}" {% if filter_course_id == c.id %}selected{% endif %}>{{ c.code }} — {{ c.title }}</option>
+        <option value="{{ c.id }}" {% if filter_course_id == c.id %}selected{% endif %}>{{ c.title }}</option>
         {% endfor %}
       </select>
     </div>
@@ -104,7 +104,7 @@
             <span class="text-muted">No class selected on timer</span>
             {% endif %}
           </td>
-          <td class="small">{{ row.course.code if row.course else '—' }}</td>
+          <td class="small">{{ row.course.title if row.course else '—' }}</td>
           <td>{{ row.sessions }}</td>
           <td>{{ fmt_seconds(row.seconds) }}</td>
         </tr>
@@ -192,7 +192,7 @@
           <td>{{ row.quarter }}</td>
           <td>{{ row.user.full_name if row.user else '—' }}</td>
           <td>{% if row.section %}{{ row.section.name }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-          <td class="small">{{ row.course.code if row.course else '—' }}</td>
+          <td class="small">{{ row.course.title if row.course else '—' }}</td>
           <td>{{ fmt_seconds(row.seconds) }}</td>
         </tr>
         {% else %}

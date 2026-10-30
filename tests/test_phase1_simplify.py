@@ -121,3 +121,118 @@ def test_no_unbacked_cmi5_or_ieee_claims(anon):
         body = anon.get(path).get_data(as_text=True).lower()
         for bad in ('cmi5 compliant', 'cmi5 conformant', 'cmi5)', '9274'):
             assert bad not in body, (path, bad)
+
+
+PUBLIC_PAGES = ('/', '/landing', '/login', '/register', '/compliance', '/security', '/specs', '/compare', '/consult',
+                '/terms', '/privacy', '/roi', '/gaps', '/pricing', '/demo/tour', '/llms.txt', '/llms-full.txt',
+                '/robots.txt', '/sitemap.xml', '/api/xapi/statements')
+UNVERIFIED_MILITARY = ('Navy ILE', 'JKO', 'CIN:', 'A-150-')
+
+
+def test_no_unverified_navy_dod_claims_on_public_pages(app, anon):
+    for host in (None, 'novakornothing.com'):
+        c = app.test_client() if host else anon
+        for path in PUBLIC_PAGES:
+            r = c.get(path, base_url=f'http://{host}') if host else c.get(path)
+            assert r.status_code in (200, 302), (host, path, r.status_code)
+            body = r.get_data(as_text=True)
+            for bad in UNVERIFIED_MILITARY:
+                assert bad not in body, (host, path, bad)
+
+
+def test_scorm_packages_have_no_navy_metadata(anon):
+    import io
+    import zipfile
+    for ver in ('1.2', '2004'):
+        r = anon.get(f'/compliance/scorm/ITSUP.zip?version={ver}')
+        assert r.status_code == 200
+        with zipfile.ZipFile(io.BytesIO(r.data)) as zf:
+            for name in zf.namelist():
+                text = zf.read(name).decode('utf-8', 'ignore')
+                for bad in UNVERIFIED_MILITARY + ('ile_cin', 'Navy', 'DoD'):
+                    assert bad not in text, (ver, name, bad)
+
+
+_CODE_RE = re.compile(r'\b(ITSUP|NETOPS|CLIENT)\b')
+_OLD_TITLE_RE = re.compile(r'IT Support Technician Fundamentals|Network Operations Fundamentals|Client Systems|'
+                           r'Shop Procedures|client systems|network operations (training|learning)|CLIENT-101')
+
+
+def _visible_strings(html):
+    """Text a user can see or a crawler shows: titles, meta content, JSON-LD strings, attributes, body text."""
+    out = re.findall(r'<title>(.*?)</title>', html, re.S) + re.findall(r'<meta[^>]+content="([^"]*)"', html)
+
+    def walk(o, key=None):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                walk(v, k)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v, key)
+        elif isinstance(o, str) and key not in ('courseCode', '@id', 'url', 'identifier'):
+            out.append(o)
+    for block in re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S):
+        walk(json.loads(block))
+    body = re.sub(r'(?is)<(script|style|template)\b.*?</\1>', ' ', html)
+    body = re.sub(r'(?s)<!--.*?-->', ' ', body)
+    out += re.findall(r'\b(?:title|aria-label|placeholder|alt)="([^"]*)"', body)
+    out += re.sub(r'<[^>]+>', '\n', body).split('\n')
+    return [' '.join(s.split()) for s in out if s.strip()]
+
+
+def _bad_course_names(strings):
+    return [s[:120] for s in strings if _CODE_RE.search(s) or _OLD_TITLE_RE.search(s)]
+
+
+def test_no_course_codes_or_old_titles_visible(app, anon, student, instructor, admin):
+    pages = {
+        anon: ['/', '/landing', '/specs', '/compare', '/login', '/demo', '/demo/tour', '/compliance', '/security',
+               '/roi', '/consult', '/gaps', '/terms'],
+        student: ['/student', '/labs'],
+        instructor: ['/instructor'],
+        admin: ['/admin', '/admin/classes', '/admin/exports'],
+    }
+    for client, urls in pages.items():
+        for u in urls:
+            r = client.get(u, follow_redirects=True)
+            assert r.status_code == 200, u
+            assert _bad_course_names(_visible_strings(r.get_data(as_text=True))) == [], u
+    for role in ('student', 'instructor', 'admin'):
+        c = app.test_client()
+        r = c.get(f'/demo/enter/{role}', follow_redirects=True)
+        assert r.status_code == 200, role
+        assert _bad_course_names(_visible_strings(r.get_data(as_text=True))) == [], role
+    for name in ('llms.txt', 'llms-full.txt'):
+        text = (ROOT / 'static' / name).read_text()
+        assert 'across IT Support, Basic Networking, and Operating Systems' in text
+        assert _bad_course_names(text.splitlines()) == [], name
+    landing = anon.get('/landing').get_data(as_text=True)
+    assert 'learning management system for IT Support, Basic Networking, and Operating Systems' in landing
+
+
+def test_lesson_visuals_and_exports_use_course_names():
+    import io
+    import zipfile
+    from curriculum_v2.lesson_visuals import inject_lesson_visual
+    html = inject_lesson_visual('<section><h2>A</h2><p>x</p></section>' * 6, 'NETOPS', 1, 1, 'OSI model')
+    assert _bad_course_names(_visible_strings(html)) == []
+    assert 'Basic Networking' in html
+    import scorm_xapi
+    for code in ('ITSUP', 'NETOPS', 'CLIENT', 'ALL'):
+        res = scorm_xapi.build_scorm_package_zip(code, '1.2')
+        data = next(x for x in (res if isinstance(res, tuple) else (res,)) if isinstance(x, (bytes, bytearray)) or hasattr(x, 'getvalue'))
+        data = data.getvalue() if hasattr(data, 'getvalue') else data
+        manifest = zipfile.ZipFile(io.BytesIO(data)).read('imsmanifest.xml').decode()
+        titles = re.findall(r'<title>(.*?)</title>', manifest, re.S)
+        assert titles and _bad_course_names(titles) == [], code
+
+
+def test_learning_path_switch_keeps_reader_in_place():
+    """The 5 Ways switcher swaps every section; it must not focus-jump and must re-pin the section in view.
+    (Browser check: /tmp/p1/jump_check.py, which asserts the in-view section moves < 40px.)"""
+    ui = (ROOT / 'static/js/novak-ui.js').read_text()
+    lad = (ROOT / 'static/js/ladder.js').read_text()
+    assert "card.setAttribute('data-swap-quiet', '1')" in ui and 'keepReaderInPlace();' in ui
+    assert 'function restoreAnchor()' in ui and 'ResizeObserver' in ui
+    assert "box.hasAttribute('data-swap-quiet')) moveFocus = false" in lad
+    assert 'if (!desk.matches) openSheet(false);' in ui

@@ -58,7 +58,7 @@
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="course_id" value="{{ c.id }}" id="course_{{ c.id }}"
                        {% if c.id in filter_course_ids %}checked{% endif %}>
-                <label class="form-check-label" for="course_{{ c.id }}">{{ c.code }} — {{ c.title }}</label>
+                <label class="form-check-label" for="course_{{ c.id }}">{{ c.title }}</label>
               </div>
               {% else %}<div class="text-muted small">No courses</div>{% endfor %}
             </div>

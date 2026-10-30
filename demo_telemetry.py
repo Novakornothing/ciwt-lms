@@ -20,7 +20,9 @@ from datetime import timedelta
 
 
 # Phase 1 plain-English names: existing demo rows were seeded with older feature names.
-DEMO_TEXT_RENAMES = [('Demo EOC reaction for TQI packet.', 'Demo end-of-course survey comment.'), ('Exhausted explanation ladder on section 2', 'Tried all 5 ways on section 2'), ('Walk through Rung 2 analogy', 'Walk through the Analogy view'), ('Exam-Day Simulator — CompTIA A+ Core 1 & Core 2 Voucher Readiness', 'Practice Exams — CompTIA A+ Core 1 & Core 2 Exam Readiness'), ('in the Exam-Day Simulator', 'in Practice Exams'), ('Exam-Day Readiness Simulator', 'Practice Exams'), ('Exam-Day Simulator', 'Practice Exam'), ('Adaptive 4-Rung Ladders, Helix Attention & Live VMs', '5 Ways to Learn, Eye Tracking & Live VMs'), ('our 4-rung adaptive explanation ladder (Plain Language -> Analogy -> Visual Diagram -> Interactive Try-It)', '5 Ways to Learn (Standard, Plain English, Analogy, Visual, Try-It)'), ('opt-in Helix 478-landmark attention tracking', 'opt-in Eye Tracking'), ('The 4-rung adaptive explanations', 'The 5 Ways to Learn explanations'), ('The 4-rung explanation ladder (especially Rung 2 analogies and Rung 3 visual traces)', 'The 5 Ways to Learn (especially the Analogy and Visual views)'), ('Who Needs Me co-pilot and Helix attention heatmaps', 'Students Needing Help and Eye Tracking heatmaps'), ('took a few extra tries on the explanation ladder', 'took a few extra tries across the 5 Ways to Learn'), ('walking through Rung 3 (Visual step-by-step)', 'walking through the Visual view'), ('The Rung 2 analogies', 'The Analogy views'), ('Great work reaching Voucher Ready', 'Great work reaching Exam Ready'), ('final proctored voucher sitting', 'final proctored exam'), ('mastery and voucher-readiness benchmarks', 'mastery and exam-readiness benchmarks')]
+CLIENT_SECTION_NAME = 'Operating Systems Fall 2026 — Section E'
+
+DEMO_TEXT_RENAMES = [('CLIENT-101 Lab & CompTIA Tech+', 'Operating Systems Lab & CompTIA Tech+'), ('Your CLIENT-101 Windows 11', 'Your Operating Systems Windows 11'), ('NETOPS Linux VM Routing', 'Basic Networking Linux VM Routing'), ('submitting the NETOPS labs', 'submitting the Basic Networking labs'), ('Demo EOC reaction for TQI packet.', 'Demo end-of-course survey comment.'), ('Exhausted explanation ladder on section 2', 'Tried all 5 ways on section 2'), ('Walk through Rung 2 analogy', 'Walk through the Analogy view'), ('Exam-Day Simulator — CompTIA A+ Core 1 & Core 2 Voucher Readiness', 'Practice Exams — CompTIA A+ Core 1 & Core 2 Exam Readiness'), ('in the Exam-Day Simulator', 'in Practice Exams'), ('Exam-Day Readiness Simulator', 'Practice Exams'), ('Exam-Day Simulator', 'Practice Exam'), ('Adaptive 4-Rung Ladders, Helix Attention & Live VMs', '5 Ways to Learn, Eye Tracking & Live VMs'), ('our 4-rung adaptive explanation ladder (Plain Language -> Analogy -> Visual Diagram -> Interactive Try-It)', '5 Ways to Learn (Standard, Plain English, Analogy, Visual, Try-It)'), ('opt-in Helix 478-landmark attention tracking', 'opt-in Eye Tracking'), ('The 4-rung adaptive explanations', 'The 5 Ways to Learn explanations'), ('The 4-rung explanation ladder (especially Rung 2 analogies and Rung 3 visual traces)', 'The 5 Ways to Learn (especially the Analogy and Visual views)'), ('Who Needs Me co-pilot and Helix attention heatmaps', 'Students Needing Help and Eye Tracking heatmaps'), ('took a few extra tries on the explanation ladder', 'took a few extra tries across the 5 Ways to Learn'), ('walking through Rung 3 (Visual step-by-step)', 'walking through the Visual view'), ('The Rung 2 analogies', 'The Analogy views'), ('Great work reaching Voucher Ready', 'Great work reaching Exam Ready'), ('final proctored voucher sitting', 'final proctored exam'), ('mastery and voucher-readiness benchmarks', 'mastery and exam-readiness benchmarks')]
 
 
 def _plain(text):
@@ -121,12 +123,12 @@ def ensure_rich_demo_telemetry(app):
         sec_client = None
         if client_course:
             sec_client = ClassSection.query.filter_by(course_id=client_course.id).first()
-            if sec_client and 'CLIENT-101' not in (sec_client.name or ''):
-                sec_client.name = 'Operating Systems — CLIENT-101'
+            if sec_client and sec_client.name != CLIENT_SECTION_NAME:
+                sec_client.name = CLIENT_SECTION_NAME
                 db.session.commit()
             if not sec_client:
                 sec_client = ClassSection(
-                    name='Operating Systems — CLIENT-101',
+                    name=CLIENT_SECTION_NAME,
                     course_id=client_course.id,
                     instructor_id=instr1.id,
                     max_students=25,
@@ -826,11 +828,11 @@ def ensure_rich_demo_telemetry(app):
                 (instr1, s1, sec1.id, 'Practice Exams — CompTIA A+ Core 1 & Core 2 Exam Readiness',
                  'Hi Student1,\n\nGreat work reaching Exam Ready (829/900 on 220-1201 and 802/900 on 220-1202) in Practice Exams. Your Diagnose -> Fix -> Verify habits on the Linux VM permissions and DNS labs were spot-on. Let me know when you want to schedule your final proctored exam.',
                  'Thanks Jordan! The Analogy views and the 60-second port/protocol Speed-Drill really helped lock in the networking objectives. I am ready to sit Core 1 this Friday.'),
-                (instr1, s1, sec_client.id if sec_client else sec1.id, 'CLIENT-101 Lab & CompTIA Tech+ (FC0-U71) Readiness Check',
-                 'Hi Student1,\n\nYour CLIENT-101 Windows 11 service recovery and Linux account/sudo labs are 100% verified, and your CompTIA Tech+ (FC0-U71) sitting hit 836/900. Keep up the daily spaced review!',
+                (instr1, s1, sec_client.id if sec_client else sec1.id, 'Operating Systems Lab & CompTIA Tech+ (FC0-U71) Readiness Check',
+                 'Hi Student1,\n\nYour Operating Systems Windows 11 service recovery and Linux account/sudo labs are 100% verified, and your CompTIA Tech+ (FC0-U71) sitting hit 836/900. Keep up the daily spaced review!',
                  'Will do — the instant-boot Linux VM snapshot made practicing the user/group permissions lab super fast.'),
-                (instr1, s1, sec2.id, 'NETOPS Linux VM Routing & VLAN Trunking Follow-up',
-                 'Hi Student1,\n\nNice job verifying both `show interfaces trunk` and `ip neigh` before submitting the NETOPS labs. You are on track for the Network+ (N10-009) full simulation this week.',
+                (instr1, s1, sec2.id, 'Basic Networking Linux VM Routing & VLAN Trunking Follow-up',
+                 'Hi Student1,\n\nNice job verifying both `show interfaces trunk` and `ip neigh` before submitting the Basic Networking labs. You are on track for the Network+ (N10-009) full simulation this week.',
                  None),
                 (instr1, s5_stu, sec1.id, 'Let us go through "Three kinds of work" & ESD Safety (IT-1.1 / IT-1.2) together',
                  'Hi Student5,\n\nI noticed Lesson 1.1 ("Three kinds of work") and the ESD power-off sequence took a few extra tries across the 5 Ways to Learn. That is useful signal for me, not a mark against you. Can we spend 10 minutes walking through the Visual view before tomorrow\'s lab?',
