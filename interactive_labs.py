@@ -2770,6 +2770,11 @@ def run_switch(cmd, state, done):
         out.append("end")
         return out, state, done
 
+    if cl in ("show banner", "sh banner"):
+        text = state.get("banner") or ""
+        out.append(text if text else "(no login banner)")
+        return out, state, done
+
     if cl in ("show version", "sh ver", "show ver"):
         out.append(f"{state.get('hostname')} uptime is 1 day, 4 hours")
         out.append("Cisco IOS Software, Switch Training Image")
@@ -3168,6 +3173,11 @@ def run_router(cmd, state, done):
             out.append("  1  *  *  *")
             out.append("  2  *  *  *")
             out.append("% No connected route to " + target + " yet.")
+        return out, state, done
+
+    if cl in ("show banner", "sh banner"):
+        text = state.get("banner") or ""
+        out.append(text if text else "(no login banner)")
         return out, state, done
 
     if cl in ("show version", "sh ver"):

@@ -582,6 +582,9 @@ def observe(lab, state, done):
             continue
         if end_state_ok(lab, stage, state, done):
             done.append(mark)
+            if stage == "guided":
+                import lab_skills as SK
+                SK.after_guided(lab, state)
     return state, done
 
 
@@ -665,6 +668,11 @@ def stage_actions(lab, state):
     for stage in ("assisted", "ticket"):
         if fam == "desk":
             import lab_skills as SK
+            events = SK.stage_events(lab, f, stage)
+            if events:
+                for item in events:
+                    actions.append({"type": "event", "stage": stage, "ev": item["ev"], "data": item.get("data") or {}})
+                continue
             custom = SK.desk_value(lab, f, stage)
             ans = custom if custom is not None else (f["assisted_dns"] if stage == "assisted" else f["ticket_host"])
             actions.append({"type": "stage", "stage": stage, "answer": ans})
@@ -722,6 +730,13 @@ def drive(lab, state, done, run_command):
             continue
         if fam == "desk":
             import lab_skills as SK
+            events = SK.stage_events(lab, f, stage) if hasattr(SK, "stage_events") else None
+            if events:
+                import labs_gui as LG
+                for item in events:
+                    _, state, done = LG.apply(lab, state, done, item["ev"], item.get("data") or {})
+                state, done = observe(lab, state, done)
+                continue
             custom = SK.desk_value(lab, f, stage) if hasattr(SK, "desk_value") else None
             ans = custom if custom is not None else (f["assisted_dns"] if stage == "assisted" else f["ticket_host"])
             _, state, done = submit_answer(lab, state, done, stage, ans)
@@ -756,6 +771,12 @@ def absorb(lab, state, command):
         if "incident" in low:
             return f["note_ticket"].splitlines()
         return f["note_body"].splitlines()
+    if low in ("get-content ticket.txt", "gc ticket.txt", "type ticket.txt"):
+        import lab_skills as SK
+        clue = (SK.spec(lab) or {}).get("clue")
+        if clue:
+            return [str(clue(f))]
+        return ["This lab has no ticket.txt."]
     m = re.search(r"-serveraddresses\s+(\S+)", raw, re.I)
     if m and "dns" in low:
         ip = m.group(1).strip("'\"")
@@ -1176,7 +1197,9 @@ def later_html(lab, stage):
             f"<pre class=\"desk-note\" data-note-for=\"{stage}\" hidden></pre>"
         )
     form = ""
-    if fam in ("choice", "number", "desk"):
+    import lab_skills as SK
+    gui_graded = fam == "desk" and bool((SK.spec(lab) or {}).get("events"))
+    if fam in ("choice", "number", "desk") and not gui_graded:
         label = "Network address" if fam == "number" else ("Setting from the note" if fam == "desk" else "Outcome from the note")
         form = (
             f"<form class=\"stage-answer\" data-stage=\"{stage}\">"

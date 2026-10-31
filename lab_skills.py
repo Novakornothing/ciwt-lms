@@ -6,6 +6,8 @@ for the solver only. They are not the syntax card.
 """
 from __future__ import annotations
 
+import hashlib
+import ipaddress
 import os
 import re
 import shlex
@@ -179,14 +181,91 @@ def _fs_world(fs):
     return world
 
 
+def canonical_iptables(cmd):
+    """Turn an iptables command into the line `iptables -S` actually prints.
+
+    `iptables -A INPUT -p tcp -s 10.20.0.60 --dport 22 -j ACCEPT` becomes
+    `-A INPUT -s 10.20.0.60/32 -p tcp -m tcp --dport 22 -j ACCEPT`.
+    NAT commands are reported by `iptables -t nat -S`, not `iptables -S`.
+    """
+    try:
+        tokens = shlex.split(cmd)
+    except ValueError:
+        tokens = cmd.split()
+    if not tokens or tokens[0] != "iptables":
+        return "filter", None, None
+    rest = tokens[1:]
+    table = "filter"
+    if rest and rest[0] == "-t" and len(rest) > 1:
+        table = rest[1]
+        rest = rest[2:]
+    if not rest:
+        return table, None, None
+    if rest[0] == "-P" and len(rest) >= 3:
+        return table, None, (rest[1], rest[2])
+    if rest[0] not in ("-A", "-I") or len(rest) < 2:
+        return table, None, None
+    chain = rest[1]
+    opts = rest[2:]
+    src = dst = inn = out = proto = dport = jump = None
+    extra = []
+    i = 0
+    while i < len(opts):
+        tok = opts[i]
+        nxt = opts[i + 1] if i + 1 < len(opts) else ""
+        if tok in ("-s", "-d", "-i", "-o", "-p", "-j", "--dport", "-m") and nxt:
+            if tok == "-s":
+                src = nxt if "/" in nxt else nxt + "/32"
+            elif tok == "-d":
+                dst = nxt if "/" in nxt else nxt + "/32"
+            elif tok == "-i":
+                inn = nxt
+            elif tok == "-o":
+                out = nxt
+            elif tok == "-p":
+                proto = nxt
+            elif tok == "-j":
+                jump = nxt
+            elif tok == "--dport":
+                dport = nxt
+            i += 2
+            continue
+        if tok.startswith("--dport="):
+            dport = tok.split("=", 1)[1]
+        elif tok not in ("-m",):
+            extra.append(tok)
+        i += 1
+    parts = ["-A", chain]
+    if src:
+        parts += ["-s", src]
+    if dst:
+        parts += ["-d", dst]
+    if inn:
+        parts += ["-i", inn]
+    if out:
+        parts += ["-o", out]
+    if proto:
+        parts += ["-p", proto]
+        if proto == "tcp" and dport:
+            parts += ["-m", "tcp"]
+    if dport:
+        parts += ["--dport", dport]
+    parts += extra
+    if jump:
+        parts += ["-j", jump]
+    return table, " ".join(parts), None
+
+
 class _World:
     def __init__(self):
         self.files = {}
         self.routes = []
+        self.rules = {"filter": [], "nat": []}
         self.iptables = []
         self.policy = {}
         self.forward = "0"
         self.crontab = []
+        self.links = []
 
     def apply(self, cmd):
         raw = str(cmd).strip()
@@ -227,19 +306,28 @@ class _World:
         if m:
             self.files.pop(m.group(1), None)
             return
+        m = re.match(r"^ip addr add (\S+)/(\d+) dev \S+$", raw)
+        if m:
+            self.links.append(ipaddress.ip_network(f"{m.group(1)}/{m.group(2)}", strict=False))
+            return
         m = re.match(r"^ip route add default via (\S+)$", raw)
         if m:
-            self.routes.append(m.group(1))
+            hop = ipaddress.ip_address(m.group(1))
+            if any(hop in net for net in self.links):
+                self.routes.append(m.group(1))
             return
         m = re.match(r"^sysctl -w net\.ipv4\.ip_forward=(\d+)$", raw)
         if m:
             self.forward = m.group(1)
             return
         if raw.startswith("iptables "):
-            self.iptables.append(raw)
-            pm = re.search(r"-P (\S+) (\S+)", raw)
-            if pm:
-                self.policy[pm.group(1)] = pm.group(2)
+            table, line, policy = canonical_iptables(raw)
+            if line:
+                self.rules.setdefault(table, []).append(line)
+                self.iptables.append(line)
+            if policy:
+                self.policy[policy[0]] = policy[1]
+                self.rules.setdefault(table, []).append(f"-P {policy[0]} {policy[1]}")
             return
         m = re.match(r"^crontab (\S+)$", raw)
         if m:
@@ -278,7 +366,8 @@ def _model_ok(world, checks):
             if world.forward != str(check["value"]):
                 return False
         elif kind == "iptables":
-            blob = "\n".join(world.iptables)
+            table = check.get("table") or "filter"
+            blob = "\n".join(world.rules.get(table, []))
             if check["fragment"] not in blob:
                 return False
         elif kind == "policy":
@@ -286,6 +375,13 @@ def _model_ok(world, checks):
                 return False
         elif kind == "crontab":
             if check["line"] not in world.crontab:
+                return False
+        elif kind == "sha256":
+            node = world.files.get(check["path"])
+            if not node:
+                return False
+            digest = hashlib.sha256(node.get("content", "").encode()).hexdigest()
+            if digest != check["digest"]:
                 return False
         else:
             raise ValueError(kind)
@@ -324,17 +420,21 @@ def _shell(checks):
         elif kind == "forward":
             parts.append(f"[ \"$(cat /proc/sys/net/ipv4/ip_forward)\" = '{check['value']}' ]")
         elif kind == "iptables":
-            parts.append(f"iptables -S | grep -F -q -- '{check['fragment']}'")
+            table = check.get("table") or "filter"
+            tool = "iptables -t nat -S" if table == "nat" else "iptables -S"
+            parts.append(f"{tool} | grep -F -q -- '{check['fragment']}'")
         elif kind == "policy":
             parts.append(f"iptables -S | grep -q '^-P {check['chain']} {check['policy']}'")
         elif kind == "crontab":
             parts.append(f"crontab -l | grep -qxF -- '{check['line']}'")
+        elif kind == "sha256":
+            parts.append(f"sha256sum '{path}' | grep -q '^{check['digest']} '")
         else:
             raise ValueError(kind)
     return " && ".join(parts)
 
 
-_FILE_KINDS = {"mode", "absent", "contains", "not_contains"}
+_FILE_KINDS = {"mode", "absent", "contains", "not_contains", "sha256"}
 
 
 def _run_stage(plant, fix, checks):
@@ -368,11 +468,37 @@ def plant_state(lab, state, facts):
         fn(state, facts)
 
 
+def stage_events(lab, facts, stage):
+    """GUI actions that grade a desktop stage. None when the stage is not click-graded."""
+    row = spec(lab)
+    evs = (row or {}).get("events") or {}
+    fn = evs.get(stage) if isinstance(evs, dict) else None
+    if not fn:
+        return None
+    return list(fn(facts))
+
+
+def after_guided(lab, state):
+    """Re-plant stage 2 and 3 faults once the walkthrough has just finished."""
+    row = spec(lab)
+    fn = (row or {}).get("after_guided")
+    px = (state or {}).setdefault("px", {})
+    if not fn or px.get("spoiled"):
+        return
+    px["spoiled"] = True
+    fn(state, px.get("facts") or {})
+
+
 def desk_value(lab, facts, stage):
     row = spec(lab)
     if not row or not row.get("ok"):
         return None
-    return row["stages"][stage]["fix"](facts)[0]
+    if stage_events(lab, facts, stage) is not None:
+        return None
+    cmds = row["stages"][stage]["fix"](facts)
+    if not cmds:
+        return None
+    return cmds[0]
 
 
 def stage_state_ok(lab, stage, state, facts):

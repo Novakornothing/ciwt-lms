@@ -36,21 +36,24 @@ ACL = IOS + [("Standard list", "access-list <1-99> deny host <address>")]
 
 
 def _base(f, seed):
-    f["v1"] = f.get("assisted_vlan") or (30 + (seed % 40))
-    f["v2"] = f.get("ticket_vlan") or (f["v1"] + 11)
-    if f["v2"] in (20, f["v1"]):
-        f["v2"] = f["v1"] + 7
-    f["hop1"] = f"10.{20 + (seed % 30)}.{seed % 80}.2"
-    f["hop2"] = f"10.{40 + (seed % 20)}.{seed % 80}.2"
-    f["h1"] = f"10.{20 + (seed % 30)}.{seed % 80}.50"
-    f["h2"] = f"10.{40 + (seed % 20)}.{seed % 80}.50"
-    f["ip1"] = f"10.{20 + (seed % 30)}.{seed % 80}.1"
-    f["ip2"] = f"10.{40 + (seed % 20)}.{seed % 80}.1"
-    f["nm"] = f"EDGE-{seed % 80}"
-    f["d1"] = f"Wing-{seed % 50}"
-    f["d2"] = f"Night-{seed % 60}"
-    f["tok1"] = f"CLOSET{seed % 90}"
-    f["tok2"] = f"RACK{seed % 70}"
+    # Last octets differ, so stage 2 and stage 3 values cannot collide.
+    second = 21 + (seed % 180)
+    third = 1 + (seed % 200)
+    f["v1"] = 30 + (seed % 50)
+    f["v2"] = f["v1"] + 1 + (seed % 7)
+    if f["v2"] > 4000:
+        f["v2"] = f["v1"] + 2
+    f["hop1"] = f"10.{second}.{third}.2"
+    f["hop2"] = f"10.{second}.{third}.3"
+    f["h1"] = f"10.{second}.{third}.50"
+    f["h2"] = f"10.{second}.{third}.51"
+    f["ip1"] = f"10.{second}.{third}.1"
+    f["ip2"] = f"10.{second}.{third}.9"
+    f["nm"] = f"EDGE-{second}"
+    f["d1"] = f"Wing-{second}"
+    f["d2"] = f"Night-{third}"
+    f["tok1"] = f"CLOSET{second}"
+    f["tok2"] = f"RACK{third}"
 
 
 def _port(state, name):
@@ -78,9 +81,9 @@ def _lines(*body):
 # VLAN
 _reg("sw-vlan-access", "vlan-member", VLAN,
      "The training-room phone was patched into the third access port and it is still in the default VLAN, so it never reaches the users subnet. The practice note names the VLAN and that port. Create the VLAN and place only that port in it. Leave the walkthrough port where it is.",
-     "A printer on the second access port came up in the default VLAN after a recable. The incident note names the VLAN it should join. The third port you just moved can stay.",
+     "A printer on the second access port came up in the default VLAN after a recable. show banner prints the VLAN it should join. The third port you just moved can stay.",
      "Create VLAN {v1}. Put FastEthernet0/3 in it as an access port.",
-     "Put FastEthernet0/2 in VLAN {v2} as an access port.",
+     "FastEthernet0/2 is still in the default VLAN. show banner prints the VLAN number. Create that VLAN and put only that port in it.",
      _lines("vlan {v1}", "name LAB{v1}", "interface fa0/3", "switchport mode access", "switchport access vlan {v1}"),
      _lines("vlan {v2}", "name LAB{v2}", "interface fa0/2", "switchport mode access", "switchport access vlan {v2}"),
      lambda st, f, stage: (_port(st, "FastEthernet0/3").get("vlan") == f["v1"] and _port(st, "FastEthernet0/3").get("mode") == "access") if stage == "assisted"
@@ -88,9 +91,9 @@ _reg("sw-vlan-access", "vlan-member", VLAN,
 
 _reg("sw-vlan-and-trunk", "vlan-trunk", VLAN + TRUNK,
      "A new phone is on the third access port, in the default VLAN, and the uplink is not yet limited. The practice note has the VLAN for that phone. Put the phone port in it. Do not turn the uplink into an access port.",
-     "The uplink is carrying every VLAN, including ones this closet does not use. The incident note lists the only VLAN that should remain on the trunk.",
+     "The uplink is carrying every VLAN, including ones this closet does not use. show banner prints the only VLAN that should remain on the trunk.",
      "Put FastEthernet0/3 in VLAN {v1}.",
-     "Trunk FastEthernet0/1 and allow only VLAN {v1}.",
+     "The uplink carries every VLAN. show banner prints the only VLAN that should remain on the trunk.",
      _lines("vlan {v1}", "name LAB{v1}", "interface fa0/3", "switchport mode access", "switchport access vlan {v1}"),
      _lines("interface fa0/1", "switchport mode trunk", "switchport trunk allowed vlan {v1}"),
      lambda st, f, stage: (_port(st, "FastEthernet0/3").get("vlan") == f["v1"]) if stage == "assisted"
@@ -100,7 +103,7 @@ _reg("sw-vlan-multi", "vlan-trunk", VLAN + TRUNK,
      "Staff and the lobby kiosk are still in one broadcast domain. The practice note has two VLAN numbers, the staff port, and the kiosk port. Build both VLANs and place each port. The single VLAN from the earlier lab is not this closet.",
      "The uplink toward the router is still carrying every VLAN. After the two access ports are in their VLANs, limit the trunk to those two numbers and no others.",
      "VLAN {v1} on FastEthernet0/2. VLAN {v2} on FastEthernet0/3.",
-     "Trunk FastEthernet0/1 allowed VLANs {v1} and {v2} only.",
+     "The uplink carries every VLAN. show banner prints the two VLAN numbers, separated by a space, that the trunk may carry.",
      _lines("vlan {v1}", "name STAFF{v1}", "vlan {v2}", "name GUEST{v2}",
             "interface fa0/2", "switchport mode access", "switchport access vlan {v1}",
             "interface fa0/3", "switchport mode access", "switchport access vlan {v2}"),
@@ -112,7 +115,7 @@ _reg("sw-trunk-basics", "trunk", TRUNK,
      "The uplink is a trunk and it still allows every VLAN. The practice note lists the only VLAN that may cross to the next switch. Restrict the uplink to that one number.",
      "A second VLAN now has to cross the same uplink, and the list you just set does not include it. Add that VLAN to the allowed list without turning the port into an access port.",
      "Allow only VLAN {v1} on FastEthernet0/1.",
-     "Allow VLANs {v1} and {v2} on the uplink.",
+     "A second VLAN now has to cross this uplink. show banner prints both VLAN numbers, separated by a space.",
      _lines("interface fa0/1", "switchport mode trunk", "switchport trunk allowed vlan {v1}"),
      _lines("interface fa0/1", "switchport mode trunk", "switchport trunk allowed vlan {v1},{v2}"),
      lambda st, f, stage: (_port(st, "FastEthernet0/1").get("trunk") and list(_port(st, "FastEthernet0/1").get("allowed") or []) == [f["v1"]]) if stage == "assisted"
@@ -120,13 +123,13 @@ _reg("sw-trunk-basics", "trunk", TRUNK,
 
 _reg("sw-port-security", "port-security", IOS + [("Port security", "switchport port-security")],
      "A laptop keeps moving between the third access port and a dock, and the switch learns a new address every time. Turn port security on that port. The port you secured in the walkthrough is a different jack.",
-     "The uplink-facing access port, FastEthernet0/1, is still learning every address plugged into the patch panel. Turn port security on there too.",
+     "FastEthernet0/2, the user access port, is still learning every address plugged into the desk drop. Turn port security on that access port. Do not put it on the uplink.",
      "Enable port security on FastEthernet0/3.",
-     "Enable port security on FastEthernet0/1.",
+     "Turn port security on the access port named by show banner. That port is not the uplink.",
      _lines("interface fa0/3", "switchport mode access", "switchport port-security"),
-     _lines("interface fa0/1", "switchport mode access", "switchport port-security"),
+     _lines("interface fa0/2", "switchport mode access", "switchport port-security"),
      lambda st, f, stage: bool(_port(st, "FastEthernet0/3").get("portsec")) if stage == "assisted"
-     else bool(_port(st, "FastEthernet0/1").get("portsec")))
+     else bool(_port(st, "FastEthernet0/2").get("portsec")))
 
 _reg("sw-banner", "banner", IOS + [("Login banner", "banner login <text>")],
      "Auditors want the login screen to show a closet code that is not the sample from the walkthrough. The practice note has the exact token. Put it in the login banner.",
@@ -139,9 +142,9 @@ _reg("sw-banner", "banner", IOS + [("Login banner", "banner login <text>")],
 
 _reg("sw-describe", "description", IOS + [("Description", "description <text>")],
      "The access port facing the user desk still has a stale description, so the diagram and the switch disagree. The practice note has the text for FastEthernet0/2.",
-     "FastEthernet0/3, the new printer drop, has no description. The incident note has the text. Do not change the description you just set on the user port.",
+     "FastEthernet0/3, the new printer drop, has no description. show banner prints the text. Do not change the description you just set on the user port.",
      "Describe FastEthernet0/2 as {d1}.",
-     "Describe FastEthernet0/3 as {d2}.",
+     "Describe FastEthernet0/3 with the text from show banner.",
      _lines("interface fa0/2", "description {d1}"),
      _lines("interface fa0/3", "description {d2}"),
      lambda st, f, stage: _port(st, "FastEthernet0/2").get("desc") == f["d1"] if stage == "assisted"
@@ -149,9 +152,9 @@ _reg("sw-describe", "description", IOS + [("Description", "description <text>")]
 
 _reg("sw-mac-table", "vlan-member", VLAN,
      "The MAC table shows the new phone on the third access port, and that port is still in the default VLAN. The practice note has the VLAN the phone should join. Move that port.",
-     "A second phone showed up on the second access port in the default VLAN. The incident note has its VLAN. Leave the third port in the VLAN you just set.",
+     "A second phone showed up on the second access port in the default VLAN. show banner prints its VLAN. Leave the third port in the VLAN you just set.",
      "Put FastEthernet0/3 in VLAN {v1}.",
-     "Put FastEthernet0/2 in VLAN {v2}.",
+     "The second phone is on FastEthernet0/2 in the default VLAN. show banner prints the VLAN number.",
      _lines("vlan {v1}", "name PHONE{v1}", "interface fa0/3", "switchport mode access", "switchport access vlan {v1}"),
      _lines("vlan {v2}", "name PHONE{v2}", "interface fa0/2", "switchport mode access", "switchport access vlan {v2}"),
      lambda st, f, stage: _port(st, "FastEthernet0/3").get("vlan") == f["v1"] if stage == "assisted"
@@ -204,9 +207,9 @@ _reg("rtr-gateway", "address", ADDR,
 
 _reg("rtr-two-interfaces", "address", ADDR,
      "You already proved two connected networks with the walkthrough addresses. This site's far LAN uses a different address, in the practice note, on GigabitEthernet0/1.",
-     "The near LAN was also renumbered. GigabitEthernet0/0 needs the address in the incident note, and it has to be up. Leave the far interface as you just set it.",
+     "The near LAN was also renumbered. GigabitEthernet0/0 needs the address from show banner, and it has to be up. Leave the far interface as you just set it.",
      "Address GigabitEthernet0/1 with {ip1} 255.255.255.0 and no shutdown.",
-     "Address GigabitEthernet0/0 with {ip2} 255.255.255.0 and no shutdown.",
+     "GigabitEthernet0/0 needs a new address. show banner prints it. Use mask 255.255.255.0 and bring the interface up.",
      _lines("interface GigabitEthernet0/1", "ip address {ip1} 255.255.255.0", "no shutdown"),
      _lines("interface GigabitEthernet0/0", "ip address {ip2} 255.255.255.0", "no shutdown"),
      lambda st, f, stage: _port(st, "GigabitEthernet0/1").get("ip") == f["ip1"] if stage == "assisted"
@@ -214,45 +217,45 @@ _reg("rtr-two-interfaces", "address", ADDR,
 
 _reg("rtr-edge-complete", "route", ROUTE,
      "The edge forwards for the walkthrough LANs and has no default route toward the new provider. The practice note has the next hop.",
-     "A second provider hop replaced the one you just installed. The incident note has the hop that should be the default now. The old route can stay; the new one has to be present.",
+     "A second provider hop replaced the one you just installed. show banner prints the hop that should be the default now. The old route can stay; the new one has to be present.",
      "Default route via {hop1}.",
-     "Default route via {hop2}.",
+     "The provider hop changed. show banner prints the next hop to install as the default route.",
      _lines("ip route 0.0.0.0 0.0.0.0 {hop1}"),
      _lines("ip route 0.0.0.0 0.0.0.0 {hop2}"),
      lambda st, f, stage: (f["hop1"] if stage == "assisted" else f["hop2"]) in " ".join(st.get("static") or []))
 
 _reg("rtr-default-route", "route", ROUTE,
      "Users on the inside LAN reach each other and nothing beyond this router. The practice note has a next hop that is not the walkthrough hop. Install that default route.",
-     "The provider changed the hop again overnight. The incident note has the new one. Add it. A route that only names the walkthrough hop does not pass.",
+     "The provider changed the hop again overnight. show banner prints the new one. Add it. A route that only names the walkthrough hop does not pass.",
      "Next hop {hop1}.",
-     "Next hop {hop2}.",
+     "Users still cannot leave this router. show banner prints the next hop for the default route.",
      _lines("ip route 0.0.0.0 0.0.0.0 {hop1}"),
      _lines("ip route 0.0.0.0 0.0.0.0 {hop2}"),
      lambda st, f, stage: (f["hop1"] if stage == "assisted" else f["hop2"]) in " ".join(st.get("static") or []))
 
 _reg("rtr-trace", "route", ROUTE,
      "The traceroute died on this router because there is no route for the far network. The practice note has the next hop of a default route.",
-     "The far network moved to a different next hop. The incident note has it. Add that default route.",
+     "The far network moved to a different next hop. show banner prints it. Add that default route.",
      "Default via {hop1}.",
-     "Default via {hop2}.",
+     "The traceroute still dies here. show banner prints the next hop of the missing default route.",
      _lines("ip route 0.0.0.0 0.0.0.0 {hop1}"),
      _lines("ip route 0.0.0.0 0.0.0.0 {hop2}"),
      lambda st, f, stage: (f["hop1"] if stage == "assisted" else f["hop2"]) in " ".join(st.get("static") or []))
 
 _reg("rtr-vlan-acl", "acl", ACL,
      "Inter-VLAN routing is in place and a host that should not be reachable still is. The practice note names one host to deny in a standard access list.",
-     "A second host needs the same deny. The incident note has its address. Add a deny for that host. Do not remove the entry you already wrote.",
+     "A second host needs the same deny. show banner prints its address. Add a deny for that host. Do not remove the entry you already wrote.",
      "Deny host {h1} in a standard access list.",
-     "Deny host {h2}.",
+     "A second host is still reachable. show banner prints that host. Add a standard-list deny for it.",
      _lines("access-list 15 deny host {h1}"),
      _lines("access-list 15 deny host {h2}"),
      lambda st, f, stage: (f["h1"] if stage == "assisted" else f["h2"]) in str(st.get("acls") or ""))
 
 _reg("rtr-describe", "description", IOS + [("Description", "description <text>")],
      "GigabitEthernet0/0 faces the users LAN and its description is empty or left over from the walkthrough. The practice note has the text.",
-     "GigabitEthernet0/1, the far LAN, still has no description. The incident note has the text. Do not edit the users-LAN description again.",
+     "GigabitEthernet0/1, the far LAN, still has no description. show banner prints the text. Do not edit the users-LAN description again.",
      "Describe GigabitEthernet0/0 as {d1}.",
-     "Describe GigabitEthernet0/1 as {d2}.",
+     "Describe GigabitEthernet0/1 with the text from show banner.",
      _lines("interface GigabitEthernet0/0", "description {d1}"),
      _lines("interface GigabitEthernet0/1", "description {d2}"),
      lambda st, f, stage: _port(st, "GigabitEthernet0/0").get("desc") == f["d1"] if stage == "assisted"
@@ -270,10 +273,10 @@ _reg("rtr-hostname-write", "saved-config", IOS + [("Device name", "hostname <nam
 
 # rtr-gateway ticket must differ from stage 2. Rebind its ticket to the near interface address.
 SK.SPECS["rtr-gateway"]["stages"]["ticket"]["fix"] = _lines("interface GigabitEthernet0/0", "ip address {ip2} 255.255.255.0", "no shutdown")
-SK.SPECS["rtr-gateway"]["stages"]["ticket"]["note"] = lambda f: f"Address GigabitEthernet0/0 with {f['ip2']} mask 255.255.255.0 and bring it up."
+SK.SPECS["rtr-gateway"]["stages"]["ticket"]["note"] = lambda f: "Address GigabitEthernet0/0 with the address from show banner, mask 255.255.255.0, and bring it up."
 SK.SPECS["rtr-gateway"]["stages"]["ticket"]["prose"] = (
     "The near LAN was renumbered after you finished the far interface. GigabitEthernet0/0 still has the walkthrough address or none. "
-    "The incident note has the new address. Put it on GigabitEthernet0/0 and bring that interface up. Leave the far interface as you set it."
+    "show banner prints the new address. Put it on GigabitEthernet0/0 and bring that interface up. Leave the far interface as you set it."
 )
 SK.SPECS["rtr-gateway"]["ok"] = lambda st, f, stage: (
     _port(st, "GigabitEthernet0/1").get("ip") == f["ip1"] if stage == "assisted"
@@ -293,3 +296,35 @@ def _shut(lid, *ports):
     SK.SPECS[lid]["plant_state"] = plant
 
 _shut("sw-int-status", "FastEthernet0/2", "FastEthernet0/3")
+
+
+def _banner(lid, template):
+    """Stage 3 reads the value from the login banner instead of the note."""
+    prev = SK.SPECS[lid].get("plant_state")
+
+    def plant(state, facts):
+        if prev:
+            prev(state, facts)
+        px = state.setdefault("px", {})
+        if px.get("banner_clue"):
+            return
+        px["banner_clue"] = True
+        state["banner"] = template.format(**facts)
+
+    SK.SPECS[lid]["plant_state"] = plant
+
+
+_banner("sw-vlan-access", "{v2}")
+_banner("sw-vlan-and-trunk", "{v1}")
+_banner("sw-vlan-multi", "{v1} {v2}")
+_banner("sw-trunk-basics", "{v1} {v2}")
+_banner("sw-port-security", "FastEthernet0/2")
+_banner("sw-mac-table", "{v2}")
+_banner("rtr-gateway", "{ip2}")
+_banner("rtr-two-interfaces", "{ip2}")
+_banner("rtr-edge-complete", "{hop2}")
+_banner("rtr-default-route", "{hop2}")
+_banner("rtr-trace", "{hop2}")
+_banner("rtr-vlan-acl", "{h2}")
+_banner("sw-describe", "{d2}")
+_banner("rtr-describe", "{d2}")

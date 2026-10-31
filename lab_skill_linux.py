@@ -124,28 +124,36 @@ def _file(lid, checker, syntax, directory, s2_name, s3_name, s2_prose, s3_prose,
     }
 
 
+def _sibling(path):
+    if "." in path.rsplit("/", 1)[-1]:
+        stem, ext = path.rsplit(".", 1)
+        return f"{stem}-night.{ext}"
+    return path + "-night"
+
+
 def _text(lid, checker, syntax, path_tmpl, s2_prose, s3_prose, s2_note, s3_note, s2_bad, s2_good, s3_bad, s3_good):
     def enrich(f, seed):
         n = 1000 + (seed * 19) % 8000
-        f["tx_path"] = path_tmpl.format(n=n)
+        f["s2_path"] = path_tmpl.format(n=n)
+        f["s3_path"] = _sibling(f["s2_path"])
         f["s2_good"] = s2_good
         f["s3_good"] = s3_good
 
-    def plant(bad):
+    def plant(bad, key):
         def run(f):
-            path = f["tx_path"]
+            path = f[key]
             parent = path.rsplit("/", 1)[0]
             return [f"mkdir -p {parent}", f"printf '%s\\n' '{_q(bad)}' > {path}"]
         return run
 
-    def fix(good_key):
+    def fix(good_key, path_key):
         def run(f):
-            return [f"printf '%s\\n' '{_q(f[good_key])}' > {f['tx_path']}"]
+            return [f"printf '%s\\n' '{_q(f[good_key])}' > {f[path_key]}"]
         return run
 
-    def checks(good_key):
+    def checks(good_key, path_key):
         def run(f):
-            return [{"kind": "contains", "path": f["tx_path"], "text": f[good_key]}]
+            return [{"kind": "contains", "path": f[path_key], "text": f[good_key]}]
         return run
 
     SK.SPECS[lid] = {
@@ -154,25 +162,28 @@ def _text(lid, checker, syntax, path_tmpl, s2_prose, s3_prose, s2_note, s3_note,
         "stages": {
             "assisted": {
                 "checker": checker, "prose": s2_prose,
-                "note": lambda f: s2_note.format(path=f["tx_path"], value=f["s2_good"]),
-                "plant": plant(s2_bad), "fix": fix("s2_good"), "checks": checks("s2_good"),
+                "note": lambda f: s2_note.format(path=f["s2_path"], value=f["s2_good"]),
+                "plant": plant(s2_bad, "s2_path"), "fix": fix("s2_good", "s2_path"),
+                "checks": checks("s2_good", "s2_path"),
             },
             "ticket": {
                 "checker": checker, "prose": s3_prose,
-                "note": lambda f: s3_note.format(path=f["tx_path"], value=f["s3_good"]),
-                "plant": plant(s3_bad), "fix": fix("s3_good"), "checks": checks("s3_good"),
+                "note": lambda f: s3_note.format(path=f["s3_path"], value=f["s3_good"]),
+                "plant": plant(s3_bad, "s3_path"), "fix": fix("s3_good", "s3_path"),
+                "checks": checks("s3_good", "s3_path"),
             },
         },
     }
 
 
-def _route(lid, s2_prose, s3_prose):
+def _route(lid, s2_prose, s3_prose, addr, hop_a, hop_b):
+    """addr is an on-link address already on the host. hop_a and hop_b are in that subnet."""
     def enrich(f, seed):
-        f["s2_hop"] = f"10.{20 + (seed % 50)}.{seed % 200}.1"
-        f["s3_hop"] = f"10.{30 + (seed % 40)}.{(seed * 3) % 200}.1"
-        if f["s3_hop"] == f["s2_hop"]:
-            f["s3_hop"] = "10.44.44.1"
+        f["s2_hop"] = hop_a
+        f["s3_hop"] = hop_b
+        f["link_addr"] = addr
 
+    link = f"ip addr add {addr} dev eth0"
     SK.SPECS[lid] = {
         "syntax": NET,
         "enrich": enrich,
@@ -180,16 +191,16 @@ def _route(lid, s2_prose, s3_prose):
             "assisted": {
                 "checker": "route",
                 "prose": s2_prose,
-                "note": lambda f: f"This host has no usable default route. The next hop to install is {f['s2_hop']}.",
-                "plant": lambda f: [],
+                "note": lambda f: f"This host is on {f['link_addr']}. It has no usable default route. The on-link next hop is {f['s2_hop']}.",
+                "plant": lambda f: [link],
                 "fix": lambda f: [f"ip route add default via {f['s2_hop']}"],
                 "checks": lambda f: [{"kind": "route", "hop": f["s2_hop"]}],
             },
             "ticket": {
                 "checker": "route",
                 "prose": s3_prose,
-                "note": lambda f: "Hosts beyond this subnet time out. The default route is missing. The next hop is written on the first line of /root/NEXT-HOP.",
-                "plant": lambda f: ["mkdir -p /root", f"printf '%s\\n' '{f['s3_hop']}' > /root/NEXT-HOP"],
+                "note": lambda f: "Hosts beyond this subnet time out. The default route is missing. The next hop is the first line of /root/NEXT-HOP, and it is on the connected subnet.",
+                "plant": lambda f: [link, "mkdir -p /root", f"printf '%s\\n' '{f['s3_hop']}' > /root/NEXT-HOP"],
                 "fix": lambda f: [f"ip route add default via {f['s3_hop']}"],
                 "checks": lambda f: [{"kind": "route", "hop": f["s3_hop"]}],
             },
@@ -222,26 +233,33 @@ def _forward(lid, s2_prose, s3_prose):
     }
 
 
+def _rule(cmd):
+    table, line, _policy = SK.canonical_iptables(cmd)
+    return {"kind": "iptables", "table": table, "fragment": line}
+
+
 def _iptables(lid, s2_prose, s3_prose, s2_fragment, s3_fragment, s2_note, s3_note):
+    s2_cmd = s2_fragment if str(s2_fragment).startswith("iptables") else f"iptables {s2_fragment}"
+    s3_cmd = s3_fragment if str(s3_fragment).startswith("iptables") else f"iptables {s3_fragment}"
     SK.SPECS[lid] = {
         "syntax": FILTER,
-        "enrich": lambda f, seed: f.update(frag2=s2_fragment, frag3=s3_fragment),
+        "enrich": lambda f, seed: None,
         "stages": {
             "assisted": {
                 "checker": "iptables",
                 "prose": s2_prose,
                 "note": lambda f: s2_note,
                 "plant": lambda f: [],
-                "fix": lambda f: [s2_fragment if s2_fragment.startswith("iptables") else f"iptables {s2_fragment}"],
-                "checks": lambda f: [{"kind": "iptables", "fragment": s2_fragment if s2_fragment.startswith("iptables") else s2_fragment}],
+                "fix": lambda f, c=s2_cmd: [c],
+                "checks": lambda f, c=s2_cmd: [_rule(c)],
             },
             "ticket": {
                 "checker": "iptables",
                 "prose": s3_prose,
                 "note": lambda f: s3_note,
                 "plant": lambda f: [],
-                "fix": lambda f: [s3_fragment if s3_fragment.startswith("iptables") else f"iptables {s3_fragment}"],
-                "checks": lambda f: [{"kind": "iptables", "fragment": s3_fragment}],
+                "fix": lambda f, c=s3_cmd: [c],
+                "checks": lambda f, c=s3_cmd: [_rule(c)],
             },
         },
     }
@@ -293,10 +311,10 @@ _file(
 )
 
 _file(
-    "linux-vm-perms", "mode-owner", PERM, "/root/support", "payroll-{n}.txt", "handoff-{n}.txt",
-    "tech1 can read the walkthrough notes, and a new payroll export cannot. It was created by root as mode 666. The practice note names the file. It has to be mode 640 and owned by tech1. Do not loosen the original notes file.",
-    "The night technician cannot save the handoff, but every other account can rewrite it. The file is the one under /root/support that is still world-writable. tech1 should own it, and others should not be able to change it. The payroll file from practice is already correct.",
-    "File: {path}. Mode: {mode}. Owner: {owner}.",
+    "linux-vm-perms", "mode-owner", PERM, "/srv/handoff", "payroll-{n}.txt", "handoff-{n}.txt",
+    "tech1 can read the walkthrough notes, and a new payroll export in the shared handoff directory cannot. It was created by root as mode 666. The practice note names the file. It has to be mode 640 and owned by tech1. tech1 can reach /srv/handoff. Do not loosen the original notes file.",
+    "The night technician cannot save the handoff in /srv/handoff, but every other account can rewrite it. The file is the world-writable one in that shared directory. tech1 should own it, and others should not be able to change it. The payroll file from practice is already correct.",
+    "File: {path}. Mode: {mode}. Owner: {owner}. The directory /srv/handoff is shared so tech1 can reach it.",
     "The handoff under {directory} is writable by everyone and owned by root. tech1 should own it, and others should not be able to change it.",
     "666", "640", "666", "640", s2_owner="tech1", s3_owner="tech1",
 )
@@ -355,7 +373,7 @@ _text(
     "Edit {path} so it contains this exact line: {value}",
     "A heartbeat config under /etc/init.d still names the wrong DAEMON path. The correct line is in /root/DAEMON-PATH. Put that line into the config.",
     "DAEMON=/usr/local/sbin/heartbeat", "DAEMON=/usr/local/bin/heartbeat",
-    "DAEMON=/usr/local/sbin/heartbeat", "DAEMON=/usr/local/bin/heartbeat",
+    "DAEMON=/opt/old/heartbeat", "DAEMON=/opt/novak/bin/heartbeat",
 )
 
 _text(
@@ -366,7 +384,7 @@ _text(
     "File {path} must contain this line: {value}",
     "Name lookups use a resolver file that still points at a retired server. Read /root/RESOLVER and make the nameserver line match it.",
     "nameserver 10.9.9.9", "nameserver 10.10.0.53",
-    "nameserver 10.1.1.1", "nameserver 10.10.0.53",
+    "nameserver 10.1.1.1", "nameserver 10.10.0.54",
 )
 
 _text(
@@ -374,10 +392,10 @@ _text(
     "/etc/hosts.novak-{n}",
     "The walkthrough zone already returns the new intranet address. A second hosts file, named in the practice note, still maps intranet.novak.lab to the retired address. Put the address from the note on that name. Do not break the resolver you already pointed at 10.30.0.53.",
     "intranet.novak.lab still answers with the old address from a hosts file that is not the one you edited in practice. The address it should have now is the only line in /root/INTRANET-ADDR.",
-    "In {path}, intranet.novak.lab must resolve to {value}",
-    "The intranet name still points at the retired server in a hosts file under /etc. /root/INTRANET-ADDR has the address that should be published.",
+    "The hosts file {path} must contain this exact line: {value}",
+    "The intranet name still points at the retired server in a hosts file under /etc. /root/INTRANET-ADDR has the single hosts line that should be published.",
     "10.30.0.99 intranet.novak.lab", "10.30.0.80 intranet.novak.lab",
-    "10.30.0.99 intranet.novak.lab", "10.30.0.80 intranet.novak.lab",
+    "10.30.0.98 intranet.novak.lab", "10.30.0.81 intranet.novak.lab",
 )
 
 _text(
@@ -388,7 +406,7 @@ _text(
     "Write this address into {path}: {value}",
     "The evidence file still has the sample address. /root/evidence/TOP has the address that failed most often. Put that address in the evidence file.",
     "203.0.113.77", "198.51.100.23",
-    "203.0.113.77", "198.51.100.23",
+    "203.0.113.77", "198.51.100.24",
 )
 
 _text(
@@ -399,7 +417,7 @@ _text(
     "Write {value} into {path}.",
     "A source file in /root/ir still says unknown. /root/ir/TOP has the address that actually failed most often.",
     "unknown", "203.0.113.50",
-    "unknown", "203.0.113.50",
+    "unknown", "203.0.113.51",
 )
 
 _text(
@@ -410,7 +428,7 @@ _text(
     "{path} must contain {value} and must not contain the backup warning.",
     "An empty hits file in /root/case is waiting for the marker stored in /root/case/WANT. Do not copy the backup warning into it.",
     "", "SR-4419 disk",
-    "", "SR-4419 disk",
+    "", "SR-4419 tape",
 )
 
 _text(
@@ -443,7 +461,7 @@ _text(
     "{path} must contain {value}",
     "A timeclock defaults file still points at the old folder. /root/DOCROOT has the line it should contain.",
     "DOCROOT=/var/oldclock", "DOCROOT=/srv/timeclock",
-    "DOCROOT=/var/oldclock", "DOCROOT=/srv/timeclock",
+    "DOCROOT=/var/oldclock", "DOCROOT=/srv/timeclock/public",
 )
 
 _text(
@@ -454,7 +472,7 @@ _text(
     "{path} must contain {value}",
     "A listener config still binds to loopback. /root/ADDR-WANT has the ADDR line it should contain.",
     "ADDR=127.0.0.1", "ADDR=0.0.0.0",
-    "ADDR=127.0.0.1", "ADDR=0.0.0.0",
+    "ADDR=127.0.0.1", "ADDR=10.30.0.12",
 )
 
 _text(
@@ -465,7 +483,7 @@ _text(
     "{path} must contain {value}",
     "An fstab drop-in still names /dev/sda1. /root/FSTAB-WANT has the UUID line that should be there instead.",
     "/dev/sda1 /srv/data ext4 defaults 0 2", "UUID=abc123 /srv/data ext4 defaults 0 2",
-    "/dev/sda1 /srv/data ext4 defaults 0 2", "UUID=abc123 /srv/data ext4 defaults 0 2",
+    "/dev/sdb1 /srv/data ext4 defaults 0 2", "UUID=def456 /srv/archive ext4 defaults 0 2",
 )
 
 _text(
@@ -476,7 +494,7 @@ _text(
     "{path} must contain {value}",
     "An sshd drop-in still allows passwords. /root/SSHD-WANT has the line it should contain.",
     "PasswordAuthentication yes", "PasswordAuthentication no",
-    "PasswordAuthentication yes", "PasswordAuthentication no",
+    "PasswordAuthentication yes", "KbdInteractiveAuthentication no",
 )
 
 _text(
@@ -487,7 +505,7 @@ _text(
     "{path} must contain {value}",
     "A drop-in still permits root login. /root/SSHD-WANT has the line it should contain.",
     "PermitRootLogin yes", "PermitRootLogin no",
-    "PermitRootLogin yes", "PermitRootLogin no",
+    "PermitRootLogin yes", "PermitRootLogin prohibit-password",
 )
 
 _text(
@@ -509,7 +527,7 @@ _text(
     "{path} must contain {value}",
     "An empty group file is still empty. /root/GROUP-WANT has the line it should contain.",
     "", "opsdesk:x:2400:ana,ben",
-    "", "opsdesk:x:2400:ana,ben",
+    "", "nightdesk:x:2401:cara,ben",
 )
 
 _text(
@@ -520,7 +538,7 @@ _text(
     "{path} must contain {value}",
     "A shadow snippet still allows a password. /root/SHADOW-WANT has the locked line it should contain.",
     "intern:$6$hash:19000:0:99999:7:::", "intern:!:19000:0:99999:7:::",
-    "intern:$6$hash:19000:0:99999:7:::", "intern:!:19000:0:99999:7:::",
+    "intern2:$6$hash:19000:0:99999:7:::", "intern2:!:19000:0:99999:7:::",
 )
 
 _text(
@@ -531,7 +549,7 @@ _text(
     "{path} must contain {value}",
     "Password aging is still unset in a shadow snippet. /root/AGE-WANT has the line it should contain.",
     "contractor:$6$hash:19000:0:99999:7:::", "contractor:$6$hash:19000:14:90:7:::",
-    "contractor:$6$hash:19000:0:99999:7:::", "contractor:$6$hash:19000:14:90:7:::",
+    "vendor:$6$hash:19000:0:99999:7:::", "vendor:$6$hash:19000:14:90:7:::",
 )
 
 _text(
@@ -542,7 +560,7 @@ _text(
     "{path} must contain {value}",
     "A script is still missing its shebang. /root/SCRIPT-WANT has the line it should start with.",
     "echo nope", "#!/bin/sh",
-    "echo nope", "#!/bin/sh",
+    "echo nope", "#!/usr/bin/env sh",
 )
 
 _text(
@@ -553,7 +571,7 @@ _text(
     "{path} must contain {value}",
     "The local repository is still commented out in a repositories file. /root/REPO-WANT has the line that should be there.",
     "repo none", "/var/lib/novak-repo",
-    "repo none", "/var/lib/novak-repo",
+    "# /var/lib/novak-repo", "/var/lib/novak-night",
 )
 
 _text(
@@ -572,10 +590,10 @@ _text(
     "/etc/passwd.d/extra-{n}",
     "The walkthrough backdoor account is gone. A passwd snippet named in the practice note still has a second UID 0 account. Remove that line so the snippet does not contain it. The note tells you the account name.",
     "A passwd snippet still lists an extra UID 0 account. It is not the one you removed in the walkthrough. /root/UID0-NAME names the account that must not remain.",
-    "{path} must not contain the account named in the note. Write the single word gone as {value} once that account line is gone, into this same file, replacing its contents.",
-    "An extra UID 0 account is still listed. /root/UID0-NAME names it. The snippet should end up containing only the word gone.",
-    "backdoor:x:0:0:backdoor:/root:/bin/sh", "gone",
-    "backdoor:x:0:0:backdoor:/root:/bin/sh", "gone",
+    "The file {path} must still contain the real root line and must no longer contain the extra UID 0 account.",
+    "A different passwd snippet still lists an extra UID 0 account. Remove that account line and leave the root line.",
+    "backdoor:x:0:0:backdoor:/root:/bin/sh", "root:x:0:0:root:/root:/bin/sh",
+    "ghost:x:0:0:ghost:/root:/bin/sh", "root:x:0:0:root:/root:/bin/sh",
 )
 
 _text(
@@ -619,7 +637,7 @@ _text(
     "Write {value} into {path}.",
     "The odd-address file is empty. /root/case/ODD-WANT has the address that belongs in it.",
     "", "198.51.100.77",
-    "", "198.51.100.77",
+    "", "198.51.100.78",
 )
 
 _text(
@@ -630,7 +648,7 @@ _text(
     "{path} must contain {value}",
     "The timeline file still has the later failure first. /root/case/ORDER-WANT has the line it should contain.",
     "12:10 failed login", "12:02 failed login",
-    "12:10 failed login", "12:02 failed login",
+    "12:10 failed login", "12:02 failed login before 12:10",
 )
 
 _text(
@@ -641,7 +659,7 @@ _text(
     "{path} must contain {value}",
     "A crontab file still has the hidden job. /root/CRON-WANT has the line it should contain instead.",
     "* * * * * /var/tmp/.font/sync.sh", "15 3 * * * /usr/local/bin/logrotate-local",
-    "* * * * * /var/tmp/.font/sync.sh", "15 3 * * * /usr/local/bin/logrotate-local",
+    "* * * * * /var/tmp/.font/sync.sh", "30 4 * * * /usr/local/bin/logrotate-night",
 )
 
 _cron(
@@ -649,25 +667,28 @@ _cron(
     "crond is already running from the walkthrough. Root's crontab does not yet contain the weekday cleanup named in the practice note. Install that one line. Leave the 02:30 backup job if it is already there, but the check for this stage is the cleanup line.",
     "The cleanup did not run this morning. Root's crontab still has a comment where the job should be. The schedule that should be installed is the only line in /root/CRON-WANT.",
     "20 1 * * 1-5 /usr/local/bin/cleanup.sh",
-    "20 1 * * 1-5 /usr/local/bin/cleanup.sh",
+    "45 4 * * 1-5 /usr/local/bin/cleanup-night.sh",
 )
 
 _route(
     "linux-vm-routing",
-    "Forwarding between the walkthrough LANs already works. This host, the one named in the practice note, has no default route, so anything off its own subnet dies here. Install the next hop from the note. Do not remove the connected routes you already added.",
-    "A PC on the near LAN can ping its router and nothing past it. The default route is missing. The next hop is not the walkthrough address. Read /root/NEXT-HOP and install that route.",
+    "Forwarding between the walkthrough LANs already works. This PC is on 10.1.0.0/24 and has no default route, so anything off its own subnet dies here. Install the on-link next hop from the note. Do not remove the connected address.",
+    "The PC can ping its own subnet and nothing past it. The default route is missing. Read /root/NEXT-HOP and install that on-link hop.",
+    "10.1.0.10/24", "10.1.0.4", "10.1.0.5",
 )
 
 _route(
     "linux-vm-nettrouble",
-    "The multi-hop path from the walkthrough reaches the far host. This attempt's client has no default route at all, which is why its pings never leave the subnet. The practice note has the next hop. Install it.",
-    "Pings to the far host die on this client and the routing table has no default. The hop you should use is in /root/NEXT-HOP, not the address from the walkthrough.",
+    "The walkthrough path reaches the far host. This client is on 10.2.0.0/24 and has no default route, which is why its pings never leave the subnet. The practice note has an on-link next hop. Install it.",
+    "Pings past the local subnet die on this client. The routing table has no default. The hop in /root/NEXT-HOP is on 10.2.0.0/24. Install that route.",
+    "10.2.0.40/24", "10.2.0.4", "10.2.0.5",
 )
 
 _route(
     "scn-lan2-fix",
-    "LAN 2's PCs get nowhere past the router because this client has no default route. The practice note has the next hop that should be installed. This is not the proof file from another lab.",
-    "The CFO's side of LAN 2 still cannot reach the ERP host. This router-facing client has no default route. /root/NEXT-HOP has the hop.",
+    "LAN 2's PC is on 10.2.0.0/24 and has no default route, so it cannot reach the ERP host. The practice note has an on-link next hop. Install it.",
+    "The CFO's side of LAN 2 still cannot reach the ERP host. This client has no default route. /root/NEXT-HOP has an on-link hop on 10.2.0.0/24.",
+    "10.2.0.40/24", "10.2.0.6", "10.2.0.7",
 )
 
 _iptables(
@@ -688,7 +709,7 @@ _text(
     "{path} must contain {value}",
     "A dnsmasq snippet still has router advertisements commented out. /root/RA-WANT has the line it should contain.",
     "ra disabled", "enable-ra",
-    "ra disabled", "enable-ra",
+    "# enable-ra", "dhcp-range=10.40.0.50,10.40.0.80",
 )
 
 _iptables(
@@ -716,10 +737,10 @@ _text(
     "/etc/hosts.floor-{n}",
     "The floor cannot open the intranet by name. A hosts file named in the practice note still publishes the retired address. Put the address from the note on intranet.novak.lab in that file.",
     "The intranet name still returns the retired address from a hosts file you have not fixed. /root/INTRANET-ADDR has the address that name should have.",
-    "{path} must map the intranet name to {value}",
-    "The intranet name is still wrong in a hosts file. /root/INTRANET-ADDR has the address to publish.",
+    "The hosts file {path} must contain this exact line: {value}",
+    "The intranet name is still wrong in a different hosts file. /root/INTRANET-ADDR has the single hosts line to publish.",
     "10.30.0.99 intranet.novak.lab", "10.30.0.80 intranet.novak.lab",
-    "10.30.0.99 intranet.novak.lab", "10.30.0.80 intranet.novak.lab",
+    "10.30.0.98 intranet.novak.lab", "10.30.0.82 intranet.novak.lab",
 )
 
 _text(
@@ -730,7 +751,7 @@ _text(
     "{path} must contain {value}",
     "Swappiness is still 60 in a sysctl drop-in. /root/SWAP-WANT has the line it should contain.",
     "vm.swappiness=60", "vm.swappiness=10",
-    "vm.swappiness=60", "vm.swappiness=10",
+    "vm.swappiness=80", "vm.swappiness=1",
 )
 
 
@@ -744,3 +765,214 @@ _also("linux-vm-logs", "ticket", lambda f: ["mkdir -p /root/evidence", f"printf 
 _also("linux-vm-nat", "ticket", lambda f: ["mkdir -p /root", "printf '%s\\n' '10.9.8.0/24' > /root/NAT-NET"])
 _also("linux-vm-firewall", "ticket", lambda f: ["mkdir -p /root", "printf '%s\\n' '10.20.0.61' > /root/ADMIN-IP"])
 _also("sec-vm-iptables", "ticket", lambda f: ["mkdir -p /root", "printf '%s\\n' '10.9.1.71' > /root/MON-IP"])
+
+
+def _absent_pair(lid, checker, p2, p3, s2_prose, s3_prose, s2_note, s3_note):
+    def enrich(f, seed):
+        n = 1400 + (seed * 13) % 5000
+        f["s2_path"] = p2.format(n=n)
+        f["s3_path"] = p3.format(n=n)
+
+    def plant(key):
+        def run(f):
+            path = f[key]
+            parent = path.rsplit("/", 1)[0]
+            return [f"mkdir -p {parent}", f"printf '%s\\n' 'still-running' > {path}", f"chmod 755 {path}"]
+        return run
+
+    def fix(key):
+        def run(f):
+            return [f"rm -f {f[key]}"]
+        return run
+
+    def checks(key):
+        def run(f):
+            return [{"kind": "absent", "path": f[key]}]
+        return run
+
+    SK.SPECS[lid] = {
+        "syntax": [("Remove a file", "rm -f <path>"), ("See processes", "ps")],
+        "enrich": enrich,
+        "stages": {
+            "assisted": {"checker": checker, "prose": s2_prose, "note": lambda f: s2_note.format(path=f["s2_path"]),
+                         "plant": plant("s2_path"), "fix": fix("s2_path"), "checks": checks("s2_path")},
+            "ticket": {"checker": checker, "prose": s3_prose, "note": lambda f: s3_note.format(path=f["s3_path"]),
+                       "plant": plant("s3_path"), "fix": fix("s3_path"), "checks": checks("s3_path")},
+        },
+    }
+
+
+_absent_pair(
+    "sec-vm-proc", "process-gone",
+    "/var/tmp/.cache/beacon-{n}", "/var/tmp/.font/agent-{n}",
+    "The walkthrough beacon is gone. A second program is still on disk under the cache directory. The practice note names it. Remove that file. Stopping a status word is not the check.",
+    "A different program is still on disk under /var/tmp/.font. It is not the beacon you just removed. Delete that file so the process cannot be started again.",
+    "Remove {path}. The process file itself has to be gone.",
+    "Remove {path}. The agent file has to be gone.",
+)
+_absent_pair(
+    "sec-vm-harden", "process-gone",
+    "/usr/local/sbin/extra-{n}", "/var/tmp/listener-{n}",
+    "The walkthrough extra process is stopped. Another executable is still in /usr/local/sbin. The practice note names it. Remove the file.",
+    "A listener binary is still under /var/tmp. It is not the program you just removed. Delete it.",
+    "Remove {path}.",
+    "Remove {path}.",
+)
+
+_file(
+    "sec-openssl", "key-mode", PERM, "/root/pki", "server-{n}.key", "client-{n}.key",
+    "server.key from the walkthrough is already private. A second key, named in the practice note, is mode 644, so every account can read it. Make it mode 600.",
+    "A client key in /root/pki is still readable by other accounts. It is not the server key you just closed. Make that key mode 600.",
+    "Key: {path}. Required mode: {mode}. Others must not be able to read it.",
+    "The other key in {directory} is still world-readable. It should be mode 600.",
+    "644", "600", "644", "600",
+)
+
+def _digest(lid, path_tmpl, s2_bad, s2_good, s3_bad, s3_good, s2_prose, s3_prose, s2_note, s3_note, clue):
+    """Grade the sha256 of the file, which is what sha256sum prints, not a status word."""
+    import hashlib
+
+    def dig(text):
+        return hashlib.sha256((text + "\n").encode()).hexdigest()
+
+    def enrich(f, seed):
+        n = 1100 + (seed * 23) % 7000
+        f["s2_path"] = path_tmpl.format(n=n)
+        f["s3_path"] = _sibling(f["s2_path"])
+        f["s2_good"] = s2_good
+        f["s3_good"] = s3_good
+        f["s2_digest"] = dig(s2_good)
+        f["s3_digest"] = dig(s3_good)
+
+    def plant(bad, key):
+        def run(f):
+            path = f[key]
+            parent = path.rsplit("/", 1)[0]
+            return [f"mkdir -p {parent}", f"printf '%s\\n' '{_q(bad)}' > {path}"]
+        return run
+
+    def fix(good_key, path_key):
+        def run(f):
+            return [f"printf '%s\\n' '{_q(f[good_key])}' > {f[path_key]}"]
+        return run
+
+    def checks(digest_key, path_key):
+        def run(f):
+            return [{"kind": "sha256", "path": f[path_key], "digest": f[digest_key]}]
+        return run
+
+    SK.SPECS[lid] = {
+        "syntax": FILE + [("Check a sum", "sha256sum <file>")],
+        "enrich": enrich,
+        "stages": {
+            "assisted": {
+                "checker": "checksum", "prose": s2_prose,
+                "note": lambda f: s2_note.format(path=f["s2_path"], value=f["s2_digest"]),
+                "plant": plant(s2_bad, "s2_path"), "fix": fix("s2_good", "s2_path"),
+                "checks": checks("s2_digest", "s2_path"),
+            },
+            "ticket": {
+                "checker": "checksum", "prose": s3_prose,
+                "note": lambda f: s3_note.format(path=f["s3_path"]),
+                "plant": plant(s3_bad, "s3_path"), "fix": fix("s3_good", "s3_path"),
+                "checks": checks("s3_digest", "s3_path"),
+            },
+        },
+    }
+    _also(lid, "ticket", lambda f, clue=clue: [
+        f"mkdir -p {clue.rsplit('/', 1)[0]}",
+        f"printf '%s\\n' '{f['s3_digest']}' > {clue}",
+    ])
+
+
+_digest(
+    "sec-vm-hash", "/opt/app/build-{n}.bin",
+    "TAMPERED-BUILD", "GOOD-BUILD-v1", "TAMPERED-PLUGIN", "GOOD-PLUGIN-v2",
+    "The walkthrough image now matches its sum. A second file, named in the practice note, still hashes to the tampered build. Replace it with the payload whose sha256 is in the note.",
+    "A plugin image under /opt/app still hashes to the tampered bytes. It is not the file you repaired. sha256sum of that file has to match the digest in /root/HASH-WANT.",
+    "File {path} must sha256 to {value}.",
+    "The plugin image still does not match its sum. /root/HASH-WANT has the digest. The path is {path}.",
+    "/root/HASH-WANT",
+)
+_digest(
+    "sec-vm-fim", "/srv/bin/tool-{n}",
+    "echo tampered", "echo ok-a", "echo tampered-b", "echo ok-b",
+    "The walkthrough baseline matches. A second tool, named in the practice note, does not. Replace it so its sha256 is the digest in the note.",
+    "Another tool under /srv/bin does not match its baseline. /root/FIM-WANT has the sha256 that file must have.",
+    "File {path} must sha256 to {value}.",
+    "A tool still does not match its baseline. /root/FIM-WANT has the digest. The path is {path}.",
+    "/root/FIM-WANT",
+)
+_digest(
+    "sec-vm-backup", "/root/keep/archive-{n}.bin",
+    "BAD-ARCHIVE", "GOOD-ARCHIVE-v1", "BAD-NIGHT", "GOOD-ARCHIVE-v2",
+    "The walkthrough archive matches its sum. A second archive, named in the practice note, does not. Replace the bytes so sha256sum matches the digest in the note.",
+    "The night archive does not match the sum that was recorded when it was written. /root/SHA-WANT has that digest. The archive file is not the one you already repaired.",
+    "File {path} must sha256 to {value}.",
+    "The night archive still fails its sum. /root/SHA-WANT has the digest. The path is {path}.",
+    "/root/SHA-WANT",
+)
+
+
+def _drop_account(lid, stage, bad):
+    key = "s2_path" if stage == "assisted" else "s3_path"
+    row = SK.SPECS[lid]["stages"][stage]
+    original = row["checks"]
+
+    def checks(f, original=original, bad=bad, key=key):
+        return list(original(f)) + [{"kind": "not_contains", "path": f[key], "text": bad}]
+
+    row["checks"] = checks
+
+
+_drop_account("linux-vm-incident", "assisted", "backdoor:x:0:0:backdoor:/root:/bin/sh")
+_drop_account("linux-vm-incident", "ticket", "ghost:x:0:0:ghost:/root:/bin/sh")
+
+
+def _clue(lid, path):
+    _also(lid, "ticket", lambda f, path=path: [
+        f"mkdir -p {path.rsplit('/', 1)[0]}",
+        f"printf '%s\\n' '{_q(f['s3_good'])}' > {path}",
+    ])
+
+
+for _lid, _path in (
+    ("linux-vm-services", "/root/DAEMON-PATH"),
+    ("linux-vm-netclient", "/root/RESOLVER"),
+    ("linux-vm-dns", "/root/INTRANET-ADDR"),
+    ("linux-vm-logs", "/root/evidence/TOP"),
+    ("sec-vm-authlog", "/root/ir/TOP"),
+    ("sec-vm-grep", "/root/case/WANT"),
+    ("linux-vm-method", "/root/DOCROOT"),
+    ("linux-vm-web", "/root/ADDR-WANT"),
+    ("linux-vm-disk", "/root/FSTAB-WANT"),
+    ("linux-vm-ssh", "/root/SSHD-WANT"),
+    ("sec-vm-ssh", "/root/SSHD-WANT"),
+    ("linux-vm-users", "/root/GROUP-WANT"),
+    ("sec-vm-users", "/root/SHADOW-WANT"),
+    ("sec-vm-faillock", "/root/AGE-WANT"),
+    ("linux-vm-script", "/root/SCRIPT-WANT"),
+    ("linux-vm-packages", "/root/REPO-WANT"),
+    ("linux-vm-ipv6", "/root/RA-WANT"),
+    ("scn-dns-fix", "/root/INTRANET-ADDR"),
+    ("linux-vm-perf", "/root/SWAP-WANT"),
+    ("sec-vm-cron", "/root/CRON-WANT"),
+    ("sec-vm-capture", "/root/case/ODD-WANT"),
+    ("sec-vm-timeline", "/root/case/ORDER-WANT"),
+    ("linux-vm-restore", "/root/RESTORE-WANT"),
+    ("linux-vm-incident", "/root/UID0-NAME"),
+):
+    _clue(_lid, _path)
+
+# The incident clue names the extra account, not the root line the file must keep.
+_also("linux-vm-incident", "ticket", lambda f: ["mkdir -p /root", "printf '%s\\n' 'ghost' > /root/UID0-NAME"])
+_text(
+    "linux-vm-restore", "restore", FILE,
+    "/srv/share/finance/budget-{n}.csv",
+    "The walkthrough restore is in place. A budget file named in the practice note still has the broken copy. Replace it with the restored row from the note.",
+    "The HR rota file is still the broken copy. It is not the budget file. /root/RESTORE-WANT has the row that file should contain.",
+    "{path} must contain {value}",
+    "The rota file still has the broken copy. /root/RESTORE-WANT has the restored row.",
+    "broken-budget", "quarter,amount",
+    "broken-rota", "Mon,front-desk",
+)

@@ -68,6 +68,13 @@ def _split(cmd):
         return cmd.split()
 
 
+def _here(lab):
+    title = (lab.get("title") or lab.get("id") or "this lab").strip()
+    title = re.sub(r"^\d+[a-z]?\.\s*", "", title)
+    title = title.replace(".", " ").strip().rstrip(".")
+    return title or (lab.get("id") or "this lab")
+
+
 def explain_command(cmd, kind, lab):
     """One accurate sentence for this exact command line."""
     raw = str(cmd).strip().split("|", 1)[0].strip()
@@ -81,19 +88,16 @@ def explain_command(cmd, kind, lab):
     low = raw.lower()
     parts = _split(raw)
     tool = (parts[0] if parts else raw).lower()
-    sentence = _body(raw, low, tool, parts, kind)
+    sentence = _body(raw, low, tool, parts, kind, lab)
     if where:
         sentence = sentence.rstrip(".") + f", and this line runs on the {where} machine"
     # A period followed by whitespace starts a new sentence. Dots inside
     # addresses and paths are not followed by whitespace, so they stay dots.
     sentence = re.sub(r"\.\s+", ", ", sentence).rstrip(".")
-    task = re.split(r"\.\s+", _blurb(lab))[0].strip()
-    if task and task.lower() not in sentence.lower():
-        sentence = f"{sentence}, for this task: {task[0].lower() + task[1:]}"
     return sentence + "."
 
 
-def _body(raw, low, tool, parts, kind):
+def _body(raw, low, tool, parts, kind, lab):
     if low in ("enable", "en"):
         if kind in ("switch", "router"):
             return "enable moves the console from user EXEC, where the prompt ends in >, to privileged EXEC, where the prompt ends in #. It does not enter configuration mode."
@@ -142,15 +146,16 @@ def _body(raw, low, tool, parts, kind):
             return f"{text} creates the account and, because of -m, also creates its home directory. -s sets the login shell and -G adds a supplementary group."
         return f"{text} creates or updates an account. Read each flag on this line rather than assuming a default home or password."
     if tool == "printf":
-        return f"{raw} writes the quoted text with printf. It is not echo. A > replaces the file, and the format string controls newlines. A missing parent directory is an error."
+        how = "appends to the file because >> is shell redirection" if " >>" in raw else "replaces the file because > is shell redirection" if " >" in raw else "writes to the terminal"
+        return f"{raw} writes the quoted text with printf, which {how}. The format string controls newlines. A missing parent directory is an error."
     if tool == "echo":
         redir = "replaces the file" if " >" in raw or raw.endswith(">") else "writes to the terminal"
         if " >>" in raw:
             redir = "appends to the file"
-        return f"{raw} uses echo, which {redir}. It is not printf. Quoted spaces stay one argument."
+        return f"{raw} uses echo, which {redir}. Quoted spaces stay one argument."
     if tool == "ipconfig":
         if "/all" in low:
-            return "ipconfig /all prints the adapter, DHCP state, IPv4 address, mask, gateway, and DNS servers. It does not change them. /all is the flag that adds the DNS list. The dots in the addresses are dots."
+            return f"ipconfig /all prints the adapter, DHCP state, IPv4 address, mask, gateway, and DNS servers on {_here(lab)}. It does not change them. /all is the flag that adds the DNS list. The dots in the addresses are dots."
         if "/flushdns" in low:
             return "ipconfig /flushdns clears the resolver cache on this PC. It does not change which DNS server is configured."
         if "/release" in low:
@@ -181,7 +186,7 @@ def _body(raw, low, tool, parts, kind):
         sub = ""
         if "." in iface:
             sub = f" The dot in {iface} marks a subinterface, which is a separate logical interface on the physical port, not a separator to turn into a comma."
-        return f"interface {iface} enters interface configuration for {iface}. The prompt becomes (config-if).{sub}"
+        return f"interface {iface} enters interface configuration for {iface} on {_here(lab)}. The prompt becomes (config-if).{sub}"
     if "switchport mode access" in low:
         return "switchport mode access makes this interface an access port, which carries one VLAN untagged. It does not choose which VLAN. That is a separate switchport access vlan line."
     if "switchport mode trunk" in low:
@@ -194,13 +199,51 @@ def _body(raw, low, tool, parts, kind):
     if "switchport port-security" in low:
         return f"{raw} turns on port security on this interface. Sticky or maximum values only apply if this line includes them. A later show command is what proves the port is secured."
     if low in ("no shutdown", "no shut"):
-        return "no shutdown brings this interface up administratively. Until this line, the interface stays down even if it has an address."
+        return f"no shutdown brings this interface up administratively on {_here(lab)}. Until this line, the interface stays down even if it has an address."
     if low == "shutdown":
         return "shutdown administratively disables this interface. Traffic stops until no shutdown."
     if low.startswith("ip address"):
         addr = parts[2] if len(parts) > 2 else ""
         mask = parts[3] if len(parts) > 3 else ""
-        return f"ip address {addr} {mask} sets this interface's IPv4 address and mask. Both numbers keep their dots. The interface still needs no shutdown if it is administratively down."
+        return f"ip address {addr} {mask} sets this interface's IPv4 address and mask on {_here(lab)}. Both numbers keep their dots. The interface still needs no shutdown if it is administratively down."
+    if low.startswith("encapsulation dot1q"):
+        vid = parts[-1]
+        return f"encapsulation dot1Q {vid} tags this subinterface with VLAN {vid}. The 802.1Q header is how a router separates VLANs on one physical trunk."
+    if tool == "curl":
+        bits = [f"{raw} requests a URL."]
+        if "-s" in parts:
+            bits.append("-s is silent, so progress is not printed.")
+        if "-S" in parts:
+            bits.append("-S shows errors even when -s is set.")
+        if "-w" in parts or any(a.startswith("-w") for a in parts):
+            bits.append("-w is the write-out format printed after the transfer, not a wait.")
+        if "-o" in parts:
+            bits.append("-o writes the body to a named file.")
+        if "-I" in parts:
+            bits.append("-I fetches headers only.")
+        if "-k" in parts:
+            bits.append("-k skips certificate verification.")
+        return " ".join(bits)
+    if tool == "traceroute":
+        bits = [f"{raw} lists each hop to the destination."]
+        if "-n" in parts:
+            bits.append("-n prints numeric addresses and does not look up DNS names.")
+        if "-q" in parts:
+            bits.append("-q is how many probes are sent per hop.")
+        if "-w" in parts:
+            bits.append("-w is how long to wait for a probe reply.")
+        return " ".join(bits)
+    if tool == "crontab":
+        if "-l" in parts:
+            return f"{raw} lists the crontab for this user. -l means list. It does not edit the table."
+        return f"{raw} installs the crontab from the named file, replacing the previous table."
+    if tool == "find":
+        bits = [f"{raw} walks a directory tree."]
+        if "-perm" in parts:
+            bits.append("-perm selects by permission bits. The value that follows, such as -4000, is the mode test, not a flag of its own. -4000 means the setuid bit is set.")
+        if "-type" in parts:
+            bits.append("-type f limits the walk to regular files.")
+        return " ".join(bits)
     if low.startswith("ip route add default via"):
         hop = parts[-1]
         return f"{raw} installs a default route via {hop}. The address keeps its dots. It is the Linux iproute2 command, not the Cisco ip route line."
@@ -272,7 +315,7 @@ def _body(raw, low, tool, parts, kind):
     if tool == "mv":
         return f"{raw} moves or renames a file. The old path is gone after it succeeds."
     if tool == "cat":
-        return f"{raw} prints the file to the terminal. It does not modify the file."
+        return f"{raw} prints the file to the terminal on {_here(lab)}. It does not modify the file."
     if tool == "sed":
         inplace = " -i edits the file in place." if "-i" in parts else ""
         return f"{raw} runs a stream edit.{inplace} The s expression replaces the first match on each line unless a g flag is present."
@@ -320,29 +363,57 @@ def _body(raw, low, tool, parts, kind):
         return f"{raw} generates a key pair.{extra}"
     if "passwordauthentication" in low or "permitrootlogin" in low:
         return f"{raw} changes one sshd setting. PasswordAuthentication no refuses passwords. PermitRootLogin no refuses direct root login. sshd -t is how you confirm the file still parses."
-    # fallback: name every token without pretending
+    # fallback: say what each token does on this line. Redirection is the shell's, not the program's.
     known = {
-        "-i": "selects the interface", "-n": "avoids a prompt or a fork, depending on the program",
+        "-i": "selects the interface",
+        "-n": "prints numeric addresses and skips DNS lookups",
         "-t": "sets a count or a type", "-T": "sets a timeout", "-c": "sets a count",
-        "-w": "writes a capture file" if tool == "tcpdump" else "sets a wait",
-        "-U": "flushes each packet", "-q": "stays quiet", "-f": "forces the action or names a file",
-        "-r": "reads a file or recurses", "-v": "adds detail", "-l": "uses a long or numeric listing",
+        "-w": "is the write-out format" if tool == "curl" else ("writes a capture file" if tool == "tcpdump" else "sets how long to wait"),
+        "-U": "flushes each packet",
+        "-q": "is the number of probes per hop" if tool == "traceroute" else "keeps the command quiet",
+        "-f": "names a file or forces the action", "-r": "reads a file or recurses",
+        "-v": "adds detail",
+        "-l": "lists the current table" if tool == "crontab" else "uses a long listing",
+        "-s": "is silent, hiding the progress meter" if tool == "curl" else "names the source",
+        "-o": "writes the body to a file" if tool == "curl" else "selects the output interface",
+        "-I": "fetches headers only" if tool == "curl" else "inserts a rule",
+        "-k": "skips certificate checks" if tool == "curl" else "keeps going after errors",
         "--test": "checks the configuration without starting the daemon",
+        "-perm": "selects files by a permission test, and the next token is the mode value",
     }
-    bits = [f"{parts[0]} is the program being run."]
-    for arg in parts[1:]:
-        if arg.startswith("-"):
+    redir = ""
+    args = []
+    i = 1
+    while i < len(parts):
+        arg = parts[i]
+        if arg in (">", ">>"):
+            target = parts[i + 1] if i + 1 < len(parts) else "the named file"
+            verb = "appends to" if arg == ">>" else "replaces"
+            redir = f"{arg} is shell redirection and {verb} {target}. It is not an argument to {parts[0]}."
+            i += 2
+            continue
+        args.append(arg)
+        i += 1
+    bits = []
+    for arg in args:
+        if arg.startswith("-") and not re.fullmatch(r"-\d+", arg):
             meaning = known.get(arg) or known.get(arg.split("=", 1)[0])
             if meaning:
                 bits.append(f"{arg} {meaning}.")
             else:
-                bits.append(f"The flag {arg} changes how {parts[0]} behaves on this line.")
+                bits.append(f"{arg} is a flag on {parts[0]}.")
+        elif re.fullmatch(r"-\d+", arg):
+            bits.append(f"{arg} is a value passed to {parts[0]}, not a flag name.")
         elif re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}", arg):
-            bits.append(f"{arg} is an IPv4 address, with dots, passed to {parts[0]}.")
+            bits.append(f"{arg} is an IPv4 address, and the dots stay dots.")
         elif "/" in arg or arg.startswith("."):
-            bits.append(f"{arg} is a path passed to {parts[0]}.")
+            bits.append(f"{arg} is a path.")
         else:
-            bits.append(f"{arg} is an argument to {parts[0]}.")
+            bits.append(f"{arg} is a value passed to {parts[0]}.")
+    if redir:
+        bits.append(redir)
+    if not bits:
+        bits.append(f"{parts[0]} is entered on its own on this line.")
     return " ".join(bits)
 
 
@@ -360,6 +431,22 @@ def guided_html(lab, esc, commands):
         shown = []
         for i, cmd in enumerate(commands):
             sentence = explain_command(cmd, kind, lab)
+            # Mode changes such as enable are the same words on every IOS lab.
+            # Name this lab and the following line so the sentence is about this walkthrough.
+            title = _here(lab)
+            shared = (
+                "enable moves the console",
+                "configure terminal, typed from",
+                "end leaves every configuration",
+                "exit climbs one configuration",
+                "write memory copies the running",
+            )
+            if any(sentence.lower().startswith(prefix) for prefix in shared):
+                nxt = commands[i + 1] if i + 1 < len(commands) else ""
+                if nxt:
+                    sentence = sentence.rstrip(".") + f" On {title}, the next line is {nxt}."
+                else:
+                    sentence = sentence.rstrip(".") + f" On {title}, this is the last line of the walkthrough."
             words = re.findall(r"[A-Za-z0-9][A-Za-z0-9'./_-]*", sentence.lower())
             key = tuple(words[:3])
             seen = sum(1 for prev in shown if prev == key)

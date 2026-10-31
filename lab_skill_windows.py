@@ -46,8 +46,13 @@ def _cmd(lid, checker, syntax, s2_prose, s3_prose, s2_note, s3_note, s2_cmd, s3_
         f["w_ip"] = _seed_ip(seed, 8)
         f["w_ip2"] = _seed_ip(seed, 18)
         f["w_hop"] = _seed_ip(seed, 2)
-        f["w_name"] = f"WING-{seed % 90}"
-        f["w_suffix"] = f"wing{f['w_ip'].split('.')[1]}.local"
+        f["w_name"] = f"CLINIC-{20 + (seed % 40)}"
+        f["w_svc"] = ("W32Time", "EventLog", "LanmanServer", "Schedule", "Sens")[seed % 5]
+        f["w_proc"] = ("SearchApp", "msedge", "OneDrive", "WINWORD", "Teams")[seed % 5]
+        f["w_acct"] = ("kiosk-front", "lab-tech", "front-desk", "scan-user", "night-audit")[seed % 5]
+        f["w_acct2"] = ("kiosk-back", "lab-lead", "front-lead", "scan-lead", "night-lead")[seed % 5]
+        f["w_ssid"] = ("Novak-Clinic", "Novak-East", "Novak-Ward", "Novak-Lab", "Novak-Lobby")[seed % 5]
+        f["w_suffix"] = f"clinic{20 + (seed % 40)}.local"
 
     def note(stage):
         text = s2_note if stage == "assisted" else s3_note
@@ -79,7 +84,7 @@ def _ok(checker, state, f, stage):
     if checker == "firewall":
         return mark.get("fw") == ("all" if stage == "assisted" else "private")
     if checker == "service":
-        want = "Spooler" if stage == "assisted" else f["w_name"]
+        want = "Spooler" if stage == "assisted" else f["w_svc"]
         return str(mark.get("service") or "").lower() == want.lower()
     if checker == "renew":
         if stage == "assisted":
@@ -87,24 +92,24 @@ def _ok(checker, state, f, stage):
         return dns == [f["w_ip2"]]
     if checker == "flush":
         if stage == "assisted":
-            return dns == [f["w_ip"]]
-        return mark.get("flushed") is True and dns == [f["w_ip"]]
+            return dns == [f["w_ip"]] and mark.get("flushed") is True
+        return mark.get("flushed") is True and dns == [f["w_ip2"]]
     if checker == "wlan":
-        want = f["w_name"] if stage == "assisted" else "Novak-Staff"
+        want = f["w_ssid"] if stage == "assisted" else "Novak-Staff"
         return str(mark.get("wlan") or "").lower() == want.lower()
     if checker == "print":
         if stage == "assisted":
             return mark.get("queue") == "clear"
         return mark.get("queue") == "clear" and mark.get("service") == "Spooler"
     if checker == "switch":
-        want = f["w_name"] if stage == "assisted" else "Lab-Private"
+        want = "Clinic-Internal" if stage == "assisted" else "Lab-Private"
         return str(mark.get("switch") or "").lower() == want.lower()
     if checker == "arp":
         return mark.get("arp") == ("clear" if stage == "assisted" else "one")
     if checker == "disk":
         return mark.get("disk") == ("1" if stage == "assisted" else "2")
     if checker == "process":
-        want = "notepad" if stage == "assisted" else f["w_name"]
+        want = "notepad" if stage == "assisted" else f["w_proc"]
         return str(mark.get("killed") or "").lower() == want.lower()
     if checker == "adapter":
         return (state.get("gui") or {}).get("adapter") == "up" or mark.get("adapter") == "up"
@@ -117,7 +122,7 @@ def _ok(checker, state, f, stage):
         suffix = (mark.get("suffix") or "").lower()
         return host == f["w_name"].lower() and suffix == f["w_suffix"].lower()
     if checker == "account":
-        want = f["w_name"] if stage == "assisted" else f["w_name"] + "b"
+        want = f["w_acct"] if stage == "assisted" else f["w_acct2"]
         return str(mark.get("account") or "").lower() == want.lower()
     if checker == "device":
         return "net" in ((state.get("gui") or {}).get("dev_open") or [])
@@ -125,6 +130,18 @@ def _ok(checker, state, f, stage):
         return str(mark.get("ad") or "").lower() == f["w_name"].lower()
     if checker == "port":
         return mark.get("port") == ("587" if stage == "assisted" else "25")
+    if checker == "mac":
+        if stage == "assisted":
+            return mark.get("adapter") == "up"
+        return mark.get("arp") == "one"
+    if checker == "listen":
+        if stage == "assisted":
+            return str(mark.get("service") or "").lower() == "spooler"
+        return mark.get("fw") == "private"
+    if checker == "reach":
+        if stage == "assisted":
+            return dns == [f["w_ip"]]
+        return mark.get("fw") == "private"
     return False
 
 
@@ -349,81 +366,81 @@ def _reg(lid, checker, syntax, s2p, s3p, s2n, s3n, s2c, s3c, plant, match):
 # DNS labs. Each story is a different failure, and the graded state is the resolver list.
 _reg("win-dns-break", "dns", WIN,
      "A new application host was added overnight and this PC still asks the resolver that does not know it. The practice note has the one DNS server that does. Point Ethernet at that server and leave the address on DHCP.",
-     "Names for the clinic app still fail, and the address answers. The resolver list on Ethernet is the old pair. The server that holds the record now is the only line in the practice note's incident section.",
+     "Names for the clinic app still fail, and the address answers. The resolver list on Ethernet is the old pair. The server that holds the record now is not in this sentence.",
      "DNS server for Ethernet: {w_ip}. Leave DHCP in charge of the address.",
-     "The app name fails. Use DNS server {w_ip2} on Ethernet.",
+     "The app name fails. Get-Content ticket.txt prints the only DNS server Ethernet should use.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
 
 _reg("win-net-cli", "dns", WIN,
      "You already showed that a name fails while an address works, using the image resolvers. The practice note names the server that actually has the record. Make that the only DNS server on Ethernet.",
-     "The failing name still does not resolve. The DNS server list was never changed. The incident note has the server that should be asked.",
+     "The failing name still does not resolve. The DNS server list was never changed.",
      "Set Ethernet DNS to {w_ip}.",
-     "Names still fail. Ethernet should use {w_ip2}.",
+     "Names still fail. The only line in ticket.txt is the server Ethernet should ask. Read it with Get-Content ticket.txt.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
 
 _reg("win-nslookup-ok", "dns", WIN,
      "The walkthrough lookup used the image DNS servers. Those servers are being retired. The practice note has the replacement. Make it the only server on Ethernet.",
-     "Lookups still go to a server that is about to be switched off. The incident note has the replacement address.",
+     "Lookups still go to a server that is about to be switched off.",
      "Resolver to configure: {w_ip}.",
-     "Replace the resolver with {w_ip2}.",
+     "The replacement resolver is the only line of ticket.txt. Point Ethernet at it.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
 
 _reg("win-ipconfig", "dns", WIN,
      "The full address listing on this PC still shows the image DNS servers, and the charting name will not resolve. The practice note has the server this adapter should use. Set that and leave the address on automatic.",
-     "The identity you recorded is stale because the resolver changed this morning. The incident note has the DNS server Ethernet should use now.",
+     "The identity you recorded is stale because the resolver changed this morning.",
      "Ethernet DNS: {w_ip}.",
-     "Update Ethernet DNS to {w_ip2}. The address stays on DHCP.",
+     "Ethernet should use the DNS server in ticket.txt. The address stays on DHCP. Read the file with Get-Content ticket.txt.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
 
 _reg("w11-powershell-net", "dns", WIN,
      "The address view from the shell showed the image DNS servers. The practice note has the server the branch file share was moved to. Set that on Ethernet.",
-     "The branch share still fails by name. The resolver list was not updated. The incident note has the server.",
+     "The branch share still fails by name. The resolver list was not updated.",
      "Set the Ethernet resolver to {w_ip}.",
-     "The share's resolver is {w_ip2}.",
+     "The share's resolver is the only address in ticket.txt.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
 
 _reg("w11-netsh", "dns", WIN,
      "Both address tools showed the image DNS servers. The practice note has the server this site published. Set it with the DNS cmdlet. Leave the address on DHCP.",
-     "The older interface tool and ipconfig still disagree with the site's resolver. The incident note has the address Ethernet should use.",
+     "The older interface tool and ipconfig still disagree with the site's resolver.",
      "DNS server: {w_ip}.",
-     "Point Ethernet at {w_ip2}.",
+     "Point Ethernet at the address printed by Get-Content ticket.txt.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
 
 _reg("gui-ethernet", "dns", WIN,
      "Ethernet properties still list the image DNS servers. The practice note has the resolver for this moved desk. Set that server. Leave the address automatic.",
-     "The desk was moved again and the resolver in Ethernet properties is the practice one, which this wing does not use. The incident note has the server to use now.",
+     "The desk was moved again and the resolver in Ethernet properties is the practice one, which this wing does not use.",
      "In Ethernet, set DNS to {w_ip}.",
-     "Ethernet DNS should be {w_ip2}.",
+     "Open Ethernet and set DNS to the address in ticket.txt.",
      lambda f: f["w_ip"], lambda f: f["w_ip2"], lambda f: {}, _dns_match)
 
 _reg("scn-dns-evidence", "dns", WIN,
      "The third-floor caller can open the proxy by address and nothing by name. This PC is the evidence station. The practice note has the DNS server that should hold the intranet record. Point Ethernet at it.",
-     "The name still fails after the first change. The incident note has the resolver the floor should be using now.",
+     "The name still fails after the first change.",
      "Evidence PC DNS: {w_ip}.",
-     "The floor resolver is {w_ip2}.",
+     "The floor resolver is the only line in ticket.txt. Get-Content ticket.txt prints it.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
 
 _reg("win-flushdns", "flush", WIN,
      "You cleared the cache and it filled again from the same retired server. The practice note has the server to configure, and the cache has to be cleared after that change or the old answer sticks.",
-     "The name fails again. The cache was flushed and the server list was not changed, or the other way around. The incident note has the server. Set it, then flush.",
+     "The name fails again because the cache was filled from the retired server. ticket.txt has the replacement server. Set that, then flush.",
      "Set DNS to {w_ip}, then flush the cache.",
-     "Set DNS to {w_ip} and flush. The old cache entry is not the fix by itself.",
+     "The replacement DNS server is the only line in ticket.txt. Set it, then flush. The practice server is retired.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
-     lambda f: "ipconfig /flushdns",
+     lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {"flushed": False}, _flush_match)
 
 # flush stage 3 only sets flushed, but _ok for flush requires dns == w_ip AND flushed.
@@ -433,45 +450,45 @@ _reg("win-flushdns", "flush", WIN,
 
 _reg("win-dhcp-renew", "renew", WIN,
      "Cycling the lease brought back the image DNS servers. The practice note has the resolver this lease should keep. Renew, and set that DNS server.",
-     "The laptop still holds Friday's resolver after the LAN came back. Renew the lease and set the DNS server in the incident note.",
+     "The laptop still holds Friday's resolver after the LAN came back. Renew the lease, then set the DNS server from ticket.txt.",
      "Renew the lease and set DNS to {w_ip}.",
-     "Renew, then set DNS to {w_ip2}.",
+     "Renew, then set DNS to the only address in ticket.txt.",
      lambda f: "ipconfig /renew",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {"renewed": False}, _renew_match)
 
 _reg("scn-lan2-verify", "renew", WIN,
      "The CFO laptop still has Friday's resolver. Renew the lease and set the DNS server in the practice note.",
-     "The laptop got a new lease and is still asking the old resolver. The incident note has the server.",
+     "The laptop got a new lease and is still asking the old resolver.",
      "Renew the lease.",
-     "After the renew, DNS should be {w_ip2}.",
+     "After the renew, DNS should be the address in ticket.txt.",
      lambda f: "ipconfig /renew",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {"renewed": False}, _renew_match)
 
 _reg("win-full-triage", "dns", WIN,
      "The full triage used the image DNS pair. This desk moved to a wing whose resolver is in the practice note. Set that server. Keep the address on DHCP.",
-     "Lookups still use the wing you moved away from. The incident note has the resolver for the wing this PC is in now.",
+     "Lookups still use the wing you moved away from.",
      "Wing resolver: {w_ip}.",
-     "This wing's resolver is {w_ip2}.",
+     "This wing's resolver is the only line in ticket.txt.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
 
 _reg("win-route", "route", ROUTE,
      "The route table shows a default gateway that no longer forwards. The practice note has the next hop to install for 0.0.0.0. Add that route. Do not delete the connected subnet.",
-     "Traffic off the subnet dies on this PC. The default route is missing or points at the old hop. The incident note has the gateway to add.",
+     "Traffic off the subnet dies on this PC. The default route is missing or points at the old hop.",
      "Add a default route via {w_hop}.",
-     "The default gateway to add is {w_ip2}.",
+     "The default gateway to add is the only line in ticket.txt. Read it with Get-Content ticket.txt.",
      lambda f: f"route add 0.0.0.0 mask 0.0.0.0 {f['w_hop']}",
      lambda f: f"route add 0.0.0.0 mask 0.0.0.0 {f['w_ip2']}",
      lambda f: {"hop": ""}, _route_match)
 
 _reg("win-ping-loop", "route", ROUTE,
      "Loopback answers, so the stack is up. Anything past the local subnet does not, because there is no default route. The practice note has the hop.",
-     "Ping to the gateway times out and loopback still answers. The incident note has the hop that should be the default route.",
+     "Ping to the gateway times out and loopback still answers.",
      "Default hop: {w_hop}.",
-     "Install a default route via {w_ip2}.",
+     "Install a default route via the hop in ticket.txt.",
      lambda f: f"route add 0.0.0.0 mask 0.0.0.0 {f['w_hop']}",
      lambda f: f"route add 0.0.0.0 mask 0.0.0.0 {f['w_ip2']}",
      lambda f: {"hop": ""}, _route_match)
@@ -487,11 +504,11 @@ _reg("w11-firewall", "firewall", FW,
 
 _reg("w11-services", "service", SVC,
      "DHCP, the DNS client, and Defender are running. The print spooler is stopped, which is why nothing prints. The practice note names the service to start.",
-     "A different service, named in the incident note, is stopped. Start that one. Do not stop Defender.",
+     "A service other than the spooler is stopped. ticket.txt names it. Start that one. Do not stop Defender.",
      "Start the Spooler service.",
-     "Start the service named {w_name}.",
+     "Start the service named in ticket.txt. Get-Content ticket.txt prints the service name.",
      lambda f: "Start-Service Spooler",
-     lambda f: f"Start-Service {f['w_name']}",
+     lambda f: f"Start-Service {f['w_svc']}",
      lambda f: {"service": ""}, _svc_match)
 
 _reg("gui-services", "service", SVC,
@@ -521,19 +538,19 @@ _reg("print-trouble", "print", SVC + [("Queue", "Get-PrintJob -PrinterName <name
 
 _reg("w11-wlan", "wlan", WLAN,
      "The wireless report shows this laptop is not on the staff network. The practice note has the profile to join.",
-     "The laptop fell back to a guest network. The incident note has the profile it should be on.",
-     "Connect to {w_name}.",
-     "Connect to Novak-Staff.",
-     lambda f: f"netsh wlan connect name={f['w_name']}",
+     "The laptop fell back to a guest network. ticket.txt names the profile it should be on.",
+     "Connect to {w_ssid}.",
+     "Connect to the profile named in ticket.txt.",
+     lambda f: f"netsh wlan connect name={f['w_ssid']}",
      lambda f: "netsh wlan connect name=Novak-Staff",
      lambda f: {"wlan": ""}, _wlan_match)
 
 _reg("win-wifi-survey", "wlan", WLAN,
      "The survey shows the laptop associated to a neighboring office. The practice note has the profile this building uses.",
-     "After the survey the laptop is on the guest SSID again. Connect it to the staff profile.",
-     "Join {w_name}.",
-     "Join Novak-Staff.",
-     lambda f: f"netsh wlan connect name={f['w_name']}",
+     "After the survey the laptop is on the guest SSID again.",
+     "Join {w_ssid}.",
+     "Join the profile in ticket.txt. Get-Content ticket.txt prints the SSID.",
+     lambda f: f"netsh wlan connect name={f['w_ssid']}",
      lambda f: "netsh wlan connect name=Novak-Staff",
      lambda f: {"wlan": ""}, _wlan_match)
 
@@ -557,30 +574,37 @@ _reg("w11-disk", "disk", [("List disks", "list disk"), ("Bring a disk online", "
 
 _reg("w11-processes", "process", [("List processes", "Get-Process"), ("Stop one", "Stop-Process -Name <name>")],
      "A notepad process is stuck and holding a file the user needs. Stop that process. Do not stop the DNS client.",
-     "Another process, named in the incident note, is stuck. Stop that one.",
+     "Another process is stuck and holding a file. ticket.txt names it. Stop that one.",
      "Stop notepad.",
-     "Stop {w_name}.",
+     "Stop the process named in ticket.txt.",
      lambda f: "Stop-Process -Name notepad",
-     lambda f: f"Stop-Process -Name {f['w_name']}",
+     lambda f: f"Stop-Process -Name {f['w_proc']}",
      lambda f: {"killed": ""}, _proc_match)
 
 _reg("hv-vswitch", "switch", [("List switches", "Get-VMSwitch"), ("Create one", "New-VMSwitch -Name <name> -SwitchType Private")],
      "The lab guests are still on the default switch. The practice note has the private switch to create.",
-     "The private switch from practice is not the one the change record names. Create the switch in the incident note.",
-     "Create a private switch named {w_name}.",
-     "Create private switch Lab-Private.",
-     lambda f: f"New-VMSwitch -Name {f['w_name']} -SwitchType Private",
+     "The private switch from practice is not the one the change record names.",
+     "Create a private switch named Clinic-Internal.",
+     "Create the private switch named in ticket.txt.",
+     lambda f: "New-VMSwitch -Name Clinic-Internal -SwitchType Private",
      lambda f: "New-VMSwitch -Name Lab-Private -SwitchType Private",
      lambda f: {"switch": ""}, _switch_match)
 
-_reg("win-getmac", "adapter", [("Show the MAC", "getmac"), ("Enable the adapter", "netsh interface set interface Ethernet enable")],
+def _mac_match(low, raw, f, state):
+    hit = _adapter_match(low, raw, f, state)
+    if hit:
+        return hit
+    return _arp_match(low, raw, f, state)
+
+
+_reg("win-getmac", "mac", [("Show the MAC", "getmac"), ("Enable the adapter", "netsh interface set interface Ethernet enable"), ("Delete one ARP entry", "arp -d <address>")],
      "getmac shows Ethernet as media disconnected because the adapter is disabled. Enable it. The MAC does not change.",
-     "Ethernet is disabled again, so the MAC the asset system wants is not on the wire. Enable the adapter.",
+     "Ethernet is up and the asset system still has the old gateway MAC. Delete that one ARP entry. The address is the only line in ticket.txt. Do not clear the whole cache.",
      "Enable Ethernet.",
-     "The adapter is down. Enable Ethernet.",
+     "Delete the stale gateway ARP entry. Get-Content ticket.txt prints the address. Do not run arp -d *.",
      lambda f: "netsh interface set interface Ethernet enable",
-     lambda f: "netsh interface set interface Ethernet enable",
-     lambda f: {"adapter": "down"}, _adapter_match)
+     lambda f: f"arp -d {f['w_hop']}",
+     lambda f: {"adapter": "down", "arp": ""}, _mac_match)
 
 _reg("gui-renew", "adapter", [("Renew", "ipconfig /renew")],
      "The lease on this desk is from the old VLAN. Renew it so the adapter comes back up on the new scope.",
@@ -593,9 +617,9 @@ _reg("gui-renew", "adapter", [("Renew", "ipconfig /renew")],
 
 _reg("win-hostname", "identity", WIN + [("Computer name", "Rename-Computer -NewName <name>"), ("DNS suffix", "netsh interface ip set dnsSuffix <suffix>")],
      "The name and the DNS suffix still match the image, so two PCs answer the same name. The practice note has the name and the suffix.",
-     "Inventory merged this PC with another image. The incident note has the name and the suffix this PC should use.",
-     "Name: {w_name}. Suffix: wing{w_ip}.",
-     "Set the name to {w_name} and the suffix from the note.",
+     "The computer name is updated and the DNS suffix is still the image suffix, so two names collide in DNS. ticket.txt has the suffix to set.",
+     "Name: {w_name}. Suffix: {w_suffix}.",
+     "Keep the name from practice. Set the DNS suffix to the only line in ticket.txt.",
      lambda f: f"Rename-Computer -NewName {f['w_name']}",
      lambda f: f"netsh interface ip set dnsSuffix {f['w_suffix']}",
      lambda f: {"suffix": ""}, _id_match)
@@ -605,10 +629,10 @@ _reg("win-hostname", "identity", WIN + [("Computer name", "Rename-Computer -NewN
 # Stage 2 won't latch. I need _ok for identity: assisted checks hostname, ticket checks both.
 
 _reg("w11-inventory", "identity", WIN,
-     "The inventory still shows the image name and an empty DNS suffix. The practice note has the name. Set it. The suffix is stage 3.",
-     "The name is updated and the suffix is still empty, so the inventory row does not match the domain. Set the suffix from the incident note.",
+     "The inventory still shows the image name and an empty DNS suffix. The practice note has the name. Set it.",
+     "The name is updated and the suffix is still empty, so the inventory row does not match the domain.",
      "Set the computer name to {w_name}.",
-     "Set the DNS suffix to {w_suffix}.",
+     "Set the DNS suffix to the only line in ticket.txt.",
      lambda f: f"Rename-Computer -NewName {f['w_name']}",
      lambda f: f"netsh interface ip set dnsSuffix {f['w_suffix']}",
      lambda f: {"suffix": ""}, _id_match)
@@ -658,20 +682,257 @@ _reg("gui-devices", "device", [("Device Manager", "open the network adapters")],
      lambda f: "net",
      lambda f: {}, lambda low, raw, f, state: {"device": True} if low == "net" else None)
 
-_reg("win-netstat", "port", [("Connections", "netstat -ano"), ("Test a port", "Test-NetConnection <host> -Port <port>")],
-     "netstat shows nothing listening on the mail submission port. Confirm port 587 answers. The practice note has the host.",
-     "Mail is failing on the other port. Confirm port 25. Do not open 587 to the world.",
-     "Test port 587.",
-     "Test port 25.",
-     lambda f: "Test-NetConnection mail.novak.local -Port 587",
-     lambda f: "Test-NetConnection mail.novak.local -Port 25",
-     lambda f: {"port": ""}, _port_match)
+def _listen_match(low, raw, f, state):
+    hit = _svc_match(low, raw, f, state)
+    if hit:
+        return hit
+    return _fw_match(low, raw, f, state)
 
-_reg("win-laptop-ports", "port", [("Port test", "Test-NetConnection <host> -Port <port>")],
-     "The laptop can resolve mail and cannot connect. The practice note says to prove port 587.",
-     "Submission works and the relay on port 25 does not. Prove port 25.",
-     "Test 587.",
-     "Test 25.",
-     lambda f: "Test-NetConnection mail.novak.local -Port 587",
-     lambda f: "Test-NetConnection mail.novak.local -Port 25",
-     lambda f: {"port": ""}, _port_match)
+
+_reg("win-netstat", "listen", [("Connections", "netstat -ano"), ("Start a service", "Start-Service <name>"), ("Firewall profile", "netsh advfirewall set <profile> state on")],
+     "netstat shows nothing listening because the print spooler is stopped. Start Spooler. A connection test is not the repair.",
+     "The spooler is running and the private firewall profile is still off, so the port the ticket needs stays closed. Turn the private profile on.",
+     "Start the Spooler service.",
+     "Turn the private firewall profile on. Do not run Test-NetConnection and call that the fix.",
+     lambda f: "Start-Service Spooler",
+     lambda f: "netsh advfirewall set privateprofile state on",
+     lambda f: {"service": "", "fw": "off"}, _listen_match)
+
+def _reach_match(low, raw, f, state):
+    hit = _dns_match(low, raw, f, state)
+    if hit:
+        return hit
+    return _fw_match(low, raw, f, state)
+
+
+_reg("win-laptop-ports", "reach", [("Resolver", "Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses <address>"), ("Firewall profile", "netsh advfirewall set privateprofile state on")],
+     "The laptop cannot resolve the mail host. The practice note has the DNS server to set on Ethernet. A port probe does not fix a name that fails.",
+     "The name resolves and the connection still dies. The private firewall profile is off. Turn that profile on.",
+     "Set Ethernet DNS to {w_ip}.",
+     "Turn the private firewall profile on. The DNS change from practice is already done.",
+     lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
+     lambda f: "netsh advfirewall set privateprofile state on",
+     lambda f: {"fw": "off"}, _reach_match)
+
+
+SK.SPECS["win-flushdns"]["stages"]["assisted"]["fix"] = lambda f: [
+    f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
+    "ipconfig /flushdns",
+]
+SK.SPECS["win-flushdns"]["stages"]["ticket"]["fix"] = lambda f: [
+    f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
+    "ipconfig /flushdns",
+]
+
+
+def _clue(lid, fn):
+    SK.SPECS[lid]["clue"] = fn
+
+
+for _lid in (
+    "win-dns-break", "win-net-cli", "win-nslookup-ok", "win-ipconfig", "w11-powershell-net",
+    "w11-netsh", "scn-dns-evidence", "win-flushdns", "win-dhcp-renew", "scn-lan2-verify",
+    "win-full-triage", "win-route", "win-ping-loop",
+):
+    _clue(_lid, lambda f: f["w_ip2"])
+_clue("w11-services", lambda f: f["w_svc"])
+_clue("w11-processes", lambda f: f["w_proc"])
+_clue("w11-wlan", lambda f: "Novak-Staff")
+_clue("win-wifi-survey", lambda f: "Novak-Staff")
+_clue("hv-vswitch", lambda f: "Lab-Private")
+_clue("win-hostname", lambda f: f["w_suffix"])
+_clue("w11-inventory", lambda f: f["w_suffix"])
+_clue("win-getmac", lambda f: f["w_hop"])
+
+
+def _gui_enrich(f, seed):
+    f["w_ip"] = _seed_ip(seed, 8)
+    f["w_ip2"] = _seed_ip(seed, 18)
+    f["w_name"] = f"CLINIC-{20 + (seed % 40)}"
+    f["w_suffix"] = f"clinic{20 + (seed % 40)}.local"
+
+
+def _seen(state):
+    return ((state.get("gui") or {}).get("seen") or [])
+
+
+def _gui(lid, checker, syntax, s2p, s3p, s2n, s3n, s2ev, s3ev, ok, after=None, plant=None):
+    SK.SPECS[lid] = {
+        "syntax": syntax,
+        "enrich": _gui_enrich,
+        "events": {"assisted": s2ev, "ticket": s3ev},
+        "ok": ok,
+        "after_guided": after,
+        "plant_state": plant,
+        "stages": {
+            "assisted": {
+                "checker": checker, "prose": s2p,
+                "note": lambda f, t=s2n: t.format(**f),
+                "fix": lambda f: [], "plant": lambda f: [],
+                "checks": lambda f: [{"kind": checker, "stage": "assisted"}],
+            },
+            "ticket": {
+                "checker": checker, "prose": s3p,
+                "note": lambda f, t=s3n: t.format(**f),
+                "fix": lambda f: [], "plant": lambda f: [],
+                "checks": lambda f: [{"kind": checker, "stage": "ticket"}],
+            },
+        },
+    }
+
+
+def _about_after(state, facts):
+    gui = state.setdefault("gui", {})
+    gui["pane"] = "home"
+    gui["seen"] = [e for e in (gui.get("seen") or []) if e not in ("pane:about", "pane:system")]
+
+
+def _update_after(state, facts):
+    gui = state.setdefault("gui", {})
+    gui["updates"] = "idle"
+    gui["pane"] = "home"
+    gui["seen"] = [e for e in (gui.get("seen") or []) if e not in ("pane:update", "update:check")]
+
+
+def _devices_after(state, facts):
+    gui = state.setdefault("gui", {})
+    gui["dev_open"] = []
+    gui["seen"] = [e for e in (gui.get("seen") or []) if not str(e).startswith("dev:")]
+
+
+def _renew_after(state, facts):
+    gui = state.setdefault("gui", {})
+    gui["adapter"] = "down"
+    gui["seen"] = [e for e in (gui.get("seen") or []) if not str(e).startswith("adapter:")]
+
+
+def _ethernet_after(state, facts):
+    gui = state.setdefault("gui", {})
+    gui["pane"] = "home"
+    gui["adapter"] = "up"
+    gui["seen"] = [e for e in (gui.get("seen") or []) if e != "pane:ethernet" and not str(e).startswith("adapter:")]
+
+
+def _accounts_after(state, facts):
+    gui = state.setdefault("gui", {})
+    gui["pane"] = "home"
+    gui["seen"] = [e for e in (gui.get("seen") or []) if e not in ("pane:accounts", "pane:about")]
+
+
+_gui(
+    "gui-about", "about", [("About", "Settings, System, About"), ("System", "Settings, System")],
+    "About was open during the walkthrough and is back on the home page. Open About again and read the device name there. Do not type the name into a box.",
+    "About is open and System is not. Open System so the display and sound links are on screen. Leaving About open does not finish this.",
+    "Open Settings and then About.",
+    "Open System. About by itself is the previous stage.",
+    lambda f: [{"ev": "pane:about"}],
+    lambda f: [{"ev": "pane:system"}],
+    lambda state, f, stage: (state.get("gui") or {}).get("pane") == ("about" if stage == "assisted" else "system"),
+    _about_after,
+)
+_gui(
+    "gui-ethernet", "ethernet", [("Ethernet", "Settings, Network, Ethernet"), ("Adapter", "Disable, then Enable")],
+    "Ethernet properties are not on screen. Open Ethernet and read the IPv4 address, mask, gateway, and DNS. The check is that page, not a typed address.",
+    "The Ethernet page is open and the adapter was never cycled. Disable Ethernet, then enable it, from Advanced network settings or Network Connections.",
+    "Open the Ethernet page.",
+    "Disable the Ethernet adapter, then enable it.",
+    lambda f: [{"ev": "pane:ethernet"}],
+    lambda f: [{"ev": "adapter:disable"}, {"ev": "adapter:enable"}],
+    lambda state, f, stage: ((state.get("gui") or {}).get("pane") == "ethernet") if stage == "assisted"
+    else ((state.get("gui") or {}).get("adapter") == "up" and "adapter:disable" in _seen(state)),
+    _ethernet_after,
+)
+_gui(
+    "gui-renew", "renew", [("Enable", "Enable the Ethernet adapter"), ("Cycle", "Disable, then Enable")],
+    "The Ethernet adapter is disabled, so this desk has no lease. Enable it. The adapter starts down after the walkthrough, so the old enable does not count.",
+    "The adapter is up on the lease you just brought back, and it has not been cycled since. Disable it, then enable it again.",
+    "Enable the Ethernet adapter.",
+    "Disable Ethernet, then enable it.",
+    lambda f: [{"ev": "adapter:enable"}],
+    lambda f: [{"ev": "adapter:disable"}, {"ev": "adapter:enable"}],
+    lambda state, f, stage: ((state.get("gui") or {}).get("adapter") == "up" and "adapter:disable" not in _seen(state)) if stage == "assisted"
+    else ((state.get("gui") or {}).get("adapter") == "up" and "adapter:disable" in _seen(state)),
+    _renew_after,
+)
+_gui(
+    "gui-services", "service", SVC,
+    "Services is open on Defender from the walkthrough. The print spooler has not been selected. Select Print Spooler.",
+    "Print Spooler is selected. Windows Update (wuauserv) has not been. Select that service. Spooler staying selected does not pass.",
+    "Select the Print Spooler service.",
+    "Select the Windows Update service, wuauserv.",
+    lambda f: [{"ev": "open:services"}, {"ev": "svc:Spooler"}],
+    lambda f: [{"ev": "svc:wuauserv"}],
+    lambda state, f, stage: (state.get("gui") or {}).get("svc") == ("Spooler" if stage == "assisted" else "wuauserv"),
+)
+_gui(
+    "gui-update", "updates", [("Windows Update", "Settings, Windows Update"), ("Check", "Check for updates")],
+    "Windows Update has not been opened since the walkthrough check was cleared. Open the Windows Update page. Do not click Check for updates yet.",
+    "The Windows Update page is open and the last check is still the stale one. Click Check for updates.",
+    "Open Windows Update. Do not run the check.",
+    "Click Check for updates.",
+    lambda f: [{"ev": "pane:update"}],
+    lambda f: [{"ev": "update:check"}],
+    lambda state, f, stage: ((state.get("gui") or {}).get("pane") == "update" and (state.get("gui") or {}).get("updates") != "checked") if stage == "assisted"
+    else (state.get("gui") or {}).get("updates") == "checked",
+    _update_after,
+)
+_gui(
+    "gui-accounts", "account", [("Accounts", "Settings, Accounts"), ("About", "Settings, System, About")],
+    "Accounts is not on screen. Open Accounts and read the signed-in user before you change anything.",
+    "You have the signed-in account. About is closed, so the device name next to that account is not on screen. Open About.",
+    "Open Accounts.",
+    "Open About and read the device name.",
+    lambda f: [{"ev": "pane:accounts"}],
+    lambda f: [{"ev": "pane:about"}],
+    lambda state, f, stage: (state.get("gui") or {}).get("pane") == ("accounts" if stage == "assisted" else "about"),
+    _accounts_after,
+)
+_gui(
+    "gui-devices", "device", [("Network adapters", "Device Manager, Network adapters"), ("Display adapters", "Device Manager, Display adapters")],
+    "Device Manager's network adapters are collapsed. Expand Network adapters. Leave Display adapters collapsed.",
+    "Network adapters are expanded and Display adapters are not. Expand Display adapters. The network category from practice can stay open.",
+    "Expand Network adapters.",
+    "Expand Display adapters.",
+    lambda f: [{"ev": "open:devmgr"}, {"ev": "dev:net"}],
+    lambda f: [{"ev": "dev:display"}],
+    lambda state, f, stage: ("net" in ((state.get("gui") or {}).get("dev_open") or []) and "display" not in ((state.get("gui") or {}).get("dev_open") or [])) if stage == "assisted"
+    else "display" in ((state.get("gui") or {}).get("dev_open") or []),
+    _devices_after,
+)
+
+
+def _plant_ad(state, facts):
+    gui = state.get("gui") or {}
+    ad = gui.get("ad")
+    px = state.setdefault("px", {})
+    if not ad or px.get("ad_planted"):
+        return
+    px["ad_planted"] = True
+    ad["users"].append({
+        "sam": "ncole", "name": "Nora Cole", "ou": "Sales", "enabled": True, "locked": True,
+        "groups": ["Domain Users", "Sales-Staff"], "must_change": False, "pw_reset": False,
+    })
+    ad["users"].append({
+        "sam": "snguyen", "name": "Sam Nguyen", "ou": "HR", "enabled": True, "locked": False,
+        "groups": ["Domain Users", "HR-Staff"], "must_change": False, "pw_reset": False,
+        "note": "Contractor ended Tuesday",
+    })
+
+
+def _ad_user(state, sam):
+    users = ((state.get("gui") or {}).get("ad") or {}).get("users") or []
+    return next((u for u in users if u.get("sam") == sam), None)
+
+
+_gui(
+    "win-ad-users", "ad", [("Unlock", "Unlock account"), ("Disable", "Disable account")],
+    "Jamie Chen is already unlocked from the walkthrough. Another Sales account is still locked. Unlock that one. It is the locked account that is not jchen.",
+    "Nora Cole is unlocked. An HR account is still enabled and its note says the contractor ended. Disable that account. Do not delete it.",
+    "Unlock the Sales account that is still locked and is not Jamie Chen.",
+    "Disable the HR account whose note says the contractor ended. Do not delete the object.",
+    lambda f: [{"ev": "open:aduc"}, {"ev": "ad:unlock", "data": {"sam": "ncole"}}],
+    lambda f: [{"ev": "ad:disable", "data": {"sam": "snguyen"}}],
+    lambda state, f, stage: (lambda u: bool(u) and not u.get("locked"))(_ad_user(state, "ncole")) if stage == "assisted"
+    else (lambda u: bool(u) and not u.get("enabled"))(_ad_user(state, "snguyen")),
+    plant=_plant_ad,
+)

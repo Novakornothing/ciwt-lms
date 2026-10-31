@@ -71,8 +71,8 @@ def test_checkers_read_end_state_and_reject_walkthrough_values():
     state, done = PX.observe(lab, state, done)
     assert "stage:guided" in done and "stage:assisted" not in done
     facts = state["px"]["facts"]
-    state["vlans"][facts["assisted_vlan"]] = facts["assisted_name"]
-    state["interfaces"]["FastEthernet0/3"]["vlan"] = facts["assisted_vlan"]
+    state["vlans"][facts["v1"]] = "LAB"
+    state["interfaces"]["FastEthernet0/3"]["vlan"] = facts["v1"]
     state["interfaces"]["FastEthernet0/3"]["mode"] = "access"
     state, done = PX.observe(lab, state, done)
     assert "stage:assisted" in done and "stage:ticket" not in done
@@ -221,3 +221,95 @@ def test_vm_file_check_runs_real_grep_and_solved_probe_does_not_fake_it():
     assert SK.stage_fails_until_fixed(lab, facts, "ticket")
     made = SK.evaluate(lab, facts)
     assert made == ["c_px_assisted 1", "c_px_ticket 1"]
+
+
+_MODEL = {"mode", "absent", "contains", "not_contains", "route", "forward", "iptables", "policy", "crontab", "sha256"}
+
+
+def test_stage3_checks_differ_and_do_not_pass_after_the_stage2_fix():
+    import lab_skills as SK
+    import labs_gui as LG
+    for lab in LABS:
+        if lab.get("kind") == "linuxgui" or not SK.has_spec(lab):
+            continue
+        facts = PX.facts(lab, 11)
+        row = SK.spec(lab)["stages"]
+        assisted = row["assisted"]["checks"](facts)
+        ticket = row["ticket"]["checks"](facts)
+        kinds = {c.get("kind") for c in assisted + ticket}
+        if lab.get("kind") in ("vm", "linux") and kinds and kinds <= _MODEL:
+            assert assisted != ticket, lab["id"]
+            plants = list(row["assisted"]["plant"](facts)) + list(row["ticket"]["plant"](facts))
+            assert not SK._run_stage(plants, row["assisted"]["fix"](facts), ticket), lab["id"]
+            both = list(row["assisted"]["fix"](facts)) + list(row["ticket"]["fix"](facts))
+            assert SK._run_stage(plants, both, ticket), lab["id"]
+            continue
+        state = RT.fresh_state(lab["id"], uid=9)
+        done = [o["id"] for o in lab["objectives"]]
+        state, done = PX.observe(lab, state, done)
+        assert "stage:guided" in done, lab["id"]
+        fam = PX.family(lab)
+        facts = state["px"]["facts"]
+        events = SK.stage_events(lab, facts, "assisted")
+        if events:
+            for item in events:
+                _, state, done = LG.apply(lab, state, done, item["ev"], item.get("data") or {})
+            state, done = PX.observe(lab, state, done)
+        elif fam in ("choice", "number"):
+            _, state, done = PX.submit_answer(lab, state, done, "assisted", facts["assisted_answer"])
+        else:
+            for cmd in PX.followup_commands(lab, state, "assisted"):
+                _, state, done = RT.run_command(lab["id"], state, done, cmd)
+            state, done = PX.observe(lab, state, done)
+        assert "stage:assisted" in done, (lab["id"], "stage 2 fix did not pass")
+        assert "stage:ticket" not in done, (lab["id"], "stage 3 passed after only the stage 2 fix")
+
+
+def test_ios_stage_values_never_collide_across_200_seeds():
+    from lab_skill_ios import _base
+    for seed in range(200):
+        facts = {}
+        _base(facts, seed)
+        assert facts["hop1"] != facts["hop2"], seed
+        assert facts["h1"] != facts["h2"], seed
+        assert facts["ip1"] != facts["ip2"], seed
+        assert facts["v1"] != facts["v2"], seed
+
+
+def test_iptables_s_and_ip_route_match_command_output():
+    import lab_skills as SK
+    table, line, policy = SK.canonical_iptables("iptables -A INPUT -p tcp -s 10.20.0.60 --dport 22 -j ACCEPT")
+    assert policy is None and table == "filter"
+    assert line == "-A INPUT -s 10.20.0.60/32 -p tcp -m tcp --dport 22 -j ACCEPT"
+    table, line, _policy = SK.canonical_iptables("iptables -t nat -A POSTROUTING -s 10.9.0.0/24 -o eth0 -j MASQUERADE")
+    assert table == "nat"
+    assert line == "-A POSTROUTING -s 10.9.0.0/24 -o eth0 -j MASQUERADE"
+    shell = SK._shell([{"kind": "iptables", "table": "nat", "fragment": line}])
+    assert "iptables -t nat -S" in shell
+    shell = SK._shell([{"kind": "iptables", "table": "filter", "fragment": "-A INPUT -s 10.20.0.60/32 -p tcp -m tcp --dport 22 -j ACCEPT"}])
+    assert shell.startswith("iptables -S")
+    world = SK._World()
+    world.apply("ip addr add 10.1.0.10/24 dev eth0")
+    world.apply("ip route add default via 10.9.9.9")
+    assert world.routes == []
+    world.apply("ip route add default via 10.1.0.4")
+    assert world.routes == ["10.1.0.4"]
+    route_shell = SK._shell([{"kind": "route", "hop": "10.1.0.4"}])
+    assert route_shell == "ip route | grep -q '^default via 10.1.0.4'"
+
+
+def test_stage1_drops_template_filler_and_gui_stages_are_not_a_text_box():
+    import lab_skills as SK
+    for lab in LABS:
+        html = PX.guided_html(lab).lower()
+        assert "for this task" not in html, lab["id"]
+        assert "is the program being run" not in html, lab["id"]
+        assert "it is not printf" not in html, lab["id"]
+        assert "changes how curl behaves" not in html, lab["id"]
+        assert "sets a wait" not in html, lab["id"]
+        assert "does not fork" not in html, lab["id"]
+        if (SK.spec(lab) or {}).get("events"):
+            for stage in ("assisted", "ticket"):
+                body = PX.later_html(lab, stage)
+                assert "Setting from the note" not in body, lab["id"]
+                assert "<form" not in body, lab["id"]

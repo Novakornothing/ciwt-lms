@@ -68,6 +68,8 @@ def solve_http(client, lab_id, mod=None):
             st = _j(client.post(f"/labs/{lab_id}/cmd", json={"command": action["command"]}))
         elif action["type"] == "stage":
             st = _j(client.post(f"/labs/{lab_id}/stage", json={"stage": action["stage"], "answer": action["answer"]}))
+        elif action["type"] == "event":
+            st = _j(client.post(f"/labs/{lab_id}/event", json={"ev": action["ev"], "data": action.get("data") or {}}))
     if lab.get("kind") == "vm":
         import lab_skills as SK
         server_state = _server_state(lab_id)
