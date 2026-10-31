@@ -201,6 +201,9 @@ def _body(raw, low, tool, parts, kind):
         addr = parts[2] if len(parts) > 2 else ""
         mask = parts[3] if len(parts) > 3 else ""
         return f"ip address {addr} {mask} sets this interface's IPv4 address and mask. Both numbers keep their dots. The interface still needs no shutdown if it is administratively down."
+    if low.startswith("ip route add default via"):
+        hop = parts[-1]
+        return f"{raw} installs a default route via {hop}. The address keeps its dots. It is the Linux iproute2 command, not the Cisco ip route line."
     if low.startswith("ip route"):
         dest = parts[2] if len(parts) > 2 else ""
         mask = parts[3] if len(parts) > 3 else ""
