@@ -11,9 +11,9 @@ import lab_skills as SK
 
 WIN = [
     ("Show the address", "ipconfig /all"),
-    ("Set the resolver", "Set-DnsClientServerAddress -InterfaceAlias <name> -ServerAddresses <address>"),
-    ("Renew a lease", "ipconfig /renew"),
-    ("Flush the cache", "ipconfig /flushdns"),
+    ("Set the resolver", "the DNS-client cmdlet, with an interface and a server address"),
+    ("Renew a lease", "ipconfig /<release-or-renew>"),
+    ("Flush the cache", "ipconfig /<flush-option>"),
     ("Ask a name", "nslookup <name>"),
 ]
 ROUTE = [("Show routes", "route print"), ("Add a route", "route add <dest> mask <mask> <gateway>")]

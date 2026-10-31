@@ -31,7 +31,7 @@ ADDR = IOS + [
     ("Enable the interface", "no shutdown"),
     ("Routes", "show ip route"),
 ]
-ROUTE = ADDR + [("Default route", "ip route 0.0.0.0 0.0.0.0 <next-hop>")]
+ROUTE = ADDR + [("Static route", "ip route <network> <mask> <next-hop>")]
 ACL = IOS + [("Standard list", "access-list <1-99> deny host <address>")]
 
 
