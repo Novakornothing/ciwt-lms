@@ -12,13 +12,8 @@
 </style>
 <div class="lab-shell">
   <div class="lab-main">
+    {% include '_lab_stages.html' %}
     <p class="mb-2">This is a real Linux desktop running in the page (x86 emulated in WebAssembly). Right-click the desktop for <strong>Terminal</strong>, <strong>Files</strong>, <strong>Editor</strong>, and <strong>Settings</strong>. Nothing here is graded by clicks — Check my work looks at the machine.</p>
-    {% for stage in lab.stages or [] %}
-    <section class="mb-3">
-      <h2 class="h6 mb-1">{{ stage.title }}</h2>
-      <div class="lgui-note">{{ stage.html|safe }}</div>
-    </section>
-    {% endfor %}
     {% if vm_assets_ok %}
     <div class="d-flex flex-wrap gap-2 mb-2">
       <button type="button" class="btn btn-brand" id="lguiCheck"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Check my work</button>

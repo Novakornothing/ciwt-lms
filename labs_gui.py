@@ -161,8 +161,40 @@ def apply(lab, state, done, ev, data):
     elif kind == 'adapter' and arg in ('disable', 'enable'):
         st['adapter'] = 'down' if arg == 'disable' else 'up'
         result['ok'] = 'Ethernet disabled — the address is released.' if arg == 'disable' else 'Ethernet enabled — new DHCP lease obtained (10.20.30.47).'
+    elif kind == 'svc' and arg == 'start':
+        name = (data or {}).get('name') or ''
+        if name in SERVICES:
+            running = st.setdefault('svc_running', [])
+            if name not in running:
+                running.append(name)
+            stopped = st.setdefault('stopped', [])
+            if name in stopped:
+                stopped.remove(name)
+            st['svc'] = name
+            result['ok'] = f'{name} is running.'
     elif kind == 'svc' and arg in SERVICES:
         st['svc'] = arg
+    elif ev == 'host:rename':
+        name = ((data or {}).get('name') or '').strip()
+        if not name:
+            return {'error': 'Type the new device name.', 'changed': False}, state, done
+        st['hostname'] = name
+        state['hostname'] = name
+        result['ok'] = f'Device name is now {name}.'
+    elif ev == 'acct:enable':
+        name = ((data or {}).get('name') or '').strip()
+        hit = next((a for a in (st.get('local_accounts') or []) if a.get('name') == name), None)
+        if not hit:
+            return {'error': 'That account is not on this PC.', 'changed': False}, state, done
+        hit['enabled'] = True
+        result['ok'] = f'{name} is enabled.'
+    elif ev == 'dev:fix':
+        name = ((data or {}).get('name') or '').strip()
+        if name == 'display':
+            st['display_warn'] = False
+            result['ok'] = 'Display adapter driver updated.'
+        else:
+            return {'error': 'Choose the device with the warning.', 'changed': False}, state, done
     elif kind == 'dev' and arg in DEVCATS:
         st.setdefault('dev_open', [])
         if arg not in st['dev_open']:

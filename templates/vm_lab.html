@@ -9,6 +9,7 @@
 {% set mem = (ms|sum(attribute='memory_mb')) + 90 * ms|length %}
 <div class="lab-shell">
   <div class="lab-main">
+    {% include '_lab_stages.html' %}
     {% include '_linux_gnome_companion.html' %}
     <div class="vm-start card mb-2" id="vmStart">
       <div class="card-body">

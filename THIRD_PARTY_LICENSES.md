@@ -42,3 +42,11 @@ For the 24 in-browser Linux VM labs, the **BSD-2-Clause `v86.wasm` hardware emul
 | `cryptography` | **Apache-2.0 / BSD-3-Clause** | Permissive commercial & whitelabel safe |
 | `ReportLab` | **BSD-3-Clause** | Permissive commercial & whitelabel safe |
 | `lxml` | **BSD-3-Clause** | Permissive commercial & whitelabel safe |
+
+## 4. Word list
+
+| Component | Version | License | Notes |
+|---|---|---|---|
+| **SCOWL** (Spell Checker Oriented Word Lists), Kevin Atkinson, files `curriculum_sec/words/en_US.txt`, `curriculum_sec/words/security_allowlist.txt`, notice `curriculum_sec/words/SCOWL_COPYRIGHT.txt` | scowl-5 | **Permissive grant** | The collective work is copyright 2000-2011 by Kevin Atkinson. Permission to use, copy, modify, distribute, and sell the word lists, the associated scripts, their output, and the documentation for any purpose is granted without fee, provided the copyright notice appears in all copies and both the copyright notice and the permission notice appear in supporting documentation. It is provided as is. Component lists (including public-domain Moby Words II and Brian Kelk's UK English wordlist) keep the notices in `SCOWL_COPYRIGHT.txt`. |
+
+The Windows simulation, the Cisco IOS-style console, and the network view in `static/js/sims/lab-stages.js` are original code in this repository. They do not add another third-party runtime. v86 remains BSD-2-Clause, listed above.

@@ -63,7 +63,29 @@ def solve_http(client, lab_id, mod=None):
                 a = a(server_state)
             st = _j(client.post(f"/labs/{lab_id}/check", json={"step": step["id"], "answer": a}))
             assert st["result"]["correct"], (lab_id, step["id"], st["result"])
-    return st
+    for action in RT.PX.stage_actions(lab, _server_state(lab_id)):
+        if action["type"] == "cmd":
+            st = _j(client.post(f"/labs/{lab_id}/cmd", json={"command": action["command"]}))
+        elif action["type"] == "stage":
+            st = _j(client.post(f"/labs/{lab_id}/stage", json={"stage": action["stage"], "answer": action["answer"]}))
+        elif action["type"] == "event":
+            st = _j(client.post(f"/labs/{lab_id}/event", json={"ev": action["ev"], "data": action.get("data") or {}}))
+    if lab.get("kind") == "vm":
+        import lab_skills as SK
+        server_state = _server_state(lab_id)
+        file_cmds = RT.PX.vm_file_commands(lab, server_state)
+        if SK.has_spec(lab):
+            extra = SK.evaluate(lab, server_state["px"]["facts"])
+        else:
+            extra = RT.PX.run_px_grep(lab, server_state, file_cmds) if file_cmds else []
+        if file_cmds:
+            _j(client.post(f"/labs/{lab_id}/vm-log", json={"lines": file_cmds}))
+        if extra:
+            probes = RT.VM.solved_probes(_server_state(lab_id), lab)
+            first = next(iter(probes))
+            probes[first] = RT.PX.splice_px_lines(probes[first], extra)
+            st = _j(client.post(f"/labs/{lab_id}/vm-check", json={"probes": probes, "fabric": sol.get("fabric")}))
+    return _j(client.get(f"/labs/{lab_id}/state"))
 
 
 def _server_state(lab_id, email="student1@lms.local"):
@@ -289,6 +311,9 @@ def test_event_log_records_ordered_process(student, instructor, mod):
     _j(student.post("/labs/win-ipconfig/hint"))
     _j(student.post("/labs/win-ipconfig/cmd", json={"command": "hostname"}))
     _j(student.post("/labs/win-ipconfig/cmd", json={"command": "ipconfig /all"}))
+    for action in RT.PX.stage_actions(RT.get_lab("win-ipconfig"), _server_state("win-ipconfig")):
+        if action["type"] == "cmd":
+            _j(student.post("/labs/win-ipconfig/cmd", json={"command": action["command"]}))
     row, uid = _row(mod, "student1@lms.local", "win-ipconfig")
     with mod.app.app_context():
         evs = api.events_for(uid, "win-ipconfig", attempt=(row.resets or 0) + 1)
@@ -342,7 +367,8 @@ def test_vm_lab_grades_probe_and_history(student, instructor, mod):
     bad = RT.VM.solved_probe(st, RT.VM.PERMS).replace("c_perms 1", "c_perms 0").replace("end", "v_perms -rw-r--r--\nend")
     r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": bad}))
     assert "perms" not in r["done"] and any("-rw-r--r--" in m and "640" in m for m in r["result"]["messages"])
-    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": RT.VM.solved_probe(st, RT.VM.PERMS)}))
+    probe = RT.PX.probes_with_real_px(RT.get_lab("linux-vm-perms"), st, RT.VM.solved_probe(st, RT.VM.PERMS))
+    r = _j(student.post("/labs/linux-vm-perms/vm-check", json={"probe": probe}))
     assert r["complete"] and r["score"] == 100
     _, uid = _row(mod, "student1@lms.local", "linux-vm-perms")
     page = instructor.get(f"/instructor/section/1/labs/student/{uid}/linux-vm-perms").data.decode()
@@ -370,7 +396,8 @@ def test_vm_multi_machine_probes_and_order(student):
     st = _server_state("linux-vm-routing")
     _j(student.post("/labs/linux-vm-routing/vm-log", json={"lines": [], "booted": True}))
     _j(student.post("/labs/linux-vm-routing/vm-log", json={"lines": lab["solution"]["vm_commands"]}))
-    r = _j(student.post("/labs/linux-vm-routing/vm-check", json={"probes": RT.VM.solved_probes(st, lab)}))
+    probes = RT.PX.probes_with_real_px(lab, st, RT.VM.solved_probes(st, lab))
+    r = _j(student.post("/labs/linux-vm-routing/vm-check", json={"probes": probes}))
     assert r["complete"]
 
 

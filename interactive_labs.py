@@ -858,6 +858,7 @@ _COMMON_SHOW_SW = [
     ("show", "interfaces"), ("show", "ip", "interface", "brief"),
     ("show", "mac", "address-table"), ("show", "mac", "address", "table"),
     ("show", "version"), ("show", "clock"),
+    ("show", "banner", "login"), ("show", "banner", "motd"),
 ]
 _SW_BY_MODE = {
     "user": [
@@ -865,6 +866,8 @@ _SW_BY_MODE = {
         ("show", "vlan", "brief"), ("show", "vlan"),
         ("show", "interfaces", "status"),
         ("show", "version"),
+        ("show", "mac", "address-table"),
+        ("show", "banner", "login"), ("show", "banner", "motd"),
     ],
     "priv": [
         ("enable",), ("disable",), ("exit",), ("end",),
@@ -923,6 +926,7 @@ _RTR_BY_MODE = {
     "user": [
         ("enable",), ("exit",), ("help",), ("?",), ("clear",),
         ("show", "ip", "interface", "brief"), ("show", "version"),
+        ("show", "banner", "login"), ("show", "banner", "motd"),
     ],
     "priv": [
         ("enable",), ("disable",), ("exit",), ("end",),
@@ -931,6 +935,7 @@ _RTR_BY_MODE = {
         ("show", "ip", "route"),
         ("show", "ip", "protocols"),
         ("show", "running-config"), ("show", "startup-config"),
+        ("show", "banner", "login"), ("show", "banner", "motd"),
         ("show", "interfaces"), ("show", "version"),
         ("show", "arp"), ("show", "clock"),
         ("show", "access-lists"), ("show", "ip", "access-lists"),
@@ -1012,6 +1017,33 @@ _WIN_COMMANDS = [
     "cls",
     "clear",
 ]
+
+
+def _banner_cfg_lines(state):
+    """Lines a show running-config should print for each configured banner."""
+    banners = dict((state or {}).get("banners") or {})
+    raw = (state or {}).get("banner") or ""
+    if raw and "login" not in banners and "motd" not in banners:
+        banners["login"] = raw
+    lines = []
+    for kind in ("motd", "login"):
+        text = banners.get(kind) or ""
+        if not text:
+            continue
+        lines.append(f"banner {kind} ^C")
+        lines.append(text)
+        lines.append("^C")
+    return lines
+
+
+def _show_banner_lines(state, kind):
+    banners = (state or {}).get("banners") or {}
+    text = banners.get(kind) or ""
+    if not text and kind == "login":
+        text = (state or {}).get("banner") or ""
+    if not text:
+        return [f"(no {kind} banner is configured)"]
+    return [text]
 
 
 def _token_matches(abbrev, word):
@@ -1959,6 +1991,8 @@ def _run_windows_base(cmd, state, done):
         out.append("csrss.exe                      712 Services           4,212 K")
         out.append("explorer.exe                  4312 Console           42,108 K")
         out.append("MsMpEng.exe                   2104 Services          88,000 K")
+        for proc in state.get("extra_procs") or []:
+            out.append(f"{proc['name']:<30} {proc['pid']:<4} Console           12,000 K")
         _mark(done, "tasklist")
         return out, state, done
 
@@ -2035,7 +2069,9 @@ def _run_windows_base(cmd, state, done):
 
     if cl == "ipconfig /release":
         state["released"] = True
-        state["ipv4_prev"] = state.get("ipv4")
+        cur = str(state.get("ipv4") or "")
+        if not cur.startswith("169.254"):
+            state["ipv4_prev"] = cur
         state["ipv4"] = "0.0.0.0"
         out.append("")
         out.append("Windows IP Configuration")
@@ -2134,7 +2170,9 @@ def _run_windows_base(cmd, state, done):
         gw = state.get("gateway") or "10.20.30.1"
         out.append("Interface: Ethernet")
         out.append("  Internet Address      Physical Address      Type")
-        out.append(f"  {gw}           00-1a-2b-3c-4d-01     dynamic")
+        rows = state.get("arp_rows") or [{"ip": gw, "mac": "00-1a-2b-3c-4d-01", "kind": "dynamic"}]
+        for row in rows:
+            out.append(f"  {row['ip']:<18} {row['mac']:<20} {row.get('kind') or 'dynamic'}")
         out.append(f"  {state.get('ipv4')}        00-1a-2b-aa-bb-07     static")
         _mark(done, "arp")
         return out, state, done
@@ -2156,16 +2194,21 @@ def _run_windows_base(cmd, state, done):
         _mark(done, "route")
         return out, state, done
 
-    if cl in ("netstat", "netstat -an", "netstat -a"):
+    if cl in ("netstat", "netstat -an", "netstat -a", "netstat -ano"):
         out.append("Active Connections")
-        out.append("  Proto  Local Address          Foreign Address        State")
-        out.append(f"  TCP    {state.get('ipv4')}:49712      10.20.30.10:53          TIME_WAIT")
+        out.append("  Proto  Local Address          Foreign Address        State           PID")
+        out.append(f"  TCP    {state.get('ipv4')}:49712      10.20.30.10:53          TIME_WAIT       2104")
+        for row in state.get("listeners") or []:
+            out.append(f"  TCP    0.0.0.0:{row['port']:<16} 0.0.0.0:0              LISTENING       {row['pid']}")
         _mark(done, "netstat")
         return out, state, done
 
     if cl == "getmac":
         out.append("Physical Address    Transport Name")
-        out.append("00-1A-2B-AA-BB-07   Ethernet")
+        adapters = state.get("adapters") or [{"mac": "00-1A-2B-AA-BB-07", "name": "Ethernet", "media": "connected"}]
+        for row in adapters:
+            media = row.get("media") or "connected"
+            out.append(f"{row['mac']}   {row['name']} ({media})")
         _mark(done, "getmac")
         return out, state, done
 
@@ -2585,6 +2628,8 @@ def run_switch(cmd, state, done):
 
     if mode == "config" and cl.startswith("banner "):
         state["banner"] = c
+        kind = "motd" if cl.startswith("banner motd") else "login"
+        state.setdefault("banners", {})[kind] = c.split(None, 2)[-1] if len(c.split()) > 2 else c
         _mark(done, "banner")
         return out, state, done
 
@@ -2750,8 +2795,7 @@ def run_switch(cmd, state, done):
                 continue
             out.append(f"vlan {vid}")
             out.append(f" name {name}")
-        if state.get("banner"):
-            out.append(state["banner"])
+        out.extend(_banner_cfg_lines(state))
         for p, cfg in state["interfaces"].items():
             out.append(f"interface {p}")
             if cfg.get("desc"):
@@ -2770,16 +2814,24 @@ def run_switch(cmd, state, done):
         out.append("end")
         return out, state, done
 
+    if cl in ("show banner login", "sh banner login", "show banner motd", "sh banner motd"):
+        kind = "motd" if cl.endswith("motd") else "login"
+        out.extend(_show_banner_lines(state, kind))
+        return out, state, done
+
     if cl in ("show version", "sh ver", "show ver"):
         out.append(f"{state.get('hostname')} uptime is 1 day, 4 hours")
-        out.append("Cisco IOS Software, Switch Training Image")
+        out.append(f"Cisco IOS Software, Version {state.get('ios_version') or '15.2(4)E7'}")
+        out.append(f"Processor board ID {state.get('serial') or 'FDO2140A1B2'}")
         _mark(done, "show_ver")
         return out, state, done
 
     if cl in ("show mac address-table", "show mac address table", "sh mac address-table", "show mac"):
         out.append("Vlan    Mac Address       Type        Ports")
         out.append("----    -----------       --------    -----")
-        out.append("   1    0011.2233.4455    DYNAMIC     Fa0/2")
+        rows = state.get("macs") or [{"vlan": 1, "mac": "0011.2233.4455", "port": "Fa0/2"}]
+        for row in rows:
+            out.append(f"{int(row.get('vlan') or 1):>4}    {row.get('mac')}    DYNAMIC     {row.get('port')}")
         _mark(done, "show_mac")
         return out, state, done
 
@@ -3170,9 +3222,15 @@ def run_router(cmd, state, done):
             out.append("% No connected route to " + target + " yet.")
         return out, state, done
 
+    if cl in ("show banner login", "sh banner login", "show banner motd", "sh banner motd"):
+        kind = "motd" if cl.endswith("motd") else "login"
+        out.extend(_show_banner_lines(state, kind))
+        return out, state, done
+
     if cl in ("show version", "sh ver"):
         out.append(f"{state.get('hostname')} uptime is 2 days, 3 hours")
-        out.append("Cisco IOS Software, Router Training Image (Novak LMS simulator)")
+        out.append(f"Cisco IOS Software, Version {state.get('ios_version') or '15.7(3)M4'}")
+        out.append(f"Processor board ID {state.get('serial') or 'FDO2140RTR1'}")
         return out, state, done
 
     if cl in ("show interfaces", "show interface", "sh int", "show ip interface"):
@@ -3211,8 +3269,7 @@ def run_router(cmd, state, done):
         for num, entries in sorted(state["acls"].items()):
             for e in entries:
                 out.append(f"access-list {num} {_acl_line(e)}")
-        if state.get("banner"):
-            out.append(state["banner"])
+        out.extend(_banner_cfg_lines(state))
         out.append("end")
         return out, state, done
 

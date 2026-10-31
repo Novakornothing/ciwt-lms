@@ -164,7 +164,11 @@
       c.appendChild(row('About', 'Device specifications, rename this PC, Windows specifications', 'pane:about', { icon: 'bi-info-circle' }));
     } else if (pane === 'about') {
       c.appendChild(el('h4', { class: 'w11-sub', text: 'Device specifications' }));
-      c.appendChild(kv([['Device name', facts.hostname], ['Processor', 'Intel(R) Core(TM) i5-1345U'], ['Installed RAM', '16.0 GB'], ['System type', '64-bit operating system, x64-based processor']]));
+      c.appendChild(kv([['Device name', gui.hostname || facts.hostname], ['Processor', 'Intel(R) Core(TM) i5-1345U'], ['Installed RAM', '16.0 GB'], ['System type', '64-bit operating system, x64-based processor']]));
+      c.appendChild(field('aboutName', 'Rename this PC', 'text', gui.hostname || facts.hostname || ''));
+      var rename = el('button', { type: 'button', class: 'btn btn-brand btn-sm', id: 'w11Rename', text: 'Rename' });
+      rename.addEventListener('click', function () { send('host:rename', { name: v('aboutName') }); });
+      c.appendChild(rename);
       c.appendChild(el('h4', { class: 'w11-sub', text: 'Windows specifications' }));
       c.appendChild(kv([['Edition', facts.edition], ['Version', facts.version], ['OS build', facts.build], ['Domain', facts.domain]]));
     } else if (pane === 'network') {
@@ -191,7 +195,18 @@
       c.appendChild(row('Network reset', 'Not used in this lab — it removes every adapter', null, { icon: 'bi-exclamation-triangle' }));
     } else if (pane === 'accounts') {
       c.appendChild(kv([['Signed in as', facts.user], ['Account type', 'Domain user · Standard'], ['Domain', facts.domain]]));
-      c.appendChild(el('p', { class: 'small text-muted', text: 'Name the account before you reset anything.' }));
+      (gui.local_accounts || []).forEach(function (a) {
+        var row = el('div', { class: 'w11-card' }, [
+          el('span', { class: 'fw-semibold', text: a.name }),
+          el('span', { class: 'small', text: a.enabled ? 'Enabled' : 'Disabled' })
+        ]);
+        if (!a.enabled) {
+          var b = el('button', { type: 'button', class: 'btn btn-sm btn-brand', text: 'Enable' });
+          b.addEventListener('click', function () { send('acct:enable', { name: a.name }); });
+          row.appendChild(b);
+        }
+        c.appendChild(row);
+      });
     } else if (pane === 'update') {
       var checked = gui.updates === 'checked';
       c.appendChild(el('p', { class: 'w11-big', text: checked ? "You're up to date" : 'Updates available? Check now.' }));
@@ -228,8 +243,9 @@
     var list = el('div', { class: 'w11-list', role: 'listbox', 'aria-label': 'Services' });
     SVCS.forEach(function (s) {
       var on = gui.svc === s[0];
+      var stopped = (gui.stopped || []).indexOf(s[0]) >= 0 && (gui.svc_running || []).indexOf(s[0]) < 0;
       var b = el('button', { type: 'button', role: 'option', 'aria-selected': on ? 'true' : 'false', class: 'w11-svc' + (on ? ' active' : ''), 'data-svc': s[0] },
-        [el('span', { class: 'w11-svc-name', text: s[1] }), el('span', { class: 'w11-svc-st', text: s[2] }), el('span', { class: 'w11-svc-type', text: s[3] })]);
+        [el('span', { class: 'w11-svc-name', text: s[1] }), el('span', { class: 'w11-svc-st', text: stopped ? 'Stopped' : s[2] }), el('span', { class: 'w11-svc-type', text: s[3] })]);
       b.addEventListener('click', function () { status = ''; send('svc:' + s[0]); });
       longPress(b, function () {
         return [{ label: 'Properties', run: function () { send('svc:' + s[0]); } },
@@ -243,6 +259,11 @@
       det.appendChild(el('h4', { class: 'w11-sub', text: cur[1] }));
       det.appendChild(kv([['Service name', cur[0]], ['Status', cur[2]], ['Startup type', cur[3]]]));
       det.appendChild(el('p', { class: 'small', text: cur[4] }));
+      if ((gui.stopped || []).indexOf(cur[0]) >= 0 && (gui.svc_running || []).indexOf(cur[0]) < 0) {
+        var start = el('button', { type: 'button', class: 'btn btn-sm btn-brand', id: 'w11SvcStart', text: 'Start' });
+        start.addEventListener('click', function () { send('svc:start', { name: cur[0] }); });
+        det.appendChild(start);
+      }
     } else det.appendChild(el('p', { class: 'small text-muted', text: 'Select a service to see its status and startup type. Long-press or right-click for more.' }));
     return frame('Services (Local)', 'bi-list-check', el('div', { class: 'w11-split' }, [list, det]));
   }
@@ -261,7 +282,20 @@
       var li = el('li', { role: 'treeitem', 'aria-expanded': ex ? 'true' : 'false' }, [b]);
       if (ex) {
         var sub = el('ul', { role: 'group' });
-        d[3].forEach(function (n) { sub.appendChild(el('li', { role: 'treeitem', class: 'w11-tree-leaf', text: n })); });
+        d[3].forEach(function (n) {
+          var leaf = el('li', { role: 'treeitem', class: 'w11-tree-leaf', text: n + (d[0] === 'display' && gui.display_warn ? ' — driver problem' : '') });
+          sub.appendChild(leaf);
+        });
+        if (d[0] === 'display' && gui.display_warn) {
+          var fix = el('button', { type: 'button', class: 'btn btn-sm btn-brand', id: 'w11DisplayFix', text: 'Update driver' });
+          fix.addEventListener('click', function () { send('dev:fix', { name: 'display' }); });
+          sub.appendChild(el('li', {}, [fix]));
+        }
+        if (d[0] === 'net' && gui.adapter === 'down') {
+          var en = el('button', { type: 'button', class: 'btn btn-sm btn-brand', id: 'w11NicEnable', text: 'Enable' });
+          en.addEventListener('click', function () { send('adapter:enable'); });
+          sub.appendChild(el('li', {}, [en]));
+        }
         li.appendChild(sub);
       }
       tree.appendChild(li);

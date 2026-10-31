@@ -199,7 +199,7 @@ def test_method_page_and_http_flow(student, instructor):
         st = json.loads(api.LabProgress.query.filter_by(user_id=u.id, lab_id=METHOD).first().state_json)
     student.post(f'/labs/{METHOD}/vm-log', json={'lines': [], 'booted': True, 'boot_ms': 1})
     student.post(f'/labs/{METHOD}/vm-log', json={'lines': lab['solution']['vm_commands']})
-    r = student.post(f'/labs/{METHOD}/vm-check', json={'probes': V.solved_probes(st, lab)}).get_json()
+    r = student.post(f'/labs/{METHOD}/vm-check', json={'probes': RT.PX.probes_with_real_px(lab, st, V.solved_probes(st, lab))}).get_json()
     assert r['complete'] and r['score'] == 100, r
 
 
