@@ -93,6 +93,7 @@
       <p class="mb-1 mt-1">Check my work runs a short read-only script inside {{ 'each VM' if multi else 'your VM' }} (it looks at files, permissions, processes, services and network configuration) and sends the result to the LMS.{% if lab.vm.net %} The virtual network's DHCP and DNS servers also report what they saw (for example a DHCP acknowledgement), so a hand-typed address does not count as a lease.{% endif %} Your command lines are recorded in order so your instructor can see how you worked, not only whether you finished.</p>
       <p class="mb-0">Credits: <a href="https://github.com/copy/v86">v86</a> (BSD-2-Clause), SeaBIOS (LGPL-3.0), Linux and BusyBox (GPL-2.0) via Buildroot. <a href="{{ url_for('static', filename='vendor/v86/LICENSES.md') }}">Licences and source</a>.</p>
     </details>
+    {% include '_lab_sims.html' %}
   </div>
   {% include '_lab_side.html' %}
 </div>
