@@ -53,6 +53,9 @@ def _cmd(lid, checker, syntax, s2_prose, s3_prose, s2_note, s3_note, s2_cmd, s3_
         f["w_acct2"] = ("kiosk-back", "lab-lead", "front-lead", "scan-lead", "night-lead")[seed % 5]
         f["w_ssid"] = ("Novak-Clinic", "Novak-East", "Novak-Ward", "Novak-Lab", "Novak-Lobby")[seed % 5]
         f["w_suffix"] = f"clinic{20 + (seed % 40)}.local"
+        listeners = ("AnyDesk", "TeamViewer", "TightVNC", "ngrok", "rustdesk")
+        f["listen1"] = listeners[seed % 5]
+        f["listen2"] = listeners[(seed + 2) % 5]
 
     def note(stage):
         text = s2_note if stage == "assisted" else s3_note
@@ -133,11 +136,21 @@ def _ok(checker, state, f, stage):
     if checker == "mac":
         if stage == "assisted":
             return mark.get("adapter") == "up"
-        return mark.get("arp") == "one"
+        return mark.get("usb") == "down"
     if checker == "listen":
+        want = f.get("listen1") if stage == "assisted" else f.get("listen2")
+        return str(mark.get("killed") or "").lower() == str(want or "").lower()
+    if checker == "ipcfg":
         if stage == "assisted":
-            return str(mark.get("service") or "").lower() == "spooler"
-        return mark.get("fw") == "private"
+            return dns == [f["w_ip"]]
+        ip = str(state.get("ipv4") or "")
+        return mark.get("renewed") is True and not ip.startswith("169.254")
+    if checker == "inventory":
+        if stage == "assisted":
+            host = (state.get("hostname") or mark.get("hostname") or "").lower()
+            return host == f["w_name"].lower()
+        ip = str(state.get("ipv4") or "")
+        return mark.get("renewed") is True and not ip.startswith("169.254")
     if checker == "reach":
         if stage == "assisted":
             return dns == [f["w_ip"]]
@@ -391,11 +404,11 @@ _reg("win-nslookup-ok", "dns", WIN,
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
 
-_reg("win-ipconfig", "dns", WIN,
+_reg("win-ipconfig", "ipcfg", WIN,
      "The full address listing on this PC still shows the image DNS servers, and the charting name will not resolve. The practice note has the server this adapter should use. Set that and leave the address on automatic.",
-     "The identity you recorded is stale because the resolver changed this morning.",
+     "The address listing shows a 169.254 address. That is the IPv4 address Windows picks when DHCP does not answer. Release the address and renew the lease. Do not type a static DNS server for this stage.",
      "Ethernet DNS: {w_ip}.",
-     "Ethernet should use the DNS server in ticket.txt. The address stays on DHCP. Read the file with Get-Content ticket.txt.",
+     "Read ipconfig. It shows the 169.254 address. Release the lease, then renew it.",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip']}",
      lambda f: f"Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses {f['w_ip2']}",
      lambda f: {}, _dns_match)
@@ -556,9 +569,9 @@ _reg("win-wifi-survey", "wlan", WLAN,
 
 _reg("win-arp", "arp", [("Show ARP", "arp -a"), ("Delete entries", "arp -d *")],
      "The ARP cache still has the old gateway after the router was replaced, so packets go to a stale MAC. Clear the cache.",
-     "The cache was cleared and the retired gateway was learned again for one address. Delete that one entry. Do not add a static entry for the old MAC.",
+     "The cache was cleared and one retired gateway was learned again. Delete that one entry. Do not add a static entry for the old MAC.",
      "Clear the ARP cache.",
-     "Delete only the stale gateway entry.",
+     "The ARP table shows the stale gateway. Delete only that address. Read it with arp -a.",
      lambda f: "arp -d *",
      lambda f: f"arp -d {f['w_hop']}",
      lambda f: {"arp": ""}, _arp_match)
@@ -597,14 +610,23 @@ def _mac_match(low, raw, f, state):
     return _arp_match(low, raw, f, state)
 
 
-_reg("win-getmac", "mac", [("Show the MAC", "getmac"), ("Enable the adapter", "netsh interface set interface Ethernet enable"), ("Delete one ARP entry", "arp -d <address>")],
-     "getmac shows Ethernet as media disconnected because the adapter is disabled. Enable it. The MAC does not change.",
-     "Ethernet is up and the asset system still has the old gateway MAC. Delete that one ARP entry. The address is the only line in ticket.txt. Do not clear the whole cache.",
-     "Enable Ethernet.",
-     "Delete the stale gateway ARP entry. Get-Content ticket.txt prints the address. Do not run arp -d *.",
+def _usb_match(low, raw, f, state):
+    hit = _adapter_match(low, raw, f, state)
+    if hit:
+        return hit
+    if "ethernet 2" in low and "disable" in low:
+        return {"usb": "down"}
+    return None
+
+
+_reg("win-getmac", "mac", [("Show the MAC", "getmac"), ("Enable the adapter", "netsh interface set interface Ethernet enable"), ("Disable one adapter", "netsh interface set interface <name> disable")],
+     "getmac shows Ethernet as media disconnected, so its MAC is not on the wire. Enable Ethernet. The address getmac prints does not change when you enable it.",
+     "getmac now shows a second adapter, Ethernet 2, whose MAC starts with 02. That is a locally administered address, a USB dongle the switch should not learn. Disable Ethernet 2. Leave the built-in Ethernet adapter enabled.",
+     "Enable Ethernet. Confirm the MAC with getmac.",
+     "getmac lists Ethernet 2 with a MAC that starts with 02. Disable that adapter.",
      lambda f: "netsh interface set interface Ethernet enable",
-     lambda f: f"arp -d {f['w_hop']}",
-     lambda f: {"adapter": "down", "arp": ""}, _mac_match)
+     lambda f: "netsh interface set interface \"Ethernet 2\" disable",
+     lambda f: {"adapter": "down", "usb": "up"}, _usb_match)
 
 _reg("gui-renew", "adapter", [("Renew", "ipconfig /renew")],
      "The lease on this desk is from the old VLAN. Renew it so the adapter comes back up on the new scope.",
@@ -628,13 +650,13 @@ _reg("win-hostname", "identity", WIN + [("Computer name", "Rename-Computer -NewN
 # _ok requires both. Stage 2 fails until both exist. Solver runs stage 2 then 3, but stage 2 observe happens before stage 3.
 # Stage 2 won't latch. I need _ok for identity: assisted checks hostname, ticket checks both.
 
-_reg("w11-inventory", "identity", WIN,
-     "The inventory still shows the image name and an empty DNS suffix. The practice note has the name. Set it.",
-     "The name is updated and the suffix is still empty, so the inventory row does not match the domain.",
+_reg("w11-inventory", "inventory", WIN + [("Renew a lease", "ipconfig /renew")],
+     "The inventory still shows the image computer name. The practice note has the name this PC should carry. Set it.",
+     "The address listing shows a 169.254 address, so DHCP never answered. Release the lease and renew it. The computer name from practice can stay.",
      "Set the computer name to {w_name}.",
-     "Set the DNS suffix to the only line in ticket.txt.",
+     "Read ipconfig. It shows the 169.254 address. Release the lease, then renew it.",
      lambda f: f"Rename-Computer -NewName {f['w_name']}",
-     lambda f: f"netsh interface ip set dnsSuffix {f['w_suffix']}",
+     lambda f: "ipconfig /renew",
      lambda f: {"suffix": ""}, _id_match)
 
 _reg("gui-about", "identity", WIN,
@@ -689,14 +711,14 @@ def _listen_match(low, raw, f, state):
     return _fw_match(low, raw, f, state)
 
 
-_reg("win-netstat", "listen", [("Connections", "netstat -ano"), ("Start a service", "Start-Service <name>"), ("Firewall profile", "netsh advfirewall set <profile> state on")],
-     "netstat shows nothing listening because the print spooler is stopped. Start Spooler. A connection test is not the repair.",
-     "The spooler is running and the private firewall profile is still off, so the port the ticket needs stays closed. Turn the private profile on.",
-     "Start the Spooler service.",
-     "Turn the private firewall profile on. Do not run Test-NetConnection and call that the fix.",
-     lambda f: "Start-Service Spooler",
-     lambda f: "netsh advfirewall set privateprofile state on",
-     lambda f: {"service": "", "fw": "off"}, _listen_match)
+_reg("win-netstat", "listen", [("Connections", "netstat -ano"), ("Process list", "tasklist"), ("Stop one", "Stop-Process -Name <name>")],
+     "The numeric connection listing shows a LISTENING socket that this PC should not have. The process list names the PID. Stop that process. A firewall change is not the finding.",
+     "A second LISTENING socket is on a different port, owned by a different process. The process list names that PID. Stop that process. Leave the first one stopped.",
+     "Stop the process that owns the unexpected LISTENING port. Run netstat -ano for the port and PID, then tasklist for the name.",
+     "A second port is still LISTENING. Run netstat -ano and tasklist. Stop the process that owns it.",
+     lambda f: f"Stop-Process -Name {f['listen1']}",
+     lambda f: f"Stop-Process -Name {f['listen2']}",
+     lambda f: {"killed": ""}, _proc_match)
 
 def _reach_match(low, raw, f, state):
     hit = _dns_match(low, raw, f, state)
@@ -820,15 +842,15 @@ def _accounts_after(state, facts):
 
 
 _gui(
-    "gui-about", "about", [("About", "Settings, System, About"), ("System", "Settings, System")],
-    "About was open during the walkthrough and is back on the home page. Open About again and read the device name there. Do not type the name into a box.",
-    "About is open and System is not. Open System so the display and sound links are on screen. Leaving About open does not finish this.",
-    "Open Settings and then About.",
-    "Open System. About by itself is the previous stage.",
-    lambda f: [{"ev": "pane:about"}],
-    lambda f: [{"ev": "pane:system"}],
-    lambda state, f, stage: (state.get("gui") or {}).get("pane") == ("about" if stage == "assisted" else "system"),
-    _about_after,
+    "gui-about", "about", [("Rename", "Rename this PC"), ("Updates", "Check for updates")],
+    "About shows the image device name. Rename this PC to the name in the practice note. Opening the page is not the change.",
+    "About shows the image OS build. That build is stale. Open Windows Update and click Check for updates. The rename from practice can stay.",
+    "Rename this PC to {w_name}. The button is on About.",
+    "The OS build on About is the image build. Click Check for updates.",
+    lambda f: [{"ev": "host:rename", "data": {"name": f["w_name"]}}],
+    lambda f: [{"ev": "pane:update"}, {"ev": "update:check"}],
+    lambda state, f, stage: ((state.get("gui") or {}).get("hostname") or "").lower() == f["w_name"].lower() if stage == "assisted"
+    else (state.get("gui") or {}).get("updates") == "checked",
 )
 _gui(
     "gui-ethernet", "ethernet", [("Ethernet", "Settings, Network, Ethernet"), ("Adapter", "Disable, then Enable")],
@@ -854,50 +876,98 @@ _gui(
     else ((state.get("gui") or {}).get("adapter") == "up" and "adapter:disable" in _seen(state)),
     _renew_after,
 )
+def _svc_running(state, name):
+    return name in (((state.get("gui") or {}).get("svc_running")) or [])
+
+
+def _services_plant(state, facts):
+    px = state.setdefault("px", {})
+    if px.get("svc_planted"):
+        return
+    px["svc_planted"] = True
+    gui = state.setdefault("gui", {})
+    gui["stopped"] = ["Spooler", "wuauserv"]
+
+
 _gui(
-    "gui-services", "service", SVC,
-    "Services is open on Defender from the walkthrough. The print spooler has not been selected. Select Print Spooler.",
-    "Print Spooler is selected. Windows Update (wuauserv) has not been. Select that service. Spooler staying selected does not pass.",
-    "Select the Print Spooler service.",
-    "Select the Windows Update service, wuauserv.",
-    lambda f: [{"ev": "open:services"}, {"ev": "svc:Spooler"}],
-    lambda f: [{"ev": "svc:wuauserv"}],
-    lambda state, f, stage: (state.get("gui") or {}).get("svc") == ("Spooler" if stage == "assisted" else "wuauserv"),
+    "gui-services", "service", SVC + [("Start", "Start the stopped service")],
+    "Services shows Print Spooler as Stopped, which is why nothing prints. Start Print Spooler. Selecting the row is not the same as starting it.",
+    "Print Spooler is running. Windows Update (wuauserv) is still Stopped, so definition updates cannot install. Start wuauserv.",
+    "Start Print Spooler. It is listed as Stopped.",
+    "Start the Windows Update service, wuauserv. It is still Stopped.",
+    lambda f: [{"ev": "open:services"}, {"ev": "svc:start", "data": {"name": "Spooler"}}],
+    lambda f: [{"ev": "svc:start", "data": {"name": "wuauserv"}}],
+    lambda state, f, stage: _svc_running(state, "Spooler" if stage == "assisted" else "wuauserv"),
+    plant=_services_plant,
 )
 _gui(
-    "gui-update", "updates", [("Windows Update", "Settings, Windows Update"), ("Check", "Check for updates")],
-    "Windows Update has not been opened since the walkthrough check was cleared. Open the Windows Update page. Do not click Check for updates yet.",
-    "The Windows Update page is open and the last check is still the stale one. Click Check for updates.",
-    "Open Windows Update. Do not run the check.",
+    "gui-update", "updates", [("Check", "Check for updates"), ("Service", "Start Windows Update")],
+    "Windows Update has not been checked since the image was built. Open Windows Update and click Check for updates. Opening the page is not the check.",
+    "The check ran, and Windows Update (wuauserv) is still Stopped, so the definitions never install. Start that service in Services.",
     "Click Check for updates.",
-    lambda f: [{"ev": "pane:update"}],
-    lambda f: [{"ev": "update:check"}],
-    lambda state, f, stage: ((state.get("gui") or {}).get("pane") == "update" and (state.get("gui") or {}).get("updates") != "checked") if stage == "assisted"
-    else (state.get("gui") or {}).get("updates") == "checked",
+    "Start the Windows Update service, wuauserv. It is Stopped.",
+    lambda f: [{"ev": "pane:update"}, {"ev": "update:check"}],
+    lambda f: [{"ev": "open:services"}, {"ev": "svc:start", "data": {"name": "wuauserv"}}],
+    lambda state, f, stage: (state.get("gui") or {}).get("updates") == "checked" if stage == "assisted"
+    else _svc_running(state, "wuauserv"),
     _update_after,
+    plant=_services_plant,
 )
+
+
+def _acct_enabled(state, name):
+    for row in ((state.get("gui") or {}).get("local_accounts") or []):
+        if row.get("name") == name:
+            return bool(row.get("enabled"))
+    return False
+
+
+def _accounts_plant(state, facts):
+    px = state.setdefault("px", {})
+    if px.get("acct_planted"):
+        return
+    px["acct_planted"] = True
+    gui = state.setdefault("gui", {})
+    gui["local_accounts"] = [
+        {"name": "kiosk-front", "enabled": False},
+        {"name": "kiosk-back", "enabled": False},
+    ]
+
+
 _gui(
-    "gui-accounts", "account", [("Accounts", "Settings, Accounts"), ("About", "Settings, System, About")],
-    "Accounts is not on screen. Open Accounts and read the signed-in user before you change anything.",
-    "You have the signed-in account. About is closed, so the device name next to that account is not on screen. Open About.",
-    "Open Accounts.",
-    "Open About and read the device name.",
-    lambda f: [{"ev": "pane:accounts"}],
-    lambda f: [{"ev": "pane:about"}],
-    lambda state, f, stage: (state.get("gui") or {}).get("pane") == ("accounts" if stage == "assisted" else "about"),
-    _accounts_after,
+    "gui-accounts", "account", [("Enable", "Enable a disabled local account")],
+    "Accounts lists kiosk-front as disabled. Enable that account. Reading the signed-in user is not the change.",
+    "kiosk-front is enabled. kiosk-back is still disabled on the Accounts page. Enable that one.",
+    "Enable kiosk-front. It is listed as disabled.",
+    "Enable the local account that is still disabled. The Accounts page shows the name.",
+    lambda f: [{"ev": "acct:enable", "data": {"name": "kiosk-front"}}],
+    lambda f: [{"ev": "acct:enable", "data": {"name": "kiosk-back"}}],
+    lambda state, f, stage: _acct_enabled(state, "kiosk-front" if stage == "assisted" else "kiosk-back"),
+    plant=_accounts_plant,
 )
+
+
+def _devices_plant(state, facts):
+    px = state.setdefault("px", {})
+    if px.get("dev_planted"):
+        return
+    px["dev_planted"] = True
+    gui = state.setdefault("gui", {})
+    gui["adapter"] = "down"
+    gui["display_warn"] = True
+
+
 _gui(
-    "gui-devices", "device", [("Network adapters", "Device Manager, Network adapters"), ("Display adapters", "Device Manager, Display adapters")],
-    "Device Manager's network adapters are collapsed. Expand Network adapters. Leave Display adapters collapsed.",
-    "Network adapters are expanded and Display adapters are not. Expand Display adapters. The network category from practice can stay open.",
-    "Expand Network adapters.",
-    "Expand Display adapters.",
-    lambda f: [{"ev": "open:devmgr"}, {"ev": "dev:net"}],
-    lambda f: [{"ev": "dev:display"}],
-    lambda state, f, stage: ("net" in ((state.get("gui") or {}).get("dev_open") or []) and "display" not in ((state.get("gui") or {}).get("dev_open") or [])) if stage == "assisted"
-    else "display" in ((state.get("gui") or {}).get("dev_open") or []),
-    _devices_after,
+    "gui-devices", "device", [("Network adapter", "Enable the disabled NIC"), ("Display", "Update the display driver")],
+    "Device Manager shows the network adapter disabled. Expand Network adapters and enable Ethernet. Expanding the category is not the repair.",
+    "The NIC is up. Display adapters still shows a warning. Expand Display adapters and update the driver.",
+    "Enable Ethernet from Device Manager.",
+    "Update the display driver. The warning is on Display adapters.",
+    lambda f: [{"ev": "open:devmgr"}, {"ev": "dev:net"}, {"ev": "adapter:enable"}],
+    lambda f: [{"ev": "dev:display"}, {"ev": "dev:fix", "data": {"name": "display"}}],
+    lambda state, f, stage: (state.get("gui") or {}).get("adapter") == "up" if stage == "assisted"
+    else (state.get("gui") or {}).get("display_warn") is False,
+    plant=_devices_plant,
 )
 
 
@@ -936,3 +1006,80 @@ _gui(
     else (lambda u: bool(u) and not u.get("enabled"))(_ad_user(state, "snguyen")),
     plant=_plant_ad,
 )
+
+
+def _apipa(state, facts):
+    cur = str(state.get("ipv4") or "10.20.30.47")
+    if not cur.startswith("169.254"):
+        state["ipv4_prev"] = cur
+        state["ipv4"] = "169.254.22.18"
+        state["gateway"] = ""
+
+
+def _ipcfg_match(low, raw, f, state):
+    hit = _dns_match(low, raw, f, state) or {}
+    if low == "ipconfig /renew":
+        hit["renewed"] = True
+    return hit or None
+
+
+def _inv_match(low, raw, f, state):
+    hit = _id_match(low, raw, f, state) or {}
+    if low == "ipconfig /renew":
+        hit["renewed"] = True
+    return hit or None
+
+
+SK.SPECS["win-ipconfig"]["match"] = _ipcfg_match
+SK.SPECS["win-ipconfig"]["after_guided"] = _apipa
+SK.SPECS["win-ipconfig"]["stages"]["ticket"]["fix"] = lambda f: ["ipconfig /release", "ipconfig /renew"]
+SK.SPECS["w11-inventory"]["match"] = _inv_match
+SK.SPECS["w11-inventory"]["after_guided"] = _apipa
+SK.SPECS["w11-inventory"]["stages"]["ticket"]["fix"] = lambda f: ["ipconfig /release", "ipconfig /renew"]
+
+
+def _with_plant(lid, extra):
+    prev = SK.SPECS[lid].get("plant_state")
+
+    def plant(state, facts):
+        if prev:
+            prev(state, facts)
+        extra(state, facts)
+
+    SK.SPECS[lid]["plant_state"] = plant
+
+
+def _listen_extra(state, facts):
+    px = state.setdefault("px", {})
+    if px.get("listeners_set"):
+        return
+    px["listeners_set"] = True
+    state["listeners"] = [{"port": 4444, "pid": 4102}, {"port": 5900, "pid": 4188}]
+    state["extra_procs"] = [
+        {"name": facts["listen1"] + ".exe", "pid": 4102},
+        {"name": facts["listen2"] + ".exe", "pid": 4188},
+    ]
+
+
+def _mac_extra(state, facts):
+    px = state.setdefault("px", {})
+    if px.get("adapters_set"):
+        return
+    px["adapters_set"] = True
+    state["adapters"] = [
+        {"mac": "00-15-5D-0A-1E-47", "name": "Ethernet", "media": "disconnected"},
+        {"mac": "02-00-00-00-00-09", "name": "Ethernet 2", "media": "connected"},
+    ]
+
+
+def _arp_extra(state, facts):
+    px = state.setdefault("px", {})
+    if px.get("arp_set"):
+        return
+    px["arp_set"] = True
+    state["arp_rows"] = [{"ip": facts["w_hop"], "mac": "00-1a-2b-3c-4d-01", "kind": "dynamic"}]
+
+
+_with_plant("win-netstat", _listen_extra)
+_with_plant("win-getmac", _mac_extra)
+_with_plant("win-arp", _arp_extra)

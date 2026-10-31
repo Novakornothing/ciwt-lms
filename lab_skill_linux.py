@@ -490,9 +490,9 @@ _text(
     "linux-vm-ssh", "sshd", FILE + [("Key file mode", "chmod <mode> <path>"), ("sshd test", "sshd -t")],
     "/etc/ssh/sshd_config.d/lab-{n}.conf",
     "The walkthrough daemon already refuses passwords. A drop-in named in the practice note still says PasswordAuthentication yes. Set the line from the note. Do not turn root login back on.",
-    "Password login is still allowed by a drop-in that is not the one you edited. /root/SSHD-WANT has the line that should be in that drop-in.",
+    "Keyboard-interactive login is still allowed by a drop-in that is not the one you edited. /root/SSHD-WANT has the line that should be in that drop-in.",
     "{path} must contain {value}",
-    "An sshd drop-in still allows passwords. /root/SSHD-WANT has the line it should contain.",
+    "An sshd drop-in still allows keyboard-interactive login. /root/SSHD-WANT has the KbdInteractiveAuthentication line it should contain.",
     "PasswordAuthentication yes", "PasswordAuthentication no",
     "PasswordAuthentication yes", "KbdInteractiveAuthentication no",
 )
@@ -705,11 +705,11 @@ _text(
     "linux-vm-ipv6", "ra-config", NET,
     "/etc/dnsmasq.d/ra-{n}.conf",
     "Router advertisements for the walkthrough prefix already work. A second dnsmasq snippet, named in the practice note, still has RA commented out. It should contain the enable-ra line from the note.",
-    "Hosts on the second segment never learn a prefix. A dnsmasq snippet still has RA commented out. /root/RA-WANT has the line that snippet should contain.",
+    "Hosts on the second segment never learn an IPv6 prefix. A dnsmasq snippet still has router advertisements commented out. /root/RA-WANT has the IPv6 dhcp-range line, with an fd10: prefix and ra-stateless, that the snippet should contain.",
     "{path} must contain {value}",
-    "A dnsmasq snippet still has router advertisements commented out. /root/RA-WANT has the line it should contain.",
+    "Router advertisements are still commented out in a dnsmasq snippet. /root/RA-WANT has the IPv6 line it should contain.",
     "ra disabled", "enable-ra",
-    "# enable-ra", "dhcp-range=10.40.0.50,10.40.0.80",
+    "# enable-ra", "dhcp-range=fd10:30::,ra-stateless",
 )
 
 _iptables(
@@ -802,21 +802,69 @@ def _absent_pair(lid, checker, p2, p3, s2_prose, s3_prose, s2_note, s3_note):
     }
 
 
-_absent_pair(
-    "sec-vm-proc", "process-gone",
+def _daemon(lid, p2, p3, s2_prose, s3_prose, s2_note, s3_note):
+    """A real background process plus its binary. Both the pid and the file must go."""
+    def enrich(f, seed):
+        n = 1400 + (seed * 13) % 5000
+        f["s2_path"] = p2.format(n=n)
+        f["s3_path"] = p3.format(n=n)
+        f["s2_pidfile"] = f"/var/run/novak-{n}.pid"
+        f["s3_pidfile"] = f"/var/run/novak-{n}-night.pid"
+
+    def plant(path_key, pid_key):
+        def run(f):
+            path = f[path_key]
+            parent = path.rsplit("/", 1)[0]
+            return [
+                f"mkdir -p {parent} /var/run",
+                f"printf '%s\\n' 'while true; do sleep 60; done' > {path}",
+                f"chmod 755 {path}",
+                f"{path} >/dev/null 2>&1 &",
+                f"echo $! > {f[pid_key]}",
+            ]
+        return run
+
+    def fix(path_key, pid_key):
+        def run(f):
+            return [f"kill $(cat {f[pid_key]})", f"rm -f {f[path_key]}"]
+        return run
+
+    def checks(path_key, pid_key):
+        def run(f):
+            return [{"kind": "procdead", "binary": f[path_key], "pidfile": f[pid_key]}]
+        return run
+
+    SK.SPECS[lid] = {
+        "syntax": [("Process list", "ps w"), ("Stop one pid", "kill <pid>"), ("Remove the program", "rm -f <path>")],
+        "enrich": enrich,
+        "stages": {
+            "assisted": {"checker": "process-gone", "prose": s2_prose, "note": lambda f: s2_note.format(**f),
+                         "plant": plant("s2_path", "s2_pidfile"), "fix": fix("s2_path", "s2_pidfile"),
+                         "checks": checks("s2_path", "s2_pidfile")},
+            "ticket": {"checker": "process-gone", "prose": s3_prose, "note": lambda f: s3_note.format(**f),
+                       "plant": plant("s3_path", "s3_pidfile"), "fix": fix("s3_path", "s3_pidfile"),
+                       "checks": checks("s3_path", "s3_pidfile")},
+        },
+    }
+
+
+_daemon(
+    "sec-vm-proc",
     "/var/tmp/.cache/beacon-{n}", "/var/tmp/.font/agent-{n}",
-    "The walkthrough beacon is gone. A second program is still on disk under the cache directory. The practice note names it. Remove that file. Stopping a status word is not the check.",
-    "A different program is still on disk under /var/tmp/.font. It is not the beacon you just removed. Delete that file so the process cannot be started again.",
-    "Remove {path}. The process file itself has to be gone.",
-    "Remove {path}. The agent file has to be gone.",
+    "The walkthrough beacon is gone. The process list still shows a second program looping under /var/tmp/.cache. Its pid is in the pid file named in the practice note. Kill that pid and remove the program file.",
+    "A different program is still running from /var/tmp/.font. It is not the beacon you just stopped. The pid file is named in the note. Kill that pid and delete the binary so it cannot be started again.",
+    "The program is {s2_path}. Its pid is in {s2_pidfile}. Kill that pid, then remove the program.",
+    "The program is {s3_path}. Its pid is in {s3_pidfile}. Kill that pid, then remove the program.",
 )
-_absent_pair(
-    "sec-vm-harden", "process-gone",
-    "/usr/local/sbin/extra-{n}", "/var/tmp/listener-{n}",
-    "The walkthrough extra process is stopped. Another executable is still in /usr/local/sbin. The practice note names it. Remove the file.",
-    "A listener binary is still under /var/tmp. It is not the program you just removed. Delete it.",
-    "Remove {path}.",
-    "Remove {path}.",
+_text(
+    "sec-vm-harden", "sysctl-text", [("Sysctl", "sysctl <key>=<value>"), ("Redirects", "net.ipv4.conf.all.accept_redirects")],
+    "/etc/sysctl.d/99-harden-{n}.conf",
+    "The walkthrough extra process is stopped. This host still accepts ICMP redirects, which a hardening pass should turn off. A sysctl drop-in named in the practice note still sets accept_redirects to 1. Change that line to 0.",
+    "The host still sends ICMP redirects. A different sysctl drop-in, not the one you just edited, sets send_redirects to 1. /root/HARDEN-WANT has the line that file should contain.",
+    "{path} must contain {value}",
+    "ICMP redirects are still being sent. /root/HARDEN-WANT has the line for the other drop-in.",
+    "net.ipv4.conf.all.accept_redirects=1", "net.ipv4.conf.all.accept_redirects=0",
+    "net.ipv4.conf.all.send_redirects=1", "net.ipv4.conf.all.send_redirects=0",
 )
 
 _file(
@@ -844,11 +892,16 @@ def _digest(lid, path_tmpl, s2_bad, s2_good, s3_bad, s3_good, s2_prose, s3_prose
         f["s2_digest"] = dig(s2_good)
         f["s3_digest"] = dig(s3_good)
 
-    def plant(bad, key):
+    def plant(bad, key, good_key):
         def run(f):
             path = f[key]
             parent = path.rsplit("/", 1)[0]
-            return [f"mkdir -p {parent}", f"printf '%s\\n' '{_q(bad)}' > {path}"]
+            good = "/root/good/" + path.rsplit("/", 1)[-1]
+            return [
+                f"mkdir -p {parent} /root/good",
+                f"printf '%s\\n' '{_q(bad)}' > {path}",
+                f"printf '%s\\n' '{_q(f[good_key])}' > {good}",
+            ]
         return run
 
     def fix(good_key, path_key):
@@ -868,13 +921,13 @@ def _digest(lid, path_tmpl, s2_bad, s2_good, s3_bad, s3_good, s2_prose, s3_prose
             "assisted": {
                 "checker": "checksum", "prose": s2_prose,
                 "note": lambda f: s2_note.format(path=f["s2_path"], value=f["s2_digest"]),
-                "plant": plant(s2_bad, "s2_path"), "fix": fix("s2_good", "s2_path"),
+                "plant": plant(s2_bad, "s2_path", "s2_good"), "fix": fix("s2_good", "s2_path"),
                 "checks": checks("s2_digest", "s2_path"),
             },
             "ticket": {
                 "checker": "checksum", "prose": s3_prose,
                 "note": lambda f: s3_note.format(path=f["s3_path"]),
-                "plant": plant(s3_bad, "s3_path"), "fix": fix("s3_good", "s3_path"),
+                "plant": plant(s3_bad, "s3_path", "s3_good"), "fix": fix("s3_good", "s3_path"),
                 "checks": checks("s3_digest", "s3_path"),
             },
         },
@@ -888,28 +941,28 @@ def _digest(lid, path_tmpl, s2_bad, s2_good, s3_bad, s3_good, s2_prose, s3_prose
 _digest(
     "sec-vm-hash", "/opt/app/build-{n}.bin",
     "TAMPERED-BUILD", "GOOD-BUILD-v1", "TAMPERED-PLUGIN", "GOOD-PLUGIN-v2",
-    "The walkthrough image now matches its sum. A second file, named in the practice note, still hashes to the tampered build. Replace it with the payload whose sha256 is in the note.",
-    "A plugin image under /opt/app still hashes to the tampered bytes. It is not the file you repaired. sha256sum of that file has to match the digest in /root/HASH-WANT.",
-    "File {path} must sha256 to {value}.",
-    "The plugin image still does not match its sum. /root/HASH-WANT has the digest. The path is {path}.",
+    "The walkthrough image now matches its sum. A second file, named in the practice note, still hashes to the tampered build. The good bytes are the same file name under /root/good/. Copy those bytes over the tampered file. sha256sum must match the digest in the note.",
+    "A plugin image under /opt/app still hashes to the tampered bytes. The good copy is the same file name under /root/good/. sha256sum of the repaired file has to match the digest in /root/HASH-WANT.",
+    "File {path} must sha256 to {value}. The good bytes are /root/good/ plus the file name.",
+    "The plugin image still does not match its sum. /root/HASH-WANT has the digest. The good bytes are under /root/good/. The path is {path}.",
     "/root/HASH-WANT",
 )
 _digest(
     "sec-vm-fim", "/srv/bin/tool-{n}",
     "echo tampered", "echo ok-a", "echo tampered-b", "echo ok-b",
-    "The walkthrough baseline matches. A second tool, named in the practice note, does not. Replace it so its sha256 is the digest in the note.",
-    "Another tool under /srv/bin does not match its baseline. /root/FIM-WANT has the sha256 that file must have.",
-    "File {path} must sha256 to {value}.",
-    "A tool still does not match its baseline. /root/FIM-WANT has the digest. The path is {path}.",
+    "The walkthrough baseline matches. A second tool, named in the practice note, does not. Copy the matching file from /root/good/ over it so its sha256 is the digest in the note.",
+    "Another tool under /srv/bin does not match its baseline. The good copy is under /root/good/. /root/FIM-WANT has the sha256 that file must have.",
+    "File {path} must sha256 to {value}. The good bytes are under /root/good/.",
+    "A tool still does not match its baseline. /root/FIM-WANT has the digest. The good bytes are under /root/good/. The path is {path}.",
     "/root/FIM-WANT",
 )
 _digest(
     "sec-vm-backup", "/root/keep/archive-{n}.bin",
     "BAD-ARCHIVE", "GOOD-ARCHIVE-v1", "BAD-NIGHT", "GOOD-ARCHIVE-v2",
-    "The walkthrough archive matches its sum. A second archive, named in the practice note, does not. Replace the bytes so sha256sum matches the digest in the note.",
-    "The night archive does not match the sum that was recorded when it was written. /root/SHA-WANT has that digest. The archive file is not the one you already repaired.",
-    "File {path} must sha256 to {value}.",
-    "The night archive still fails its sum. /root/SHA-WANT has the digest. The path is {path}.",
+    "The walkthrough archive matches its sum. A second archive, named in the practice note, does not. Copy the matching bytes from /root/good/ over the archive so sha256sum matches the digest in the note.",
+    "The night archive does not match the sum that was recorded when it was written. The good copy is under /root/good/. /root/SHA-WANT has that digest.",
+    "File {path} must sha256 to {value}. The good bytes are under /root/good/.",
+    "The night archive still fails its sum. /root/SHA-WANT has the digest. The good bytes are under /root/good/. The path is {path}.",
     "/root/SHA-WANT",
 )
 
@@ -959,8 +1012,8 @@ for _lid, _path in (
     ("sec-vm-cron", "/root/CRON-WANT"),
     ("sec-vm-capture", "/root/case/ODD-WANT"),
     ("sec-vm-timeline", "/root/case/ORDER-WANT"),
-    ("linux-vm-restore", "/root/RESTORE-WANT"),
     ("linux-vm-incident", "/root/UID0-NAME"),
+    ("sec-vm-harden", "/root/HARDEN-WANT"),
 ):
     _clue(_lid, _path)
 
@@ -968,11 +1021,12 @@ for _lid, _path in (
 _also("linux-vm-incident", "ticket", lambda f: ["mkdir -p /root", "printf '%s\\n' 'ghost' > /root/UID0-NAME"])
 _text(
     "linux-vm-restore", "restore", FILE,
-    "/srv/share/finance/budget-{n}.csv",
-    "The walkthrough restore is in place. A budget file named in the practice note still has the broken copy. Replace it with the restored row from the note.",
-    "The HR rota file is still the broken copy. It is not the budget file. /root/RESTORE-WANT has the row that file should contain.",
+    "/srv/share/hr/rota-{n}.csv",
+    "The walkthrough finance restore is already in /srv/share/finance. The HR rota under /srv/share/hr, named in the practice note, still has the broken copy. Replace it with the restored row from the note.",
+    "The HR rota is still the broken copy. It lives under /srv/share/hr, not in the finance share. /root/RESTORE-WANT has the restored row.",
     "{path} must contain {value}",
-    "The rota file still has the broken copy. /root/RESTORE-WANT has the restored row.",
+    "The rota under /srv/share/hr still has the broken copy. /root/RESTORE-WANT has the restored row.",
     "broken-budget", "quarter,amount",
     "broken-rota", "Mon,front-desk",
 )
+_clue("linux-vm-restore", "/root/RESTORE-WANT")

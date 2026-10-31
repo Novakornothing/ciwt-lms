@@ -223,7 +223,7 @@ def test_vm_file_check_runs_real_grep_and_solved_probe_does_not_fake_it():
     assert made == ["c_px_assisted 1", "c_px_ticket 1"]
 
 
-_MODEL = {"mode", "absent", "contains", "not_contains", "route", "forward", "iptables", "policy", "crontab", "sha256"}
+_MODEL = {"mode", "absent", "contains", "not_contains", "route", "forward", "iptables", "policy", "crontab", "sha256", "procdead"}
 
 
 def test_stage3_checks_differ_and_do_not_pass_after_the_stage2_fix():

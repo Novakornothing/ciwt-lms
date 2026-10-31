@@ -16,6 +16,11 @@ def add(lid, prose2, prose3, cases, syntax=DEC):
     def enrich(f, seed):
         i = int(seed) % len(cases)
         j = (i + 1) % len(cases)
+        for step in range(1, len(cases) + 1):
+            cand = (i + step) % len(cases)
+            if cases[cand][1] != cases[i][1]:
+                j = cand
+                break
         f["assisted_case"], f["assisted_answer"] = cases[i]
         f["ticket_case"], f["ticket_answer"] = cases[j]
         f["options"] = ", ".join(dict.fromkeys(a for _, a in cases))

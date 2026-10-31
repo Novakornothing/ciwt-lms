@@ -266,6 +266,8 @@ class _World:
         self.forward = "0"
         self.crontab = []
         self.links = []
+        self.pids = {}
+        self._next_pid = 4241
 
     def apply(self, cmd):
         raw = str(cmd).strip()
@@ -334,6 +336,22 @@ class _World:
             text = self.files.get(m.group(1), {}).get("content", "")
             self.crontab = [ln for ln in text.splitlines() if ln and not ln.startswith("#")]
             return
+        if raw.rstrip().endswith("&"):
+            self._next_pid += 1
+            self._last_pid = str(self._next_pid)
+            self.pids[self._last_pid] = True
+            return
+        m = re.match(r"^echo \$! > (\S+)$", raw)
+        if m:
+            pid = getattr(self, "_last_pid", None) or "4242"
+            self.files[m.group(1)] = {"mode": 0o644, "owner": "root", "content": pid + "\n"}
+            self.pids[pid] = True
+            return
+        m = re.match(r"^kill \$\(cat (\S+)\)$", raw)
+        if m:
+            pid = (self.files.get(m.group(1), {}).get("content") or "").strip()
+            self.pids.pop(pid, None)
+            return
         raise ValueError(f"stage harness cannot apply {raw}")
 
 
@@ -383,6 +401,11 @@ def _model_ok(world, checks):
             digest = hashlib.sha256(node.get("content", "").encode()).hexdigest()
             if digest != check["digest"]:
                 return False
+        elif kind == "procdead":
+            binary = world.files.get(check["binary"])
+            pid = (world.files.get(check["pidfile"], {}).get("content") or "").strip()
+            if binary is not None or (pid and pid in world.pids):
+                return False
         else:
             raise ValueError(kind)
     return True
@@ -429,6 +452,10 @@ def _shell(checks):
             parts.append(f"crontab -l | grep -qxF -- '{check['line']}'")
         elif kind == "sha256":
             parts.append(f"sha256sum '{path}' | grep -q '^{check['digest']} '")
+        elif kind == "procdead":
+            pidfile = check["pidfile"]
+            binary = check["binary"]
+            parts.append(f"pid=$(cat '{pidfile}'); ! kill -0 \"$pid\" 2>/dev/null && [ ! -e '{binary}' ]")
         else:
             raise ValueError(kind)
     return " && ".join(parts)

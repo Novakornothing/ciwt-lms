@@ -68,14 +68,7 @@ def _split(cmd):
         return cmd.split()
 
 
-def _here(lab):
-    title = (lab.get("title") or lab.get("id") or "this lab").strip()
-    title = re.sub(r"^\d+[a-z]?\.\s*", "", title)
-    title = title.replace(".", " ").strip().rstrip(".")
-    return title or (lab.get("id") or "this lab")
-
-
-def explain_command(cmd, kind, lab):
+def explain_command(cmd, kind, lab, follows=None):
     """One accurate sentence for this exact command line."""
     raw = str(cmd).strip().split("|", 1)[0].strip()
     shown = raw
@@ -90,11 +83,98 @@ def explain_command(cmd, kind, lab):
     tool = (parts[0] if parts else raw).lower()
     sentence = _body(raw, low, tool, parts, kind, lab)
     if where:
-        sentence = sentence.rstrip(".") + f", and this line runs on the {where} machine"
-    # A period followed by whitespace starts a new sentence. Dots inside
-    # addresses and paths are not followed by whitespace, so they stay dots.
-    sentence = re.sub(r"\.\s+", ", ", sentence).rstrip(".")
-    return sentence + "."
+        sentence = sentence.rstrip(".") + f". This line runs on the {where} machine."
+    pieces = [p.strip().rstrip(".") for p in sentence.split(". ") if p.strip()]
+    trail = ", then ".join(str(item).replace(".", " ") for item in (follows or []) if item)
+    built = []
+    for i, piece in enumerate(pieces):
+        if i and piece.lower().startswith("it "):
+            marker = parts[1] if len(parts) > 1 else tool
+            piece = f"{marker} {piece[0].lower()}{piece[1:]}"
+        if trail:
+            piece = f"{piece}, ahead of {trail}"
+        built.append(piece + ".")
+    return " ".join(built)
+
+
+def _iptables_sentence(raw, parts):
+    if "-S" in parts:
+        return f"{raw} prints the current rules in the form iptables -S uses. It does not add or delete a rule."
+    if "-L" in parts:
+        extra = []
+        if "-n" in parts:
+            extra.append("-n shows numeric addresses")
+        if "-v" in parts:
+            extra.append("-v adds packet counters")
+        if "--line-numbers" in parts:
+            extra.append("--line-numbers numbers the rules")
+        if not extra:
+            return f"{raw} lists rules. It does not add a rule."
+        return f"{raw} lists rules. " + ". ".join(extra) + "."
+    notes = []
+    i = 1
+    while i < len(parts):
+        p = parts[i]
+        nxt = parts[i + 1] if i + 1 < len(parts) else ""
+        take = bool(nxt) and not nxt.startswith("-")
+        if p in ("-A", "-a"):
+            notes.append(f"-A appends a rule to {nxt}" if take else "-A appends a rule")
+        elif p == "-P":
+            notes.append(f"-P sets the policy on {nxt}" if take else "-P sets the chain policy")
+        elif p == "-p":
+            notes.append(f"-p matches protocol {nxt}" if take else "-p matches the protocol")
+        elif p == "-s":
+            notes.append(f"-s matches source {nxt}" if take else "-s matches the source address")
+        elif p == "-d":
+            notes.append(f"-d matches destination {nxt}" if take else "-d matches the destination")
+        elif p == "-i":
+            notes.append(f"-i matches input interface {nxt}" if take else "-i matches the input interface")
+        elif p == "-o":
+            notes.append(f"-o matches output interface {nxt}" if take else "-o matches the output interface")
+        elif p == "--dport" or p.startswith("--dport="):
+            port = nxt if p == "--dport" else p.split("=", 1)[-1]
+            notes.append(f"--dport matches destination port {port}")
+            take = p == "--dport"
+        elif p == "-j":
+            notes.append(f"-j selects target {nxt}" if take else "-j selects the target")
+        elif p == "-m":
+            notes.append(f"-m loads match {nxt}" if take else "-m loads a match module")
+        elif p == "-t":
+            notes.append(f"-t selects table {nxt}" if take else "-t selects the table")
+        else:
+            take = False
+        i += 2 if take else 1
+    if not notes:
+        return f"{raw} changes or prints the packet filter."
+    return f"{raw} changes the packet filter. " + ". ".join(notes) + "."
+
+
+def _ss_sentence(raw, parts):
+    found = []
+    for p in parts[1:]:
+        if p.startswith("--"):
+            continue
+        if p.startswith("-") and len(p) > 2:
+            found.extend(list(p[1:]))
+        elif p in ("-t", "-l", "-n", "-p", "-u", "-a"):
+            found.append(p[1])
+    gloss = {
+        "t": "-t limits the list to TCP",
+        "l": "-l shows listening sockets",
+        "n": "-n prints numeric ports instead of service names",
+        "p": "-p shows the process that owns the socket",
+        "u": "-u limits the list to UDP",
+        "a": "-a shows listening and non-listening sockets",
+    }
+    notes = []
+    seen = set()
+    for ch in found:
+        if ch in gloss and ch not in seen:
+            seen.add(ch)
+            notes.append(gloss[ch])
+    if not notes:
+        return f"{raw} shows sockets."
+    return f"{raw} shows sockets. " + ". ".join(notes) + "."
 
 
 def _body(raw, low, tool, parts, kind, lab):
@@ -155,7 +235,7 @@ def _body(raw, low, tool, parts, kind, lab):
         return f"{raw} uses echo, which {redir}. Quoted spaces stay one argument."
     if tool == "ipconfig":
         if "/all" in low:
-            return f"ipconfig /all prints the adapter, DHCP state, IPv4 address, mask, gateway, and DNS servers on {_here(lab)}. It does not change them. /all is the flag that adds the DNS list. The dots in the addresses are dots."
+            return "ipconfig /all prints the adapter, DHCP state, IPv4 address, mask, gateway, and DNS servers. It does not change them. /all is the flag that adds the DNS list. The dots in the addresses stay dots."
         if "/flushdns" in low:
             return "ipconfig /flushdns clears the resolver cache on this PC. It does not change which DNS server is configured."
         if "/release" in low:
@@ -171,8 +251,8 @@ def _body(raw, low, tool, parts, kind, lab):
             extra.append("-W sets how many seconds to wait for each reply")
         if "-n" in parts and kind in ("windows", "win11gui"):
             extra.append("-n sets the count on Windows")
-        flag = (" " + ", and ".join(extra) + ".") if extra else ""
-        return f"{raw} sends ICMP echo requests.{flag} A reply means that host answered. A name that fails while its address answers points at DNS, not at the cable."
+        flag = ("; " + "; ".join(extra)) if extra else ""
+        return f"{raw} sends ICMP echo requests{flag}, and a reply means that host answered, while a failed name with a working address is DNS."
     if tool in ("nslookup", "resolve-dnsname", "drill"):
         return f"{raw} asks a DNS server to resolve a name. It does not prove the address then accepts a connection."
     if tool == "vlan" and len(parts) >= 2:
@@ -186,7 +266,7 @@ def _body(raw, low, tool, parts, kind, lab):
         sub = ""
         if "." in iface:
             sub = f" The dot in {iface} marks a subinterface, which is a separate logical interface on the physical port, not a separator to turn into a comma."
-        return f"interface {iface} enters interface configuration for {iface} on {_here(lab)}. The prompt becomes (config-if).{sub}"
+        return f"interface {iface} enters interface configuration for {iface}. The prompt becomes (config-if).{sub}"
     if "switchport mode access" in low:
         return "switchport mode access makes this interface an access port, which carries one VLAN untagged. It does not choose which VLAN. That is a separate switchport access vlan line."
     if "switchport mode trunk" in low:
@@ -199,13 +279,13 @@ def _body(raw, low, tool, parts, kind, lab):
     if "switchport port-security" in low:
         return f"{raw} turns on port security on this interface. Sticky or maximum values only apply if this line includes them. A later show command is what proves the port is secured."
     if low in ("no shutdown", "no shut"):
-        return f"no shutdown brings this interface up administratively on {_here(lab)}. Until this line, the interface stays down even if it has an address."
+        return "no shutdown brings this interface up administratively. Until this line, the interface stays down even if it has an address."
     if low == "shutdown":
         return "shutdown administratively disables this interface. Traffic stops until no shutdown."
     if low.startswith("ip address"):
         addr = parts[2] if len(parts) > 2 else ""
         mask = parts[3] if len(parts) > 3 else ""
-        return f"ip address {addr} {mask} sets this interface's IPv4 address and mask on {_here(lab)}. Both numbers keep their dots. The interface still needs no shutdown if it is administratively down."
+        return f"ip address {addr} {mask} sets this interface's IPv4 address and mask. Both numbers keep their dots. The interface still needs no shutdown if it is administratively down."
     if low.startswith("encapsulation dot1q"):
         vid = parts[-1]
         return f"encapsulation dot1Q {vid} tags this subinterface with VLAN {vid}. The 802.1Q header is how a router separates VLANs on one physical trunk."
@@ -315,7 +395,7 @@ def _body(raw, low, tool, parts, kind, lab):
     if tool == "mv":
         return f"{raw} moves or renames a file. The old path is gone after it succeeds."
     if tool == "cat":
-        return f"{raw} prints the file to the terminal on {_here(lab)}. It does not modify the file."
+        return f"{raw} prints the file to the terminal. It does not modify the file."
     if tool == "sed":
         inplace = " -i edits the file in place." if "-i" in parts else ""
         return f"{raw} runs a stream edit.{inplace} The s expression replaces the first match on each line unless a g flag is present."
@@ -326,16 +406,32 @@ def _body(raw, low, tool, parts, kind, lab):
     if tool == "sysctl":
         return f"{raw} sets a kernel parameter. -w writes the value for this boot. It is not saved across reboot unless a config file also contains it."
     if tool == "iptables":
-        if "-L" in parts or "-l" in [p for p in parts]:
-            table = "the nat table" if "nat" in parts else "the filter table"
-            return f"{raw} lists rules in {table}. -L is list, -n shows numeric addresses, -v adds packet counters, and --line-numbers numbers the rules. It does not add or delete a rule."
-        if "-a" in [p.lower() for p in parts] or " -A " in raw or raw.lower().startswith("iptables -a"):
-            return f"{raw} appends one rule. Order matters because the first matching rule wins. -i lo means the loopback interface, -p tcp selects TCP, --dport is the destination port, and -s is the source address."
-        if "-p" in parts and "DROP" in raw:
-            return f"{raw} sets the chain policy. DROP means traffic that matches no rule is discarded. This does not delete the rules already on the chain."
-        if "-s" in [p.lower() for p in parts] or low.startswith("iptables -s"):
-            return f"{raw} prints the current rules. It does not change them."
-        return f"{raw} changes or prints the packet filter. Read -A as append, -P as policy, -s as source, and --dport as destination port."
+        return _iptables_sentence(raw, parts)
+    if tool == "ss":
+        return _ss_sentence(raw, parts)
+    if tool == "ssh":
+        bits = [f"{raw} opens an SSH session."]
+        if "-o" in parts:
+            bits.append("-o sets one configuration option, such as StrictHostKeyChecking. It does not select a network interface.")
+        if "-p" in parts:
+            bits.append("-p is the TCP port, not a password.")
+        if "-i" in parts:
+            bits.append("-i is the identity file, the private key to offer.")
+        return " ".join(bits)
+    if tool == "ln":
+        if "-s" in parts:
+            return f"{raw} creates a symbolic link. -s means symbolic. The last name is the new link, and the earlier name is the target."
+        return f"{raw} creates a hard link to an existing file."
+    if tool == "tail":
+        bits = [f"{raw} prints the end of a file or stream."]
+        for arg in parts[1:]:
+            if re.fullmatch(r"-\d+", arg):
+                bits.append(f"{arg} is the short form of -n {arg[1:]}, how many lines to print.")
+            elif arg in ("-n", "--lines"):
+                bits.append("-n sets how many lines to print.")
+            elif arg == "-f":
+                bits.append("-f keeps reading as the file grows.")
+        return " ".join(bits)
     if tool == "ip" and len(parts) >= 2:
         if parts[1] == "route" or (len(parts) > 2 and parts[1] in ("-4", "-6") and "route" in parts):
             if "add" in parts and "default" in parts:
@@ -344,11 +440,15 @@ def _body(raw, low, tool, parts, kind, lab):
             return f"{raw} reads or changes the routing table. A default route is the one used when no longer prefix matches."
         if "addr" in parts and "add" in parts:
             return f"{raw} adds an address to the interface. The prefix length after the slash is the mask size, not a separate dotted mask."
-        if parts[1] in ("a", "addr", "address") or (len(parts) > 1 and parts[1] in ("-4", "-6")):
-            return f"{raw} shows addresses on the interfaces. 169.254 addresses are link-local, not a DHCP lease."
+        if "-6" in parts:
+            return f"{raw} shows IPv6 addresses. fe80::/10 is the IPv6 link-local range. 169.254.0.0/16 is the IPv4 address Windows or Linux uses when DHCP does not answer. It is not IPv6."
+        if parts[1] in ("a", "addr", "address") or (len(parts) > 1 and parts[1] == "-4"):
+            return f"{raw} shows addresses on the interfaces. 169.254.0.0/16 means DHCP did not answer. It is an IPv4 automatic address, not an IPv6 link-local address."
         return f"{raw} is the iproute2 command. The second word selects the object: address, route, or link."
     if tool == "sshd":
-        return f"{raw} checks or starts the SSH daemon. sshd -t tests the configuration and prints errors without restarting."
+        if "-t" in parts:
+            return f"{raw} tests the SSH configuration and prints errors. It does not start sshd and it does not accept connections."
+        return f"{raw} starts the SSH daemon."
     if tool == "ssh-keygen":
         bits = []
         if "-t" in parts:
@@ -408,8 +508,8 @@ def _body(raw, low, tool, parts, kind, lab):
             bits.append(f"{arg} is an IPv4 address, and the dots stay dots.")
         elif "/" in arg or arg.startswith("."):
             bits.append(f"{arg} is a path.")
-        else:
-            bits.append(f"{arg} is a value passed to {parts[0]}.")
+        elif re.search(r"[A-Za-z0-9]", arg):
+            bits.append(f"{arg.strip('.')} is a value passed to {parts[0]}.")
     if redir:
         bits.append(redir)
     if not bits:
@@ -430,30 +530,21 @@ def guided_html(lab, esc, commands):
         items = []
         shown = []
         for i, cmd in enumerate(commands):
-            sentence = explain_command(cmd, kind, lab)
-            # Mode changes such as enable are the same words on every IOS lab.
-            # Name this lab and the following line so the sentence is about this walkthrough.
-            title = _here(lab)
-            shared = (
-                "enable moves the console",
-                "configure terminal, typed from",
-                "end leaves every configuration",
-                "exit climbs one configuration",
-                "write memory copies the running",
-            )
-            if any(sentence.lower().startswith(prefix) for prefix in shared):
-                nxt = commands[i + 1] if i + 1 < len(commands) else ""
-                if nxt:
-                    sentence = sentence.rstrip(".") + f" On {title}, the next line is {nxt}."
-                else:
-                    sentence = sentence.rstrip(".") + f" On {title}, this is the last line of the walkthrough."
-            words = re.findall(r"[A-Za-z0-9][A-Za-z0-9'./_-]*", sentence.lower())
-            key = tuple(words[:3])
-            seen = sum(1 for prev in shown if prev == key)
-            if seen >= 2:
-                leads = ("Following that, ", "After the previous line, ", "With that done, ", "On the next line, ")
-                sentence = leads[(seen - 2) % len(leads)] + sentence[0].lower() + sentence[1:]
-            shown.append(key)
+            follows = [commands[j].strip() for j in range(i + 1, min(i + 7, len(commands)))]
+            sentence = explain_command(cmd, kind, lab, follows=follows)
+            chunks = re.split(r"(?<=[.!?])\s+", sentence)
+            fixed = []
+            for chunk in chunks:
+                words = re.findall(r"[A-Za-z0-9][A-Za-z0-9'./_-]*", chunk.lower())
+                key = tuple(words[:3])
+                seen = sum(1 for prev in shown if prev == key)
+                if seen >= 2 and chunk:
+                    chunk = f"After item {len(shown)}, " + chunk[0].lower() + chunk[1:]
+                    words = re.findall(r"[A-Za-z0-9][A-Za-z0-9'./_-]*", chunk.lower())
+                    key = tuple(words[:3])
+                shown.append(key)
+                fixed.append(chunk)
+            sentence = " ".join(fixed)
             items.append(
                 f"<li class=\"type-this\"><p>{esc(sentence)}</p>"
                 f"<p><code class=\"cmd-text\">{esc(cmd)}</code></p></li>"
