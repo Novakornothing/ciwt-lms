@@ -1,0 +1,93 @@
+{# In-page practice simulations. They run only in the browser and never change or grade this lab. #}
+{% set show_win = lab.kind in ('windows', 'win11gui') %}
+{% set show_ios = lab.kind in ('switch', 'router') %}
+{% set show_net = lab.kind in ('switch', 'router') or (lab.vm is defined and lab.vm and lab.vm.net) %}
+{% if show_win or show_ios or show_net %}
+<div class="lab-sims" id="labSims">
+{% if show_win %}
+<section class="client-sim" id="winSim" data-sim="windows" aria-label="Windows simulation">
+  <h2 class="h6 mb-1">Windows practice (simulation)</h2>
+  <p class="sim-banner">Simulation. This is not a Windows PC. A small PowerShell, Settings, Event Viewer, and Users view run in this page. Practice here does not change or grade this lab.</p>
+  <div class="sim-tabs" role="tablist">
+    <button type="button" class="sim-tab is-active" data-sim-tab="shell">PowerShell</button>
+    <button type="button" class="sim-tab" data-sim-tab="settings">Settings</button>
+    <button type="button" class="sim-tab" data-sim-tab="events">Event Viewer</button>
+    <button type="button" class="sim-tab" data-sim-tab="users">Users</button>
+  </div>
+  <div class="sim-panel" data-sim-panel="shell">
+    <div class="sim-out" id="winSimOut" role="log" aria-live="polite"></div>
+    <form class="sim-form" id="winSimForm">
+      <label class="visually-hidden" for="winSimIn">Command</label>
+      <input id="winSimIn" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="Type help">
+      <button type="submit" class="btn btn-sm btn-brand">Run</button>
+    </form>
+  </div>
+  <div class="sim-panel" data-sim-panel="settings" hidden>
+    <p>System → About shows the computer name. Network shows the DNS server. Changes apply to this simulation only.</p>
+    <form id="winSettingsForm" class="sim-settings">
+      <label>Computer name <input name="name" autocomplete="off"></label>
+      <label>DNS server <input name="dns" autocomplete="off" inputmode="decimal"></label>
+      <button type="submit" class="btn btn-sm btn-brand">Apply in the simulation</button>
+    </form>
+  </div>
+  <div class="sim-panel" data-sim-panel="events" hidden>
+    <table class="sim-table">
+      <caption>Sample System log</caption>
+      <thead><tr><th>Time</th><th>Source</th><th>Event</th></tr></thead>
+      <tbody>
+        <tr><td>08:12</td><td>Dhcp-Client</td><td>Lease renewed on Ethernet.</td></tr>
+        <tr><td>08:14</td><td>DNS Client Events</td><td>Name lookup timed out.</td></tr>
+        <tr><td>09:01</td><td>Service Control Manager</td><td>The Print Spooler service entered the running state.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="sim-panel" data-sim-panel="users" hidden>
+    <ul class="sim-users" id="winUsers">
+      <li data-user="Trainee">Trainee <button type="button" class="btn btn-sm btn-outline-secondary" data-user-toggle="Trainee">Disable</button></li>
+      <li data-user="labtech">labtech <button type="button" class="btn btn-sm btn-outline-secondary" data-user-toggle="labtech">Disable</button></li>
+    </ul>
+    <p class="small">Account changes stay in this browser.</p>
+  </div>
+</section>
+{% endif %}
+{% if show_ios %}
+<section class="client-sim" id="iosSim" data-sim="ios" data-kind="{{ lab.kind }}" aria-label="Cisco IOS-style simulation">
+  <h2 class="h6 mb-1">Cisco IOS-style practice (simulation)</h2>
+  <p class="sim-banner">Simulation. Cisco IOS-style command line with user, privileged, and configuration modes. This is not Cisco software. Practice here does not change or grade this lab.</p>
+  <div class="sim-out" id="iosSimOut" role="log" aria-live="polite"></div>
+  <form class="sim-form" id="iosSimForm">
+    <label class="prompt" id="iosPrompt" for="iosSimIn">&gt;</label>
+    <input id="iosSimIn" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="Type ?">
+    <button type="submit" class="btn btn-sm btn-brand">Run</button>
+  </form>
+</section>
+{% endif %}
+{% if show_net %}
+<section class="client-sim" id="netCanvas" data-sim="net" aria-label="Network view">
+  <h2 class="h6 mb-1">Network view</h2>
+  <p class="sim-banner">A drawn map of a simple path: PC, switch, router, server. The packet list is a teaching model of what each hop does.</p>
+  <div class="net-layout">
+    <svg id="netSvg" viewBox="0 0 640 180" role="img" aria-label="PC, switch, router, and server connected in a line">
+      <line x1="90" y1="90" x2="230" y2="90" class="net-link"/>
+      <line x1="310" y1="90" x2="390" y2="90" class="net-link"/>
+      <line x1="470" y1="90" x2="540" y2="90" class="net-link"/>
+      <g class="net-node" data-node="pc"><rect x="20" y="60" width="70" height="60" rx="8"/><text x="55" y="94">PC</text></g>
+      <g class="net-node" data-node="sw"><rect x="230" y="60" width="80" height="60" rx="8"/><text x="270" y="94">Switch</text></g>
+      <g class="net-node" data-node="rtr"><rect x="390" y="60" width="80" height="60" rx="8"/><text x="430" y="94">Router</text></g>
+      <g class="net-node" data-node="srv"><rect x="540" y="60" width="80" height="60" rx="8"/><text x="580" y="94">Server</text></g>
+      <circle id="netPacket" cx="55" cy="50" r="7" hidden/>
+    </svg>
+    <div>
+      <button type="button" class="btn btn-sm btn-brand" id="netSend">Send a test packet</button>
+      <table class="sim-table" id="netTable">
+        <caption>Packet list</caption>
+        <thead><tr><th>Hop</th><th>What happens</th><th>Port</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
+</div>
+<script src="{{ url_for('static', filename='js/sims/lab-sims.js') }}" defer></script>
+{% endif %}

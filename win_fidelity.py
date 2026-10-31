@@ -248,6 +248,12 @@ def get_service(c, st, lines):
 
 
 def getmac(st):
+    adapters = st.get("adapters")
+    if adapters:
+        rows = ["", "Physical Address    Transport Name", "=================== =========================================================="]
+        for row in adapters:
+            rows.append(f"{row['mac']}   {row['name']} ({row.get('media') or 'connected'})")
+        return rows
     return ["", "Physical Address    Transport Name", "=================== ==========================================================",
             f"{st.get('mac') or ETH_MAC}   " + ("Media disconnected" if st.get("released") and False else r"\Device\Tcpip_{6F1C2A3B-8D4E-4F50-9A61-B2C3D4E5F607}"),
             f"{WIFI_MAC}   Media disconnected"]
@@ -256,10 +262,13 @@ def getmac(st):
 def arp(st):
     gw = st.get("gateway") or "10.20.30.1"
     pre = ".".join((st.get("ipv4") or "10.20.30.47").split(".")[:3])
-    return ["", f"Interface: {st.get('ipv4')} --- 0xc", "  Internet Address      Physical Address      Type",
+    rows = ["", f"Interface: {st.get('ipv4')} --- 0xc", "  Internet Address      Physical Address      Type",
             f"  {gw:<22}00-1a-2b-3c-4d-01     dynamic", f"  {pre + '.255':<22}ff-ff-ff-ff-ff-ff     static",
             f"  {'224.0.0.22':<22}01-00-5e-00-00-16     static", f"  {'224.0.0.251':<22}01-00-5e-00-00-fb     static",
             f"  {'239.255.255.250':<22}01-00-5e-7f-ff-fa     static", f"  {'255.255.255.255':<22}ff-ff-ff-ff-ff-ff     static"]
+    for row in st.get("arp_rows") or []:
+        rows.append(f"  {row['ip']:<22}{row['mac']}     {row.get('kind') or 'dynamic'}")
+    return rows
 
 
 def route_print(st):
